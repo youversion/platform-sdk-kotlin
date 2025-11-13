@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reader_menu_font_settings">Font &amp; Settings</string>
+    <string name="reader_menu_sign_in">Sign In</string>
+    <string name="reader_menu_sign_out">Sign Out</string>
+
+    <string name="font_settings_label">Font</string>
+
+    <string name="book_chapter_picker_title">Books</string>
+</resources>

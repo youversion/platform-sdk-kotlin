@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Exclude directories prefixed with bible_ from library -->
+    <exclude
+        domain="file"
+        path="yvp_bible_.*" />
+</full-backup-content>
