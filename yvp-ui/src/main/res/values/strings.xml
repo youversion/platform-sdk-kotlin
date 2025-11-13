@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sign_in_button_full">Sign in with</string>
+    <string name="sign_in_button_compact">Sign in</string>
+    <string name="sign_in_button_content_desc">Sign in with YouVersion</string>
+
+    <string name="widget_bible_app">Bible App</string>
+    <string name="widget_copyright">Copyright</string>
+
+    <string name="tab_votd">Verse of the Day</string>
+</resources>
