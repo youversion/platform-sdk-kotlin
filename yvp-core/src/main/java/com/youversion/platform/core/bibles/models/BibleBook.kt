@@ -9,13 +9,13 @@ data class BibleBook(
     @SerialName(CodingKey.TITLE) val title: String?,
     @SerialName(CodingKey.ABBREVIATION) val abbreviation: String?,
     @SerialName(CodingKey.CANON) val canon: String?,
-    @SerialName(CodingKey.CHAPTERS) val chapters: List<BibleChapter>? = null,
+    @SerialName(CodingKey.BIBLE_CHAPTERS) val chapters: List<BibleChapter>? = null,
 ) {
     object CodingKey {
         const val ID = "id"
         const val TITLE = "title"
         const val ABBREVIATION = "abbreviation"
         const val CANON = "canon"
-        const val CHAPTERS = "chapters"
+        const val BIBLE_CHAPTERS = "BibleChapter" // Local for caching
     }
 }
