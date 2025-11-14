@@ -72,9 +72,21 @@ fun BibleReader(
             composable(
                 route = BibleReaderDestination.References.route,
             ) {
-                ReferencesScreen(
-                    onBackClick = navController::popBackStack,
-                )
+                viewModel.bibleVersion?.let {
+                    ReferencesScreen(
+                        bibleVersion = it,
+                        bibleReference = viewModel.bibleReference,
+                        onSelectionClick = { versionId, bookCode, chapter ->
+                            BibleReference(
+                                versionId = versionId,
+                                bookUSFM = bookCode,
+                                chapter = chapter.toInt(),
+                            ).also { viewModel.onHeaderSelectionChange(it) }
+                            navController.popBackStack()
+                        },
+                        onBackClick = navController::popBackStack,
+                    )
+                }
             }
             composable(
                 route = BibleReaderDestination.Fonts.route,

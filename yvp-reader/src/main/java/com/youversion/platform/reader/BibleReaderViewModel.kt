@@ -25,9 +25,10 @@ class BibleReaderViewModel(
     private val _state: MutableStateFlow<State>
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
 
-    private val bibleReference: BibleReference
+    internal var bibleReference: BibleReference
         get() = _state.value.bibleReference
-    private var bibleVersion: BibleVersion?
+        set(value) = _state.update { it.copy(bibleReference = value) }
+    internal var bibleVersion: BibleVersion?
         get() = _state.value.bibleVersion
         set(value) = _state.update { it.copy(bibleVersion = value) }
 
@@ -77,6 +78,17 @@ class BibleReaderViewModel(
         when (action) {
             is Action.OpenFontSettings -> _state.update { it.copy(showingFontList = true) }
             is Action.CloseFontSettings -> _state.update { it.copy(showingFontList = false) }
+        }
+    }
+
+    fun onHeaderSelectionChange(newReference: BibleReference) {
+        viewModelScope.launch {
+            if (bibleVersion?.id != newReference.versionId) {
+                val newVersion = bibleVersionRepository.version(id = newReference.versionId)
+                bibleVersion = newVersion
+                // TODO: INsert my version
+            }
+            bibleReference = newReference
         }
     }
 
