@@ -230,7 +230,7 @@ object BibleVersionRendering {
                 val verseNumStyle =
                     stateIn.fonts.styleFor(BibleTextFontOption.VERSE_NUM).copy(
                         baselineShift = stateIn.fonts.verseNumBaselineShift,
-                        color = stateIn.textColor.copy(alpha = stateIn.fonts.verseNumOpacity),
+                        color = stateIn.textColor.copy(alpha = stateIn.textColor.alpha * stateIn.fonts.verseNumOpacity),
                     )
                 stateUp.append(verseNumText, verseNumStyle, BibleTextCategory.VERSE_LABEL)
             }
