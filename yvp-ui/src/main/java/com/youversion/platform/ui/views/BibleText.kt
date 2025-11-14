@@ -53,6 +53,7 @@ data class BibleTextOptions(
     val lineSpacing: TextUnit? = null,
     val textColor: Color? = null,
     val wocColor: Color = Color(0xFFF04C59), // YouVersion red
+    val renderVerseNumbers: Boolean = true,
     val footnoteMode: BibleTextFootnoteMode = BibleTextFootnoteMode.NONE,
     val footnoteMarker: AnnotatedString? = null,
 )
@@ -102,6 +103,7 @@ fun BibleText(
                 BibleVersionRendering.textBlocks(
                     bibleVersionRepository = bibleVersionRepository,
                     reference = reference,
+                    renderVerseNumbers = textOptions.renderVerseNumbers,
                     renderFootnotes = textOptions.footnoteMode != BibleTextFootnoteMode.NONE,
                     footnoteMarker = textOptions.footnoteMarker,
                     textColor = textOptions.textColor ?: Color.Unspecified,
