@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -26,7 +27,7 @@ fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
             bookUSFM = "2CO",
             chapter = 1,
             verseStart = 3,
-            verseEnd = 20,
+            verseEnd = 5,
         )
 
     Scaffold(
@@ -44,6 +45,7 @@ fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(20.dp),
+            contentAlignment = Alignment.Center,
         ) {
             BibleWidget(
                 reference = bibleReference,
