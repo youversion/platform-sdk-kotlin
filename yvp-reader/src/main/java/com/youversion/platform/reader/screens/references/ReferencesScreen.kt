@@ -64,9 +64,15 @@ internal fun ReferencesScreen(
             val listIndex = bookIndex * 2
 
             if (bookIndex >= 0) {
+                val lastVisibleIndex =
+                    lazyListState.layoutInfo.visibleItemsInfo
+                        .lastOrNull()
+                        ?.index
                 if (shouldAnimateScrollTo) {
-                    delay(450.milliseconds)
-                    lazyListState.animateScrollToItem(listIndex)
+                    if (lastVisibleIndex != null && lastVisibleIndex - listIndex < 4) {
+                        delay(450.milliseconds)
+                        lazyListState.animateScrollToItem(listIndex)
+                    }
                 } else {
                     shouldAnimateScrollTo = true
                     lazyListState.scrollToItem(listIndex)
