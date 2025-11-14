@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -24,26 +25,55 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.components.BibleReaderTopAppBar
 import com.youversion.platform.reader.theme.readerColorScheme
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 internal fun ReferencesScreen(
     bibleVersion: BibleVersion,
+    bibleReference: BibleReference,
     onSelectionClick: (Int, String, String) -> Unit,
     onBackClick: () -> Unit,
 ) {
-    val viewModel: ReferencesViewModel = viewModel(factory = ReferencesViewModel.factory(bibleVersion))
+    val viewModel: ReferencesViewModel = viewModel(factory = ReferencesViewModel.factory(bibleVersion, bibleReference))
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val lazyListState = rememberLazyListState()
+
+    var shouldAnimateScrollTo by remember { mutableStateOf(false) }
+
+    LaunchedEffect(state.expandedBookCode) {
+        state.expandedBookCode?.let { expandedBookCode ->
+            val bookIndex = state.referenceRows.indexOfFirst { it.bookCode == expandedBookCode }
+            // There are 2 items for each book (header and chapters)
+            val listIndex = bookIndex * 2
+
+            if (bookIndex >= 0) {
+                if (shouldAnimateScrollTo) {
+                    delay(450.milliseconds)
+                    lazyListState.animateScrollToItem(listIndex)
+                } else {
+                    shouldAnimateScrollTo = true
+                    lazyListState.scrollToItem(listIndex)
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -51,7 +81,7 @@ internal fun ReferencesScreen(
         },
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            LazyColumn {
+            LazyColumn(state = lazyListState) {
                 state.referenceRows.forEach { row ->
                     stickyHeader(key = row.bookCode) {
                         RowHeader(

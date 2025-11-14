@@ -75,6 +75,7 @@ fun BibleReader(
                 viewModel.bibleVersion?.let {
                     ReferencesScreen(
                         bibleVersion = it,
+                        bibleReference = viewModel.bibleReference,
                         onSelectionClick = { versionId, bookCode, chapter ->
                             BibleReference(
                                 versionId = versionId,
