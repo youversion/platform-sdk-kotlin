@@ -68,9 +68,6 @@ dependencies {
 }
 
 mavenPublishing {
-    publishToMavenCentral()
-    signAllPublications()
-
     coordinates(
         groupId = "com.youversion.platform",
         artifactId = "yvp-core",
@@ -83,33 +80,5 @@ mavenPublishing {
             """
             Provides the fundamental building blocks for the YouVersion platform, such as data models, network calls, and caching.
             """.trimIndent()
-        url = "https://platform.youversion.com/"
-        inceptionYear = "2025"
-
-        licenses {
-            license {
-                name = "Apache License, Version 2.0"
-                url = "https://opensource.org/licenses/Apache-2.0"
-                distribution = "https://opensource.org/licenses/Apache-2.0"
-            }
-        }
-
-        scm {
-            connection = "scm:git:https://github.com/youversion/platform-sdk-kotlin.git"
-            developerConnection = "scm:git:ssh://git@github.com/youversion/platform-sdk-kotlin.git"
-            url = "https://github.com/youversion/platform-sdk-kotlin"
-        }
-
-        developers {
-            developer {
-                name = "YouVersion"
-                email = "engineering@youversion.com"
-            }
-        }
-
-        organization {
-            name = "YouVersion"
-            url = "https://youversion.com/"
-        }
     }
 }

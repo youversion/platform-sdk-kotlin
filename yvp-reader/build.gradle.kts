@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.maven.publish)
 }
 
 kotlin {
@@ -65,4 +66,20 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+}
+
+mavenPublishing {
+    coordinates(
+        groupId = "com.youversion.platform",
+        artifactId = "yvp-reader",
+        version = libs.versions.yvpPlatform.get(),
+    )
+
+    pom {
+        name = "YouVersion Platform SDK - Reader"
+        description =
+            """
+            High-level reader functionality combining core SDK features and UI components for complete Bible reading experiences.
+            """.trimIndent()
+    }
 }
