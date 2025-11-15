@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.maven.publish)
 }
 
@@ -14,7 +14,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.youversion.platform.reader"
+    namespace = "com.youversion.platform.core"
     compileSdk =
         libs.versions.compileSdk
             .get()
@@ -43,43 +43,42 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    buildFeatures {
-        compose = true
-    }
 }
 
 dependencies {
-    api(projects.yvpUi)
-    api(projects.yvpCore)
-
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.navigation)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+
+    implementation(libs.koin.core)
+
+    implementation(libs.kotlin.coroutines)
+    implementation(libs.kotlin.serialization)
+
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.contentNegotiation)
+    implementation(libs.ktor.client.serialization)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.client.logging)
+
+    implementation(libs.touchlab.kermit)
+
+    testImplementation(libs.koin.test)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlin.coroutines.test)
+    testImplementation(libs.ktor.client.mock)
 }
 
 mavenPublishing {
     coordinates(
         groupId = "com.youversion.platform",
-        artifactId = "yvp-reader",
-        version = libs.versions.yvpPlatform.get(),
+        artifactId = "platform-core",
+        version = libs.versions.youversionPlatform.get(),
     )
 
     pom {
-        name = "YouVersion Platform SDK - Reader"
+        name = "YouVersion Platform SDK - Core"
         description =
             """
-            High-level reader functionality combining core SDK features and UI components for complete Bible reading experiences.
+            Provides the fundamental building blocks for the YouVersion platform, such as data models, network calls, and caching.
             """.trimIndent()
     }
 }

@@ -46,7 +46,7 @@ android {
 }
 
 dependencies {
-    implementation(projects.yvpCore)
+    implementation(projects.platformCore)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -68,8 +68,8 @@ dependencies {
 mavenPublishing {
     coordinates(
         groupId = "com.youversion.platform",
-        artifactId = "yvp-ui",
-        version = libs.versions.yvpPlatform.get(),
+        artifactId = "platform-ui",
+        version = libs.versions.youversionPlatform.get(),
     )
 
     pom {
