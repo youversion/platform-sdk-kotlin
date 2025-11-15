@@ -68,12 +68,13 @@ dependencies {
 }
 
 mavenPublishing {
-    val version = libs.versions.yvpPlatform.get()
+    publishToMavenCentral()
+    signAllPublications()
 
     coordinates(
         groupId = "com.youversion.platform",
         artifactId = "yvp-core",
-        version = version,
+        version = libs.versions.yvpPlatform.get(),
     )
 
     pom {
