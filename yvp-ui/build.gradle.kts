@@ -27,6 +27,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+        vectorDrawables {
+            // evenOdd support on API < 24
+            useSupportLibrary = true
+        }
     }
 
     buildTypes {
