@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.maven.publish)
 }
 
 kotlin {
@@ -64,4 +65,50 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlin.coroutines.test)
     testImplementation(libs.ktor.client.mock)
+}
+
+mavenPublishing {
+    val version = libs.versions.yvpPlatform.get()
+
+    coordinates(
+        groupId = "com.youversion.platform",
+        artifactId = "yvp-core",
+        version = version,
+    )
+
+    pom {
+        name = "YouVersion Platform SDK - Core"
+        description =
+            """
+            Provides the fundamental building blocks for the YouVersion platform, such as data models, network calls, and caching.
+            """.trimIndent()
+        url = "https://platform.youversion.com/"
+        inceptionYear = "2025"
+
+        licenses {
+            license {
+                name = "Apache License, Version 2.0"
+                url = "https://opensource.org/licenses/Apache-2.0"
+                distribution = "https://opensource.org/licenses/Apache-2.0"
+            }
+        }
+
+        scm {
+            connection = "scm:git:https://github.com/youversion/platform-sdk-kotlin.git"
+            developerConnection = "scm:git:ssh://git@github.com/youversion/platform-sdk-kotlin.git"
+            url = "https://github.com/youversion/platform-sdk-kotlin"
+        }
+
+        developers {
+            developer {
+                name = "YouVersion"
+                email = "engineering@youversion.com"
+            }
+        }
+
+        organization {
+            name = "YouVersion"
+            url = "https://youversion.com/"
+        }
+    }
 }
