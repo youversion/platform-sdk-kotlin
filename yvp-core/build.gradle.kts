@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.maven.publish)
 }
 
 kotlin {
@@ -64,4 +65,20 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlin.coroutines.test)
     testImplementation(libs.ktor.client.mock)
+}
+
+mavenPublishing {
+    coordinates(
+        groupId = "com.youversion.platform",
+        artifactId = "yvp-core",
+        version = libs.versions.yvpPlatform.get(),
+    )
+
+    pom {
+        name = "YouVersion Platform SDK - Core"
+        description =
+            """
+            Provides the fundamental building blocks for the YouVersion platform, such as data models, network calls, and caching.
+            """.trimIndent()
+    }
 }

@@ -1,12 +1,19 @@
 [versions]
+
+# Library Version
+yvpPlatform = "0.5.0" # .get()
+
+# Android SDK Versions
+compileSdk = "36" # .get()
+minSdk = "21" # .get()
+targetSdk = "36" # .get()
+
 # Tooling
 agp = "8.13.0"
 kotlin = "2.2.20"
 spotless = "8.0.0"
-compileSdk = "36" # .get()
-minSdk = "21" # .get()
-targetSdk = "36" # .get()
 ktlint = "1.7.1" # .get()
+mavenPublish = "0.35.0"
 
 
 # Dependencies
@@ -80,4 +87,5 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
 
