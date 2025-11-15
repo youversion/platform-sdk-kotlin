@@ -3,20 +3,16 @@ package com.youversion.platform.core.users.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-@Serializable
-enum class SignInWithYouVersionPermission {
-    @SerialName("bibles")
-    BIBLES,
+enum class SignInWithYouVersionPermission(
+    val rawValue: String,
+) {
+    BIBLES("bibles"),
 
-    @SerialName("highlights")
-    HIGHLIGHTS,
+    HIGHLIGHTS("highlights"),
 
-    @SerialName("votd")
-    VOTD,
+    VOTD("votd"),
 
-    @SerialName("demographics")
-    DEMOGRAPHICS,
+    DEMOGRAPHICS("demographics"),
 
-    @SerialName("bible_activity")
-    BIBLE_ACTIVITY,
+    BIBLE_ACTIVITY("bible_activity"),
 }

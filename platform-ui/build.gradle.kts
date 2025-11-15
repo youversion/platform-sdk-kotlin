@@ -48,6 +48,7 @@ android {
 dependencies {
     implementation(projects.platformCore)
 
+    implementation(libs.androidx.browser)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)

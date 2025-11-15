@@ -5,6 +5,7 @@ import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
 import org.koin.test.inject
+import java.util.Date
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -68,19 +69,46 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     }
 
     @Test
-    fun `setAccessToken changes the access token`() {
+    fun saveAuthData() {
         with(YouVersionPlatformConfiguration) {
-            configure(appKey = "appKey", accessToken = "accessToken")
+            configure(
+                appKey = "appKey",
+                accessToken = "accessToken",
+                refreshToken = "refreshToken",
+                expiryDate = Date(),
+            )
             assertEquals("accessToken", accessToken)
             assertNull(store.accessToken)
 
-            setAccessToken(accessToken = "newToken", persist = false)
-            assertEquals("newToken", accessToken)
-            assertNull(store.accessToken)
+            val newDate = Date()
 
-            setAccessToken(accessToken = "persistedToken")
+            saveAuthData(
+                accessToken = "newToken",
+                refreshToken = "newRefreshToken",
+                expiryDate = newDate,
+                persist = false,
+            )
+            assertEquals("newToken", accessToken)
+            assertEquals("newRefreshToken", refreshToken)
+            assertEquals(newDate, expiryDate)
+
+            assertNull(store.accessToken)
+            assertNull(store.refreshToken)
+            assertNull(store.expiryDate)
+
+            saveAuthData(
+                accessToken = "persistedToken",
+                refreshToken = "persistedRefreshToken",
+                expiryDate = newDate,
+            )
             assertEquals("persistedToken", accessToken)
             assertEquals("persistedToken", store.accessToken)
+
+            assertEquals("persistedRefreshToken", refreshToken)
+            assertEquals("persistedRefreshToken", store.refreshToken)
+
+            assertEquals(newDate, expiryDate)
+            assertEquals(newDate, store.expiryDate)
         }
     }
 }

@@ -1,9 +1,9 @@
 package com.youversion.platform.core
 
 import android.content.Context
-import com.youversion.platform.core.YouVersionPlatformConfiguration.configure
 import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
 import com.youversion.platform.core.utilities.koin.startYouVersionPlatform
+import java.util.Date
 import java.util.UUID
 
 object YouVersionPlatformConfiguration {
@@ -21,11 +21,17 @@ object YouVersionPlatformConfiguration {
         get() = config?.installId
     val accessToken: String?
         get() = config?.accessToken
+    val refreshToken: String?
+        get() = config?.refreshToken
+    val expiryDate: Date?
+        get() = config?.expiryDate
 
     fun configure(
         context: Context,
         appKey: String?,
         accessToken: String? = null,
+        refreshToken: String? = null,
+        expiryDate: Date? = null,
         apiHost: String = DEV_API_HOST,
         hostEnv: String? = null,
     ) {
@@ -35,6 +41,8 @@ object YouVersionPlatformConfiguration {
         configure(
             appKey = appKey,
             accessToken = accessToken,
+            refreshToken = refreshToken,
+            expiryDate = expiryDate,
             apiHost = apiHost,
             hostEnv = hostEnv,
         )
@@ -43,6 +51,8 @@ object YouVersionPlatformConfiguration {
     internal fun configure(
         appKey: String?,
         accessToken: String? = null,
+        refreshToken: String? = null,
+        expiryDate: Date? = null,
         apiHost: String = DEV_API_HOST,
         hostEnv: String? = null,
     ) {
@@ -55,27 +65,62 @@ object YouVersionPlatformConfiguration {
                 hostEnv = hostEnv,
                 installId = store.installId ?: UUID.randomUUID().toString().also { store.installId = it },
                 accessToken = accessToken ?: store.accessToken,
+                refreshToken = refreshToken ?: store.refreshToken,
+                expiryDate = expiryDate ?: store.expiryDate,
             )
     }
 
     /**
-     * Updates the [accessToken] to be used by the SDK.
+     * Persists the authentication data received from a successful sign-in flow.
      *
-     * @param accessToken The new accessToken to be used by the SDK
-     * @param persist Stores the access token to local cache. Default true.
-     * @throws IllegalStateException If [configure] has not been called first.
+     * This function should be called after a user has successfully authenticated and
+     * tokens have been obtained from the token endpoint. It stores the access token,
+     * refresh token, and token expiry date in a secure, persistent storage
+     * (e.g., EncryptedSharedPreferences) so that the user remains signed in
+     * across app sessions. It also caches these values in memory for immediate use.
+     *
+     * @param accessToken The OAuth 2.0 access token used for authorizing API requests.
+     *                    Passing null will clear the stored access token.
+     * @param refreshToken The token used to obtain a new access token when the current one
+     *                     expires. Passing null will clear the stored refresh token.
+     * @param expiryDate The future date and time at which the access token becomes invalid.
+     *                   Passing null will clear the stored expiry date.
      */
-    fun setAccessToken(
+    fun saveAuthData(
         accessToken: String?,
+        refreshToken: String?,
+        expiryDate: Date?,
         persist: Boolean = true,
     ) {
         config?.let {
-            config = it.copy(accessToken = accessToken)
+            config =
+                it.copy(
+                    accessToken = accessToken,
+                    refreshToken = refreshToken,
+                    expiryDate = expiryDate,
+                )
             if (persist) {
                 val store = YouVersionPlatformComponent.store
                 store.accessToken = accessToken
+                store.refreshToken = refreshToken
+                store.expiryDate = expiryDate
             }
         } ?: throw IllegalStateException("You must first call configure")
+    }
+
+    /**
+     * Clears all persisted user authentication data from the device.
+     *
+     * This function effectively signs the user out of the application. It removes the
+     * access token, refresh token, and expiry date from both the in-memory cache and
+     * the secure, persistent storage.
+     *
+     * Call this function when the user explicitly chooses to sign out. After this is
+     * called, the user will need to go through the `signIn` flow again to
+     * re-authenticate.
+     */
+    fun clearAuthData() {
+        saveAuthData(accessToken = null, refreshToken = null, expiryDate = null)
     }
 }
 
@@ -85,4 +130,6 @@ private data class Config(
     val hostEnv: String?,
     val installId: String?,
     val accessToken: String?,
+    val refreshToken: String?,
+    val expiryDate: Date?,
 )

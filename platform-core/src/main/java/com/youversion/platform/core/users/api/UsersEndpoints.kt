@@ -32,15 +32,8 @@ object UsersEndpoints : UsersApi {
     }
 
     // ----- UserApi
-    override suspend fun signIn(
-        requiredPermissions: Set<SignInWithYouVersionPermission>,
-        optionalPermissions: Set<SignInWithYouVersionPermission>,
-    ): SignInWithYouVersionResult {
-        TODO("Not yet implemented")
-    }
-
     override fun signOut() {
-        YouVersionPlatformConfiguration.setAccessToken(null)
+        YouVersionPlatformConfiguration.clearAuthData()
     }
 
     override suspend fun userInfo(accessToken: String?): YouVersionUserInfo {
