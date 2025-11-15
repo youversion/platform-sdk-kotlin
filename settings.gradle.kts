@@ -23,6 +23,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "YouVersionPlatform"
 include(":examples:sample-android")
-include(":yvp-reader")
-include(":yvp-ui")
-include(":yvp-core")
+include(":platform-reader")
+include(":platform-ui")
+include(":platform-core")
