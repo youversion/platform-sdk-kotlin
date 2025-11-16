@@ -46,7 +46,7 @@ internal fun BibleScreen(
 ) {
     val minFontSize = 10.sp
     val maxFontSize = 24.sp
-    val lineSpacingOptions = listOf(2f, 2.5f, 3f)
+    val lineSpacingMultiplierOptions = listOf(2f, 2.5f, 3f)
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
@@ -66,9 +66,9 @@ internal fun BibleScreen(
     }
 
     val changeLineSpacing = {
-        val currentIndex = lineSpacingOptions.indexOf(lineSpacingMultiplier)
-        val nextIndex = (currentIndex + 1) % lineSpacingOptions.size
-        lineSpacingMultiplier = lineSpacingOptions[nextIndex]
+        val currentIndex = lineSpacingMultiplierOptions.indexOf(lineSpacingMultiplier)
+        val nextIndex = (currentIndex + 1) % lineSpacingMultiplierOptions.size
+        lineSpacingMultiplier = lineSpacingMultiplierOptions[nextIndex]
     }
 
     Scaffold(
