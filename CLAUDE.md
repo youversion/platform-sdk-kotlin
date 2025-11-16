@@ -4,31 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-YouVersion Platform SDK (yvp-kotlin-sdk) is an Android SDK for third-party apps to integrate Bible text services from YouVersion. It's designed to be distributed as a library dependency.
+YouVersion Platform SDK (platform-sdk-kotlin) is an Android SDK for third-party apps to integrate Bible text services from YouVersion. It's designed to be distributed as a library dependency.
 
 ## Module Architecture
 
 The project uses a multi-module architecture with clear separation of concerns:
 
-- **yvp-core**: Core SDK logic containing:
+- **platform-core**: Core SDK logic containing:
   - API clients (Bible, VOTD, Highlights, Languages)
   - Configuration management (`YouVersionPlatformConfiguration`)
   - Koin-based dependency injection
   - Data models and utilities
   - No UI dependencies
 
-- **yvp-ui**: UI components library (Jetpack Compose):
+- **platform-ui**: UI components library (Jetpack Compose):
   - Reusable Compose UI components
-  - Depends on `yvp-core`
+  - Depends on `platform-core`
 
-- **yvp-reader**: High-level reader functionality:
-  - Combines `yvp-core` + `yvp-ui`
+- **platform-reader**: High-level reader functionality:
+  - Combines `platform-core` + `platform-ui`
   - Exposes both modules via `api()` dependencies
   - Intended as the main entry point for consumer apps
 
 - **examples/sample-android**: Sample Android app demonstrating SDK usage
 
-**Dependency Flow**: `yvp-core` ← `yvp-ui` ← `yvp-reader` ← `sample-android`
+**Dependency Flow**: `platform-core` ← `platform-ui` ← `platform-reader` ← `sample-android`
 
 ## SDK Initialization Pattern
 
@@ -41,9 +41,9 @@ The SDK uses a singleton configuration pattern with Koin DI:
 5. All API calls are suspend functions using Kotlin coroutines
 
 **Key Files**:
-- Configuration: `yvp-core/src/main/java/com/youversion/platform/core/YouVersionPlatformConfiguration.kt`
-- DI Setup: `yvp-core/src/main/java/com/youversion/platform/core/utilities/koin/`
-- API Entry: `yvp-core/src/main/java/com/youversion/platform/core/api/YouVersionApi.kt`
+- Configuration: `platform-core/src/main/java/com/youversion/platform/core/YouVersionPlatformConfiguration.kt`
+- DI Setup: `platform-core/src/main/java/com/youversion/platform/core/utilities/koin/`
+- API Entry: `platform-core/src/main/java/com/youversion/platform/core/api/YouVersionApi.kt`
 
 ## Build Commands
 
@@ -55,22 +55,22 @@ The SDK uses a singleton configuration pattern with Koin DI:
 ./gradlew clean build
 
 # Build specific module
-./gradlew :yvp-core:build
-./gradlew :yvp-ui:build
-./gradlew :yvp-reader:build
+./gradlew :platform-core:build
+./gradlew :platform-ui:build
+./gradlew :platform-reader:build
 
 # Run all tests
 ./gradlew test
 
 # Run tests for specific module
-./gradlew :yvp-core:test
-./gradlew :yvp-core:testDebugUnitTest
+./gradlew :platform-core:test
+./gradlew :platform-core:testDebugUnitTest
 
 # Run single test class
-./gradlew :yvp-core:test --tests "com.youversion.platform.core.api.bible.BibleVersionsApiTests"
+./gradlew :platform-core:test --tests "com.youversion.platform.core.api.bible.BibleVersionsApiTests"
 
 # Run single test method
-./gradlew :yvp-core:test --tests "com.youversion.platform.core.api.bible.BibleVersionsApiTests.testVersionsAPI"
+./gradlew :platform-core:test --tests "com.youversion.platform.core.api.bible.BibleVersionsApiTests.testVersionsAPI"
 
 # Code coverage report
 ./gradlew koverXmlReport

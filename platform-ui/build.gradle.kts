@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.maven.publish)
 }
 
 kotlin {
@@ -49,7 +50,7 @@ android {
 }
 
 dependencies {
-    implementation(projects.yvpCore)
+    implementation(projects.platformCore)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -66,4 +67,20 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+mavenPublishing {
+    coordinates(
+        groupId = "com.youversion.platform",
+        artifactId = "platform-ui",
+        version = libs.versions.youversionPlatform.get(),
+    )
+
+    pom {
+        name = "YouVersion Platform SDK - UI"
+        description =
+            """
+            Provides reusable Jetpack Compose UI components for building Bible reading experiences with the YouVersion platform.
+            """.trimIndent()
+    }
 }

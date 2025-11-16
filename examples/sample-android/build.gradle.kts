@@ -56,7 +56,9 @@ android {
 }
 
 dependencies {
-    implementation(projects.yvpReader)
+    implementation(projects.platformReader)
+    implementation(projects.platformUi)
+    implementation(projects.platformCore)
 
     implementation(libs.app.auth)
 
