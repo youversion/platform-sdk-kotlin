@@ -1,7 +1,7 @@
 package com.youversion.platform.core.bibles.api
 
 import co.touchlab.kermit.Logger
-import com.youversion.platform.core.api.buildYouVersionUrl
+import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.api.parseApiBody
 import com.youversion.platform.core.api.parseApiResponse
@@ -25,57 +25,59 @@ object BiblesEndpoints : BiblesApi {
         get() = YouVersionPlatformComponent.httpClient
 
     // ----- Bibles URLs
-    fun versionsUrl(languageRanges: Set<String> = emptySet()) =
-        buildYouVersionUrl {
+    fun versionsUrl(languageRanges: Set<String> = emptySet()): String =
+        buildYouVersionUrlString {
             path("/v1/bibles")
             val ranges = if (languageRanges.isEmpty()) "*" else languageRanges.joinToString(",")
             parameter("language_ranges", ranges)
         }
 
-    fun versionUrl(versionId: Int) = buildYouVersionUrl { path("/v1/bibles/$versionId") }
+    fun versionUrl(versionId: Int): String = buildYouVersionUrlString { path("/v1/bibles/$versionId") }
 
-    fun versionIndexUrl(versionId: Int) = buildYouVersionUrl { path("/v1/bibles/$versionId/index") }
+    fun versionIndexUrl(versionId: Int): String = buildYouVersionUrlString { path("/v1/bibles/$versionId/index") }
 
-    fun versionBooksUrl(versionId: Int) = buildYouVersionUrl { path("/v1/bibles/$versionId/books") }
+    fun versionBooksUrl(versionId: Int): String = buildYouVersionUrlString { path("/v1/bibles/$versionId/books") }
 
     fun versionBookUrl(
         versionId: Int,
         book: String,
-    ) = buildYouVersionUrl { path("/v1/bibles/$versionId/books/$book") }
+    ): String = buildYouVersionUrlString { path("/v1/bibles/$versionId/books/$book") }
 
     fun versionBookChaptersUrl(
         versionId: Int,
         book: String,
-    ) = buildYouVersionUrl { path("/v1/bibles/$versionId/books/$book/chapters") }
+    ): String = buildYouVersionUrlString { path("/v1/bibles/$versionId/books/$book/chapters") }
 
     fun versionBookChapterUrl(
         versionId: Int,
         book: String,
         chapterId: String,
-    ) = buildYouVersionUrl { path("/v1/bibles/$versionId/books/$book/chapters/$chapterId") }
+    ): String = buildYouVersionUrlString { path("/v1/bibles/$versionId/books/$book/chapters/$chapterId") }
 
     fun versionBookChapterVersesUrl(
         versionId: Int,
         book: String,
         chapterId: String,
-    ) = buildYouVersionUrl { path("/v1/bibles/$versionId/books/$book/chapters/$chapterId/verses") }
+    ): String = buildYouVersionUrlString { path("/v1/bibles/$versionId/books/$book/chapters/$chapterId/verses") }
 
     fun versionBookChapterVerseUrl(
         versionId: Int,
         book: String,
         chapterId: String,
         verseId: String,
-    ) = buildYouVersionUrl { path("/v1/bibles/$versionId/books/$book/chapters/$chapterId/verses/$verseId") }
+    ): String =
+        buildYouVersionUrlString { path("/v1/bibles/$versionId/books/$book/chapters/$chapterId/verses/$verseId") }
 
     fun passageUrl(
         reference: BibleReference,
         format: String = "html",
-    ) = buildYouVersionUrl {
-        path("/v1/bibles/${reference.versionId}/passages/${reference.asUSFM}")
-        parameter("format", format)
-        parameter("include_notes", true)
-        parameter("include_headings", true)
-    }
+    ): String =
+        buildYouVersionUrlString {
+            path("/v1/bibles/${reference.versionId}/passages/${reference.asUSFM}")
+            parameter("format", format)
+            parameter("include_notes", true)
+            parameter("include_headings", true)
+        }
 
     // ----- Bibles API
     override suspend fun versions(languageCode: String?): List<BibleVersion> {

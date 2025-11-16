@@ -2,7 +2,7 @@ package com.youversion.platform.core.highlights.api
 
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.ApiResponse
-import com.youversion.platform.core.api.buildYouVersionUrl
+import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.invalidResponse
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.highlights.models.Highlight
@@ -16,7 +16,6 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.path
@@ -31,8 +30,8 @@ object HighlightsEndpoints : HighlightsApi {
     fun highlightsUrl(
         versionId: Int? = null,
         passageId: String? = null,
-    ): Url =
-        buildYouVersionUrl {
+    ): String =
+        buildYouVersionUrlString {
             path("/v1/highlights")
             versionId?.let { parameter("version_id", versionId) }
             passageId?.let { parameter("passage_id", passageId) }
@@ -41,8 +40,8 @@ object HighlightsEndpoints : HighlightsApi {
     fun highlightsDeleteUrl(
         versionId: Int,
         passageId: String,
-    ): Url =
-        buildYouVersionUrl {
+    ): String =
+        buildYouVersionUrlString {
             path("/v1/highlights/$passageId")
             parameter("version_id", versionId)
         }
