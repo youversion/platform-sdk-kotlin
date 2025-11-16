@@ -55,13 +55,13 @@ internal fun BibleScreen(
 
     val incrementFontSize = {
         if (fontSize <= maxFontSize) {
-            fontSize = (fontSize.value + 2f).sp
+            fontSize = (fontSize.value + 4f).sp
         }
     }
 
     val decrementFontSize = {
         if (fontSize >= minFontSize) {
-            fontSize = (fontSize.value - 2f).sp
+            fontSize = (fontSize.value - 4f).sp
         }
     }
 
