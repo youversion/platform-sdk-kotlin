@@ -32,6 +32,7 @@ import com.youversion.platform.reader.components.BibleReaderHeader
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
+import com.youversion.platform.ui.views.BibleTextOptions
 
 @Composable
 internal fun BibleScreen(
@@ -43,9 +44,24 @@ internal fun BibleScreen(
     onVersionsClick: () -> Unit,
     onFontsClick: () -> Unit,
 ) {
+    val minFontSize = 10.sp
+    val maxFontSize = 24.sp
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
+    var fontSize by remember { mutableStateOf(16.sp) }
+
+    val incrementFontSize = {
+        if (fontSize <= maxFontSize) {
+            fontSize = (fontSize.value + 2f).sp
+        }
+    }
+
+    val decrementFontSize = {
+        if (fontSize >= minFontSize) {
+            fontSize = (fontSize.value - 2f).sp
+        }
+    }
 
     Scaffold(
         bottomBar = bottomBar,
@@ -75,6 +91,10 @@ internal fun BibleScreen(
                     Column {
                         Spacer(modifier = Modifier.height(16.dp))
                         BibleText(
+                            textOptions =
+                                BibleTextOptions(
+                                    fontSize = fontSize,
+                                ),
                             reference = state.bibleReference,
                             onStateChange = { loadingPhase = it },
                         )
@@ -90,8 +110,8 @@ internal fun BibleScreen(
             if (state.showingFontList) {
                 BibleReaderFontSettingsSheet(
                     onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings) },
-                    onSmallerFontClick = { },
-                    onBiggerFontClick = { },
+                    onSmallerFontClick = { decrementFontSize() },
+                    onBiggerFontClick = { incrementFontSize() },
                     onLineSpacingClick = { },
                     onFontClick = {
                         viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings)
