@@ -46,10 +46,12 @@ internal fun BibleScreen(
 ) {
     val minFontSize = 10.sp
     val maxFontSize = 24.sp
+    val lineSpacingOptions = listOf(2f, 2.5f, 3f)
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
     var fontSize by remember { mutableStateOf(16.sp) }
+    var lineSpacingMultiplier by remember { mutableStateOf(2.5f) }
 
     val incrementFontSize = {
         if (fontSize <= maxFontSize) {
@@ -61,6 +63,12 @@ internal fun BibleScreen(
         if (fontSize >= minFontSize) {
             fontSize = (fontSize.value - 2f).sp
         }
+    }
+
+    val changeLineSpacing = {
+        val currentIndex = lineSpacingOptions.indexOf(lineSpacingMultiplier)
+        val nextIndex = (currentIndex + 1) % lineSpacingOptions.size
+        lineSpacingMultiplier = lineSpacingOptions[nextIndex]
     }
 
     Scaffold(
@@ -94,6 +102,7 @@ internal fun BibleScreen(
                             textOptions =
                                 BibleTextOptions(
                                     fontSize = fontSize,
+                                    lineSpacing = fontSize * lineSpacingMultiplier,
                                 ),
                             reference = state.bibleReference,
                             onStateChange = { loadingPhase = it },
@@ -112,7 +121,7 @@ internal fun BibleScreen(
                     onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings) },
                     onSmallerFontClick = { decrementFontSize() },
                     onBiggerFontClick = { incrementFontSize() },
-                    onLineSpacingClick = { },
+                    onLineSpacingClick = { changeLineSpacing() },
                     onFontClick = {
                         viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings)
                         onFontsClick()
