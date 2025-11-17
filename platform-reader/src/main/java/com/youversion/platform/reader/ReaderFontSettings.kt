@@ -40,4 +40,11 @@ object ReaderFontSettings {
         val nextBigger = lineSpacingMultiplierOptions.firstOrNull { it > currentSpacing }
         return nextBigger ?: lineSpacingMultiplierOptions.minOrNull() ?: currentSpacing
     }
+
+    /**
+     * Gets the current line spacing settings index.
+     * @param currentSpacing The current line spacing value.
+     * @return The current line spacing settings index.
+     */
+    fun getLineSpacingSettingIndex(currentSpacing: Float): Int = lineSpacingMultiplierOptions.indexOf(currentSpacing)
 }

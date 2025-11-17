@@ -115,7 +115,10 @@ class BibleReaderViewModel(
     fun nextLineSpacingMultiplierOption() {
         _state.update {
             it.copy(
-                lineSpacingMultiplier = ReaderFontSettings.nextLineSpacingMultiplier(it.lineSpacingMultiplier),
+                lineSpacingMultiplier =
+                    ReaderFontSettings.nextLineSpacingMultiplier(
+                        it.lineSpacingMultiplier,
+                    ),
             )
         }
     }
@@ -146,6 +149,11 @@ class BibleReaderViewModel(
                         ?: version.abbreviation
                         ?: version.id.toString()
                 } ?: ""
+
+        val lineSpacingSettingsIndex =
+            ReaderFontSettings.getLineSpacingSettingIndex(
+                lineSpacingMultiplier,
+            )
     }
 
     // ----- Events

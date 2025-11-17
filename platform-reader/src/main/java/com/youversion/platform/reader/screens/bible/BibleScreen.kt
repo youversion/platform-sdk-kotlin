@@ -106,7 +106,7 @@ internal fun BibleScreen(
                         onFontsClick()
                     },
                     onThemeSelect = { },
-                    lineSpacingMultiplier = state.lineSpacingMultiplier,
+                    lineSpacingSettingIndex = state.lineSpacingSettingsIndex,
                 )
             }
         }
