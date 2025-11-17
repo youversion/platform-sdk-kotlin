@@ -60,7 +60,7 @@ dependencies {
     implementation(projects.platformUi)
     implementation(projects.platformCore)
 
-    implementation(libs.app.auth)
+//    implementation(libs.app.auth)
 
     implementation(libs.androidx.compose.icons.core)
     implementation(libs.androidx.compose.icons.extended)
@@ -70,9 +70,10 @@ dependencies {
     implementation(libs.androidx.compose.navigation)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
+//    implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
