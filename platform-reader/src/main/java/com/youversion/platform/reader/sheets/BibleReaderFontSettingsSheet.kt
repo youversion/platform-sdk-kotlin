@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youversion.platform.reader.R
+import com.youversion.platform.reader.ReaderFontSettings
 import com.youversion.platform.reader.theme.BibleReaderTheme
 import com.youversion.platform.reader.theme.Charcoal
 import com.youversion.platform.reader.theme.Cream
@@ -63,6 +64,7 @@ fun BibleReaderFontSettingsSheet(
     onLineSpacingClick: () -> Unit,
     onFontClick: () -> Unit,
     onThemeSelect: (ReaderColorScheme) -> Unit,
+    lineSpacingMultiplier: Float,
 ) {
     val sheetState =
         rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -88,6 +90,7 @@ fun BibleReaderFontSettingsSheet(
                     onSmallerFontClick = onSmallerFontClick,
                     onBiggerFontClick = onBiggerFontClick,
                     onLineSpacingClick = onLineSpacingClick,
+                    lineSpacingMultiplier = lineSpacingMultiplier,
                 )
                 FontDisplayButton(onFontClick = {
                     scope.launch {
@@ -111,6 +114,7 @@ private fun FontSizeButtons(
     onSmallerFontClick: () -> Unit,
     onBiggerFontClick: () -> Unit,
     onLineSpacingClick: () -> Unit,
+    lineSpacingMultiplier: Float,
 ) {
     val minWidth = 126.dp
     val minHeight = 48.dp
@@ -189,7 +193,7 @@ private fun FontSizeButtons(
                         onClick = onLineSpacingClick,
                     ),
         ) {
-            val currentSpacing = 18
+            val currentSpacing = 8 * lineSpacingMultiplier
 
             Column(
                 horizontalAlignment = Alignment.Start,
@@ -356,6 +360,7 @@ private fun Preview_BibleReaderFontSettingsSheet() {
             onLineSpacingClick = {},
             onFontClick = {},
             onThemeSelect = {},
+            lineSpacingMultiplier = ReaderFontSettings.DEFAULT_LINE_SPACING_MULTIPLIER,
         )
     }
 }
