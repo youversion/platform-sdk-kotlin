@@ -29,7 +29,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
 
             assertEquals("appKey", appKey)
             assertNull(accessToken)
-            assertEquals("api-staging.youversion.com", apiHost)
+            assertEquals("api.youversion.com", apiHost)
             assertNull(hostEnv)
             assertNotNull(installId)
             assertEquals(store.installId, installId)

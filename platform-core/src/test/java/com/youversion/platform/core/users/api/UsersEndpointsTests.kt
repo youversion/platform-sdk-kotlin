@@ -22,7 +22,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
     @Test
     fun `test userUrl`() {
         assertEquals(
-            "https://api-staging.youversion.com/auth/me?lat=token",
+            "https://api.youversion.com/auth/me?lat=token",
             UsersEndpoints.userUrl("token").toString(),
         )
     }
@@ -44,7 +44,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                 ).let { Url(urlString = it) }
 
         assertEquals(URLProtocol.HTTPS, url.protocol)
-        assertEquals("api-staging.youversion.com", url.host)
+        assertEquals("api.youversion.com", url.host)
         assertEquals("/auth/login", url.encodedPath)
         assertEquals("app", url.parameters["app_id"])
         assertEquals("en", url.parameters["language"])
