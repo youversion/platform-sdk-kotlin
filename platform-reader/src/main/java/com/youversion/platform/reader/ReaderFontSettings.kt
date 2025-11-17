@@ -12,7 +12,7 @@ object ReaderFontSettings {
     val lineSpacingMultiplierOptions = listOf(1.75f, 2.25f, 2.75f)
 
     val DEFAULT_FONT_SIZE: TextUnit = 18.sp
-    const val DEFAULT_LINE_SPACING_MULTIPLIER: Float = 2f
+    const val DEFAULT_LINE_SPACING_MULTIPLIER: Float = 2.25f
 
     /**
      * Finds the next available font size smaller than the current one.
