@@ -7,14 +7,14 @@ import com.youversion.platform.core.utilities.koin.startYouVersionPlatform
 import java.util.UUID
 
 object YouVersionPlatformConfiguration {
-    private const val DEV_API_HOST = "api-staging.youversion.com"
+    private const val DEFAULT_API_HOST = "api.youversion.com"
 
     private var config: Config? = null
 
     val appKey: String?
         get() = config?.appKey
     val apiHost: String
-        get() = config?.apiHost ?: DEV_API_HOST
+        get() = config?.apiHost ?: DEFAULT_API_HOST
     val hostEnv: String?
         get() = config?.hostEnv
     val installId: String?
@@ -26,7 +26,7 @@ object YouVersionPlatformConfiguration {
         context: Context,
         appKey: String?,
         accessToken: String? = null,
-        apiHost: String = DEV_API_HOST,
+        apiHost: String = DEFAULT_API_HOST,
         hostEnv: String? = null,
     ) {
         startYouVersionPlatform(context)
@@ -43,7 +43,7 @@ object YouVersionPlatformConfiguration {
     internal fun configure(
         appKey: String?,
         accessToken: String? = null,
-        apiHost: String = DEV_API_HOST,
+        apiHost: String = DEFAULT_API_HOST,
         hostEnv: String? = null,
     ) {
         val store = YouVersionPlatformComponent.store

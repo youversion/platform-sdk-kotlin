@@ -6,6 +6,7 @@ import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
 import io.ktor.http.URLProtocol
+import io.ktor.http.Url
 import org.junit.Test
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -21,7 +22,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
     @Test
     fun `test userUrl`() {
         assertEquals(
-            "https://api-staging.youversion.com/auth/me?lat=token",
+            "https://api.youversion.com/auth/me?lat=token",
             UsersEndpoints.userUrl("token").toString(),
         )
     }
@@ -31,18 +32,19 @@ class UsersEndpointsTests : YouVersionPlatformTest {
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         val url =
-            UsersEndpoints.authUrl(
-                appKey = "app",
-                requiredPermissions =
-                    setOf(
-                        SignInWithYouVersionPermission.BIBLES,
-                        SignInWithYouVersionPermission.BIBLE_ACTIVITY,
-                    ),
-                optionalPermissions = setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
-            )
+            UsersEndpoints
+                .authUrl(
+                    appKey = "app",
+                    requiredPermissions =
+                        setOf(
+                            SignInWithYouVersionPermission.BIBLES,
+                            SignInWithYouVersionPermission.BIBLE_ACTIVITY,
+                        ),
+                    optionalPermissions = setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                ).let { Url(urlString = it) }
 
         assertEquals(URLProtocol.HTTPS, url.protocol)
-        assertEquals("api-staging.youversion.com", url.host)
+        assertEquals("api.youversion.com", url.host)
         assertEquals("/auth/login", url.encodedPath)
         assertEquals("app", url.parameters["app_id"])
         assertEquals("en", url.parameters["language"])

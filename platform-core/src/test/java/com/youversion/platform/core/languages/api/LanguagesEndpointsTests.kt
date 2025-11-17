@@ -7,11 +7,11 @@ class LanguagesEndpointsTests {
     @Test
     fun `test languages url`() {
         with(LanguagesEndpoints.languagesUrl("US")) {
-            assertEquals("https://api-staging.youversion.com/v1/languages?country=US", toString())
+            assertEquals("https://api.youversion.com/v1/languages?country=US", toString())
         }
 
         with(LanguagesEndpoints.languagesUrl()) {
-            assertEquals("https://api-staging.youversion.com/v1/languages", toString())
+            assertEquals("https://api.youversion.com/v1/languages", toString())
         }
     }
 }
