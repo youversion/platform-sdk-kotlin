@@ -83,4 +83,15 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             assertEquals("persistedToken", store.accessToken)
         }
     }
+
+    @Test
+    fun `setApiHost changes the api host`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey", accessToken = "accessToken", apiHost = "api-staging.youversion.com")
+            assertEquals("api-staging.youversion.com", apiHost)
+
+            setApiHost(apiHost = "api.youversion.com")
+            assertEquals("api.youversion.com", apiHost)
+        }
+    }
 }
