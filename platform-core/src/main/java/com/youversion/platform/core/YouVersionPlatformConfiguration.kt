@@ -1,9 +1,12 @@
 package com.youversion.platform.core
 
 import android.content.Context
+import co.touchlab.kermit.Logger
 import com.youversion.platform.core.YouVersionPlatformConfiguration.configure
+import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfiguredException
 import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
 import com.youversion.platform.core.utilities.koin.startYouVersionPlatform
+import com.youversion.platform.core.utilities.koin.stopYouVersionPlatform
 import java.util.UUID
 
 object YouVersionPlatformConfiguration {
@@ -29,9 +32,16 @@ object YouVersionPlatformConfiguration {
         apiHost: String = DEFAULT_API_HOST,
         hostEnv: String? = null,
     ) {
+        if (config != null) {
+            Logger.w("YouVersionPlatform SDK has already been configured. Reconfiguring.")
+            config = null
+            stopYouVersionPlatform()
+        }
+
+        // This establishes the Dependency Graph which can only be called once.
         startYouVersionPlatform(context)
 
-        // Now configure the SDK with whatever [Store] comes back from Koin
+        // Now configure the SDK, use DI to provide any dependencies needed during configuration.
         configure(
             appKey = appKey,
             accessToken = accessToken,
@@ -75,7 +85,7 @@ object YouVersionPlatformConfiguration {
                 val store = YouVersionPlatformComponent.store
                 store.accessToken = accessToken
             }
-        } ?: throw IllegalStateException("You must first call configure")
+        } ?: throw YouVersionNotConfiguredException()
     }
 }
 

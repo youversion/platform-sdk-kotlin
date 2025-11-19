@@ -4,6 +4,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.utilities.dependencies.Store
 import com.youversion.platform.core.utilities.koin.YouVersionPlatformTools
 import com.youversion.platform.core.utilities.koin.startYouVersionPlatform
+import com.youversion.platform.core.utilities.koin.stopYouVersionPlatform
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respondOk
@@ -26,7 +27,7 @@ internal fun startYouVersionPlatformTest(engine: HttpClientEngine = MockEngine.c
         ),
     )
 
-internal fun stopYouVersionPlatformTest() = YouVersionPlatformTools.defaultContext().stopKoin()
+internal fun stopYouVersionPlatformTest() = stopYouVersionPlatform()
 
 /**
  * An in-memory [Store] implementation.
