@@ -2,9 +2,12 @@ package com.youversion.platform.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.youversion.platform.R
 
 // Set of Material typography styles to start with
 val Typography =
@@ -33,4 +36,12 @@ val Typography =
         letterSpacing = 0.5.sp
     )
      */
+    )
+
+val Tinos =
+    FontFamily(
+        Font(R.font.tinos_regular, FontWeight.Normal),
+        Font(R.font.tinos_italic, FontWeight.Normal, FontStyle.Italic),
+        Font(R.font.tinos_bold, FontWeight.Bold),
+        Font(R.font.tinos_italic, FontWeight.Bold, FontStyle.Italic),
     )
