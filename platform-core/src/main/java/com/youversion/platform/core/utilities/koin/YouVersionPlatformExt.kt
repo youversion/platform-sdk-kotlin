@@ -40,6 +40,8 @@ internal fun startYouVersionPlatform(modules: List<Module>) {
     }
 }
 
+internal fun stopYouVersionPlatform() = YouVersionPlatformTools.defaultContext().stopKoin()
+
 private val HttpClientModule =
     module {
         single { Json { ignoreUnknownKeys = true } }
