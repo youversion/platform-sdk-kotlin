@@ -32,6 +32,7 @@ import com.youversion.platform.reader.components.BibleReaderHeader
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
+import com.youversion.platform.ui.views.BibleTextOptions
 
 @Composable
 internal fun BibleScreen(
@@ -75,6 +76,11 @@ internal fun BibleScreen(
                     Column {
                         Spacer(modifier = Modifier.height(16.dp))
                         BibleText(
+                            textOptions =
+                                BibleTextOptions(
+                                    fontSize = state.fontSize,
+                                    lineSpacing = state.lineSpacing,
+                                ),
                             reference = state.bibleReference,
                             onStateChange = { loadingPhase = it },
                         )
@@ -90,14 +96,17 @@ internal fun BibleScreen(
             if (state.showingFontList) {
                 BibleReaderFontSettingsSheet(
                     onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings) },
-                    onSmallerFontClick = { },
-                    onBiggerFontClick = { },
-                    onLineSpacingClick = { },
+                    onSmallerFontClick = { viewModel.onAction(BibleReaderViewModel.Action.DecreaseFontSize) },
+                    onBiggerFontClick = { viewModel.onAction(BibleReaderViewModel.Action.IncreaseFontSize) },
+                    onLineSpacingClick = {
+                        viewModel.onAction(BibleReaderViewModel.Action.NextLineSpacingMultiplierOption)
+                    },
                     onFontClick = {
                         viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings)
                         onFontsClick()
                     },
                     onThemeSelect = { },
+                    lineSpacingSettingIndex = state.lineSpacingSettingsIndex,
                 )
             }
         }
