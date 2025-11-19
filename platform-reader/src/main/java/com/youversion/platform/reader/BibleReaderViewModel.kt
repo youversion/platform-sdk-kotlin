@@ -150,10 +150,14 @@ class BibleReaderViewModel(
                         ?: version.id.toString()
                 } ?: ""
 
-        val lineSpacingSettingsIndex =
-            ReaderFontSettings.getLineSpacingSettingIndex(
-                lineSpacingMultiplier,
-            )
+        val lineSpacingSettingsIndex: Int
+            get() =
+                ReaderFontSettings.getLineSpacingSettingIndex(
+                    lineSpacingMultiplier,
+                )
+
+        val lineSpacing: TextUnit
+            get() = fontSize * lineSpacingMultiplier
     }
 
     // ----- Events

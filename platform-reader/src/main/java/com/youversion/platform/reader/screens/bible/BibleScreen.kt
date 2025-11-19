@@ -79,7 +79,7 @@ internal fun BibleScreen(
                             textOptions =
                                 BibleTextOptions(
                                     fontSize = state.fontSize,
-                                    lineSpacing = state.fontSize * state.lineSpacingMultiplier,
+                                    lineSpacing = state.lineSpacing,
                                 ),
                             reference = state.bibleReference,
                             onStateChange = { loadingPhase = it },
