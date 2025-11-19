@@ -9,7 +9,6 @@ class MainApplication : Application() {
         YouVersionPlatformConfiguration.configure(
             context = this,
             appKey = TODO("Provide your app key"),
-            apiHost = "api-staging.youversion.com",
         )
     }
 }
