@@ -87,11 +87,11 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     @Test
     fun `setApiHost changes the api host`() {
         with(YouVersionPlatformConfiguration) {
-            configure(appKey = "appKey", accessToken = "accessToken", apiHost = "api-staging.youversion.com")
-            assertEquals("api-staging.youversion.com", apiHost)
+            configure(appKey = "appKey", accessToken = "accessToken", apiHost = "apiHost")
+            assertEquals("apiHost", apiHost)
 
-            setApiHost(apiHost = "api.youversion.com")
-            assertEquals("api.youversion.com", apiHost)
+            setApiHost(apiHost = "newApiHost")
+            assertEquals("newApiHost", apiHost)
         }
     }
 }
