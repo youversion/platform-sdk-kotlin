@@ -92,12 +92,12 @@ object YouVersionPlatformConfiguration {
      * Updates the [apiHost] to be used by the SDK.
      *
      * @param apiHost The new apiHost to be used by the SDK
-     * @throws IllegalStateException If [configure] has not been called first.
+     * @throws YouVersionNotConfiguredException If [configure] has not been called first.
      */
     fun setApiHost(apiHost: String) {
         config?.let {
             config = it.copy(apiHost = apiHost)
-        } ?: throw IllegalStateException("You must first call configure")
+        } ?: throw YouVersionNotConfiguredException()
     }
 }
 
