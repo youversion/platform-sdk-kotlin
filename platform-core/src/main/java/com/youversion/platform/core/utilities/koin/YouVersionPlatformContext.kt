@@ -1,6 +1,6 @@
 package com.youversion.platform.core.utilities.koin
 
-import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfiguredException
+import com.youversion.platform.core.utilities.exceptions.YouVersionAlreadyConfiguredException
 import org.koin.core.Koin
 import org.koin.core.KoinApplication
 import org.koin.core.context.KoinContext
@@ -16,7 +16,7 @@ internal object YouVersionPlatformContext : KoinContext {
 
     private fun register(koinApplication: KoinApplication) {
         if (koin != null) {
-            throw YouVersionNotConfiguredException()
+            throw YouVersionAlreadyConfiguredException()
         }
         koin = koinApplication.koin
     }
