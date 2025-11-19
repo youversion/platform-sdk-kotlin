@@ -1,6 +1,7 @@
 package com.youversion.platform.reader
 
 import android.content.Context
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -12,6 +13,8 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.utilities.dependencies.SharedPreferencesStore
 import com.youversion.platform.core.utilities.dependencies.Store
+import com.youversion.platform.reader.theme.FontDefinitionProvider
+import com.youversion.platform.reader.theme.UntitledSerif
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +23,7 @@ import kotlinx.coroutines.launch
 
 class BibleReaderViewModel(
     bibleReference: BibleReference?,
+    private val fontDefinitionProvider: FontDefinitionProvider?,
     private val bibleVersionRepository: BibleVersionRepository,
     private val store: Store,
 ) : ViewModel() {
@@ -55,7 +59,13 @@ class BibleReaderViewModel(
                 }
             }
 
-        this._state = MutableStateFlow(State(bibleReference = reference))
+        this._state =
+            MutableStateFlow(
+                State(
+                    bibleReference = reference,
+                    providedFontDefinitions = fontDefinitionProvider?.fonts() ?: listOf(),
+                ),
+            )
 
         loadVersionIfNeeded(myVersionIds ?: emptySet())
     }
@@ -82,6 +92,7 @@ class BibleReaderViewModel(
             is Action.DecreaseFontSize -> decreaseFontSize()
             is Action.IncreaseFontSize -> increaseFontSize()
             is Action.NextLineSpacingMultiplierOption -> nextLineSpacingMultiplierOption()
+            is Action.SetFontDefinition -> setFontFamily(action)
         }
     }
 
@@ -123,12 +134,27 @@ class BibleReaderViewModel(
         }
     }
 
+    fun setFontFamily(action: Action.SetFontDefinition) {
+        _state.update { it.copy(selectedFontDefinition = action.fontDefinition) }
+    }
+
     // ----- State
     data class State(
         val bibleReference: BibleReference,
         val bibleVersion: BibleVersion? = null,
         val showCopyright: Boolean = false,
         val showingFontList: Boolean = false,
+        val defaultFontDefinitions: List<FontDefinition> =
+            listOf(
+                FontDefinition("Untitled Serif", UntitledSerif),
+                FontDefinition("Serif", FontFamily.Serif),
+                FontDefinition("System Default", FontFamily.Default),
+                FontDefinition("Cursive", FontFamily.Cursive),
+                FontDefinition("Sans Serif", FontFamily.SansSerif),
+                FontDefinition("Monospace", FontFamily.Monospace),
+            ),
+        val providedFontDefinitions: List<FontDefinition> = listOf(),
+        val selectedFontDefinition: FontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
         val fontSize: TextUnit = ReaderFontSettings.DEFAULT_FONT_SIZE,
         val lineSpacingMultiplier: Float = ReaderFontSettings.DEFAULT_LINE_SPACING_MULTIPLIER,
     ) {
@@ -158,6 +184,12 @@ class BibleReaderViewModel(
 
         val lineSpacing: TextUnit
             get() = fontSize * lineSpacingMultiplier
+
+        val fontFamily: FontFamily
+            get() = selectedFontDefinition.fontFamily
+
+        val allFontDefinitions: List<FontDefinition>
+            get() = defaultFontDefinitions + providedFontDefinitions
     }
 
     // ----- Events
@@ -176,6 +208,10 @@ class BibleReaderViewModel(
         data object IncreaseFontSize : Action
 
         data object NextLineSpacingMultiplierOption : Action
+
+        data class SetFontDefinition(
+            val fontDefinition: FontDefinition,
+        ) : Action
     }
 
     // ----- Injection
@@ -183,12 +219,14 @@ class BibleReaderViewModel(
         fun factory(
             context: Context,
             bibleReference: BibleReference?,
+            fontDefinitionProvider: FontDefinitionProvider?,
         ): ViewModelProvider.Factory =
             InitializerViewModelFactoryBuilder()
                 .apply {
                     initializer {
                         BibleReaderViewModel(
                             bibleReference = bibleReference,
+                            fontDefinitionProvider = fontDefinitionProvider,
                             bibleVersionRepository = BibleVersionRepository(context),
                             store = SharedPreferencesStore(context),
                         )
