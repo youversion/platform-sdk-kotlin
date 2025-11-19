@@ -1,6 +1,7 @@
 package com.youversion.platform.reader
 
 import android.content.Context
+import androidx.compose.ui.unit.TextUnit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -78,6 +79,9 @@ class BibleReaderViewModel(
         when (action) {
             is Action.OpenFontSettings -> _state.update { it.copy(showingFontList = true) }
             is Action.CloseFontSettings -> _state.update { it.copy(showingFontList = false) }
+            is Action.DecreaseFontSize -> decreaseFontSize()
+            is Action.IncreaseFontSize -> increaseFontSize()
+            is Action.NextLineSpacingMultiplierOption -> nextLineSpacingMultiplierOption()
         }
     }
 
@@ -92,12 +96,41 @@ class BibleReaderViewModel(
         }
     }
 
+    fun decreaseFontSize() {
+        _state.update {
+            it.copy(
+                fontSize = ReaderFontSettings.nextSmallerFontSize(it.fontSize),
+            )
+        }
+    }
+
+    fun increaseFontSize() {
+        _state.update {
+            it.copy(
+                fontSize = ReaderFontSettings.nextLargerFontSize(it.fontSize),
+            )
+        }
+    }
+
+    fun nextLineSpacingMultiplierOption() {
+        _state.update {
+            it.copy(
+                lineSpacingMultiplier =
+                    ReaderFontSettings.nextLineSpacingMultiplier(
+                        it.lineSpacingMultiplier,
+                    ),
+            )
+        }
+    }
+
     // ----- State
     data class State(
         val bibleReference: BibleReference,
         val bibleVersion: BibleVersion? = null,
         val showCopyright: Boolean = false,
         val showingFontList: Boolean = false,
+        val fontSize: TextUnit = ReaderFontSettings.DEFAULT_FONT_SIZE,
+        val lineSpacingMultiplier: Float = ReaderFontSettings.DEFAULT_LINE_SPACING_MULTIPLIER,
     ) {
         val bookAndChapter: String
             get() =
@@ -116,6 +149,15 @@ class BibleReaderViewModel(
                         ?: version.abbreviation
                         ?: version.id.toString()
                 } ?: ""
+
+        val lineSpacingSettingsIndex: Int
+            get() =
+                ReaderFontSettings.getLineSpacingSettingIndex(
+                    lineSpacingMultiplier,
+                )
+
+        val lineSpacing: TextUnit
+            get() = fontSize * lineSpacingMultiplier
     }
 
     // ----- Events
@@ -128,6 +170,12 @@ class BibleReaderViewModel(
         data object OpenFontSettings : Action
 
         data object CloseFontSettings : Action
+
+        data object DecreaseFontSize : Action
+
+        data object IncreaseFontSize : Action
+
+        data object NextLineSpacingMultiplierOption : Action
     }
 
     // ----- Injection
