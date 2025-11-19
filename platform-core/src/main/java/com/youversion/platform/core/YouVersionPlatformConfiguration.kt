@@ -2,12 +2,11 @@ package com.youversion.platform.core
 
 import android.content.Context
 import co.touchlab.kermit.Logger
-import com.youversion.platform.core.YouVersionPlatformConfiguration.configure
 import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfiguredException
 import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
 import com.youversion.platform.core.utilities.koin.startYouVersionPlatform
-import java.util.Date
 import com.youversion.platform.core.utilities.koin.stopYouVersionPlatform
+import java.util.Date
 import java.util.UUID
 
 object YouVersionPlatformConfiguration {
