@@ -1,5 +1,6 @@
 package com.youversion.platform.reader.sheets
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,6 +65,7 @@ fun BibleReaderFontSettingsSheet(
     onLineSpacingClick: () -> Unit,
     onFontClick: () -> Unit,
     onThemeSelect: (ReaderColorScheme) -> Unit,
+    lineSpacingSettingIndex: Int,
 ) {
     val sheetState =
         rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -88,14 +91,17 @@ fun BibleReaderFontSettingsSheet(
                     onSmallerFontClick = onSmallerFontClick,
                     onBiggerFontClick = onBiggerFontClick,
                     onLineSpacingClick = onLineSpacingClick,
+                    lineSpacingSettingIndex = lineSpacingSettingIndex,
                 )
-                FontDisplayButton(onFontClick = {
-                    scope.launch {
-                        sheetState.hide()
-                        onDismissRequest()
-                    }
-                    onFontClick()
-                })
+                FontDisplayButton(
+                    onFontClick = {
+                        scope.launch {
+                            sheetState.hide()
+                            onDismissRequest()
+                        }
+                        onFontClick()
+                    },
+                )
             }
 
             ThemePicker(
@@ -111,6 +117,7 @@ private fun FontSizeButtons(
     onSmallerFontClick: () -> Unit,
     onBiggerFontClick: () -> Unit,
     onLineSpacingClick: () -> Unit,
+    lineSpacingSettingIndex: Int,
 ) {
     val minWidth = 126.dp
     val minHeight = 48.dp
@@ -189,11 +196,12 @@ private fun FontSizeButtons(
                         onClick = onLineSpacingClick,
                     ),
         ) {
-            val currentSpacing = 18
+            val targetSpacing = (3 * (lineSpacingSettingIndex + 1)).dp
+            val animatedSpacing by animateDpAsState(targetValue = targetSpacing, label = "lineSpacingAnimation")
 
             Column(
                 horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.spacedBy((currentSpacing / 3).dp),
+                verticalArrangement = Arrangement.spacedBy((animatedSpacing)),
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             ) {
                 Box(
@@ -356,6 +364,7 @@ private fun Preview_BibleReaderFontSettingsSheet() {
             onLineSpacingClick = {},
             onFontClick = {},
             onThemeSelect = {},
+            lineSpacingSettingIndex = 1,
         )
     }
 }
