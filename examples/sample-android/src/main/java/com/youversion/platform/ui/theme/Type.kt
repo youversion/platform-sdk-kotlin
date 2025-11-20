@@ -1,5 +1,6 @@
 package com.youversion.platform.ui.theme
 
+import android.os.Build
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -38,10 +39,31 @@ val Typography =
      */
     )
 
+// Static font example
 val Tinos =
     FontFamily(
         Font(R.font.tinos_regular, FontWeight.Normal),
         Font(R.font.tinos_italic, FontWeight.Normal, FontStyle.Italic),
         Font(R.font.tinos_bold, FontWeight.Bold),
-        Font(R.font.tinos_italic, FontWeight.Bold, FontStyle.Italic),
+        Font(R.font.tinos_bold_italic, FontWeight.Bold, FontStyle.Italic),
     )
+
+// Variable font example
+val CormorantGaramond =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        FontFamily(
+            Font(
+                resId = R.font.cormorant_garamond_variable,
+                weight = FontWeight.Normal,
+                style = FontStyle.Normal,
+            ),
+            Font(
+                resId = R.font.cormorant_garamond_variable_italic,
+                weight = FontWeight.Normal,
+                style = FontStyle.Italic,
+            ),
+        )
+    } else {
+        // Fallback
+        FontFamily.Default
+    }
