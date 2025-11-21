@@ -78,6 +78,7 @@ internal fun BibleScreen(
                         BibleText(
                             textOptions =
                                 BibleTextOptions(
+                                    fontFamily = state.fontFamily,
                                     fontSize = state.fontSize,
                                     lineSpacing = state.lineSpacing,
                                 ),
@@ -107,6 +108,7 @@ internal fun BibleScreen(
                     },
                     onThemeSelect = { },
                     lineSpacingSettingIndex = state.lineSpacingSettingsIndex,
+                    fontDefinition = state.selectedFontDefinition,
                 )
             }
         }

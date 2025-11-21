@@ -1,7 +1,9 @@
 package com.youversion.platform.reader
 
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+import com.youversion.platform.reader.theme.UntitledSerif
 
 /**
  * A utility object that provides constants and helper functions for managing font settings
@@ -13,6 +15,8 @@ object ReaderFontSettings {
 
     val DEFAULT_FONT_SIZE: TextUnit = 18.sp
     const val DEFAULT_LINE_SPACING_MULTIPLIER: Float = 2.25f
+
+    val DEFAULT_FONT_DEFINITION: FontDefinition = FontDefinition("Untitled Serif", UntitledSerif)
 
     /**
      * Finds the next available font size smaller than the current one.
@@ -48,3 +52,8 @@ object ReaderFontSettings {
      */
     fun getLineSpacingSettingIndex(currentSpacing: Float): Int = lineSpacingMultiplierOptions.indexOf(currentSpacing)
 }
+
+data class FontDefinition(
+    val fontName: String,
+    val fontFamily: FontFamily,
+)

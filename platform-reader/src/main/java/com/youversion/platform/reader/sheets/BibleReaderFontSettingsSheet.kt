@@ -43,7 +43,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.youversion.platform.reader.FontDefinition
 import com.youversion.platform.reader.R
+import com.youversion.platform.reader.ReaderFontSettings
 import com.youversion.platform.reader.theme.BibleReaderTheme
 import com.youversion.platform.reader.theme.Charcoal
 import com.youversion.platform.reader.theme.Cream
@@ -66,6 +68,7 @@ fun BibleReaderFontSettingsSheet(
     onFontClick: () -> Unit,
     onThemeSelect: (ReaderColorScheme) -> Unit,
     lineSpacingSettingIndex: Int,
+    fontDefinition: FontDefinition,
 ) {
     val sheetState =
         rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -94,6 +97,7 @@ fun BibleReaderFontSettingsSheet(
                     lineSpacingSettingIndex = lineSpacingSettingIndex,
                 )
                 FontDisplayButton(
+                    fontDefinition = fontDefinition,
                     onFontClick = {
                         scope.launch {
                             sheetState.hide()
@@ -231,7 +235,10 @@ private fun FontSizeButtons(
 }
 
 @Composable
-private fun FontDisplayButton(onFontClick: () -> Unit) {
+private fun FontDisplayButton(
+    fontDefinition: FontDefinition,
+    onFontClick: () -> Unit,
+) {
     OutlinedButton(
         shape = RoundedCornerShape(8.dp),
         onClick = onFontClick,
@@ -246,7 +253,7 @@ private fun FontDisplayButton(onFontClick: () -> Unit) {
                     text = stringResource(R.string.font_settings_label),
                 )
                 Text(
-                    text = "Baskerfille",
+                    text = fontDefinition.fontName,
                 )
             }
             Icon(
@@ -365,6 +372,7 @@ private fun Preview_BibleReaderFontSettingsSheet() {
             onFontClick = {},
             onThemeSelect = {},
             lineSpacingSettingIndex = 1,
+            fontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
         )
     }
 }

@@ -5,6 +5,7 @@
     <string name="reader_menu_sign_out">Sign Out</string>
 
     <string name="font_settings_label">Font</string>
+    <string name="font_selected_check">Font selected check</string>
 
     <string name="book_chapter_picker_title">Books</string>
 </resources>
