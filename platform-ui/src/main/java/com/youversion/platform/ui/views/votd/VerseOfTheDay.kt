@@ -35,7 +35,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
-import com.youversion.platform.core.votd.models.YouVersionVerseOfTheDay
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextOptions
@@ -44,12 +43,12 @@ import com.youversion.platform.ui.views.components.BibleAppLogo
 
 @Composable
 fun CompactVerseOfTheDay(
-    verseOfTheDay: YouVersionVerseOfTheDay? = null,
+    bibleVersionId: Int = 111,
     showIcon: Boolean = true,
     dark: Boolean = isSystemInDarkTheme(),
 ) {
     InternalVerseOfTheDay(
-        verseOfTheDay = verseOfTheDay,
+        bibleVersionId = bibleVersionId,
         showIcon = showIcon,
         dark = dark,
         compact = true,
@@ -58,14 +57,14 @@ fun CompactVerseOfTheDay(
 
 @Composable
 fun VerseOfTheDay(
-    verseOfTheDay: YouVersionVerseOfTheDay? = null,
+    bibleVersionId: Int = 111,
     showIcon: Boolean = true,
     dark: Boolean = isSystemInDarkTheme(),
     onShareClick: () -> Unit = {},
     onFullChapterClick: () -> Unit = {},
 ) {
     InternalVerseOfTheDay(
-        verseOfTheDay = verseOfTheDay,
+        bibleVersionId = bibleVersionId,
         showIcon = showIcon,
         dark = dark,
         compact = false,
@@ -76,7 +75,7 @@ fun VerseOfTheDay(
 
 @Composable
 private fun InternalVerseOfTheDay(
-    verseOfTheDay: YouVersionVerseOfTheDay? = null,
+    bibleVersionId: Int,
     showIcon: Boolean = true,
     dark: Boolean = isSystemInDarkTheme(),
     compact: Boolean = false,
@@ -86,7 +85,7 @@ private fun InternalVerseOfTheDay(
     val context = LocalContext.current
 
     val viewModel: VerseOfTheDayViewModel =
-        viewModel(factory = VerseOfTheDayViewModel.factory(context, verseOfTheDay))
+        viewModel(factory = VerseOfTheDayViewModel.factory(context, bibleVersionId))
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Box {
@@ -248,7 +247,7 @@ private fun CompactVerseOfTheDayContent(
 private fun Preview_VerseOfTheDay() {
     PreviewBackground(dark = true) {
         InternalVerseOfTheDay(
-            verseOfTheDay = YouVersionVerseOfTheDay.preview,
+            bibleVersionId = 1,
         )
     }
 }

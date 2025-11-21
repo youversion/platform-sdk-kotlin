@@ -1,6 +1,5 @@
 package com.youversion.platform.core.bibles.data
 
-import co.touchlab.kermit.Logger
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import kotlinx.coroutines.sync.Mutex
@@ -46,35 +45,21 @@ class BibleVersionMemoryCache : BibleVersionCache {
 
     override suspend fun version(id: Int): BibleVersion? =
         versionMutex.withLock {
-            Logger.d { "[$cacheType] Checking for version id=$id" }
             val version = versionCache[id]
-            if (version != null) {
-                Logger.d { "[$cacheType] Version id=$id found: ${version.abbreviation}" }
-            } else {
-                Logger.d { "[$cacheType] Version id=$id not found" }
-            }
             version
         }
 
     override suspend fun chapterContent(reference: BibleReference): String? =
         chapterMutex.withLock {
             val cacheKey = cacheKey(reference)
-            Logger.d { "[$cacheType] Checking for $cacheKey chapter contents" }
             val contents = chapterCache[cacheKey]
-            if (contents != null) {
-                Logger.d { "[$cacheType] Chapter $cacheKey found: ${contents.length} characters" }
-            } else {
-                Logger.d { "[$cacheType] Chapter $cacheKey not found" }
-            }
 
             contents
         }
 
     override suspend fun addVersion(version: BibleVersion) =
         versionMutex.withLock {
-            Logger.d { "[$cacheType] Adding version id=${version.id} abbreviation=${version.abbreviation}" }
             versionCache[version.id] = version
-            Logger.d { "[$cacheType] Successfully added version id=${version.id}" }
         }
 
     override suspend fun addChapterContents(
@@ -82,45 +67,36 @@ class BibleVersionMemoryCache : BibleVersionCache {
         reference: BibleReference,
     ) = chapterMutex.withLock {
         val cacheKey = cacheKey(reference)
-        Logger.d { "[$cacheType] Adding chapter content for $cacheKey" }
         chapterCache[cacheKey] = content
-        Logger.d { "[$cacheType] Successfully added chapter content for $cacheKey" }
     }
 
-    override suspend fun removeVersion(versionId: Int) =
+    override suspend fun removeVersion(versionId: Int) {
         versionMutex.withLock {
-            Logger.d { "[$cacheType] Removing version id=$versionId" }
-            val removed = versionCache.remove(versionId)
-            Logger.d { "[$cacheType] Version id=$versionId removed: ${removed != null}" }
+            versionCache.remove(versionId)
         }
+    }
 
-    override suspend fun removeVersionChapters(versionId: Int) =
+    override suspend fun removeVersionChapters(versionId: Int) {
         chapterMutex.withLock {
-            Logger.d { "[$cacheType] Removing chapters for version id=$versionId" }
             val prefix = "${versionId}_"
             val keysToRemove = chapterCache.keys.filter { it.startsWith(prefix) }
             keysToRemove.forEach { chapterCache.remove(it) }
-            Logger.d { "[$cacheType] ${keysToRemove.size} chapters removed for version id=$versionId" }
         }
+    }
 
-    override suspend fun removeUnpermittedVersions(permittedIds: Set<Int>) =
+    override suspend fun removeUnpermittedVersions(permittedIds: Set<Int>) {
         versionMutex.withLock {
-            Logger.d { "[$cacheType] Scanning for unpermitted versions, permitted count=${permittedIds.size}" }
-            val unpermittedIds = versionCache.keys.filterNot { permittedIds.contains(it) }.toSet()
-            Logger.d { "[$cacheType] Found ${unpermittedIds.size} unpermitted versions to remove: $unpermittedIds" }
             versionCache.entries.removeAll { !permittedIds.contains(it.key) }
-            Logger.d { "[$cacheType] Finished removing unpermitted versions" }
         }
+    }
 
     override fun versionIsPresent(versionId: Int): Boolean {
         val present = versionCache.containsKey(versionId)
-        Logger.d { "[$cacheType] Version id=$versionId present: $present" }
         return present
     }
 
     override fun chaptersArePresent(versionId: Int): Boolean {
         val present = chapterCache.keys.any { it.startsWith("${versionId}_") }
-        Logger.d { "[$cacheType] Version id=$versionId chapters are present: $present" }
         return present
     }
 }

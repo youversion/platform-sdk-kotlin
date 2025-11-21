@@ -52,7 +52,11 @@ subprojects {
     // publishing block in order to provide detailed information about the module, such as it's coordinates.
     pluginManager.withPlugin("com.vanniktech.maven.publish") {
         configure<MavenPublishBaseExtension> {
-            publishToMavenCentral()
+            publishToMavenCentral(
+                // After Central Portal validates the build, automatically release it to Maven Central
+                // This prevents the need to manually push the publish button in Central Portal.
+                automaticRelease = true
+            )
             signAllPublications()
 
             pom {

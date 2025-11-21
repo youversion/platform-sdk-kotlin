@@ -13,7 +13,6 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.utilities.dependencies.SharedPreferencesStore
 import com.youversion.platform.core.utilities.dependencies.Store
-import com.youversion.platform.core.votd.models.YouVersionVerseOfTheDay
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,7 +22,7 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 
 internal class VerseOfTheDayViewModel private constructor(
-    verseOfTheDay: YouVersionVerseOfTheDay?,
+    private val bibleVersionId: Int,
     private val store: Store,
     private val bibleVersionRepository: BibleVersionRepository,
 ) : ViewModel() {
@@ -33,17 +32,13 @@ internal class VerseOfTheDayViewModel private constructor(
     private val _events = Channel<Event>()
     val events = _events.receiveAsFlow()
 
-    private val dayOfTheYear: Int
-        get() = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
-
     init {
         viewModelScope.launch {
             try {
-                val passageUsfm = loadPassageUsfm(verseOfTheDay)
-                val bibleVersion = bibleVersionRepository.preferredBibleVersion()
-                val reference =
-                    BibleReference
-                        .unvalidatedReference(passageUsfm, bibleVersion.id)
+                val dayOfYear = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
+                val verseOfTheDay = YouVersionApi.votd.verseOfTheDay(dayOfYear)
+                val bibleVersion = bibleVersionRepository.version(bibleVersionId)
+                val reference = bibleVersion.reference(verseOfTheDay.passageUsfm)
 
                 if (reference != null) {
                     _state.update { it.copy(bibleReference = reference, bibleVersion = bibleVersion) }
@@ -59,12 +54,6 @@ internal class VerseOfTheDayViewModel private constructor(
             }
         }
     }
-
-    private suspend fun loadPassageUsfm(verseOfTheDay: YouVersionVerseOfTheDay?): String =
-        verseOfTheDay?.passageUsfm
-            ?: YouVersionApi.votd
-                .verseOfTheDay(dayOfTheYear)
-                .passageUsfm
 
     // ----- State
     data class State(
@@ -86,15 +75,15 @@ internal class VerseOfTheDayViewModel private constructor(
     companion object {
         fun factory(
             context: Context,
-            verseOfTheDay: YouVersionVerseOfTheDay?,
+            bibleVersionId: Int,
         ): ViewModelProvider.Factory =
             InitializerViewModelFactoryBuilder()
                 .apply {
                     initializer {
                         VerseOfTheDayViewModel(
-                            verseOfTheDay,
-                            SharedPreferencesStore(context),
-                            BibleVersionRepository(context),
+                            bibleVersionId = bibleVersionId,
+                            store = SharedPreferencesStore(context),
+                            bibleVersionRepository = BibleVersionRepository(context),
                         )
                     }
                 }.build()
