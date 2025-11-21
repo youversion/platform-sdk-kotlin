@@ -1,7 +1,6 @@
 package com.youversion.platform.core.bibles.data
 
 import android.content.Context
-import co.touchlab.kermit.Logger
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import kotlinx.coroutines.Dispatchers
@@ -20,8 +19,6 @@ class BibleVersionTemporaryCache(
 ) : BibleVersionFileCache() {
     override val rootDir: File
         get() = context.cacheDir
-
-    override val cacheType: String = "TemporaryCache"
 }
 
 /**
@@ -33,8 +30,6 @@ class BibleVersionPersistentCache(
 ) : BibleVersionFileCache() {
     override val rootDir: File
         get() = context.filesDir
-
-    override val cacheType: String = "PersistentCache"
 }
 
 /**
@@ -64,9 +59,6 @@ abstract class BibleVersionFileCache : BibleVersionCache {
     // the rootDir/
     protected abstract val rootDir: File
 
-    // The type of files dir used for  the rootDir/ e.g. cacheDir or filesDir
-    protected abstract val cacheType: String
-
     /** @return [File] representing bible_<id>/ dir */
     private fun bibleVersionDir(id: Int): File = ensureExists(File(rootDir, "bible_$id"))
 
@@ -88,15 +80,12 @@ abstract class BibleVersionFileCache : BibleVersionCache {
 
     override suspend fun version(id: Int): BibleVersion? =
         withContext(Dispatchers.IO) {
-            Logger.d { "[$cacheType] Checking for version id=$id" }
             if (!versionIsPresent(id)) {
-                Logger.d { "[$cacheType] Version id=$id not found" }
                 return@withContext null
             }
             mutex.withLock {
                 val metadataJson = bibleVersionMetadataFile(id).readText()
                 val version = Json.decodeFromString<BibleVersion>(metadataJson)
-                Logger.d { "[$cacheType] Version id=$id found: ${version.abbreviation}" }
                 version
             }
         }
@@ -106,28 +95,21 @@ abstract class BibleVersionFileCache : BibleVersionCache {
             val usfm = reference.chapterUSFM
             val file = chapterContentsFile(usfm, reference.versionId)
 
-            Logger.d { "[$cacheType] Checking for chapter $usfm in version ${reference.versionId}" }
             if (!file.exists()) {
-                Logger.d { "[$cacheType] Chapter $usfm not found in version ${reference.versionId}" }
                 return@withContext null
             }
             mutex.withLock {
                 val contents = file.readText()
-                Logger.d {
-                    "[$cacheType] Chapter $usfm found in version ${reference.versionId}: ${contents.length} characters"
-                }
                 contents
             }
         }
 
     override suspend fun addVersion(version: BibleVersion) =
         withContext(Dispatchers.IO) {
-            Logger.d { "[$cacheType] Adding version id=${version.id} abbreviation=${version.abbreviation}" }
             mutex.withLock {
                 bibleVersionMetadataFile(version.id)
                     .writeText(Json.encodeToString(version))
             }
-            Logger.d { "[$cacheType] Successfully added version id=${version.id}" }
         }
 
     override suspend fun addChapterContents(
@@ -136,49 +118,38 @@ abstract class BibleVersionFileCache : BibleVersionCache {
     ) = withContext(Dispatchers.IO) {
         val usfm = reference.chapterUSFM
 
-        Logger.d { "[$cacheType] Adding chapter content for $usfm in version ${reference.versionId}" }
         mutex.withLock {
             chapterContentsFile(usfm, reference.versionId)
                 .writeText(content)
         }
-        Logger.d { "[$cacheType] Successfully added chapter content for $usfm in version ${reference.versionId}" }
     }
 
     override suspend fun removeVersion(versionId: Int) {
         withContext(Dispatchers.IO) {
-            Logger.d { "[$cacheType] Removing version id=$versionId" }
-            val deleted = mutex.withLock { bibleVersionMetadataFile(versionId).delete() }
-            Logger.d { "[$cacheType] Version id=$versionId removed: $deleted" }
+            mutex.withLock { bibleVersionMetadataFile(versionId).delete() }
         }
     }
 
     override suspend fun removeVersionChapters(versionId: Int) {
         withContext(Dispatchers.IO) {
-            Logger.d { "[$cacheType] Removing chapters for version id=$versionId" }
-            val deleted = mutex.withLock { bibleVersionChaptersDir(versionId).deleteRecursively() }
-            Logger.d { "[$cacheType] Chapters for version id=$versionId removed: $deleted" }
+            mutex.withLock { bibleVersionChaptersDir(versionId).deleteRecursively() }
         }
     }
 
     override suspend fun removeUnpermittedVersions(permittedIds: Set<Int>) {
         withContext(Dispatchers.IO) {
-            Logger.d { "[$cacheType] Scanning for unpermitted versions, permitted count=${permittedIds.size}" }
             val unpermittedIds = storedVersionIds.filterNot { permittedIds.contains(it) }
-            Logger.d { "[$cacheType] Found ${unpermittedIds.size} unpermitted versions to remove: $unpermittedIds" }
             unpermittedIds.forEach { removeVersion(it) }
-            Logger.d { "[$cacheType] Finished removing unpermitted versions" }
         }
     }
 
     override fun versionIsPresent(versionId: Int): Boolean {
         val exists = bibleVersionMetadataFile(versionId).exists()
-        Logger.d { "[$cacheType] Version id=$versionId present: $exists" }
         return exists
     }
 
     override fun chaptersArePresent(versionId: Int): Boolean {
         val hasChapters = bibleVersionChaptersDir(versionId).listFiles()?.isNotEmpty() == true
-        Logger.d { "[$cacheType] Version id=$versionId chapters are present: $hasChapters" }
         return hasChapters
     }
 
