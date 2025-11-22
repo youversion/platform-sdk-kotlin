@@ -1,6 +1,7 @@
 package com.youversion.platform.ui.signin
 
 import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
@@ -26,4 +27,20 @@ class SignInViewModel : ViewModel() {
             }
         }
     }
+
+    fun handleAuthCallback(
+        context: Context,
+        intent: Intent,
+    ) {
+        viewModelScope.launch {
+            YouVersionAuthentication.handleAuthCallback(context, intent)
+        }
+    }
+
+    fun cancelAuthentication(context: Context) {
+        YouVersionAuthentication.cancelAuthentication(context)
+    }
+
+    fun isAuthenticationInProgress(context: Context): Boolean =
+        YouVersionAuthentication.isAuthenticationInProgress(context)
 }

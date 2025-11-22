@@ -6,17 +6,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.ui.App
 import com.youversion.platform.ui.signin.SignInViewModel
-import com.youversion.platform.ui.signin.YouVersionAuthentication
 import com.youversion.platform.ui.theme.YouVersionPlatformTheme
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.sin
 
 class MainActivity : ComponentActivity() {
+    private val signInViewModel by viewModels<SignInViewModel>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        println(YouVersionPlatformConfiguration.accessToken)
 
         handleOAuthCallback(intent)
 
@@ -35,14 +36,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (YouVersionAuthentication.isAuthFlowActive.get()) {
-            YouVersionAuthentication.cancelAuthentication()
+        if (signInViewModel.isAuthenticationInProgress(this)) {
+            signInViewModel.cancelAuthentication(this)
         }
     }
 
     fun handleOAuthCallback(intent: Intent?) {
+        println("handleOAuthCallback: intent=$intent")
         if (intent?.action == Intent.ACTION_VIEW && intent.data != null) {
-            YouVersionAuthentication.handleAuthCallback(intent)
+            signInViewModel.handleAuthCallback(this, intent)
             clearIntent()
         }
     }

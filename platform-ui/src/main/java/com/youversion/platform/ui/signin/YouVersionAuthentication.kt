@@ -2,7 +2,6 @@ package com.youversion.platform.ui.signin
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionNetworkException
@@ -10,33 +9,24 @@ import com.youversion.platform.core.users.model.SignInWithYouVersion
 import com.youversion.platform.core.users.model.SignInWithYouVersionPKCEAuthorizationRequestBuilder
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.users.model.SignInWithYouVersionResult
-import kotlinx.coroutines.suspendCancellableCoroutine
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Handles the user authentication flow for signing in with YouVersion.
  */
 object YouVersionAuthentication {
-    // Holds the coroutine continuation across the Custom Tabs activity flow.
-    private var authContinuation: ((Result<Uri>) -> Unit)? = null
-    val isAuthFlowActive = AtomicBoolean(false)
-
     /**
-     * Presents the YouVersion login flow and returns the result upon completion.
+     * Presents the YouVersion login flow to the user. This function is now a 'fire-and-forget'
+     * operation. The result must be handled by `handleAuthCallback`.
      *
-     * This function uses Chrome Custom Tabs to authenticate the user. It suspends until the
-     * user completes or cancels the login flow.
-     *
-     * @param context The Android context (e.g., an Activity) required to launch the Custom Tab.
+     * @param context The Android context required to launch the Custom Tab.
      * @param permissions The set of permissions to request from the user.
-     * @return A [SignInWithYouVersionResult] on successful login.
-     * @throws Exception if authentication fails or is cancelled.
      */
-    suspend fun signIn(
+    fun signIn(
         context: Context,
         permissions: Set<SignInWithYouVersionPermission>,
-    ): SignInWithYouVersionResult {
+    ) {
         val appKey =
             YouVersionPlatformConfiguration.appKey
                 ?: throw YouVersionNetworkException(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION)
@@ -48,39 +38,53 @@ object YouVersionAuthentication {
                 redirectUri = SignInWithYouVersion.redirectURL,
             )
 
-        isAuthFlowActive.set(true)
+        PKCEStateStore.save(
+            context,
+            codeVerifier = authorizationRequest.parameters.codeVerifier,
+            state = authorizationRequest.parameters.state,
+        )
 
-        // Launch the Custom Tab
         val customTabsIntent = CustomTabsIntent.Builder().build()
         customTabsIntent.launchUrl(context, authorizationRequest.url)
+    }
 
-        // Suspend and wait for the callback from the deep link activity
-        val callbackUri =
-            suspendCancellableCoroutine { continuation ->
-                authContinuation = { result ->
-                    continuation.resumeWith(result)
-                    isAuthFlowActive.set(false)
-                    authContinuation = null
-                }
-                continuation.invokeOnCancellation {
-                    authContinuation?.invoke(Result.failure(Exception("Sign in cancelled.")))
-                    isAuthFlowActive.set(false)
-                    authContinuation = null
-                }
-            }
+    /**
+     * Handles the callback from the Custom Tab, completes the authentication, and
+     * returns the result. This function performs network operations and should be
+     * called from a coroutine.
+     *
+     * @param context The Android context.
+     * @param intent The intent received from the Custom Tab redirect.
+     * @return A [SignInWithYouVersionResult] on success, or null on failure/cancellation.
+     * @throws Exception if the token exchange fails.
+     */
+    suspend fun handleAuthCallback(
+        context: Context,
+        intent: Intent?,
+    ): SignInWithYouVersionResult? {
+        val uri = intent?.data ?: return null
 
-        // Authentication flow continues here
-        try {
+        val storedState = PKCEStateStore.getState(context)
+        val storedCodeVerifier = PKCEStateStore.getCodeVerifier(context)
+
+        PKCEStateStore.clear(context)
+
+        if (storedState == null || storedCodeVerifier == null) {
+            println("PKCE state not found. The sign-in flow may have been interrupted by process death.")
+            return null
+        }
+
+        return withContext(Dispatchers.IO) {
             val location =
                 SignInWithYouVersion.obtainLocation(
-                    from = callbackUri,
-                    state = authorizationRequest.parameters.state,
+                    from = uri,
+                    state = storedState,
                 )
             val code = SignInWithYouVersion.obtainCode(from = location)
             val tokens =
                 SignInWithYouVersion.obtainTokens(
                     from = code,
-                    codeVerifier = authorizationRequest.parameters.codeVerifier,
+                    codeVerifier = storedCodeVerifier,
                 )
             val result = SignInWithYouVersion.extractSignInWithYouVersionResult(from = tokens)
 
@@ -89,39 +93,30 @@ object YouVersionAuthentication {
                 refreshToken = result.refreshToken,
                 expiryDate = result.expiryDate,
             )
-            return result
-        } catch (e: Exception) {
-            throw e
+            result
         }
     }
 
     /**
-     * This function should be called when the authentication flow is cancelled
-     * by the user (e.g., closing the Custom Tab). It resumes the suspended
-     * coroutine with a cancellation exception.
+     * Clears the stored PKCE state in case of user-initiated cancellation.
+     *
+     * @param context The Android context.
      */
-    fun cancelAuthentication() {
-        authContinuation?.invoke(
-            Result.failure(
-                CancellationException("Authentication flow was cancelled by the user."),
-            ),
-        )
-        isAuthFlowActive.set(false)
-        authContinuation = null // Clean up to prevent leaks
+    fun cancelAuthentication(context: Context) {
+        PKCEStateStore.clear(context)
     }
 
     /**
-     * This function must be called from your deep link handling Activity
-     * to resume the suspended coroutine with the result.
+     * Checks if an authentication flow is currently in progress by looking for
+     * stored PKCE parameters.
+     *
+     * This is useful for determining if the app should expect a callback from a
+     * Custom Tab, especially after the app process has been recreated.
+     *
+     * @param context The Android context.
+     * @return `true` if a code verifier or state is stored, `false` otherwise.
      */
-    fun handleAuthCallback(intent: Intent?) {
-        isAuthFlowActive.set(false)
-        val uri = intent?.data
-        if (uri != null) {
-            authContinuation?.invoke(Result.success(uri))
-        } else {
-            authContinuation?.invoke(Result.failure(Exception("Authentication cancelled or failed.")))
-        }
-        authContinuation = null
-    }
+    fun isAuthenticationInProgress(context: Context): Boolean =
+        PKCEStateStore.getCodeVerifier(context) != null &&
+            PKCEStateStore.getState(context) != null
 }
