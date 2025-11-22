@@ -8,12 +8,12 @@ class BiblesEndpointsTest {
     @Test
     fun `test versionsUrl`() {
         assertEquals(
-            "https://api.youversion.com/v1/bibles?language_ranges=%2A",
+            "https://api.youversion.com/v1/bibles?language_ranges%5B%5D=%2A",
             BiblesEndpoints.versionsUrl().toString(),
         )
 
         assertEquals(
-            "https://api.youversion.com/v1/bibles?language_ranges=eng",
+            "https://api.youversion.com/v1/bibles?language_ranges%5B%5D=eng",
             BiblesEndpoints.versionsUrl(languageRanges = setOf("eng")).toString(),
         )
     }

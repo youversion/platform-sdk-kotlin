@@ -29,7 +29,7 @@ object BiblesEndpoints : BiblesApi {
         buildYouVersionUrlString {
             path("/v1/bibles")
             val ranges = if (languageRanges.isEmpty()) "*" else languageRanges.joinToString(",")
-            parameter("language_ranges", ranges)
+            parameter("language_ranges[]", ranges)
         }
 
     fun versionUrl(versionId: Int): String = buildYouVersionUrlString { path("/v1/bibles/$versionId") }
