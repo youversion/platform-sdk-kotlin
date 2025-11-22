@@ -5,6 +5,7 @@ import android.util.Base64
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
 import io.ktor.client.call.body
+import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -113,13 +114,13 @@ object SignInWithYouVersionPKCEAuthorizationRequestBuilder {
         codeVerifier: String,
         redirectUri: String,
     ): TokenResponse {
-        val url = "https://api-staging.youversion.com/auth/token"
+        val url = "https://${YouVersionPlatformConfiguration.apiHost}/auth/token"
         val httpClient = YouVersionPlatformComponent.httpClient
 
         return httpClient
-            .post(url) {
-                contentType(ContentType.Application.FormUrlEncoded)
-                setBody(
+            .submitForm(
+                url = url,
+                formParameters =
                     Parameters.build {
                         append("grant_type", "authorization_code")
                         append("code", code)
@@ -127,8 +128,7 @@ object SignInWithYouVersionPKCEAuthorizationRequestBuilder {
                         append("client_id", YouVersionPlatformConfiguration.appKey ?: "")
                         append("code_verifier", codeVerifier)
                     },
-                )
-            }.body()
+            ).body()
     }
 
     private fun authorizeURL(

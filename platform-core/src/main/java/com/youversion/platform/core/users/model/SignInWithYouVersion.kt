@@ -3,6 +3,7 @@ package com.youversion.platform.core.users.model
 import android.net.Uri
 import android.util.Base64
 import androidx.core.net.toUri
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
@@ -12,7 +13,7 @@ import kotlinx.serialization.json.Json
 
 object SignInWithYouVersion {
     val redirectURL = "youversionauth://callback".toUri()
-    private val callbackUrL = "https://api-staging.youversion.com/auth/callback"
+    private val callbackUrL = "https://" + YouVersionPlatformConfiguration.apiHost + "/auth/callback"
 
     suspend fun obtainLocation(
         from: Uri,
