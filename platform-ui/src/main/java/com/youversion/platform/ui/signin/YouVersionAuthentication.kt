@@ -50,8 +50,7 @@ object YouVersionAuthentication {
 
     /**
      * Handles the callback from the Custom Tab, completes the authentication, and
-     * returns the result. This function performs network operations and should be
-     * called from a coroutine.
+     * returns the result.
      *
      * @param context The Android context.
      * @param intent The intent received from the Custom Tab redirect.
@@ -70,7 +69,6 @@ object YouVersionAuthentication {
         PKCEStateStore.clear(context)
 
         if (storedState == null || storedCodeVerifier == null) {
-            println("PKCE state not found. The sign-in flow may have been interrupted by process death.")
             return null
         }
 

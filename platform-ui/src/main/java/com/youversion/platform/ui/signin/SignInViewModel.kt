@@ -5,7 +5,6 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class SignInViewModel : ViewModel() {
@@ -19,11 +18,8 @@ class SignInViewModel : ViewModel() {
                     context = context,
                     permissions = permissions.toSet(),
                 )
-            } catch (_: CancellationException) {
-                println("Login cancelled")
             } catch (_: Exception) {
-                println("Login exception")
-            } finally {
+                // TODO inform UI of error
             }
         }
     }
@@ -33,7 +29,11 @@ class SignInViewModel : ViewModel() {
         intent: Intent,
     ) {
         viewModelScope.launch {
-            YouVersionAuthentication.handleAuthCallback(context, intent)
+            try {
+                YouVersionAuthentication.handleAuthCallback(context, intent)
+            } catch (_: Exception) {
+                // TODO inform UI of error
+            }
         }
     }
 

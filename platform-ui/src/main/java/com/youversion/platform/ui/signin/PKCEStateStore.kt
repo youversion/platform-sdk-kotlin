@@ -2,11 +2,11 @@ package com.youversion.platform.ui.signin
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 
 /**
- * A utility to securely store and retrieve PKCE parameters across application
- * sessions and process death. This is needed for the authentication flow to
- * work reliably.
+ * A utility to store and retrieve PKCE parameters across application
+ * sessions and process death. This is needed for the authentication flow.
  */
 internal object PKCEStateStore {
     private const val PREF_NAME = "youversion_pkce_state_prefs"
@@ -35,10 +35,10 @@ internal object PKCEStateStore {
         state: String,
     ) {
         getPrefs(context)
-            .edit()
-            .putString(KEY_CODE_VERIFIER, codeVerifier)
-            .putString(KEY_STATE, state)
-            .apply()
+            .edit {
+                putString(KEY_CODE_VERIFIER, codeVerifier)
+                putString(KEY_STATE, state)
+            }
     }
 
     /**
@@ -65,9 +65,9 @@ internal object PKCEStateStore {
      */
     fun clear(context: Context) {
         getPrefs(context)
-            .edit()
-            .remove(KEY_CODE_VERIFIER)
-            .remove(KEY_STATE)
-            .apply()
+            .edit {
+                remove(KEY_CODE_VERIFIER)
+                remove(KEY_STATE)
+            }
     }
 }
