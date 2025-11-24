@@ -58,11 +58,8 @@ dependencies {
     implementation(projects.platformUi)
     implementation(projects.platformCore)
 
-    implementation(libs.app.auth)
-
     implementation(libs.androidx.compose.icons.core)
     implementation(libs.androidx.compose.icons.extended)
-    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.navigation)

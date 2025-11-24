@@ -2,7 +2,6 @@ package com.youversion.platform.core.utilities.dependencies
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.core.content.edit
 import com.youversion.platform.core.bibles.domain.BibleReference
 import kotlinx.serialization.json.Json
 
@@ -49,5 +48,18 @@ class SharedPreferencesStore(
 
     companion object {
         private const val PREF_NAME = "com.youversion.platform.configuration_preferences"
+    }
+
+    private inline fun SharedPreferences.edit(
+        commit: Boolean = false,
+        action: SharedPreferences.Editor.() -> Unit,
+    ) {
+        val editor = edit()
+        action(editor)
+        if (commit) {
+            editor.commit()
+        } else {
+            editor.apply()
+        }
     }
 }

@@ -58,8 +58,6 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    implementation(libs.androidx.core.ktx)
-
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
 
