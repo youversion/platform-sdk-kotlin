@@ -30,36 +30,29 @@ class SharedPreferencesStore(
 
     override var installId: String?
         get() = prefs.getString(Store.KEY_INSTALL_ID, null)
-        set(value) = prefs.edit { putString(Store.KEY_INSTALL_ID, value) }
+        set(value) = edit { putString(Store.KEY_INSTALL_ID, value) }
 
     override var accessToken: String?
         get() = prefs.getString(Store.KEY_ACCESS_TOKEN, null)
-        set(value) = prefs.edit { putString(Store.KEY_ACCESS_TOKEN, value) }
+        set(value) = edit { putString(Store.KEY_ACCESS_TOKEN, value) }
 
     override var bibleReference: BibleReference?
         get() = prefs.getString(Store.KEY_BIBLE_READER_REFERENCE, null)?.let { Json.decodeFromString(it) }
-        set(value) = prefs.edit { putString(Store.KEY_BIBLE_READER_REFERENCE, Json.encodeToString(value)) }
+        set(value) = edit { putString(Store.KEY_BIBLE_READER_REFERENCE, Json.encodeToString(value)) }
 
     override var myVersionIds: Set<Int>?
         get() = prefs.getStringSet(Store.KEY_BIBLE_READER_MY_VERSIONS, emptySet())?.map { it.toInt() }?.toSet()
         set(
             value,
-        ) = prefs.edit { putStringSet(Store.KEY_BIBLE_READER_MY_VERSIONS, value?.map { it.toString() }?.toSet()) }
+        ) = edit { putStringSet(Store.KEY_BIBLE_READER_MY_VERSIONS, value?.map { it.toString() }?.toSet()) }
 
     companion object {
         private const val PREF_NAME = "com.youversion.platform.configuration_preferences"
     }
 
-    private inline fun SharedPreferences.edit(
-        commit: Boolean = false,
-        action: SharedPreferences.Editor.() -> Unit,
-    ) {
-        val editor = edit()
-        action(editor)
-        if (commit) {
-            editor.commit()
-        } else {
-            editor.apply()
-        }
-    }
+    private inline fun edit(action: SharedPreferences.Editor.() -> Unit) =
+        prefs
+            .edit()
+            .apply(action)
+            .apply()
 }
