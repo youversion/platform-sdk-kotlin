@@ -16,17 +16,19 @@ import com.youversion.platform.reader.screens.references.ReferencesScreen
 import com.youversion.platform.reader.screens.versions.LanguagesScreen
 import com.youversion.platform.reader.screens.versions.VersionsScreen
 import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
+import com.youversion.platform.reader.theme.FontDefinitionProvider
 
 @Composable
 fun BibleReader(
     appName: String,
     appSignInMessage: String,
     bibleReference: BibleReference? = null,
+    fontDefinitionProvider: FontDefinitionProvider? = null,
     bottomBar: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
     val viewModel: BibleReaderViewModel =
-        viewModel(factory = BibleReaderViewModel.factory(context, bibleReference))
+        viewModel(factory = BibleReaderViewModel.factory(context, bibleReference, fontDefinitionProvider))
 
     val navController = rememberNavController()
     val onDestinationClick: (BibleReaderDestination) -> Unit = { destination ->
@@ -93,6 +95,7 @@ fun BibleReader(
                 route = BibleReaderDestination.Fonts.route,
             ) {
                 FontsScreen(
+                    viewModel = viewModel,
                     onBackClick = navController::popBackStack,
                 )
             }
