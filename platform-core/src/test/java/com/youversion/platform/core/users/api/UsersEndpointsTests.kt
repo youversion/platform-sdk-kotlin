@@ -7,9 +7,9 @@ import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
 import io.ktor.http.URLProtocol
 import io.ktor.http.Url
-import org.junit.Test
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class UsersEndpointsTests : YouVersionPlatformTest {
