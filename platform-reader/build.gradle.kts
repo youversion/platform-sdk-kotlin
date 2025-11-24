@@ -26,7 +26,6 @@ android {
                 .get()
                 .toInt()
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -61,15 +60,8 @@ dependencies {
     implementation(libs.androidx.compose.icons.extended)
     implementation(libs.androidx.compose.navigation)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-
     implementation(libs.touchlab.kermit)
 
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 }
 
 mavenPublishing {

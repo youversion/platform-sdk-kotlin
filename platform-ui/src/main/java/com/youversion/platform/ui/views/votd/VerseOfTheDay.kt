@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -148,7 +146,7 @@ private fun VerseOfTheDayContent(
             )
             IconButton(onClick = onShareClick) {
                 Icon(
-                    imageVector = Icons.Filled.Share,
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_material_share),
                     modifier = Modifier.size(24.dp),
                     contentDescription = null,
                 )

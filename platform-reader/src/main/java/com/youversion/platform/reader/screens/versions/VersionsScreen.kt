@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -159,7 +158,7 @@ private fun LanguageSelector(onClick: () -> Unit) {
                 ).padding(16.dp),
     ) {
         Icon(
-            imageVector = Icons.Default.Language,
+            imageVector = ImageVector.vectorResource(R.drawable.ic_material_language),
             contentDescription = null,
         )
         Spacer(modifier = Modifier.width(16.dp))

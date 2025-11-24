@@ -8,9 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -29,6 +26,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontFamily
@@ -39,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
+import com.youversion.platform.ui.R
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleTextCategory
@@ -308,13 +307,13 @@ fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
             BibleTextLoadingPhase.LOADING -> CircularProgressIndicator()
             BibleTextLoadingPhase.NOT_PERMITTED ->
                 PlaceholderMessage(
-                    icon = Icons.Default.Lock,
+                    icon = ImageVector.vectorResource(R.drawable.ic_material_lock),
                     text = "Your previously selected Bible version is unavailable. Please switch to another one.",
                 )
 
             BibleTextLoadingPhase.FAILED ->
                 PlaceholderMessage(
-                    icon = Icons.Default.Warning,
+                    icon = ImageVector.vectorResource(R.drawable.ic_material_warning),
                     text =
                         "We’re having difficulties with your connection. " +
                             "Please download a Bible version when you’re online.",
