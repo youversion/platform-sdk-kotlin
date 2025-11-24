@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
@@ -233,16 +234,16 @@ private fun BibleVersionRow(
                     ).background(
                         color = MaterialTheme.readerColorScheme.buttonPrimaryColor,
                         shape = RoundedCornerShape(4.dp),
-                    ),
+                    ).padding(6.dp),
         ) {
             Text(
                 text = letters,
                 maxLines = 1,
                 color = MaterialTheme.readerColorScheme.readerTextPrimaryColor,
+                autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = 16.sp, stepSize = 1.sp),
                 style =
                     TextStyle(
                         fontFamily = UntitledSerif,
-                        fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                     ),
             )

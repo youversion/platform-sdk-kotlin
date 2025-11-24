@@ -61,7 +61,6 @@ dependencies {
     implementation(libs.androidx.compose.navigation)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.touchlab.kermit)
-
 }
 
 mavenPublishing {
