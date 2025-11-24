@@ -17,10 +17,14 @@ interface BiblesApi {
      *
      * @param languageCode An optional letter language code for filtering available Bible versions. If `null` is given,
      *  then expect all versions. If invalid, then an empty list will be returned.
+     * @param pageSize informs the Api to return a given number of results per page. Must be > 1 and < 100
      * @return A list of [BibleVersion]s  available for the language.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun versions(languageCode: String? = null): List<BibleVersion>
+    suspend fun versions(
+        languageCode: String? = null,
+        pageSize: Int? = null,
+    ): List<BibleVersion>
 
     /**
      * Retrieves a specific [BibleVersion] from the server identified by [versionId].
