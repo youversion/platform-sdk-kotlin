@@ -52,6 +52,7 @@ import com.youversion.platform.core.utilities.splitAbbreviation
 import com.youversion.platform.reader.R
 import com.youversion.platform.reader.components.BibleReaderTopAppBar
 import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
+import com.youversion.platform.reader.theme.UntitledSerif
 import com.youversion.platform.reader.theme.readerColorScheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -237,16 +238,24 @@ private fun BibleVersionRow(
         ) {
             Text(
                 text = letters,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 color = MaterialTheme.readerColorScheme.readerTextPrimaryColor,
+                style =
+                    TextStyle(
+                        fontFamily = UntitledSerif,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
             )
             if (numbers.isNotBlank()) {
                 Text(
                     text = numbers,
-                    fontSize = 14.sp,
                     maxLines = 1,
+                    style =
+                        TextStyle(
+                            fontFamily = UntitledSerif,
+                            fontSize = 14.sp,
+                        ),
                 )
             }
         }
