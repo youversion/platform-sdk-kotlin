@@ -26,4 +26,21 @@ data class Organization(
         const val WEBSITE_URL = "website_url"
         const val ADDRESS = "address"
     }
+
+    // ----- Companion
+    companion object {
+        val preview: Organization
+            get() =
+                Organization(
+                    id = "abc123",
+                    parentOrgId = null,
+                    name = "Biblica",
+                    description = "Everyone deserves a chance to be transformed by Jesus",
+                    email = null,
+                    phone = null,
+                    primaryLanguage = "en",
+                    websiteUrl = "https://www.example.com",
+                    address = null,
+                )
+    }
 }

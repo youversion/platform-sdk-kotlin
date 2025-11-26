@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.initializer
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.organizations.models.Organization
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,11 +56,39 @@ class VersionsViewModel(
         }
     }
 
+    fun onAction(action: Action) {
+        when (action) {
+            is Action.VersionTapped -> {
+                loadOrganization(bibleVersion = action.bibleVersion)
+                _state.update { it.copy(selectedBibleVersion = action.bibleVersion) }
+            }
+            is Action.VersionDismissed ->
+                _state.update { it.copy(selectedBibleVersion = null, selectedOrganization = null) }
+        }
+    }
+
+    private fun loadOrganization(bibleVersion: BibleVersion) {
+        viewModelScope.launch {
+            bibleVersion.organizationId?.let {
+                try {
+                    val org = YouVersionApi.organizations.organization(it)
+                    _state.update { it.copy(selectedOrganization = org) }
+                } catch (e: Exception) {
+                    Logger.e("Failed to get org", e)
+                }
+            }
+        }
+    }
+
     // ----- State
     data class State(
         val initializing: Boolean = true,
         val permittedVersions: List<BibleVersion> = emptyList(),
         val chosenLanguageTag: String,
+        val showBibleVersionSheet: Boolean = false,
+        val showBibleVersionLoading: Boolean = false,
+        val selectedBibleVersion: BibleVersion? = null,
+        val selectedOrganization: Organization? = null,
         val searchQuery: String = "",
     ) {
         val versionsCount: Int
@@ -81,7 +110,13 @@ class VersionsViewModel(
     sealed interface Event
 
     // ----- Actions
-    sealed interface Action
+    sealed interface Action {
+        data class VersionTapped(
+            val bibleVersion: BibleVersion,
+        ) : Action
+
+        data object VersionDismissed : Action
+    }
 
     // ----- Injection
     companion object {
