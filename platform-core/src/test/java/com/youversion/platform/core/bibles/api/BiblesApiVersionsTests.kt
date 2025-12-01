@@ -78,7 +78,7 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
     fun `test versions queries all versions if language code is null`() =
         runTest {
             MockEngine { request ->
-                assertEquals("*", request.url.parameters["language_ranges"])
+                assertEquals("*", request.url.parameters["language_ranges[]"])
                 respondJson(VERSIONS_ENG_JSON)
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
