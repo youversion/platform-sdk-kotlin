@@ -51,13 +51,13 @@ class SharedPreferencesStore(
 
     override var refreshToken: String?
         get() = prefs.getString(Store.KEY_REFRESH_TOKEN, null)
-        set(value) = prefs.edit { putString(Store.KEY_REFRESH_TOKEN, value) }
+        set(value) = edit { putString(Store.KEY_REFRESH_TOKEN, value) }
 
     override var expiryDate: Date?
         get() = prefs.getString(Store.KEY_EXPIRY_DATE, null)?.let { Json.decodeFromString(DateSerializer, it) }
         set(
             value,
-        ) = prefs.edit { putString(Store.KEY_EXPIRY_DATE, value?.let { Json.encodeToString(DateSerializer, it) }) }
+        ) = edit { putString(Store.KEY_EXPIRY_DATE, value?.let { Json.encodeToString(DateSerializer, it) }) }
 
     override var bibleReference: BibleReference?
         get() = prefs.getString(Store.KEY_BIBLE_READER_REFERENCE, null)?.let { Json.decodeFromString(it) }
