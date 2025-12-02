@@ -26,6 +26,8 @@ object YouVersionPlatformConfiguration {
         get() = config?.accessToken
     val refreshToken: String?
         get() = config?.refreshToken
+    val idToken: String?
+        get() = config?.idToken
     val expiryDate: Date?
         get() = config?.expiryDate
 
@@ -34,6 +36,7 @@ object YouVersionPlatformConfiguration {
         appKey: String?,
         accessToken: String? = null,
         refreshToken: String? = null,
+        idToken: String? = null,
         expiryDate: Date? = null,
         apiHost: String = DEFAULT_API_HOST,
         hostEnv: String? = null,
@@ -52,6 +55,7 @@ object YouVersionPlatformConfiguration {
             appKey = appKey,
             accessToken = accessToken,
             refreshToken = refreshToken,
+            idToken = idToken,
             expiryDate = expiryDate,
             apiHost = apiHost,
             hostEnv = hostEnv,
@@ -62,6 +66,7 @@ object YouVersionPlatformConfiguration {
         appKey: String?,
         accessToken: String? = null,
         refreshToken: String? = null,
+        idToken: String? = null,
         expiryDate: Date? = null,
         apiHost: String = DEFAULT_API_HOST,
         hostEnv: String? = null,
@@ -76,6 +81,7 @@ object YouVersionPlatformConfiguration {
                 installId = store.installId ?: UUID.randomUUID().toString().also { store.installId = it },
                 accessToken = accessToken ?: store.accessToken,
                 refreshToken = refreshToken ?: store.refreshToken,
+                idToken = idToken ?: store.idToken,
                 expiryDate = expiryDate ?: store.expiryDate,
             )
     }
@@ -93,12 +99,16 @@ object YouVersionPlatformConfiguration {
      *                    Passing null will clear the stored access token.
      * @param refreshToken The token used to obtain a new access token when the current one
      *                     expires. Passing null will clear the stored refresh token.
+     * @param idToken A JSON Web Token (JWT) that contains the user's identity and profile information.
+     *                It proves that the user has been authenticated. Passing null will clear the
+     *                stored ID token.
      * @param expiryDate The future date and time at which the access token becomes invalid.
      *                   Passing null will clear the stored expiry date.
      */
     fun saveAuthData(
         accessToken: String?,
         refreshToken: String?,
+        idToken: String?,
         expiryDate: Date?,
         persist: Boolean = true,
     ) {
@@ -107,12 +117,14 @@ object YouVersionPlatformConfiguration {
                 it.copy(
                     accessToken = accessToken,
                     refreshToken = refreshToken,
+                    idToken = idToken,
                     expiryDate = expiryDate,
                 )
             if (persist) {
                 val store = YouVersionPlatformComponent.store
                 store.accessToken = accessToken
                 store.refreshToken = refreshToken
+                store.idToken = idToken
                 store.expiryDate = expiryDate
             }
         } ?: throw YouVersionNotConfiguredException()
@@ -130,7 +142,7 @@ object YouVersionPlatformConfiguration {
      * re-authenticate.
      */
     fun clearAuthData() {
-        saveAuthData(accessToken = null, refreshToken = null, expiryDate = null)
+        saveAuthData(accessToken = null, refreshToken = null, idToken = null, expiryDate = null)
     }
 
     /**
@@ -153,5 +165,6 @@ private data class Config(
     val installId: String?,
     val accessToken: String?,
     val refreshToken: String?,
+    val idToken: String?,
     val expiryDate: Date?,
 )

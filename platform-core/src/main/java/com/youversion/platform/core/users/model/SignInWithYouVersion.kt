@@ -10,6 +10,9 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 object SignInWithYouVersion {
     val redirectURL = "youversionauth://callback".toUri()
@@ -58,19 +61,20 @@ object SignInWithYouVersion {
             redirectUri = redirectURL.toString(),
         )
 
-    fun extractSignInWithYouVersionResult(from: TokenResponse): SignInWithYouVersionResult {
-        val idClaims = decodeJWT(from.idToken)
+    fun extractSignInWithYouVersionResult(tokens: TokenResponse): SignInWithYouVersionResult {
+        val idClaims = decodeJWT(tokens.idToken)
         val permissions =
-            from.scope
-                .split(" ")
+            tokens.scope
+                .split(",")
                 .mapNotNull { rawValue ->
                     SignInWithYouVersionPermission.entries.find { it.rawValue == rawValue }
                 }.toSet()
 
         return SignInWithYouVersionResult.create(
-            accessToken = from.accessToken,
-            expiresIn = from.expiresIn.toString(),
-            refreshToken = from.refreshToken,
+            accessToken = tokens.accessToken,
+            expiresIn = tokens.expiresIn.toString(),
+            refreshToken = tokens.refreshToken,
+            idToken = tokens.idToken,
             permissions = permissions.toList(),
             yvpUserId = idClaims["sub"] as? String,
             name = idClaims["name"] as? String,
@@ -79,14 +83,53 @@ object SignInWithYouVersion {
         )
     }
 
-    private fun decodeJWT(token: String): Map<String, Any> {
+    val currentUserId: String?
+        get() = currentIdClaims?.get("sub") as? String
+
+    val currentUserName: String?
+        get() = currentIdClaims?.get("name") as? String
+
+    val currentUserEmail: String?
+        get() = currentIdClaims?.get("email") as? String
+
+    val currentUserProfilePicture: String?
+        get() = currentIdClaims?.get("picture") as? String
+
+    /**
+     * A computed property that decodes and returns the claims from the currently stored ID token.
+     *
+     * @return A map of claims if an ID token exists and can be successfully decoded, otherwise `null`.
+     */
+    private val currentIdClaims: Map<String, Any?>?
+        get() {
+            val idToken = YouVersionPlatformConfiguration.idToken ?: return null
+            return decodeJWT(idToken)
+        }
+
+    private fun decodeJWT(token: String): Map<String, Any?> {
         val segments = token.split(".")
-        if (segments.size < 2) return emptyMap()
+        if (segments.size != 3) return emptyMap()
+        var base64 = segments[1]
+        base64 = base64.replace('-', '+').replace('_', '/')
 
-        val payload = segments[1]
-        val decodedBytes = Base64.decode(payload, Base64.URL_SAFE)
-        val decodedString = String(decodedBytes, Charsets.UTF_8)
+        val padding =
+            when (base64.length % 4) {
+                2 -> "=="
+                3 -> "="
+                else -> ""
+            }
+        base64 += padding
 
-        return Json.decodeFromString<Map<String, Any>>(decodedString)
+        return try {
+            val decodedBytes = Base64.decode(base64, Base64.DEFAULT)
+            val decodedString = String(decodedBytes, Charsets.UTF_8)
+            val jsonObject = Json.decodeFromString<JsonObject>(decodedString)
+
+            jsonObject.mapValues { (_, jsonElement) ->
+                jsonElement.jsonPrimitive.contentOrNull
+            }
+        } catch (_: Exception) {
+            emptyMap()
+        }
     }
 }

@@ -84,11 +84,12 @@ object YouVersionAuthentication {
                     from = code,
                     codeVerifier = storedCodeVerifier,
                 )
-            val result = SignInWithYouVersion.extractSignInWithYouVersionResult(from = tokens)
+            val result = SignInWithYouVersion.extractSignInWithYouVersionResult(tokens = tokens)
 
             YouVersionPlatformConfiguration.saveAuthData(
                 accessToken = result.accessToken,
                 refreshToken = result.refreshToken,
+                idToken = result.idToken,
                 expiryDate = result.expiryDate,
             )
             result

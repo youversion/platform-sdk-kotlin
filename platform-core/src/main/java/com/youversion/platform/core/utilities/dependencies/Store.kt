@@ -19,6 +19,8 @@ interface Store {
 
     var refreshToken: String?
 
+    var idToken: String?
+
     var expiryDate: Date?
 
     var bibleReference: BibleReference?
@@ -28,6 +30,7 @@ interface Store {
     companion object {
         internal const val KEY_ACCESS_TOKEN = "YouVersionPlatformAccessToken"
         internal const val KEY_REFRESH_TOKEN = "YouVersionPlatformRefreshToken"
+        internal const val KEY_ID_TOKEN = "YouVersionPlatformIDToken"
         internal const val KEY_EXPIRY_DATE = "YouVersionPlatformExpiryDate"
         internal const val KEY_INSTALL_ID = "YouVersionPlatformInstallID"
         internal const val KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
@@ -52,6 +55,10 @@ class SharedPreferencesStore(
     override var refreshToken: String?
         get() = prefs.getString(Store.KEY_REFRESH_TOKEN, null)
         set(value) = edit { putString(Store.KEY_REFRESH_TOKEN, value) }
+
+    override var idToken: String?
+        get() = prefs.getString(Store.KEY_ID_TOKEN, null)
+        set(value) = edit { putString(Store.KEY_ID_TOKEN, value) }
 
     override var expiryDate: Date?
         get() = prefs.getString(Store.KEY_EXPIRY_DATE, null)?.let { Json.decodeFromString(DateSerializer, it) }

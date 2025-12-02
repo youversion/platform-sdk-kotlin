@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.ui.App
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.theme.YouVersionPlatformTheme
@@ -16,8 +15,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        println(YouVersionPlatformConfiguration.accessToken)
 
         handleOAuthCallback(intent)
 
