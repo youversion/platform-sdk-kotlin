@@ -37,10 +37,13 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                     appKey = "app",
                     requiredPermissions =
                         setOf(
-                            SignInWithYouVersionPermission.BIBLES,
-                            SignInWithYouVersionPermission.BIBLE_ACTIVITY,
+                            SignInWithYouVersionPermission.OPENID,
                         ),
-                    optionalPermissions = setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                    optionalPermissions =
+                        setOf(
+                            SignInWithYouVersionPermission.PROFILE,
+                            SignInWithYouVersionPermission.EMAIL,
+                        ),
                 ).let { Url(urlString = it) }
 
         assertEquals(URLProtocol.HTTPS, url.protocol)
@@ -48,8 +51,8 @@ class UsersEndpointsTests : YouVersionPlatformTest {
         assertEquals("/auth/login", url.encodedPath)
         assertEquals("app", url.parameters["app_id"])
         assertEquals("en", url.parameters["language"])
-        assertEquals("bibles,bible_activity", url.parameters["required_perms"])
-        assertEquals("highlights", url.parameters["opt_perms"])
+        assertEquals("openid", url.parameters["required_perms"])
+        assertEquals("profile,email", url.parameters["opt_perms"])
         assertEquals(YouVersionPlatformConfiguration.installId, url.parameters["x-yvp-installation-id"])
     }
 }

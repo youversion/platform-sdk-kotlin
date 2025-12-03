@@ -42,8 +42,8 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                 onClick = {
                     signInViewModel.signIn(
                         context = context,
-                        SignInWithYouVersionPermission.BIBLES,
-                        SignInWithYouVersionPermission.HIGHLIGHTS,
+                        SignInWithYouVersionPermission.PROFILE,
+                        SignInWithYouVersionPermission.EMAIL,
                     )
                 },
                 stroked = true,
