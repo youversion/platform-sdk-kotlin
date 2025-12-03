@@ -57,6 +57,13 @@ class TestStore : Store {
                 ?: prefs.remove(Store.KEY_REFRESH_TOKEN)
         }
 
+    override var idToken: String?
+        get() = prefs[Store.KEY_ID_TOKEN]
+        set(value) {
+            value?.let { prefs[Store.KEY_ID_TOKEN] = it }
+                ?: prefs.remove(Store.KEY_ID_TOKEN)
+        }
+
     override var expiryDate: Date?
         get() = prefs[Store.KEY_EXPIRY_DATE]?.let { Json.decodeFromString(DateSerializer, it) }
         set(value) {

@@ -75,6 +75,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 appKey = "appKey",
                 accessToken = "accessToken",
                 refreshToken = "refreshToken",
+                idToken = "idToken",
                 expiryDate = Date(),
             )
             assertEquals("accessToken", accessToken)
@@ -85,11 +86,13 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             saveAuthData(
                 accessToken = "newToken",
                 refreshToken = "newRefreshToken",
+                idToken = "newIdToken",
                 expiryDate = newDate,
                 persist = false,
             )
             assertEquals("newToken", accessToken)
             assertEquals("newRefreshToken", refreshToken)
+            assertEquals("newIdToken", idToken)
             assertEquals(newDate, expiryDate)
 
             assertNull(store.accessToken)
@@ -99,6 +102,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             saveAuthData(
                 accessToken = "persistedToken",
                 refreshToken = "persistedRefreshToken",
+                idToken = "persistedIdToken",
                 expiryDate = newDate,
             )
             assertEquals("persistedToken", accessToken)
@@ -106,6 +110,9 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
 
             assertEquals("persistedRefreshToken", refreshToken)
             assertEquals("persistedRefreshToken", store.refreshToken)
+
+            assertEquals("persistedIdToken", idToken)
+            assertEquals("persistedIdToken", store.idToken)
 
             assertEquals(newDate, expiryDate)
             assertEquals(newDate, store.expiryDate)
