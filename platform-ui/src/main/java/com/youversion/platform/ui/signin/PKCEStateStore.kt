@@ -12,6 +12,7 @@ internal object PKCEStateStore {
     private const val PREF_NAME = "youversion_pkce_state_prefs"
     private const val KEY_CODE_VERIFIER = "pkce_code_verifier"
     private const val KEY_STATE = "pkce_state"
+    private const val KEY_NONCE = "pkce_nonce"
 
     private var prefs: SharedPreferences? = null
 
@@ -33,11 +34,13 @@ internal object PKCEStateStore {
         context: Context,
         codeVerifier: String,
         state: String,
+        nonce: String,
     ) {
         getPrefs(context)
             .edit {
                 putString(KEY_CODE_VERIFIER, codeVerifier)
                 putString(KEY_STATE, state)
+                putString(KEY_NONCE, nonce)
             }
     }
 
@@ -58,6 +61,14 @@ internal object PKCEStateStore {
     fun getState(context: Context): String? = getPrefs(context).getString(KEY_STATE, null)
 
     /**
+     * Retrieves the stored nonce.
+     *
+     * @param context The Android context.
+     * @return The stored nonce string, or null if not found.
+     */
+    fun getNonce(context: Context): String? = getPrefs(context).getString(KEY_NONCE, null)
+
+    /**
      * Clears the stored PKCE parameters from SharedPreferences. This should be
      * called after the authentication flow is completed or cancelled.
      *
@@ -68,6 +79,7 @@ internal object PKCEStateStore {
             .edit {
                 remove(KEY_CODE_VERIFIER)
                 remove(KEY_STATE)
+                remove(KEY_NONCE)
             }
     }
 }

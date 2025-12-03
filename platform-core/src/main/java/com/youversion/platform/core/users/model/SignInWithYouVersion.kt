@@ -15,22 +15,44 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
 object SignInWithYouVersion {
-    val redirectURL = "youversionauth://callback".toUri()
-    private val callbackUrL = "https://" + YouVersionPlatformConfiguration.apiHost + "/auth/callback"
+    private val callbackUrl = "https://" + YouVersionPlatformConfiguration.apiHost + "/auth/callback"
 
-    suspend fun obtainLocation(
-        from: Uri,
+    suspend fun getSignInResult(
+        callbackUri: Uri,
+        state: String,
+        codeVerifier: String,
+        redirectUri: Uri,
+        nonce: String,
+    ): SignInWithYouVersionResult {
+        val location =
+            obtainLocation(
+                callbackUri = callbackUri,
+                state = state,
+            )
+        val code = obtainCode(location = location)
+        val tokens =
+            obtainTokens(
+                code = code,
+                codeVerifier = codeVerifier,
+                redirectUri = redirectUri,
+            )
+        val result = extractSignInWithYouVersionResult(tokens = tokens, nonce = nonce)
+        return result
+    }
+
+    private suspend fun obtainLocation(
+        callbackUri: Uri,
         state: String,
     ): String {
-        if (from.getQueryParameter("state") != state) {
+        if (callbackUri.getQueryParameter("state") != state) {
             throw IllegalStateException("State mismatch")
         }
 
         val newUrl =
-            callbackUrL
+            callbackUrl
                 .toUri()
                 .buildUpon()
-                .encodedQuery(from.encodedQuery) // Forward all original query params
+                .encodedQuery(callbackUri.encodedQuery) // Forward all original query params
                 .build()
 
         val client = YouVersionPlatformComponent.httpClient.config { followRedirects = false }
@@ -45,24 +67,33 @@ object SignInWithYouVersion {
             ?: throw Exception("Location header not found in 302 response")
     }
 
-    fun obtainCode(from: String): String {
-        val locationUri = from.toUri()
+    private fun obtainCode(location: String): String {
+        val locationUri = location.toUri()
         return locationUri.getQueryParameter("code")
             ?: throw Exception("Code not found in location URI")
     }
 
-    suspend fun obtainTokens(
-        from: String,
+    private suspend fun obtainTokens(
+        code: String,
         codeVerifier: String,
+        redirectUri: Uri,
     ): TokenResponse =
         SignInWithYouVersionPKCEAuthorizationRequestBuilder.tokenRequest(
-            code = from,
+            code = code,
             codeVerifier = codeVerifier,
-            redirectUri = redirectURL.toString(),
+            redirectUri = redirectUri,
         )
 
-    fun extractSignInWithYouVersionResult(tokens: TokenResponse): SignInWithYouVersionResult {
+    private fun extractSignInWithYouVersionResult(
+        tokens: TokenResponse,
+        nonce: String,
+    ): SignInWithYouVersionResult {
         val idClaims = decodeJWT(tokens.idToken)
+
+        if (idClaims["nonce"] as? String != nonce) {
+            throw IllegalStateException("Nonce mismatch. Potential replay attack.")
+        }
+
         val permissions =
             tokens.scope
                 .split(",")

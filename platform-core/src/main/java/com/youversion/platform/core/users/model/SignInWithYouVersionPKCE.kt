@@ -108,7 +108,7 @@ object SignInWithYouVersionPKCEAuthorizationRequestBuilder {
     suspend fun tokenRequest(
         code: String,
         codeVerifier: String,
-        redirectUri: String,
+        redirectUri: Uri,
     ): TokenResponse {
         val url = "https://${YouVersionPlatformConfiguration.apiHost}/auth/token"
         val httpClient = YouVersionPlatformComponent.httpClient
@@ -120,7 +120,7 @@ object SignInWithYouVersionPKCEAuthorizationRequestBuilder {
                     Parameters.build {
                         append("grant_type", "authorization_code")
                         append("code", code)
-                        append("redirect_uri", redirectUri)
+                        append("redirect_uri", redirectUri.toString())
                         append("client_id", YouVersionPlatformConfiguration.appKey ?: "")
                         append("code_verifier", codeVerifier)
                     },
@@ -192,8 +192,7 @@ object SignInWithYouVersionPKCEAuthorizationRequestBuilder {
      * Combines a set of permissions into a single, space-delimited scope string, ensuring "openid" is included.
      */
     private fun scopeValue(permissions: Set<SignInWithYouVersionPermission>): String {
-        val permissionValues = permissions.map { it.rawValue }.toMutableSet()
-        permissionValues.add("openid")
-        return permissionValues.sorted().joinToString(" ")
+        val fullScopes = permissions.union(setOf(SignInWithYouVersionPermission.OPENID))
+        return fullScopes.map { it.rawValue }.sorted().joinToString(" ")
     }
 }

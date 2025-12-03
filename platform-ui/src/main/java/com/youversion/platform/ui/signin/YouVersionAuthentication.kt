@@ -3,6 +3,7 @@ package com.youversion.platform.ui.signin
 import android.content.Context
 import android.content.Intent
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.core.net.toUri
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.users.model.SignInWithYouVersion
@@ -16,6 +17,8 @@ import kotlinx.coroutines.withContext
  * Handles the user authentication flow for signing in with YouVersion.
  */
 object YouVersionAuthentication {
+    val redirectUri = "youversionauth://callback".toUri()
+
     /**
      * Presents the YouVersion login flow to the user. This function is now a 'fire-and-forget'
      * operation. The result must be handled by `handleAuthCallback`.
@@ -35,13 +38,14 @@ object YouVersionAuthentication {
             SignInWithYouVersionPKCEAuthorizationRequestBuilder.make(
                 appKey = appKey,
                 permissions = permissions,
-                redirectUri = SignInWithYouVersion.redirectURL,
+                redirectUri = redirectUri,
             )
 
         PKCEStateStore.save(
             context,
             codeVerifier = authorizationRequest.parameters.codeVerifier,
             state = authorizationRequest.parameters.state,
+            nonce = authorizationRequest.parameters.nonce,
         )
 
         val customTabsIntent = CustomTabsIntent.Builder().build()
@@ -61,30 +65,27 @@ object YouVersionAuthentication {
         context: Context,
         intent: Intent?,
     ): SignInWithYouVersionResult? {
-        val uri = intent?.data ?: return null
+        val callbackUri = intent?.data ?: return null
 
         val storedState = PKCEStateStore.getState(context)
         val storedCodeVerifier = PKCEStateStore.getCodeVerifier(context)
+        val storedNonce = PKCEStateStore.getNonce(context)
 
         PKCEStateStore.clear(context)
 
-        if (storedState == null || storedCodeVerifier == null) {
+        if (storedState == null || storedCodeVerifier == null || storedNonce == null) {
             return null
         }
 
         return withContext(Dispatchers.IO) {
-            val location =
-                SignInWithYouVersion.obtainLocation(
-                    from = uri,
+            val result =
+                SignInWithYouVersion.getSignInResult(
+                    callbackUri = callbackUri,
                     state = storedState,
-                )
-            val code = SignInWithYouVersion.obtainCode(from = location)
-            val tokens =
-                SignInWithYouVersion.obtainTokens(
-                    from = code,
                     codeVerifier = storedCodeVerifier,
+                    redirectUri = redirectUri,
+                    nonce = storedNonce,
                 )
-            val result = SignInWithYouVersion.extractSignInWithYouVersionResult(tokens = tokens)
 
             YouVersionPlatformConfiguration.saveAuthData(
                 accessToken = result.accessToken,
