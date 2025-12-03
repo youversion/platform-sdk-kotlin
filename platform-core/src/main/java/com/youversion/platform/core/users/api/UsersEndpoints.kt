@@ -4,7 +4,6 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
-import com.youversion.platform.core.users.model.SignInWithYouVersionResult
 import com.youversion.platform.core.users.model.YouVersionUserInfo
 import io.ktor.http.path
 
