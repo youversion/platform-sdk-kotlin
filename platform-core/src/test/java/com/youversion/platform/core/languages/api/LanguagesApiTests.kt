@@ -66,7 +66,7 @@ class LanguagesApiTests : YouVersionPlatformTest {
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
-            val languages = YouVersionApi.language.languages()
+            val languages = YouVersionApi.languages.languages()
 
             assertEquals(2, languages.size)
             assertEquals("en", languages[0].id)
@@ -85,7 +85,7 @@ class LanguagesApiTests : YouVersionPlatformTest {
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
-            YouVersionApi.language
+            YouVersionApi.languages
                 .languages()
                 .apply { assertTrue { isEmpty() } }
         }
@@ -93,24 +93,24 @@ class LanguagesApiTests : YouVersionPlatformTest {
     @Test
     fun `test books throws not permitted if unauthorized`() =
         testUnauthorizedNotPermitted {
-            YouVersionApi.language.languages(country = "US")
+            YouVersionApi.languages.languages(country = "US")
         }
 
     @Test
     fun `test books throws not permitted if forbidden`() =
         testForbiddenNotPermitted {
-            YouVersionApi.language.languages(country = "US")
+            YouVersionApi.languages.languages(country = "US")
         }
 
     @Test
     fun `test books throws cannot download if request failed`() =
         testCannotDownload {
-            YouVersionApi.language.languages(country = "US")
+            YouVersionApi.languages.languages(country = "US")
         }
 
     @Test
     fun `test books throws invalid response if cannot parse`() =
         testInvalidResponse {
-            YouVersionApi.language.languages(country = "US")
+            YouVersionApi.languages.languages(country = "US")
         }
 }

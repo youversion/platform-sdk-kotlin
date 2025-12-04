@@ -19,6 +19,7 @@ data class BibleVersion(
     @SerialName(CodingKey.BOOK_CODES) val bookCodes: List<String>? = null,
     @SerialName(CodingKey.BOOKS) val books: List<BibleBook>? = null,
     @SerialName(CodingKey.TEXT_DIRECTION) val textDirection: String? = null,
+    @SerialName(CodingKey.ORGANIZATION_ID) val organizationId: String? = null,
 ) {
     private object CodingKey {
         const val ID = "id"
@@ -34,6 +35,7 @@ data class BibleVersion(
         const val READER_FOOTER_URL = "publisher_url"
         const val TEXT_DIRECTION = "text_direction"
         const val TITLE = "title"
+        const val ORGANIZATION_ID = "organization_id"
     }
 
     val isRightToLeft: Boolean
