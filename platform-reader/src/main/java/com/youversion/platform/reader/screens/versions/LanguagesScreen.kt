@@ -7,18 +7,33 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import com.youversion.platform.reader.components.BibleReaderTopAppBar
+import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun LanguagesScreen(onBackClick: () -> Unit) {
     Scaffold(
         topBar = {
-            BibleReaderTopAppBar(title = "Languages", onBackClick = onBackClick)
+            BibleReaderTopAppBar(
+                title = "Languages",
+                onBackClick = onBackClick,
+            )
         },
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            Text(text = "Languages Screen")
+            Text("Languages")
         }
+    }
+}
+
+@Composable
+@Preview
+private fun Preview_LanguagesScreen() {
+    BibleReaderMaterialTheme {
+        LanguagesScreen(
+            onBackClick = {},
+        )
     }
 }

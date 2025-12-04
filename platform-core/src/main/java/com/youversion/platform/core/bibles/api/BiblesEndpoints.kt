@@ -25,11 +25,17 @@ object BiblesEndpoints : BiblesApi {
         get() = YouVersionPlatformComponent.httpClient
 
     // ----- Bibles URLs
-    fun versionsUrl(languageRanges: Set<String> = emptySet()): String =
+    fun versionsUrl(
+        languageRanges: Set<String> = emptySet(),
+        pageSize: Int? = null,
+    ): String =
         buildYouVersionUrlString {
             path("/v1/bibles")
             val ranges = if (languageRanges.isEmpty()) "*" else languageRanges.joinToString(",")
             parameter("language_ranges[]", ranges)
+            pageSize?.let {
+                parameter("page_size", it)
+            }
         }
 
     fun versionUrl(versionId: Int): String = buildYouVersionUrlString { path("/v1/bibles/$versionId") }
@@ -80,7 +86,10 @@ object BiblesEndpoints : BiblesApi {
         }
 
     // ----- Bibles API
-    override suspend fun versions(languageCode: String?): List<BibleVersion> {
+    override suspend fun versions(
+        languageCode: String?,
+        pageSize: Int?,
+    ): List<BibleVersion> {
         if (languageCode != null && languageCode.length != 3) {
             Logger.w { "Invalid Language Code $languageCode. Must be 3 letters, e.g. 'eng'." }
             return emptyList()
@@ -88,7 +97,7 @@ object BiblesEndpoints : BiblesApi {
 
         val range = languageCode?.let { setOf(it) } ?: emptySet()
         return httpClient
-            .get(versionsUrl(range))
+            .get(versionsUrl(languageRanges = range, pageSize = pageSize))
             .let {
                 when (it.status) {
                     HttpStatusCode.NoContent -> emptyList()
