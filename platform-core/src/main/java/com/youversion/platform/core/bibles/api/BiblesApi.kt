@@ -24,6 +24,7 @@ interface BiblesApi {
     suspend fun versions(
         languageCode: String? = null,
         pageSize: Int? = null,
+        pageToken: String? = null,
     ): List<BibleVersion>
 
     /**

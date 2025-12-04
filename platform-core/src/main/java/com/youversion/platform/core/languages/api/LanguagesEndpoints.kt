@@ -1,6 +1,8 @@
 package com.youversion.platform.core.languages.api
 
 import com.youversion.platform.core.api.buildYouVersionUrlString
+import com.youversion.platform.core.api.pageSize
+import com.youversion.platform.core.api.pageToken
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.api.parseApiResponse
 import com.youversion.platform.core.languages.models.Language
@@ -22,8 +24,8 @@ object LanguagesEndpoints : LanguagesApi {
         buildYouVersionUrlString {
             path("/v1/languages")
             parameter("country", country)
-            parameter("page_size", pageSize)
-            parameter("page_token", pageToken)
+            pageSize(pageSize)
+            pageToken(pageToken)
         }
 
     override suspend fun languages(

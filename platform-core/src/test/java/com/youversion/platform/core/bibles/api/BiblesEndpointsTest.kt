@@ -21,6 +21,11 @@ class BiblesEndpointsTest {
             "https://api.youversion.com/v1/bibles?language_ranges%5B%5D=eng&page_size=99",
             BiblesEndpoints.versionsUrl(languageRanges = setOf("eng"), pageSize = 99),
         )
+
+        assertEquals(
+            "https://api.youversion.com/v1/bibles?language_ranges%5B%5D=eng&page_token=token",
+            BiblesEndpoints.versionsUrl(languageRanges = setOf("eng"), pageToken = "token"),
+        )
     }
 
     @Test

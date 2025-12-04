@@ -2,6 +2,8 @@ package com.youversion.platform.core.bibles.api
 
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.buildYouVersionUrlString
+import com.youversion.platform.core.api.pageSize
+import com.youversion.platform.core.api.pageToken
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.api.parseApiBody
 import com.youversion.platform.core.api.parseApiResponse
@@ -28,14 +30,14 @@ object BiblesEndpoints : BiblesApi {
     fun versionsUrl(
         languageRanges: Set<String> = emptySet(),
         pageSize: Int? = null,
+        pageToken: String? = null,
     ): String =
         buildYouVersionUrlString {
             path("/v1/bibles")
             val ranges = if (languageRanges.isEmpty()) "*" else languageRanges.joinToString(",")
             parameter("language_ranges[]", ranges)
-            pageSize?.let {
-                parameter("page_size", it)
-            }
+            pageSize(pageSize)
+            pageToken(pageToken)
         }
 
     fun versionUrl(versionId: Int): String = buildYouVersionUrlString { path("/v1/bibles/$versionId") }
@@ -89,6 +91,7 @@ object BiblesEndpoints : BiblesApi {
     override suspend fun versions(
         languageCode: String?,
         pageSize: Int?,
+        pageToken: String?,
     ): List<BibleVersion> {
         if (languageCode != null && languageCode.length != 3) {
             Logger.w { "Invalid Language Code $languageCode. Must be 3 letters, e.g. 'eng'." }
@@ -97,7 +100,7 @@ object BiblesEndpoints : BiblesApi {
 
         val range = languageCode?.let { setOf(it) } ?: emptySet()
         return httpClient
-            .get(versionsUrl(languageRanges = range, pageSize = pageSize))
+            .get(versionsUrl(languageRanges = range, pageSize = pageSize, pageToken = pageToken))
             .let {
                 when (it.status) {
                     HttpStatusCode.NoContent -> emptyList()
