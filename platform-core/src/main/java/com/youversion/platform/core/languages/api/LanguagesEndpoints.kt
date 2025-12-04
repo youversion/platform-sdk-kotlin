@@ -14,15 +14,25 @@ object LanguagesEndpoints : LanguagesApi {
     private val httpClient: HttpClient
         get() = YouVersionPlatformComponent.httpClient
 
-    fun languagesUrl(country: String? = null): String =
+    fun languagesUrl(
+        country: String? = null,
+        pageSize: Int? = null,
+        pageToken: String? = null,
+    ): String =
         buildYouVersionUrlString {
             path("/v1/languages")
-            country?.let { parameter("country", country) }
+            parameter("country", country)
+            parameter("page_size", pageSize)
+            parameter("page_token", pageToken)
         }
 
-    override suspend fun languages(country: String?): List<Language> =
+    override suspend fun languages(
+        country: String?,
+        perPage: Int?,
+        pageToken: String?,
+    ): List<Language> =
         httpClient
-            .get(languagesUrl(country))
+            .get(languagesUrl(country, perPage, pageToken))
             .let {
                 when (it.status) {
                     HttpStatusCode.NoContent -> emptyList()

@@ -14,5 +14,9 @@ interface LanguagesApi {
      * @return A list of [Language]s representing the available languages.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun languages(country: String? = null): List<Language>
+    suspend fun languages(
+        country: String? = null,
+        perPage: Int? = null,
+        pageToken: String? = null,
+    ): List<Language>
 }

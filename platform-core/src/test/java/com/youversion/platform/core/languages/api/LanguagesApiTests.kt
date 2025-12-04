@@ -28,7 +28,8 @@ class LanguagesApiTests : YouVersionPlatformTest {
     fun `test languages success returns data`() =
         runTest {
             MockEngine { request ->
-                assertEquals(HttpMethod.Companion.Get, request.method)
+                assertEquals(HttpMethod.Get, request.method)
+                assertEquals("/v1/languages", request.url.encodedPathAndQuery)
                 respondJson(
                     """
                     {
