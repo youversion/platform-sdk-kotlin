@@ -21,15 +21,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.components.BibleReaderHeader
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
+import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
 import com.youversion.platform.ui.views.BibleTextOptions
@@ -44,7 +48,11 @@ internal fun BibleScreen(
     onVersionsClick: () -> Unit,
     onFontsClick: () -> Unit,
 ) {
+    val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    val signInViewModel = viewModel<SignInViewModel>()
+    val signInState by signInViewModel.state.collectAsStateWithLifecycle()
 
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
 
@@ -56,14 +64,20 @@ internal fun BibleScreen(
             Column {
                 // Reader top bar
                 BibleReaderHeader(
-                    signedIn = false,
+                    signedIn = signInState.isSignedIn,
                     bookAndChapter = state.bookAndChapter,
                     versionAbbreviation = state.versionAbbreviation,
                     onChapterClick = onReferencesClick,
                     onVersionClick = onVersionsClick,
                     onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
-                    onSignInClick = {},
-                    onSignOutClick = {},
+                    onSignInClick = {
+                        signInViewModel.signIn(
+                            context = context,
+                            SignInWithYouVersionPermission.PROFILE,
+                            SignInWithYouVersionPermission.EMAIL,
+                        )
+                    },
+                    onSignOutClick = { signInViewModel.signOut() },
                 )
 
                 // Scrollable Reader content
