@@ -6,14 +6,18 @@ import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfigured
 import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
 import com.youversion.platform.core.utilities.koin.startYouVersionPlatform
 import com.youversion.platform.core.utilities.koin.stopYouVersionPlatform
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.Date
 import java.util.UUID
 
 object YouVersionPlatformConfiguration {
     private const val DEFAULT_API_HOST = "api.youversion.com"
+    private val _configState = MutableStateFlow<Config?>(null)
+    val configState = _configState.asStateFlow()
 
-    private var config: Config? = null
-
+    private val config: Config?
+        get() = _configState.value
     val appKey: String?
         get() = config?.appKey
     val apiHost: String
@@ -31,6 +35,9 @@ object YouVersionPlatformConfiguration {
     val expiryDate: Date?
         get() = config?.expiryDate
 
+    val isSignedIn: Boolean
+        get() = accessToken != null
+
     fun configure(
         context: Context,
         appKey: String?,
@@ -43,7 +50,7 @@ object YouVersionPlatformConfiguration {
     ) {
         if (config != null) {
             Logger.w("YouVersionPlatform SDK has already been configured. Reconfiguring.")
-            config = null
+            _configState.value = null // Emit a null state to notify observers of reconfiguration
             stopYouVersionPlatform()
         }
 
@@ -73,7 +80,7 @@ object YouVersionPlatformConfiguration {
     ) {
         val store = YouVersionPlatformComponent.store
 
-        config =
+        _configState.value =
             Config(
                 appKey = appKey,
                 apiHost = apiHost,
@@ -112,22 +119,23 @@ object YouVersionPlatformConfiguration {
         expiryDate: Date?,
         persist: Boolean = true,
     ) {
-        config?.let {
-            config =
-                it.copy(
-                    accessToken = accessToken,
-                    refreshToken = refreshToken,
-                    idToken = idToken,
-                    expiryDate = expiryDate,
-                )
-            if (persist) {
-                val store = YouVersionPlatformComponent.store
-                store.accessToken = accessToken
-                store.refreshToken = refreshToken
-                store.idToken = idToken
-                store.expiryDate = expiryDate
-            }
-        } ?: throw YouVersionNotConfiguredException()
+        val currentConfig = config ?: throw YouVersionNotConfiguredException()
+
+        _configState.value =
+            currentConfig.copy(
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                idToken = idToken,
+                expiryDate = expiryDate,
+            )
+
+        if (persist) {
+            val store = YouVersionPlatformComponent.store
+            store.accessToken = accessToken
+            store.refreshToken = refreshToken
+            store.idToken = idToken
+            store.expiryDate = expiryDate
+        }
     }
 
     /**
@@ -152,13 +160,12 @@ object YouVersionPlatformConfiguration {
      * @throws YouVersionNotConfiguredException If [configure] has not been called first.
      */
     fun setApiHost(apiHost: String) {
-        config?.let {
-            config = it.copy(apiHost = apiHost)
-        } ?: throw YouVersionNotConfiguredException()
+        val currentConfig = config ?: throw YouVersionNotConfiguredException()
+        _configState.value = currentConfig.copy(apiHost = apiHost)
     }
 }
 
-private data class Config(
+data class Config(
     val appKey: String?,
     val apiHost: String,
     val hostEnv: String?,
