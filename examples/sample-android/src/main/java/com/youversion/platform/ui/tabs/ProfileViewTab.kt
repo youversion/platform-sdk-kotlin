@@ -58,14 +58,10 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                 }
             } else {
                 SignInWithYouVersionButton(
-                    onClick = {
-                        signInViewModel.onAction(
-                            SignInViewModel.Action.SignIn(
-                                setOf(
-                                    SignInWithYouVersionPermission.PROFILE,
-                                    SignInWithYouVersionPermission.EMAIL,
-                                ),
-                            ),
+                    permissions = {
+                        setOf(
+                            SignInWithYouVersionPermission.PROFILE,
+                            SignInWithYouVersionPermission.EMAIL,
                         )
                     },
                     stroked = true,

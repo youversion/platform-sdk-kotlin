@@ -1,6 +1,7 @@
 package com.youversion.platform.ui.signin
 
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -47,10 +48,10 @@ class SignInViewModel(
     fun onAction(action: Action) {
         when (action) {
             is Action.SignIn -> {
-                handleSignIn(action.permissions)
+                handleSignIn(action)
             }
             is Action.ProcessAuthCallback -> {
-                handleProcessAuthCallback(action.intent)
+                handleProcessAuthCallback(action)
             }
             is Action.CancelAuthentication -> {
                 handleCancelAuthentication()
@@ -61,12 +62,12 @@ class SignInViewModel(
         }
     }
 
-    private fun handleSignIn(permissions: Set<SignInWithYouVersionPermission>) {
+    private fun handleSignIn(action: Action.SignIn) {
         viewModelScope.launch {
             try {
                 YouVersionAuthentication.signIn(
-                    context = application,
-                    permissions = permissions,
+                    context = action.context,
+                    permissions = action.permissions,
                 )
             } catch (_: Exception) {
                 _events.send(Event.SignInError)
@@ -74,10 +75,10 @@ class SignInViewModel(
         }
     }
 
-    private fun handleProcessAuthCallback(intent: Intent) {
+    private fun handleProcessAuthCallback(action: Action.ProcessAuthCallback) {
         viewModelScope.launch {
             try {
-                YouVersionAuthentication.handleAuthCallback(application, intent)
+                YouVersionAuthentication.handleAuthCallback(application, action.intent)
             } catch (_: Exception) {
                 _events.send(Event.AuthenticationError)
             }
@@ -109,6 +110,7 @@ class SignInViewModel(
     // ----- Actions
     sealed interface Action {
         data class SignIn(
+            val context: Context,
             val permissions: Set<SignInWithYouVersionPermission>,
         ) : Action
 

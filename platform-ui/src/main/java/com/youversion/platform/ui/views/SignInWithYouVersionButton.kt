@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.SpanStyle
@@ -32,7 +33,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.signin.SignInViewModel
 
 enum class SignInWithYouVersionButtonMode {
     FULL,
@@ -56,20 +60,30 @@ object SignInWithYouVersionButtonDefaults {
 
 @Composable
 fun SignInWithYouVersionButton(
-    onClick: () -> Unit,
+    permissions: () -> Set<SignInWithYouVersionPermission>,
     paddingValues: PaddingValues = SignInWithYouVersionButtonDefaults.padding,
     shape: Shape = SignInWithYouVersionButtonDefaults.capsuleShape,
     mode: SignInWithYouVersionButtonMode = SignInWithYouVersionButtonDefaults.mode,
     stroked: Boolean = false,
     dark: Boolean = isSystemInDarkTheme(),
 ) {
+    val context = LocalContext.current
+    val signInViewModel = viewModel<SignInViewModel>()
+
     val colorGray15 = Color(0xFFDDDBDB)
     val colorGray35 = Color(0xFF474545)
     val strokeColor = if (dark) colorGray35 else colorGray15
     val strokeWidth = if (dark) 2.dp else 1.dp
 
     Button(
-        onClick = onClick,
+        onClick = {
+            signInViewModel.onAction(
+                SignInViewModel.Action.SignIn(
+                    context = context,
+                    permissions = permissions(),
+                ),
+            )
+        },
         contentPadding = paddingValues,
         shape = shape,
         border = if (stroked) BorderStroke(strokeWidth, strokeColor) else null,
@@ -164,16 +178,40 @@ private fun ButtonPreview(
         }
     Column {
         PreviewBackground(true) {
-            SignInWithYouVersionButton(onClick = {}, mode = mode, shape = shape, stroked = false, dark = true)
+            SignInWithYouVersionButton(
+                permissions = { setOf() },
+                mode = mode,
+                shape = shape,
+                stroked = false,
+                dark = true,
+            )
         }
         PreviewBackground(true) {
-            SignInWithYouVersionButton(onClick = {}, mode = mode, shape = shape, stroked = true, dark = true)
+            SignInWithYouVersionButton(
+                permissions = { setOf() },
+                mode = mode,
+                shape = shape,
+                stroked = true,
+                dark = true,
+            )
         }
         PreviewBackground(false) {
-            SignInWithYouVersionButton(onClick = {}, mode = mode, shape = shape, stroked = false, dark = false)
+            SignInWithYouVersionButton(
+                permissions = { setOf() },
+                mode = mode,
+                shape = shape,
+                stroked = false,
+                dark = false,
+            )
         }
         PreviewBackground(false) {
-            SignInWithYouVersionButton(onClick = {}, mode = mode, shape = shape, stroked = true, dark = false)
+            SignInWithYouVersionButton(
+                permissions = { setOf() },
+                mode = mode,
+                shape = shape,
+                stroked = true,
+                dark = false,
+            )
         }
     }
 }
