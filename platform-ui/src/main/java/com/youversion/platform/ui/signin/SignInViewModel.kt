@@ -1,24 +1,35 @@
 package com.youversion.platform.ui.signin
 
-import android.content.Context
+import android.app.Application
 import android.content.Intent
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.InitializerViewModelFactoryBuilder
+import androidx.lifecycle.viewmodel.initializer
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.users.model.SignInWithYouVersion
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class SignInViewModel : ViewModel() {
+class SignInViewModel(
+    application: Application,
+) : AndroidViewModel(application) {
     private val _state = MutableStateFlow(SignInViewState())
     val state: StateFlow<SignInViewState> by lazy { _state.asStateFlow() }
+
+    private val _events = Channel<Event>()
+    val events = _events.receiveAsFlow()
 
     init {
         YouVersionPlatformConfiguration.configState
@@ -33,49 +44,92 @@ class SignInViewModel : ViewModel() {
             }.launchIn(viewModelScope)
     }
 
-    fun signIn(
-        context: Context,
-        vararg permissions: SignInWithYouVersionPermission,
-    ) {
+    fun onAction(action: Action) {
+        when (action) {
+            is Action.SignIn -> {
+                handleSignIn(action.permissions)
+            }
+            is Action.ProcessAuthCallback -> {
+                handleProcessAuthCallback(action.intent)
+            }
+            is Action.CancelAuthentication -> {
+                handleCancelAuthentication()
+            }
+            is Action.SignOut -> {
+                handleSignOut()
+            }
+        }
+    }
+
+    private fun handleSignIn(permissions: Set<SignInWithYouVersionPermission>) {
         viewModelScope.launch {
             try {
                 YouVersionAuthentication.signIn(
-                    context = context,
-                    permissions = permissions.toSet(),
+                    context = application,
+                    permissions = permissions,
                 )
             } catch (_: Exception) {
-                // TODO inform UI of error
+                _events.send(Event.SignInError)
             }
         }
     }
 
-    fun handleAuthCallback(
-        context: Context,
-        intent: Intent,
-    ) {
+    private fun handleProcessAuthCallback(intent: Intent) {
         viewModelScope.launch {
             try {
-                YouVersionAuthentication.handleAuthCallback(context, intent)
+                YouVersionAuthentication.handleAuthCallback(application, intent)
             } catch (_: Exception) {
-                // TODO inform UI of error
+                _events.send(Event.AuthenticationError)
             }
         }
     }
 
-    fun cancelAuthentication(context: Context) {
-        YouVersionAuthentication.cancelAuthentication(context)
+    private fun handleCancelAuthentication() {
+        YouVersionAuthentication.cancelAuthentication(application)
     }
 
-    fun isAuthenticationInProgress(context: Context): Boolean =
-        YouVersionAuthentication.isAuthenticationInProgress(context)
-
-    fun signOut() {
+    private fun handleSignOut() {
         YouVersionApi.users.signOut()
     }
-}
 
-data class SignInViewState(
-    val isSignedIn: Boolean = false,
-    val userName: String? = null,
-    val userEmail: String? = null,
-)
+    // ----- State
+    data class SignInViewState(
+        val isSignedIn: Boolean = false,
+        val userName: String? = null,
+        val userEmail: String? = null,
+    )
+
+    // ----- Events
+    interface Event {
+        data object SignInError : Event
+
+        data object AuthenticationError : Event
+    }
+
+    // ----- Actions
+    sealed interface Action {
+        data class SignIn(
+            val permissions: Set<SignInWithYouVersionPermission>,
+        ) : Action
+
+        data class ProcessAuthCallback(
+            val intent: Intent,
+        ) : Action
+
+        data object CancelAuthentication : Action
+
+        data object SignOut : Action
+    }
+
+    // ----- Injection
+    companion object {
+        fun factory(): ViewModelProvider.Factory =
+            InitializerViewModelFactoryBuilder()
+                .apply {
+                    initializer {
+                        val application = checkNotNull(get(ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY))
+                        SignInViewModel(application)
+                    }
+                }.build()
+    }
+}

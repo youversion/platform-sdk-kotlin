@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -27,7 +26,6 @@ import com.youversion.platform.ui.views.SignInWithYouVersionButton
 
 @Composable
 fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
-    val context = LocalContext.current
     val signInViewModel = viewModel<SignInViewModel>()
     val state by signInViewModel.state.collectAsStateWithLifecycle()
 
@@ -54,17 +52,20 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                     Text(state.userName ?: "user name")
                     Text(state.userEmail ?: "user email")
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { signInViewModel.signOut() }) {
+                    Button(onClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut) }) {
                         Text("Sign Out")
                     }
                 }
             } else {
                 SignInWithYouVersionButton(
                     onClick = {
-                        signInViewModel.signIn(
-                            context = context,
-                            SignInWithYouVersionPermission.PROFILE,
-                            SignInWithYouVersionPermission.EMAIL,
+                        signInViewModel.onAction(
+                            SignInViewModel.Action.SignIn(
+                                setOf(
+                                    SignInWithYouVersionPermission.PROFILE,
+                                    SignInWithYouVersionPermission.EMAIL,
+                                ),
+                            ),
                         )
                     },
                     stroked = true,

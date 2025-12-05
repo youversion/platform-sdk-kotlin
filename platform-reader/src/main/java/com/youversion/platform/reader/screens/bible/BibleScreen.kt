@@ -48,7 +48,6 @@ internal fun BibleScreen(
     onVersionsClick: () -> Unit,
     onFontsClick: () -> Unit,
 ) {
-    val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     val signInViewModel = viewModel<SignInViewModel>()
@@ -71,13 +70,16 @@ internal fun BibleScreen(
                     onVersionClick = onVersionsClick,
                     onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
                     onSignInClick = {
-                        signInViewModel.signIn(
-                            context = context,
-                            SignInWithYouVersionPermission.PROFILE,
-                            SignInWithYouVersionPermission.EMAIL,
+                        signInViewModel.onAction(
+                            SignInViewModel.Action.SignIn(
+                                setOf(
+                                    SignInWithYouVersionPermission.PROFILE,
+                                    SignInWithYouVersionPermission.EMAIL,
+                                ),
+                            ),
                         )
                     },
-                    onSignOutClick = { signInViewModel.signOut() },
+                    onSignOutClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut) },
                 )
 
                 // Scrollable Reader content
