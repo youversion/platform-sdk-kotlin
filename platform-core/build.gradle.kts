@@ -45,6 +45,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.core.ktx)
     implementation(libs.koin.core)
 
     implementation(libs.kotlin.coroutines)

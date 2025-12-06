@@ -4,7 +4,6 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
-import com.youversion.platform.core.users.model.SignInWithYouVersionResult
 import com.youversion.platform.core.users.model.YouVersionUserInfo
 import io.ktor.http.path
 
@@ -32,15 +31,8 @@ object UsersEndpoints : UsersApi {
         }
 
     // ----- UserApi
-    override suspend fun signIn(
-        requiredPermissions: Set<SignInWithYouVersionPermission>,
-        optionalPermissions: Set<SignInWithYouVersionPermission>,
-    ): SignInWithYouVersionResult {
-        TODO("Not yet implemented")
-    }
-
     override fun signOut() {
-        YouVersionPlatformConfiguration.setAccessToken(null)
+        YouVersionPlatformConfiguration.clearAuthData()
     }
 
     override suspend fun userInfo(accessToken: String?): YouVersionUserInfo {
