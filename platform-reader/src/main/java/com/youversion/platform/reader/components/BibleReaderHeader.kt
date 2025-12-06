@@ -15,6 +15,7 @@ import com.youversion.platform.reader.theme.readerColorScheme
 
 @Composable
 fun BibleReaderHeader(
+    isSignInProcessing: Boolean,
     signedIn: Boolean,
     bookAndChapter: String,
     versionAbbreviation: String,
@@ -43,6 +44,7 @@ fun BibleReaderHeader(
                 compactMode = false,
             )
             BibleReaderHeaderMenu(
+                isSignInProcessing = isSignInProcessing,
                 signedIn = signedIn,
                 onFontSettingsClick = onFontSettingsClick,
                 onSignInClick = onSignInClick,

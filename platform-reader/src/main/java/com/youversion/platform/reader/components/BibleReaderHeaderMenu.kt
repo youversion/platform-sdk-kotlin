@@ -21,6 +21,7 @@ import com.youversion.platform.reader.R
 
 @Composable
 fun BibleReaderHeaderMenu(
+    isSignInProcessing: Boolean,
     signedIn: Boolean,
     onFontSettingsClick: () -> Unit,
     onSignInClick: () -> Unit,
@@ -57,6 +58,7 @@ fun BibleReaderHeaderMenu(
                         expanded = false
                         onSignOutClick()
                     },
+                    enabled = !isSignInProcessing,
                 )
             } else {
                 DropdownMenuItem(
@@ -65,6 +67,7 @@ fun BibleReaderHeaderMenu(
                         expanded = false
                         onSignInClick()
                     },
+                    enabled = !isSignInProcessing,
                 )
             }
         }

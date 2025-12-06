@@ -15,10 +15,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -33,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.ui.R
@@ -70,12 +74,15 @@ fun SignInWithYouVersionButton(
     val context = LocalContext.current
     val signInViewModel = viewModel<SignInViewModel>()
 
+    val state by signInViewModel.state.collectAsStateWithLifecycle()
+
     val colorGray15 = Color(0xFFDDDBDB)
     val colorGray35 = Color(0xFF474545)
     val strokeColor = if (dark) colorGray35 else colorGray15
     val strokeWidth = if (dark) 2.dp else 1.dp
 
     Button(
+        enabled = !state.isProcessing,
         onClick = {
             signInViewModel.onAction(
                 SignInViewModel.Action.SignIn(
@@ -97,11 +104,25 @@ fun SignInWithYouVersionButton(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Image(
-                ImageVector.vectorResource(R.drawable.yv_bibleapp),
-                contentDescription = "Bible Logo",
-                modifier = Modifier.size(26.dp),
-            )
+            Box(modifier = Modifier.size(26.dp)) {
+                Image(
+                    ImageVector.vectorResource(R.drawable.yv_bibleapp),
+                    contentDescription = "Bible Logo",
+                    modifier =
+                        Modifier
+                            .size(26.dp)
+                            .alpha(
+                                if (state.isProcessing) {
+                                    0.5f
+                                } else {
+                                    1.0f
+                                },
+                            ),
+                )
+                if (state.isProcessing) {
+                    CircularProgressIndicator()
+                }
+            }
             LocalizedLoginText(dark, mode)
         }
     }

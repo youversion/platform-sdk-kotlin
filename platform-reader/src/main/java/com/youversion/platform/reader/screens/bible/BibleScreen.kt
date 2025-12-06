@@ -64,6 +64,7 @@ internal fun BibleScreen(
             Column {
                 // Reader top bar
                 BibleReaderHeader(
+                    isSignInProcessing = signInState.isProcessing,
                     signedIn = signInState.isSignedIn,
                     bookAndChapter = state.bookAndChapter,
                     versionAbbreviation = state.versionAbbreviation,
