@@ -1,10 +1,11 @@
 package com.youversion.platform.core.languages.api
 
+import com.youversion.platform.core.api.PaginatedResponse
 import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.pageSize
 import com.youversion.platform.core.api.pageToken
 import com.youversion.platform.core.api.parameter
-import com.youversion.platform.core.api.parseApiResponse
+import com.youversion.platform.core.api.parsePaginatedResponse
 import com.youversion.platform.core.languages.models.Language
 import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
 import io.ktor.client.HttpClient
@@ -32,13 +33,13 @@ object LanguagesEndpoints : LanguagesApi {
         country: String?,
         perPage: Int?,
         pageToken: String?,
-    ): List<Language> =
+    ): PaginatedResponse<Language> =
         httpClient
             .get(languagesUrl(country, perPage, pageToken))
             .let {
                 when (it.status) {
-                    HttpStatusCode.NoContent -> emptyList()
-                    else -> parseApiResponse(it)
+                    HttpStatusCode.NoContent -> PaginatedResponse(emptyList(), null, null)
+                    else -> parsePaginatedResponse(it)
                 }
             }
 }

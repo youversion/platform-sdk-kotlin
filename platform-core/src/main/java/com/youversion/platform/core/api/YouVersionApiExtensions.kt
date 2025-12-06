@@ -6,6 +6,9 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
 
+internal suspend inline fun <reified T> parsePaginatedResponse(response: HttpResponse): PaginatedResponse<T> =
+    parseApiBody<PaginatedResponse<T>>(response)
+
 internal suspend inline fun <reified T> parseApiResponse(response: HttpResponse): T =
     parseApiBody<ApiResponse<T>>(response).data
 

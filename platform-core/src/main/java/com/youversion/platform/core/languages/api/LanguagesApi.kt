@@ -1,5 +1,6 @@
 package com.youversion.platform.core.languages.api
 
+import com.youversion.platform.core.api.PaginatedResponse
 import com.youversion.platform.core.languages.models.Language
 
 interface LanguagesApi {
@@ -18,5 +19,5 @@ interface LanguagesApi {
         country: String? = null,
         perPage: Int? = null,
         pageToken: String? = null,
-    ): List<Language>
+    ): PaginatedResponse<Language>
 }

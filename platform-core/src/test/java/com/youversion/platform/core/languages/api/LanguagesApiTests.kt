@@ -67,7 +67,7 @@ class LanguagesApiTests : YouVersionPlatformTest {
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
-            val languages = YouVersionApi.languages.languages()
+            val languages = YouVersionApi.languages.languages().data
 
             assertEquals(2, languages.size)
             assertEquals("en", languages[0].id)
@@ -88,7 +88,7 @@ class LanguagesApiTests : YouVersionPlatformTest {
             YouVersionPlatformConfiguration.configure(appKey = "app")
             YouVersionApi.languages
                 .languages()
-                .apply { assertTrue { isEmpty() } }
+                .apply { assertTrue { data.isEmpty() } }
         }
 
     @Test
