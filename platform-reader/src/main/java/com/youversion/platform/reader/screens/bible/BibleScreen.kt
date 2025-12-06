@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +34,7 @@ import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.components.BibleReaderHeader
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
+import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
@@ -57,6 +59,8 @@ internal fun BibleScreen(
     val signInViewModel = viewModel<SignInViewModel>()
     val signInState by signInViewModel.state.collectAsStateWithLifecycle()
 
+    var showSignInError by rememberSaveable { mutableStateOf(false) }
+
     val authTabLauncher =
         rememberYouVersionAuthLauncher { intent ->
             signInViewModel.onAction(SignInViewModel.Action.ProcessAuthCallback(intent))
@@ -65,7 +69,7 @@ internal fun BibleScreen(
     val signInLauncher =
         rememberSignInWithYouVersion(
             onSignInError = {
-                // TODO error
+                showSignInError = true
             },
         )
 
@@ -145,6 +149,13 @@ internal fun BibleScreen(
                     onThemeSelect = { },
                     lineSpacingSettingIndex = state.lineSpacingSettingsIndex,
                     fontDefinition = state.selectedFontDefinition,
+                )
+            }
+
+            if (showSignInError) {
+                SignInErrorAlert(
+                    onDismissRequest = { showSignInError = false },
+                    onConfirm = { showSignInError = false },
                 )
             }
         }

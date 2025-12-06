@@ -19,6 +19,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -40,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
@@ -78,6 +82,8 @@ fun SignInWithYouVersionButton(
     val signInViewModel = viewModel<SignInViewModel>()
     val state by signInViewModel.state.collectAsStateWithLifecycle()
 
+    var showSignInError by rememberSaveable { mutableStateOf(false) }
+
     val authTabLauncher =
         rememberYouVersionAuthLauncher { intent ->
             signInViewModel.onAction(SignInViewModel.Action.ProcessAuthCallback(intent))
@@ -86,7 +92,7 @@ fun SignInWithYouVersionButton(
     val signInLauncher =
         rememberSignInWithYouVersion(
             onSignInError = {
-                // TODO show error
+                showSignInError = true
             },
         )
 
@@ -115,6 +121,13 @@ fun SignInWithYouVersionButton(
                 contentColor = if (dark) Color.Green else Color.Black,
             ),
     ) {
+        if (showSignInError) {
+            SignInErrorAlert(
+                onDismissRequest = { showSignInError = false },
+                onConfirm = { showSignInError = false },
+            )
+        }
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
