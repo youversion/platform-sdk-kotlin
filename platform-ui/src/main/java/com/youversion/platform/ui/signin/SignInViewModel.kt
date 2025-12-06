@@ -1,7 +1,6 @@
 package com.youversion.platform.ui.signin
 
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -12,7 +11,6 @@ import androidx.lifecycle.viewmodel.initializer
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.users.model.SignInWithYouVersion
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,27 +45,11 @@ class SignInViewModel(
 
     fun onAction(action: Action) {
         when (action) {
-            is Action.SignIn -> {
-                handleSignIn(action)
-            }
             is Action.ProcessAuthCallback -> {
                 handleProcessAuthCallback(action)
             }
             is Action.SignOut -> {
                 handleSignOut()
-            }
-        }
-    }
-
-    private fun handleSignIn(action: Action.SignIn) {
-        viewModelScope.launch {
-            try {
-                YouVersionAuthentication.signIn(
-                    context = action.context,
-                    permissions = action.permissions,
-                )
-            } catch (_: Exception) {
-                _events.send(Event.SignInError)
             }
         }
     }
@@ -99,18 +81,11 @@ class SignInViewModel(
 
     // ----- Events
     interface Event {
-        data object SignInError : Event
-
         data object AuthenticationError : Event
     }
 
     // ----- Actions
     sealed interface Action {
-        data class SignIn(
-            val context: Context,
-            val permissions: Set<SignInWithYouVersionPermission>,
-        ) : Action
-
         data class ProcessAuthCallback(
             val intent: Intent,
         ) : Action

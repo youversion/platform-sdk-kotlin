@@ -2,7 +2,11 @@ package com.youversion.platform.ui.signin
 
 import android.content.Context
 import android.content.Intent
-import androidx.browser.customtabs.CustomTabsIntent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.browser.auth.AuthTabIntent
+import androidx.compose.runtime.Composable
 import androidx.core.net.toUri
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionNetworkException
@@ -28,6 +32,7 @@ object YouVersionAuthentication {
      */
     fun signIn(
         context: Context,
+        launcher: ActivityResultLauncher<Intent>,
         permissions: Set<SignInWithYouVersionPermission>,
     ) {
         val appKey =
@@ -48,8 +53,8 @@ object YouVersionAuthentication {
             nonce = authorizationRequest.parameters.nonce,
         )
 
-        val customTabsIntent = CustomTabsIntent.Builder().build()
-        customTabsIntent.launchUrl(context, authorizationRequest.url)
+        val authTabIntent = AuthTabIntent.Builder().build()
+        authTabIntent.launch(launcher, authorizationRequest.url, redirectUri.toString())
     }
 
     /**

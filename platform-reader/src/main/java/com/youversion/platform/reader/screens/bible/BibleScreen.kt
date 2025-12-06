@@ -33,7 +33,10 @@ import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.components.BibleReaderHeader
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
+import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
+import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
+import com.youversion.platform.ui.signin.rememberYouVersionAuthLauncher
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
 import com.youversion.platform.ui.views.BibleTextOptions
@@ -54,6 +57,18 @@ internal fun BibleScreen(
     val signInViewModel = viewModel<SignInViewModel>()
     val signInState by signInViewModel.state.collectAsStateWithLifecycle()
 
+    val authTabLauncher =
+        rememberYouVersionAuthLauncher { intent ->
+            signInViewModel.onAction(SignInViewModel.Action.ProcessAuthCallback(intent))
+        }
+
+    val signInLauncher =
+        rememberSignInWithYouVersion(
+            onSignInError = {
+                // TODO error
+            },
+        )
+
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
 
     Scaffold(
@@ -72,9 +87,10 @@ internal fun BibleScreen(
                     onVersionClick = onVersionsClick,
                     onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
                     onSignInClick = {
-                        signInViewModel.onAction(
-                            SignInViewModel.Action.SignIn(
+                        signInLauncher(
+                            SignInParameters(
                                 context = context,
+                                launcher = authTabLauncher,
                                 permissions =
                                     setOf(
                                         SignInWithYouVersionPermission.PROFILE,

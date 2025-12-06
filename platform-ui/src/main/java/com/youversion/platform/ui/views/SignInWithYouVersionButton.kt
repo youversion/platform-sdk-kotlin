@@ -40,7 +40,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
+import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
+import com.youversion.platform.ui.signin.rememberYouVersionAuthLauncher
 
 enum class SignInWithYouVersionButtonMode {
     FULL,
@@ -73,8 +76,19 @@ fun SignInWithYouVersionButton(
 ) {
     val context = LocalContext.current
     val signInViewModel = viewModel<SignInViewModel>()
-
     val state by signInViewModel.state.collectAsStateWithLifecycle()
+
+    val authTabLauncher =
+        rememberYouVersionAuthLauncher { intent ->
+            signInViewModel.onAction(SignInViewModel.Action.ProcessAuthCallback(intent))
+        }
+
+    val signInLauncher =
+        rememberSignInWithYouVersion(
+            onSignInError = {
+                // TODO show error
+            },
+        )
 
     val colorGray15 = Color(0xFFDDDBDB)
     val colorGray35 = Color(0xFF474545)
@@ -84,9 +98,10 @@ fun SignInWithYouVersionButton(
     Button(
         enabled = !state.isProcessing,
         onClick = {
-            signInViewModel.onAction(
-                SignInViewModel.Action.SignIn(
+            signInLauncher(
+                SignInParameters(
                     context = context,
+                    launcher = authTabLauncher,
                     permissions = permissions(),
                 ),
             )
