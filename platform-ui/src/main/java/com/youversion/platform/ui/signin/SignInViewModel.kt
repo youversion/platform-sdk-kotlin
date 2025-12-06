@@ -75,9 +75,12 @@ class SignInViewModel(
     private fun handleProcessAuthCallback(action: Action.ProcessAuthCallback) {
         viewModelScope.launch {
             try {
+                _state.update { it.copy(isProcessingAuthCallback = true) }
                 YouVersionAuthentication.handleAuthCallback(application, action.intent)
             } catch (_: Exception) {
                 _events.send(Event.AuthenticationError)
+            } finally {
+                _state.update { it.copy(isProcessingAuthCallback = false) }
             }
         }
     }
@@ -88,6 +91,7 @@ class SignInViewModel(
 
     // ----- State
     data class SignInViewState(
+        val isProcessingAuthCallback: Boolean = false,
         val isSignedIn: Boolean = false,
         val userName: String? = null,
         val userEmail: String? = null,
