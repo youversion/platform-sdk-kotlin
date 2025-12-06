@@ -465,8 +465,7 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
                     {
                         "id": "JHN.3.1",
                         "content": "content",
-                        "bible_id": 206,
-                        "human_reference": "John 3:1"
+                        "reference": "John 3:1"
                     }
                     """.trimIndent(),
                 )
