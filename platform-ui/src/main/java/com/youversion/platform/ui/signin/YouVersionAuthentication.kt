@@ -17,7 +17,7 @@ import kotlinx.coroutines.withContext
  * Handles the user authentication flow for signing in with YouVersion.
  */
 object YouVersionAuthentication {
-    val redirectUri = "youversionauth://callback".toUri()
+    private val redirectUri = "youversionauth://callback".toUri()
 
     /**
      * Presents the YouVersion login flow to the user. This function is now a 'fire-and-forget'
@@ -66,6 +66,10 @@ object YouVersionAuthentication {
         intent: Intent?,
     ): SignInWithYouVersionResult? {
         val callbackUri = intent?.data ?: return null
+
+        if (callbackUri.scheme != redirectUri.scheme) {
+            return null
+        }
 
         val storedState = PKCEStateStore.getState(context)
         val storedCodeVerifier = PKCEStateStore.getCodeVerifier(context)

@@ -12,12 +12,12 @@ abstract class SignInWithYouVersionActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        handleOAuthCallback(intent)
+        handleIntent(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        handleOAuthCallback(intent)
+        handleIntent(intent)
     }
 
     override fun onResume() {
@@ -27,15 +27,9 @@ abstract class SignInWithYouVersionActivity : ComponentActivity() {
         }
     }
 
-    private fun handleOAuthCallback(intent: Intent?) {
-        println("handleOAuthCallback: intent=$intent")
-        if (intent?.action == Intent.ACTION_VIEW && intent.data != null) {
+    private fun handleIntent(intent: Intent?) {
+        if (intent?.data != null) {
             signInViewModel.onAction(SignInViewModel.Action.ProcessAuthCallback(intent))
-            clearIntent()
         }
-    }
-
-    private fun clearIntent() {
-        intent = Intent(this, SignInWithYouVersionActivity::class.java)
     }
 }
