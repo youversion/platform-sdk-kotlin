@@ -74,7 +74,7 @@ object SignInWithYouVersionPKCEAuthorizationRequestBuilder {
         redirectUri: Uri,
     ): SignInWithYouVersionPKCEAuthorizationRequest {
         val codeVerifier = randomURLSafeString(32)
-        val codeChallenge = codeChallenge(forVerifier = codeVerifier)
+        val codeChallenge = codeChallenge(verifier = codeVerifier)
         val state = randomURLSafeString(24)
         val nonce = randomURLSafeString(24)
 
@@ -161,8 +161,8 @@ object SignInWithYouVersionPKCEAuthorizationRequestBuilder {
     /**
      * Hashes the verifier using SHA-256 and encodes it in Base64-URL-safe format.
      */
-    private fun codeChallenge(forVerifier: String): String {
-        val bytes = forVerifier.toByteArray(Charsets.UTF_8)
+    private fun codeChallenge(verifier: String): String {
+        val bytes = verifier.toByteArray(Charsets.UTF_8)
         val messageDigest = MessageDigest.getInstance("SHA-256")
         val digest = messageDigest.digest(bytes)
         return base64URLEncodedString(digest)
