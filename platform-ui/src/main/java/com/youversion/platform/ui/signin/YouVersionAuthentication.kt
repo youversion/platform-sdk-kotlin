@@ -114,9 +114,10 @@ object YouVersionAuthentication {
      * Custom Tab, especially after the app process has been recreated.
      *
      * @param context The Android context.
-     * @return `true` if a code verifier or state is stored, `false` otherwise.
+     * @return `true` if a code verifier, state, and nonce are stored, `false` otherwise.
      */
     fun isAuthenticationInProgress(context: Context): Boolean =
         PKCEStateStore.getCodeVerifier(context) != null &&
-            PKCEStateStore.getState(context) != null
+            PKCEStateStore.getState(context) != null &&
+            PKCEStateStore.getNonce(context) != null
 }

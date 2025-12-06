@@ -53,9 +53,6 @@ class SignInViewModel(
             is Action.ProcessAuthCallback -> {
                 handleProcessAuthCallback(action)
             }
-            is Action.CancelAuthentication -> {
-                handleCancelAuthentication()
-            }
             is Action.SignOut -> {
                 handleSignOut()
             }
@@ -83,10 +80,6 @@ class SignInViewModel(
                 _events.send(Event.AuthenticationError)
             }
         }
-    }
-
-    private fun handleCancelAuthentication() {
-        YouVersionAuthentication.cancelAuthentication(application)
     }
 
     private fun handleSignOut() {
@@ -117,8 +110,6 @@ class SignInViewModel(
         data class ProcessAuthCallback(
             val intent: Intent,
         ) : Action
-
-        data object CancelAuthentication : Action
 
         data object SignOut : Action
     }

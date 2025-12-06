@@ -23,7 +23,7 @@ abstract class SignInWithYouVersionActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         if (YouVersionAuthentication.isAuthenticationInProgress(this)) {
-            signInViewModel.onAction(SignInViewModel.Action.CancelAuthentication)
+            YouVersionAuthentication.cancelAuthentication(this)
         }
     }
 
