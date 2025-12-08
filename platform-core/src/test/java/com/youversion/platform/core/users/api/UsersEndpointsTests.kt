@@ -26,33 +26,4 @@ class UsersEndpointsTests : YouVersionPlatformTest {
             UsersEndpoints.userUrl("token").toString(),
         )
     }
-
-    @Test
-    fun `test authUrl`() {
-        YouVersionPlatformConfiguration.configure(appKey = "app")
-
-        val url =
-            UsersEndpoints
-                .authUrl(
-                    appKey = "app",
-                    requiredPermissions =
-                        setOf(
-                            SignInWithYouVersionPermission.OPENID,
-                        ),
-                    optionalPermissions =
-                        setOf(
-                            SignInWithYouVersionPermission.PROFILE,
-                            SignInWithYouVersionPermission.EMAIL,
-                        ),
-                ).let { Url(urlString = it) }
-
-        assertEquals(URLProtocol.HTTPS, url.protocol)
-        assertEquals("api.youversion.com", url.host)
-        assertEquals("/auth/login", url.encodedPath)
-        assertEquals("app", url.parameters["app_id"])
-        assertEquals("en", url.parameters["language"])
-        assertEquals("openid", url.parameters["required_perms"])
-        assertEquals("profile,email", url.parameters["opt_perms"])
-        assertEquals(YouVersionPlatformConfiguration.installId, url.parameters["x-yvp-installation-id"])
-    }
 }

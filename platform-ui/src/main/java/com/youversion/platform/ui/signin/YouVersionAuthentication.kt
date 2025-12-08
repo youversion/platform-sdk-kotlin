@@ -2,16 +2,13 @@ package com.youversion.platform.ui.signin
 
 import android.content.Context
 import android.content.Intent
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.browser.auth.AuthTabIntent
-import androidx.compose.runtime.Composable
 import androidx.core.net.toUri
 import com.youversion.platform.core.YouVersionPlatformConfiguration
+import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.api.YouVersionNetworkException
-import com.youversion.platform.core.users.model.SignInWithYouVersion
-import com.youversion.platform.core.users.model.SignInWithYouVersionPKCEAuthorizationRequestBuilder
+import com.youversion.platform.core.users.model.SignInWithYouVersionPKCEAuthorizationRequest
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.users.model.SignInWithYouVersionResult
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +18,7 @@ import kotlinx.coroutines.withContext
  * Handles the user authentication flow for signing in with YouVersion.
  */
 object YouVersionAuthentication {
-    private val redirectUri = "youversionauth://callback".toUri()
+    private val redirectUri = "youversionauth://callback"
 
     /**
      * Presents the YouVersion login flow to the user. This function is now a 'fire-and-forget'
@@ -40,7 +37,7 @@ object YouVersionAuthentication {
                 ?: throw YouVersionNetworkException(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION)
 
         val authorizationRequest =
-            SignInWithYouVersionPKCEAuthorizationRequestBuilder.make(
+            SignInWithYouVersionPKCEAuthorizationRequest(
                 appKey = appKey,
                 permissions = permissions,
                 redirectUri = redirectUri,
@@ -54,7 +51,7 @@ object YouVersionAuthentication {
         )
 
         val authTabIntent = AuthTabIntent.Builder().build()
-        authTabIntent.launch(launcher, authorizationRequest.url, redirectUri.toString())
+        authTabIntent.launch(launcher, authorizationRequest.url.toUri(), redirectUri)
     }
 
     /**
@@ -72,7 +69,7 @@ object YouVersionAuthentication {
     ): SignInWithYouVersionResult? {
         val callbackUri = intent?.data ?: return null
 
-        if (callbackUri.scheme != redirectUri.scheme) {
+        if (callbackUri.scheme != redirectUri.toUri().scheme) {
             return null
         }
 
@@ -88,8 +85,8 @@ object YouVersionAuthentication {
 
         return withContext(Dispatchers.IO) {
             val result =
-                SignInWithYouVersion.getSignInResult(
-                    callbackUri = callbackUri,
+                YouVersionApi.users.getSignInResult(
+                    callbackUri = callbackUri.toString(),
                     state = storedState,
                     codeVerifier = storedCodeVerifier,
                     redirectUri = redirectUri,

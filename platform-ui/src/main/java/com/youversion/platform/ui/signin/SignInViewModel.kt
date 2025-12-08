@@ -10,7 +10,6 @@ import androidx.lifecycle.viewmodel.InitializerViewModelFactoryBuilder
 import androidx.lifecycle.viewmodel.initializer
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
-import com.youversion.platform.core.users.model.SignInWithYouVersion
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,9 +34,9 @@ class SignInViewModel(
             .onEach { config ->
                 _state.update {
                     it.copy(
-                        isSignedIn = config?.accessToken != null,
-                        userName = SignInWithYouVersion.currentUserName,
-                        userEmail = SignInWithYouVersion.currentUserEmail,
+                        isSignedIn = config?.isSignedIn == true,
+                        userName = YouVersionApi.users.currentUserName,
+                        userEmail = YouVersionApi.users.currentUserEmail,
                     )
                 }
             }.launchIn(viewModelScope)

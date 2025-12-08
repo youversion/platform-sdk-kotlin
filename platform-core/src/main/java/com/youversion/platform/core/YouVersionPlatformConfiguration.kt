@@ -174,4 +174,6 @@ data class Config(
     val refreshToken: String?,
     val idToken: String?,
     val expiryDate: Date?,
-)
+) {
+    val isSignedIn = accessToken != null
+}
