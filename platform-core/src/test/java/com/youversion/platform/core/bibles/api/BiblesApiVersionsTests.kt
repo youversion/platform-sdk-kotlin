@@ -40,7 +40,7 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
             YouVersionApi.bible
                 .versions("eng")
                 .apply {
-                    assertEquals(12, this[0].id)
+                    assertEquals(12, data[0].id)
                 }
         }
 
@@ -55,7 +55,7 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
             YouVersionApi.bible
                 .versions("en")
                 .apply {
-                    assertTrue { isEmpty() }
+                    assertTrue { data.isEmpty() }
                 }
         }
 
@@ -70,7 +70,7 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
             YouVersionApi.bible
                 .versions("foo")
                 .apply {
-                    assertTrue { isEmpty() }
+                    assertTrue { data.isEmpty() }
                 }
         }
 
@@ -86,7 +86,7 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
             YouVersionApi.bible
                 .versions()
                 .apply {
-                    assertFalse { isEmpty() }
+                    assertFalse { data.isEmpty() }
                 }
         }
 

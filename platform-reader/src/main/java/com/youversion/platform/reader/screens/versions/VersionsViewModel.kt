@@ -1,5 +1,6 @@
 package com.youversion.platform.reader.screens.versions
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -7,6 +8,7 @@ import androidx.lifecycle.viewmodel.InitializerViewModelFactoryBuilder
 import androidx.lifecycle.viewmodel.initializer
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.organizations.models.Organization
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +19,7 @@ import kotlinx.coroutines.launch
 
 class VersionsViewModel(
     bibleVersion: BibleVersion?,
+    private val bibleVersionRepository: BibleVersionRepository,
 ) : ViewModel() {
     private val _state =
         MutableStateFlow(
@@ -33,10 +36,9 @@ class VersionsViewModel(
     private fun loadVersionsList() {
         viewModelScope.launch {
             try {
-                // TODO: proper pagination
-                val versions = YouVersionApi.bible.versions(pageSize = 99)
+                val allVersions = bibleVersionRepository.allVersions()
                 val deduplicated =
-                    versions
+                    allVersions
                         .sortedBy { it.id }
                         .fold(mutableListOf<BibleVersion>()) { acc, version ->
                             if (acc.none { it.id == version.id }) {
@@ -120,12 +122,16 @@ class VersionsViewModel(
 
     // ----- Injection
     companion object {
-        fun factory(bibleVersion: BibleVersion?): ViewModelProvider.Factory =
+        fun factory(
+            bibleVersion: BibleVersion?,
+            context: Context,
+        ): ViewModelProvider.Factory =
             InitializerViewModelFactoryBuilder()
                 .apply {
                     initializer {
                         VersionsViewModel(
                             bibleVersion = bibleVersion,
+                            bibleVersionRepository = BibleVersionRepository(context),
                         )
                     }
                 }.build()

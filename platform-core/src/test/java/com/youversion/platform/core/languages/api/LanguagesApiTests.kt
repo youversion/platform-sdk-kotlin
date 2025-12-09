@@ -92,25 +92,25 @@ class LanguagesApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test books throws not permitted if unauthorized`() =
+    fun `test languages throws not permitted if unauthorized`() =
         testUnauthorizedNotPermitted {
             YouVersionApi.languages.languages(country = "US")
         }
 
     @Test
-    fun `test books throws not permitted if forbidden`() =
+    fun `test languages throws not permitted if forbidden`() =
         testForbiddenNotPermitted {
             YouVersionApi.languages.languages(country = "US")
         }
 
     @Test
-    fun `test books throws cannot download if request failed`() =
+    fun `test languages throws cannot download if request failed`() =
         testCannotDownload {
             YouVersionApi.languages.languages(country = "US")
         }
 
     @Test
-    fun `test books throws invalid response if cannot parse`() =
+    fun `test languages throws invalid response if cannot parse`() =
         testInvalidResponse {
             YouVersionApi.languages.languages(country = "US")
         }

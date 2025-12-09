@@ -34,3 +34,24 @@ internal suspend inline fun <reified T> parseApiBody(response: HttpResponse): T 
         throw invalidResponse(e)
     }
 }
+
+/**
+ * Fetches all pages from a paginated API endpoint and returns the combined results.
+ *
+ * **⚠️ USE WITH CAUTION**: This function makes multiple sequential API calls, one for each page
+ * of results
+ */
+internal suspend fun <T> fetchAllPages(request: suspend (nextPageToken: String?) -> PaginatedResponse<T>): List<T> {
+    var nextPageToken: String? = null
+    var hasNextPage = true
+    val allResults = mutableListOf<T>()
+
+    while (hasNextPage) {
+        val paginatedResponse = request(nextPageToken)
+        allResults += paginatedResponse.data
+        nextPageToken = paginatedResponse.nextPageToken
+        hasNextPage = paginatedResponse.nextPageToken != null
+    }
+
+    return allResults
+}

@@ -38,7 +38,7 @@ object LanguagesEndpoints : LanguagesApi {
             .get(languagesUrl(country, perPage, pageToken))
             .let {
                 when (it.status) {
-                    HttpStatusCode.NoContent -> PaginatedResponse(emptyList(), null, null)
+                    HttpStatusCode.NoContent -> PaginatedResponse(emptyList())
                     else -> parsePaginatedResponse(it)
                 }
             }

@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -58,7 +59,8 @@ internal fun VersionsScreen(
     onBackClick: () -> Unit,
     onLanguagesClick: () -> Unit,
 ) {
-    val viewModel: VersionsViewModel = viewModel(factory = VersionsViewModel.factory(bibleVersion))
+    val context = LocalContext.current
+    val viewModel: VersionsViewModel = viewModel(factory = VersionsViewModel.factory(bibleVersion, context))
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(

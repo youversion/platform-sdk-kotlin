@@ -7,6 +7,8 @@ import com.youversion.platform.core.utilities.dependencies.Store
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.cache.HttpCache
+import io.ktor.client.plugins.cache.storage.FileStorage
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
@@ -48,6 +50,11 @@ private val HttpClientModule =
         single {
             HttpClient(get()) {
                 install(ContentNegotiation) { json(get()) }
+                install(HttpCache) {
+                    getOrNull<Context>()?.let {
+                        privateStorage(FileStorage(it.cacheDir))
+                    }
+                }
                 defaultRequest {
                     headers {
                         YouVersionPlatformConfiguration.appKey?.let {
@@ -73,7 +80,7 @@ private val HttpClientModule =
                         }
 
                     // TODO: Ensure logging is set to `NONE` in production.
-                    level = LogLevel.NONE
+                    level = LogLevel.INFO
                 }
             }
         }

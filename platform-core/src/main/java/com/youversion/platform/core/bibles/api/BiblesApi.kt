@@ -1,5 +1,6 @@
 package com.youversion.platform.core.bibles.api
 
+import com.youversion.platform.core.api.PaginatedResponse
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleChapter
@@ -25,7 +26,7 @@ interface BiblesApi {
         languageCode: String? = null,
         pageSize: Int? = null,
         pageToken: String? = null,
-    ): List<BibleVersion>
+    ): PaginatedResponse<BibleVersion>
 
     /**
      * Retrieves a specific [BibleVersion] from the server identified by [versionId].
