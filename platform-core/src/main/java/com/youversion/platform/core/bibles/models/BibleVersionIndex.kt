@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class BibleVersionIndex(
     @SerialName(CodingKey.TEXT_DIRECTION) val textDirection: String?,
-    @SerialName(CodingKey.BOOKS) val books: List<BibleVersionIndexBook>?,
+    @SerialName(CodingKey.BOOKS) val books: List<BibleBook>?,
 ) {
     object CodingKey {
         const val TEXT_DIRECTION = "text_direction"
