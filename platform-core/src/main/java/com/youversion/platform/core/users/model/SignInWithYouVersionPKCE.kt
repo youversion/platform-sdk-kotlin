@@ -94,7 +94,10 @@ data class SignInWithYouVersionPKCEAuthorizationRequest(
         /**
          * Encodes a byte array into a Base64 string safe for use in URLs.
          */
-        private fun base64URLEncodedString(data: ByteArray): String = Base64.UrlSafe.encode(data)
+        private fun base64URLEncodedString(data: ByteArray): String =
+            Base64.UrlSafe
+                .withPadding(Base64.PaddingOption.ABSENT)
+                .encode(data)
     }
 }
 

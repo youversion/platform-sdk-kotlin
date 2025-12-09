@@ -107,7 +107,10 @@ object UsersEndpoints : UsersApi {
             val segments = token.split('.')
             if (segments.size != 3) return emptyMap()
 
-            val decodedBytes = Base64.UrlSafe.decode(segments[1])
+            val decodedBytes =
+                Base64.UrlSafe
+                    .withPadding(Base64.PaddingOption.ABSENT)
+                    .decode(segments[1])
             val decodedString = decodedBytes.decodeToString()
             val jsonObject = Json.decodeFromString<JsonObject>(decodedString)
 
