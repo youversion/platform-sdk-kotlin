@@ -6,8 +6,8 @@
   "info": null,
   "publisher_url": null,
   "language_tag": "en",
-  "local_abbreviation": "WEBUS",
-  "local_title": "World English Bible, American English Edition, without Strong's Numbers",
+  "localized_abbreviation": "WEBUS",
+  "localized_title": "World English Bible, American English Edition, without Strong's Numbers",
   "title": "World English Bible, American English Edition, without Strong's Numbers",
   "books": [
     "GEN",
@@ -91,5 +91,6 @@
     "JUD",
     "REV"
   ],
-  "youversion_deep_link": "https://www.bible.com/versions/206"
+  "youversion_deep_link": "https://www.bible.com/versions/206",
+  "organization_id": "73a4fa15-1b99-430a-b504-dbee75b32d96"
 }

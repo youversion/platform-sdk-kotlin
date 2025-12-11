@@ -35,21 +35,77 @@ class BiblesApiBooksTests : YouVersionPlatformTest {
                             {
                                 "id": "GEN",
                                 "title": "Genesis",
+                                "full_title": "The First Book of Moses, Commonly Called Genesis",
                                 "abbreviation": "Gen",
-                                "canon": "ot",
+                                "canon": "old_testament",
                                 "chapters": [
-                                    "GEN.1",
-                                    "GEN.2",
+                                    {
+                                        "id": "1",
+                                        "passage_id": "GEN.1",
+                                        "title": "1",
+                                        "verses": [
+                                            {
+                                                "id": "1",
+                                                "passage_id": "GEN.1.1",
+                                                "title": "1"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "id": "2",
+                                        "passage_id": "GEN.2",
+                                        "title": "2",
+                                        "verses": [
+                                            {
+                                                "id": "2",
+                                                "passage_id": "GEN.2.1",
+                                                "title": "2"
+                                            }
+                                        ]
+                                    }
                                 ]
                             },
                             {
                                 "id": "EXO",
                                 "title": "Exodus",
+                                "full_title": "The Second Book of Moses, Commonly Called Exodus",
                                 "abbreviation": "Exo",
-                                "canon": "ot",
+                                "canon": "old_testament",
                                 "chapters": [
-                                    "EXO.1",
-                                    "EXO.2",
+                                    {
+                                        "id": "1",
+                                        "passage_id": "EXO.1",
+                                        "title": "1",
+                                        "verses": [
+                                            {
+                                                "id": "1",
+                                                "passage_id": "EXO.1.1",
+                                                "title": "1"
+                                            },
+                                            {
+                                                "id": "2",
+                                                "passage_id": "EXO.1.2",
+                                                "title": "2"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "id": "2",
+                                        "passage_id": "EXO.2",
+                                        "title": "2",
+                                        "verses": [
+                                            {
+                                                "id": "1",
+                                                "passage_id": "EXO.2.1",
+                                                "title": "1"
+                                            },
+                                            {
+                                                "id": "2",
+                                                "passage_id": "EXO.2.2",
+                                                "title": "2"
+                                            }
+                                        ]
+                                    }
                                 ]
                             }
                         ]
@@ -64,8 +120,9 @@ class BiblesApiBooksTests : YouVersionPlatformTest {
                 .apply {
                     assertEquals("GEN", this[0].usfm)
                     assertEquals("Genesis", this[0].title)
+                    assertEquals("The First Book of Moses, Commonly Called Genesis", this[0].fullTitle)
                     assertEquals("Gen", this[0].abbreviation)
-                    assertEquals("ot", this[0].canon)
+                    assertEquals("old_testament", this[0].canon)
                     assertEquals("EXO", this[1].usfm)
                 }
         }
@@ -106,11 +163,34 @@ class BiblesApiBooksTests : YouVersionPlatformTest {
                     {
                         "id": "GEN",
                         "title": "Genesis",
+                        "full_title": "The First Book of Moses, Commonly Called Genesis",
                         "abbreviation": "Gen",
-                        "canon": "ot",
+                        "canon": "old_testament",
                         "chapters": [
-                            "GEN.1",
-                            "GEN.2",
+                            {
+                                "id": "1",
+                                "passage_id": "GEN.1",
+                                "title": "1",
+                                "verses": [
+                                    {
+                                        "id": "1",
+                                        "passage_id": "GEN.1.1",
+                                        "title": "1"
+                                    }
+                                ]
+                            },
+                            {
+                                "id": "2",
+                                "passage_id": "GEN.2",
+                                "title": "2",
+                                "verses": [
+                                    {
+                                        "id": "2",
+                                        "passage_id": "GEN.2.1",
+                                        "title": "2"
+                                    }
+                                ]
+                            }
                         ]
                     }
                     """.trimIndent(),
@@ -123,8 +203,9 @@ class BiblesApiBooksTests : YouVersionPlatformTest {
                 .apply {
                     assertEquals("GEN", usfm)
                     assertEquals("Genesis", title)
+                    assertEquals("The First Book of Moses, Commonly Called Genesis", fullTitle)
                     assertEquals("Gen", abbreviation)
-                    assertEquals("ot", canon)
+                    assertEquals("old_testament", canon)
                 }
         }
 

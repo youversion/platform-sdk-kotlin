@@ -202,7 +202,7 @@ class BibleVersionTests : YouVersionPlatformTest {
     @Test
     fun `test bookUSFMs returns non-null USFMs`() {
         val booksWithNullUsfm = bibleVersion.books!!.toMutableList()
-        booksWithNullUsfm.add(BibleBook(null, null, null, null))
+        booksWithNullUsfm.add(BibleBook(null, null, null, null, null, null))
 
         val bibleVersion = bibleVersion.copy(books = booksWithNullUsfm)
         assertEquals(81, bibleVersion.books?.count())
