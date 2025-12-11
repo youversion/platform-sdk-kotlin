@@ -29,8 +29,8 @@ data class BibleVersion(
         const val COPYRIGHT_LONG = "copyright_long"
         const val COPYRIGHT_SHORT = "copyright_short"
         const val LANGUAGE_TAG = "language_tag"
-        const val LOCALIZED_ABBREVIATION = "local_abbreviation"
-        const val LOCALIZED_TITLE = "local_title"
+        const val LOCALIZED_ABBREVIATION = "localized_abbreviation"
+        const val LOCALIZED_TITLE = "localized_title"
         const val READER_FOOTER = "info"
         const val READER_FOOTER_URL = "publisher_url"
         const val TEXT_DIRECTION = "text_direction"
@@ -232,39 +232,10 @@ data class BibleVersion(
         fun merge(
             basic: BibleVersion,
             index: BibleVersionIndex,
-        ): BibleVersion {
-            val books =
-                index.books
-                    ?.filter { it.chapters != null && it.chapters.isNotEmpty() }
-                    ?.map { book ->
-                        // non-canonical chapters don't have verses.
-                        val chapters =
-                            book.chapters
-                                ?.filter { it.verses != null && it.verses.isNotEmpty() }
-                                ?.map { chapter ->
-                                    BibleChapter(
-                                        id = chapter.title,
-                                        bookUSFM = chapter.id,
-                                        isCanonical = true,
-                                        passageId = chapter.id,
-                                        title = chapter.title,
-                                    )
-                                }
-
-                        BibleBook(
-                            usfm = book.id,
-                            abbreviation = book.abbreviation,
-                            title = book.title,
-                            canon = book.canon,
-                            chapters = chapters,
-                        )
-                    }
-
-            return basic.copy(
-                bookCodes = books?.mapNotNull { it.usfm },
-                books = books,
+        ): BibleVersion =
+            basic.copy(
+                books = index.books,
                 textDirection = index.textDirection,
             )
-        }
     }
 }

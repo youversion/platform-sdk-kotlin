@@ -34,24 +34,26 @@ class BiblesApiChaptersTests : YouVersionPlatformTest {
                         "data": [
                             {
                                 "id": "1",
-                                "book_id": "GEN",
                                 "passage_id": "GEN.1",
                                 "title": "1",
                                 "verses": [
-                                    "1",
-                                    "2",
-                                    "3"
+                                    {
+                                        "id": "1",
+                                        "passage_id": "GEN.1.1",
+                                        "title": "1"
+                                    }
                                 ]
                             },
                             {
                                 "id": "2",
-                                "book_id": "GEN",
                                 "passage_id": "GEN.2",
                                 "title": "2",
                                 "verses": [
-                                    "1",
-                                    "2",
-                                    "3"
+                                    {
+                                        "id": "2",
+                                        "passage_id": "GEN.2.1",
+                                        "title": "2"
+                                    }
                                 ]
                             }
                         ]
@@ -65,7 +67,6 @@ class BiblesApiChaptersTests : YouVersionPlatformTest {
                 .chapters(versionId = 206, bookUsfm = "JHN")
                 .apply {
                     assertEquals("1", this[0].id)
-                    assertEquals("GEN", this[0].bookUSFM)
                     assertEquals("GEN.1", this[0].passageId)
                     assertEquals("1", this[0].title)
                     assertEquals("2", this[1].id)
@@ -107,13 +108,14 @@ class BiblesApiChaptersTests : YouVersionPlatformTest {
                     """
                     {
                         "id": "1",
-                        "book_id": "GEN",
                         "passage_id": "GEN.1",
                         "title": "1",
                         "verses": [
-                            "1",
-                            "2",
-                            "3"
+                            {
+                                "id": "1",
+                                "passage_id": "GEN.1.1",
+                                "title": "1"
+                            }
                         ]
                     }
                     """.trimIndent(),
