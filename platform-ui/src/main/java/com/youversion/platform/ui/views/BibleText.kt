@@ -78,7 +78,7 @@ fun BibleText(
     selectedVerses: Set<BibleReference> = emptySet(),
     onVerseSelectedChange: (Set<BibleReference>) -> Unit = {},
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)? = null,
-    onFootnoteTap: (AnnotatedString) -> Unit = {},
+    onFootnoteTap: (reference: BibleReference, footNote: AnnotatedString) -> Unit = { _, _ -> },
     placeholder: @Composable (BibleTextLoadingPhase) -> Unit = { StandardPlaceholder(it) },
     onStateChange: (BibleTextLoadingPhase) -> Unit = {},
 ) {
@@ -191,9 +191,9 @@ fun BibleText(
                                             it.item.startsWith(BibleTextCategory.FOOTNOTE_MARKER.name)
                                         }?.item
                                         ?.let {
-                                            block.footnotes[it.split(":")[1].toInt()]
-                                        }?.let {
-                                            onFootnoteTap(it)
+                                            val footNote = block.footnotes[it.split(":")[1].toInt()]
+                                            val reference = BibleReference.fromFootnoteAnnotation(it)
+                                            onFootnoteTap(reference, footNote)
                                         }
                                 }
                             }
@@ -214,6 +214,16 @@ fun BibleReference.Companion.fromAnnotation(annotation: String): BibleReference 
         bookUSFM = split[1],
         chapter = split[2].toInt(),
         verse = split[3].toInt(),
+    )
+}
+
+fun BibleReference.Companion.fromFootnoteAnnotation(annotation: String): BibleReference {
+    val split = annotation.split(":")
+    return BibleReference(
+        versionId = split[2].toInt(),
+        bookUSFM = split[3],
+        chapter = split[4].toInt(),
+        verse = split[5].toInt(),
     )
 }
 

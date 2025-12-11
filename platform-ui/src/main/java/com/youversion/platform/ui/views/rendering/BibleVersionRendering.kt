@@ -905,7 +905,7 @@ class StateUp(
                     append(text)
                     addStringAnnotation(
                         tag = BibleTextCategoryAttribute.NAME,
-                        annotation = category.name + ":" + footnotes.size,
+                        annotation = "${category.name}:${footnotes.size}:$versionId:$bookUSFM:$chapter:$verse",
                         start = 0 - text.length,
                         end = text.length,
                     )
