@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -30,7 +31,9 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.components.BibleReaderHeader
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
+import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
 import com.youversion.platform.ui.views.BibleText
+import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
 import com.youversion.platform.ui.views.BibleTextOptions
 
@@ -81,9 +84,19 @@ internal fun BibleScreen(
                                     fontFamily = state.fontFamily,
                                     fontSize = state.fontSize,
                                     lineSpacing = state.lineSpacing,
+                                    footnoteMode = BibleTextFootnoteMode.MARKER,
+                                    footnoteMarker = AnnotatedString(" FN "),
                                 ),
                             reference = state.bibleReference,
                             onStateChange = { loadingPhase = it },
+                            onFootnoteTap = { reference, footnotes ->
+                                viewModel.onAction(
+                                    BibleReaderViewModel.Action.OpenFootnotes(
+                                        reference = reference,
+                                        footnotes = footnotes,
+                                    ),
+                                )
+                            },
                         )
                         if (loadingPhase == BibleTextLoadingPhase.SUCCESS) {
                             Copyright(version = state.bibleVersion)
@@ -109,6 +122,14 @@ internal fun BibleScreen(
                     onThemeSelect = { },
                     lineSpacingSettingIndex = state.lineSpacingSettingsIndex,
                     fontDefinition = state.selectedFontDefinition,
+                )
+            }
+
+            if (state.showingFootnotes) {
+                BibleReaderFootnotesSheet(
+                    onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFootnotes) },
+                    reference = state.footnotesReference,
+                    footnotes = state.footnotes,
                 )
             }
         }

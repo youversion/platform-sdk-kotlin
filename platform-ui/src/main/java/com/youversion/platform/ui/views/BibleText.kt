@@ -52,6 +52,7 @@ data class BibleTextOptions(
     val lineSpacing: TextUnit? = null,
     val textColor: Color? = null,
     val wocColor: Color = Color(0xFFF04C59), // YouVersion red
+    val renderHeadlines: Boolean = true,
     val renderVerseNumbers: Boolean = true,
     val footnoteMode: BibleTextFootnoteMode = BibleTextFootnoteMode.NONE,
     val footnoteMarker: AnnotatedString? = null,
@@ -78,7 +79,7 @@ fun BibleText(
     selectedVerses: Set<BibleReference> = emptySet(),
     onVerseSelectedChange: (Set<BibleReference>) -> Unit = {},
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)? = null,
-    onFootnoteTap: (reference: BibleReference, footNote: AnnotatedString) -> Unit = { _, _ -> },
+    onFootnoteTap: (reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit = { _, _ -> },
     placeholder: @Composable (BibleTextLoadingPhase) -> Unit = { StandardPlaceholder(it) },
     onStateChange: (BibleTextLoadingPhase) -> Unit = {},
 ) {
@@ -104,6 +105,7 @@ fun BibleText(
                     reference = reference,
                     renderVerseNumbers = textOptions.renderVerseNumbers,
                     renderFootnotes = textOptions.footnoteMode != BibleTextFootnoteMode.NONE,
+                    renderHeadlines = textOptions.renderHeadlines,
                     footnoteMarker = textOptions.footnoteMarker,
                     textColor = textOptions.textColor ?: Color.Unspecified,
                     wocColor = textOptions.wocColor,
@@ -191,9 +193,20 @@ fun BibleText(
                                             it.item.startsWith(BibleTextCategory.FOOTNOTE_MARKER.name)
                                         }?.item
                                         ?.let {
-                                            val footNote = block.footnotes[it.split(":")[1].toInt()]
                                             val reference = BibleReference.fromFootnoteAnnotation(it)
-                                            onFootnoteTap(reference, footNote)
+                                            val footNotes =
+                                                block.footnotes.filter { footnote ->
+                                                    val referenceAnnotation =
+                                                        footnote
+                                                            .getStringAnnotations(
+                                                                tag = BibleReferenceAttribute.NAME,
+                                                                start = 0,
+                                                                end = block.text.length,
+                                                            ).firstOrNull()
+                                                    reference ==
+                                                        BibleReference.fromAnnotation(referenceAnnotation?.item ?: "")
+                                                }
+                                            onFootnoteTap(reference, footNotes)
                                         }
                                 }
                             }

@@ -1,6 +1,7 @@
 package com.youversion.platform.reader
 
 import android.content.Context
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
 import androidx.lifecycle.ViewModel
@@ -93,6 +94,8 @@ class BibleReaderViewModel(
             is Action.IncreaseFontSize -> increaseFontSize()
             is Action.NextLineSpacingMultiplierOption -> nextLineSpacingMultiplierOption()
             is Action.SetFontDefinition -> setFontFamily(action)
+            is Action.OpenFootnotes -> openFootnotes(action)
+            is Action.CloseFootnotes -> closeFootnotes()
         }
     }
 
@@ -138,6 +141,26 @@ class BibleReaderViewModel(
         _state.update { it.copy(selectedFontDefinition = action.fontDefinition) }
     }
 
+    fun openFootnotes(action: Action.OpenFootnotes) {
+        _state.update {
+            it.copy(
+                showingFootnotes = true,
+                footnotesReference = action.reference,
+                footnotes = action.footnotes,
+            )
+        }
+    }
+
+    fun closeFootnotes() {
+        _state.update {
+            it.copy(
+                showingFootnotes = false,
+                footnotesReference = null,
+                footnotes = emptyList(),
+            )
+        }
+    }
+
     // ----- State
     data class State(
         val bibleReference: BibleReference,
@@ -157,6 +180,9 @@ class BibleReaderViewModel(
         val selectedFontDefinition: FontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
         val fontSize: TextUnit = ReaderFontSettings.DEFAULT_FONT_SIZE,
         val lineSpacingMultiplier: Float = ReaderFontSettings.DEFAULT_LINE_SPACING_MULTIPLIER,
+        val showingFootnotes: Boolean = false,
+        val footnotesReference: BibleReference? = null,
+        val footnotes: List<AnnotatedString> = emptyList(),
     ) {
         val bookAndChapter: String
             get() =
@@ -212,6 +238,13 @@ class BibleReaderViewModel(
         data class SetFontDefinition(
             val fontDefinition: FontDefinition,
         ) : Action
+
+        data class OpenFootnotes(
+            val reference: BibleReference,
+            val footnotes: List<AnnotatedString>,
+        ) : Action
+
+        data object CloseFootnotes : Action
     }
 
     // ----- Injection
