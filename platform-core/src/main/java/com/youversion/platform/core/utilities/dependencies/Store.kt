@@ -15,7 +15,7 @@ interface Store {
     var readerThemeId: Int?
     var readerFontSize: Float?
     var readerLineSpacing: Float?
-    var readerFontFamily: String?
+    var readerFontDefinitionName: String?
 
     var myVersionIds: Set<Int>?
 
@@ -68,7 +68,7 @@ class SharedPreferencesStore(
                 value?.let { putFloat(Store.KEY_BIBLE_READER_LINE_SPACING, it) }
                     ?: remove(Store.KEY_BIBLE_READER_LINE_SPACING)
             }
-    override var readerFontFamily: String?
+    override var readerFontDefinitionName: String?
         get() = prefs.getString(Store.KEY_BIBLE_READER_FONT_FAMILY, null)
         set(value) =
             edit {

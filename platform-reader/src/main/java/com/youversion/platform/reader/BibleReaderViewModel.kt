@@ -17,7 +17,6 @@ import com.youversion.platform.core.utilities.dependencies.Store
 import com.youversion.platform.reader.theme.BibleReaderTheme
 import com.youversion.platform.reader.theme.FontDefinitionProvider
 import com.youversion.platform.reader.theme.ReaderTheme
-import com.youversion.platform.reader.theme.UntitledSerif
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -84,6 +83,11 @@ class BibleReaderViewModel(
         BibleReaderTheme.selectedColorScheme.value = savedReaderTheme.colorScheme
 
         // Restore Font
+        val savedFontDefinitionName = store.readerFontDefinitionName
+        val allFontDefinitions = _state.value.allFontDefinitions
+        allFontDefinitions.find { it.fontName == savedFontDefinitionName }?.let { savedFontDefinition ->
+            _state.update { it.copy(selectedFontDefinition = savedFontDefinition) }
+        }
 
         // Restore Line Spacing
         val savedLineSpacing = store.readerLineSpacing
@@ -161,6 +165,7 @@ class BibleReaderViewModel(
     }
 
     fun setFontFamily(action: Action.SetFontDefinition) {
+        store.readerFontDefinitionName = action.fontDefinition.fontName
         _state.update { it.copy(selectedFontDefinition = action.fontDefinition) }
     }
 
@@ -175,15 +180,7 @@ class BibleReaderViewModel(
         val bibleVersion: BibleVersion? = null,
         val showCopyright: Boolean = false,
         val showingFontList: Boolean = false,
-        val defaultFontDefinitions: List<FontDefinition> =
-            listOf(
-                FontDefinition("Untitled Serif", UntitledSerif),
-                FontDefinition("Serif", FontFamily.Serif),
-                FontDefinition("System Default", FontFamily.Default),
-                FontDefinition("Cursive", FontFamily.Cursive),
-                FontDefinition("Sans Serif", FontFamily.SansSerif),
-                FontDefinition("Monospace", FontFamily.Monospace),
-            ),
+        val defaultFontDefinitions: List<FontDefinition> = ReaderFontSettings.defaultFontDefinitions,
         val providedFontDefinitions: List<FontDefinition> = listOf(),
         val selectedFontDefinition: FontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
         val fontSize: TextUnit = ReaderFontSettings.DEFAULT_FONT_SIZE,

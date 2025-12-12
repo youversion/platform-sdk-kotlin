@@ -18,6 +18,16 @@ object ReaderFontSettings {
 
     val DEFAULT_FONT_DEFINITION: FontDefinition = FontDefinition("Untitled Serif", UntitledSerif)
 
+    val defaultFontDefinitions: List<FontDefinition> =
+        listOf(
+            FontDefinition("Untitled Serif", UntitledSerif),
+            FontDefinition("Serif", FontFamily.Serif),
+            FontDefinition("System Default", FontFamily.Default),
+            FontDefinition("Cursive", FontFamily.Cursive),
+            FontDefinition("Sans Serif", FontFamily.SansSerif),
+            FontDefinition("Monospace", FontFamily.Monospace),
+        )
+
     /**
      * Finds the next available font size smaller than the current one.
      * @param currentSize The current font size as an Int.
