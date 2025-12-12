@@ -790,7 +790,6 @@ enum class BibleTextCategory {
 }
 
 /**
- * An extension function to mimic `markWithTextCategory`.
  * This adds a metadata tag to a range of text.
  */
 fun AnnotatedString.Builder.addTextCategoryAnnotation(
@@ -877,10 +876,8 @@ class StateUp(
     ) {
         textBuilder.withStyle(style) {
             append(text)
-            // Tag with metadata for later use (e.g., click handlers)
-            addStringAnnotation(
-                tag = BibleTextCategoryAttribute.NAME,
-                annotation = category.name,
+            addTextCategoryAnnotation(
+                category = category,
                 start = textBuilder.length - text.length,
                 end = textBuilder.length,
             )
