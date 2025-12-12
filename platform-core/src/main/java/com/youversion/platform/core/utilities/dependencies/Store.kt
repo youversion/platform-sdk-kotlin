@@ -15,7 +15,7 @@ interface Store {
     var readerThemeId: Int?
     var readerFontSize: Float?
     var readerLineSpacing: Float?
-    var readerFontDefinitionName: String?
+    var readerFontFamilyName: String?
 
     var myVersionIds: Set<Int>?
 
@@ -27,7 +27,7 @@ interface Store {
         internal const val KEY_BIBLE_READER_THEME = "bible-reader-view--theme"
         internal const val KEY_BIBLE_READER_LINE_SPACING = "bible-reader-view--line-spacing"
         internal const val KEY_BIBLE_READER_FONT_SIZE = "bible-reader-view--font-size"
-        internal const val KEY_BIBLE_READER_FONT_FAMILY = "bible-reader-view--font-family"
+        internal const val KEY_BIBLE_READER_FONT_FAMILY_NAME = "bible-reader-view--font-family-name"
     }
 }
 
@@ -68,12 +68,12 @@ class SharedPreferencesStore(
                 value?.let { putFloat(Store.KEY_BIBLE_READER_LINE_SPACING, it) }
                     ?: remove(Store.KEY_BIBLE_READER_LINE_SPACING)
             }
-    override var readerFontDefinitionName: String?
-        get() = prefs.getString(Store.KEY_BIBLE_READER_FONT_FAMILY, null)
+    override var readerFontFamilyName: String?
+        get() = prefs.getString(Store.KEY_BIBLE_READER_FONT_FAMILY_NAME, null)
         set(value) =
             edit {
-                value?.let { putString(Store.KEY_BIBLE_READER_FONT_FAMILY, it) }
-                    ?: remove(Store.KEY_BIBLE_READER_FONT_FAMILY)
+                value?.let { putString(Store.KEY_BIBLE_READER_FONT_FAMILY_NAME, it) }
+                    ?: remove(Store.KEY_BIBLE_READER_FONT_FAMILY_NAME)
             }
     override var myVersionIds: Set<Int>?
         get() = prefs.getStringSet(Store.KEY_BIBLE_READER_MY_VERSIONS, emptySet())?.map { it.toInt() }?.toSet()

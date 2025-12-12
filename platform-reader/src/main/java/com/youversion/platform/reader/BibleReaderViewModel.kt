@@ -83,7 +83,7 @@ class BibleReaderViewModel(
         BibleReaderTheme.selectedColorScheme.value = savedReaderTheme.colorScheme
 
         // Restore Font
-        val savedFontDefinitionName = store.readerFontDefinitionName
+        val savedFontDefinitionName = store.readerFontFamilyName
         val allFontDefinitions = _state.value.allFontDefinitions
         allFontDefinitions.find { it.fontName == savedFontDefinitionName }?.let { savedFontDefinition ->
             _state.update { it.copy(selectedFontDefinition = savedFontDefinition) }
@@ -165,7 +165,7 @@ class BibleReaderViewModel(
     }
 
     fun setFontFamily(action: Action.SetFontDefinition) {
-        store.readerFontDefinitionName = action.fontDefinition.fontName
+        store.readerFontFamilyName = action.fontDefinition.fontName
         _state.update { it.copy(selectedFontDefinition = action.fontDefinition) }
     }
 
