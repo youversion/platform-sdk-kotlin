@@ -13,7 +13,9 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.utilities.dependencies.SharedPreferencesStore
 import com.youversion.platform.core.utilities.dependencies.Store
+import com.youversion.platform.reader.theme.BibleReaderTheme
 import com.youversion.platform.reader.theme.FontDefinitionProvider
+import com.youversion.platform.reader.theme.ReaderTheme
 import com.youversion.platform.reader.theme.UntitledSerif
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -70,7 +72,14 @@ class BibleReaderViewModel(
                 ),
             )
 
+        loadUserSettingsFromStorage()
         loadVersionIfNeeded(myVersionIds ?: emptySet())
+    }
+
+    private fun loadUserSettingsFromStorage() {
+        val savedReaderThemeId = store.readerThemeId
+        val savedReaderTheme = ReaderTheme.themeById(savedReaderThemeId)
+        BibleReaderTheme.selectedColorScheme.value = savedReaderTheme.colorScheme
     }
 
     private fun loadVersionIfNeeded(mySavedVersionIds: Set<Int>) {
@@ -96,6 +105,7 @@ class BibleReaderViewModel(
             is Action.IncreaseFontSize -> increaseFontSize()
             is Action.NextLineSpacingMultiplierOption -> nextLineSpacingMultiplierOption()
             is Action.SetFontDefinition -> setFontFamily(action)
+            is Action.SetReaderTheme -> setReaderTheme(action)
         }
     }
 
@@ -139,6 +149,11 @@ class BibleReaderViewModel(
 
     fun setFontFamily(action: Action.SetFontDefinition) {
         _state.update { it.copy(selectedFontDefinition = action.fontDefinition) }
+    }
+
+    fun setReaderTheme(action: Action.SetReaderTheme) {
+        BibleReaderTheme.selectedColorScheme.value = action.readerTheme.colorScheme
+        store.readerThemeId = action.readerTheme.id
     }
 
     // ----- State
@@ -214,6 +229,10 @@ class BibleReaderViewModel(
 
         data class SetFontDefinition(
             val fontDefinition: FontDefinition,
+        ) : Action
+
+        data class SetReaderTheme(
+            val readerTheme: ReaderTheme,
         ) : Action
     }
 

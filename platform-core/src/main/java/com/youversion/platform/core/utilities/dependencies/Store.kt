@@ -12,6 +12,8 @@ interface Store {
 
     var bibleReference: BibleReference?
 
+    var readerThemeId: Int?
+
     var myVersionIds: Set<Int>?
 
     companion object {
@@ -19,6 +21,7 @@ interface Store {
         internal const val KEY_INSTALL_ID = "YouVersionPlatformInstallID"
         internal const val KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
         internal const val KEY_BIBLE_READER_MY_VERSIONS = "bible-reader-view--my-versions"
+        internal const val KEY_BIBLE_READER_THEME = "bible-reader-view--theme"
     }
 }
 
@@ -39,6 +42,11 @@ class SharedPreferencesStore(
     override var bibleReference: BibleReference?
         get() = prefs.getString(Store.KEY_BIBLE_READER_REFERENCE, null)?.let { Json.decodeFromString(it) }
         set(value) = edit { putString(Store.KEY_BIBLE_READER_REFERENCE, Json.encodeToString(value)) }
+
+    override var readerThemeId: Int?
+        get() = prefs.getInt(Store.KEY_BIBLE_READER_THEME, 1)
+        set(value) =
+            edit { value?.let { putInt(Store.KEY_BIBLE_READER_THEME, it) } ?: remove(Store.KEY_BIBLE_READER_THEME) }
 
     override var myVersionIds: Set<Int>?
         get() = prefs.getStringSet(Store.KEY_BIBLE_READER_MY_VERSIONS, emptySet())?.map { it.toInt() }?.toSet()
