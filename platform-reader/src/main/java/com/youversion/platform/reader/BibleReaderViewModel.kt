@@ -32,7 +32,10 @@ class BibleReaderViewModel(
 
     internal var bibleReference: BibleReference
         get() = _state.value.bibleReference
-        set(value) = _state.update { it.copy(bibleReference = value) }
+        set(value) {
+            store.bibleReference = value
+            _state.update { it.copy(bibleReference = value) }
+        }
     internal var bibleVersion: BibleVersion?
         get() = _state.value.bibleVersion
         set(value) = _state.update { it.copy(bibleVersion = value) }
