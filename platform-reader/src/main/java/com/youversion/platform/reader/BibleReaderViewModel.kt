@@ -3,6 +3,7 @@ package com.youversion.platform.reader
 import android.content.Context
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -77,9 +78,24 @@ class BibleReaderViewModel(
     }
 
     private fun loadUserSettingsFromStorage() {
+        // Restore Theme
         val savedReaderThemeId = store.readerThemeId
         val savedReaderTheme = ReaderTheme.themeById(savedReaderThemeId)
         BibleReaderTheme.selectedColorScheme.value = savedReaderTheme.colorScheme
+
+        // Restore Font
+
+        // Restore Line Spacing
+        val savedLineSpacing = store.readerLineSpacing
+        if (savedLineSpacing != null && savedLineSpacing > -1f) {
+            _state.update { it.copy(lineSpacingMultiplier = savedLineSpacing) }
+        }
+
+        // Restore Font Size
+        val savedFontSize = store.readerFontSize
+        if (savedFontSize != null && savedFontSize > -1f) {
+            _state.update { it.copy(fontSize = savedFontSize.sp) }
+        }
     }
 
     private fun loadVersionIfNeeded(mySavedVersionIds: Set<Int>) {
@@ -121,30 +137,27 @@ class BibleReaderViewModel(
     }
 
     fun decreaseFontSize() {
-        _state.update {
-            it.copy(
-                fontSize = ReaderFontSettings.nextSmallerFontSize(it.fontSize),
-            )
-        }
+        val currentFontSize = _state.value.fontSize
+        val nextFontSize = ReaderFontSettings.nextSmallerFontSize(currentFontSize)
+        setFontSize(nextFontSize)
     }
 
     fun increaseFontSize() {
-        _state.update {
-            it.copy(
-                fontSize = ReaderFontSettings.nextLargerFontSize(it.fontSize),
-            )
-        }
+        val currentFontSize = _state.value.fontSize
+        val nextFontSize = ReaderFontSettings.nextLargerFontSize(currentFontSize)
+        setFontSize(nextFontSize)
+    }
+
+    private fun setFontSize(size: TextUnit) {
+        store.readerFontSize = size.value
+        _state.update { it.copy(fontSize = size) }
     }
 
     fun nextLineSpacingMultiplierOption() {
-        _state.update {
-            it.copy(
-                lineSpacingMultiplier =
-                    ReaderFontSettings.nextLineSpacingMultiplier(
-                        it.lineSpacingMultiplier,
-                    ),
-            )
-        }
+        val currentLineSpacing = _state.value.lineSpacingMultiplier
+        val nextLineSpacing = ReaderFontSettings.nextLineSpacingMultiplier(currentLineSpacing)
+        store.readerLineSpacing = nextLineSpacing
+        _state.update { it.copy(lineSpacingMultiplier = nextLineSpacing) }
     }
 
     fun setFontFamily(action: Action.SetFontDefinition) {
