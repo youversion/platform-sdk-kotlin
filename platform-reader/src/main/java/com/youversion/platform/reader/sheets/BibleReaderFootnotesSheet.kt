@@ -42,7 +42,7 @@ fun BibleReaderFootnotesSheet(
             modifier =
                 Modifier
                     .padding(vertical = 16.dp)
-                    .height(240.dp),
+                    .height(260.dp),
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -57,6 +57,7 @@ fun BibleReaderFootnotesSheet(
                         textOptions =
                             BibleTextOptions(
                                 renderHeadlines = false,
+                                renderVerseNumbers = false,
                             ),
                     )
                 }
@@ -71,10 +72,10 @@ fun BibleReaderFootnotesSheet(
 @Composable
 fun Footnotes(footnotes: List<AnnotatedString>) {
     Column {
-        HorizontalDivider()
+        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
         footnotes.forEach {
             Text(it)
-            HorizontalDivider()
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
         }
     }
 }
