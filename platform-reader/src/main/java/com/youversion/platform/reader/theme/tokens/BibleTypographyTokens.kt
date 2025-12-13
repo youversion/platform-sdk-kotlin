@@ -3,8 +3,8 @@ package com.youversion.platform.reader.theme.tokens
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.youversion.platform.reader.theme.AktivGrotesk
 import com.youversion.platform.reader.theme.UntitledSerif
+import com.youversion.platform.reader.theme.fonts.AktivGrotesk
 
 internal object BibleTypographyTokens {
     // ----- Header

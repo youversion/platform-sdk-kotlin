@@ -15,8 +15,3 @@ val UntitledSerif =
         Font(R.font.untitled_serif_app_bold, FontWeight.Bold),
         Font(R.font.untitled_serif_app_bold_italic, FontWeight.Bold, FontStyle.Italic),
     )
-
-val AktivGrotesk =
-    FontFamily(
-        Font(resId = R.font.aktivgrotesk),
-    )
