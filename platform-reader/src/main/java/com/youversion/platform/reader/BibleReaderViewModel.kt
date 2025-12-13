@@ -14,9 +14,9 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.utilities.dependencies.SharedPreferencesStore
 import com.youversion.platform.core.utilities.dependencies.Store
-import com.youversion.platform.reader.theme.BibleReaderTheme
 import com.youversion.platform.reader.theme.FontDefinitionProvider
 import com.youversion.platform.reader.theme.ReaderTheme
+import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
