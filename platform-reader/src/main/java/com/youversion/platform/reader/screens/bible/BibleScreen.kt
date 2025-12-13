@@ -37,6 +37,7 @@ import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
+import com.youversion.platform.ui.signin.SignOutConfirmationAlert
 import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
 import com.youversion.platform.ui.signin.rememberYouVersionAuthLauncher
 import com.youversion.platform.ui.views.BibleText
@@ -89,6 +90,7 @@ internal fun BibleScreen(
                     versionAbbreviation = state.versionAbbreviation,
                     onChapterClick = onReferencesClick,
                     onVersionClick = onVersionsClick,
+                    onOpenHeaderMenu = { signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState) },
                     onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
                     onSignInClick = {
                         signInLauncher(
@@ -103,7 +105,7 @@ internal fun BibleScreen(
                             ),
                         )
                     },
-                    onSignOutClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut) },
+                    onSignOutClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut(true)) },
                 )
 
                 // Scrollable Reader content
@@ -158,6 +160,16 @@ internal fun BibleScreen(
                 SignInErrorAlert(
                     onDismissRequest = { showSignInError = false },
                     onConfirm = { showSignInError = false },
+                )
+            }
+
+            if (signInState.showSignOutConfirmation) {
+                SignOutConfirmationAlert(
+                    onDismissRequest = { signInViewModel.onAction(SignInViewModel.Action.CancelSignOut) },
+                    onConfirm =
+                        {
+                            signInViewModel.onAction(SignInViewModel.Action.SignOut(false))
+                        },
                 )
             }
         }

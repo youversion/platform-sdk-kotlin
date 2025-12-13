@@ -12,6 +12,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +29,10 @@ import com.youversion.platform.ui.views.SignInWithYouVersionButton
 fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
     val signInViewModel = viewModel<SignInViewModel>()
     val state by signInViewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState)
+    }
 
     Scaffold(
         bottomBar = {
@@ -52,7 +57,7 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                     Text(state.userName ?: "user name")
                     Text(state.userEmail ?: "user email")
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut) }) {
+                    Button(onClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut()) }) {
                         Text("Sign Out")
                     }
                 }

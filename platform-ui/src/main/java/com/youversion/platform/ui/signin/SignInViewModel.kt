@@ -48,8 +48,10 @@ class SignInViewModel(
                 handleProcessAuthCallback(action)
             }
             is Action.SignOut -> {
-                handleSignOut()
+                handleSignOut(action)
             }
+            is Action.CancelSignOut -> cancelSignOut()
+            is Action.UpdateSignInState -> updateSignInState()
         }
     }
 
@@ -66,8 +68,26 @@ class SignInViewModel(
         }
     }
 
-    private fun handleSignOut() {
-        YouVersionApi.users.signOut()
+    private fun handleSignOut(action: Action.SignOut) {
+        if (action.requireConfirmation) {
+            _state.update { it.copy(showSignOutConfirmation = true) }
+        } else {
+            _state.update { it.copy(showSignOutConfirmation = false) }
+            YouVersionApi.users.signOut()
+        }
+    }
+
+    private fun cancelSignOut() {
+        _state.update { it.copy(showSignOutConfirmation = false) }
+    }
+
+    private fun updateSignInState() {
+        viewModelScope.launch {
+            val hasValidToken = YouVersionApi.hasValidToken()
+            if (!hasValidToken) {
+                YouVersionPlatformConfiguration.clearAuthData()
+            }
+        }
     }
 
     // ----- State
@@ -76,6 +96,7 @@ class SignInViewModel(
         val isSignedIn: Boolean = false,
         val userName: String? = null,
         val userEmail: String? = null,
+        val showSignOutConfirmation: Boolean = false,
     )
 
     // ----- Events
@@ -89,7 +110,13 @@ class SignInViewModel(
             val intent: Intent,
         ) : Action
 
-        data object SignOut : Action
+        data class SignOut(
+            val requireConfirmation: Boolean = false,
+        ) : Action
+
+        data object CancelSignOut : Action
+
+        data object UpdateSignInState : Action
     }
 
     // ----- Injection

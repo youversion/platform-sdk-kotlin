@@ -21,6 +21,7 @@ fun BibleReaderHeader(
     versionAbbreviation: String,
     onChapterClick: () -> Unit,
     onVersionClick: () -> Unit,
+    onOpenHeaderMenu: () -> Unit,
     onFontSettingsClick: () -> Unit,
     onSignInClick: () -> Unit,
     onSignOutClick: () -> Unit,
@@ -46,6 +47,7 @@ fun BibleReaderHeader(
             BibleReaderHeaderMenu(
                 isSignInProcessing = isSignInProcessing,
                 signedIn = signedIn,
+                onOpenMenu = onOpenHeaderMenu,
                 onFontSettingsClick = onFontSettingsClick,
                 onSignInClick = onSignInClick,
                 onSignOutClick = onSignOutClick,

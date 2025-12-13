@@ -6,6 +6,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +24,7 @@ import com.youversion.platform.reader.R
 fun BibleReaderHeaderMenu(
     isSignInProcessing: Boolean,
     signedIn: Boolean,
+    onOpenMenu: () -> Unit,
     onFontSettingsClick: () -> Unit,
     onSignInClick: () -> Unit,
     onSignOutClick: () -> Unit,
@@ -34,7 +36,10 @@ fun BibleReaderHeaderMenu(
             Modifier
                 .padding(16.dp),
     ) {
-        IconButton(onClick = { expanded = !expanded }) {
+        IconButton(onClick = {
+            onOpenMenu()
+            expanded = !expanded
+        }) {
             Icon(
                 imageVector = ImageVector.vectorResource(R.drawable.ic_pending),
                 contentDescription = "Fonts & Settings",
@@ -53,7 +58,12 @@ fun BibleReaderHeaderMenu(
             )
             if (signedIn) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.reader_menu_sign_out)) },
+                    text = {
+                        Text(
+                            text = stringResource(R.string.reader_menu_sign_out),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    },
                     onClick = {
                         expanded = false
                         onSignOutClick()
