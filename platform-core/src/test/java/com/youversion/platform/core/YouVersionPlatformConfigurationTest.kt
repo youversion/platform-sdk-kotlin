@@ -28,6 +28,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             configure(appKey = "appKey")
 
             assertEquals("appKey", appKey)
+            assertEquals("youversionauth://callback", authCallback)
             assertNull(accessToken)
             assertEquals("api.youversion.com", apiHost)
             assertNull(hostEnv)
@@ -41,12 +42,14 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
         with(YouVersionPlatformConfiguration) {
             configure(
                 appKey = "appKey",
+                authCallback = "auth_callback",
                 accessToken = "token",
                 apiHost = "example.com",
                 hostEnv = "prod",
             )
 
             assertEquals("appKey", appKey)
+            assertEquals("auth_callback", authCallback)
             assertEquals("token", accessToken)
             assertEquals("example.com", apiHost)
             assertEquals("prod", hostEnv)

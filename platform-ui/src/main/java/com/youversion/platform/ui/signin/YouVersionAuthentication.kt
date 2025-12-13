@@ -18,8 +18,6 @@ import kotlinx.coroutines.withContext
  * Handles the user authentication flow for signing in with YouVersion.
  */
 object YouVersionAuthentication {
-    private const val REDIRECT_URI = "youversionauth://callback"
-
     /**
      * Presents the YouVersion login flow to the user. This function is now a 'fire-and-forget'
      * operation. The result must be handled by `handleAuthCallback`.
@@ -40,7 +38,7 @@ object YouVersionAuthentication {
             SignInWithYouVersionPKCEAuthorizationRequest(
                 appKey = appKey,
                 permissions = permissions,
-                redirectUri = REDIRECT_URI,
+                redirectUri = YouVersionPlatformConfiguration.authCallback,
             )
 
         PKCEStateStore.save(
@@ -51,7 +49,11 @@ object YouVersionAuthentication {
         )
 
         val authTabIntent = AuthTabIntent.Builder().build()
-        authTabIntent.launch(launcher, authorizationRequest.url.toUri(), REDIRECT_URI)
+        authTabIntent.launch(
+            launcher,
+            authorizationRequest.url.toUri(),
+            YouVersionPlatformConfiguration.authCallback,
+        )
     }
 
     /**
@@ -69,7 +71,7 @@ object YouVersionAuthentication {
     ): SignInWithYouVersionResult? {
         val callbackUri = intent?.data ?: return null
 
-        if (callbackUri.scheme != REDIRECT_URI.toUri().scheme) {
+        if (callbackUri.scheme != YouVersionPlatformConfiguration.authCallback.toUri().scheme) {
             return null
         }
 
@@ -89,7 +91,7 @@ object YouVersionAuthentication {
                     callbackUri = callbackUri.toString(),
                     state = storedState,
                     codeVerifier = storedCodeVerifier,
-                    redirectUri = REDIRECT_URI,
+                    redirectUri = YouVersionPlatformConfiguration.authCallback,
                     nonce = storedNonce,
                 )
 

@@ -13,6 +13,7 @@ import java.util.UUID
 
 object YouVersionPlatformConfiguration {
     private const val DEFAULT_API_HOST = "api.youversion.com"
+    private const val DEFAULT_AUTH_CALLBACK = "youversionauth://callback"
     private val _configState = MutableStateFlow<Config?>(null)
     val configState = _configState.asStateFlow()
 
@@ -20,6 +21,8 @@ object YouVersionPlatformConfiguration {
         get() = _configState.value
     val appKey: String?
         get() = config?.appKey
+    val authCallback: String
+        get() = config?.authCallback ?: DEFAULT_AUTH_CALLBACK
     val apiHost: String
         get() = config?.apiHost ?: DEFAULT_API_HOST
     val hostEnv: String?
@@ -41,6 +44,7 @@ object YouVersionPlatformConfiguration {
     fun configure(
         context: Context,
         appKey: String?,
+        authCallback: String = DEFAULT_AUTH_CALLBACK,
         accessToken: String? = null,
         refreshToken: String? = null,
         idToken: String? = null,
@@ -60,6 +64,7 @@ object YouVersionPlatformConfiguration {
         // Now configure the SDK, use DI to provide any dependencies needed during configuration.
         configure(
             appKey = appKey,
+            authCallback = authCallback,
             accessToken = accessToken,
             refreshToken = refreshToken,
             idToken = idToken,
@@ -71,6 +76,7 @@ object YouVersionPlatformConfiguration {
 
     internal fun configure(
         appKey: String?,
+        authCallback: String = DEFAULT_AUTH_CALLBACK,
         accessToken: String? = null,
         refreshToken: String? = null,
         idToken: String? = null,
@@ -83,6 +89,7 @@ object YouVersionPlatformConfiguration {
         _configState.value =
             Config(
                 appKey = appKey,
+                authCallback = authCallback,
                 apiHost = apiHost,
                 hostEnv = hostEnv,
                 installId = store.installId ?: UUID.randomUUID().toString().also { store.installId = it },
@@ -167,6 +174,7 @@ object YouVersionPlatformConfiguration {
 
 data class Config(
     val appKey: String?,
+    val authCallback: String,
     val apiHost: String,
     val hostEnv: String?,
     val installId: String?,
