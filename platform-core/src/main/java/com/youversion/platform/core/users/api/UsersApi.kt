@@ -17,6 +17,8 @@ interface UsersApi {
         nonce: String,
     ): SignInWithYouVersionResult
 
+    suspend fun performRefresh(): SignInWithYouVersionResult
+
     fun decodeJWT(token: String): Map<String, Any?>
 
     val currentUserId: String?

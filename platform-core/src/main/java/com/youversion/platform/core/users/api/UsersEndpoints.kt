@@ -3,6 +3,7 @@ package com.youversion.platform.core.users.api
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.parameter
+import com.youversion.platform.core.users.model.RefreshTokenResponse
 import com.youversion.platform.core.users.model.SignInWithYouVersionPKCEParameters
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.users.model.SignInWithYouVersionResult
@@ -101,6 +102,38 @@ object UsersEndpoints : UsersApi {
             )
         val result = extractSignInWithYouVersionResult(tokens = tokens, nonce = nonce)
         return result
+    }
+
+    override suspend fun performRefresh(): SignInWithYouVersionResult {
+        val refreshToken =
+            YouVersionPlatformConfiguration.refreshToken
+                ?: throw IllegalStateException("Refresh token not available. Cannot perform refresh.")
+        val appKey =
+            YouVersionPlatformConfiguration.appKey
+                ?: throw IllegalStateException("App key not configured. Cannot perform refresh.")
+
+        val tokens =
+            httpClient
+                .submitForm(
+                    url = authTokenUrl(),
+                    formParameters =
+                        parameters {
+                            append("grant_type", "refresh_token")
+                            append("client_id", appKey)
+                            append("refresh_token", refreshToken)
+                        },
+                ).body<RefreshTokenResponse>()
+
+        val originalIdToken = YouVersionPlatformConfiguration.idToken
+
+        return SignInWithYouVersionResult.create(
+            accessToken = tokens.accessToken,
+            expiresIn = tokens.expiresIn.toString(),
+            refreshToken = tokens.refreshToken,
+            idToken = originalIdToken,
+            permissions = emptyList(),
+            yvpUserId = null,
+        )
     }
 
     override fun decodeJWT(token: String): Map<String, Any?> {
