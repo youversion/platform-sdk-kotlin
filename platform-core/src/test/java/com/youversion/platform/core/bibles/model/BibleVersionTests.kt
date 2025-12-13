@@ -49,8 +49,8 @@ class BibleVersionTests : YouVersionPlatformTest {
         assertEquals(bookCodes, bibleVersion.books?.map { it.usfm })
         assertEquals("GEN", bookCodes?.first())
         assertEquals("REV", bookCodes?.last())
-        assertEquals("PUBLIC DOMAIN (not copyrighted)", bibleVersion.copyrightShort)
-        assertEquals("This Public Domain Bible text is courtesy of eBible.org.", bibleVersion.copyrightLong)
+        assertEquals("PUBLIC DOMAIN (not copyrighted)", bibleVersion.copyright)
+        assertEquals("This Public Domain Bible text is courtesy of eBible.org.", bibleVersion.promotionalContent)
     }
 
     // ----- displayTitle
