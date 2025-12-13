@@ -151,7 +151,7 @@ private fun RowScope.Copyright(
     version: BibleVersion?,
     onClick: () -> Unit = {},
 ) {
-    val copyright = version?.copyrightShort ?: version?.copyrightLong ?: ""
+    val copyright = version?.copyright ?: version?.promotionalContent ?: ""
     Text(
         text = copyright,
         textAlign = TextAlign.Start,
@@ -192,7 +192,7 @@ private fun CopyrightSheetContent(version: BibleVersion?) {
         )
 
         Text(
-            text = version?.copyrightLong ?: version?.copyrightShort ?: "",
+            text = version?.promotionalContent ?: version?.copyright ?: "",
         )
         Spacer(modifier = Modifier.height(40.dp))
     }
