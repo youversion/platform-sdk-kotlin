@@ -8,8 +8,8 @@ import kotlinx.serialization.Serializable
 data class BibleVersion(
     @SerialName(CodingKey.ID) val id: Int,
     @SerialName(CodingKey.ABBREVIATION) val abbreviation: String? = null,
-    @SerialName(CodingKey.COPYRIGHT_LONG) val copyrightLong: String? = null,
-    @SerialName(CodingKey.COPYRIGHT_SHORT) val copyrightShort: String? = null,
+    @SerialName(CodingKey.PROMOTIONAL_CONTENT) val promotionalContent: String? = null,
+    @SerialName(CodingKey.COPYRIGHT) val copyright: String? = null,
     @SerialName(CodingKey.LANGUAGE_TAG) val languageTag: String? = null,
     @SerialName(CodingKey.LOCALIZED_ABBREVIATION) val localizedAbbreviation: String? = null,
     @SerialName(CodingKey.LOCALIZED_TITLE) val localizedTitle: String? = null,
@@ -26,8 +26,8 @@ data class BibleVersion(
         const val ABBREVIATION = "abbreviation"
         const val BOOK_CODES = "books"
         const val BOOKS = "BibleBooks" // This will be merged from /index but we need to encode it for caching
-        const val COPYRIGHT_LONG = "copyright_long"
-        const val COPYRIGHT_SHORT = "copyright_short"
+        const val PROMOTIONAL_CONTENT = "promotional_content"
+        const val COPYRIGHT = "copyright"
         const val LANGUAGE_TAG = "language_tag"
         const val LOCALIZED_ABBREVIATION = "localized_abbreviation"
         const val LOCALIZED_TITLE = "localized_title"
@@ -215,8 +215,8 @@ data class BibleVersion(
                 return BibleVersion(
                     id = 1,
                     abbreviation = "KJV",
-                    copyrightLong = copyrightLong,
-                    copyrightShort = null,
+                    promotionalContent = copyrightLong,
+                    copyright = null,
                     languageTag = "en",
                     localizedAbbreviation = "KJV",
                     localizedTitle = "King James Version",

@@ -178,7 +178,7 @@ internal fun BibleScreen(
 
 @Composable
 private fun Copyright(version: BibleVersion?) {
-    val copyright = version?.copyrightShort ?: version?.copyrightLong ?: ""
+    val copyright = version?.copyright ?: version?.promotionalContent ?: ""
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Text(
             text = copyright,
