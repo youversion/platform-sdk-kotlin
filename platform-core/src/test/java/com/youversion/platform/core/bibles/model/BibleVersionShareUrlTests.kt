@@ -14,8 +14,8 @@ class BibleVersionShareUrlTests {
         BibleVersion(
             id = id,
             abbreviation = abbreviation,
-            copyrightLong = null,
-            copyrightShort = null,
+            promotionalContent = null,
+            copyright = null,
             languageTag = "eng",
             localizedAbbreviation = localizedAbbreviation,
             localizedTitle = null,

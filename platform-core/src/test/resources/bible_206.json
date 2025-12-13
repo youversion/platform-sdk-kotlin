@@ -1,8 +1,8 @@
 {
   "id": 206,
   "abbreviation": "engWEBUS",
-  "copyright_long": "This Public Domain Bible text is courtesy of eBible.org.",
-  "copyright_short": "PUBLIC DOMAIN (not copyrighted)",
+  "promotional_content": "This Public Domain Bible text is courtesy of eBible.org.",
+  "copyright": "PUBLIC DOMAIN (not copyrighted)",
   "info": null,
   "publisher_url": null,
   "language_tag": "en",

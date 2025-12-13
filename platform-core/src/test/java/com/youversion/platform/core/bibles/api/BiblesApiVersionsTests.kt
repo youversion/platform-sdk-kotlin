@@ -133,8 +133,8 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
                     // Assert metadata fields from bible_206.json
                     assertEquals(206, id)
                     assertEquals("engWEBUS", abbreviation)
-                    assertEquals("This Public Domain Bible text is courtesy of eBible.org.", copyrightLong)
-                    assertEquals("PUBLIC DOMAIN (not copyrighted)", copyrightShort)
+                    assertEquals("This Public Domain Bible text is courtesy of eBible.org.", promotionalContent)
+                    assertEquals("PUBLIC DOMAIN (not copyrighted)", copyright)
                     assertEquals("en", languageTag)
                     assertEquals("WEBUS", localizedAbbreviation)
                     assertEquals(
@@ -223,7 +223,7 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
                 .apply {
                     assertEquals(206, id)
                     assertEquals("engWEBUS", abbreviation)
-                    assertEquals("PUBLIC DOMAIN (not copyrighted)", copyrightShort)
+                    assertEquals("PUBLIC DOMAIN (not copyrighted)", copyright)
                     assertEquals("World English Bible, American English Edition, without Strong's Numbers", title)
                     assertNull(books)
                 }
@@ -303,8 +303,8 @@ private const val VERSIONS_ENG_JSON = """
         {
             "id": 12,
             "abbreviation": "ASV",
-            "copyright_long": null,
-            "copyright_short": null,
+            "promotional_content": null,
+            "copyright": null,
             "info": null,
             "publisher_url": null,
             "language_tag": "en",
@@ -324,8 +324,8 @@ private const val VERSION_206_METADATA_JSON = """
 {
   "id": 206,
   "abbreviation": "engWEBUS",
-  "copyright_long": "This Public Domain Bible text is courtesy of eBible.org.",
-  "copyright_short": "PUBLIC DOMAIN (not copyrighted)",
+  "promotional_content": "This Public Domain Bible text is courtesy of eBible.org.",
+  "copyright": "PUBLIC DOMAIN (not copyrighted)",
   "info": null,
   "publisher_url": null,
   "language_tag": "en",
