@@ -25,19 +25,21 @@ class UsersEndpointsTests : YouVersionPlatformTest {
         startYouVersionPlatformTest()
         YouVersionPlatformConfiguration.configure(appKey = "test_app_key")
         val permissions = setOf(SignInWithYouVersionPermission.PROFILE, SignInWithYouVersionPermission.EMAIL)
-        val pkceParams = SignInWithYouVersionPKCEParameters(
-            codeChallenge = "challenge_string",
-            codeVerifier = "verifier_string",
-            nonce = "nonce_string",
-            state = "state_string",
-        )
+        val pkceParams =
+            SignInWithYouVersionPKCEParameters(
+                codeChallenge = "challenge_string",
+                codeVerifier = "verifier_string",
+                nonce = "nonce_string",
+                state = "state_string",
+            )
 
-        val url = UsersEndpoints.authorizeUrl(
-            appKey = YouVersionPlatformConfiguration.appKey!!,
-            permissions = permissions,
-            redirectUri = "app://callback",
-            parameters = pkceParams,
-        )
+        val url =
+            UsersEndpoints.authorizeUrl(
+                appKey = YouVersionPlatformConfiguration.appKey!!,
+                permissions = permissions,
+                redirectUri = "app://callback",
+                parameters = pkceParams,
+            )
 
         val installId = YouVersionPlatformConfiguration.installId
 
@@ -55,44 +57,49 @@ class UsersEndpointsTests : YouVersionPlatformTest {
     }
 
     @Test
-    fun `test performRefresh success`() = runTest {
-        val mockResponse = """
-            {
-              "access_token": "new_access_token",
-              "expires_in": 3600,
-              "refresh_token": "new_refresh_token",
-              "scope": "scope"
-            }
-        """.trimIndent()
-        val mockEngine = MockEngine { respondJson(mockResponse) }
-        startYouVersionPlatformTest(engine = mockEngine)
-        YouVersionPlatformConfiguration.configure(
-            appKey = "test_app_key",
-            refreshToken = "old_refresh_token",
-            idToken = "fake.id.token", // This should be preserved
-        )
+    fun `test performRefresh success`() =
+        runTest {
+            val mockResponse =
+                """
+                {
+                  "access_token": "new_access_token",
+                  "expires_in": 3600,
+                  "refresh_token": "new_refresh_token",
+                  "scope": "scope"
+                }
+                """.trimIndent()
+            val mockEngine = MockEngine { respondJson(mockResponse) }
+            startYouVersionPlatformTest(engine = mockEngine)
+            YouVersionPlatformConfiguration.configure(
+                appKey = "test_app_key",
+                refreshToken = "old_refresh_token",
+                idToken = "fake.id.token", // This should be preserved
+            )
 
-        val result = YouVersionApi.users.performRefresh()
+            val result = YouVersionApi.users.performRefresh()
 
-        assertEquals("new_access_token", result.accessToken)
-        assertEquals("new_refresh_token", result.refreshToken)
-        assertEquals(
-            "fake.id.token",
-            result.idToken, "Original idToken should be preserved",
-        )
-        assertTrue(
-            result.permissions.isEmpty(),
-            "Permissions should be empty for a refresh response",
-        )
-    }
+            assertEquals("new_access_token", result.accessToken)
+            assertEquals("new_refresh_token", result.refreshToken)
+            assertEquals(
+                "fake.id.token",
+                result.idToken,
+                "Original idToken should be preserved",
+            )
+            assertTrue(
+                result.permissions.isEmpty(),
+                "Permissions should be empty for a refresh response",
+            )
+        }
 
     @Test
-    fun `test performRefresh throws if no refresh token`() = runTest {
-        startYouVersionPlatformTest()
-        YouVersionPlatformConfiguration.configure(appKey = "test_app_key", refreshToken = null)
-        val exception = assertFailsWith<IllegalStateException> {
-            YouVersionApi.users.performRefresh()
+    fun `test performRefresh throws if no refresh token`() =
+        runTest {
+            startYouVersionPlatformTest()
+            YouVersionPlatformConfiguration.configure(appKey = "test_app_key", refreshToken = null)
+            val exception =
+                assertFailsWith<IllegalStateException> {
+                    YouVersionApi.users.performRefresh()
+                }
+            assertEquals("Refresh token not available. Cannot perform refresh.", exception.message)
         }
-        assertEquals("Refresh token not available. Cannot perform refresh.", exception.message)
-    }
 }
