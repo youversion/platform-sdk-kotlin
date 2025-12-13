@@ -60,4 +60,29 @@ class TestStore : Store {
             value?.let { prefs[Store.KEY_BIBLE_READER_MY_VERSIONS] = it.joinToString(",") { i -> i.toString() } }
                 ?: prefs.remove(Store.KEY_BIBLE_READER_MY_VERSIONS)
         }
+
+    override var readerThemeId: Int?
+        get() = prefs[Store.KEY_BIBLE_READER_THEME]?.toInt()
+        set(value) {
+            value?.let { prefs[Store.KEY_BIBLE_READER_THEME] = it.toString() }
+                ?: prefs.remove(Store.KEY_BIBLE_READER_THEME)
+        }
+    override var readerFontSize: Float?
+        get() = prefs[Store.KEY_BIBLE_READER_FONT_SIZE]?.toFloat()
+        set(value) {
+            value?.let { prefs[Store.KEY_BIBLE_READER_FONT_SIZE] = it.toString() }
+                ?: prefs.remove(Store.KEY_BIBLE_READER_FONT_SIZE)
+        }
+    override var readerLineSpacing: Float?
+        get() = prefs[Store.KEY_BIBLE_READER_LINE_SPACING]?.toFloat()
+        set(value) {
+            value?.let { prefs[Store.KEY_BIBLE_READER_LINE_SPACING] = it.toString() }
+                ?: prefs.remove(Store.KEY_BIBLE_READER_LINE_SPACING)
+        }
+    override var readerFontFamilyName: String?
+        get() = prefs[Store.KEY_BIBLE_READER_FONT_FAMILY_NAME]
+        set(value) {
+            value?.let { prefs[Store.KEY_BIBLE_READER_FONT_FAMILY_NAME] = it }
+                ?: prefs.remove(Store.KEY_BIBLE_READER_FONT_FAMILY_NAME)
+        }
 }

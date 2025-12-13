@@ -2,6 +2,26 @@ package com.youversion.platform.reader.theme
 
 import androidx.compose.ui.graphics.Color
 
+data class ReaderTheme(
+    val id: Int,
+    val colorScheme: ReaderColorScheme,
+) {
+    companion object {
+        val allThemes =
+            listOf(
+                ReaderTheme(1, PureWhite),
+                ReaderTheme(2, Sepia),
+                ReaderTheme(3, PaperGray),
+                ReaderTheme(4, Cream),
+                ReaderTheme(5, Charcoal),
+                ReaderTheme(6, MidnightBlue),
+                ReaderTheme(7, TrueBlack),
+            )
+
+        fun themeById(id: Int? = null): ReaderTheme = allThemes.find { it.id == id } ?: allThemes.first()
+    }
+}
+
 // Light themes
 internal val PureWhite =
     lightReaderColorScheme(

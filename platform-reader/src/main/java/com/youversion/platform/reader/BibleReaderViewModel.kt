@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -14,8 +15,9 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.utilities.dependencies.SharedPreferencesStore
 import com.youversion.platform.core.utilities.dependencies.Store
+import com.youversion.platform.reader.theme.BibleReaderTheme
 import com.youversion.platform.reader.theme.FontDefinitionProvider
-import com.youversion.platform.reader.theme.UntitledSerif
+import com.youversion.platform.reader.theme.ReaderTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,7 +35,10 @@ class BibleReaderViewModel(
 
     internal var bibleReference: BibleReference
         get() = _state.value.bibleReference
-        set(value) = _state.update { it.copy(bibleReference = value) }
+        set(value) {
+            store.bibleReference = value
+            _state.update { it.copy(bibleReference = value) }
+        }
     internal var bibleVersion: BibleVersion?
         get() = _state.value.bibleVersion
         set(value) = _state.update { it.copy(bibleVersion = value) }
@@ -68,7 +73,34 @@ class BibleReaderViewModel(
                 ),
             )
 
+        loadUserSettingsFromStorage()
         loadVersionIfNeeded(myVersionIds ?: emptySet())
+    }
+
+    private fun loadUserSettingsFromStorage() {
+        // Restore Theme
+        val savedReaderThemeId = store.readerThemeId
+        val savedReaderTheme = ReaderTheme.themeById(savedReaderThemeId)
+        BibleReaderTheme.selectedColorScheme.value = savedReaderTheme.colorScheme
+
+        // Restore Font
+        val savedFontDefinitionName = store.readerFontFamilyName
+        val allFontDefinitions = _state.value.allFontDefinitions
+        allFontDefinitions.find { it.fontName == savedFontDefinitionName }?.let { savedFontDefinition ->
+            _state.update { it.copy(selectedFontDefinition = savedFontDefinition) }
+        }
+
+        // Restore Line Spacing
+        val savedLineSpacing = store.readerLineSpacing
+        if (savedLineSpacing != null && savedLineSpacing > -1f) {
+            _state.update { it.copy(lineSpacingMultiplier = savedLineSpacing) }
+        }
+
+        // Restore Font Size
+        val savedFontSize = store.readerFontSize
+        if (savedFontSize != null && savedFontSize > -1f) {
+            _state.update { it.copy(fontSize = savedFontSize.sp) }
+        }
     }
 
     private fun loadVersionIfNeeded(mySavedVersionIds: Set<Int>) {
@@ -96,6 +128,7 @@ class BibleReaderViewModel(
             is Action.SetFontDefinition -> setFontFamily(action)
             is Action.OpenFootnotes -> openFootnotes(action)
             is Action.CloseFootnotes -> closeFootnotes()
+            is Action.SetReaderTheme -> setReaderTheme(action)
         }
     }
 
@@ -111,33 +144,31 @@ class BibleReaderViewModel(
     }
 
     fun decreaseFontSize() {
-        _state.update {
-            it.copy(
-                fontSize = ReaderFontSettings.nextSmallerFontSize(it.fontSize),
-            )
-        }
+        val currentFontSize = _state.value.fontSize
+        val nextFontSize = ReaderFontSettings.nextSmallerFontSize(currentFontSize)
+        setFontSize(nextFontSize)
     }
 
     fun increaseFontSize() {
-        _state.update {
-            it.copy(
-                fontSize = ReaderFontSettings.nextLargerFontSize(it.fontSize),
-            )
-        }
+        val currentFontSize = _state.value.fontSize
+        val nextFontSize = ReaderFontSettings.nextLargerFontSize(currentFontSize)
+        setFontSize(nextFontSize)
+    }
+
+    private fun setFontSize(size: TextUnit) {
+        store.readerFontSize = size.value
+        _state.update { it.copy(fontSize = size) }
     }
 
     fun nextLineSpacingMultiplierOption() {
-        _state.update {
-            it.copy(
-                lineSpacingMultiplier =
-                    ReaderFontSettings.nextLineSpacingMultiplier(
-                        it.lineSpacingMultiplier,
-                    ),
-            )
-        }
+        val currentLineSpacing = _state.value.lineSpacingMultiplier
+        val nextLineSpacing = ReaderFontSettings.nextLineSpacingMultiplier(currentLineSpacing)
+        store.readerLineSpacing = nextLineSpacing
+        _state.update { it.copy(lineSpacingMultiplier = nextLineSpacing) }
     }
 
     fun setFontFamily(action: Action.SetFontDefinition) {
+        store.readerFontFamilyName = action.fontDefinition.fontName
         _state.update { it.copy(selectedFontDefinition = action.fontDefinition) }
     }
 
@@ -161,21 +192,18 @@ class BibleReaderViewModel(
         }
     }
 
+    fun setReaderTheme(action: Action.SetReaderTheme) {
+        BibleReaderTheme.selectedColorScheme.value = action.readerTheme.colorScheme
+        store.readerThemeId = action.readerTheme.id
+    }
+
     // ----- State
     data class State(
         val bibleReference: BibleReference,
         val bibleVersion: BibleVersion? = null,
         val showCopyright: Boolean = false,
         val showingFontList: Boolean = false,
-        val defaultFontDefinitions: List<FontDefinition> =
-            listOf(
-                FontDefinition("Untitled Serif", UntitledSerif),
-                FontDefinition("Serif", FontFamily.Serif),
-                FontDefinition("System Default", FontFamily.Default),
-                FontDefinition("Cursive", FontFamily.Cursive),
-                FontDefinition("Sans Serif", FontFamily.SansSerif),
-                FontDefinition("Monospace", FontFamily.Monospace),
-            ),
+        val defaultFontDefinitions: List<FontDefinition> = ReaderFontSettings.defaultFontDefinitions,
         val providedFontDefinitions: List<FontDefinition> = listOf(),
         val selectedFontDefinition: FontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
         val fontSize: TextUnit = ReaderFontSettings.DEFAULT_FONT_SIZE,
@@ -245,6 +273,10 @@ class BibleReaderViewModel(
         ) : Action
 
         data object CloseFootnotes : Action
+
+        data class SetReaderTheme(
+            val readerTheme: ReaderTheme,
+        ) : Action
     }
 
     // ----- Injection
