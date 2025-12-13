@@ -49,7 +49,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
         assertTrue(url.contains("state=state_string"))
         assertTrue(url.contains("code_challenge=challenge_string"))
         assertTrue(url.contains("code_challenge_method=S256"))
-        assertTrue(url.contains("scope=email+openid+profile")) // The implementation sorts and encodes
+        assertTrue(url.contains("scope=email+openid+profile"))
         assertTrue(url.contains("require_user_interaction=true"))
         assertTrue(url.contains("x-yvp-installation-id=$installId"))
     }
@@ -76,14 +76,20 @@ class UsersEndpointsTests : YouVersionPlatformTest {
 
         assertEquals("new_access_token", result.accessToken)
         assertEquals("new_refresh_token", result.refreshToken)
-        assertEquals("fake.id.token", result.idToken, "Original idToken should be preserved")
-        assertTrue(result.permissions.isEmpty(), "Permissions should be empty for a refresh response")
+        assertEquals(
+            "fake.id.token",
+            result.idToken, "Original idToken should be preserved",
+        )
+        assertTrue(
+            result.permissions.isEmpty(),
+            "Permissions should be empty for a refresh response",
+        )
     }
 
     @Test
     fun `test performRefresh throws if no refresh token`() = runTest {
         startYouVersionPlatformTest()
-        YouVersionPlatformConfiguration.configure(appKey = "test_app_key", refreshToken = null) // Ensure token is null
+        YouVersionPlatformConfiguration.configure(appKey = "test_app_key", refreshToken = null)
         val exception = assertFailsWith<IllegalStateException> {
             YouVersionApi.users.performRefresh()
         }
