@@ -54,6 +54,7 @@ object UsersEndpoints : UsersApi {
             parameter("code_challenge", parameters.codeChallenge)
             parameter("code_challenge_method", "S256")
             parameter("scope", scopeValue(permissions))
+            parameter("require_user_interaction", true)
 
             YouVersionPlatformConfiguration.installId?.let {
                 parameter("x-yvp-installation-id", it)
