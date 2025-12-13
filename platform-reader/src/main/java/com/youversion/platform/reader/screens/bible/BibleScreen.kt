@@ -146,7 +146,9 @@ internal fun BibleScreen(
                         viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings)
                         onFontsClick()
                     },
-                    onThemeSelect = { },
+                    onThemeSelect = { newReaderTheme ->
+                        viewModel.onAction(BibleReaderViewModel.Action.SetReaderTheme(newReaderTheme))
+                    },
                     lineSpacingSettingIndex = state.lineSpacingSettingsIndex,
                     fontDefinition = state.selectedFontDefinition,
                 )
