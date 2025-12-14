@@ -20,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.ui.views.BibleText
+import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextOptions
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,6 +59,7 @@ fun BibleReaderFootnotesSheet(
                             BibleTextOptions(
                                 renderHeadlines = false,
                                 renderVerseNumbers = false,
+                                footnoteMode = BibleTextFootnoteMode.LETTERS,
                             ),
                     )
                 }
