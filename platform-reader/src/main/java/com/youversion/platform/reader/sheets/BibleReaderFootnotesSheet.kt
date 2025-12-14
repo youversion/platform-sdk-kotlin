@@ -16,9 +16,12 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextOptions
@@ -27,6 +30,7 @@ import com.youversion.platform.ui.views.BibleTextOptions
 @Composable
 fun BibleReaderFootnotesSheet(
     onDismissRequest: () -> Unit,
+    version: BibleVersion?,
     reference: BibleReference?,
     footnotes: List<AnnotatedString>,
 ) {
@@ -43,7 +47,7 @@ fun BibleReaderFootnotesSheet(
             modifier =
                 Modifier
                     .padding(vertical = 16.dp)
-                    .height(260.dp),
+                    .height(360.dp),
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -52,6 +56,14 @@ fun BibleReaderFootnotesSheet(
                         .padding(horizontal = 24.dp)
                         .verticalScroll(rememberScrollState()),
             ) {
+                if (version != null && reference != null) {
+                    Text(
+                        text = version.displayTitle(reference, includesVersionAbbreviation = true),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                    )
+                }
                 reference?.let {
                     BibleText(
                         reference = it,
@@ -74,10 +86,10 @@ fun BibleReaderFootnotesSheet(
 @Composable
 fun Footnotes(footnotes: List<AnnotatedString>) {
     Column {
-        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         footnotes.forEach {
             Text(it)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         }
     }
 }
@@ -88,6 +100,7 @@ private fun Preview_BibleReaderFootnotesSheet() {
     MaterialTheme {
         BibleReaderFootnotesSheet(
             onDismissRequest = {},
+            version = BibleVersion.preview,
             reference =
                 BibleReference(
                     versionId = 111,

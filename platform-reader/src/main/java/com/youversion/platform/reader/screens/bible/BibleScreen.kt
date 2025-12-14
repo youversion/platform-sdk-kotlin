@@ -128,6 +128,7 @@ internal fun BibleScreen(
             if (state.showingFootnotes) {
                 BibleReaderFootnotesSheet(
                     onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFootnotes) },
+                    version = state.bibleVersion,
                     reference = state.footnotesReference,
                     footnotes = state.footnotes,
                 )
