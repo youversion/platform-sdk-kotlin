@@ -2,6 +2,7 @@ package com.youversion.platform.reader.sheets
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,7 +17,9 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -87,8 +90,20 @@ fun BibleReaderFootnotesSheet(
 fun Footnotes(footnotes: List<AnnotatedString>) {
     Column {
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-        footnotes.forEach {
-            Text(it)
+        footnotes.forEachIndexed { index, footnote ->
+            val value = 'a'.code + index
+            val letter = value.toChar().toString()
+            val footnoteEnumeration =
+                buildAnnotatedString {
+                    withStyle(footnote.spanStyles.first().item) {
+                        append(letter)
+                        append(".")
+                    }
+                }
+            Row {
+                Text(footnoteEnumeration, modifier = Modifier.padding(end = 4.dp))
+                Text(footnote)
+            }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         }
     }
