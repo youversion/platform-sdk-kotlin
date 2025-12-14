@@ -898,18 +898,20 @@ class StateUp(
         category: BibleTextCategory,
     ) {
         textBuilder.withStyle(style) {
+            val start = textBuilder.length
             append(text)
+            val end = textBuilder.length
             addTextCategoryAnnotation(
                 category = category,
-                start = textBuilder.length - text.length,
-                end = textBuilder.length + 1,
+                start = start,
+                end = end,
             )
             if (verse > 0) {
                 addStringAnnotation(
                     tag = BibleReferenceAttribute.NAME,
                     annotation = "$versionId:$bookUSFM:$chapter:$verse",
-                    start = textBuilder.length - text.length,
-                    end = textBuilder.length + 1,
+                    start = start,
+                    end = end,
                 )
             }
         }
