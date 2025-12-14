@@ -33,6 +33,7 @@ import com.youversion.platform.ui.views.convertToEnumeration
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BibleReaderFootnotesSheet(
+    textOptions: BibleTextOptions,
     onDismissRequest: () -> Unit,
     version: BibleVersion?,
     reference: BibleReference?,
@@ -72,7 +73,7 @@ fun BibleReaderFootnotesSheet(
                     BibleText(
                         reference = it,
                         textOptions =
-                            BibleTextOptions(
+                            textOptions.copy(
                                 renderHeadlines = false,
                                 renderVerseNumbers = false,
                                 footnoteMode = BibleTextFootnoteMode.LETTERS,
@@ -127,6 +128,7 @@ private fun Preview_BibleReaderFootnotesSheet() {
                     verseStart = 3,
                     verseEnd = 5,
                 ),
+            textOptions = BibleTextOptions(),
             footnotes = listOf(AnnotatedString("1:5 Footnote details")),
         )
     }

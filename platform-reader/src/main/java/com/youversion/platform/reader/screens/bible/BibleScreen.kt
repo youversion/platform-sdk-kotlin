@@ -127,6 +127,12 @@ internal fun BibleScreen(
 
             if (state.showingFootnotes) {
                 BibleReaderFootnotesSheet(
+                    textOptions =
+                        BibleTextOptions(
+                            fontFamily = state.fontFamily,
+                            fontSize = state.fontSize,
+                            lineSpacing = state.lineSpacing,
+                        ),
                     onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFootnotes) },
                     version = state.bibleVersion,
                     reference = state.footnotesReference,
