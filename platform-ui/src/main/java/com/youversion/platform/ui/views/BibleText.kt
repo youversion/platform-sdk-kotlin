@@ -121,6 +121,11 @@ data class BibleTextOptions(
     }
 }
 
+fun Int.convertToEnumeration(): String {
+    val value = 'a'.code + minOf(25, this)
+    return value.toChar().toString()
+}
+
 enum class BibleTextFootnoteMode {
     NONE,
     INLINE,

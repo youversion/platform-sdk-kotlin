@@ -23,6 +23,7 @@ import com.youversion.platform.ui.views.BibleTextFontOption
 import com.youversion.platform.ui.views.BibleTextFonts
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextOptions
+import com.youversion.platform.ui.views.convertToEnumeration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.UUID
@@ -887,8 +888,7 @@ class StateUp(
 ) {
     val nextFootnoteMarker: String
         get() {
-            val value = 'a'.code + minOf(25, footnotes.size)
-            val marker = value.toChar().toString()
+            val marker = footnotes.size.convertToEnumeration()
             return "\u00A0$marker "
         }
 

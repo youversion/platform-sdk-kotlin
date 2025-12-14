@@ -28,6 +28,7 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextOptions
+import com.youversion.platform.ui.views.convertToEnumeration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,8 +92,7 @@ fun Footnotes(footnotes: List<AnnotatedString>) {
     Column {
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         footnotes.forEachIndexed { index, footnote ->
-            val value = 'a'.code + index
-            val letter = value.toChar().toString()
+            val letter = index.convertToEnumeration()
             val footnoteEnumeration =
                 buildAnnotatedString {
                     withStyle(footnote.spanStyles.first().item) {
