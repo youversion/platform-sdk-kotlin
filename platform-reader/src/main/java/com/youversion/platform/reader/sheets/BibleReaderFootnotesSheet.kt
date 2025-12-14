@@ -92,13 +92,16 @@ fun Footnotes(footnotes: List<AnnotatedString>) {
     Column {
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         footnotes.forEachIndexed { index, footnote ->
-            val letter = index.convertToEnumeration()
+            val enumeration = index.convertToEnumeration() + "."
+            val style = footnote.spanStyles.firstOrNull()?.item
+
             val footnoteEnumeration =
                 buildAnnotatedString {
-                    withStyle(footnote.spanStyles.first().item) {
-                        append(letter)
-                        append(".")
-                    }
+                    style?.run {
+                        withStyle(this) {
+                            append(enumeration)
+                        }
+                    } ?: append(enumeration)
                 }
             Row {
                 Text(footnoteEnumeration, modifier = Modifier.padding(end = 4.dp))
