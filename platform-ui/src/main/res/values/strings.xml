@@ -8,4 +8,6 @@
     <string name="widget_copyright">Copyright</string>
 
     <string name="tab_votd">Verse of the Day</string>
+
+    <string name="footnote_content_desc">footnote</string>
 </resources>

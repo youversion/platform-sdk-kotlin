@@ -1,5 +1,9 @@
 package com.youversion.platform.ui.views
 
+import androidx.compose.animation.core.copy
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,8 +12,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,16 +28,29 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -45,6 +66,7 @@ import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import java.nio.file.WatchEvent
 
 data class BibleTextOptions(
     val fontFamily: FontFamily = FontFamily.Serif,
@@ -55,13 +77,56 @@ data class BibleTextOptions(
     val renderHeadlines: Boolean = true,
     val renderVerseNumbers: Boolean = true,
     val footnoteMode: BibleTextFootnoteMode = BibleTextFootnoteMode.NONE,
-    val footnoteMarker: AnnotatedString? = null,
-)
+    val footnoteMarker: AnnotatedString? = getDefaultFootnoteMarker(),
+) {
+    val inlineContentMap =
+        mapOf(
+            FOOTNOTE_IMAGE_ID to
+                InlineTextContent(
+                    Placeholder(
+                        width = 24.sp,
+                        height = 32.sp,
+                        placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
+                    ),
+                ) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .alpha(0.8f),
+                        contentAlignment = Alignment.TopCenter,
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.ic_material_footnotes),
+                            contentDescription = stringResource(R.string.footnote_content_desc),
+                            modifier = Modifier.size(20.dp),
+                            tint = LocalContentColor.current.copy(alpha = 0.6f),
+                        )
+                    }
+                },
+        )
+
+    companion object {
+        const val FOOTNOTE_IMAGE_ID = "footnote_image_id"
+
+        fun getImageFootnoteMarker(): AnnotatedString =
+            buildAnnotatedString { appendInlineContent(id = FOOTNOTE_IMAGE_ID) }
+
+        fun getDefaultFootnoteMarker(): AnnotatedString =
+            buildAnnotatedString {
+                pushStyle(SpanStyle(baselineShift = BaselineShift.Superscript))
+                append("\u00A0※ ")
+                pop()
+            }
+    }
+}
 
 enum class BibleTextFootnoteMode {
     NONE,
     INLINE,
     MARKER,
+    LETTERS,
+    IMAGE,
 }
 
 enum class BibleTextLoadingPhase {
@@ -79,7 +144,7 @@ fun BibleText(
     selectedVerses: Set<BibleReference> = emptySet(),
     onVerseSelectedChange: (Set<BibleReference>) -> Unit = {},
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)? = null,
-    onFootnoteTap: (reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit = { _, _ -> },
+    onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)? = null,
     placeholder: @Composable (BibleTextLoadingPhase) -> Unit = { StandardPlaceholder(it) },
     onStateChange: (BibleTextLoadingPhase) -> Unit = {},
 ) {
@@ -104,7 +169,7 @@ fun BibleText(
                     bibleVersionRepository = bibleVersionRepository,
                     reference = reference,
                     renderVerseNumbers = textOptions.renderVerseNumbers,
-                    renderFootnotes = textOptions.footnoteMode != BibleTextFootnoteMode.NONE,
+                    footnoteMode = textOptions.footnoteMode,
                     renderHeadlines = textOptions.renderHeadlines,
                     footnoteMarker = textOptions.footnoteMarker,
                     textColor = textOptions.textColor ?: Color.Unspecified,
@@ -154,7 +219,7 @@ fun BibleText(
                         onTap = { localPosition, textLayoutResult ->
                             coroutineScope.launch {
                                 val characterIndex = textLayoutResult.getOffsetForPosition(localPosition)
-                                // Find the reference at the tapped index
+
                                 val tappedRef =
                                     block.text
                                         .getStringAnnotations(
@@ -168,13 +233,44 @@ fun BibleText(
                                         }
 
                                 if (tappedRef != null) {
-                                    // Handle single tap action
-                                    onVerseTap?.invoke(
-                                        tappedRef,
-                                        localPosition,
-                                    ) // Position is local to the Text composable
+                                    val tappedFootnote =
+                                        block.text
+                                            .getStringAnnotations(
+                                                tag = BibleTextCategoryAttribute.NAME,
+                                                start = characterIndex,
+                                                end = characterIndex,
+                                            ).firstOrNull {
+                                                it.item == BibleTextCategory.FOOTNOTE_MARKER.name ||
+                                                    it.item == BibleTextCategory.FOOTNOTE_IMAGE.name
+                                            }
 
-                                    // Handle selection change (like a long press would)
+                                    if (tappedFootnote != null) {
+                                        val footNotes =
+                                            block.footnotes.filter { footnote ->
+                                                val referenceAnnotation =
+                                                    footnote
+                                                        .getStringAnnotations(
+                                                            tag = BibleReferenceAttribute.NAME,
+                                                            start = 0,
+                                                            end = footnote.text.length,
+                                                        ).firstOrNull()
+                                                referenceAnnotation?.let { annotation ->
+                                                    tappedRef ==
+                                                        BibleReference.fromAnnotation(annotation.item)
+                                                } == true
+                                            }
+
+                                        onFootnoteTap?.invoke(
+                                            tappedRef,
+                                            footNotes,
+                                        )
+                                    } else {
+                                        onVerseTap?.invoke(
+                                            tappedRef,
+                                            localPosition,
+                                        )
+                                    }
+
                                     val newSelection = selectedVerses.toMutableSet()
                                     if (newSelection.contains(tappedRef)) {
                                         newSelection.remove(tappedRef)
@@ -182,32 +278,6 @@ fun BibleText(
                                         newSelection.add(tappedRef)
                                     }
                                     onVerseSelectedChange(newSelection)
-                                } else {
-                                    // Check for footnote tap
-                                    block.text
-                                        .getStringAnnotations(
-                                            tag = BibleTextCategoryAttribute.NAME,
-                                            start = characterIndex,
-                                            end = characterIndex,
-                                        ).firstOrNull {
-                                            it.item.startsWith(BibleTextCategory.FOOTNOTE_MARKER.name)
-                                        }?.item
-                                        ?.let {
-                                            val reference = BibleReference.fromFootnoteAnnotation(it)
-                                            val footNotes =
-                                                block.footnotes.filter { footnote ->
-                                                    val referenceAnnotation =
-                                                        footnote
-                                                            .getStringAnnotations(
-                                                                tag = BibleReferenceAttribute.NAME,
-                                                                start = 0,
-                                                                end = block.text.length,
-                                                            ).firstOrNull()
-                                                    reference ==
-                                                        BibleReference.fromAnnotation(referenceAnnotation?.item ?: "")
-                                                }
-                                            onFootnoteTap(reference, footNotes)
-                                        }
                                 }
                             }
                         },
@@ -227,16 +297,6 @@ fun BibleReference.Companion.fromAnnotation(annotation: String): BibleReference 
         bookUSFM = split[1],
         chapter = split[2].toInt(),
         verse = split[3].toInt(),
-    )
-}
-
-fun BibleReference.Companion.fromFootnoteAnnotation(annotation: String): BibleReference {
-    val split = annotation.split(":")
-    return BibleReference(
-        versionId = split[2].toInt(),
-        bookUSFM = split[3],
-        chapter = split[4].toInt(),
-        verse = split[5].toInt(),
     )
 }
 
@@ -271,6 +331,7 @@ private fun BibleTextBlock(
         onTextLayout = { result ->
             textLayoutResult = result
         },
+        inlineContent = textOptions.inlineContentMap,
     )
 }
 

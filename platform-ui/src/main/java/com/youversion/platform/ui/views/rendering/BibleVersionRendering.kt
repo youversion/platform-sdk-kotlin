@@ -21,6 +21,8 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.ui.views.BibleTextFontOption
 import com.youversion.platform.ui.views.BibleTextFonts
+import com.youversion.platform.ui.views.BibleTextFootnoteMode
+import com.youversion.platform.ui.views.BibleTextOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.UUID
@@ -47,7 +49,7 @@ object BibleVersionRendering {
                     reference = reference,
                     renderVerseNumbers = false,
                     renderHeadlines = false,
-                    renderFootnotes = false,
+                    footnoteMode = BibleTextFootnoteMode.NONE,
                     fonts = fonts,
                 )
             blocks?.joinToString(separator = "\n") { it.text.text }
@@ -66,7 +68,7 @@ object BibleVersionRendering {
         reference: BibleReference,
         renderVerseNumbers: Boolean = true,
         renderHeadlines: Boolean = true,
-        renderFootnotes: Boolean = false,
+        footnoteMode: BibleTextFootnoteMode,
         footnoteMarker: AnnotatedString? = null,
         textColor: Color = Color.Unspecified,
         wocColor: Color = Color.Red,
@@ -110,7 +112,7 @@ object BibleVersionRendering {
                     toVerse = reference.verseEnd ?: 999,
                     renderVerseNumbers = renderVerseNumbers,
                     renderHeadlines = renderHeadlines,
-                    renderFootnotes = renderFootnotes,
+                    footnoteMode = footnoteMode,
                     footnoteMarker = footnoteMarker,
                     textColor = textColor,
                     wocColor = wocColor,
@@ -255,26 +257,48 @@ object BibleVersionRendering {
         stateUp: StateUp,
     ) {
         // If not rendering footnotes just add a space and return
-        if (!stateIn.renderFootnotes) {
+        if (stateIn.footnoteMode == BibleTextFootnoteMode.NONE) {
             val style = stateIn.fonts.styleFor(parentStateDown.currentFont)
             stateUp.append(text = " ", style = style, category = parentStateDown.textCategory)
             return
         }
 
-        // Create a new StateDown for the footnote context.
         var stateDown =
             parentStateDown.copy().apply {
                 nodeDepth = parentStateDown.nodeDepth + 1
                 textCategory = BibleTextCategory.FOOTNOTE_TEXT
             }
 
-        if (stateIn.footnoteMarker != null) {
-            // Case 1: Footnotes are displayed with a marker and collected separately.
-            // Append the marker (e.g., a superscript number) to the main text builder.
-            stateUp.appendFootnote(stateIn.footnoteMarker, BibleTextCategory.FOOTNOTE_MARKER)
+        val marker =
+            when (stateIn.footnoteMode) {
+                BibleTextFootnoteMode.IMAGE -> BibleTextOptions.getImageFootnoteMarker()
+                BibleTextFootnoteMode.LETTERS -> {
+                    val style =
+                        stateIn.fonts.styleFor(BibleTextFontOption.FOOTNOTE).copy(
+                            baselineShift = stateIn.fonts.verseNumBaselineShift,
+                            color =
+                                stateIn.textColor.copy(
+                                    alpha = stateIn.textColor.alpha * stateIn.fonts.verseNumOpacity,
+                                ),
+                        )
+                    buildAnnotatedString {
+                        withStyle(style) {
+                            append(stateUp.nextFootnoteMarker)
+                        }
+                    }
+                }
 
-            // Now, create a new, temporary StateUp object to build the footnote's content.
-            // This isolates the footnote's AnnotatedString from the main text.
+                else -> stateIn.footnoteMarker
+            }
+
+        if (stateIn.footnoteMode != BibleTextFootnoteMode.INLINE && marker != null) {
+            val category =
+                when (stateIn.footnoteMode) {
+                    BibleTextFootnoteMode.IMAGE -> BibleTextCategory.FOOTNOTE_IMAGE
+                    else -> BibleTextCategory.FOOTNOTE_MARKER
+                }
+            stateUp.appendFootnote(marker, category)
+
             val footState =
                 StateUp(
                     rendering = true,
@@ -282,16 +306,13 @@ object BibleVersionRendering {
                     bookUSFM = stateUp.bookUSFM,
                     chapter = stateUp.chapter,
                     verse = stateUp.verse,
-                    // Other properties like indents are irrelevant here.
                 )
 
-            // Ensure the font for the footnote text is correctly set.
             stateDown =
                 stateDown.copy().apply {
                     currentFont = BibleTextFontOption.FOOTNOTE
                 }
 
-            // Recursively process all children of the footnote node to build its content.
             for (child in node.children) {
                 handleBlockChild(
                     node = child,
@@ -301,14 +322,10 @@ object BibleVersionRendering {
                 )
             }
 
-            // Once the footnote's text is fully built, add the resulting AnnotatedString
-            // to the main state's list of footnotes.
             if (!footState.isTextEmpty()) {
                 stateUp.footnotes.add(footState.textBuilder.toAnnotatedString())
             }
         } else {
-            // Case 2: Footnotes are rendered directly inline with the scripture text.
-            // Set the font for the inline footnote text.
             stateDown =
                 stateDown.copy().apply {
                     currentFont = BibleTextFontOption.FOOTNOTE
@@ -317,8 +334,6 @@ object BibleVersionRendering {
             val defaultStyle = stateIn.fonts.styleFor(BibleTextFontOption.TEXT)
             stateUp.append("[", defaultStyle, BibleTextCategory.SCRIPTURE)
 
-            // Recursively process the footnote's children, but append the result
-            // directly to the main text builder (`stateUp`).
             for (child in node.children) {
                 handleBlockChild(
                     node = child,
@@ -785,6 +800,7 @@ enum class BibleTextCategory {
     SCRIPTURE,
     VERSE_LABEL,
     FOOTNOTE_MARKER,
+    FOOTNOTE_IMAGE,
     FOOTNOTE_TEXT,
     HEADER,
 }
@@ -832,7 +848,7 @@ data class StateIn(
     val toVerse: Int,
     val renderVerseNumbers: Boolean,
     val renderHeadlines: Boolean,
-    val renderFootnotes: Boolean,
+    val footnoteMode: BibleTextFootnoteMode,
     val footnoteMarker: AnnotatedString?,
     val textColor: Color,
     val wocColor: Color,
@@ -869,6 +885,13 @@ class StateUp(
     var textBuilder: AnnotatedString.Builder = AnnotatedString.Builder(),
     val footnotes: MutableList<AnnotatedString> = mutableListOf(),
 ) {
+    val nextFootnoteMarker: String
+        get() {
+            val value = 'a'.code + minOf(25, footnotes.size)
+            val marker = value.toChar().toString()
+            return "\u00A0$marker "
+        }
+
     fun append(
         text: String,
         style: SpanStyle,
@@ -879,14 +902,14 @@ class StateUp(
             addTextCategoryAnnotation(
                 category = category,
                 start = textBuilder.length - text.length,
-                end = textBuilder.length,
+                end = textBuilder.length + 1,
             )
             if (verse > 0) {
                 addStringAnnotation(
                     tag = BibleReferenceAttribute.NAME,
                     annotation = "$versionId:$bookUSFM:$chapter:$verse",
                     start = textBuilder.length - text.length,
-                    end = textBuilder.length,
+                    end = textBuilder.length + 1,
                 )
             }
         }
@@ -901,10 +924,15 @@ class StateUp(
                 buildAnnotatedString {
                     append(text)
                     addStringAnnotation(
-                        tag = BibleTextCategoryAttribute.NAME,
-                        annotation = "${category.name}:${footnotes.size}:$versionId:$bookUSFM:$chapter:$verse",
-                        start = 0 - text.length,
-                        end = text.length,
+                        tag = BibleReferenceAttribute.NAME,
+                        annotation = "$versionId:$bookUSFM:$chapter:$verse",
+                        start = 0,
+                        end = text.length + 1,
+                    )
+                    addTextCategoryAnnotation(
+                        category = category,
+                        start = 0,
+                        end = text.length + 1,
                     )
                 }
             textBuilder.append(annotatedString)
