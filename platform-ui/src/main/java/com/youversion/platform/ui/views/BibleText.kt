@@ -1,9 +1,5 @@
 package com.youversion.platform.ui.views
 
-import androidx.compose.animation.core.copy
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,17 +26,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
@@ -66,7 +56,18 @@ import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-import java.nio.file.WatchEvent
+
+private const val FOOTNOTE_IMAGE_ID = "footnote_image_id"
+
+private val DefaultFootnoteMarker: AnnotatedString =
+    buildAnnotatedString {
+        pushStyle(SpanStyle(baselineShift = BaselineShift.Superscript))
+        append("\u00A0※ ")
+        pop()
+    }
+
+internal val ImageFootnoteMarker: AnnotatedString =
+    buildAnnotatedString { appendInlineContent(id = FOOTNOTE_IMAGE_ID) }
 
 data class BibleTextOptions(
     val fontFamily: FontFamily = FontFamily.Serif,
@@ -77,7 +78,7 @@ data class BibleTextOptions(
     val renderHeadlines: Boolean = true,
     val renderVerseNumbers: Boolean = true,
     val footnoteMode: BibleTextFootnoteMode = BibleTextFootnoteMode.NONE,
-    val footnoteMarker: AnnotatedString? = getDefaultFootnoteMarker(),
+    val footnoteMarker: AnnotatedString? = DefaultFootnoteMarker,
 ) {
     val inlineContentMap =
         mapOf(
@@ -105,20 +106,6 @@ data class BibleTextOptions(
                     }
                 },
         )
-
-    companion object {
-        const val FOOTNOTE_IMAGE_ID = "footnote_image_id"
-
-        fun getImageFootnoteMarker(): AnnotatedString =
-            buildAnnotatedString { appendInlineContent(id = FOOTNOTE_IMAGE_ID) }
-
-        fun getDefaultFootnoteMarker(): AnnotatedString =
-            buildAnnotatedString {
-                pushStyle(SpanStyle(baselineShift = BaselineShift.Superscript))
-                append("\u00A0※ ")
-                pop()
-            }
-    }
 }
 
 fun Int.convertToEnumeration(): String {

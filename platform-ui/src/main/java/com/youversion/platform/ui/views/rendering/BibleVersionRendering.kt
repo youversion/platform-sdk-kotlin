@@ -22,7 +22,7 @@ import com.youversion.platform.core.utilities.exceptions.BibleVersionApiExceptio
 import com.youversion.platform.ui.views.BibleTextFontOption
 import com.youversion.platform.ui.views.BibleTextFonts
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
-import com.youversion.platform.ui.views.BibleTextOptions
+import com.youversion.platform.ui.views.ImageFootnoteMarker
 import com.youversion.platform.ui.views.convertToEnumeration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -272,7 +272,7 @@ object BibleVersionRendering {
 
         val marker =
             when (stateIn.footnoteMode) {
-                BibleTextFootnoteMode.IMAGE -> BibleTextOptions.getImageFootnoteMarker()
+                BibleTextFootnoteMode.IMAGE -> ImageFootnoteMarker
                 BibleTextFootnoteMode.LETTERS -> {
                     val style =
                         stateIn.fonts.styleFor(BibleTextFontOption.FOOTNOTE).copy(
