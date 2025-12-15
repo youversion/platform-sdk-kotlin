@@ -34,13 +34,13 @@ import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.components.BibleReaderHeader
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
+import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.signin.SignOutConfirmationAlert
 import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
 import com.youversion.platform.ui.signin.rememberYouVersionAuthLauncher
-import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
