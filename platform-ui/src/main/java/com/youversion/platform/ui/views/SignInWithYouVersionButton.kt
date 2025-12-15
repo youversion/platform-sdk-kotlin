@@ -15,13 +15,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.SpanStyle
@@ -32,7 +39,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.signin.SignInErrorAlert
+import com.youversion.platform.ui.signin.SignInParameters
+import com.youversion.platform.ui.signin.SignInViewModel
+import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
+import com.youversion.platform.ui.signin.rememberYouVersionAuthLauncher
 
 enum class SignInWithYouVersionButtonMode {
     FULL,
@@ -56,20 +71,47 @@ object SignInWithYouVersionButtonDefaults {
 
 @Composable
 fun SignInWithYouVersionButton(
-    onClick: () -> Unit,
+    permissions: () -> Set<SignInWithYouVersionPermission>,
     paddingValues: PaddingValues = SignInWithYouVersionButtonDefaults.padding,
     shape: Shape = SignInWithYouVersionButtonDefaults.capsuleShape,
     mode: SignInWithYouVersionButtonMode = SignInWithYouVersionButtonDefaults.mode,
     stroked: Boolean = false,
     dark: Boolean = isSystemInDarkTheme(),
 ) {
+    val context = LocalContext.current
+    val signInViewModel = viewModel<SignInViewModel>()
+    val state by signInViewModel.state.collectAsStateWithLifecycle()
+
+    var showSignInError by rememberSaveable { mutableStateOf(false) }
+
+    val authTabLauncher =
+        rememberYouVersionAuthLauncher { intent ->
+            signInViewModel.onAction(SignInViewModel.Action.ProcessAuthCallback(intent))
+        }
+
+    val signInLauncher =
+        rememberSignInWithYouVersion(
+            onSignInError = {
+                showSignInError = true
+            },
+        )
+
     val colorGray15 = Color(0xFFDDDBDB)
     val colorGray35 = Color(0xFF474545)
     val strokeColor = if (dark) colorGray35 else colorGray15
     val strokeWidth = if (dark) 2.dp else 1.dp
 
     Button(
-        onClick = onClick,
+        enabled = !state.isProcessing,
+        onClick = {
+            signInLauncher(
+                SignInParameters(
+                    context = context,
+                    launcher = authTabLauncher,
+                    permissions = permissions(),
+                ),
+            )
+        },
         contentPadding = paddingValues,
         shape = shape,
         border = if (stroked) BorderStroke(strokeWidth, strokeColor) else null,
@@ -79,15 +121,36 @@ fun SignInWithYouVersionButton(
                 contentColor = if (dark) Color.Green else Color.Black,
             ),
     ) {
+        if (showSignInError) {
+            SignInErrorAlert(
+                onDismissRequest = { showSignInError = false },
+                onConfirm = { showSignInError = false },
+            )
+        }
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Image(
-                ImageVector.vectorResource(R.drawable.yv_bibleapp),
-                contentDescription = "Bible Logo",
-                modifier = Modifier.size(26.dp),
-            )
+            Box(modifier = Modifier.size(26.dp)) {
+                Image(
+                    ImageVector.vectorResource(R.drawable.yv_bibleapp),
+                    contentDescription = "Bible Logo",
+                    modifier =
+                        Modifier
+                            .size(26.dp)
+                            .alpha(
+                                if (state.isProcessing) {
+                                    0.5f
+                                } else {
+                                    1.0f
+                                },
+                            ),
+                )
+                if (state.isProcessing) {
+                    CircularProgressIndicator()
+                }
+            }
             LocalizedLoginText(dark, mode)
         }
     }
@@ -164,16 +227,40 @@ private fun ButtonPreview(
         }
     Column {
         PreviewBackground(true) {
-            SignInWithYouVersionButton(onClick = {}, mode = mode, shape = shape, stroked = false, dark = true)
+            SignInWithYouVersionButton(
+                permissions = { setOf() },
+                mode = mode,
+                shape = shape,
+                stroked = false,
+                dark = true,
+            )
         }
         PreviewBackground(true) {
-            SignInWithYouVersionButton(onClick = {}, mode = mode, shape = shape, stroked = true, dark = true)
+            SignInWithYouVersionButton(
+                permissions = { setOf() },
+                mode = mode,
+                shape = shape,
+                stroked = true,
+                dark = true,
+            )
         }
         PreviewBackground(false) {
-            SignInWithYouVersionButton(onClick = {}, mode = mode, shape = shape, stroked = false, dark = false)
+            SignInWithYouVersionButton(
+                permissions = { setOf() },
+                mode = mode,
+                shape = shape,
+                stroked = false,
+                dark = false,
+            )
         }
         PreviewBackground(false) {
-            SignInWithYouVersionButton(onClick = {}, mode = mode, shape = shape, stroked = true, dark = false)
+            SignInWithYouVersionButton(
+                permissions = { setOf() },
+                mode = mode,
+                shape = shape,
+                stroked = true,
+                dark = false,
+            )
         }
     }
 }

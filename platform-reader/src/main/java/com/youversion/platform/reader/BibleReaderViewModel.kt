@@ -15,9 +15,9 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.utilities.dependencies.SharedPreferencesStore
 import com.youversion.platform.core.utilities.dependencies.Store
-import com.youversion.platform.reader.theme.BibleReaderTheme
 import com.youversion.platform.reader.theme.FontDefinitionProvider
 import com.youversion.platform.reader.theme.ReaderTheme
+import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -130,6 +130,11 @@ class BibleReaderViewModel(
             is Action.CloseFootnotes -> closeFootnotes()
             is Action.SetReaderTheme -> setReaderTheme(action)
         }
+    }
+
+    fun switchToVersion(versionId: Int) {
+        val newReference = bibleReference.copy(versionId = versionId)
+        onHeaderSelectionChange(newReference)
     }
 
     fun onHeaderSelectionChange(newReference: BibleReference) {

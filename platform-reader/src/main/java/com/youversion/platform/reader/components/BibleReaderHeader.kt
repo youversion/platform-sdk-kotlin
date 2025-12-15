@@ -15,11 +15,13 @@ import com.youversion.platform.reader.theme.readerColorScheme
 
 @Composable
 fun BibleReaderHeader(
+    isSignInProcessing: Boolean,
     signedIn: Boolean,
     bookAndChapter: String,
     versionAbbreviation: String,
     onChapterClick: () -> Unit,
     onVersionClick: () -> Unit,
+    onOpenHeaderMenu: () -> Unit,
     onFontSettingsClick: () -> Unit,
     onSignInClick: () -> Unit,
     onSignOutClick: () -> Unit,
@@ -43,7 +45,9 @@ fun BibleReaderHeader(
                 compactMode = false,
             )
             BibleReaderHeaderMenu(
+                isSignInProcessing = isSignInProcessing,
                 signedIn = signedIn,
+                onOpenMenu = onOpenHeaderMenu,
                 onFontSettingsClick = onFontSettingsClick,
                 onSignInClick = onSignInClick,
                 onSignOutClick = onSignOutClick,

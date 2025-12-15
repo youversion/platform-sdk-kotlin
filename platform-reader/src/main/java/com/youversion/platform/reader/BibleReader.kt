@@ -62,6 +62,10 @@ fun BibleReader(
                     bibleVersion = viewModel.bibleVersion,
                     onBackClick = navController::popBackStack,
                     onLanguagesClick = { onDestinationClick(BibleReaderDestination.Languages) },
+                    onVersionSelect = { selectedVersion ->
+                        navController.popBackStack()
+                        viewModel.switchToVersion(selectedVersion.id)
+                    },
                 )
             }
 
