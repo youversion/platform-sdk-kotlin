@@ -34,6 +34,7 @@ import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.components.BibleReaderHeader
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
+import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
@@ -41,6 +42,7 @@ import com.youversion.platform.ui.signin.SignOutConfirmationAlert
 import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
 import com.youversion.platform.ui.signin.rememberYouVersionAuthLauncher
 import com.youversion.platform.ui.views.BibleText
+import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
 import com.youversion.platform.ui.views.BibleTextOptions
 
@@ -123,9 +125,18 @@ internal fun BibleScreen(
                                     fontFamily = state.fontFamily,
                                     fontSize = state.fontSize,
                                     lineSpacing = state.lineSpacing,
+                                    footnoteMode = BibleTextFootnoteMode.IMAGE,
                                 ),
                             reference = state.bibleReference,
                             onStateChange = { loadingPhase = it },
+                            onFootnoteTap = { reference, footnotes ->
+                                viewModel.onAction(
+                                    BibleReaderViewModel.Action.OpenFootnotes(
+                                        reference = reference,
+                                        footnotes = footnotes,
+                                    ),
+                                )
+                            },
                         )
                         if (loadingPhase == BibleTextLoadingPhase.SUCCESS) {
                             Copyright(version = state.bibleVersion)
@@ -170,6 +181,21 @@ internal fun BibleScreen(
                         {
                             signInViewModel.onAction(SignInViewModel.Action.SignOut(false))
                         },
+                )
+            }
+
+            if (state.showingFootnotes) {
+                BibleReaderFootnotesSheet(
+                    textOptions =
+                        BibleTextOptions(
+                            fontFamily = state.fontFamily,
+                            fontSize = state.fontSize,
+                            lineSpacing = state.lineSpacing,
+                        ),
+                    onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFootnotes) },
+                    version = state.bibleVersion,
+                    reference = state.footnotesReference,
+                    footnotes = state.footnotes,
                 )
             }
         }
