@@ -129,6 +129,11 @@ class BibleReaderViewModel(
         }
     }
 
+    fun switchToVersion(versionId: Int) {
+        val newReference = bibleReference.copy(versionId = versionId)
+        onHeaderSelectionChange(newReference)
+    }
+
     fun onHeaderSelectionChange(newReference: BibleReference) {
         viewModelScope.launch {
             if (bibleVersion?.id != newReference.versionId) {
