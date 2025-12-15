@@ -8,4 +8,13 @@
     <string name="widget_copyright">Copyright</string>
 
     <string name="tab_votd">Verse of the Day</string>
+
+    <string name="sign_in_error_title">Sign-In Failed</string>
+    <string name="sign_in_error_message">We were unable to sign you in at this time. Please try again.</string>
+    <string name="ok">OK</string>
+
+    <string name="sign_out_confirmation_title">Sign Out</string>
+    <string name="sign_out_confirmation_message">Are you sure you want to sign out from YouVersion? You will need to sign in again to access your highlights.</string>
+    <string name="sign_out_confirm_button_text">Sign Out</string>
+    <string name="sign_out_cancel_button_text">Cancel</string>
 </resources>
