@@ -25,6 +25,11 @@ class YouVersionNetworkException(
          * The response is not valid.
          */
         INVALID_RESPONSE,
+
+        /**
+         *  Missing authentication
+         */
+        MISSING_AUTHENTICATION,
     }
 }
 

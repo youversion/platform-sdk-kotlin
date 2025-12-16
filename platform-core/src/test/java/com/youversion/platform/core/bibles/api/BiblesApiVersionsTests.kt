@@ -133,8 +133,8 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
                     // Assert metadata fields from bible_206.json
                     assertEquals(206, id)
                     assertEquals("engWEBUS", abbreviation)
-                    assertEquals("This Public Domain Bible text is courtesy of eBible.org.", copyrightLong)
-                    assertEquals("PUBLIC DOMAIN (not copyrighted)", copyrightShort)
+                    assertEquals("This Public Domain Bible text is courtesy of eBible.org.", promotionalContent)
+                    assertEquals("PUBLIC DOMAIN (not copyrighted)", copyright)
                     assertEquals("en", languageTag)
                     assertEquals("WEBUS", localizedAbbreviation)
                     assertEquals(
@@ -148,27 +148,25 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
                     // Assert text direction from index
                     assertEquals("ltr", textDirection)
 
-                    // Assert bookCodes - should only contain GEN (EXO and LEV filtered out due to null/empty chapters)
-                    assertEquals(listOf("GEN"), bookCodes)
+                    // Assert bookCodes
+                    assertEquals(listOf("GEN", "EXO", "LEV"), bookCodes)
 
-                    // Assert books structure - should only have 1 book (GEN)
-                    assertEquals(1, books?.size)
+                    // Assert books structure
+                    assertEquals(3, books?.size)
 
                     // Assert Genesis book details
                     books?.get(0)?.apply {
                         assertEquals("GEN", usfm)
                         assertEquals("Genesis", title)
                         assertEquals("Gen", abbreviation)
-                        assertEquals("ot", canon)
+                        assertEquals("old_testament", canon)
 
-                        // Assert chapters - should only have 2 chapters (GEN.1 and GEN.2)
-                        // GEN.intro and GEN.3 should be filtered out due to null/empty verses
-                        assertEquals(2, chapters?.size)
+                        // Assert chapters
+                        assertEquals(4, chapters?.size)
 
                         // Assert GEN.1 chapter
                         chapters?.get(0)?.apply {
                             assertEquals("1", id)
-                            assertEquals("GEN.1", bookUSFM)
                             assertEquals(true, isCanonical)
                             assertEquals("GEN.1", passageId)
                             assertEquals("1", title)
@@ -177,7 +175,6 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
                         // Assert GEN.2 chapter
                         chapters?.get(1)?.apply {
                             assertEquals("2", id)
-                            assertEquals("GEN.2", bookUSFM)
                             assertEquals(true, isCanonical)
                             assertEquals("GEN.2", passageId)
                             assertEquals("2", title)
@@ -226,7 +223,7 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
                 .apply {
                     assertEquals(206, id)
                     assertEquals("engWEBUS", abbreviation)
-                    assertEquals("PUBLIC DOMAIN (not copyrighted)", copyrightShort)
+                    assertEquals("PUBLIC DOMAIN (not copyrighted)", copyright)
                     assertEquals("World English Bible, American English Edition, without Strong's Numbers", title)
                     assertNull(books)
                 }
@@ -306,8 +303,8 @@ private const val VERSIONS_ENG_JSON = """
         {
             "id": 12,
             "abbreviation": "ASV",
-            "copyright_long": null,
-            "copyright_short": null,
+            "promotional_content": null,
+            "copyright": null,
             "info": null,
             "publisher_url": null,
             "language_tag": "en",
@@ -327,13 +324,13 @@ private const val VERSION_206_METADATA_JSON = """
 {
   "id": 206,
   "abbreviation": "engWEBUS",
-  "copyright_long": "This Public Domain Bible text is courtesy of eBible.org.",
-  "copyright_short": "PUBLIC DOMAIN (not copyrighted)",
+  "promotional_content": "This Public Domain Bible text is courtesy of eBible.org.",
+  "copyright": "PUBLIC DOMAIN (not copyrighted)",
   "info": null,
   "publisher_url": null,
   "language_tag": "en",
-  "local_abbreviation": "WEBUS",
-  "local_title": "World English Bible, American English Edition, without Strong's Numbers",
+  "localized_abbreviation": "WEBUS",
+  "localized_title": "World English Bible, American English Edition, without Strong's Numbers",
   "title": "World English Bible, American English Edition, without Strong's Numbers",
   "books": [
     "GEN",
@@ -346,71 +343,79 @@ private const val VERSION_206_METADATA_JSON = """
 
 private const val VERSION_206_INDEX_JSON = """
 {
-  "text_direction": "ltr",
-  "books": [
-    {
-      "id": "GEN",
-      "title": "Genesis",
-      "full_title": "The First Book of Moses, Commonly Called Genesis",
-      "abbreviation": "Gen",
-      "canon": "ot",
-      "chapters": [
+    "text_direction": "ltr",
+    "books": [
         {
-          "id": "GEN.1",
-          "title": "1",
-          "verses": [
-            {
-              "id": "GEN.1.1",
-              "title": "1"
-            },
-            {
-              "id": "GEN.1.2",
-              "title": "2"
-            }
-          ]
+            "id": "GEN",
+            "title": "Genesis",
+            "full_title": "The First Book of Moses, Commonly Called Genesis",
+            "abbreviation": "Gen",
+            "canon": "old_testament",
+            "chapters": [
+                {
+                    "id": "1",
+                    "passage_id": "GEN.1",
+                    "title": "1",
+                    "verses": [
+                        {
+                            "id": "1",
+                            "passage_id": "GEN.1.1",
+                            "title": "1"
+                        },
+                        {
+                            "id": "2",
+                            "passage_id": "GEN.1.2",
+                            "title": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "2",
+                    "passage_id": "GEN.2",
+                    "title": "2",
+                    "verses": [
+                        {
+                            "id": "1",
+                            "passage_id": "GEN.2.1",
+                            "title": "1"
+                        },
+                        {
+                            "id": "2",
+                            "passage_id": "GEN.2.2",
+                            "title": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "3",
+                    "passage_id": "GEN.3",
+                    "title": "3",
+                    "verses": null
+                },
+                {
+                    "id": "Intro",
+                    "passage_id": "GEN.intro",
+                    "title": "Introduction",
+                    "verses": null
+                }
+            ]
         },
         {
-          "id": "GEN.2",
-          "title": "2",
-          "verses": [
-            {
-              "id": "GEN.2.1",
-              "title": "1"
-            },
-            {
-              "id": "GEN.2.2",
-              "title": "2"
-            }
-          ]
+          "id": "EXO",
+          "title": "Exodus",
+          "full_title": "The Second Book of Moses, Called Exodus",
+          "abbreviation": "Exo",
+          "canon": "old_testament",
+          "chapters": null
         },
         {
-          "id": "GEN.intro",
-          "title": "Introduction",
-          "verses": null
-        },
-        {
-          "id": "GEN.3",
-          "title": "3",
-          "verses": []
+          "id": "LEV",
+          "title": "Leviticus",
+          "full_title": "The Third Book of Moses, Called Leviticus",
+          "abbreviation": "Lev",
+          "canon": "old_testament",
+          "chapters": []
         }
-      ]
-    },
-    {
-      "id": "EXO",
-      "title": "Exodus",
-      "full_title": "The Second Book of Moses, Called Exodus",
-      "abbreviation": "Exo",
-      "canon": "ot",
-      "chapters": null
-    },
-    {
-      "id": "LEV",
-      "title": "Leviticus",
-      "full_title": "The Third Book of Moses, Called Leviticus",
-      "abbreviation": "Lev",
-      "canon": "ot",
-      "chapters": []
-    }
-  ]
+    ]
 }
 """

@@ -60,7 +60,7 @@ class VersionsViewModel(
 
     fun onAction(action: Action) {
         when (action) {
-            is Action.VersionTapped -> {
+            is Action.VersionInfoTapped -> {
                 loadOrganization(bibleVersion = action.bibleVersion)
                 _state.update { it.copy(selectedBibleVersion = action.bibleVersion) }
             }
@@ -87,7 +87,6 @@ class VersionsViewModel(
         val initializing: Boolean = true,
         val permittedVersions: List<BibleVersion> = emptyList(),
         val chosenLanguageTag: String,
-        val showBibleVersionSheet: Boolean = false,
         val showBibleVersionLoading: Boolean = false,
         val selectedBibleVersion: BibleVersion? = null,
         val selectedOrganization: Organization? = null,
@@ -113,7 +112,7 @@ class VersionsViewModel(
 
     // ----- Actions
     sealed interface Action {
-        data class VersionTapped(
+        data class VersionInfoTapped(
             val bibleVersion: BibleVersion,
         ) : Action
 

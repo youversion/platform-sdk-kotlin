@@ -46,13 +46,13 @@ import androidx.compose.ui.unit.sp
 import com.youversion.platform.reader.FontDefinition
 import com.youversion.platform.reader.R
 import com.youversion.platform.reader.ReaderFontSettings
-import com.youversion.platform.reader.theme.BibleReaderTheme
 import com.youversion.platform.reader.theme.Charcoal
 import com.youversion.platform.reader.theme.Cream
 import com.youversion.platform.reader.theme.MidnightBlue
 import com.youversion.platform.reader.theme.PaperGray
 import com.youversion.platform.reader.theme.PureWhite
 import com.youversion.platform.reader.theme.ReaderColorScheme
+import com.youversion.platform.reader.theme.ReaderTheme
 import com.youversion.platform.reader.theme.Sepia
 import com.youversion.platform.reader.theme.TrueBlack
 import com.youversion.platform.reader.theme.readerColorScheme
@@ -66,7 +66,7 @@ fun BibleReaderFontSettingsSheet(
     onBiggerFontClick: () -> Unit,
     onLineSpacingClick: () -> Unit,
     onFontClick: () -> Unit,
-    onThemeSelect: (ReaderColorScheme) -> Unit,
+    onThemeSelect: (ReaderTheme) -> Unit,
     lineSpacingSettingIndex: Int,
     fontDefinition: FontDefinition,
 ) {
@@ -265,7 +265,7 @@ private fun FontDisplayButton(
 }
 
 @Composable
-private fun ThemePicker(onThemeSelect: (ReaderColorScheme) -> Unit) {
+private fun ThemePicker(onThemeSelect: (ReaderTheme) -> Unit) {
     val colorSchemes =
         listOf(
             PureWhite,
@@ -281,11 +281,11 @@ private fun ThemePicker(onThemeSelect: (ReaderColorScheme) -> Unit) {
         contentPadding = PaddingValues(horizontal = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(colorSchemes) { colorScheme ->
+        items(ReaderTheme.allThemes) { readerTheme ->
             ThemePickerItem(
-                colorScheme = colorScheme,
-                selected = MaterialTheme.readerColorScheme == colorScheme,
-                onClick = { BibleReaderTheme.selectedColorScheme.value = colorScheme },
+                colorScheme = readerTheme.colorScheme,
+                selected = MaterialTheme.readerColorScheme == readerTheme.colorScheme,
+                onClick = { onThemeSelect(readerTheme) },
             )
         }
     }

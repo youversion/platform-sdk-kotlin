@@ -34,17 +34,13 @@ class BiblesApiVersesTests : YouVersionPlatformTest {
                         "data": [
                             {
                                 "id": "1",
-                                "reference": "Genesis 1:1",
-                                "book_id": "GEN",
-                                "chapter_id": "1",
-                                "passage_id": "GEN.1.1"
+                                "passage_id": "GEN.1.1",
+                                "title": "1"
                             },
                             {
                                 "id": "2",
-                                "reference": "Genesis 1:2",
-                                "book_id": "GEN",
-                                "chapter_id": "1",
-                                "passage_id": "GEN.1.2"
+                                "passage_id": "GEN.1.2",
+                                "title": "2"
                             }
                         ]
                     }
@@ -96,10 +92,8 @@ class BiblesApiVersesTests : YouVersionPlatformTest {
                     """
                     {
                         "id": "1",
-                        "reference": "Genesis 1:1",
-                        "book_id": "GEN",
-                        "chapter_id": "1",
-                        "passage_id": "GEN.1.1"
+                        "passage_id": "GEN.2.1",
+                        "title": "1"
                     }
                     """.trimIndent(),
                 )

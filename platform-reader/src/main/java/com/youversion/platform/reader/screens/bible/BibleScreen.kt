@@ -18,19 +18,31 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.components.BibleReaderHeader
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
+import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
+import com.youversion.platform.ui.signin.SignInErrorAlert
+import com.youversion.platform.ui.signin.SignInParameters
+import com.youversion.platform.ui.signin.SignInViewModel
+import com.youversion.platform.ui.signin.SignOutConfirmationAlert
+import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
+import com.youversion.platform.ui.signin.rememberYouVersionAuthLauncher
 import com.youversion.platform.ui.views.BibleText
+import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
 import com.youversion.platform.ui.views.BibleTextOptions
 
@@ -44,7 +56,25 @@ internal fun BibleScreen(
     onVersionsClick: () -> Unit,
     onFontsClick: () -> Unit,
 ) {
+    val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    val signInViewModel = viewModel<SignInViewModel>()
+    val signInState by signInViewModel.state.collectAsStateWithLifecycle()
+
+    var showSignInError by rememberSaveable { mutableStateOf(false) }
+
+    val authTabLauncher =
+        rememberYouVersionAuthLauncher { intent ->
+            signInViewModel.onAction(SignInViewModel.Action.ProcessAuthCallback(intent))
+        }
+
+    val signInLauncher =
+        rememberSignInWithYouVersion(
+            onSignInError = {
+                showSignInError = true
+            },
+        )
 
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
 
@@ -56,14 +86,28 @@ internal fun BibleScreen(
             Column {
                 // Reader top bar
                 BibleReaderHeader(
-                    signedIn = false,
+                    isSignInProcessing = signInState.isProcessing,
+                    signedIn = signInState.isSignedIn,
                     bookAndChapter = state.bookAndChapter,
                     versionAbbreviation = state.versionAbbreviation,
                     onChapterClick = onReferencesClick,
                     onVersionClick = onVersionsClick,
+                    onOpenHeaderMenu = { signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState) },
                     onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
-                    onSignInClick = {},
-                    onSignOutClick = {},
+                    onSignInClick = {
+                        signInLauncher(
+                            SignInParameters(
+                                context = context,
+                                launcher = authTabLauncher,
+                                permissions =
+                                    setOf(
+                                        SignInWithYouVersionPermission.PROFILE,
+                                        SignInWithYouVersionPermission.EMAIL,
+                                    ),
+                            ),
+                        )
+                    },
+                    onSignOutClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut(true)) },
                 )
 
                 // Scrollable Reader content
@@ -81,9 +125,18 @@ internal fun BibleScreen(
                                     fontFamily = state.fontFamily,
                                     fontSize = state.fontSize,
                                     lineSpacing = state.lineSpacing,
+                                    footnoteMode = BibleTextFootnoteMode.IMAGE,
                                 ),
                             reference = state.bibleReference,
                             onStateChange = { loadingPhase = it },
+                            onFootnoteTap = { reference, footnotes ->
+                                viewModel.onAction(
+                                    BibleReaderViewModel.Action.OpenFootnotes(
+                                        reference = reference,
+                                        footnotes = footnotes,
+                                    ),
+                                )
+                            },
                         )
                         if (loadingPhase == BibleTextLoadingPhase.SUCCESS) {
                             Copyright(version = state.bibleVersion)
@@ -106,9 +159,43 @@ internal fun BibleScreen(
                         viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings)
                         onFontsClick()
                     },
-                    onThemeSelect = { },
+                    onThemeSelect = { newReaderTheme ->
+                        viewModel.onAction(BibleReaderViewModel.Action.SetReaderTheme(newReaderTheme))
+                    },
                     lineSpacingSettingIndex = state.lineSpacingSettingsIndex,
                     fontDefinition = state.selectedFontDefinition,
+                )
+            }
+
+            if (showSignInError) {
+                SignInErrorAlert(
+                    onDismissRequest = { showSignInError = false },
+                    onConfirm = { showSignInError = false },
+                )
+            }
+
+            if (signInState.showSignOutConfirmation) {
+                SignOutConfirmationAlert(
+                    onDismissRequest = { signInViewModel.onAction(SignInViewModel.Action.CancelSignOut) },
+                    onConfirm =
+                        {
+                            signInViewModel.onAction(SignInViewModel.Action.SignOut(false))
+                        },
+                )
+            }
+
+            if (state.showingFootnotes) {
+                BibleReaderFootnotesSheet(
+                    textOptions =
+                        BibleTextOptions(
+                            fontFamily = state.fontFamily,
+                            fontSize = state.fontSize,
+                            lineSpacing = state.lineSpacing,
+                        ),
+                    onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFootnotes) },
+                    version = state.bibleVersion,
+                    reference = state.footnotesReference,
+                    footnotes = state.footnotes,
                 )
             }
         }
@@ -117,7 +204,7 @@ internal fun BibleScreen(
 
 @Composable
 private fun Copyright(version: BibleVersion?) {
-    val copyright = version?.copyrightShort ?: version?.copyrightLong ?: ""
+    val copyright = version?.copyright ?: version?.promotionalContent ?: ""
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Text(
             text = copyright,

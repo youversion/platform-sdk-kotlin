@@ -67,8 +67,8 @@ fun VersionInfoBottomSheet(
             )
             if (
                 bibleVersion.readerFooterUrl != null ||
-                bibleVersion.copyrightLong != null ||
-                bibleVersion.copyrightShort != null
+                bibleVersion.promotionalContent != null ||
+                bibleVersion.copyright != null
             ) {
                 Text(
                     text = "Details",
@@ -203,7 +203,7 @@ private fun VersionWebsite(
 
 @Composable
 private fun VersionCopyright(bibleVersion: BibleVersion) {
-    val copyright = bibleVersion.copyrightLong ?: bibleVersion.copyrightShort
+    val copyright = bibleVersion.promotionalContent ?: bibleVersion.copyright
     copyright?.let {
         Column(
             modifier = Modifier.verticalScroll(rememberScrollState()),

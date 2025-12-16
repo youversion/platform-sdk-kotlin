@@ -459,14 +459,13 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
     @Test
     fun `test chapter fetches chapter contents from the API if not in any cache and then caches it`() =
         runTest {
-            MockEngine { request ->
+            MockEngine {
                 respondJson(
                     """
                     {
                         "id": "JHN.3.1",
                         "content": "content",
-                        "bible_id": 206,
-                        "human_reference": "John 3:1"
+                        "reference": "John 3:1"
                     }
                     """.trimIndent(),
                 )

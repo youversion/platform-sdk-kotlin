@@ -1,6 +1,7 @@
 package com.youversion.platform.helpers
 
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.utilities.dependencies.DateSerializer
 import com.youversion.platform.core.utilities.dependencies.Store
 import com.youversion.platform.core.utilities.koin.YouVersionPlatformTools
 import com.youversion.platform.core.utilities.koin.startYouVersionPlatform
@@ -12,6 +13,7 @@ import kotlinx.serialization.json.Json
 import org.koin.core.Koin
 import org.koin.dsl.module
 import org.koin.test.KoinTest
+import java.util.Date
 
 interface YouVersionPlatformTest : KoinTest {
     override fun getKoin(): Koin = YouVersionPlatformTools.defaultContext().get()
@@ -48,6 +50,27 @@ class TestStore : Store {
                 ?: prefs.remove(Store.KEY_ACCESS_TOKEN)
         }
 
+    override var refreshToken: String?
+        get() = prefs[Store.KEY_REFRESH_TOKEN]
+        set(value) {
+            value?.let { prefs[Store.KEY_REFRESH_TOKEN] = it }
+                ?: prefs.remove(Store.KEY_REFRESH_TOKEN)
+        }
+
+    override var idToken: String?
+        get() = prefs[Store.KEY_ID_TOKEN]
+        set(value) {
+            value?.let { prefs[Store.KEY_ID_TOKEN] = it }
+                ?: prefs.remove(Store.KEY_ID_TOKEN)
+        }
+
+    override var expiryDate: Date?
+        get() = prefs[Store.KEY_EXPIRY_DATE]?.let { Json.decodeFromString(DateSerializer, it) }
+        set(value) {
+            value?.let { prefs[Store.KEY_EXPIRY_DATE] = Json.encodeToString(DateSerializer, it) }
+                ?: prefs.remove(Store.KEY_EXPIRY_DATE)
+        }
+
     override var bibleReference: BibleReference?
         get() = prefs[Store.KEY_BIBLE_READER_REFERENCE]?.let { Json.decodeFromString(it) }
         set(value) {
@@ -59,5 +82,30 @@ class TestStore : Store {
         set(value) {
             value?.let { prefs[Store.KEY_BIBLE_READER_MY_VERSIONS] = it.joinToString(",") { i -> i.toString() } }
                 ?: prefs.remove(Store.KEY_BIBLE_READER_MY_VERSIONS)
+        }
+
+    override var readerThemeId: Int?
+        get() = prefs[Store.KEY_BIBLE_READER_THEME]?.toInt()
+        set(value) {
+            value?.let { prefs[Store.KEY_BIBLE_READER_THEME] = it.toString() }
+                ?: prefs.remove(Store.KEY_BIBLE_READER_THEME)
+        }
+    override var readerFontSize: Float?
+        get() = prefs[Store.KEY_BIBLE_READER_FONT_SIZE]?.toFloat()
+        set(value) {
+            value?.let { prefs[Store.KEY_BIBLE_READER_FONT_SIZE] = it.toString() }
+                ?: prefs.remove(Store.KEY_BIBLE_READER_FONT_SIZE)
+        }
+    override var readerLineSpacing: Float?
+        get() = prefs[Store.KEY_BIBLE_READER_LINE_SPACING]?.toFloat()
+        set(value) {
+            value?.let { prefs[Store.KEY_BIBLE_READER_LINE_SPACING] = it.toString() }
+                ?: prefs.remove(Store.KEY_BIBLE_READER_LINE_SPACING)
+        }
+    override var readerFontFamilyName: String?
+        get() = prefs[Store.KEY_BIBLE_READER_FONT_FAMILY_NAME]
+        set(value) {
+            value?.let { prefs[Store.KEY_BIBLE_READER_FONT_FAMILY_NAME] = it }
+                ?: prefs.remove(Store.KEY_BIBLE_READER_FONT_FAMILY_NAME)
         }
 }

@@ -8,8 +8,8 @@ import kotlinx.serialization.Serializable
 data class BibleVersion(
     @SerialName(CodingKey.ID) val id: Int,
     @SerialName(CodingKey.ABBREVIATION) val abbreviation: String? = null,
-    @SerialName(CodingKey.COPYRIGHT_LONG) val copyrightLong: String? = null,
-    @SerialName(CodingKey.COPYRIGHT_SHORT) val copyrightShort: String? = null,
+    @SerialName(CodingKey.PROMOTIONAL_CONTENT) val promotionalContent: String? = null,
+    @SerialName(CodingKey.COPYRIGHT) val copyright: String? = null,
     @SerialName(CodingKey.LANGUAGE_TAG) val languageTag: String? = null,
     @SerialName(CodingKey.LOCALIZED_ABBREVIATION) val localizedAbbreviation: String? = null,
     @SerialName(CodingKey.LOCALIZED_TITLE) val localizedTitle: String? = null,
@@ -26,11 +26,11 @@ data class BibleVersion(
         const val ABBREVIATION = "abbreviation"
         const val BOOK_CODES = "books"
         const val BOOKS = "BibleBooks" // This will be merged from /index but we need to encode it for caching
-        const val COPYRIGHT_LONG = "copyright_long"
-        const val COPYRIGHT_SHORT = "copyright_short"
+        const val PROMOTIONAL_CONTENT = "promotional_content"
+        const val COPYRIGHT = "copyright"
         const val LANGUAGE_TAG = "language_tag"
-        const val LOCALIZED_ABBREVIATION = "local_abbreviation"
-        const val LOCALIZED_TITLE = "local_title"
+        const val LOCALIZED_ABBREVIATION = "localized_abbreviation"
+        const val LOCALIZED_TITLE = "localized_title"
         const val READER_FOOTER = "info"
         const val READER_FOOTER_URL = "publisher_url"
         const val TEXT_DIRECTION = "text_direction"
@@ -215,8 +215,8 @@ data class BibleVersion(
                 return BibleVersion(
                     id = 1,
                     abbreviation = "KJV",
-                    copyrightLong = copyrightLong,
-                    copyrightShort = null,
+                    promotionalContent = copyrightLong,
+                    copyright = null,
                     languageTag = "en",
                     localizedAbbreviation = "KJV",
                     localizedTitle = "King James Version",
@@ -232,39 +232,10 @@ data class BibleVersion(
         fun merge(
             basic: BibleVersion,
             index: BibleVersionIndex,
-        ): BibleVersion {
-            val books =
-                index.books
-                    ?.filter { it.chapters != null && it.chapters.isNotEmpty() }
-                    ?.map { book ->
-                        // non-canonical chapters don't have verses.
-                        val chapters =
-                            book.chapters
-                                ?.filter { it.verses != null && it.verses.isNotEmpty() }
-                                ?.map { chapter ->
-                                    BibleChapter(
-                                        id = chapter.title,
-                                        bookUSFM = chapter.id,
-                                        isCanonical = true,
-                                        passageId = chapter.id,
-                                        title = chapter.title,
-                                    )
-                                }
-
-                        BibleBook(
-                            usfm = book.id,
-                            abbreviation = book.abbreviation,
-                            title = book.title,
-                            canon = book.canon,
-                            chapters = chapters,
-                        )
-                    }
-
-            return basic.copy(
-                bookCodes = books?.mapNotNull { it.usfm },
-                books = books,
+        ): BibleVersion =
+            basic.copy(
+                books = index.books,
                 textDirection = index.textDirection,
             )
-        }
     }
 }
