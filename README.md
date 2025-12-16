@@ -21,6 +21,7 @@ currently not available.
 - [Usage](#usage)
   - [Displaying Scripture](#displaying-scripture)
   - [Displaying Verse of the Day](#displaying-verse-of-the-day)
+  - [Authentication](#authentication)
 - [Sample App](#sample-app)
 - [For Different Use Cases](#-for-different-use-cases)
 - [Contributing](#contributing-starting-early-2026)
@@ -32,7 +33,7 @@ currently not available.
 
 ## Features
 - 📖 **Scripture Display** - Easy-to-use Jetpack Compose components for displaying Bible verses, chapters, and passages with `BibleText`
-- 🔐 **User Authentication** - Seamless "Log In with YouVersion" integration using `LoginWithYouVersionButton`
+- 🔐 **User Authentication** - Seamless "Sign In with YouVersion" integration using `SignInWithYouVersionButton`
 - 🌅 **Verse of the Day** - Built-in `VerseOfTheDay` component and API access to VOTD data
 - 🚀 **Modern Kotlin** - Built with coroutines, Jetpack Compose, and Material Theming
 - 💾 **Smart Caching** - Automatic local caching for improved performance
@@ -184,6 +185,93 @@ suspend fun fetchVotd(): YouVersionVerseOfTheDay {
 }
 ```
 
+### Authentication
+
+Integrating "Sign In with YouVersion" is straightforward. The SDK handles the entire authentication flow, including launching the sign-in screen, handling the redirect, and managing tokens.
+
+#### 1. Configure the Manifest
+
+To handle the redirect from the YouVersion authentication, you need to add an intent filter to your main activity in your `AndroidManifest.xml` file. The SDK will use this to receive the authentication result.
+
+```xml
+<!-- AndroidManifest.xml -->
+<activity
+    android:name=".MainActivity"
+    android:exported="true">
+    <!-- ... existing intent filters -->
+
+    <!-- Handle OAuth callback -->
+    <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+
+        <data
+            android:scheme="youversionauth"
+            android:host="callback" />
+    </intent-filter>
+</activity>
+```
+
+#### 2. Update Your Main Activity
+
+Your main activity must extend `SignInWithYouVersionActivity`. This allows the SDK to automatically handle the result from the sign-in process.
+
+```kotlin
+// MainActivity.kt
+import com.youversion.platform.ui.signin.SignInWithYouVersionActivity
+
+class MainActivity : SignInWithYouVersionActivity() {
+    // ...
+}
+```
+
+#### 3. Add the Sign-In Button to Your UI
+
+Use the `SignInWithYouVersionButton` composable in your UI. You can use the `SignInViewModel` to check if the user is already signed in and conditionally display the button.
+
+- `SignInWithYouVersionPermission.PROFILE`: To access the user's name and profile picture.
+- `SignInWithYouVersionPermission.EMAIL`: To access the user's email address.
+
+```kotlin
+// ProfileScreen.kt
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.ui.signin.SignInViewModel
+import com.youversion.platform.ui.views.SignInWithYouVersionButton
+
+@Composable
+fun ProfileScreen() {
+    val signInViewModel = viewModel<SignInViewModel>()
+    val state by signInViewModel.state.collectAsStateWithLifecycle()
+
+    if (state.isSignedIn) {
+        Column {
+            Text("Welcome, ${state.userName ?: "User"}!")
+            Text("Your email is ${state.userEmail ?: "not available"}.")
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut()) }) {
+                Text("Sign Out")
+            }
+        }
+    } else {
+        SignInWithYouVersionButton(
+            permissions = {
+                setOf(
+                    SignInWithYouVersionPermission.PROFILE,
+                    SignInWithYouVersionPermission.EMAIL
+                )
+            }
+        )
+    }
+}
+```
+
+That's it. The `SignInViewModel` will automatically update its state, and your UI will recompose to reflect the user's authentication status.
+
 ## Sample App
 
 Explore the [examples directory](./examples) for a complete sample app demonstrating:
@@ -201,7 +289,7 @@ To run the sample app:
 
 ### 📱 Kotlin SDK
 
-Building an Android application? This Kotlin SDK provides native Jetpack Compose components including `BibleText`, `VerseOfTheDay`, and `LoginWithYouVersionButton` using modern language features.
+Building an Android application? This Kotlin SDK provides native Jetpack Compose components including `BibleText`, `VerseOfTheDay`, and `SignInWithYouVersionButton` using modern language features.
 
 ### 🔧 API Integration
 
