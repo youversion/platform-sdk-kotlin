@@ -12,8 +12,8 @@ import androidx.navigation.compose.rememberNavController
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.reader.screens.bible.BibleScreen
 import com.youversion.platform.reader.screens.fonts.FontsScreen
+import com.youversion.platform.reader.screens.languages.LanguagesScreen
 import com.youversion.platform.reader.screens.references.ReferencesScreen
-import com.youversion.platform.reader.screens.versions.LanguagesScreen
 import com.youversion.platform.reader.screens.versions.VersionsScreen
 import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
 import com.youversion.platform.reader.theme.FontDefinitionProvider
@@ -73,6 +73,7 @@ fun BibleReader(
                 route = BibleReaderDestination.Languages.route,
             ) {
                 LanguagesScreen(
+                    viewModel = viewModel,
                     onBackClick = navController::popBackStack,
                 )
             }

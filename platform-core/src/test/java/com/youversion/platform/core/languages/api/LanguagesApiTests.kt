@@ -28,7 +28,8 @@ class LanguagesApiTests : YouVersionPlatformTest {
     fun `test languages success returns data`() =
         runTest {
             MockEngine { request ->
-                assertEquals(HttpMethod.Companion.Get, request.method)
+                assertEquals(HttpMethod.Get, request.method)
+                assertEquals("/v1/languages", request.url.encodedPathAndQuery)
                 respondJson(
                     """
                     {
@@ -66,7 +67,7 @@ class LanguagesApiTests : YouVersionPlatformTest {
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
-            val languages = YouVersionApi.languages.languages()
+            val languages = YouVersionApi.languages.languages().data
 
             assertEquals(2, languages.size)
             assertEquals("en", languages[0].id)
@@ -87,29 +88,29 @@ class LanguagesApiTests : YouVersionPlatformTest {
             YouVersionPlatformConfiguration.configure(appKey = "app")
             YouVersionApi.languages
                 .languages()
-                .apply { assertTrue { isEmpty() } }
+                .apply { assertTrue { data.isEmpty() } }
         }
 
     @Test
-    fun `test books throws not permitted if unauthorized`() =
+    fun `test languages throws not permitted if unauthorized`() =
         testUnauthorizedNotPermitted {
             YouVersionApi.languages.languages(country = "US")
         }
 
     @Test
-    fun `test books throws not permitted if forbidden`() =
+    fun `test languages throws not permitted if forbidden`() =
         testForbiddenNotPermitted {
             YouVersionApi.languages.languages(country = "US")
         }
 
     @Test
-    fun `test books throws cannot download if request failed`() =
+    fun `test languages throws cannot download if request failed`() =
         testCannotDownload {
             YouVersionApi.languages.languages(country = "US")
         }
 
     @Test
-    fun `test books throws invalid response if cannot parse`() =
+    fun `test languages throws invalid response if cannot parse`() =
         testInvalidResponse {
             YouVersionApi.languages.languages(country = "US")
         }

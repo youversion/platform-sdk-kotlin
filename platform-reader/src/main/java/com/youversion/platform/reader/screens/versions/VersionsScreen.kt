@@ -33,12 +33,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -47,6 +45,7 @@ import com.youversion.platform.reader.R
 import com.youversion.platform.reader.components.BibleReaderTopAppBar
 import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
 import com.youversion.platform.reader.theme.readerColorScheme
+import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +55,8 @@ internal fun VersionsScreen(
     onLanguagesClick: () -> Unit,
     onVersionSelect: (BibleVersion) -> Unit,
 ) {
-    val viewModel: VersionsViewModel = viewModel(factory = VersionsViewModel.factory(bibleVersion))
+    val context = LocalContext.current
+    val viewModel: VersionsViewModel = viewModel(factory = VersionsViewModel.factory(bibleVersion, context))
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -89,7 +89,7 @@ internal fun VersionsScreen(
 
                 item {
                     BibleVersionsSectionHeader(
-                        title = "English Versions",
+                        title = "English Versions (${state.languagesCount})",
                     )
                 }
 
@@ -199,11 +199,7 @@ private fun BibleVersionsSectionHeader(title: String) {
     ) {
         Text(
             text = title,
-            style =
-                TextStyle(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                ),
+            style = BibleReaderTheme.typography.headerM,
         )
     }
 }
@@ -218,7 +214,6 @@ private fun BibleVersionRow(
     val (letters, numbers) = splitAbbreviation(abbreviation)
 
     Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
         modifier =
             Modifier
@@ -232,14 +227,18 @@ private fun BibleVersionRow(
     ) {
         Column(
             verticalArrangement = Arrangement.Center,
+            modifier = Modifier.weight(1f),
         ) {
             Text(
                 text = abbreviation,
                 maxLines = 1,
-                color = MaterialTheme.readerColorScheme.readerTextPrimaryColor,
+                style = BibleReaderTheme.typography.labelL,
+                color = BibleReaderTheme.colorScheme.textPrimary,
             )
             Text(
                 text = bibleVersion.localizedTitle ?: bibleVersion.title ?: bibleVersion.id.toString(),
+                style = BibleReaderTheme.typography.labelM,
+                color = BibleReaderTheme.colorScheme.textMuted,
             )
         }
 

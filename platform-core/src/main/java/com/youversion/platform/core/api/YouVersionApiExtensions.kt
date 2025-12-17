@@ -6,6 +6,9 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
 
+internal suspend inline fun <reified T> parsePaginatedResponse(response: HttpResponse): PaginatedResponse<T> =
+    parseApiBody<PaginatedResponse<T>>(response)
+
 internal suspend inline fun <reified T> parseApiResponse(response: HttpResponse): T =
     parseApiBody<ApiResponse<T>>(response).data
 
@@ -30,4 +33,25 @@ internal suspend inline fun <reified T> parseApiBody(response: HttpResponse): T 
     } catch (e: Exception) {
         throw invalidResponse(e)
     }
+}
+
+/**
+ * Fetches all pages from a paginated API endpoint and returns the combined results.
+ *
+ * **⚠️ USE WITH CAUTION**: This function makes multiple sequential API calls, one for each page
+ * of results
+ */
+internal suspend fun <T> fetchAllPages(request: suspend (nextPageToken: String?) -> PaginatedResponse<T>): List<T> {
+    var nextPageToken: String? = null
+    var hasNextPage = true
+    val allResults = mutableListOf<T>()
+
+    while (hasNextPage) {
+        val paginatedResponse = request(nextPageToken)
+        allResults += paginatedResponse.data
+        nextPageToken = paginatedResponse.nextPageToken
+        hasNextPage = paginatedResponse.nextPageToken != null
+    }
+
+    return allResults
 }

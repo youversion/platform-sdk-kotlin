@@ -10,11 +10,15 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.InitializerViewModelFactoryBuilder
 import androidx.lifecycle.viewmodel.initializer
+import co.touchlab.kermit.Logger
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.languages.domain.LanguageRepository
+import com.youversion.platform.core.languages.models.Language
 import com.youversion.platform.core.utilities.dependencies.SharedPreferencesStore
 import com.youversion.platform.core.utilities.dependencies.Store
+import com.youversion.platform.reader.screens.languages.LanguageRowItem
 import com.youversion.platform.reader.theme.FontDefinitionProvider
 import com.youversion.platform.reader.theme.ReaderTheme
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
@@ -23,11 +27,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class BibleReaderViewModel(
     bibleReference: BibleReference?,
     private val fontDefinitionProvider: FontDefinitionProvider?,
     private val bibleVersionRepository: BibleVersionRepository,
+    private val languagesRepository: LanguageRepository,
     private val store: Store,
 ) : ViewModel() {
     private val _state: MutableStateFlow<State>
@@ -42,6 +48,21 @@ class BibleReaderViewModel(
     internal var bibleVersion: BibleVersion?
         get() = _state.value.bibleVersion
         set(value) = _state.update { it.copy(bibleVersion = value) }
+
+    private var permittedVersions: List<BibleVersion> = emptyList()
+    private var languagesList: List<Language> = emptyList()
+    private val suggestedLanguageCodes: List<String>
+        get() {
+            if (languagesList.isEmpty()) {
+                return listOf("eng", "spa")
+            }
+
+            val languageCodes = extractLanguageCodes(languagesList)
+            return languageCodes
+                .filter { languageCode ->
+                    permittedVersions.isEmpty() || permittedVersions.any { it.languageTag == languageCode }
+                }
+        }
 
     init {
         val myVersionIds: Set<Int>? = store.myVersionIds
@@ -75,6 +96,7 @@ class BibleReaderViewModel(
 
         loadUserSettingsFromStorage()
         loadVersionIfNeeded(myVersionIds ?: emptySet())
+        loadSuggestedLanguages()
     }
 
     private fun loadUserSettingsFromStorage() {
@@ -202,6 +224,31 @@ class BibleReaderViewModel(
         store.readerThemeId = action.readerTheme.id
     }
 
+    // ----- Languages
+    val localeCountryCode: String
+        get() = Locale.getDefault().country ?: "US"
+    val localeLanguageCode: String
+        get() = Locale.getDefault().language ?: "en"
+
+    private fun loadSuggestedLanguages() {
+        viewModelScope.launch {
+            try {
+                val languages =
+                    languagesRepository
+                        .suggestedLanguages(country = localeCountryCode)
+                        .map { LanguageRowItem(it, localeLanguageCode) }
+                _state.update { it.copy(suggestedLanguages = languages) }
+            } catch (e: Exception) {
+                Logger.w("Failed to get languages", e)
+            }
+        }
+    }
+
+    private fun extractLanguageCodes(languages: List<Language>): Set<String> =
+        languages
+            .map { languages -> languages.id }
+            .toSet()
+
     // ----- State
     data class State(
         val bibleReference: BibleReference,
@@ -213,6 +260,7 @@ class BibleReaderViewModel(
         val selectedFontDefinition: FontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
         val fontSize: TextUnit = ReaderFontSettings.DEFAULT_FONT_SIZE,
         val lineSpacingMultiplier: Float = ReaderFontSettings.DEFAULT_LINE_SPACING_MULTIPLIER,
+        val suggestedLanguages: List<LanguageRowItem> = emptyList(),
         val showingFootnotes: Boolean = false,
         val footnotesReference: BibleReference? = null,
         val footnotes: List<AnnotatedString> = emptyList(),
@@ -298,6 +346,7 @@ class BibleReaderViewModel(
                             bibleReference = bibleReference,
                             fontDefinitionProvider = fontDefinitionProvider,
                             bibleVersionRepository = BibleVersionRepository(context),
+                            languagesRepository = LanguageRepository(),
                             store = SharedPreferencesStore(context),
                         )
                     }

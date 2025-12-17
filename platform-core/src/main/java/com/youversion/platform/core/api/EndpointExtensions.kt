@@ -22,3 +22,7 @@ internal fun URLBuilder.parameter(
     key: String,
     value: Any?,
 ): Unit = value?.let { parameters.append(key, it.toString()) } ?: Unit
+
+internal fun URLBuilder.pageSize(pageSize: Int?): Unit = parameter("page_size", pageSize)
+
+internal fun URLBuilder.pageToken(pageToken: String?): Unit = parameter("page_token", pageToken)

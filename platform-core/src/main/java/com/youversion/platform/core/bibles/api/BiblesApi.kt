@@ -1,5 +1,6 @@
 package com.youversion.platform.core.bibles.api
 
+import com.youversion.platform.core.api.PaginatedResponse
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleChapter
@@ -24,7 +25,8 @@ interface BiblesApi {
     suspend fun versions(
         languageCode: String? = null,
         pageSize: Int? = null,
-    ): List<BibleVersion>
+        pageToken: String? = null,
+    ): PaginatedResponse<BibleVersion>
 
     /**
      * Retrieves a specific [BibleVersion] from the server identified by [versionId].

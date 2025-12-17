@@ -3,6 +3,7 @@ package com.youversion.platform.core.bibles.domain
 import android.content.Context
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.api.fetchAllPages
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
 import com.youversion.platform.core.bibles.data.BibleVersionPersistentCache
@@ -71,6 +72,11 @@ class BibleVersionRepository(
             inFlightTasks.remove(id)
         }
     }
+
+    suspend fun allVersions(): List<BibleVersion> =
+        fetchAllPages { nextPageToken ->
+            YouVersionApi.bible.versions(pageSize = 99, pageToken = nextPageToken)
+        }
 
     fun versionIsPresent(id: Int): Boolean = persistentCache.versionIsPresent(id)
 
