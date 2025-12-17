@@ -15,6 +15,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.languages.domain.LanguageRepository
+import com.youversion.platform.core.languages.models.Language
 import com.youversion.platform.core.utilities.dependencies.SharedPreferencesStore
 import com.youversion.platform.core.utilities.dependencies.Store
 import com.youversion.platform.reader.screens.languages.LanguageRowItem
@@ -47,6 +48,21 @@ class BibleReaderViewModel(
     internal var bibleVersion: BibleVersion?
         get() = _state.value.bibleVersion
         set(value) = _state.update { it.copy(bibleVersion = value) }
+
+    private var permittedVersions: List<BibleVersion> = emptyList()
+    private var languagesList: List<Language> = emptyList()
+    private val suggestedLanguageCodes: List<String>
+        get() {
+            if (languagesList.isEmpty()) {
+                return listOf("eng", "spa")
+            }
+
+            val languageCodes = extractLanguageCodes(languagesList)
+            return languageCodes
+                .filter { languageCode ->
+                    permittedVersions.isEmpty() || permittedVersions.any { it.languageTag == languageCode }
+                }
+        }
 
     init {
         val myVersionIds: Set<Int>? = store.myVersionIds
@@ -209,16 +225,18 @@ class BibleReaderViewModel(
     }
 
     // ----- Languages
-    val countryCode: String by lazy { Locale.getDefault().country }
-    val languageCode: String by lazy { Locale.getDefault().language }
+    val localeCountryCode: String
+        get() = Locale.getDefault().country ?: "US"
+    val localeLanguageCode: String
+        get() = Locale.getDefault().language ?: "en"
 
     private fun loadSuggestedLanguages() {
         viewModelScope.launch {
             try {
                 val languages =
                     languagesRepository
-                        .suggestedLanguages(country = countryCode)
-                        .map { LanguageRowItem(it, languageCode) }
+                        .suggestedLanguages(country = localeCountryCode)
+                        .map { LanguageRowItem(it, localeLanguageCode) }
                 _state.update { it.copy(suggestedLanguages = languages) }
             } catch (e: Exception) {
                 Logger.w("Failed to get languages", e)
@@ -226,9 +244,9 @@ class BibleReaderViewModel(
         }
     }
 
-    private fun extractLanguageCodes(languages: List<LanguageRowItem>): Set<String> =
+    private fun extractLanguageCodes(languages: List<Language>): Set<String> =
         languages
-            .map { it.language.id }
+            .map { languages -> languages.id }
             .toSet()
 
     // ----- State
@@ -334,7 +352,4 @@ class BibleReaderViewModel(
                     }
                 }.build()
     }
-}
-
-fun BibleReaderViewModel.loadVersionsList() {
 }

@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -26,12 +27,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.core.languages.models.Language
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.components.BibleReaderTopAppBar
 import com.youversion.platform.reader.theme.readerColorScheme
+import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import kotlinx.coroutines.launch
 
 private enum class LanguageTab(
@@ -59,7 +62,7 @@ internal fun LanguagesScreen(
     Scaffold(
         topBar = {
             BibleReaderTopAppBar(
-                title = "Languages",
+                title = "Select a Languages",
                 onBackClick = onBackClick,
             )
         },
@@ -67,6 +70,15 @@ internal fun LanguagesScreen(
         Column(modifier = Modifier.padding(innerPadding)) {
             PrimaryTabRow(
                 selectedTabIndex = selectedDestination,
+                containerColor = BibleReaderTheme.colorScheme.canvasPrimary,
+                contentColor = BibleReaderTheme.colorScheme.textPrimary,
+                indicator = {
+                    TabRowDefaults.PrimaryIndicator(
+                        modifier = Modifier.tabIndicatorOffset(selectedDestination, matchContentSize = true),
+                        color = BibleReaderTheme.colorScheme.textPrimary,
+                        width = Dp.Unspecified,
+                    )
+                },
             ) {
                 LanguageTab.entries.forEachIndexed { index, destination ->
                     Tab(
@@ -141,7 +153,10 @@ private fun SuggestedLanguagesTab(
 @Composable
 private fun AllLanguagesTab() {
     Column(
-        modifier = Modifier.padding(horizontal = 20.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
     ) {
         Text("All Languages")
         Text("All Languages")
