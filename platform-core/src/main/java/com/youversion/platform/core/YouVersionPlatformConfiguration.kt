@@ -10,7 +10,6 @@ import com.youversion.platform.foundation.PlatformKoinGraph
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.Date
-import java.util.UUID
 
 object YouVersionPlatformConfiguration {
     private const val DEFAULT_API_HOST = "api.youversion.com"
@@ -85,7 +84,7 @@ object YouVersionPlatformConfiguration {
         apiHost: String = DEFAULT_API_HOST,
         hostEnv: String? = null,
     ) {
-        val store = PlatformCoreKoinComponent.store
+        val sessionRepository = PlatformCoreKoinComponent.sessionRepository
 
         _configState.value =
             Config(
@@ -93,11 +92,11 @@ object YouVersionPlatformConfiguration {
                 authCallback = authCallback,
                 apiHost = apiHost,
                 hostEnv = hostEnv,
-                installId = store.installId ?: UUID.randomUUID().toString().also { store.installId = it },
-                accessToken = accessToken ?: store.accessToken,
-                refreshToken = refreshToken ?: store.refreshToken,
-                idToken = idToken ?: store.idToken,
-                expiryDate = expiryDate ?: store.expiryDate,
+                installId = sessionRepository.installId,
+                accessToken = accessToken ?: sessionRepository.accessToken,
+                refreshToken = refreshToken ?: sessionRepository.refreshToken,
+                idToken = idToken ?: sessionRepository.idToken,
+                expiryDate = expiryDate ?: sessionRepository.expiryDate,
             )
     }
 
@@ -138,11 +137,11 @@ object YouVersionPlatformConfiguration {
             )
 
         if (persist) {
-            val store = PlatformCoreKoinComponent.store
-            store.accessToken = accessToken
-            store.refreshToken = refreshToken
-            store.idToken = idToken
-            store.expiryDate = expiryDate
+            val sessionRepository = PlatformCoreKoinComponent.sessionRepository
+            sessionRepository.accessToken = accessToken
+            sessionRepository.refreshToken = refreshToken
+            sessionRepository.idToken = idToken
+            sessionRepository.expiryDate = expiryDate
         }
     }
 

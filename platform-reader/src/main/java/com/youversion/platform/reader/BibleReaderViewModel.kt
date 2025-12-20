@@ -11,7 +11,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.languages.models.Language
-import com.youversion.platform.core.utilities.dependencies.Store
+import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.reader.screens.languages.LanguageRowItem
 import com.youversion.platform.reader.theme.FontDefinitionProvider
@@ -28,8 +28,8 @@ class BibleReaderViewModel(
     bibleReference: BibleReference?,
     private val fontDefinitionProvider: FontDefinitionProvider?,
     private val bibleVersionRepository: BibleVersionRepository,
+    private val bibleReaderRepository: BibleReaderRepository,
     private val userSettingsRepository: UserSettingsRepository,
-    private val store: Store,
 ) : ViewModel() {
     private val _state: MutableStateFlow<State>
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
@@ -37,7 +37,7 @@ class BibleReaderViewModel(
     internal var bibleReference: BibleReference
         get() = _state.value.bibleReference
         set(value) {
-            store.bibleReference = value
+            bibleReaderRepository.lastBibleReference = value
             _state.update { it.copy(bibleReference = value) }
         }
     internal var bibleVersion: BibleVersion?
@@ -60,27 +60,7 @@ class BibleReaderViewModel(
         }
 
     init {
-        val myVersionIds: Set<Int>? = store.myVersionIds
-
-        val reference =
-            if (bibleReference != null) {
-                bibleReference
-            } else {
-                val savedReference = store.bibleReference
-                if (savedReference != null) {
-                    savedReference
-                } else {
-                    // No specified or saved version so pick a downloaded one. If none
-                    // have been downloaded, then use the default version.
-                    val downloadedVersions = bibleVersionRepository.downloadedVersions
-                    val versionId =
-                        downloadedVersions.firstOrNull()
-                            ?: myVersionIds?.firstOrNull()
-                            ?: 111 // NIV
-                    BibleReference(versionId = versionId, bookUSFM = "JHN", chapter = 1)
-                }
-            }
-
+        val reference = bibleReaderRepository.produceBibleReference(bibleReference)
         this._state =
             MutableStateFlow(
                 State(
@@ -90,7 +70,7 @@ class BibleReaderViewModel(
             )
 
         loadUserSettingsFromStorage()
-        loadVersionIfNeeded(myVersionIds ?: emptySet())
+        loadVersionIfNeeded()
         loadSuggestedLanguages()
     }
 
@@ -117,14 +97,11 @@ class BibleReaderViewModel(
         }
     }
 
-    private fun loadVersionIfNeeded(mySavedVersionIds: Set<Int>) {
+    private fun loadVersionIfNeeded() {
         if (bibleVersion == null || bibleVersion?.id != bibleReference.versionId) {
             viewModelScope.launch {
                 try {
                     bibleVersion = bibleVersionRepository.version(id = bibleReference.versionId)
-                    bibleVersion?.let {
-                        // TODO: Add to saved versions
-                    }
                 } catch (e: Exception) {
                     // TODO: Select fallback version error
                 }

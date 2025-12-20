@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.maven.publish)
 }
 
@@ -51,6 +52,9 @@ dependencies {
     implementation(projects.platformUi)
     implementation(projects.platformCore)
     implementation(projects.platformFoundation)
+
+    implementation(libs.kotlin.coroutines)
+    implementation(libs.kotlin.serialization)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

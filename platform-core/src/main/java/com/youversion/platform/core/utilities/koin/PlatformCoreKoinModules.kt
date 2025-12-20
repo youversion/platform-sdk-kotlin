@@ -2,14 +2,14 @@ package com.youversion.platform.core.utilities.koin
 
 import android.content.Context
 import com.youversion.platform.core.YouVersionPlatformConfiguration
+import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
 import com.youversion.platform.core.bibles.data.BibleVersionPersistentCache
 import com.youversion.platform.core.bibles.data.BibleVersionTemporaryCache
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.data.SharedPreferencesStorage
 import com.youversion.platform.core.domain.Storage
-import com.youversion.platform.core.utilities.dependencies.SharedPreferencesStore
-import com.youversion.platform.core.utilities.dependencies.Store
+import com.youversion.platform.core.users.domain.SessionRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -26,7 +26,7 @@ import io.ktor.http.HttpMessageBuilder
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.core.module.dsl.factoryOf
-import org.koin.core.module.dsl.singleOf
+import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -34,31 +34,35 @@ internal fun platformAppKoinModule(context: Context) =
     module {
         single { context.applicationContext }
         single { OkHttp.create() } bind HttpClientEngine::class
-        factory {
-            SharedPreferencesStore(context = get())
-        } bind Store::class
-
         factoryOf(::SharedPreferencesStorage) bind Storage::class
+    }
+
+internal val PlatformCoreCacheKoinModule =
+    module {
+        single(named("memory")) { BibleVersionMemoryCache() } bind BibleVersionCache::class
+        factory(named("temporary")) { BibleVersionTemporaryCache(get()) } bind BibleVersionCache::class
+        factory(named("persistent")) { BibleVersionPersistentCache(get()) } bind BibleVersionCache::class
     }
 
 internal val PlatformCoreDomainKoinModule =
     module {
-        singleOf(::BibleVersionMemoryCache)
-        factoryOf(::BibleVersionTemporaryCache)
-        factoryOf(::BibleVersionPersistentCache)
         factory {
             BibleVersionRepository(
-                memoryCache = get<BibleVersionMemoryCache>(),
-                temporaryCache = get<BibleVersionTemporaryCache>(),
-                persistentCache = get<BibleVersionPersistentCache>(),
-                store = get<Store>(),
+                memoryCache = get(named("memory")),
+                temporaryCache = get(named("temporary")),
+                persistentCache = get(named("persistent")),
             )
         }
+        factoryOf(::SessionRepository)
     }
 
 internal val PlatformCoreKoinModule =
     module {
-        single { Json { ignoreUnknownKeys = true } }
+        single {
+            Json {
+                ignoreUnknownKeys = true
+            }
+        }
         single {
             HttpClient(get()) {
                 install(ContentNegotiation) { json(get()) }

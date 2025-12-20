@@ -8,6 +8,7 @@ internal fun PlatformKoinGraph.startCore(context: Context) {
     startCore(
         listOf(
             platformAppKoinModule(context),
+            PlatformCoreCacheKoinModule,
             PlatformCoreDomainKoinModule,
         ),
     )

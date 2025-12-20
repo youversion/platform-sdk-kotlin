@@ -50,4 +50,17 @@ class SharedPreferencesStorage(
         prefs
             .getFloat(key, -1f)
             .takeIf { it != -1f }
+
+    override fun putLong(
+        key: String,
+        value: Long?,
+    ) = prefs.edit {
+        value?.let { putLong(key, it) }
+            ?: remove(key)
+    }
+
+    override fun getLongOrNull(key: String): Long? =
+        prefs
+            .getLong(key, -1L)
+            .takeIf { it != -1L }
 }

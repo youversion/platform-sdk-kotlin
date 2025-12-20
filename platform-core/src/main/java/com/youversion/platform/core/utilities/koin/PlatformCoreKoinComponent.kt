@@ -1,6 +1,6 @@
 package com.youversion.platform.core.utilities.koin
 
-import com.youversion.platform.core.utilities.dependencies.Store
+import com.youversion.platform.core.users.domain.SessionRepository
 import com.youversion.platform.foundation.PlatformKoinGraph
 import io.ktor.client.HttpClient
 import org.koin.core.Koin
@@ -13,6 +13,6 @@ internal object PlatformCoreKoinComponent : KoinComponent {
     val httpClient: HttpClient
         get() = get()
 
-    val store: Store
+    val sessionRepository: SessionRepository
         get() = get()
 }

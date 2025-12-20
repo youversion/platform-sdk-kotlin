@@ -9,7 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.foundation.PlatformKoinGraph
-import com.youversion.platform.reader.di.PlatformReaderModule
+import com.youversion.platform.reader.di.PlatformReaderKoinModule
 import com.youversion.platform.reader.screens.bible.BibleScreen
 import com.youversion.platform.reader.screens.fonts.FontsScreen
 import com.youversion.platform.reader.screens.languages.LanguagesScreen
@@ -35,7 +35,7 @@ fun BibleReader(
     KoinIsolatedContext(
         context = PlatformKoinGraph.koinApplication,
     ) {
-        rememberKoinModules { listOf(PlatformReaderModule) }
+        rememberKoinModules { listOf(PlatformReaderKoinModule) }
 
         val viewModel: BibleReaderViewModel = koinViewModel { parametersOf(bibleReference, fontDefinitionProvider) }
 
