@@ -1,23 +1,18 @@
 package com.youversion.platform.reader
 
-import android.content.Context
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.InitializerViewModelFactoryBuilder
-import androidx.lifecycle.viewmodel.initializer
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
-import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.languages.models.Language
-import com.youversion.platform.core.utilities.dependencies.SharedPreferencesStore
 import com.youversion.platform.core.utilities.dependencies.Store
+import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.reader.screens.languages.LanguageRowItem
 import com.youversion.platform.reader.theme.FontDefinitionProvider
 import com.youversion.platform.reader.theme.ReaderTheme
@@ -33,7 +28,7 @@ class BibleReaderViewModel(
     bibleReference: BibleReference?,
     private val fontDefinitionProvider: FontDefinitionProvider?,
     private val bibleVersionRepository: BibleVersionRepository,
-    private val languagesRepository: LanguageRepository,
+    private val userSettingsRepository: UserSettingsRepository,
     private val store: Store,
 ) : ViewModel() {
     private val _state: MutableStateFlow<State>
@@ -101,26 +96,23 @@ class BibleReaderViewModel(
 
     private fun loadUserSettingsFromStorage() {
         // Restore Theme
-        val savedReaderThemeId = store.readerThemeId
+        val savedReaderThemeId = userSettingsRepository.readerThemeId
         val savedReaderTheme = ReaderTheme.themeById(savedReaderThemeId)
         BibleReaderTheme.selectedColorScheme.value = savedReaderTheme.colorScheme
 
         // Restore Font
-        val savedFontDefinitionName = store.readerFontFamilyName
+        val savedFontDefinitionName = userSettingsRepository.readerFontFamilyName
         val allFontDefinitions = _state.value.allFontDefinitions
         allFontDefinitions.find { it.fontName == savedFontDefinitionName }?.let { savedFontDefinition ->
             _state.update { it.copy(selectedFontDefinition = savedFontDefinition) }
         }
 
         // Restore Line Spacing
-        val savedLineSpacing = store.readerLineSpacing
-        if (savedLineSpacing != null && savedLineSpacing > -1f) {
+        userSettingsRepository.readerLineSpacing?.let { savedLineSpacing ->
             _state.update { it.copy(lineSpacingMultiplier = savedLineSpacing) }
         }
 
-        // Restore Font Size
-        val savedFontSize = store.readerFontSize
-        if (savedFontSize != null && savedFontSize > -1f) {
+        userSettingsRepository.readerFontSize?.let { savedFontSize ->
             _state.update { it.copy(fontSize = savedFontSize.sp) }
         }
     }
@@ -183,19 +175,19 @@ class BibleReaderViewModel(
     }
 
     private fun setFontSize(size: TextUnit) {
-        store.readerFontSize = size.value
+        userSettingsRepository.readerFontSize = size.value
         _state.update { it.copy(fontSize = size) }
     }
 
     fun nextLineSpacingMultiplierOption() {
         val currentLineSpacing = _state.value.lineSpacingMultiplier
         val nextLineSpacing = ReaderFontSettings.nextLineSpacingMultiplier(currentLineSpacing)
-        store.readerLineSpacing = nextLineSpacing
+        userSettingsRepository.readerLineSpacing = nextLineSpacing
         _state.update { it.copy(lineSpacingMultiplier = nextLineSpacing) }
     }
 
     fun setFontFamily(action: Action.SetFontDefinition) {
-        store.readerFontFamilyName = action.fontDefinition.fontName
+        userSettingsRepository.readerFontFamilyName = action.fontDefinition.fontName
         _state.update { it.copy(selectedFontDefinition = action.fontDefinition) }
     }
 
@@ -221,7 +213,7 @@ class BibleReaderViewModel(
 
     fun setReaderTheme(action: Action.SetReaderTheme) {
         BibleReaderTheme.selectedColorScheme.value = action.readerTheme.colorScheme
-        store.readerThemeId = action.readerTheme.id
+        userSettingsRepository.readerThemeId = action.readerTheme.id
     }
 
     // ----- Languages
@@ -233,11 +225,11 @@ class BibleReaderViewModel(
     private fun loadSuggestedLanguages() {
         viewModelScope.launch {
             try {
-                val languages =
-                    languagesRepository
-                        .suggestedLanguages(country = localeCountryCode)
-                        .map { LanguageRowItem(it, localeLanguageCode) }
-                _state.update { it.copy(suggestedLanguages = languages) }
+//                val languages =
+//                    languagesRepository
+//                        .suggestedLanguages(country = localeCountryCode)
+//                        .map { LanguageRowItem(it, localeLanguageCode) }
+//                _state.update { it.copy(suggestedLanguages = languages) }
             } catch (e: Exception) {
                 Logger.w("Failed to get languages", e)
             }
@@ -330,26 +322,5 @@ class BibleReaderViewModel(
         data class SetReaderTheme(
             val readerTheme: ReaderTheme,
         ) : Action
-    }
-
-    // ----- Injection
-    companion object {
-        fun factory(
-            context: Context,
-            bibleReference: BibleReference?,
-            fontDefinitionProvider: FontDefinitionProvider?,
-        ): ViewModelProvider.Factory =
-            InitializerViewModelFactoryBuilder()
-                .apply {
-                    initializer {
-                        BibleReaderViewModel(
-                            bibleReference = bibleReference,
-                            fontDefinitionProvider = fontDefinitionProvider,
-                            bibleVersionRepository = BibleVersionRepository(context),
-                            languagesRepository = LanguageRepository(),
-                            store = SharedPreferencesStore(context),
-                        )
-                    }
-                }.build()
     }
 }
