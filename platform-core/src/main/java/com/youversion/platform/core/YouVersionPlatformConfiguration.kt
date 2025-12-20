@@ -2,10 +2,11 @@ package com.youversion.platform.core
 
 import android.content.Context
 import co.touchlab.kermit.Logger
+import com.youversion.platform.core.YouVersionPlatformConfiguration.configure
 import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfiguredException
-import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
-import com.youversion.platform.core.utilities.koin.startYouVersionPlatform
-import com.youversion.platform.core.utilities.koin.stopYouVersionPlatform
+import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
+import com.youversion.platform.core.utilities.koin.startCore
+import com.youversion.platform.foundation.PlatformKoinGraph
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.Date
@@ -55,11 +56,11 @@ object YouVersionPlatformConfiguration {
         if (config != null) {
             Logger.w("YouVersionPlatform SDK has already been configured. Reconfiguring.")
             _configState.value = null // Emit a null state to notify observers of reconfiguration
-            stopYouVersionPlatform()
+            PlatformKoinGraph.stop()
         }
 
         // This establishes the Dependency Graph which can only be called once.
-        startYouVersionPlatform(context)
+        PlatformKoinGraph.startCore(context)
 
         // Now configure the SDK, use DI to provide any dependencies needed during configuration.
         configure(
@@ -84,7 +85,7 @@ object YouVersionPlatformConfiguration {
         apiHost: String = DEFAULT_API_HOST,
         hostEnv: String? = null,
     ) {
-        val store = YouVersionPlatformComponent.store
+        val store = PlatformCoreKoinComponent.store
 
         _configState.value =
             Config(
@@ -137,7 +138,7 @@ object YouVersionPlatformConfiguration {
             )
 
         if (persist) {
-            val store = YouVersionPlatformComponent.store
+            val store = PlatformCoreKoinComponent.store
             store.accessToken = accessToken
             store.refreshToken = refreshToken
             store.idToken = idToken

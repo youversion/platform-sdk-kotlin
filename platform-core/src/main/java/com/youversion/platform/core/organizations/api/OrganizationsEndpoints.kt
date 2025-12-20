@@ -5,14 +5,14 @@ import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.api.parseApiBody
 import com.youversion.platform.core.api.parseApiResponse
 import com.youversion.platform.core.organizations.models.Organization
-import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
+import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.path
 
 object OrganizationsEndpoints : OrganizationsApi {
     private val httpClient: HttpClient
-        get() = YouVersionPlatformComponent.httpClient
+        get() = PlatformCoreKoinComponent.httpClient
 
     // ----- Organization URLs
     fun organizationsUrl(bibleVersionId: Int): String =

@@ -1,0 +1,102 @@
+package com.youversion.platform.core.utilities.koin
+
+import android.content.Context
+import com.youversion.platform.core.YouVersionPlatformConfiguration
+import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
+import com.youversion.platform.core.bibles.data.BibleVersionPersistentCache
+import com.youversion.platform.core.bibles.data.BibleVersionTemporaryCache
+import com.youversion.platform.core.bibles.domain.BibleVersionRepository
+import com.youversion.platform.core.data.SharedPreferencesStorage
+import com.youversion.platform.core.domain.Storage
+import com.youversion.platform.core.utilities.dependencies.SharedPreferencesStore
+import com.youversion.platform.core.utilities.dependencies.Store
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.cache.HttpCache
+import io.ktor.client.plugins.cache.storage.FileStorage
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.request.headers
+import io.ktor.http.HeadersBuilder
+import io.ktor.http.HttpMessageBuilder
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
+import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
+import org.koin.dsl.module
+
+internal fun platformAppKoinModule(context: Context) =
+    module {
+        single { context.applicationContext }
+        single { OkHttp.create() } bind HttpClientEngine::class
+        factory {
+            SharedPreferencesStore(context = get())
+        } bind Store::class
+
+        factoryOf(::SharedPreferencesStorage) bind Storage::class
+    }
+
+internal val PlatformCoreDomainKoinModule =
+    module {
+        singleOf(::BibleVersionMemoryCache)
+        factoryOf(::BibleVersionTemporaryCache)
+        factoryOf(::BibleVersionPersistentCache)
+        factory {
+            BibleVersionRepository(
+                memoryCache = get<BibleVersionMemoryCache>(),
+                temporaryCache = get<BibleVersionTemporaryCache>(),
+                persistentCache = get<BibleVersionPersistentCache>(),
+                store = get<Store>(),
+            )
+        }
+    }
+
+internal val PlatformCoreKoinModule =
+    module {
+        single { Json { ignoreUnknownKeys = true } }
+        single {
+            HttpClient(get()) {
+                install(ContentNegotiation) { json(get()) }
+                install(HttpCache) {
+                    getOrNull<Context>()?.let {
+                        privateStorage(FileStorage(it.cacheDir))
+                    }
+                }
+                defaultRequest {
+                    defaultRequestHeaders()
+                }
+                install(Logging) {
+                    logger = logger()
+                    level = LogLevel.INFO
+                }
+            }
+        }
+    }
+
+private fun HttpMessageBuilder.defaultRequestHeaders(): HeadersBuilder =
+    headers {
+        YouVersionPlatformConfiguration.appKey?.let {
+            append("x-yvp-app-key", it)
+        }
+
+        YouVersionPlatformConfiguration.installId?.let {
+            append("x-yvp-installation-id", it)
+        }
+
+        YouVersionPlatformConfiguration.accessToken?.let {
+            append("X-YV-LAT", it)
+        }
+    }
+
+private fun logger(): Logger =
+    object : Logger {
+        override fun log(message: String) {
+            co.touchlab.kermit.Logger
+                .i(message)
+        }
+    }

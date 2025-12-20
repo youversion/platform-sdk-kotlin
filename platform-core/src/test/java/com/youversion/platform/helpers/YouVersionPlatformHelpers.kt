@@ -3,33 +3,34 @@ package com.youversion.platform.helpers
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.utilities.dependencies.DateSerializer
 import com.youversion.platform.core.utilities.dependencies.Store
-import com.youversion.platform.core.utilities.koin.YouVersionPlatformTools
-import com.youversion.platform.core.utilities.koin.startYouVersionPlatform
-import com.youversion.platform.core.utilities.koin.stopYouVersionPlatform
+import com.youversion.platform.core.utilities.koin.startCore
+import com.youversion.platform.foundation.PlatformKoinGraph
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respondOk
 import kotlinx.serialization.json.Json
 import org.koin.core.Koin
+import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.test.KoinTest
 import java.util.Date
 
 interface YouVersionPlatformTest : KoinTest {
-    override fun getKoin(): Koin = YouVersionPlatformTools.defaultContext().get()
+    override fun getKoin(): Koin = PlatformKoinGraph.getContext().get()
 }
 
+private fun youVersionTestKoinModule(engine: HttpClientEngine) =
+    module {
+        single { engine } bind HttpClientEngine::class
+        single { TestStore() } bind Store::class
+    }
+
 internal fun startYouVersionPlatformTest(engine: HttpClientEngine = MockEngine.create { addHandler { respondOk() } }) =
-    startYouVersionPlatform(
-        listOf(
-            module {
-                single<HttpClientEngine> { engine }
-                single<Store> { TestStore() }
-            },
-        ),
+    PlatformKoinGraph.startCore(
+        listOf(youVersionTestKoinModule(engine)),
     )
 
-internal fun stopYouVersionPlatformTest() = stopYouVersionPlatform()
+internal fun stopYouVersionPlatformTest() = PlatformKoinGraph.stop()
 
 /**
  * An in-memory [Store] implementation.
@@ -82,30 +83,5 @@ class TestStore : Store {
         set(value) {
             value?.let { prefs[Store.KEY_BIBLE_READER_MY_VERSIONS] = it.joinToString(",") { i -> i.toString() } }
                 ?: prefs.remove(Store.KEY_BIBLE_READER_MY_VERSIONS)
-        }
-
-    override var readerThemeId: Int?
-        get() = prefs[Store.KEY_BIBLE_READER_THEME]?.toInt()
-        set(value) {
-            value?.let { prefs[Store.KEY_BIBLE_READER_THEME] = it.toString() }
-                ?: prefs.remove(Store.KEY_BIBLE_READER_THEME)
-        }
-    override var readerFontSize: Float?
-        get() = prefs[Store.KEY_BIBLE_READER_FONT_SIZE]?.toFloat()
-        set(value) {
-            value?.let { prefs[Store.KEY_BIBLE_READER_FONT_SIZE] = it.toString() }
-                ?: prefs.remove(Store.KEY_BIBLE_READER_FONT_SIZE)
-        }
-    override var readerLineSpacing: Float?
-        get() = prefs[Store.KEY_BIBLE_READER_LINE_SPACING]?.toFloat()
-        set(value) {
-            value?.let { prefs[Store.KEY_BIBLE_READER_LINE_SPACING] = it.toString() }
-                ?: prefs.remove(Store.KEY_BIBLE_READER_LINE_SPACING)
-        }
-    override var readerFontFamilyName: String?
-        get() = prefs[Store.KEY_BIBLE_READER_FONT_FAMILY_NAME]
-        set(value) {
-            value?.let { prefs[Store.KEY_BIBLE_READER_FONT_FAMILY_NAME] = it }
-                ?: prefs.remove(Store.KEY_BIBLE_READER_FONT_FAMILY_NAME)
         }
 }
