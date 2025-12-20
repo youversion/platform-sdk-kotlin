@@ -1,5 +1,6 @@
 package com.youversion.platform.reader.screens.bible
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -114,11 +116,14 @@ internal fun BibleScreen(
                 Box(
                     modifier =
                         Modifier
-                            .padding(horizontal = 32.dp)
-                            .verticalScroll(rememberScrollState()),
+                            .padding(horizontal = 32.dp),
                 ) {
-                    Column {
-                        Spacer(modifier = Modifier.height(16.dp))
+                    Column(
+                        modifier =
+                            Modifier
+                                .verticalScroll(rememberScrollState()),
+                    ) {
+                        Spacer(modifier = Modifier.height(32.dp))
                         BibleText(
                             textOptions =
                                 BibleTextOptions(
@@ -143,6 +148,11 @@ internal fun BibleScreen(
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                     }
+                    FadingBox(
+                        modifier = Modifier
+                            .height(32.dp)
+                            .fillMaxWidth()
+                    )
                 }
             }
 
@@ -200,6 +210,23 @@ internal fun BibleScreen(
             }
         }
     }
+}
+
+@Composable
+private fun FadingBox(
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        MaterialTheme.colorScheme.background,
+                        MaterialTheme.colorScheme.background.copy(alpha = 0f),
+                    ),
+                ),
+            ),
+    )
 }
 
 @Composable
