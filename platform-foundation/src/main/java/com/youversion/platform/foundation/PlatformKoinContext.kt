@@ -1,6 +1,5 @@
-package com.youversion.platform.core.utilities.koin
+package com.youversion.platform.foundation
 
-import com.youversion.platform.core.utilities.exceptions.YouVersionAlreadyConfiguredException
 import org.koin.core.Koin
 import org.koin.core.KoinApplication
 import org.koin.core.context.KoinContext
@@ -20,11 +19,9 @@ internal object PlatformKoinContext : KoinContext {
     override fun getOrNull(): Koin? = koin
 
     private fun register(koinApplication: KoinApplication) {
-        if (koin != null) {
-            throw YouVersionAlreadyConfiguredException()
+        if (koin == null) {
+            this._koinApplication = koinApplication
         }
-
-        this._koinApplication = koinApplication
     }
 
     override fun stopKoin() =
