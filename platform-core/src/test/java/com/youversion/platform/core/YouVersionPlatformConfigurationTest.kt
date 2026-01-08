@@ -1,6 +1,7 @@
 package com.youversion.platform.core
 
-import com.youversion.platform.core.utilities.dependencies.Store
+import com.youversion.platform.core.domain.Storage
+import com.youversion.platform.core.users.domain.SessionRepository
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
@@ -14,7 +15,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
-    val store: Store by inject()
+    val storage: Storage by inject()
+    val sessionRepository: SessionRepository by inject()
 
     @BeforeTest
     fun setup() = startYouVersionPlatformTest()
@@ -33,7 +35,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             assertEquals("api.youversion.com", apiHost)
             assertNull(hostEnv)
             assertNotNull(installId)
-            assertEquals(store.installId, installId)
+            assertEquals(sessionRepository.installId, installId)
         }
     }
 
@@ -54,14 +56,14 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             assertEquals("example.com", apiHost)
             assertEquals("prod", hostEnv)
             assertNotNull(installId)
-            assertEquals(store.installId, installId)
+            assertEquals(sessionRepository.installId, installId)
         }
     }
 
     @Test
     fun `configure with saved values`() {
-        store.accessToken = "stored_token"
-        store.installId = "existing_id"
+        sessionRepository.accessToken = "stored_token"
+        sessionRepository.setInstallId("existing_id")
 
         with(YouVersionPlatformConfiguration) {
             configure(appKey = "appKey")
@@ -82,7 +84,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 expiryDate = Date(),
             )
             assertEquals("accessToken", accessToken)
-            assertNull(store.accessToken)
+            assertNull(sessionRepository.accessToken)
 
             val newDate = Date()
 
@@ -98,9 +100,9 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             assertEquals("newIdToken", idToken)
             assertEquals(newDate, expiryDate)
 
-            assertNull(store.accessToken)
-            assertNull(store.refreshToken)
-            assertNull(store.expiryDate)
+            assertNull(sessionRepository.accessToken)
+            assertNull(sessionRepository.refreshToken)
+            assertNull(sessionRepository.expiryDate)
 
             saveAuthData(
                 accessToken = "persistedToken",
@@ -109,16 +111,16 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 expiryDate = newDate,
             )
             assertEquals("persistedToken", accessToken)
-            assertEquals("persistedToken", store.accessToken)
+            assertEquals("persistedToken", sessionRepository.accessToken)
 
             assertEquals("persistedRefreshToken", refreshToken)
-            assertEquals("persistedRefreshToken", store.refreshToken)
+            assertEquals("persistedRefreshToken", sessionRepository.refreshToken)
 
             assertEquals("persistedIdToken", idToken)
-            assertEquals("persistedIdToken", store.idToken)
+            assertEquals("persistedIdToken", sessionRepository.idToken)
 
             assertEquals(newDate, expiryDate)
-            assertEquals(newDate, store.expiryDate)
+            assertEquals(newDate, sessionRepository.expiryDate)
         }
     }
 

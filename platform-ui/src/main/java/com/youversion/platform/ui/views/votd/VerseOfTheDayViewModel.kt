@@ -11,8 +11,6 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
-import com.youversion.platform.core.utilities.dependencies.SharedPreferencesStore
-import com.youversion.platform.core.utilities.dependencies.Store
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,7 +21,6 @@ import java.util.Calendar
 
 internal class VerseOfTheDayViewModel private constructor(
     private val bibleVersionId: Int,
-    private val store: Store,
     private val bibleVersionRepository: BibleVersionRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(State())
@@ -82,7 +79,6 @@ internal class VerseOfTheDayViewModel private constructor(
                     initializer {
                         VerseOfTheDayViewModel(
                             bibleVersionId = bibleVersionId,
-                            store = SharedPreferencesStore(context),
                             bibleVersionRepository = BibleVersionRepository(context),
                         )
                     }

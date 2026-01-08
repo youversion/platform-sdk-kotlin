@@ -45,6 +45,8 @@ android {
 }
 
 dependencies {
+    implementation(projects.platformFoundation)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.koin.core)
 

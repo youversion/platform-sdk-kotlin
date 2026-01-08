@@ -33,12 +33,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.utilities.splitAbbreviation
 import com.youversion.platform.reader.R
@@ -46,23 +44,35 @@ import com.youversion.platform.reader.components.BibleReaderTopAppBar
 import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
 import com.youversion.platform.reader.theme.readerColorScheme
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun VersionsScreen(
-    bibleVersion: BibleVersion?,
     onBackClick: () -> Unit,
     onLanguagesClick: () -> Unit,
     onVersionSelect: (BibleVersion) -> Unit,
 ) {
-    val context = LocalContext.current
-    val viewModel: VersionsViewModel = viewModel(factory = VersionsViewModel.factory(bibleVersion, context))
+    val viewModel: VersionsViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
             BibleReaderTopAppBar(
-                title = "Versions",
+                title = {
+                    Column {
+                        Text(
+                            text = "Versions",
+                            style = BibleReaderTheme.typography.headerM,
+                        )
+                        if (state.versionsCount > 0) {
+                            Text(
+                                text = "${state.versionsCount} Versions in ${state.languagesCount} Languages",
+                                style = BibleReaderTheme.typography.captionXS,
+                            )
+                        }
+                    }
+                },
                 onBackClick = onBackClick,
                 actions = {
                     IconButton(onClick = {}) {
@@ -89,7 +99,7 @@ internal fun VersionsScreen(
 
                 item {
                     BibleVersionsSectionHeader(
-                        title = "English Versions (${state.languagesCount})",
+                        title = "English Versions (${state.activeLanguageVersionsCount})",
                     )
                 }
 
@@ -276,7 +286,6 @@ private fun Preview_VersionsList() {
 private fun Preview_LanguagesScreen() {
     BibleReaderMaterialTheme {
         VersionsScreen(
-            bibleVersion = BibleVersion.preview,
             onBackClick = {},
             onLanguagesClick = {},
             onVersionSelect = {},

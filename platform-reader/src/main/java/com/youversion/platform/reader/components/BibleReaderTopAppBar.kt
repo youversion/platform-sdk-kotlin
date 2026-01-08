@@ -21,9 +21,21 @@ fun BibleReaderTopAppBar(
     title: String,
     onBackClick: () -> Unit,
     actions: @Composable RowScope.() -> Unit = {},
+) = BibleReaderTopAppBar(
+    title = { Text(text = title) },
+    onBackClick = onBackClick,
+    actions = actions,
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BibleReaderTopAppBar(
+    title: @Composable () -> Unit,
+    onBackClick: () -> Unit,
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
     TopAppBar(
-        title = { Text(text = title) },
+        title = title,
         colors =
             TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.background,

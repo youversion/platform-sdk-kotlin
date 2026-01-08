@@ -7,7 +7,7 @@ import com.youversion.platform.core.api.pageToken
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.api.parsePaginatedResponse
 import com.youversion.platform.core.languages.models.Language
-import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
+import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
@@ -15,7 +15,7 @@ import io.ktor.http.path
 
 object LanguagesEndpoints : LanguagesApi {
     private val httpClient: HttpClient
-        get() = YouVersionPlatformComponent.httpClient
+        get() = PlatformCoreKoinComponent.httpClient
 
     fun languagesUrl(
         country: String? = null,

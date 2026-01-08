@@ -16,7 +16,7 @@ import com.youversion.platform.core.bibles.models.BiblePassage
 import com.youversion.platform.core.bibles.models.BibleVerse
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.bibles.models.BibleVersionIndex
-import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
+import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
@@ -26,7 +26,7 @@ import kotlinx.coroutines.coroutineScope
 
 object BiblesEndpoints : BiblesApi {
     private val httpClient: HttpClient
-        get() = YouVersionPlatformComponent.httpClient
+        get() = PlatformCoreKoinComponent.httpClient
 
     // ----- Bibles URLs
     fun versionsUrl(
