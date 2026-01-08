@@ -1,13 +1,10 @@
 package com.youversion.platform.reader.screens.languages
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.InitializerViewModelFactoryBuilder
-import androidx.lifecycle.viewmodel.initializer
 import co.touchlab.kermit.Logger
-import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.languages.domain.LanguageRepository
+import com.youversion.platform.reader.domain.BibleReaderGlobalState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -15,8 +12,8 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 class LanguagesViewModel(
-    private val permittedVersions: List<BibleVersion>,
     private val languageRepository: LanguageRepository,
+    private val globalState: BibleReaderGlobalState,
 ) : ViewModel() {
     private val _state = MutableStateFlow(State())
     val state by lazy { _state.asStateFlow() }
@@ -31,11 +28,16 @@ class LanguagesViewModel(
     private fun loadSuggestedLanguages() {
         viewModelScope.launch {
             try {
-                val languages =
+                val permittedLanguageTags =
+                    globalState.permittedVersions
+                        .mapNotNull { it.languageTag }
+
+                val permittedLanguages =
                     languageRepository
                         .suggestedLanguages(country = countryCode)
+                        .filter { it.language in permittedLanguageTags }
                         .map { LanguageRowItem(it, languageCode) }
-                _state.update { it.copy(suggestedLanguages = languages) }
+                _state.update { it.copy(suggestedLanguages = permittedLanguages) }
             } catch (e: Exception) {
                 Logger.w("Failed to get languages", e)
             }
@@ -58,18 +60,4 @@ class LanguagesViewModel(
 
     // ----- Actions
     sealed interface Action
-
-    // ----- Injection
-    companion object {
-        fun factory(permittedVersions: List<BibleVersion>): ViewModelProvider.Factory =
-            InitializerViewModelFactoryBuilder()
-                .apply {
-                    initializer {
-                        LanguagesViewModel(
-                            permittedVersions = permittedVersions,
-                            languageRepository = LanguageRepository(),
-                        )
-                    }
-                }.build()
-    }
 }

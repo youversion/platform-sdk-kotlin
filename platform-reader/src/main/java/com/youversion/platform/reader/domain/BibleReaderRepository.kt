@@ -2,8 +2,11 @@ package com.youversion.platform.reader.domain
 
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
+import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.domain.Storage
 import kotlinx.serialization.json.Json
+import java.text.Collator
+import java.util.Locale
 
 /**
  * Responsible for fetching and managing data related to the Bible
@@ -11,14 +14,19 @@ import kotlinx.serialization.json.Json
  * are managed by the BibleVersionRepository.
  */
 class BibleReaderRepository(
-    private val json: Json,
     private val storage: Storage,
     private val bibleVersionRepository: BibleVersionRepository,
+    private val globalState: BibleReaderGlobalState,
 ) {
     companion object {
         private const val NIV_VERSION_ID = 111
         private const val KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
     }
+
+    val localeCountryCode: String
+        get() = Locale.getDefault().country ?: "US"
+    val localeLanguageCode: String
+        get() = Locale.getDefault().language ?: "en"
 
     /**
      * Returns the last Bible reference that the Reader was viewing.
@@ -49,4 +57,17 @@ class BibleReaderRepository(
                     chapter = 1,
                 )
             }
+
+    suspend fun loadVersionsList(): List<BibleVersion> {
+        val versions = bibleVersionRepository.allVersions()
+        val collator = Collator.getInstance()
+
+        return versions
+            .distinctBy { it.id }
+            .sortedWith { a, b ->
+                val aTitle = a.title?.lowercase() ?: ""
+                val bTitle = b.title?.lowercase() ?: ""
+                collator.compare(aTitle, bTitle)
+            }.also { globalState.update { s -> s.copy(permittedVersions = it) } }
+    }
 }

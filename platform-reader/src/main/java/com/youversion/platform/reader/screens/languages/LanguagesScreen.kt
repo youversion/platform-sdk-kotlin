@@ -31,11 +31,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.core.languages.models.Language
-import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.components.BibleReaderTopAppBar
 import com.youversion.platform.reader.theme.readerColorScheme
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 private enum class LanguageTab(
     val label: String,
@@ -46,12 +46,8 @@ private enum class LanguageTab(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun LanguagesScreen(
-    viewModel: BibleReaderViewModel,
-    onBackClick: () -> Unit,
-) {
-//    val viewModel: LanguagesViewModel =
-//        viewModel(factory = LanguagesViewModel.factory(permittedVersions = permittedVersions))
+internal fun LanguagesScreen(onBackClick: () -> Unit) {
+    val viewModel: LanguagesViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     val startDestination = LanguageTab.SUGGESTED

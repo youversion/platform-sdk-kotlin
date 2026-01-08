@@ -1,16 +1,14 @@
 package com.youversion.platform.reader.screens.versions
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.InitializerViewModelFactoryBuilder
-import androidx.lifecycle.viewmodel.initializer
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.organizations.models.Organization
+import com.youversion.platform.reader.domain.BibleReaderGlobalState
+import com.youversion.platform.reader.domain.BibleReaderRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,38 +16,40 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class VersionsViewModel(
-    bibleVersion: BibleVersion?,
     private val bibleVersionRepository: BibleVersionRepository,
+    private val bibleReaderRepository: BibleReaderRepository,
+    private val globalState: BibleReaderGlobalState,
 ) : ViewModel() {
     private val _state =
         MutableStateFlow(
             State(
-                chosenLanguageTag = bibleVersion?.languageTag ?: "en",
+                permittedVersions = globalState.permittedVersions,
             ),
         )
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
 
     init {
+        viewModelScope.launch {
+            globalState.state.collect { gState ->
+                _state.update { lState ->
+                    lState.copy(
+                        activeLanguageTag = gState.activeLanguageTag,
+                        permittedVersions = gState.permittedVersions,
+                    )
+                }
+            }
+        }
+
         loadVersionsList()
     }
 
     private fun loadVersionsList() {
+        if (globalState.permittedVersions.isNotEmpty()) return
+
         viewModelScope.launch {
             try {
-                val allVersions = bibleVersionRepository.allVersions()
-                val deduplicated =
-                    allVersions
-                        .sortedBy { it.id }
-                        .fold(mutableListOf<BibleVersion>()) { acc, version ->
-                            if (acc.none { it.id == version.id }) {
-                                acc.add(version)
-                            }
-
-                            acc
-                        }.toList()
-
-                val sorted = deduplicated.sortedBy { it.title?.lowercase() }
-                _state.update { it.copy(permittedVersions = sorted) }
+                val permittedVersions = bibleReaderRepository.loadVersionsList()
+                _state.update { it.copy(permittedVersions = permittedVersions) }
             } catch (e: Exception) {
                 Logger.e("Error loading versions", e)
             } finally {
@@ -86,7 +86,7 @@ class VersionsViewModel(
     data class State(
         val initializing: Boolean = true,
         val permittedVersions: List<BibleVersion> = emptyList(),
-        val chosenLanguageTag: String,
+        val activeLanguageTag: String = "en",
         val showBibleVersionLoading: Boolean = false,
         val selectedBibleVersion: BibleVersion? = null,
         val selectedOrganization: Organization? = null,
@@ -94,17 +94,28 @@ class VersionsViewModel(
     ) {
         val versionsCount: Int
             get() = permittedVersions.count()
-
         val languagesCount: Int
-            get() = permittedVersions.distinctBy { it.languageTag }.count()
+            get() =
+                permittedVersions
+                    .distinctBy { it.languageTag }
+                    .count()
 
         val showEmptyState: Boolean
             get() = !initializing && permittedVersions.isEmpty()
 
         val filteredVersions: List<BibleVersion>
             get() {
-                return permittedVersions.filter { it.languageTag == chosenLanguageTag }
+                val language = activeLanguageTag
+                // TODO: handle search text
+
+                return permittedVersions
+                    .filter { it.languageTag == language }
+                // TODO: handle search text
             }
+        val activeLanguageVersionsCount: Int
+            get() =
+                permittedVersions
+                    .count { it.languageTag == activeLanguageTag }
     }
 
     // ----- Events
@@ -117,22 +128,5 @@ class VersionsViewModel(
         ) : Action
 
         data object VersionDismissed : Action
-    }
-
-    // ----- Injection
-    companion object {
-        fun factory(
-            bibleVersion: BibleVersion?,
-            context: Context,
-        ): ViewModelProvider.Factory =
-            InitializerViewModelFactoryBuilder()
-                .apply {
-                    initializer {
-                        VersionsViewModel(
-                            bibleVersion = bibleVersion,
-                            bibleVersionRepository = BibleVersionRepository(context),
-                        )
-                    }
-                }.build()
     }
 }

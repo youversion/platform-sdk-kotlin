@@ -9,6 +9,7 @@ import com.youversion.platform.core.bibles.data.BibleVersionTemporaryCache
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.data.SharedPreferencesStorage
 import com.youversion.platform.core.domain.Storage
+import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.users.domain.SessionRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
@@ -53,6 +54,7 @@ internal val PlatformCoreDomainKoinModule =
                 persistentCache = get(named("persistent")),
             )
         }
+        factoryOf(::LanguageRepository)
         factoryOf(::SessionRepository)
     }
 
