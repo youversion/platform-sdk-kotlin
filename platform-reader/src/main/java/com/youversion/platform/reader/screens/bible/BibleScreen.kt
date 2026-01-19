@@ -1,5 +1,6 @@
 package com.youversion.platform.reader.screens.bible
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -11,9 +12,13 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BottomAppBarDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +27,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -33,8 +40,11 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.components.BibleReaderHeader
+import com.youversion.platform.reader.components.BibleReaderPassageSelection
+import com.youversion.platform.reader.components.BibleReaderPassageSelectionDefaults
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
+import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
@@ -46,6 +56,7 @@ import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
 import com.youversion.platform.ui.views.BibleTextOptions
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun BibleScreen(
     viewModel: BibleReaderViewModel,
@@ -78,71 +89,144 @@ internal fun BibleScreen(
 
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
 
-    Scaffold(
-        bottomBar = bottomBar,
-        contentWindowInsets = WindowInsets.safeDrawing,
-    ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            Column {
-                // Reader top bar
-                BibleReaderHeader(
-                    isSignInProcessing = signInState.isProcessing,
-                    signedIn = signInState.isSignedIn,
-                    bookAndChapter = state.bookAndChapter,
-                    versionAbbreviation = state.versionAbbreviation,
-                    onChapterClick = onReferencesClick,
-                    onVersionClick = onVersionsClick,
-                    onOpenHeaderMenu = { signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState) },
-                    onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
-                    onSignInClick = {
-                        signInLauncher(
-                            SignInParameters(
-                                context = context,
-                                launcher = authTabLauncher,
-                                permissions =
-                                    setOf(
-                                        SignInWithYouVersionPermission.PROFILE,
-                                        SignInWithYouVersionPermission.EMAIL,
-                                    ),
-                            ),
-                        )
-                    },
-                    onSignOutClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut(true)) },
-                )
+    val topScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val bottomScrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior()
+    val passageSelectionScrollBehavior = BibleReaderPassageSelectionDefaults.enterAlwaysScrollBehavior()
+//
+//    val toolbarHeight = 56.dp
+//    val toolbarHeightPx = with(LocalDensity.current) { toolbarHeight.toPx() }
+//    var toolbarOffsetManager by remember { mutableStateOf(0f) }
+//    var isVisible by remember { mutableStateOf(true) }
 
-                // Scrollable Reader content
-                Box(
+    // Logic to determine visibility based on scroll offset or direction
+//    val nestedScrollConnection =
+//        remember {
+//            object : NestedScrollConnection {
+//                override fun onPreScroll(
+//                    available: Offset,
+//                    source: NestedScrollSource,
+//                ): Offset {
+//                    // Consume scroll delta for the element that doesn't inherently scroll
+//                    val delta = available.y
+//                    val newOffset = toolbarOffsetManager + delta
+//
+//                    // Constrain the offset between 0f (fully visible) and -toolbarHeightPx (fully hidden)
+//                    toolbarOffsetManager = newOffset.coerceIn(-toolbarHeightPx, 0f)
+//
+//                    // Update visibility state for AnimatedVisibility
+//                    isVisible = toolbarOffsetManager >= -toolbarHeightPx / 2 // Adjust threshold as needed
+//
+//                    // Return the consumed portion of the delta (if any)
+//                    // We don't consume here; we just track the offset to adjust our custom UI.
+//                    // The main scrolling container (LazyColumn) will consume the full delta.
+//                    return Offset.Zero
+//                }
+//            }
+//        }
+
+    Scaffold(
+        modifier =
+            Modifier
+                .nestedScroll(topScrollBehavior.nestedScrollConnection)
+                .nestedScroll(bottomScrollBehavior.nestedScrollConnection),
+//                .nestedScroll(passageSelectionScrollBehavior.nestedScrollConnection),
+//        bottomBar = {
+//            BottomAppBar(
+//                scrollBehavior = bottomScrollBehavior,
+//                content = {
+//                    Row {
+//                        bottomBar()
+//                    }
+//                },
+//            )
+//        },
+        contentWindowInsets = WindowInsets.safeDrawing,
+        topBar = {
+            BibleReaderHeader(
+                isSignInProcessing = signInState.isProcessing,
+                signedIn = signInState.isSignedIn,
+                versionAbbreviation = state.versionAbbreviation,
+                scrollBehavior = topScrollBehavior,
+                onVersionClick = onVersionsClick,
+                onOpenHeaderMenu = { signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState) },
+                onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
+                onSignInClick = {
+                    signInLauncher(
+                        SignInParameters(
+                            context = context,
+                            launcher = authTabLauncher,
+                            permissions =
+                                setOf(
+                                    SignInWithYouVersionPermission.PROFILE,
+                                    SignInWithYouVersionPermission.EMAIL,
+                                ),
+                        ),
+                    )
+                },
+                onSignOutClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut(true)) },
+            )
+        },
+    ) { innerPadding ->
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(20.dp)
+                    .background(Color.Red)
+                    .padding(bottom = 16.dp),
+        ) {
+            Text("Foo")
+        }
+        Box(modifier = Modifier.padding(innerPadding)) {
+            // Scrollable Reader content
+            Column {
+                Column(
                     modifier =
                         Modifier
                             .padding(horizontal = 32.dp)
+                            .weight(1f)
                             .verticalScroll(rememberScrollState()),
                 ) {
-                    Column {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        BibleText(
-                            textOptions =
-                                BibleTextOptions(
-                                    fontFamily = state.fontFamily,
-                                    fontSize = state.fontSize,
-                                    lineSpacing = state.lineSpacing,
-                                    footnoteMode = BibleTextFootnoteMode.IMAGE,
+                    Spacer(modifier = Modifier.height(16.dp))
+                    BibleText(
+                        textOptions =
+                            BibleTextOptions(
+                                fontFamily = state.fontFamily,
+                                fontSize = state.fontSize,
+                                lineSpacing = state.lineSpacing,
+                                footnoteMode = BibleTextFootnoteMode.IMAGE,
+                            ),
+                        reference = state.bibleReference,
+                        onStateChange = { loadingPhase = it },
+                        onFootnoteTap = { reference, footnotes ->
+                            viewModel.onAction(
+                                BibleReaderViewModel.Action.OpenFootnotes(
+                                    reference = reference,
+                                    footnotes = footnotes,
                                 ),
-                            reference = state.bibleReference,
-                            onStateChange = { loadingPhase = it },
-                            onFootnoteTap = { reference, footnotes ->
-                                viewModel.onAction(
-                                    BibleReaderViewModel.Action.OpenFootnotes(
-                                        reference = reference,
-                                        footnotes = footnotes,
-                                    ),
-                                )
-                            },
-                        )
-                        if (loadingPhase == BibleTextLoadingPhase.SUCCESS) {
-                            Copyright(version = state.bibleVersion)
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
+                            )
+                        },
+                    )
+                    if (loadingPhase == BibleTextLoadingPhase.SUCCESS) {
+                        Copyright(version = state.bibleVersion)
                     }
+                    Spacer(modifier = Modifier.height(48.dp))
+                }
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.background),
+                ) {
+                    HorizontalDivider(
+                        color = BibleReaderTheme.colorScheme.borderPrimary,
+                    )
+                    BibleReaderPassageSelection(
+                        bookAndChapter = state.bookAndChapter,
+                        onPreviousChapter = {},
+                        onNextChapter = {},
+                        scrollBehavior = passageSelectionScrollBehavior,
+                    )
                 }
             }
 

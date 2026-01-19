@@ -1,7 +1,6 @@
 package com.youversion.platform.reader.components
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -13,15 +12,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.unit.dp
 import com.youversion.platform.reader.R
 
 @Composable
-fun BibleReaderHeaderMenu(
+fun BibleReaderHeaderDropdownMenu(
     isSignInProcessing: Boolean,
     signedIn: Boolean,
     onOpenMenu: () -> Unit,
@@ -31,11 +28,7 @@ fun BibleReaderHeaderMenu(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box(
-        modifier =
-            Modifier
-                .padding(16.dp),
-    ) {
+    Box {
         IconButton(onClick = {
             onOpenMenu()
             expanded = !expanded

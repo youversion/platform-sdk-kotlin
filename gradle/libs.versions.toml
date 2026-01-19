@@ -9,11 +9,11 @@ minSdk = "23" # .get()
 targetSdk = "36" # .get()
 
 # Tooling
-agp = "8.13.1"
-kotlin = "2.2.21"
+agp = "8.13.2"
+kotlin = "2.3.0"
 spotless = "8.1.0"
 ktlint = "1.7.1" # .get()
-kover = "0.9.3"
+kover = "0.9.4"
 mavenPublish = "0.35.0"
 androidXBrowser = "1.9.0"
 
@@ -21,10 +21,10 @@ androidXBrowser = "1.9.0"
 coreKtx = "1.17.0"
 coroutines = "1.10.2"
 lifecycleRuntimeKtx = "2.10.0"
-activityCompose = "1.12.0"
-composeBom = "2025.11.01"
+activityCompose = "1.12.2"
+composeBom = "2025.12.01"
 koin = "4.1.1"
-ktor = "3.3.2"
+ktor = "3.3.3"
 kotlinSerialization = "1.9.0"
 kermit = "2.0.8"
 navigation = "2.9.6"
