@@ -1,30 +1,33 @@
-package com.youversion.platform.core.utilities.koin
+package com.youversion.platform.foundation
 
-import com.youversion.platform.core.utilities.exceptions.YouVersionAlreadyConfiguredException
 import org.koin.core.Koin
 import org.koin.core.KoinApplication
 import org.koin.core.context.KoinContext
 import org.koin.core.module.Module
 import org.koin.dsl.KoinAppDeclaration
 
-internal object YouVersionPlatformContext : KoinContext {
-    private var koin: Koin? = null
+internal object PlatformKoinContext : KoinContext {
+    private var _koinApplication: KoinApplication? = null
+    val koinApplication: KoinApplication
+        get() = _koinApplication ?: error("KoinApplication has not been started")
+
+    private val koin: Koin?
+        get() = _koinApplication?.koin
 
     override fun get(): Koin = koin ?: error("KoinApplication has not been started")
 
     override fun getOrNull(): Koin? = koin
 
     private fun register(koinApplication: KoinApplication) {
-        if (koin != null) {
-            throw YouVersionAlreadyConfiguredException()
+        if (koin == null) {
+            this._koinApplication = koinApplication
         }
-        koin = koinApplication.koin
     }
 
     override fun stopKoin() =
         synchronized(this) {
             koin?.close()
-            koin = null
+            _koinApplication = null
         }
 
     override fun startKoin(koinApplication: KoinApplication): KoinApplication =

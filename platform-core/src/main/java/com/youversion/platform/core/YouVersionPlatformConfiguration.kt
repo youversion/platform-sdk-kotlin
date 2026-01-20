@@ -2,14 +2,14 @@ package com.youversion.platform.core
 
 import android.content.Context
 import co.touchlab.kermit.Logger
+import com.youversion.platform.core.YouVersionPlatformConfiguration.configure
 import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfiguredException
-import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
-import com.youversion.platform.core.utilities.koin.startYouVersionPlatform
-import com.youversion.platform.core.utilities.koin.stopYouVersionPlatform
+import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
+import com.youversion.platform.core.utilities.koin.startCore
+import com.youversion.platform.foundation.PlatformKoinGraph
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.Date
-import java.util.UUID
 
 object YouVersionPlatformConfiguration {
     private const val DEFAULT_API_HOST = "api.youversion.com"
@@ -55,11 +55,11 @@ object YouVersionPlatformConfiguration {
         if (config != null) {
             Logger.w("YouVersionPlatform SDK has already been configured. Reconfiguring.")
             _configState.value = null // Emit a null state to notify observers of reconfiguration
-            stopYouVersionPlatform()
+            PlatformKoinGraph.stop()
         }
 
         // This establishes the Dependency Graph which can only be called once.
-        startYouVersionPlatform(context)
+        PlatformKoinGraph.startCore(context)
 
         // Now configure the SDK, use DI to provide any dependencies needed during configuration.
         configure(
@@ -84,7 +84,7 @@ object YouVersionPlatformConfiguration {
         apiHost: String = DEFAULT_API_HOST,
         hostEnv: String? = null,
     ) {
-        val store = YouVersionPlatformComponent.store
+        val sessionRepository = PlatformCoreKoinComponent.sessionRepository
 
         _configState.value =
             Config(
@@ -92,11 +92,11 @@ object YouVersionPlatformConfiguration {
                 authCallback = authCallback,
                 apiHost = apiHost,
                 hostEnv = hostEnv,
-                installId = store.installId ?: UUID.randomUUID().toString().also { store.installId = it },
-                accessToken = accessToken ?: store.accessToken,
-                refreshToken = refreshToken ?: store.refreshToken,
-                idToken = idToken ?: store.idToken,
-                expiryDate = expiryDate ?: store.expiryDate,
+                installId = sessionRepository.installId,
+                accessToken = accessToken ?: sessionRepository.accessToken,
+                refreshToken = refreshToken ?: sessionRepository.refreshToken,
+                idToken = idToken ?: sessionRepository.idToken,
+                expiryDate = expiryDate ?: sessionRepository.expiryDate,
             )
     }
 
@@ -137,11 +137,11 @@ object YouVersionPlatformConfiguration {
             )
 
         if (persist) {
-            val store = YouVersionPlatformComponent.store
-            store.accessToken = accessToken
-            store.refreshToken = refreshToken
-            store.idToken = idToken
-            store.expiryDate = expiryDate
+            val sessionRepository = PlatformCoreKoinComponent.sessionRepository
+            sessionRepository.accessToken = accessToken
+            sessionRepository.refreshToken = refreshToken
+            sessionRepository.idToken = idToken
+            sessionRepository.expiryDate = expiryDate
         }
     }
 

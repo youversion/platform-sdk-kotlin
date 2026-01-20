@@ -9,7 +9,7 @@ import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.users.model.SignInWithYouVersionResult
 import com.youversion.platform.core.users.model.TokenResponse
 import com.youversion.platform.core.users.model.YouVersionUserInfo
-import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
+import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.submitForm
@@ -29,7 +29,7 @@ import kotlin.io.encoding.Base64
 
 object UsersEndpoints : UsersApi {
     private val httpClient: HttpClient
-        get() = YouVersionPlatformComponent.httpClient
+        get() = PlatformCoreKoinComponent.httpClient
 
     // ----- User URLs
     fun userUrl(accessToken: String): String =
@@ -199,7 +199,7 @@ object UsersEndpoints : UsersApi {
                     parameters.appendAll(url.parameters)
                 }.build()
 
-        val client = YouVersionPlatformComponent.httpClient.config { followRedirects = false }
+        val client = PlatformCoreKoinComponent.httpClient.config { followRedirects = false }
 
         val response: HttpResponse = client.get(newUrl)
 

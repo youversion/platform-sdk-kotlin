@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.maven.publish)
 }
 
@@ -50,6 +51,10 @@ android {
 dependencies {
     implementation(projects.platformUi)
     implementation(projects.platformCore)
+    implementation(projects.platformFoundation)
+
+    implementation(libs.kotlin.coroutines)
+    implementation(libs.kotlin.serialization)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -61,6 +66,9 @@ dependencies {
     implementation(libs.androidx.compose.navigation)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.touchlab.kermit)
+
+    implementation(libs.koin.core)
+    implementation(libs.koin.androidx.compose)
 }
 
 mavenPublishing {

@@ -4,7 +4,6 @@ import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.helpers.FixtureLoader
-import com.youversion.platform.helpers.TestStore
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
@@ -38,7 +37,6 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
                 memoryCache = memoryCache,
                 temporaryCache = temporaryCache,
                 persistentCache = persistentCache,
-                store = TestStore(),
             )
     }
 

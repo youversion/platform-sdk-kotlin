@@ -9,8 +9,6 @@ import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
 import com.youversion.platform.core.bibles.data.BibleVersionPersistentCache
 import com.youversion.platform.core.bibles.data.BibleVersionTemporaryCache
 import com.youversion.platform.core.bibles.models.BibleVersion
-import com.youversion.platform.core.utilities.dependencies.SharedPreferencesStore
-import com.youversion.platform.core.utilities.dependencies.Store
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 
@@ -24,13 +22,11 @@ class BibleVersionRepository(
     private val memoryCache: BibleVersionCache,
     private val temporaryCache: BibleVersionCache,
     private val persistentCache: BibleVersionCache,
-    private val store: Store,
 ) {
     constructor(context: Context) : this(
         memoryCache = BibleVersionMemoryCache(),
         temporaryCache = BibleVersionTemporaryCache(context),
         persistentCache = BibleVersionPersistentCache(context),
-        store = SharedPreferencesStore(context),
     )
 
     private val inFlightTasks = mutableMapOf<Int, Deferred<BibleVersion>>()
@@ -82,17 +78,6 @@ class BibleVersionRepository(
 
     val downloadedVersions: List<Int>
         get() = persistentCache.storedVersionIds
-
-    /**
-     * Returns the a BibleVersion that the User prefers to use,
-     * depending on if one has been downloaded or if one has
-     * been saved as a favorite. Otherwise, fallback to NIV.
-     */
-    val preferredVersionId: Int
-        get() =
-            downloadedVersions.firstOrNull()
-                ?: store.myVersionIds?.firstOrNull()
-                ?: 111 // NIV
 
     suspend fun downloadVersion(id: Int) {
         if (persistentCache.versionIsPresent(id)) {
@@ -155,7 +140,4 @@ class BibleVersionRepository(
         temporaryCache.removeVersionChapters(versionId)
         persistentCache.removeVersionChapters(versionId)
     }
-
-    // ----- User Bible Preferences
-    suspend fun preferredBibleVersion(): BibleVersion = version(preferredVersionId)
 }

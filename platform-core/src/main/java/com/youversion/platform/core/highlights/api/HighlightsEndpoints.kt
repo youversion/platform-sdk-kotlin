@@ -6,7 +6,7 @@ import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.invalidResponse
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.highlights.models.Highlight
-import com.youversion.platform.core.utilities.koin.YouVersionPlatformComponent
+import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
@@ -24,7 +24,7 @@ import kotlinx.serialization.json.put
 
 object HighlightsEndpoints : HighlightsApi {
     private val httpClient: HttpClient
-        get() = YouVersionPlatformComponent.httpClient
+        get() = PlatformCoreKoinComponent.httpClient
 
     // ----- Highlights URLs
     fun highlightsUrl(
