@@ -224,8 +224,8 @@ internal fun BibleScreen(
                     BibleReaderPassageSelection(
                         bookAndChapter = state.bookAndChapter,
                         onReferenceClick = onReferencesClick,
-                        onPreviousChapter = {},
-                        onNextChapter = {},
+                        onPreviousChapter = { viewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter) },
+                        onNextChapter = { viewModel.onAction(BibleReaderViewModel.Action.GoToNextChapter) },
                         scrollBehavior = passageSelectionScrollBehavior,
                     )
                 }

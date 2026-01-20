@@ -120,6 +120,16 @@ class BibleReaderViewModel(
             is Action.OpenFootnotes -> openFootnotes(action)
             is Action.CloseFootnotes -> closeFootnotes()
             is Action.SetReaderTheme -> setReaderTheme(action)
+            is Action.GoToNextChapter -> {
+                bibleReaderRepository
+                    .nextChapter(bibleVersion, bibleReference)
+                    ?.let { nextReference -> bibleReference = nextReference }
+            }
+            is Action.GoToPreviousChapter -> {
+                bibleReaderRepository
+                    .previousChapter(bibleVersion, bibleReference)
+                    ?.let { prevReference -> bibleReference = prevReference }
+            }
         }
     }
 
@@ -299,5 +309,9 @@ class BibleReaderViewModel(
         data class SetReaderTheme(
             val readerTheme: ReaderTheme,
         ) : Action
+
+        data object GoToNextChapter : Action
+
+        data object GoToPreviousChapter : Action
     }
 }
