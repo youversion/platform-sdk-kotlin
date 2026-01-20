@@ -223,6 +223,7 @@ internal fun BibleScreen(
                     )
                     BibleReaderPassageSelection(
                         bookAndChapter = state.bookAndChapter,
+                        onReferenceClick = onReferencesClick,
                         onPreviousChapter = {},
                         onNextChapter = {},
                         scrollBehavior = passageSelectionScrollBehavior,

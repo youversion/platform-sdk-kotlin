@@ -8,9 +8,11 @@ import androidx.compose.animation.core.animateTo
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,6 +23,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -31,6 +34,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -47,6 +51,7 @@ import kotlin.math.abs
 @Composable
 fun BibleReaderPassageSelection(
     bookAndChapter: String,
+    onReferenceClick: () -> Unit,
     onPreviousChapter: () -> Unit,
     onNextChapter: () -> Unit,
     scrollBehavior: BibleReaderPassageSelectionScrollBehavior? = null,
@@ -77,9 +82,14 @@ fun BibleReaderPassageSelection(
             Modifier
                 .then(passageSelectionDragModifier)
                 .padding(vertical = 12.dp, horizontal = 24.dp)
+                .clip(CircleShape)
                 .background(
                     color = BibleReaderTheme.colorScheme.buttonPrimary,
                     shape = CircleShape,
+                ).clickable(
+                    indication = ripple(),
+                    interactionSource = remember { MutableInteractionSource() },
+                    onClick = onReferenceClick,
                 ).fillMaxWidth(),
     ) {
         IconButton(
@@ -126,6 +136,7 @@ private fun Preview_BibleReader_PassageSelection() {
     BibleReaderMaterialTheme {
         BibleReaderPassageSelection(
             bookAndChapter = "Genesis 1",
+            onReferenceClick = {},
             onPreviousChapter = {},
             onNextChapter = {},
         )
