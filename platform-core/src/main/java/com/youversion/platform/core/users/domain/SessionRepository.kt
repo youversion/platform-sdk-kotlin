@@ -43,6 +43,10 @@ class SessionRepository(
         set(value) = storage.putString(KEY_ID_TOKEN, value)
 
     var expiryDate: Date?
-        get() = storage.getLongOrNull(KEY_EXPIRY_DATE)?.let { Date(it) }
-        set(value) = storage.putLong(KEY_EXPIRY_DATE, value?.time)
+        get() =
+            storage
+                .getStringOrNull(KEY_EXPIRY_DATE)
+                ?.toLongOrNull()
+                ?.let { Date(it) }
+        set(value) = storage.putString(KEY_EXPIRY_DATE, value?.time?.toString())
 }

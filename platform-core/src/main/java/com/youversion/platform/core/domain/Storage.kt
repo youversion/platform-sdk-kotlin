@@ -48,19 +48,4 @@ interface Storage {
      * does not exist.
      */
     fun getFloatOrNull(key: String): Float?
-
-    /**
-     * Stores a long value for a given key. If the Long is null,
-     * then the key is removed.
-     */
-    fun putLong(
-        key: String,
-        value: Long?,
-    )
-
-    /**
-     * @return The long value for a given key, or null if the key
-     * does not exist.
-     */
-    fun getLongOrNull(key: String): Long?
 }
