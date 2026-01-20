@@ -29,13 +29,6 @@ class TestStorage : Storage {
 
     override fun getFloatOrNull(key: String): Float? = floatPrefs[key]
 
-    override fun putLong(
-        key: String,
-        value: Long?,
-    ) = putPref(longPrefs, key, value)
-
-    override fun getLongOrNull(key: String): Long? = longPrefs[key]
-
     // ----- Private Helpers
     private fun <T> putPref(
         pref: MutableMap<String, T>,
