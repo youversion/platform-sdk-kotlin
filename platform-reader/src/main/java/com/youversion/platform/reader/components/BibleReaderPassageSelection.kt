@@ -9,9 +9,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.rememberSplineBasedDecay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +17,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material3.BottomAppBarScrollBehavior
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -34,67 +33,69 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import co.touchlab.kermit.Logger
-import com.youversion.platform.reader.components.BibleReaderPassageSelectionState.Companion.Saver
+import com.youversion.platform.reader.components.PassageSelectionState.Companion.Saver
 import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import kotlin.math.abs
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BibleReaderPassageSelection(
     bookAndChapter: String,
     onReferenceClick: () -> Unit,
     onPreviousChapter: () -> Unit,
     onNextChapter: () -> Unit,
-    scrollBehavior: BibleReaderPassageSelectionScrollBehavior? = null,
+    bottomBarScrollBehavior: BottomAppBarScrollBehavior? = null,
+    scrollBehavior: PassageSelectionScrollBehavior? = null,
 ) {
-    val passageSelectionDragModifier =
-        if (scrollBehavior != null && !scrollBehavior.isPinned) {
-            Modifier.draggable(
-                orientation = Orientation.Vertical,
-                state =
-                    rememberDraggableState { delta ->
-                        scrollBehavior.state.heightOffset += delta
-                    },
-                onDragStopped = { velocity ->
-                    settlePassageSelection(
-                        scrollBehavior.state,
-                        velocity,
-                        scrollBehavior.flingAnimationSpec,
-                        scrollBehavior.snapAnimationSpec,
-                    )
-                },
-            )
-        } else {
-            Modifier
-        }
-
+    val alpha = 1f - (scrollBehavior?.state?.collapsedFraction ?: 0f)
     Box(
         modifier =
             Modifier
-                .then(passageSelectionDragModifier)
-                .padding(vertical = 12.dp, horizontal = 24.dp)
-                .clip(CircleShape)
+                .padding(vertical = 4.dp, horizontal = 24.dp)
+                .dropShadow(RectangleShape) {
+                    this.radius = 48f
+
+                    this.offset = Offset(0f, 0f)
+                    this.color = Color.Black.copy(alpha = alpha * 0.2f)
+                }.clip(CircleShape)
                 .background(
-                    color = BibleReaderTheme.colorScheme.buttonPrimary,
+                    color = BibleReaderTheme.colorScheme.canvasPrimary,
                     shape = CircleShape,
                 ).clickable(
                     indication = ripple(),
                     interactionSource = remember { MutableInteractionSource() },
                     onClick = onReferenceClick,
-                ).fillMaxWidth(),
+                ).fillMaxWidth()
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints)
+
+                    val heightOffsetLimit =
+                        bottomBarScrollBehavior?.state?.heightOffsetLimit ?: -placeable.height.toFloat()
+                    scrollBehavior?.state?.heightOffsetLimit = heightOffsetLimit
+
+                    layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+                },
     ) {
         IconButton(
             onClick = onPreviousChapter,
-            modifier = Modifier.align(Alignment.CenterStart),
+            enabled = alpha > 0.1f,
+            modifier =
+                Modifier
+                    .alpha(alpha)
+                    .align(Alignment.CenterStart),
         ) {
             Icon(
                 imageVector = Icons.Filled.ChevronLeft,
@@ -111,7 +112,11 @@ fun BibleReaderPassageSelection(
         )
         IconButton(
             onClick = onNextChapter,
-            modifier = Modifier.align(Alignment.CenterEnd),
+            enabled = alpha > 0.1f,
+            modifier =
+                Modifier
+                    .alpha(alpha)
+                    .align(Alignment.CenterEnd),
         ) {
             Icon(
                 imageVector = Icons.Filled.ChevronRight,
@@ -122,73 +127,57 @@ fun BibleReaderPassageSelection(
     }
 }
 
-private fun Modifier.adjustHeightOffsetLimit(scrollBehavior: BibleReaderPassageSelectionScrollBehavior?) =
-    scrollBehavior?.state?.let {
-        onSizeChanged { size ->
-            val offset = size.height.toFloat() - it.heightOffset
-            it.heightOffsetLimit = -offset
-        }
-    } ?: this
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun Preview_BibleReader_PassageSelection() {
     BibleReaderMaterialTheme {
-        BibleReaderPassageSelection(
-            bookAndChapter = "Genesis 1",
-            onReferenceClick = {},
-            onPreviousChapter = {},
-            onNextChapter = {},
-        )
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(BibleReaderTheme.colorScheme.canvasSecondary)
+                    .padding(16.dp),
+        ) {
+            BibleReaderPassageSelection(
+                bookAndChapter = "Genesis 1",
+                onReferenceClick = {},
+                onPreviousChapter = {},
+                onNextChapter = {},
+                bottomBarScrollBehavior = null,
+                scrollBehavior = null,
+            )
+        }
     }
 }
 
-class BibleReaderPassageSelectionState(
+fun PassageSelectionState(
     initialHeightOffsetLimit: Float,
     initialHeightOffset: Float,
     initialContentOffset: Float,
-) {
-    var heightOffsetLimit = initialHeightOffsetLimit
+): PassageSelectionState =
+    PassageSelectionStateImpl(
+        initialHeightOffsetLimit,
+        initialHeightOffset,
+        initialContentOffset,
+    )
 
-    private var _heightOffset = mutableFloatStateOf(initialHeightOffset)
+interface PassageSelectionState {
+    var heightOffsetLimit: Float
+
     var heightOffset: Float
-        get() = _heightOffset.floatValue
-        set(newOffset) {
-            _heightOffset.floatValue =
-                newOffset.coerceIn(minimumValue = heightOffsetLimit, maximumValue = 0f)
-        }
 
-    var contentOffset by mutableFloatStateOf(initialContentOffset)
+    var contentOffset: Float
 
     val collapsedFraction: Float
-        get() =
-            if (heightOffsetLimit != 0f) {
-                heightOffset / heightOffsetLimit
-            } else {
-                0f
-            }
-
-    val overlappedFraction: Float
-        get() =
-            if (heightOffsetLimit != 0f) {
-                1 -
-                    (
-                        (heightOffsetLimit - contentOffset).coerceIn(
-                            minimumValue = heightOffsetLimit,
-                            maximumValue = 0f,
-                        ) / heightOffsetLimit
-                    )
-            } else {
-                0f
-            }
 
     companion object {
-        /** The default [Saver] implementation for [BibleReaderPassageSelectionState]. */
-        val Saver: Saver<BibleReaderPassageSelectionState, *> =
+        /** The default [Saver] implementation for [PassageSelectionState]. */
+        val Saver: Saver<PassageSelectionState, *> =
             listSaver(
                 save = { listOf(it.heightOffsetLimit, it.heightOffset, it.contentOffset) },
                 restore = {
-                    BibleReaderPassageSelectionState(
+                    PassageSelectionState(
                         initialHeightOffsetLimit = it[0],
                         initialHeightOffset = it[1],
                         initialContentOffset = it[2],
@@ -198,20 +187,46 @@ class BibleReaderPassageSelectionState(
     }
 }
 
+private class PassageSelectionStateImpl(
+    initialHeightOffsetLimit: Float,
+    initialHeightOffset: Float,
+    initialContentOffset: Float,
+) : PassageSelectionState {
+    override var heightOffsetLimit by mutableFloatStateOf(initialHeightOffsetLimit)
+
+    private var _heightOffset = mutableFloatStateOf(initialHeightOffset)
+    override var heightOffset: Float
+        get() = _heightOffset.floatValue
+        set(newOffset) {
+            _heightOffset.floatValue =
+                newOffset.coerceIn(minimumValue = heightOffsetLimit, maximumValue = 0f)
+        }
+
+    override var contentOffset by mutableFloatStateOf(initialContentOffset)
+
+    override val collapsedFraction: Float
+        get() =
+            if (heightOffsetLimit != 0f) {
+                heightOffset / heightOffsetLimit
+            } else {
+                0f
+            }
+}
+
 @Composable
-fun rememberBibleReaderPassageSelectionState(
+fun rememberPassageSelectionState(
     initialHeightOffsetLimit: Float = -Float.MAX_VALUE,
     initialHeightOffset: Float = 0f,
     initialContentOffset: Float = 0f,
-): BibleReaderPassageSelectionState =
-    rememberSaveable(saver = BibleReaderPassageSelectionState.Saver) {
-        BibleReaderPassageSelectionState(initialHeightOffsetLimit, initialHeightOffset, initialContentOffset)
+): PassageSelectionState =
+    rememberSaveable(saver = Saver) {
+        PassageSelectionState(initialHeightOffsetLimit, initialHeightOffset, initialContentOffset)
     }
 
-object BibleReaderPassageSelectionDefaults {
+object PassageSelectionDefaults {
     @Composable
-    fun enterAlwaysScrollBehavior(
-        state: BibleReaderPassageSelectionState = rememberBibleReaderPassageSelectionState(),
+    fun fadeAlwaysScrollBehavior(
+        state: PassageSelectionState = rememberPassageSelectionState(),
         canScroll: () -> Boolean = { true },
         snapAnimationSpec: AnimationSpec<Float>? =
             spring(
@@ -219,25 +234,23 @@ object BibleReaderPassageSelectionDefaults {
                 stiffness = 1600.0f,
             ),
         flingAnimationSpec: DecayAnimationSpec<Float>? = rememberSplineBasedDecay(),
-        reverseLayout: Boolean = false,
-    ): BibleReaderPassageSelectionScrollBehavior =
-        remember(state, canScroll, snapAnimationSpec, flingAnimationSpec, reverseLayout) {
-            EnterAlwaysScrollBehavior(
+    ): PassageSelectionScrollBehavior =
+        remember(state, canScroll, snapAnimationSpec, flingAnimationSpec) {
+            FadeAlwaysScrollBehavior(
                 state = state,
                 snapAnimationSpec = snapAnimationSpec,
                 flingAnimationSpec = flingAnimationSpec,
                 canScroll = canScroll,
-                reverseLayout = reverseLayout,
             )
         }
 }
 
-interface BibleReaderPassageSelectionScrollBehavior {
+interface PassageSelectionScrollBehavior {
     /**
-     * A [BibleReaderPassageSelectionState] that is attached to this behavior and is read and updated
+     * A [PassageSelectionState] that is attached to this behavior and is read and updated
      * when scrolling happens.
      */
-    val state: BibleReaderPassageSelectionState
+    val state: PassageSelectionState
 
     /**
      * Indicates whether the passage selection is pinned.
@@ -267,72 +280,47 @@ interface BibleReaderPassageSelectionScrollBehavior {
     val nestedScrollConnection: NestedScrollConnection
 }
 
-private class EnterAlwaysScrollBehavior(
-    override val state: BibleReaderPassageSelectionState,
-    override val snapAnimationSpec: AnimationSpec<Float>? = null,
-    override val flingAnimationSpec: DecayAnimationSpec<Float>? = null,
+private class FadeAlwaysScrollBehavior(
+    override val state: PassageSelectionState,
+    override val snapAnimationSpec: AnimationSpec<Float>?,
+    override val flingAnimationSpec: DecayAnimationSpec<Float>?,
     val canScroll: () -> Boolean = { true },
-    val reverseLayout: Boolean = false,
-) : BibleReaderPassageSelectionScrollBehavior {
+) : PassageSelectionScrollBehavior {
     override val isPinned: Boolean = false
     override var nestedScrollConnection =
         object : NestedScrollConnection {
-            override fun onPreScroll(
+            override fun onPostScroll(
+                consumed: Offset,
                 available: Offset,
                 source: NestedScrollSource,
             ): Offset {
                 if (!canScroll()) return Offset.Zero
-                val prevHeightOffset = state.heightOffset
-                state.heightOffset += available.y
-                Logger.d("State Height Offset: ${state.heightOffset}")
-                // The state's heightOffset is coerce in a minimum value of heightOffsetLimit and a
-                // maximum value 0f, so we check if its value was actually changed after the
-                // available.y was added to it in order to tell if the top app bar is currently
-                // collapsing or expanding.
-                // Note that when the content was set with a revered layout, we always return a
-                // zero offset.
-                return if (!reverseLayout && prevHeightOffset != state.heightOffset) {
-                    // We're in the middle of top app bar collapse or expand.
-                    // Consume only the scroll on the Y axis.
-                    available.copy(x = 0f)
-                } else {
-                    Offset.Zero
-                }
+                state.contentOffset += consumed.y
+                state.heightOffset += consumed.y
+                return Offset.Zero
             }
 
-//            override fun onPostScroll(
-//                consumed: Offset,
-//                available: Offset,
-//                source: NestedScrollSource,
-//            ): Offset {
-//                if (!canScroll()) return Offset.Zero
-//                state.contentOffset += consumed.y
-//                if (!reverseLayout) state.heightOffset += consumed.y
-//                return Offset.Zero
-//            }
-
-//            override suspea
-            //            nd fun onPostFling(
-//                consumed: Velocity,
-//                available: Velocity,
-//            ): Velocity {
-//                if (
-//                    available.y > 0f &&
-//                    (state.heightOffset == 0f || state.heightOffset == state.heightOffsetLimit)
-//                ) {
-//                    // Reset the total content offset to zero when scrolling all the way down.
-//                    // This will eliminate some float precision inaccuracies.
-//                    state.contentOffset = 0f
-//                }
-//                val superConsumed = super.onPostFling(consumed, available)
-//                return superConsumed +
-//                    settlePassageSelection(state, available.y, flingAnimationSpec, snapAnimationSpec)
-//            }
+            override suspend fun onPostFling(
+                consumed: Velocity,
+                available: Velocity,
+            ): Velocity {
+                if (
+                    available.y > 0f &&
+                    (state.heightOffset == 0f || state.heightOffset == state.heightOffsetLimit)
+                ) {
+                    // Reset the total content offset to zero when scrolling all the way down.
+                    // This will eliminate some float precision inaccuracies.
+                    state.contentOffset = 0f
+                }
+                val superConsumed = super.onPostFling(consumed, available)
+                return superConsumed +
+                    settlePassageSelection(state, available.y, flingAnimationSpec, snapAnimationSpec)
+            }
         }
 }
 
 private suspend fun settlePassageSelection(
-    state: BibleReaderPassageSelectionState,
+    state: PassageSelectionState,
     velocity: Float,
     flingAnimationSpec: DecayAnimationSpec<Float>?,
     snapAnimationSpec: AnimationSpec<Float>?,
@@ -368,11 +356,12 @@ private suspend fun settlePassageSelection(
     if (snapAnimationSpec != null) {
         if (state.heightOffset < 0 && state.heightOffset > state.heightOffsetLimit) {
             AnimationState(initialValue = state.heightOffset).animateTo(
-                if (state.collapsedFraction < 0.5f) {
-                    0f
-                } else {
-                    state.heightOffsetLimit
-                },
+                targetValue =
+                    if (state.collapsedFraction < 0.5f) {
+                        0f
+                    } else {
+                        state.heightOffsetLimit
+                    },
                 animationSpec = snapAnimationSpec,
             ) {
                 state.heightOffset = value

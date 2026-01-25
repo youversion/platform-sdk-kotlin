@@ -3,6 +3,7 @@ package com.youversion.platform.reader.screens.bible
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,9 +13,9 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -41,10 +42,9 @@ import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.components.BibleReaderHeader
 import com.youversion.platform.reader.components.BibleReaderPassageSelection
-import com.youversion.platform.reader.components.BibleReaderPassageSelectionDefaults
+import com.youversion.platform.reader.components.PassageSelectionDefaults
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
@@ -62,7 +62,7 @@ internal fun BibleScreen(
     viewModel: BibleReaderViewModel,
     appName: String,
     appSignInMessage: String,
-    bottomBar: @Composable () -> Unit = {},
+    bottomBar: @Composable (() -> Unit)? = null,
     onReferencesClick: () -> Unit,
     onVersionsClick: () -> Unit,
     onFontsClick: () -> Unit,
@@ -91,55 +91,26 @@ internal fun BibleScreen(
 
     val topScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val bottomScrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior()
-    val passageSelectionScrollBehavior = BibleReaderPassageSelectionDefaults.enterAlwaysScrollBehavior()
-//
-//    val toolbarHeight = 56.dp
-//    val toolbarHeightPx = with(LocalDensity.current) { toolbarHeight.toPx() }
-//    var toolbarOffsetManager by remember { mutableStateOf(0f) }
-//    var isVisible by remember { mutableStateOf(true) }
-
-    // Logic to determine visibility based on scroll offset or direction
-//    val nestedScrollConnection =
-//        remember {
-//            object : NestedScrollConnection {
-//                override fun onPreScroll(
-//                    available: Offset,
-//                    source: NestedScrollSource,
-//                ): Offset {
-//                    // Consume scroll delta for the element that doesn't inherently scroll
-//                    val delta = available.y
-//                    val newOffset = toolbarOffsetManager + delta
-//
-//                    // Constrain the offset between 0f (fully visible) and -toolbarHeightPx (fully hidden)
-//                    toolbarOffsetManager = newOffset.coerceIn(-toolbarHeightPx, 0f)
-//
-//                    // Update visibility state for AnimatedVisibility
-//                    isVisible = toolbarOffsetManager >= -toolbarHeightPx / 2 // Adjust threshold as needed
-//
-//                    // Return the consumed portion of the delta (if any)
-//                    // We don't consume here; we just track the offset to adjust our custom UI.
-//                    // The main scrolling container (LazyColumn) will consume the full delta.
-//                    return Offset.Zero
-//                }
-//            }
-//        }
+    val passageSelectionScrollBehavior = PassageSelectionDefaults.fadeAlwaysScrollBehavior()
 
     Scaffold(
         modifier =
             Modifier
-                .nestedScroll(topScrollBehavior.nestedScrollConnection)
-                .nestedScroll(bottomScrollBehavior.nestedScrollConnection),
-//                .nestedScroll(passageSelectionScrollBehavior.nestedScrollConnection),
-//        bottomBar = {
-//            BottomAppBar(
-//                scrollBehavior = bottomScrollBehavior,
-//                content = {
-//                    Row {
-//                        bottomBar()
-//                    }
-//                },
-//            )
-//        },
+                .nestedScroll(passageSelectionScrollBehavior.nestedScrollConnection)
+                .nestedScroll(bottomScrollBehavior.nestedScrollConnection)
+                .nestedScroll(topScrollBehavior.nestedScrollConnection),
+        bottomBar = {
+            bottomBar?.let {
+                BottomAppBar(
+                    scrollBehavior = bottomScrollBehavior,
+                    content = {
+                        Row {
+                            it()
+                        }
+                    },
+                )
+            }
+        },
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             BibleReaderHeader(
@@ -212,23 +183,14 @@ internal fun BibleScreen(
                     }
                     Spacer(modifier = Modifier.height(48.dp))
                 }
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.background),
-                ) {
-                    HorizontalDivider(
-                        color = BibleReaderTheme.colorScheme.borderPrimary,
-                    )
-                    BibleReaderPassageSelection(
-                        bookAndChapter = state.bookAndChapter,
-                        onReferenceClick = onReferencesClick,
-                        onPreviousChapter = { viewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter) },
-                        onNextChapter = { viewModel.onAction(BibleReaderViewModel.Action.GoToNextChapter) },
-                        scrollBehavior = passageSelectionScrollBehavior,
-                    )
-                }
+                BibleReaderPassageSelection(
+                    bookAndChapter = state.bookAndChapter,
+                    onReferenceClick = onReferencesClick,
+                    onPreviousChapter = { viewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter) },
+                    onNextChapter = { viewModel.onAction(BibleReaderViewModel.Action.GoToNextChapter) },
+                    bottomBarScrollBehavior = bottomBar?.let { bottomScrollBehavior },
+                    scrollBehavior = passageSelectionScrollBehavior,
+                )
             }
 
             // Any Sheets or Dialogs
