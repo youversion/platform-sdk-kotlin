@@ -9,6 +9,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.reader.theme.ui.darkBibleReaderColorScheme
+import com.youversion.platform.reader.theme.ui.lightBibleReaderColorScheme
 
 private val LocalReaderColorScheme = staticCompositionLocalOf { PureWhite }
 
@@ -27,6 +29,12 @@ fun BibleReaderMaterialTheme(
             ?: BibleReaderTheme.selectedColorScheme.value
             ?: if (isSystemInDarkTheme()) MidnightBlue else Cream
 
+    val bibleReaderColorScheme =
+        if (readerColorScheme.isDark) {
+            darkBibleReaderColorScheme()
+        } else {
+            lightBibleReaderColorScheme()
+        }
     val colorScheme =
         if (readerColorScheme.isDark) {
             darkColorScheme(
@@ -54,7 +62,9 @@ fun BibleReaderMaterialTheme(
             )
         }
 
-    BibleReaderTheme {
+    BibleReaderTheme(
+        colorScheme = bibleReaderColorScheme,
+    ) {
         CompositionLocalProvider(LocalReaderColorScheme provides readerColorScheme) {
             MaterialTheme(
                 colorScheme = colorScheme,
