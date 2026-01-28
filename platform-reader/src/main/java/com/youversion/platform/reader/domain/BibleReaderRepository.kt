@@ -83,6 +83,7 @@ class BibleReaderRepository(
                 // We're navigating to a previous chapter inside the same book
                 bibleReference.copy(chapter = bibleReference.chapter - 1)
             }
+
             previousBookIndex > 0 -> {
                 // We're navigating to the last chapter in the previous book
                 val previousBook = books[previousBookIndex - 1]
@@ -92,9 +93,11 @@ class BibleReaderRepository(
                     chapter = lastChapter,
                 )
             }
-            else ->
+
+            else -> {
                 // We're at the first chapter, intro, etc of the first book (e.g. Genesis 1)
                 null
+            }
         }
     }
 
@@ -112,6 +115,7 @@ class BibleReaderRepository(
                 // We're navigating to the next chapter in the same book
                 bibleReference.copy(chapter = bibleReference.chapter + 1)
             }
+
             currentBookIndex < books.count() - 1 -> {
                 // We're navigating to the first chapter of the next book
                 val nextBook = books.getOrNull(currentBookIndex + 1)
@@ -120,10 +124,32 @@ class BibleReaderRepository(
                     chapter = 1,
                 )
             }
+
             else -> {
                 // We're at the end of the last book
                 null
             }
         }
+    }
+
+    private var _versionsInLanguage: Map<String, List<BibleVersion>> = mutableMapOf()
+
+    /** Maps from a languageCode to a list of BibleVersion objects for that language. */
+    val versionsInLanguage: Map<String, List<BibleVersion>>
+        get() = _versionsInLanguage
+
+    /** Holds minimal information about all Bible versions available to this app, in all languages. */
+    var permittedVersions: List<BibleVersion> = emptyList()
+        private set
+
+    /**
+     * Returns minimal information about all Bible versions available to this app, in all languages.
+     * On error or when offline, returns nil
+     */
+    suspend fun permittedVersionsListing(): List<BibleVersion> {
+        permittedVersions?.let { return it }
+
+        val minimalVersions = bibleVersionRepository.permittedVersions()
+        return minimalVersions
     }
 }

@@ -48,6 +48,7 @@ class VersionsViewModel(
 
         viewModelScope.launch {
             try {
+                val permittedListing = bibleReaderRepository.permittedVersionsListing()
                 val permittedVersions = bibleReaderRepository.loadVersionsList()
                 _state.update { it.copy(permittedVersions = permittedVersions) }
             } catch (e: Exception) {
@@ -64,8 +65,10 @@ class VersionsViewModel(
                 loadOrganization(bibleVersion = action.bibleVersion)
                 _state.update { it.copy(selectedBibleVersion = action.bibleVersion) }
             }
-            is Action.VersionDismissed ->
+
+            is Action.VersionDismissed -> {
                 _state.update { it.copy(selectedBibleVersion = null, selectedOrganization = null) }
+            }
         }
     }
 

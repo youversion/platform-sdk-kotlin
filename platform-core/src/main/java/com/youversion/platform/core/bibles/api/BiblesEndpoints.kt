@@ -31,6 +31,7 @@ object BiblesEndpoints : BiblesApi {
     // ----- Bibles URLs
     fun versionsUrl(
         languageRanges: Set<String> = emptySet(),
+        fields: List<String>? = null,
         pageSize: Int? = null,
         pageToken: String? = null,
     ): String =
@@ -40,6 +41,9 @@ object BiblesEndpoints : BiblesApi {
             parameter("language_ranges[]", ranges)
             pageSize(pageSize)
             pageToken(pageToken)
+            fields?.forEach { field ->
+                parameter("fields[]", field)
+            }
         }
 
     fun versionUrl(versionId: Int): String = buildYouVersionUrlString { path("/v1/bibles/$versionId") }
@@ -92,6 +96,7 @@ object BiblesEndpoints : BiblesApi {
     // ----- Bibles API
     override suspend fun versions(
         languageCode: String?,
+        fields: List<String>?,
         pageSize: Int?,
         pageToken: String?,
     ): PaginatedResponse<BibleVersion> {
@@ -102,8 +107,14 @@ object BiblesEndpoints : BiblesApi {
 
         val range = languageCode?.let { setOf(it) } ?: emptySet()
         return httpClient
-            .get(versionsUrl(languageRanges = range, pageSize = pageSize, pageToken = pageToken))
-            .let {
+            .get(
+                versionsUrl(
+                    languageRanges = range,
+                    fields = fields,
+                    pageSize = pageSize,
+                    pageToken = pageToken,
+                ),
+            ).let {
                 when (it.status) {
                     HttpStatusCode.NoContent -> PaginatedResponse(emptyList())
                     else -> parsePaginatedResponse(it)

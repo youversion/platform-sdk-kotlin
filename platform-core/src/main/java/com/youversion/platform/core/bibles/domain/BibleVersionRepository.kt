@@ -109,6 +109,17 @@ class BibleVersionRepository(
         persistentCache.removeUnpermittedVersions(permittedIds)
     }
 
+    suspend fun permittedVersions(languageTag: String? = null): List<BibleVersion> {
+        val paginatedResponse =
+            YouVersionApi.bible.versions(
+                languageCode = languageTag,
+                fields = listOf("id", "language_tag"),
+            )
+
+        val permittedVersions = paginatedResponse.data
+        return permittedVersions
+    }
+
     // ----- Chapters
     suspend fun chapter(reference: BibleReference): String {
         val logKey = "${reference.versionId}_${reference.chapterUSFM}"
