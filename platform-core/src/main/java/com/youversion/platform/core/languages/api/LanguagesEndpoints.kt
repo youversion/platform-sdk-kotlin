@@ -2,6 +2,7 @@ package com.youversion.platform.core.languages.api
 
 import com.youversion.platform.core.api.PaginatedResponse
 import com.youversion.platform.core.api.buildYouVersionUrlString
+import com.youversion.platform.core.api.fields
 import com.youversion.platform.core.api.pageSize
 import com.youversion.platform.core.api.pageToken
 import com.youversion.platform.core.api.parameter
@@ -19,23 +20,26 @@ object LanguagesEndpoints : LanguagesApi {
 
     fun languagesUrl(
         country: String? = null,
+        fields: List<String>? = null,
         pageSize: Int? = null,
         pageToken: String? = null,
     ): String =
         buildYouVersionUrlString {
             path("/v1/languages")
             parameter("country", country)
-            pageSize(pageSize)
+            fields(fields)
+            pageSize(pageSize, fields)
             pageToken(pageToken)
         }
 
     override suspend fun languages(
         country: String?,
+        fields: List<String>?,
         perPage: Int?,
         pageToken: String?,
     ): PaginatedResponse<Language> =
         httpClient
-            .get(languagesUrl(country, perPage, pageToken))
+            .get(languagesUrl(country, fields, perPage, pageToken))
             .let {
                 when (it.status) {
                     HttpStatusCode.NoContent -> PaginatedResponse(emptyList())
