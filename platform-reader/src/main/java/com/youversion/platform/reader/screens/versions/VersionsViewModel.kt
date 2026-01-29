@@ -7,8 +7,8 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.organizations.models.Organization
-import com.youversion.platform.reader.domain.BibleReaderGlobalState
 import com.youversion.platform.reader.domain.BibleReaderRepository
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,39 +18,33 @@ import kotlinx.coroutines.launch
 class VersionsViewModel(
     private val bibleVersionRepository: BibleVersionRepository,
     private val bibleReaderRepository: BibleReaderRepository,
-    private val globalState: BibleReaderGlobalState,
 ) : ViewModel() {
-    private val _state =
-        MutableStateFlow(
-            State(
-                permittedVersions = globalState.permittedVersions,
-            ),
-        )
+    private val _state = MutableStateFlow(State())
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
 
     init {
-        viewModelScope.launch {
-            globalState.state.collect { gState ->
-                _state.update { lState ->
-                    lState.copy(
-                        activeLanguageTag = gState.activeLanguageTag,
-                        permittedVersions = gState.permittedVersions,
-                    )
-                }
-            }
-        }
-
-        loadVersionsList()
+        loadVersions()
     }
 
-    private fun loadVersionsList() {
-        if (globalState.permittedVersions.isNotEmpty()) return
-
+    private fun loadVersions() {
         viewModelScope.launch {
             try {
-                val permittedListing = bibleReaderRepository.permittedVersionsListing()
-                val permittedVersions = bibleReaderRepository.loadVersionsList()
-                _state.update { it.copy(permittedVersions = permittedVersions) }
+                val deferredPermittedVersions = async { bibleReaderRepository.permittedVersionsListing() }
+                val deferredActiveLanguageVersions =
+                    async {
+                        val chosenLanguage = _state.value.activeLanguageTag
+                        bibleReaderRepository.fetchVersionsInLanguage(chosenLanguage)
+                    }
+
+                val permittedVersions = deferredPermittedVersions.await()
+                val activeLanguageVersions = deferredActiveLanguageVersions.await()
+
+                _state.update {
+                    it.copy(
+                        activeLanguageVersions = activeLanguageVersions,
+                        permittedMinimalVersions = permittedVersions,
+                    )
+                }
             } catch (e: Exception) {
                 Logger.e("Error loading versions", e)
             } finally {
@@ -88,7 +82,8 @@ class VersionsViewModel(
     // ----- State
     data class State(
         val initializing: Boolean = true,
-        val permittedVersions: List<BibleVersion> = emptyList(),
+        val permittedMinimalVersions: List<BibleVersion> = emptyList(),
+        val activeLanguageVersions: List<BibleVersion> = emptyList(),
         val activeLanguageTag: String = "en",
         val showBibleVersionLoading: Boolean = false,
         val selectedBibleVersion: BibleVersion? = null,
@@ -96,28 +91,19 @@ class VersionsViewModel(
         val searchQuery: String = "",
     ) {
         val versionsCount: Int
-            get() = permittedVersions.count()
+            get() = permittedMinimalVersions.count()
         val languagesCount: Int
             get() =
-                permittedVersions
+                permittedMinimalVersions
                     .distinctBy { it.languageTag }
                     .count()
 
         val showEmptyState: Boolean
-            get() = !initializing && permittedVersions.isEmpty()
+            get() = !initializing && permittedMinimalVersions.isEmpty()
 
-        val filteredVersions: List<BibleVersion>
-            get() {
-                val language = activeLanguageTag
-                // TODO: handle search text
-
-                return permittedVersions
-                    .filter { it.languageTag == language }
-                // TODO: handle search text
-            }
         val activeLanguageVersionsCount: Int
             get() =
-                permittedVersions
+                permittedMinimalVersions
                     .count { it.languageTag == activeLanguageTag }
     }
 

@@ -45,21 +45,6 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test versions returns empty list if language code is not 3 letters`() =
-        runTest {
-            MockEngine { request ->
-                respondJson(VERSIONS_ENG_JSON)
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            YouVersionApi.bible
-                .versions("en")
-                .apply {
-                    assertTrue { data.isEmpty() }
-                }
-        }
-
-    @Test
     fun `test versions returns empty list if language code is not a known code`() =
         runTest {
             MockEngine { request ->

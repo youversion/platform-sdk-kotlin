@@ -28,7 +28,7 @@ class BiblesEndpointsTest {
         )
 
         assertEquals(
-            "https://api.youversion.com/v1/bibles?language_ranges%5B%5D=%2A&fields%5B%5D=id&fields%5B%5D=language_tag",
+            "https://api.youversion.com/v1/bibles?language_ranges%5B%5D=%2A&fields%5B%5D=id&fields%5B%5D=language_tag&page_size=%2A",
             BiblesEndpoints.versionsUrl(fields = listOf("id", "language_tag")),
         )
     }

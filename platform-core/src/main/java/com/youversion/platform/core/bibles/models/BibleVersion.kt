@@ -21,7 +21,7 @@ data class BibleVersion(
     @SerialName(CodingKey.TEXT_DIRECTION) val textDirection: String? = null,
     @SerialName(CodingKey.ORGANIZATION_ID) val organizationId: String? = null,
 ) {
-    private object CodingKey {
+    object CodingKey {
         const val ID = "id"
         const val ABBREVIATION = "abbreviation"
         const val BOOK_CODES = "books"
@@ -165,14 +165,17 @@ data class BibleVersion(
             verseEnd == 999 -> {
                 listOf(bookName, bookAndChapterSeparator, chapter)
             }
+
             // Whole chapter (no verses specified)
             verseStart == null -> {
                 listOf(bookName, bookAndChapterSeparator, chapter)
             }
+
             // Single verse (both start and end are the same)
             verseEnd != null && verseStart == verseEnd -> {
                 listOf(bookName, bookAndChapterSeparator, chapter, chapterSeparator, verseStart.toString())
             }
+
             // Verse range (different start and end)
             verseEnd != null -> {
                 listOf(
@@ -185,6 +188,7 @@ data class BibleVersion(
                     verseEnd.toString(),
                 )
             }
+
             // Single verse with no verseEnd
             else -> {
                 listOf(bookName, bookAndChapterSeparator, chapter, chapterSeparator, verseStart.toString())

@@ -1,5 +1,6 @@
 package com.youversion.platform.reader.domain
 
+import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -57,19 +58,6 @@ class BibleReaderRepository(
                     chapter = 1,
                 )
             }
-
-    suspend fun loadVersionsList(): List<BibleVersion> {
-        val versions = bibleVersionRepository.allVersions()
-        val collator = Collator.getInstance()
-
-        return versions
-            .distinctBy { it.id }
-            .sortedWith { a, b ->
-                val aTitle = a.title?.lowercase() ?: ""
-                val bTitle = b.title?.lowercase() ?: ""
-                collator.compare(aTitle, bTitle)
-            }.also { globalState.update { s -> s.copy(permittedVersions = it) } }
-    }
 
     fun previousChapter(
         version: BibleVersion?,
@@ -132,24 +120,50 @@ class BibleReaderRepository(
         }
     }
 
-    private var _versionsInLanguage: Map<String, List<BibleVersion>> = mutableMapOf()
-
-    /** Maps from a languageCode to a list of BibleVersion objects for that language. */
-    val versionsInLanguage: Map<String, List<BibleVersion>>
-        get() = _versionsInLanguage
+    /** In-memory cache of bible versions which have been fetched by language */
+    private var versionsInLanguage: MutableMap<String, List<BibleVersion>> = mutableMapOf()
 
     /** Holds minimal information about all Bible versions available to this app, in all languages. */
-    var permittedVersions: List<BibleVersion> = emptyList()
+    var permittedVersions: List<BibleVersion>? = null
         private set
 
     /**
-     * Returns minimal information about all Bible versions available to this app, in all languages.
-     * On error or when offline, returns nil
+     * Returns minimal information about all Bible versions available to this app, in all languages
      */
-    suspend fun permittedVersionsListing(): List<BibleVersion> {
-        permittedVersions?.let { return it }
+    suspend fun permittedVersionsListing(): List<BibleVersion> =
+        permittedVersions
+            ?: bibleVersionRepository
+                .permittedVersions()
+                .also { permittedVersions = it }
 
-        val minimalVersions = bibleVersionRepository.permittedVersions()
-        return minimalVersions
+    /**
+     * Returns complete information about Bible versions available in a specific language.
+     */
+    suspend fun fetchVersionsInLanguage(languageCode: String): List<BibleVersion> {
+        // Check if we already have the versions for this language locally
+        if (!versionsInLanguage[languageCode].isNullOrEmpty()) {
+            return versionsInLanguage[languageCode] ?: emptyList()
+        }
+
+        // There is currently no language with more than 99 versions so ignore pagination for now
+        val unsortedVersions =
+            YouVersionApi.bible
+                .versions(languageCode = languageCode, pageSize = 99)
+                .data
+
+        fun comparableString(bibleVersion: BibleVersion): String =
+            bibleVersion.localizedTitle ?: bibleVersion.title ?: bibleVersion.localizedAbbreviation
+                ?: bibleVersion.abbreviation
+                ?: bibleVersion.id.toString()
+
+        // collator allows for locale-specific string comparisons
+        val collator = Collator.getInstance()
+        return unsortedVersions
+            .distinctBy { it.id }
+            .sortedWith { a, b ->
+                val aTitle = comparableString(a).lowercase()
+                val bTitle = comparableString(b).lowercase()
+                collator.compare(aTitle, bTitle)
+            }.also { globalState.update { s -> s.copy(permittedVersions = it) } }
     }
 }

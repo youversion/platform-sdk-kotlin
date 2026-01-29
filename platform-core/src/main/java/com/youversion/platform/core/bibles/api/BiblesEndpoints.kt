@@ -1,8 +1,8 @@
 package com.youversion.platform.core.bibles.api
 
-import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.PaginatedResponse
 import com.youversion.platform.core.api.buildYouVersionUrlString
+import com.youversion.platform.core.api.fields
 import com.youversion.platform.core.api.pageSize
 import com.youversion.platform.core.api.pageToken
 import com.youversion.platform.core.api.parameter
@@ -39,11 +39,9 @@ object BiblesEndpoints : BiblesApi {
             path("/v1/bibles")
             val ranges = if (languageRanges.isEmpty()) "*" else languageRanges.joinToString(",")
             parameter("language_ranges[]", ranges)
-            pageSize(pageSize)
+            fields(fields)
+            pageSize(pageSize, fields)
             pageToken(pageToken)
-            fields?.forEach { field ->
-                parameter("fields[]", field)
-            }
         }
 
     fun versionUrl(versionId: Int): String = buildYouVersionUrlString { path("/v1/bibles/$versionId") }
@@ -100,11 +98,6 @@ object BiblesEndpoints : BiblesApi {
         pageSize: Int?,
         pageToken: String?,
     ): PaginatedResponse<BibleVersion> {
-        if (languageCode != null && languageCode.length != 3) {
-            Logger.w { "Invalid Language Code $languageCode. Must be 3 letters, e.g. 'eng'." }
-            return PaginatedResponse(emptyList())
-        }
-
         val range = languageCode?.let { setOf(it) } ?: emptySet()
         return httpClient
             .get(
