@@ -3,56 +3,70 @@ package com.youversion.platform.reader.screens.languages
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
-import com.youversion.platform.core.languages.domain.LanguageRepository
-import com.youversion.platform.reader.domain.BibleReaderGlobalState
+import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.reader.domain.BibleReaderRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 class LanguagesViewModel(
-    private val languageRepository: LanguageRepository,
-    private val globalState: BibleReaderGlobalState,
+    bibleVersion: BibleVersion?,
+    private val bibleReaderRepository: BibleReaderRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(State())
     val state by lazy { _state.asStateFlow() }
 
-    val countryCode by lazy { Locale.getDefault().country }
-    val languageCode by lazy { Locale.getDefault().language }
-
     init {
-        loadSuggestedLanguages()
+        loadLanguages(bibleVersion)
     }
 
-    private fun loadSuggestedLanguages() {
+    private fun loadLanguages(bibleVersion: BibleVersion?) {
         viewModelScope.launch {
             try {
-                val permittedLanguageTags =
-                    globalState.permittedVersions
-                        .mapNotNull { it.languageTag }
+                bibleReaderRepository.loadLanguageNames(bibleVersion)
 
-                val permittedLanguages =
-                    languageRepository
-                        .suggestedLanguages(country = countryCode)
-                        .filter { it.language in permittedLanguageTags }
-                        .map { LanguageRowItem(it, languageCode) }
-                _state.update { it.copy(suggestedLanguages = permittedLanguages) }
+                val allPermittedLanguageTags = bibleReaderRepository.allPermittedLanguageTags
+                val allLanguages =
+                    allPermittedLanguageTags
+                        .map { tag ->
+                            LanguageRowItem(
+                                languageTag = tag,
+                                displayName = bibleReaderRepository.languageName(tag),
+                                localeDisplayName = null,
+                            )
+                        }
+
+                val suggestedLanguageTags = bibleReaderRepository.suggestedLanguageTags()
+                val suggestedLanguages =
+                    suggestedLanguageTags
+                        .map { tag ->
+                            LanguageRowItem(
+                                languageTag = tag,
+                                displayName = bibleReaderRepository.languageName(tag),
+                                localeDisplayName = null,
+                            )
+                        }
+
+                _state.update {
+                    it.copy(
+                        suggestedLanguages = suggestedLanguages,
+                        allLanguages = allLanguages,
+                    )
+                }
             } catch (e: Exception) {
-                Logger.w("Failed to get languages", e)
+                Logger.e("Failed to get languages", e)
+            } finally {
+                _state.update { it.copy(initializing = false) }
             }
         }
     }
-
-    private fun extractLanguageCodes(languages: List<LanguageRowItem>): Set<String> =
-        languages
-            .map { it.language.id }
-            .toSet()
 
     // ----- State
     data class State(
         val initializing: Boolean = true,
         val suggestedLanguages: List<LanguageRowItem> = emptyList(),
+        val allLanguages: List<LanguageRowItem> = emptyList(),
     )
 
     // ----- Events

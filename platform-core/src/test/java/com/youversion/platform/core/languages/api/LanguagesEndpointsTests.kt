@@ -8,7 +8,7 @@ class LanguagesEndpointsTests {
     fun `test languages url`() {
         assertEquals(
             "https://api.youversion.com/v1/languages?country=US&page_size=25&page_token=token",
-            LanguagesEndpoints.languagesUrl("US", 25, "token"),
+            LanguagesEndpoints.languagesUrl(country = "US", pageSize = 25, pageToken = "token"),
         )
         assertEquals(
             "https://api.youversion.com/v1/languages",

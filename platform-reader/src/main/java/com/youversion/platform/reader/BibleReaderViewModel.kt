@@ -10,7 +10,6 @@ import co.touchlab.kermit.Logger
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
-import com.youversion.platform.core.languages.models.Language
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.reader.screens.languages.LanguageRowItem
@@ -22,7 +21,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 class BibleReaderViewModel(
     bibleReference: BibleReference?,
@@ -44,21 +42,6 @@ class BibleReaderViewModel(
         get() = _state.value.bibleVersion
         set(value) = _state.update { it.copy(bibleVersion = value) }
 
-    private var permittedVersions: List<BibleVersion> = emptyList()
-    private var languagesList: List<Language> = emptyList()
-    private val suggestedLanguageCodes: List<String>
-        get() {
-            if (languagesList.isEmpty()) {
-                return listOf("eng", "spa")
-            }
-
-            val languageCodes = extractLanguageCodes(languagesList)
-            return languageCodes
-                .filter { languageCode ->
-                    permittedVersions.isEmpty() || permittedVersions.any { it.languageTag == languageCode }
-                }
-        }
-
     init {
         val reference = bibleReaderRepository.produceBibleReference(bibleReference)
         this._state =
@@ -71,7 +54,7 @@ class BibleReaderViewModel(
 
         loadUserSettingsFromStorage()
         loadVersionIfNeeded()
-        loadSuggestedLanguages()
+        loadLanguages()
     }
 
     private fun loadUserSettingsFromStorage() {
@@ -111,20 +94,48 @@ class BibleReaderViewModel(
 
     fun onAction(action: Action) {
         when (action) {
-            is Action.OpenFontSettings -> _state.update { it.copy(showingFontList = true) }
-            is Action.CloseFontSettings -> _state.update { it.copy(showingFontList = false) }
-            is Action.DecreaseFontSize -> decreaseFontSize()
-            is Action.IncreaseFontSize -> increaseFontSize()
-            is Action.NextLineSpacingMultiplierOption -> nextLineSpacingMultiplierOption()
-            is Action.SetFontDefinition -> setFontFamily(action)
-            is Action.OpenFootnotes -> openFootnotes(action)
-            is Action.CloseFootnotes -> closeFootnotes()
-            is Action.SetReaderTheme -> setReaderTheme(action)
+            is Action.OpenFontSettings -> {
+                _state.update { it.copy(showingFontList = true) }
+            }
+
+            is Action.CloseFontSettings -> {
+                _state.update { it.copy(showingFontList = false) }
+            }
+
+            is Action.DecreaseFontSize -> {
+                decreaseFontSize()
+            }
+
+            is Action.IncreaseFontSize -> {
+                increaseFontSize()
+            }
+
+            is Action.NextLineSpacingMultiplierOption -> {
+                nextLineSpacingMultiplierOption()
+            }
+
+            is Action.SetFontDefinition -> {
+                setFontFamily(action)
+            }
+
+            is Action.OpenFootnotes -> {
+                openFootnotes(action)
+            }
+
+            is Action.CloseFootnotes -> {
+                closeFootnotes()
+            }
+
+            is Action.SetReaderTheme -> {
+                setReaderTheme(action)
+            }
+
             is Action.GoToNextChapter -> {
                 bibleReaderRepository
                     .nextChapter(bibleVersion, bibleReference)
                     ?.let { nextReference -> bibleReference = nextReference }
             }
+
             is Action.GoToPreviousChapter -> {
                 bibleReaderRepository
                     .previousChapter(bibleVersion, bibleReference)
@@ -204,29 +215,15 @@ class BibleReaderViewModel(
     }
 
     // ----- Languages
-    val localeCountryCode: String
-        get() = Locale.getDefault().country ?: "US"
-    val localeLanguageCode: String
-        get() = Locale.getDefault().language ?: "en"
-
-    private fun loadSuggestedLanguages() {
+    private fun loadLanguages() {
         viewModelScope.launch {
             try {
-//                val languages =
-//                    languagesRepository
-//                        .suggestedLanguages(country = localeCountryCode)
-//                        .map { LanguageRowItem(it, localeLanguageCode) }
-//                _state.update { it.copy(suggestedLanguages = languages) }
+                bibleReaderRepository.loadLanguageNames(bibleVersion)
             } catch (e: Exception) {
                 Logger.w("Failed to get languages", e)
             }
         }
     }
-
-    private fun extractLanguageCodes(languages: List<Language>): Set<String> =
-        languages
-            .map { languages -> languages.id }
-            .toSet()
 
     // ----- State
     data class State(

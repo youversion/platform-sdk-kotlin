@@ -43,16 +43,15 @@ import com.youversion.platform.reader.components.BibleReaderTopAppBar
 import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
 import com.youversion.platform.reader.theme.readerColorScheme
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
-import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun VersionsScreen(
+    viewModel: VersionsViewModel,
     onBackClick: () -> Unit,
     onLanguagesClick: () -> Unit,
     onVersionSelect: (BibleVersion) -> Unit,
 ) {
-    val viewModel: VersionsViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -91,6 +90,7 @@ internal fun VersionsScreen(
                 item {
                     Box(modifier = Modifier.padding(horizontal = 20.dp)) {
                         LanguageSelector(
+                            activeLanguageName = state.activeLanguageName,
                             enabled = !state.initializing,
                             onClick = onLanguagesClick,
                         )
@@ -99,7 +99,7 @@ internal fun VersionsScreen(
 
                 item {
                     BibleVersionsSectionHeader(
-                        title = "English Versions (${state.activeLanguageVersionsCount})",
+                        title = "${state.activeLanguageName} Versions (${state.activeLanguageVersionsCount})",
                     )
                 }
 
@@ -164,6 +164,7 @@ internal fun VersionsScreen(
 
 @Composable
 private fun LanguageSelector(
+    activeLanguageName: String,
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
@@ -192,7 +193,7 @@ private fun LanguageSelector(
             modifier = Modifier.weight(1f),
         )
 
-        Text("English")
+        Text(activeLanguageName)
         Spacer(modifier = Modifier.width(4.dp))
         Icon(
             imageVector = ImageVector.vectorResource(R.drawable.ic_expand_circle_right),
@@ -283,17 +284,5 @@ private fun Preview_VersionsList() {
                 }
             }
         }
-    }
-}
-
-@Composable
-@Preview
-private fun Preview_LanguagesScreen() {
-    BibleReaderMaterialTheme {
-        VersionsScreen(
-            onBackClick = {},
-            onLanguagesClick = {},
-            onVersionSelect = {},
-        )
     }
 }

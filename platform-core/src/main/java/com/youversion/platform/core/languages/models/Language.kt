@@ -5,19 +5,19 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Language(
-    @SerialName(CodingKey.ID) val id: String,
-    @SerialName(CodingKey.LANGUAGE) val language: String,
+    @SerialName(CodingKey.ID) val id: String? = null,
+    @SerialName(CodingKey.LANGUAGE) val language: String? = null,
     @SerialName(CodingKey.SCRIPT) val script: String? = null,
     @SerialName(CodingKey.SCRIPT_NAME) val scriptName: String? = null,
-    @SerialName(CodingKey.ALIASES) val aliases: List<String> = emptyList(),
-    @SerialName(CodingKey.DISPLAY_NAMES) val displayNames: Map<String, String> = emptyMap(),
-    @SerialName(CodingKey.SCRIPTS) val scripts: List<String> = emptyList(),
-    @SerialName(CodingKey.VARIANTS) val variants: List<String> = emptyList(),
-    @SerialName(CodingKey.COUNTRIES) val countries: List<String> = emptyList(),
+    @SerialName(CodingKey.ALIASES) val aliases: List<String>? = null,
+    @SerialName(CodingKey.DISPLAY_NAMES) val displayNames: Map<String, String>? = null,
+    @SerialName(CodingKey.SCRIPTS) val scripts: List<String>? = null,
+    @SerialName(CodingKey.VARIANTS) val variants: List<String>? = null,
+    @SerialName(CodingKey.COUNTRIES) val countries: List<String>? = null,
     @SerialName(CodingKey.TEXT_DIRECTION) val textDirection: String = "ltr",
     @SerialName(CodingKey.DEFAULT_BIBLE_VERSION_ID) val defaultBibleVersionId: Int? = null,
 ) {
-    private object CodingKey {
+    object CodingKey {
         const val ID = "id"
         const val LANGUAGE = "language"
         const val SCRIPT = "script"
