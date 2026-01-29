@@ -24,6 +24,7 @@ interface BiblesApi {
      */
     suspend fun versions(
         languageCode: String? = null,
+        fields: List<String>? = null,
         pageSize: Int? = null,
         pageToken: String? = null,
     ): PaginatedResponse<BibleVersion>

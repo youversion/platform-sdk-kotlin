@@ -3,7 +3,6 @@ package com.youversion.platform.core.bibles.domain
 import android.content.Context
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.YouVersionApi
-import com.youversion.platform.core.api.fetchAllPages
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
 import com.youversion.platform.core.bibles.data.BibleVersionPersistentCache
@@ -69,11 +68,6 @@ class BibleVersionRepository(
         }
     }
 
-    suspend fun allVersions(): List<BibleVersion> =
-        fetchAllPages { nextPageToken ->
-            YouVersionApi.bible.versions(pageSize = 99, pageToken = nextPageToken)
-        }
-
     fun versionIsPresent(id: Int): Boolean = persistentCache.versionIsPresent(id)
 
     val downloadedVersions: List<Int>
@@ -108,6 +102,17 @@ class BibleVersionRepository(
         temporaryCache.removeUnpermittedVersions(permittedIds)
         persistentCache.removeUnpermittedVersions(permittedIds)
     }
+
+    suspend fun permittedVersions(languageTag: String? = null): List<BibleVersion> =
+        YouVersionApi.bible
+            .versions(
+                languageCode = languageTag,
+                fields =
+                    listOf(
+                        BibleVersion.CodingKey.ID,
+                        BibleVersion.CodingKey.LANGUAGE_TAG,
+                    ),
+            ).data
 
     // ----- Chapters
     suspend fun chapter(reference: BibleReference): String {

@@ -1,5 +1,6 @@
 package com.youversion.platform.reader.domain
 
+import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -58,19 +59,6 @@ class BibleReaderRepository(
                 )
             }
 
-    suspend fun loadVersionsList(): List<BibleVersion> {
-        val versions = bibleVersionRepository.allVersions()
-        val collator = Collator.getInstance()
-
-        return versions
-            .distinctBy { it.id }
-            .sortedWith { a, b ->
-                val aTitle = a.title?.lowercase() ?: ""
-                val bTitle = b.title?.lowercase() ?: ""
-                collator.compare(aTitle, bTitle)
-            }.also { globalState.update { s -> s.copy(permittedVersions = it) } }
-    }
-
     fun previousChapter(
         version: BibleVersion?,
         bibleReference: BibleReference,
@@ -83,6 +71,7 @@ class BibleReaderRepository(
                 // We're navigating to a previous chapter inside the same book
                 bibleReference.copy(chapter = bibleReference.chapter - 1)
             }
+
             previousBookIndex > 0 -> {
                 // We're navigating to the last chapter in the previous book
                 val previousBook = books[previousBookIndex - 1]
@@ -92,9 +81,11 @@ class BibleReaderRepository(
                     chapter = lastChapter,
                 )
             }
-            else ->
+
+            else -> {
                 // We're at the first chapter, intro, etc of the first book (e.g. Genesis 1)
                 null
+            }
         }
     }
 
@@ -112,6 +103,7 @@ class BibleReaderRepository(
                 // We're navigating to the next chapter in the same book
                 bibleReference.copy(chapter = bibleReference.chapter + 1)
             }
+
             currentBookIndex < books.count() - 1 -> {
                 // We're navigating to the first chapter of the next book
                 val nextBook = books.getOrNull(currentBookIndex + 1)
@@ -120,10 +112,58 @@ class BibleReaderRepository(
                     chapter = 1,
                 )
             }
+
             else -> {
                 // We're at the end of the last book
                 null
             }
         }
+    }
+
+    /** In-memory cache of bible versions which have been fetched by language */
+    private var versionsInLanguage: MutableMap<String, List<BibleVersion>> = mutableMapOf()
+
+    /** Holds minimal information about all Bible versions available to this app, in all languages. */
+    var permittedVersions: List<BibleVersion>? = null
+        private set
+
+    /**
+     * Returns minimal information about all Bible versions available to this app, in all languages
+     */
+    suspend fun permittedVersionsListing(): List<BibleVersion> =
+        permittedVersions
+            ?: bibleVersionRepository
+                .permittedVersions()
+                .also { permittedVersions = it }
+
+    /**
+     * Returns complete information about Bible versions available in a specific language.
+     */
+    suspend fun fetchVersionsInLanguage(languageCode: String): List<BibleVersion> {
+        // Check if we already have the versions for this language locally
+        if (!versionsInLanguage[languageCode].isNullOrEmpty()) {
+            return versionsInLanguage[languageCode] ?: emptyList()
+        }
+
+        // There is currently no language with more than 99 versions so ignore pagination for now
+        val unsortedVersions =
+            YouVersionApi.bible
+                .versions(languageCode = languageCode, pageSize = 99)
+                .data
+
+        fun comparableString(bibleVersion: BibleVersion): String =
+            bibleVersion.localizedTitle ?: bibleVersion.title ?: bibleVersion.localizedAbbreviation
+                ?: bibleVersion.abbreviation
+                ?: bibleVersion.id.toString()
+
+        // collator allows for locale-specific string comparisons
+        val collator = Collator.getInstance()
+        return unsortedVersions
+            .distinctBy { it.id }
+            .sortedWith { a, b ->
+                val aTitle = comparableString(a).lowercase()
+                val bTitle = comparableString(b).lowercase()
+                collator.compare(aTitle, bTitle)
+            }.also { globalState.update { s -> s.copy(permittedVersions = it) } }
     }
 }
