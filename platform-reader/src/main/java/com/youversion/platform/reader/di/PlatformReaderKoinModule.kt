@@ -18,7 +18,7 @@ internal val PlatformReaderKoinModule =
 
         // Repositories
         factory { BibleVersionRepository(context = get()) }
-        factoryOf(::BibleReaderRepository)
+        singleOf(::BibleReaderRepository)
         factoryOf(::UserSettingsRepository)
 
         // View Models

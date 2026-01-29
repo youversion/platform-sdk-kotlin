@@ -1,8 +1,8 @@
 package com.youversion.platform.core.bibles.api
 
-import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.PaginatedResponse
 import com.youversion.platform.core.api.buildYouVersionUrlString
+import com.youversion.platform.core.api.fields
 import com.youversion.platform.core.api.pageSize
 import com.youversion.platform.core.api.pageToken
 import com.youversion.platform.core.api.parameter
@@ -31,6 +31,7 @@ object BiblesEndpoints : BiblesApi {
     // ----- Bibles URLs
     fun versionsUrl(
         languageRanges: Set<String> = emptySet(),
+        fields: List<String>? = null,
         pageSize: Int? = null,
         pageToken: String? = null,
     ): String =
@@ -38,7 +39,8 @@ object BiblesEndpoints : BiblesApi {
             path("/v1/bibles")
             val ranges = if (languageRanges.isEmpty()) "*" else languageRanges.joinToString(",")
             parameter("language_ranges[]", ranges)
-            pageSize(pageSize)
+            fields(fields)
+            pageSize(pageSize, fields)
             pageToken(pageToken)
         }
 
@@ -92,18 +94,20 @@ object BiblesEndpoints : BiblesApi {
     // ----- Bibles API
     override suspend fun versions(
         languageCode: String?,
+        fields: List<String>?,
         pageSize: Int?,
         pageToken: String?,
     ): PaginatedResponse<BibleVersion> {
-        if (languageCode != null && languageCode.length != 3) {
-            Logger.w { "Invalid Language Code $languageCode. Must be 3 letters, e.g. 'eng'." }
-            return PaginatedResponse(emptyList())
-        }
-
         val range = languageCode?.let { setOf(it) } ?: emptySet()
         return httpClient
-            .get(versionsUrl(languageRanges = range, pageSize = pageSize, pageToken = pageToken))
-            .let {
+            .get(
+                versionsUrl(
+                    languageRanges = range,
+                    fields = fields,
+                    pageSize = pageSize,
+                    pageToken = pageToken,
+                ),
+            ).let {
                 when (it.status) {
                     HttpStatusCode.NoContent -> PaginatedResponse(emptyList())
                     else -> parsePaginatedResponse(it)

@@ -38,7 +38,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.core.bibles.models.BibleVersion
-import com.youversion.platform.core.utilities.splitAbbreviation
 import com.youversion.platform.reader.R
 import com.youversion.platform.reader.components.BibleReaderTopAppBar
 import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
@@ -92,6 +91,7 @@ internal fun VersionsScreen(
                 item {
                     Box(modifier = Modifier.padding(horizontal = 20.dp)) {
                         LanguageSelector(
+                            enabled = !state.initializing,
                             onClick = onLanguagesClick,
                         )
                     }
@@ -132,7 +132,7 @@ internal fun VersionsScreen(
 
                     else -> {
                         items(
-                            items = state.filteredVersions,
+                            items = state.activeLanguageVersions,
                             key = { it.id },
                         ) { version ->
                             BibleVersionRow(
@@ -163,7 +163,10 @@ internal fun VersionsScreen(
 }
 
 @Composable
-private fun LanguageSelector(onClick: () -> Unit) {
+private fun LanguageSelector(
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier =
@@ -175,7 +178,7 @@ private fun LanguageSelector(onClick: () -> Unit) {
                 ).clickable(
                     interactionSource = null,
                     indication = ripple(),
-                    enabled = true,
+                    enabled = enabled,
                     onClick = onClick,
                 ).padding(16.dp),
     ) {
@@ -220,8 +223,10 @@ private fun BibleVersionRow(
     onVersionInfoClick: () -> Unit,
     onVersionClick: () -> Unit,
 ) {
-    val abbreviation = bibleVersion.localizedAbbreviation ?: bibleVersion.abbreviation ?: bibleVersion.id.toString()
-    val (letters, numbers) = splitAbbreviation(abbreviation)
+    val abbreviation =
+        bibleVersion.localizedAbbreviation
+            ?: bibleVersion.abbreviation
+            ?: bibleVersion.id.toString()
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
