@@ -20,7 +20,6 @@ class BibleReaderRepository(
     private val storage: Storage,
     private val bibleVersionRepository: BibleVersionRepository,
     private val languageRepository: LanguageRepository,
-    private val globalState: BibleReaderGlobalState,
 ) {
     companion object {
         private const val NIV_VERSION_ID = 111
@@ -167,7 +166,7 @@ class BibleReaderRepository(
                 val aTitle = comparableString(a).lowercase()
                 val bTitle = comparableString(b).lowercase()
                 collator.compare(aTitle, bTitle)
-            }.also { globalState.update { s -> s.copy(permittedVersions = it) } }
+            }
     }
 
     // ----- Languages
@@ -238,7 +237,7 @@ class BibleReaderRepository(
         if (names.isEmpty()) return null
         if (names.size < 2) return names.entries.firstOrNull()?.value
 
-        names[Locale.getDefault().language]?.let { return it }
+        names[localeLanguageCode]?.let { return it }
         version?.languageTag?.let { names[it] }?.let { return it }
         names["en"]?.let { return it }
 

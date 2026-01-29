@@ -2,7 +2,6 @@ package com.youversion.platform.reader.di
 
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.reader.BibleReaderViewModel
-import com.youversion.platform.reader.domain.BibleReaderGlobalState
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.reader.screens.languages.LanguagesViewModel
@@ -13,9 +12,6 @@ import org.koin.dsl.module
 
 internal val PlatformReaderKoinModule =
     module {
-        // Global Reader State
-        singleOf(::BibleReaderGlobalState)
-
         // Repositories
         factory { BibleVersionRepository(context = get()) }
         singleOf(::BibleReaderRepository)
