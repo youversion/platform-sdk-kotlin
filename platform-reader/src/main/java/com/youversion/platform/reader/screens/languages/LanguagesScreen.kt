@@ -30,12 +30,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.languages.models.Language
 import com.youversion.platform.reader.components.BibleReaderTopAppBar
 import com.youversion.platform.reader.theme.readerColorScheme
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 private enum class LanguageTab(
     val label: String,
@@ -46,8 +48,11 @@ private enum class LanguageTab(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun LanguagesScreen(onBackClick: () -> Unit) {
-    val viewModel: LanguagesViewModel = koinViewModel()
+internal fun LanguagesScreen(
+    bibleVersion: BibleVersion?,
+    onBackClick: () -> Unit,
+) {
+    val viewModel: LanguagesViewModel = koinViewModel { parametersOf(bibleVersion) }
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     val startDestination = LanguageTab.SUGGESTED
@@ -95,12 +100,19 @@ internal fun LanguagesScreen(onBackClick: () -> Unit) {
                 state = pagerState,
             ) { page ->
                 when (page) {
-                    0 ->
-                        SuggestedLanguagesTab(
+                    0 -> {
+                        LanguagesTab(
                             languages = state.suggestedLanguages,
                             onLanguageClick = { /* TODO */ },
                         )
-                    1 -> AllLanguagesTab()
+                    }
+
+                    1 -> {
+                        LanguagesTab(
+                            languages = state.allLanguages,
+                            onLanguageClick = { /* TODO */ },
+                        )
+                    }
                 }
             }
         }
@@ -108,7 +120,7 @@ internal fun LanguagesScreen(onBackClick: () -> Unit) {
 }
 
 @Composable
-private fun SuggestedLanguagesTab(
+private fun LanguagesTab(
     languages: List<LanguageRowItem>,
     onLanguageClick: (Language) -> Unit,
 ) {
@@ -128,7 +140,9 @@ private fun SuggestedLanguagesTab(
                             interactionSource = null,
                             enabled = true,
                             indication = ripple(),
-                            onClick = { onLanguageClick(language.language) },
+                            onClick = {
+//                                onLanguageClick(language.language)
+                            },
                         ).padding(horizontal = 20.dp, vertical = 8.dp),
             ) {
                 Text(
@@ -147,7 +161,7 @@ private fun SuggestedLanguagesTab(
 }
 
 @Composable
-private fun AllLanguagesTab() {
+private fun AllLanguagesTab(languages: List<LanguageRowItem>) {
     Column(
         modifier =
             Modifier

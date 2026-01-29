@@ -33,5 +33,11 @@ internal val PlatformReaderKoinModule =
         }
 
         factoryOf(::VersionsViewModel)
-        factoryOf(::LanguagesViewModel)
+
+        factory { params ->
+            LanguagesViewModel(
+                bibleVersion = params[0],
+                bibleReaderRepository = get(),
+            )
+        }
     }

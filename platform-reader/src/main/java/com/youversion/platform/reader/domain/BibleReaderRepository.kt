@@ -5,6 +5,8 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.domain.Storage
+import com.youversion.platform.core.languages.domain.LanguageRepository
+import com.youversion.platform.core.languages.models.Language
 import kotlinx.serialization.json.Json
 import java.text.Collator
 import java.util.Locale
@@ -17,6 +19,7 @@ import java.util.Locale
 class BibleReaderRepository(
     private val storage: Storage,
     private val bibleVersionRepository: BibleVersionRepository,
+    private val languageRepository: LanguageRepository,
     private val globalState: BibleReaderGlobalState,
 ) {
     companion object {
@@ -165,5 +168,80 @@ class BibleReaderRepository(
                 val bTitle = comparableString(b).lowercase()
                 collator.compare(aTitle, bTitle)
             }.also { globalState.update { s -> s.copy(permittedVersions = it) } }
+    }
+
+    // ----- Languages
+    val allPermittedLanguageTags: List<String>
+        get() =
+            permittedVersions
+                ?.mapNotNull { it.languageTag }
+                ?.distinct()
+                ?: emptyList()
+
+    private var suggestedLanguageTags: List<String>? = null
+
+    suspend fun suggestedLanguageTags(): List<String> {
+        if (!suggestedLanguageTags.isNullOrEmpty()) {
+            return suggestedLanguageTags!!
+        }
+
+        val data = languageRepository.suggestedLanguages(localeCountryCode)
+        val codes = if (data.isEmpty()) listOf("en", "es") else extractLanguageCodes(data)
+
+        return permittedVersions?.let { permittedVersions ->
+            codes
+                .filter { languageCode ->
+                    permittedVersions.isEmpty() ||
+                        permittedVersions.any { it.languageTag == languageCode }
+                }
+        } ?: codes
+    }
+
+    private fun extractLanguageCodes(languages: List<Language>): List<String> =
+        languages
+            .mapNotNull { it.language }
+            .distinct()
+
+    private var languageNames: Map<String, String> = emptyMap()
+
+    suspend fun loadLanguageNames(version: BibleVersion?) {
+        if (languageNames.isNotEmpty()) return
+
+        val result =
+            languageRepository
+                .languages()
+
+        val langNames =
+            result
+                .mapNotNull { language ->
+                    language.language?.let { code ->
+                        language.displayNames?.let { displayNames ->
+                            bestDisplayName(displayNames, version)?.let { name ->
+                                code to name
+                            }
+                        }
+                    }
+                }.toMap()
+
+        languageNames = langNames
+    }
+
+    fun languageName(lang: String): String =
+        languageNames[lang]
+            ?: Locale.getDefault().getDisplayLanguage(Locale(lang))
+            ?: lang
+
+    private fun bestDisplayName(
+        names: Map<String, String?>,
+        version: BibleVersion?,
+    ): String? {
+        if (names.isEmpty()) return null
+        if (names.size < 2) return names.entries.firstOrNull()?.value
+
+        names[Locale.getDefault().language]?.let { return it }
+        version?.languageTag?.let { names[it] }?.let { return it }
+        names["en"]?.let { return it }
+
+        return names.entries.firstOrNull()?.value
     }
 }
