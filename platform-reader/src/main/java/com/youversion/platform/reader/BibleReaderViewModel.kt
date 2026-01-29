@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 class BibleReaderViewModel(
     bibleReference: BibleReference?,
@@ -55,7 +54,7 @@ class BibleReaderViewModel(
 
         loadUserSettingsFromStorage()
         loadVersionIfNeeded()
-        loadSuggestedLanguages()
+        loadLanguages()
     }
 
     private fun loadUserSettingsFromStorage() {
@@ -216,19 +215,10 @@ class BibleReaderViewModel(
     }
 
     // ----- Languages
-    val localeCountryCode: String
-        get() = Locale.getDefault().country ?: "US"
-    val localeLanguageCode: String
-        get() = Locale.getDefault().language ?: "en"
-
-    private fun loadSuggestedLanguages() {
+    private fun loadLanguages() {
         viewModelScope.launch {
             try {
-//                val languages =
-//                    languagesRepository
-//                        .suggestedLanguages(country = localeCountryCode)
-//                        .map { LanguageRowItem(it, localeLanguageCode) }
-//                _state.update { it.copy(suggestedLanguages = languages) }
+                bibleReaderRepository.loadLanguageNames(bibleVersion)
             } catch (e: Exception) {
                 Logger.w("Failed to get languages", e)
             }

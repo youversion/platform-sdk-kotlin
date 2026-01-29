@@ -15,6 +15,7 @@ import com.youversion.platform.reader.screens.fonts.FontsScreen
 import com.youversion.platform.reader.screens.languages.LanguagesScreen
 import com.youversion.platform.reader.screens.references.ReferencesScreen
 import com.youversion.platform.reader.screens.versions.VersionsScreen
+import com.youversion.platform.reader.screens.versions.VersionsViewModel
 import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
 import com.youversion.platform.reader.theme.FontDefinitionProvider
 import org.koin.androidx.compose.koinViewModel
@@ -37,7 +38,9 @@ fun BibleReader(
     ) {
         rememberKoinModules { listOf(PlatformReaderKoinModule) }
 
-        val viewModel: BibleReaderViewModel = koinViewModel { parametersOf(bibleReference, fontDefinitionProvider) }
+        val bibleReaderViewModel: BibleReaderViewModel =
+            koinViewModel { parametersOf(bibleReference, fontDefinitionProvider) }
+        val versionViewModel: VersionsViewModel = koinViewModel()
 
         val navController = rememberNavController()
         val onDestinationClick: (BibleReaderDestination) -> Unit = { destination ->
@@ -54,7 +57,7 @@ fun BibleReader(
                     route = BibleReaderDestination.Reader.route,
                 ) {
                     BibleScreen(
-                        viewModel = viewModel,
+                        viewModel = bibleReaderViewModel,
                         appName = appName,
                         appSignInMessage = appSignInMessage,
                         bottomBar = bottomBar,
@@ -74,11 +77,12 @@ fun BibleReader(
                     route = BibleReaderDestination.Versions.route,
                 ) {
                     VersionsScreen(
+                        viewModel = versionViewModel,
                         onBackClick = navController::popBackStack,
                         onLanguagesClick = { onDestinationClick(BibleReaderDestination.Languages) },
                         onVersionSelect = { selectedVersion ->
                             navController.popBackStack()
-                            viewModel.switchToVersion(selectedVersion.id)
+                            bibleReaderViewModel.switchToVersion(selectedVersion.id)
                         },
                     )
                 }
@@ -87,23 +91,27 @@ fun BibleReader(
                     route = BibleReaderDestination.Languages.route,
                 ) {
                     LanguagesScreen(
-                        bibleVersion = viewModel.bibleVersion,
+                        bibleVersion = bibleReaderViewModel.bibleVersion,
                         onBackClick = navController::popBackStack,
+                        onLanguageTagSelected = { languageTag ->
+                            versionViewModel.loadVersionsForLanguage(languageTag)
+                            navController.popBackStack()
+                        },
                     )
                 }
                 composable(
                     route = BibleReaderDestination.References.route,
                 ) {
-                    viewModel.bibleVersion?.let {
+                    bibleReaderViewModel.bibleVersion?.let {
                         ReferencesScreen(
                             bibleVersion = it,
-                            bibleReference = viewModel.bibleReference,
+                            bibleReference = bibleReaderViewModel.bibleReference,
                             onSelectionClick = { versionId, bookCode, chapter ->
                                 BibleReference(
                                     versionId = versionId,
                                     bookUSFM = bookCode,
                                     chapter = chapter.toInt(),
-                                ).also { viewModel.onHeaderSelectionChange(it) }
+                                ).also { bibleReaderViewModel.onHeaderSelectionChange(it) }
                                 navController.popBackStack()
                             },
                             onBackClick = navController::popBackStack,
@@ -114,7 +122,7 @@ fun BibleReader(
                     route = BibleReaderDestination.Fonts.route,
                 ) {
                     FontsScreen(
-                        viewModel = viewModel,
+                        viewModel = bibleReaderViewModel,
                         onBackClick = navController::popBackStack,
                     )
                 }

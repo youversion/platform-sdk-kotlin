@@ -48,6 +48,7 @@ private enum class LanguageTab(
 internal fun LanguagesScreen(
     bibleVersion: BibleVersion?,
     onBackClick: () -> Unit,
+    onLanguageTagSelected: (String) -> Unit,
 ) {
     val viewModel: LanguagesViewModel = koinViewModel { parametersOf(bibleVersion) }
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -99,7 +100,7 @@ internal fun LanguagesScreen(
                         LanguagesTab(
                             languages = state.suggestedLanguages,
                             showProgress = state.initializing,
-                            onLanguageClick = { /* TODO */ },
+                            onLanguageClick = onLanguageTagSelected,
                         )
                     }
 
@@ -107,7 +108,7 @@ internal fun LanguagesScreen(
                         LanguagesTab(
                             languages = state.allLanguages,
                             showProgress = state.initializing,
-                            onLanguageClick = { /* TODO */ },
+                            onLanguageClick = onLanguageTagSelected,
                         )
                     }
                 }

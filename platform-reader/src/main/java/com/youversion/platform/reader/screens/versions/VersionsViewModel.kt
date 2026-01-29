@@ -51,6 +51,31 @@ class VersionsViewModel(
         }
     }
 
+    fun loadVersionsForLanguage(languageTag: String) {
+        viewModelScope.launch {
+            try {
+                _state.update {
+                    it.copy(
+                        initializing = true,
+                        activeLanguageTag = languageTag,
+                    )
+                }
+                val versions = bibleReaderRepository.fetchVersionsInLanguage(languageTag)
+                val languageName = bibleReaderRepository.languageName(languageTag)
+                _state.update {
+                    it.copy(
+                        activeLanguageVersions = versions,
+                        activeLanguageName = languageName,
+                    )
+                }
+            } catch (e: Exception) {
+                Logger.e("Error loading versions for language $languageTag", e)
+            } finally {
+                _state.update { it.copy(initializing = false) }
+            }
+        }
+    }
+
     fun onAction(action: Action) {
         when (action) {
             is Action.VersionInfoTapped -> {
@@ -83,6 +108,7 @@ class VersionsViewModel(
         val permittedMinimalVersions: List<BibleVersion> = emptyList(),
         val activeLanguageVersions: List<BibleVersion> = emptyList(),
         val activeLanguageTag: String = "en",
+        val activeLanguageName: String = "English",
         val showBibleVersionLoading: Boolean = false,
         val selectedBibleVersion: BibleVersion? = null,
         val selectedOrganization: Organization? = null,
