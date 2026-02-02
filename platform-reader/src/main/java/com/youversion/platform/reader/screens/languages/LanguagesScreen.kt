@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
@@ -22,20 +23,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.youversion.platform.core.languages.models.Language
+import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.components.BibleReaderTopAppBar
 import com.youversion.platform.reader.theme.readerColorScheme
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 private enum class LanguageTab(
     val label: String,
@@ -46,13 +45,16 @@ private enum class LanguageTab(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun LanguagesScreen(onBackClick: () -> Unit) {
-    val viewModel: LanguagesViewModel = koinViewModel()
+internal fun LanguagesScreen(
+    bibleVersion: BibleVersion?,
+    onBackClick: () -> Unit,
+    onLanguageTagSelected: (String) -> Unit,
+) {
+    val viewModel: LanguagesViewModel = koinViewModel { parametersOf(bibleVersion) }
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    val startDestination = LanguageTab.SUGGESTED
-    var selectedDestination by rememberSaveable { mutableIntStateOf(startDestination.ordinal) }
-    val pagerState = rememberPagerState { 2 }
+    val pagerState =
+        rememberPagerState(initialPage = LanguageTab.SUGGESTED.ordinal) { 2 }
     val scope = rememberCoroutineScope()
 
     Scaffold(
@@ -65,12 +67,12 @@ internal fun LanguagesScreen(onBackClick: () -> Unit) {
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
             PrimaryTabRow(
-                selectedTabIndex = selectedDestination,
+                selectedTabIndex = pagerState.currentPage,
                 containerColor = BibleReaderTheme.colorScheme.canvasPrimary,
                 contentColor = BibleReaderTheme.colorScheme.textPrimary,
                 indicator = {
                     TabRowDefaults.PrimaryIndicator(
-                        modifier = Modifier.tabIndicatorOffset(selectedDestination, matchContentSize = true),
+                        modifier = Modifier.tabIndicatorOffset(pagerState.targetPage, matchContentSize = true),
                         color = BibleReaderTheme.colorScheme.textPrimary,
                         width = Dp.Unspecified,
                     )
@@ -78,12 +80,11 @@ internal fun LanguagesScreen(onBackClick: () -> Unit) {
             ) {
                 LanguageTab.entries.forEachIndexed { index, destination ->
                     Tab(
-                        selected = selectedDestination == index,
+                        selected = pagerState.currentPage == index,
                         onClick = {
                             scope.launch {
                                 pagerState.animateScrollToPage(index)
                             }
-                            selectedDestination = index
                         },
                         text = {
                             Text(text = destination.label)
@@ -95,12 +96,21 @@ internal fun LanguagesScreen(onBackClick: () -> Unit) {
                 state = pagerState,
             ) { page ->
                 when (page) {
-                    0 ->
-                        SuggestedLanguagesTab(
+                    0 -> {
+                        LanguagesTab(
                             languages = state.suggestedLanguages,
-                            onLanguageClick = { /* TODO */ },
+                            showProgress = state.initializing,
+                            onLanguageClick = onLanguageTagSelected,
                         )
-                    1 -> AllLanguagesTab()
+                    }
+
+                    1 -> {
+                        LanguagesTab(
+                            languages = state.allLanguages,
+                            showProgress = state.initializing,
+                            onLanguageClick = onLanguageTagSelected,
+                        )
+                    }
                 }
             }
         }
@@ -108,14 +118,20 @@ internal fun LanguagesScreen(onBackClick: () -> Unit) {
 }
 
 @Composable
-private fun SuggestedLanguagesTab(
+private fun LanguagesTab(
     languages: List<LanguageRowItem>,
-    onLanguageClick: (Language) -> Unit,
+    showProgress: Boolean,
+    onLanguageClick: (String) -> Unit,
 ) {
     LazyColumn(
         contentPadding = PaddingValues(vertical = 20.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
+        if (showProgress) {
+            item {
+                CircularProgressIndicator()
+            }
+        }
         items(
             items = languages,
         ) { language ->
@@ -128,7 +144,9 @@ private fun SuggestedLanguagesTab(
                             interactionSource = null,
                             enabled = true,
                             indication = ripple(),
-                            onClick = { onLanguageClick(language.language) },
+                            onClick = {
+                                onLanguageClick(language.languageTag)
+                            },
                         ).padding(horizontal = 20.dp, vertical = 8.dp),
             ) {
                 Text(
@@ -143,26 +161,5 @@ private fun SuggestedLanguagesTab(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun AllLanguagesTab() {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp),
-    ) {
-        Text("All Languages")
-        Text("All Languages")
-        Text("All Languages")
-        Text("All Languages")
-        Text("All Languages")
-        Text("All Languages")
-        Text("All Languages")
-        Text("All Languages")
-        Text("All Languages")
-        Text("All Languages")
     }
 }

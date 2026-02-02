@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.YouVersionApi
-import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.organizations.models.Organization
 import com.youversion.platform.reader.domain.BibleReaderRepository
@@ -16,7 +15,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class VersionsViewModel(
-    private val bibleVersionRepository: BibleVersionRepository,
     private val bibleReaderRepository: BibleReaderRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(State())
@@ -47,6 +45,31 @@ class VersionsViewModel(
                 }
             } catch (e: Exception) {
                 Logger.e("Error loading versions", e)
+            } finally {
+                _state.update { it.copy(initializing = false) }
+            }
+        }
+    }
+
+    fun loadVersionsForLanguage(languageTag: String) {
+        viewModelScope.launch {
+            try {
+                _state.update {
+                    it.copy(
+                        initializing = true,
+                        activeLanguageTag = languageTag,
+                    )
+                }
+                val versions = bibleReaderRepository.fetchVersionsInLanguage(languageTag)
+                val languageName = bibleReaderRepository.languageName(languageTag)
+                _state.update {
+                    it.copy(
+                        activeLanguageVersions = versions,
+                        activeLanguageName = languageName,
+                    )
+                }
+            } catch (e: Exception) {
+                Logger.e("Error loading versions for language $languageTag", e)
             } finally {
                 _state.update { it.copy(initializing = false) }
             }
@@ -85,6 +108,7 @@ class VersionsViewModel(
         val permittedMinimalVersions: List<BibleVersion> = emptyList(),
         val activeLanguageVersions: List<BibleVersion> = emptyList(),
         val activeLanguageTag: String = "en",
+        val activeLanguageName: String = "English",
         val showBibleVersionLoading: Boolean = false,
         val selectedBibleVersion: BibleVersion? = null,
         val selectedOrganization: Organization? = null,

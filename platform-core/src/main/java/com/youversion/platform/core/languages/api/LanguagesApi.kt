@@ -17,6 +17,7 @@ interface LanguagesApi {
      */
     suspend fun languages(
         country: String? = null,
+        fields: List<String>? = null,
         perPage: Int? = null,
         pageToken: String? = null,
     ): PaginatedResponse<Language>
