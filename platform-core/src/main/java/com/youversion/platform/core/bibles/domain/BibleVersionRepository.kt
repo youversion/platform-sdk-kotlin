@@ -5,6 +5,8 @@ import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.models.BibleVersion
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 enum class BibleVersionDownloadStatus {
     DOWNLOADABLE,
@@ -18,6 +20,7 @@ class BibleVersionRepository(
     private val persistentCache: BibleVersionCache,
 ) {
     private val inFlightTasks = mutableMapOf<Int, Deferred<BibleVersion>>()
+    private val inFlightTasksMutex = Mutex()
 
     // ----- Versions
     suspend fun versionIfCached(id: Int): BibleVersion? =
@@ -34,13 +37,15 @@ class BibleVersionRepository(
         }
 
         // If a fetch is already in-flight, await its result
-        inFlightTasks[id]?.let { task ->
-            return task.await()
-        }
+        inFlightTasksMutex
+            .withLock { inFlightTasks[id] }
+            ?.let { task ->
+                if (task.isActive) return task.await()
+            }
 
         // Otherwise, create a new fetch task
         val deferred = CompletableDeferred<BibleVersion>()
-        inFlightTasks[id] = deferred
+        inFlightTasksMutex.withLock { inFlightTasks[id] = deferred }
 
         return try {
             val version = YouVersionApi.bible.version(id)
@@ -53,7 +58,7 @@ class BibleVersionRepository(
             deferred.completeExceptionally(e)
             throw e
         } finally {
-            inFlightTasks.remove(id)
+            inFlightTasksMutex.withLock { inFlightTasks.remove(id) }
         }
     }
 
