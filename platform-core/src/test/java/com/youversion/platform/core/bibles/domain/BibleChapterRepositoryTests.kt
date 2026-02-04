@@ -10,7 +10,6 @@ import io.ktor.client.engine.mock.MockEngine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -116,12 +115,11 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
     @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
     @Test
     fun `test concurrent calls only ever trigger a single in-flight task`() =
-        runTest(UnconfinedTestDispatcher()) {
+        runTest {
             val count = AtomicInt(0)
 
             MockEngine {
                 count.incrementAndFetch()
-                println("Request received")
                 respondJson(
                     """
                     {

@@ -9,7 +9,13 @@ import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
 import io.ktor.client.engine.mock.MockEngine
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -137,6 +143,44 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
             assertTrue { memoryCache.versionIsPresent(206) }
             assertTrue { temporaryCache.versionIsPresent(206) }
             assertTrue { persistentCache.versionIsPresent(206) }
+        }
+
+    @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test version deduplicates API calls`() =
+        runTest {
+            val count = AtomicInt(0)
+
+            MockEngine { request ->
+                count.incrementAndFetch()
+                val bible206Json = FixtureLoader().loadFixtureString("bible_206")
+                val bible206IndexJson = FixtureLoader().loadFixtureString("bible_206_index")
+
+                when (request.url.encodedPath) {
+                    "/v1/bibles/206" -> respondJson(bible206Json)
+                    "/v1/bibles/206/index" -> respondJson(bible206IndexJson)
+                    else -> throw IllegalArgumentException("Unexpected request path: ${request.url.encodedPath}")
+                }
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            joinAll(
+                launch { repository.version(206) },
+                launch { repository.version(206) },
+                launch { repository.version(206) },
+                launch { repository.version(206) },
+                launch { repository.version(206) },
+                launch { repository.version(206) },
+            )
+
+            // Assert all other tasks waited on the first one to complete
+            assertEquals(2, count.load())
+
+            // Clear Cache
+            repository.removeVersion(206)
+
+            // Assert another call would trigger a new request, asserting the task was removed
+            repository.version(206)
+            assertEquals(4, count.load())
         }
 
     // ----- versionIsPresent
