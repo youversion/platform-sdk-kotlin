@@ -19,7 +19,7 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
     lateinit var temporaryCache: BibleVersionCache
     lateinit var persistentCache: BibleVersionCache
 
-    lateinit var repository: BibleVersionRepository
+    lateinit var repository: BibleChapterRepository
 
     @BeforeTest
     fun setup() {
@@ -29,7 +29,7 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
         persistentCache = BibleVersionMemoryCache()
 
         repository =
-            BibleVersionRepository(
+            BibleChapterRepository(
                 memoryCache = memoryCache,
                 temporaryCache = temporaryCache,
                 persistentCache = persistentCache,
