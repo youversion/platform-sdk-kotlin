@@ -64,6 +64,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     implementation(libs.koin.core)
+    implementation(libs.koin.androidx.compose)
 }
 
 mavenPublishing {
