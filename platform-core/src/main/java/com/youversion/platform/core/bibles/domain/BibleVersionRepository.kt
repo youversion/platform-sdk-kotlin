@@ -1,12 +1,8 @@
 package com.youversion.platform.core.bibles.domain
 
-import android.content.Context
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.data.BibleVersionCache
-import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
-import com.youversion.platform.core.bibles.data.BibleVersionPersistentCache
-import com.youversion.platform.core.bibles.data.BibleVersionTemporaryCache
 import com.youversion.platform.core.bibles.models.BibleVersion
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
@@ -22,12 +18,6 @@ class BibleVersionRepository(
     private val temporaryCache: BibleVersionCache,
     private val persistentCache: BibleVersionCache,
 ) {
-    constructor(context: Context) : this(
-        memoryCache = BibleVersionMemoryCache(),
-        temporaryCache = BibleVersionTemporaryCache(context),
-        persistentCache = BibleVersionPersistentCache(context),
-    )
-
     private val inFlightTasks = mutableMapOf<Int, Deferred<BibleVersion>>()
 
     // ----- Versions

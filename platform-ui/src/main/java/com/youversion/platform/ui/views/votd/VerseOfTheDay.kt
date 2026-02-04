@@ -22,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -30,14 +29,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.foundation.PlatformKoinGraph
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.di.PlatformUIKoinModule
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.PreviewBackground
 import com.youversion.platform.ui.views.components.BibleAppLogo
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.KoinIsolatedContext
+import org.koin.compose.module.rememberKoinModules
+import org.koin.core.annotation.KoinExperimentalAPI
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun CompactVerseOfTheDay(
@@ -71,6 +76,7 @@ fun VerseOfTheDay(
     )
 }
 
+@OptIn(KoinExperimentalAPI::class)
 @Composable
 private fun InternalVerseOfTheDay(
     bibleVersionId: Int,
@@ -80,33 +86,35 @@ private fun InternalVerseOfTheDay(
     onShareClick: () -> Unit = {},
     onFullChapterClick: () -> Unit = {},
 ) {
-    val context = LocalContext.current
+    KoinIsolatedContext(
+        context = PlatformKoinGraph.koinApplication,
+    ) {
+        rememberKoinModules { listOf(PlatformUIKoinModule) }
+        val viewModel: VerseOfTheDayViewModel = koinViewModel { parametersOf(bibleVersionId) }
+        val state by viewModel.state.collectAsStateWithLifecycle()
 
-    val viewModel: VerseOfTheDayViewModel =
-        viewModel(factory = VerseOfTheDayViewModel.factory(context, bibleVersionId))
-    val state by viewModel.state.collectAsStateWithLifecycle()
-
-    Box {
-        if (state.isLoading) {
-            CircularProgressIndicator()
-        } else {
-            if (state.bibleReference != null && state.bibleVersion != null) {
-                if (compact) {
-                    CompactVerseOfTheDayContent(
-                        bibleReference = state.bibleReference!!,
-                        bibleVersion = state.bibleVersion!!,
-                        dark = dark,
-                        showIcon = showIcon,
-                    )
-                } else {
-                    VerseOfTheDayContent(
-                        bibleReference = state.bibleReference!!,
-                        bibleVersion = state.bibleVersion!!,
-                        dark = dark,
-                        showIcon = showIcon,
-                        onShareClick = onShareClick,
-                        onFullChapterClick = onFullChapterClick,
-                    )
+        Box {
+            if (state.isLoading) {
+                CircularProgressIndicator()
+            } else {
+                if (state.bibleReference != null && state.bibleVersion != null) {
+                    if (compact) {
+                        CompactVerseOfTheDayContent(
+                            bibleReference = state.bibleReference!!,
+                            bibleVersion = state.bibleVersion!!,
+                            dark = dark,
+                            showIcon = showIcon,
+                        )
+                    } else {
+                        VerseOfTheDayContent(
+                            bibleReference = state.bibleReference!!,
+                            bibleVersion = state.bibleVersion!!,
+                            dark = dark,
+                            showIcon = showIcon,
+                            onShareClick = onShareClick,
+                            onFullChapterClick = onFullChapterClick,
+                        )
+                    }
                 }
             }
         }
