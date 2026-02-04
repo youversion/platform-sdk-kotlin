@@ -168,6 +168,24 @@ internal fun BibleScreen(
                                 footnoteMode = BibleTextFootnoteMode.IMAGE,
                             ),
                         reference = state.bibleReference,
+                        selectedVerses = state.selectedVerses,
+                        onVerseTap = { reference, _ ->
+                            if (signInState.isSignedIn) {
+                                viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(reference))
+                            } else {
+                                signInLauncher(
+                                    SignInParameters(
+                                        context = context,
+                                        launcher = authTabLauncher,
+                                        permissions =
+                                            setOf(
+                                                SignInWithYouVersionPermission.PROFILE,
+                                                SignInWithYouVersionPermission.EMAIL,
+                                            ),
+                                    ),
+                                )
+                            }
+                        },
                         onStateChange = { loadingPhase = it },
                         onFootnoteTap = { reference, footnotes ->
                             viewModel.onAction(
