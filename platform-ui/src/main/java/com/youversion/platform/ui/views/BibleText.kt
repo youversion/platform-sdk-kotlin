@@ -29,7 +29,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -45,9 +44,11 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
+import com.youversion.platform.foundation.PlatformKoinGraph
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
@@ -143,7 +144,8 @@ fun BibleText(
     var blocks by remember { mutableStateOf<List<BibleTextBlock>>(emptyList()) }
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
     var isVersionRightToLeft by remember { mutableStateOf(false) }
-    val bibleVersionRepository = BibleVersionRepository(LocalContext.current)
+    val versionRepository: BibleVersionRepository = PlatformKoinGraph.koinApplication.koin.get()
+    val chapterRepository: BibleChapterRepository = PlatformKoinGraph.koinApplication.koin.get()
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -154,11 +156,11 @@ fun BibleText(
     LaunchedEffect(reference, textOptions) {
         loadingPhase = BibleTextLoadingPhase.LOADING
         try {
-            isVersionRightToLeft = bibleVersionRepository.version(reference.versionId).isRightToLeft
+            isVersionRightToLeft = versionRepository.version(reference.versionId).isRightToLeft
 
             val loadedBlocks =
                 BibleVersionRendering.textBlocks(
-                    bibleVersionRepository = bibleVersionRepository,
+                    bibleChapterRepository = chapterRepository,
                     reference = reference,
                     renderVerseNumbers = textOptions.renderVerseNumbers,
                     footnoteMode = textOptions.footnoteMode,
