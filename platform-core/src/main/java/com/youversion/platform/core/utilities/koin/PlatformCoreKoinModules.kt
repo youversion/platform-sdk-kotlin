@@ -48,7 +48,7 @@ internal val PlatformCoreCacheKoinModule =
 
 internal val PlatformCoreDomainKoinModule =
     module {
-        factory {
+        single {
             BibleVersionRepository(
                 memoryCache = get(named("memory")),
                 temporaryCache = get(named("temporary")),
@@ -56,7 +56,7 @@ internal val PlatformCoreDomainKoinModule =
             )
         }
 
-        factory {
+        single {
             BibleChapterRepository(
                 memoryCache = get(named("memory")),
                 temporaryCache = get(named("temporary")),

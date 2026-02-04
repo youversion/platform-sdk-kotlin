@@ -7,7 +7,14 @@ import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
 import io.ktor.client.engine.mock.MockEngine
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -104,6 +111,47 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
             assertEquals("content", memoryCache.chapterContent(reference))
             assertEquals("content", temporaryCache.chapterContent(reference))
             assertEquals("content", persistentCache.chapterContent(reference))
+        }
+
+    @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test concurrent calls only ever trigger a single in-flight task`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val count = AtomicInt(0)
+
+            MockEngine {
+                count.incrementAndFetch()
+                println("Request received")
+                respondJson(
+                    """
+                    {
+                        "id": "JHN.3.1",
+                        "content": "content",
+                        "reference": "John 3:1"
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+
+            joinAll(
+                launch { repository.chapter(reference) },
+                launch { repository.chapter(reference) },
+                launch { repository.chapter(reference) },
+                launch { repository.chapter(reference) },
+                launch { repository.chapter(reference) },
+                launch { repository.chapter(reference) },
+            )
+
+            // Assert all other tasks waited on the first one to complete
+            assertEquals(1, count.load())
+
+            repository.removeVersionChapters(206)
+
+            // Assert another call would trigger a new request, asserting the task was removed
+            repository.chapter(reference)
+            assertEquals(2, count.load())
         }
 
     // ----- removeVersionChapters
