@@ -281,9 +281,12 @@ Explore the [examples directory](./examples) for a complete sample app demonstra
 - Best practices for token storage
 
 To run the sample app:
-1. Open the root `platform-sdk-kotlin` directory in Android Studio
-2. Select the `examples.sample-android` module
-3. Build and run on emulator or device
+1. Open the `platform-sdk-kotlin` directory in Android Studio
+2. Wait for Gradle sync to complete (File → Sync Project with Gradle Files if needed)
+3. Add your API key to `examples/sample-android/src/main/java/com/youversion/platform/MainApplication.kt`
+4. Select `sample-android` from the run configuration dropdown
+5. Create an emulator if needed (Tools → Device Manager → Create Device)
+6. Click Run
 
 ## 🎯 For Different Use Cases
 
