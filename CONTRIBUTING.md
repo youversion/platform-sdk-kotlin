@@ -7,6 +7,33 @@ to include the Bible in your own app!
 For more information, please visit [the developer documentation](https://developers.youversion.com/overview).
 
 
+## Quick Start (Run Sample App)
+
+1. **Clone** the repository:
+   ```bash
+   git clone https://github.com/youversion/platform-sdk-kotlin.git
+   ```
+
+2. **Get an API key** from [platform.youversion.com](https://platform.youversion.com/)
+
+3. **Add your API key** to `examples/sample-android/src/main/java/com/youversion/platform/MainApplication.kt`:
+   ```kotlin
+   appKey = "YOUR_API_KEY_HERE"
+   ```
+
+4. **Open in Android Studio**:
+   - File → Open → select the `platform-sdk-kotlin` folder
+   - File → Sync Project with Gradle Files (wait for sync to complete)
+
+5. **Set up an emulator** (if needed):
+   - Tools → Device Manager → Create Device
+   - Select a phone (e.g., Pixel 8) and a system image (API 34+)
+
+6. **Run the sample app**:
+   - Select `sample-android` from the run configuration dropdown
+   - Click Run
+
+
 ## How to Contribute
 
 There are many ways you can help!
