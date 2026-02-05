@@ -1,12 +1,8 @@
 package com.youversion.platform.ui.views.votd
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.InitializerViewModelFactoryBuilder
-import androidx.lifecycle.viewmodel.initializer
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
@@ -19,7 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-internal class VerseOfTheDayViewModel private constructor(
+internal class VerseOfTheDayViewModel(
     private val bibleVersionId: Int,
     private val bibleVersionRepository: BibleVersionRepository,
 ) : ViewModel() {
@@ -67,21 +63,4 @@ internal class VerseOfTheDayViewModel private constructor(
 
     // ----- Actions
     sealed interface Action
-
-    // ----- Injection
-    companion object {
-        fun factory(
-            context: Context,
-            bibleVersionId: Int,
-        ): ViewModelProvider.Factory =
-            InitializerViewModelFactoryBuilder()
-                .apply {
-                    initializer {
-                        VerseOfTheDayViewModel(
-                            bibleVersionId = bibleVersionId,
-                            bibleVersionRepository = BibleVersionRepository(context),
-                        )
-                    }
-                }.build()
-    }
 }

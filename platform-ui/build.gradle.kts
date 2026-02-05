@@ -49,6 +49,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.platformFoundation)
     implementation(projects.platformCore)
 
     implementation(libs.androidx.browser)
@@ -61,6 +62,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    implementation(libs.koin.core)
+    implementation(libs.koin.androidx.compose)
 }
 
 mavenPublishing {

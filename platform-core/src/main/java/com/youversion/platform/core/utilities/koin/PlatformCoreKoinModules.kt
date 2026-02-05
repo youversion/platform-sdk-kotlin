@@ -6,6 +6,7 @@ import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
 import com.youversion.platform.core.bibles.data.BibleVersionPersistentCache
 import com.youversion.platform.core.bibles.data.BibleVersionTemporaryCache
+import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.data.SharedPreferencesStorage
 import com.youversion.platform.core.domain.Storage
@@ -47,13 +48,22 @@ internal val PlatformCoreCacheKoinModule =
 
 internal val PlatformCoreDomainKoinModule =
     module {
-        factory {
+        single {
             BibleVersionRepository(
                 memoryCache = get(named("memory")),
                 temporaryCache = get(named("temporary")),
                 persistentCache = get(named("persistent")),
             )
         }
+
+        single {
+            BibleChapterRepository(
+                memoryCache = get(named("memory")),
+                temporaryCache = get(named("temporary")),
+                persistentCache = get(named("persistent")),
+            )
+        }
+
         factoryOf(::LanguageRepository)
         factoryOf(::SessionRepository)
     }

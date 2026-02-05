@@ -1,12 +1,8 @@
 package com.youversion.platform.ui.views.widget
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.InitializerViewModelFactoryBuilder
-import androidx.lifecycle.viewmodel.initializer
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -17,7 +13,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-internal class BibleWidgetViewModel private constructor(
+internal class BibleWidgetViewModel(
     private val reference: BibleReference,
     bibleVersion: BibleVersion?,
     private val bibleVersionRepository: BibleVersionRepository,
@@ -70,24 +66,5 @@ internal class BibleWidgetViewModel private constructor(
         data object OnViewCopyright : Action
 
         data object OnCloseCopyright : Action
-    }
-
-    // ----- Injection
-    companion object {
-        fun factory(
-            context: Context,
-            reference: BibleReference,
-            bibleVersion: BibleVersion?,
-        ): ViewModelProvider.Factory =
-            InitializerViewModelFactoryBuilder()
-                .apply {
-                    initializer {
-                        BibleWidgetViewModel(
-                            reference,
-                            bibleVersion,
-                            BibleVersionRepository(context),
-                        )
-                    }
-                }.build()
     }
 }

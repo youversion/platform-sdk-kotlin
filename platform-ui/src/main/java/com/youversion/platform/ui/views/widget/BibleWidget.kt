@@ -35,14 +35,20 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.foundation.PlatformKoinGraph
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.di.PlatformUIKoinModule
 import com.youversion.platform.ui.utilities.ObserveAsEvents
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.components.BibleAppLogo
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.KoinIsolatedContext
+import org.koin.compose.module.rememberKoinModules
+import org.koin.core.annotation.KoinExperimentalAPI
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun BibleWidget(
@@ -63,7 +69,7 @@ fun BibleWidget(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, KoinExperimentalAPI::class)
 @Composable
 fun BibleWidget(
     reference: BibleReference,
@@ -71,58 +77,63 @@ fun BibleWidget(
     modifier: Modifier = Modifier,
     version: BibleVersion? = null,
 ) {
-    val context = LocalContext.current
+    KoinIsolatedContext(
+        context = PlatformKoinGraph.koinApplication,
+    ) {
+        rememberKoinModules { listOf(PlatformUIKoinModule) }
 
-    val viewModel: BibleWidgetViewModel =
-        viewModel(factory = BibleWidgetViewModel.factory(context, reference, version))
-    val state by viewModel.state.collectAsStateWithLifecycle()
+        val context = LocalContext.current
 
-    ObserveAsEvents(viewModel.events) { event ->
-        when (event) {
-            is BibleWidgetViewModel.Event.OnErrorLoadingBibleVersion -> {
-                Toast.makeText(context, "Error loading Bible version", Toast.LENGTH_LONG).show()
+        val viewModel: BibleWidgetViewModel = koinViewModel { parametersOf(reference, version) }
+        val state by viewModel.state.collectAsStateWithLifecycle()
+
+        ObserveAsEvents(viewModel.events) { event ->
+            when (event) {
+                is BibleWidgetViewModel.Event.OnErrorLoadingBibleVersion -> {
+                    Toast.makeText(context, "Error loading Bible version", Toast.LENGTH_LONG).show()
+                }
             }
         }
-    }
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = modifier,
-    ) {
-        HeaderReference(
-            reference = reference,
-            version = state.bibleVersion,
-        )
-        Box(
-            modifier =
-                Modifier
-                    .weight(1f, fill = false)
-                    .verticalScroll(rememberScrollState()),
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = modifier,
         ) {
-            BibleText(
+            HeaderReference(
                 reference = reference,
-                textOptions = textOptions,
-            )
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Copyright(
                 version = state.bibleVersion,
-                onClick = { viewModel.onAction(BibleWidgetViewModel.Action.OnViewCopyright) },
             )
-            BibleAppLogo()
+            Box(
+                modifier =
+                    Modifier
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
+            ) {
+                BibleText(
+                    reference = reference,
+                    textOptions = textOptions,
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Copyright(
+                    version = state.bibleVersion,
+                    onClick = { viewModel.onAction(BibleWidgetViewModel.Action.OnViewCopyright) },
+                )
+                BibleAppLogo()
+            }
         }
-    }
 
-    if (state.showCopyright) {
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.onAction(BibleWidgetViewModel.Action.OnCloseCopyright) },
-        ) {
-            CopyrightSheetContent(
-                version = state.bibleVersion,
-            )
+        if (state.showCopyright) {
+            ModalBottomSheet(
+                onDismissRequest = { viewModel.onAction(BibleWidgetViewModel.Action.OnCloseCopyright) },
+            ) {
+                CopyrightSheetContent(
+                    version = state.bibleVersion,
+                )
+            }
         }
     }
 }
