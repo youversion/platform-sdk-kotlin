@@ -8,7 +8,7 @@ class MainApplication : Application() {
         super.onCreate()
         YouVersionPlatformConfiguration.configure(
             context = this,
-            appKey = "M77XmvwImB5XigJNy7AcqTrjSzDbpJTftSQvSY7M10ud9LhC",
+            appKey = TODO("Provide your app key"),
         )
     }
 }
