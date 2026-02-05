@@ -19,6 +19,7 @@ androidXBrowser = "1.9.0"
 
 # Dependencies
 coreKtx = "1.17.0"
+mockk = "1.13.13"
 coroutines = "1.10.2"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.12.2"
@@ -55,6 +56,8 @@ kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", 
 kotlin-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinSerialization" }
+
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
