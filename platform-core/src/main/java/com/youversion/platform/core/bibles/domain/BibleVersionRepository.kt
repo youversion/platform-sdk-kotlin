@@ -1,15 +1,12 @@
 package com.youversion.platform.core.bibles.domain
 
-import android.content.Context
-import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.data.BibleVersionCache
-import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
-import com.youversion.platform.core.bibles.data.BibleVersionPersistentCache
-import com.youversion.platform.core.bibles.data.BibleVersionTemporaryCache
 import com.youversion.platform.core.bibles.models.BibleVersion
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 enum class BibleVersionDownloadStatus {
     DOWNLOADABLE,
@@ -22,13 +19,8 @@ class BibleVersionRepository(
     private val temporaryCache: BibleVersionCache,
     private val persistentCache: BibleVersionCache,
 ) {
-    constructor(context: Context) : this(
-        memoryCache = BibleVersionMemoryCache(),
-        temporaryCache = BibleVersionTemporaryCache(context),
-        persistentCache = BibleVersionPersistentCache(context),
-    )
-
     private val inFlightTasks = mutableMapOf<Int, Deferred<BibleVersion>>()
+    private val inFlightTasksMutex = Mutex()
 
     // ----- Versions
     suspend fun versionIfCached(id: Int): BibleVersion? =
@@ -45,13 +37,15 @@ class BibleVersionRepository(
         }
 
         // If a fetch is already in-flight, await its result
-        inFlightTasks[id]?.let { task ->
-            return task.await()
-        }
+        inFlightTasksMutex
+            .withLock { inFlightTasks[id] }
+            ?.let { task ->
+                if (task.isActive) return task.await()
+            }
 
         // Otherwise, create a new fetch task
         val deferred = CompletableDeferred<BibleVersion>()
-        inFlightTasks[id] = deferred
+        inFlightTasksMutex.withLock { inFlightTasks[id] = deferred }
 
         return try {
             val version = YouVersionApi.bible.version(id)
@@ -64,7 +58,7 @@ class BibleVersionRepository(
             deferred.completeExceptionally(e)
             throw e
         } finally {
-            inFlightTasks.remove(id)
+            inFlightTasksMutex.withLock { inFlightTasks.remove(id) }
         }
     }
 
@@ -113,36 +107,4 @@ class BibleVersionRepository(
                         BibleVersion.CodingKey.LANGUAGE_TAG,
                     ),
             ).data
-
-    // ----- Chapters
-    suspend fun chapter(reference: BibleReference): String {
-        val logKey = "${reference.versionId}_${reference.chapterUSFM}"
-        memoryCache.chapterContent(reference)?.let {
-            return it
-        }
-
-        temporaryCache.chapterContent(reference)?.let {
-            memoryCache.addChapterContents(it, reference)
-            return it
-        }
-
-        persistentCache.chapterContent(reference)?.let {
-            memoryCache.addChapterContents(it, reference)
-            return it
-        }
-
-        Logger.d { "$logKey Not found in any cache. Fetching from network..." }
-        val contents = YouVersionApi.bible.passage(reference).content
-        memoryCache.addChapterContents(contents, reference)
-        temporaryCache.addChapterContents(contents, reference)
-        persistentCache.addChapterContents(contents, reference)
-
-        return contents
-    }
-
-    suspend fun removeVersionChapters(versionId: Int) {
-        memoryCache.removeVersionChapters(versionId)
-        temporaryCache.removeVersionChapters(versionId)
-        persistentCache.removeVersionChapters(versionId)
-    }
 }

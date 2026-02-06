@@ -14,10 +14,10 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleTextNode
 import com.youversion.platform.core.bibles.domain.BibleTextNodeType
-import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.ui.views.BibleTextFontOption
 import com.youversion.platform.ui.views.BibleTextFonts
@@ -39,14 +39,14 @@ object BibleVersionRendering {
      * Returns plain text for a Bible reference.
      */
     suspend fun plainTextOf(
-        bibleVersionRepository: BibleVersionRepository,
+        bibleChapterRepository: BibleChapterRepository,
         reference: BibleReference,
     ): String? {
         val fonts = BibleTextFonts(fontFamily = FontFamily.Default, baseSize = 16.sp)
         return try {
             val blocks =
                 textBlocks(
-                    bibleVersionRepository = bibleVersionRepository,
+                    bibleChapterRepository = bibleChapterRepository,
                     reference = reference,
                     renderVerseNumbers = false,
                     renderHeadlines = false,
@@ -65,7 +65,7 @@ object BibleVersionRendering {
      * Formats Bible data into styled AnnotatedString blocks for Compose.
      */
     suspend fun textBlocks(
-        bibleVersionRepository: BibleVersionRepository,
+        bibleChapterRepository: BibleChapterRepository,
         reference: BibleReference,
         renderVerseNumbers: Boolean = true,
         renderHeadlines: Boolean = true,
@@ -85,11 +85,11 @@ object BibleVersionRendering {
 
             val rootNode: BibleTextNode? =
                 try {
-                    var data = bibleVersionRepository.chapter(reference = chapterRef)
+                    var data = bibleChapterRepository.chapter(reference = chapterRef)
                     val node = BibleTextNode.parse(data)
                     if (node?.children?.count() == 0) {
-                        bibleVersionRepository.removeVersionChapters(reference.versionId)
-                        data = bibleVersionRepository.chapter(reference = chapterRef)
+                        bibleChapterRepository.removeVersionChapters(reference.versionId)
+                        data = bibleChapterRepository.chapter(reference = chapterRef)
                         BibleTextNode.parse(data)
                     } else {
                         node
@@ -906,7 +906,7 @@ class StateUp(
                 start = start,
                 end = end,
             )
-            if (verse > 0) {
+            if (verse > 0 && category != BibleTextCategory.HEADER) {
                 addStringAnnotation(
                     tag = BibleReferenceAttribute.NAME,
                     annotation = "$versionId:$bookUSFM:$chapter:$verse",
