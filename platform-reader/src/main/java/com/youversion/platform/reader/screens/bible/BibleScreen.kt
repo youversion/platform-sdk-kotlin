@@ -45,6 +45,7 @@ import com.youversion.platform.reader.components.BibleReaderPassageSelection
 import com.youversion.platform.reader.components.PassageSelectionDefaults
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
+import com.youversion.platform.reader.sheets.BibleReaderVerseActionSheet
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
@@ -261,6 +262,13 @@ internal fun BibleScreen(
                     version = state.bibleVersion,
                     reference = state.footnotesReference,
                     footnotes = state.footnotes,
+                )
+            }
+
+            if (state.isShowingVerseActionSheet) {
+                BibleReaderVerseActionSheet(
+                    selectedVerses = state.selectedVerses,
+                    onDismiss = { viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection) },
                 )
             }
         }
