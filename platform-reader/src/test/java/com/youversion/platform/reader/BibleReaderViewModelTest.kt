@@ -78,13 +78,13 @@ class BibleReaderViewModelTest {
         }
 
     @Test
-    fun `selecting verse sets isShowingVerseActionSheet to true`() =
+    fun `selecting verse sets showVerseActionSheet to true`() =
         runTest {
             val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
 
-            assertTrue(viewModel.state.value.isShowingVerseActionSheet)
+            assertTrue(viewModel.state.value.showVerseActionSheet)
         }
 
     @Test
@@ -102,14 +102,14 @@ class BibleReaderViewModelTest {
         }
 
     @Test
-    fun `deselecting last verse sets isShowingVerseActionSheet to false`() =
+    fun `deselecting last verse sets showVerseActionSheet to false`() =
         runTest {
             val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
 
-            assertFalse(viewModel.state.value.isShowingVerseActionSheet)
+            assertFalse(viewModel.state.value.showVerseActionSheet)
         }
 
     @Test
@@ -128,94 +128,5 @@ class BibleReaderViewModelTest {
                 viewModel.state.value.selectedVerses
                     .containsAll(setOf(verse1, verse2, verse3)),
             )
-        }
-
-    @Test
-    fun `ClearVerseSelection clears all selected verses`() =
-        runTest {
-            val verse1 = defaultReference.copy(verseStart = 1, verseEnd = 1)
-            val verse2 = defaultReference.copy(verseStart = 2, verseEnd = 2)
-            viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verse1))
-            viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verse2))
-
-            viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection)
-
-            assertTrue(
-                viewModel.state.value.selectedVerses
-                    .isEmpty(),
-            )
-        }
-
-    @Test
-    fun `ClearVerseSelection sets isShowingVerseActionSheet to false`() =
-        runTest {
-            val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
-            viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
-
-            viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection)
-
-            assertFalse(viewModel.state.value.isShowingVerseActionSheet)
-        }
-
-    @Test
-    fun `GoToNextChapter clears verse selection`() =
-        runTest {
-            val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
-            val nextChapterRef = defaultReference.copy(chapter = 2)
-            every { bibleReaderRepository.nextChapter(any(), any()) } returns nextChapterRef
-            viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
-
-            viewModel.onAction(BibleReaderViewModel.Action.GoToNextChapter)
-
-            assertTrue(
-                viewModel.state.value.selectedVerses
-                    .isEmpty(),
-            )
-            assertFalse(viewModel.state.value.isShowingVerseActionSheet)
-        }
-
-    @Test
-    fun `GoToPreviousChapter clears verse selection`() =
-        runTest {
-            val ref = defaultReference.copy(chapter = 2)
-            every { bibleReaderRepository.produceBibleReference(any()) } returns ref
-            val prevChapterRef = defaultReference.copy(chapter = 1)
-            every { bibleReaderRepository.previousChapter(any(), any()) } returns prevChapterRef
-
-            viewModel =
-                BibleReaderViewModel(
-                    bibleReference = null,
-                    fontDefinitionProvider = null,
-                    bibleVersionRepository = bibleVersionRepository,
-                    bibleReaderRepository = bibleReaderRepository,
-                    userSettingsRepository = userSettingsRepository,
-                )
-
-            val verseRef = ref.copy(verseStart = 1, verseEnd = 1)
-            viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
-
-            viewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter)
-
-            assertTrue(
-                viewModel.state.value.selectedVerses
-                    .isEmpty(),
-            )
-            assertFalse(viewModel.state.value.isShowingVerseActionSheet)
-        }
-
-    @Test
-    fun `onHeaderSelectionChange clears verse selection`() =
-        runTest {
-            val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
-            viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
-            val newReference = BibleReference(versionId = 2, bookUSFM = "EXO", chapter = 1)
-
-            viewModel.onHeaderSelectionChange(newReference)
-
-            assertTrue(
-                viewModel.state.value.selectedVerses
-                    .isEmpty(),
-            )
-            assertFalse(viewModel.state.value.isShowingVerseActionSheet)
         }
 }

@@ -131,14 +131,12 @@ class BibleReaderViewModel(
             }
 
             is Action.GoToNextChapter -> {
-                clearVerseSelection()
                 bibleReaderRepository
                     .nextChapter(bibleVersion, bibleReference)
                     ?.let { nextReference -> bibleReference = nextReference }
             }
 
             is Action.GoToPreviousChapter -> {
-                clearVerseSelection()
                 bibleReaderRepository
                     .previousChapter(bibleVersion, bibleReference)
                     ?.let { prevReference -> bibleReference = prevReference }
@@ -146,10 +144,6 @@ class BibleReaderViewModel(
 
             is Action.OnVerseTap -> {
                 toggleVerseSelection(action.reference)
-            }
-
-            is Action.ClearVerseSelection -> {
-                clearVerseSelection()
             }
         }
     }
@@ -160,7 +154,6 @@ class BibleReaderViewModel(
     }
 
     fun onHeaderSelectionChange(newReference: BibleReference) {
-        clearVerseSelection()
         viewModelScope.launch {
             if (bibleVersion?.id != newReference.versionId) {
                 val newVersion = bibleVersionRepository.version(id = newReference.versionId)
@@ -173,24 +166,15 @@ class BibleReaderViewModel(
 
     private fun toggleVerseSelection(reference: BibleReference) {
         _state.update { currentState ->
-            val newSelection = currentState.selectedVerses.toMutableSet()
-            if (newSelection.contains(reference)) {
-                newSelection.remove(reference)
-            } else {
-                newSelection.add(reference)
-            }
+            val newSelection =
+                if (currentState.selectedVerses.contains(reference)) {
+                    currentState.selectedVerses - reference
+                } else {
+                    currentState.selectedVerses + reference
+                }
             currentState.copy(
                 selectedVerses = newSelection,
-                isShowingVerseActionSheet = newSelection.isNotEmpty(),
-            )
-        }
-    }
-
-    private fun clearVerseSelection() {
-        _state.update {
-            it.copy(
-                selectedVerses = emptySet(),
-                isShowingVerseActionSheet = false,
+                showVerseActionSheet = newSelection.isNotEmpty(),
             )
         }
     }
@@ -276,7 +260,7 @@ class BibleReaderViewModel(
         val footnotesReference: BibleReference? = null,
         val footnotes: List<AnnotatedString> = emptyList(),
         val selectedVerses: Set<BibleReference> = emptySet(),
-        val isShowingVerseActionSheet: Boolean = false,
+        val showVerseActionSheet: Boolean = false,
     ) {
         val bookAndChapter: String
             get() =
@@ -351,7 +335,5 @@ class BibleReaderViewModel(
         data class OnVerseTap(
             val reference: BibleReference,
         ) : Action
-
-        data object ClearVerseSelection : Action
     }
 }
