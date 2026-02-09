@@ -131,12 +131,14 @@ class BibleReaderViewModel(
             }
 
             is Action.GoToNextChapter -> {
+                clearVerseSelection()
                 bibleReaderRepository
                     .nextChapter(bibleVersion, bibleReference)
                     ?.let { nextReference -> bibleReference = nextReference }
             }
 
             is Action.GoToPreviousChapter -> {
+                clearVerseSelection()
                 bibleReaderRepository
                     .previousChapter(bibleVersion, bibleReference)
                     ?.let { prevReference -> bibleReference = prevReference }
@@ -154,6 +156,7 @@ class BibleReaderViewModel(
     }
 
     fun onHeaderSelectionChange(newReference: BibleReference) {
+        clearVerseSelection()
         viewModelScope.launch {
             if (bibleVersion?.id != newReference.versionId) {
                 val newVersion = bibleVersionRepository.version(id = newReference.versionId)
@@ -175,6 +178,15 @@ class BibleReaderViewModel(
             currentState.copy(
                 selectedVerses = newSelection,
                 showVerseActionSheet = newSelection.isNotEmpty(),
+            )
+        }
+    }
+
+    private fun clearVerseSelection() {
+        _state.update {
+            it.copy(
+                selectedVerses = emptySet(),
+                showVerseActionSheet = false,
             )
         }
     }
