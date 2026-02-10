@@ -147,10 +147,6 @@ class BibleReaderViewModel(
             is Action.OnVerseTap -> {
                 toggleVerseSelection(action.reference)
             }
-
-            is Action.ClearVerseSelection -> {
-                clearVerseSelection()
-            }
         }
     }
 
@@ -173,15 +169,15 @@ class BibleReaderViewModel(
 
     private fun toggleVerseSelection(reference: BibleReference) {
         _state.update { currentState ->
-            val newSelection = currentState.selectedVerses.toMutableSet()
-            if (newSelection.contains(reference)) {
-                newSelection.remove(reference)
-            } else {
-                newSelection.add(reference)
-            }
+            val newSelection =
+                if (currentState.selectedVerses.contains(reference)) {
+                    currentState.selectedVerses - reference
+                } else {
+                    currentState.selectedVerses + reference
+                }
             currentState.copy(
                 selectedVerses = newSelection,
-                isShowingVerseActionSheet = newSelection.isNotEmpty(),
+                showVerseActionSheet = newSelection.isNotEmpty(),
             )
         }
     }
@@ -190,7 +186,7 @@ class BibleReaderViewModel(
         _state.update {
             it.copy(
                 selectedVerses = emptySet(),
-                isShowingVerseActionSheet = false,
+                showVerseActionSheet = false,
             )
         }
     }
@@ -276,7 +272,7 @@ class BibleReaderViewModel(
         val footnotesReference: BibleReference? = null,
         val footnotes: List<AnnotatedString> = emptyList(),
         val selectedVerses: Set<BibleReference> = emptySet(),
-        val isShowingVerseActionSheet: Boolean = false,
+        val showVerseActionSheet: Boolean = false,
     ) {
         val bookAndChapter: String
             get() =
@@ -351,7 +347,5 @@ class BibleReaderViewModel(
         data class OnVerseTap(
             val reference: BibleReference,
         ) : Action
-
-        data object ClearVerseSelection : Action
     }
 }
