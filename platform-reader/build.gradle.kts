@@ -69,6 +69,10 @@ dependencies {
 
     implementation(libs.koin.core)
     implementation(libs.koin.androidx.compose)
+
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlin.coroutines.test)
+    testImplementation(libs.mockk)
 }
 
 mavenPublishing {
