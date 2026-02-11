@@ -25,8 +25,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -40,6 +42,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -80,6 +83,7 @@ data class BibleTextOptions(
     val renderVerseNumbers: Boolean = true,
     val footnoteMode: BibleTextFootnoteMode = BibleTextFootnoteMode.NONE,
     val footnoteMarker: AnnotatedString? = DefaultFootnoteMarker,
+    val selectionColor: Color? = null,
 ) {
     val inlineContentMap =
         mapOf(
@@ -210,6 +214,7 @@ fun BibleText(
                         block = block,
                         textOptions = textOptions,
                         isFirstBlock = index == 0,
+                        selectedVerses = selectedVerses,
                         onTap = { localPosition, textLayoutResult ->
                             coroutineScope.launch {
                                 val characterIndex = textLayoutResult.getOffsetForPosition(localPosition)
@@ -264,20 +269,17 @@ fun BibleText(
                                             localPosition,
                                         )
                                     }
-
-                                    val newSelection = selectedVerses.toMutableSet()
-                                    if (newSelection.contains(tappedRef)) {
-                                        newSelection.remove(tappedRef)
-                                    } else {
-                                        newSelection.add(tappedRef)
-                                    }
-                                    onVerseSelectedChange(newSelection)
                                 }
                             }
                         },
                     )
                 } else {
-                    BibleTableBlock(block = block, textOptions = textOptions)
+                    BibleTableBlock(
+                        block = block,
+                        textOptions = textOptions,
+                        selectedVerses = selectedVerses,
+                        onVerseTap = onVerseTap,
+                    )
                 }
             }
         }
@@ -294,15 +296,84 @@ fun BibleReference.Companion.fromAnnotation(annotation: String): BibleReference 
     )
 }
 
+/**
+ * Returns one merged character range per selected verse, spanning from the first
+ * annotation start to the last annotation end for that verse.
+ */
+internal fun AnnotatedString.selectedCharacterRanges(selectedVerses: Set<BibleReference>): List<IntRange> {
+    if (selectedVerses.isEmpty()) return emptyList()
+
+    return getStringAnnotations(
+        tag = BibleReferenceAttribute.NAME,
+        start = 0,
+        end = length,
+    ).filter { annotation ->
+        val reference = BibleReference.fromAnnotation(annotation.item)
+        selectedVerses.any { it.overlaps(reference) }
+    }.groupBy { it.item }
+        .map { (_, annotations) ->
+            annotations.first().start until annotations.last().end
+        }
+}
+
+/**
+ * Draws underlines at the bottom of each text line that contains characters in [selectedRanges].
+ */
+private fun DrawScope.drawSelectionUnderlines(
+    layoutResult: TextLayoutResult,
+    selectedRanges: List<IntRange>,
+    color: Color,
+    strokeWidth: Dp,
+) {
+    val textLength = layoutResult.layoutInput.text.length
+    selectedRanges
+        .filterNot { it.isEmpty() }
+        .forEach { range ->
+            val endOffset = (range.last + 1).coerceAtMost(textLength)
+            val startLine = layoutResult.getLineForOffset(range.first)
+            val endLine = layoutResult.getLineForOffset(endOffset)
+
+            (startLine..endLine).forEach { line ->
+                val lineBottom = layoutResult.getLineBottom(line)
+                val lineLeft =
+                    if (line == startLine) {
+                        layoutResult.getHorizontalPosition(range.first, true)
+                    } else {
+                        layoutResult.getLineLeft(line)
+                    }
+                val lineRight =
+                    if (line == endLine) {
+                        layoutResult.getHorizontalPosition(endOffset, true)
+                    } else {
+                        layoutResult.getLineRight(line)
+                    }
+                drawLine(
+                    color = color,
+                    start = Offset(lineLeft, lineBottom),
+                    end = Offset(lineRight, lineBottom),
+                    strokeWidth = strokeWidth.toPx(),
+                )
+            }
+        }
+}
+
 @Composable
 private fun BibleTextBlock(
     block: BibleTextBlock,
     textOptions: BibleTextOptions,
     isFirstBlock: Boolean,
+    selectedVerses: Set<BibleReference>,
     onTap: (position: Offset, layoutResult: TextLayoutResult) -> Unit,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     val marginTop = if (isFirstBlock) 0.dp else block.marginTop
+
+    val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
+
+    val selectedRanges =
+        remember(block.text, selectedVerses) {
+            block.text.selectedCharacterRanges(selectedVerses)
+        }
 
     Text(
         text = block.text,
@@ -312,14 +383,16 @@ private fun BibleTextBlock(
             Modifier
                 .padding(top = marginTop)
                 .fillMaxWidth()
-                .pointerInput(Unit) {
+                .drawWithContent {
+                    drawContent()
+                    textLayoutResult?.let { drawSelectionUnderlines(it, selectedRanges, selectionColor, 1.dp) }
+                }.pointerInput(Unit) {
                     detectTapGestures(
                         onTap = { position ->
                             textLayoutResult?.let { layoutResult ->
                                 onTap(position, layoutResult)
                             }
                         },
-                        // onLongPress could also be used for selection
                     )
                 },
         onTextLayout = { result ->
@@ -333,6 +406,8 @@ private fun BibleTextBlock(
 private fun BibleTableBlock(
     block: BibleTextBlock,
     textOptions: BibleTextOptions,
+    selectedVerses: Set<BibleReference>,
+    onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)?,
 ) {
     Column(
         modifier = Modifier.padding(8.dp),
@@ -347,22 +422,21 @@ private fun BibleTableBlock(
                 for (i in 0 until numCols) {
                     val cellText = row.getOrNull(i) ?: AnnotatedString("")
                     if (i == 0) {
-                        Box(
-                            modifier =
-                                Modifier.weight(1f),
-                        ) {
-                            Text(
-                                text = cellText,
-                                lineHeight = textOptions.lineSpacing ?: TextUnit.Unspecified,
-                                color = textOptions.textColor ?: Color.Unspecified,
+                        Box(modifier = Modifier.weight(1f)) {
+                            BibleTableCell(
+                                cellText = cellText,
+                                textOptions = textOptions,
+                                selectedVerses = selectedVerses,
+                                onVerseTap = onVerseTap,
                             )
                         }
                     } else {
                         Box {
-                            Text(
-                                text = cellText,
-                                lineHeight = textOptions.lineSpacing ?: TextUnit.Unspecified,
-                                color = textOptions.textColor ?: Color.Unspecified,
+                            BibleTableCell(
+                                cellText = cellText,
+                                textOptions = textOptions,
+                                selectedVerses = selectedVerses,
+                                onVerseTap = onVerseTap,
                             )
                         }
                     }
@@ -370,6 +444,55 @@ private fun BibleTableBlock(
             }
         }
     }
+}
+
+@Composable
+private fun BibleTableCell(
+    cellText: AnnotatedString,
+    textOptions: BibleTextOptions,
+    selectedVerses: Set<BibleReference>,
+    onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)?,
+) {
+    var cellLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+    val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
+    val selectedRanges =
+        remember(cellText, selectedVerses) {
+            cellText.selectedCharacterRanges(selectedVerses)
+        }
+
+    Text(
+        text = cellText,
+        lineHeight = textOptions.lineSpacing ?: TextUnit.Unspecified,
+        color = textOptions.textColor ?: Color.Unspecified,
+        modifier =
+            Modifier
+                .drawWithContent {
+                    drawContent()
+                    cellLayoutResult?.let { drawSelectionUnderlines(it, selectedRanges, selectionColor, 1.dp) }
+                }.pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = { position ->
+                            cellLayoutResult?.let { layoutResult ->
+                                val characterIndex = layoutResult.getOffsetForPosition(position)
+                                val tappedRef =
+                                    cellText
+                                        .getStringAnnotations(
+                                            tag = BibleReferenceAttribute.NAME,
+                                            start = characterIndex,
+                                            end = characterIndex,
+                                        ).firstOrNull()
+                                        ?.item
+                                        ?.let { BibleReference.fromAnnotation(it) }
+
+                                if (tappedRef != null) {
+                                    onVerseTap?.invoke(tappedRef, position)
+                                }
+                            }
+                        },
+                    )
+                },
+        onTextLayout = { cellLayoutResult = it },
+    )
 }
 
 @Composable
