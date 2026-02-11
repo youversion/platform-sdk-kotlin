@@ -83,7 +83,7 @@ internal fun ReferencesScreen(
 
     Scaffold(
         topBar = {
-            BibleReaderTopAppBar(title = "References", onBackClick = onBackClick)
+            BibleReaderTopAppBar(title = "Books", onBackClick = onBackClick)
         },
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
