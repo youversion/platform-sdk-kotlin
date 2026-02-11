@@ -102,18 +102,21 @@ internal fun BibleScreen(
         )
     val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = bottomSheetState)
 
-    LaunchedEffect(state.isShowingVerseActionSheet) {
-        if (state.isShowingVerseActionSheet) {
-            bottomSheetState.expand()
-        } else {
-            bottomSheetState.hide()
-        }
+    LaunchedEffect(Unit) {
+        snapshotFlow { state.showVerseActionSheet }
+            .collect { shouldShow ->
+                if (shouldShow) {
+                    bottomSheetState.expand()
+                } else {
+                    bottomSheetState.hide()
+                }
+            }
     }
 
     LaunchedEffect(Unit) {
         snapshotFlow { bottomSheetState.currentValue }
             .collect { sheetValue ->
-                if (sheetValue == SheetValue.Hidden && state.isShowingVerseActionSheet) {
+                if (sheetValue != SheetValue.Expanded && state.showVerseActionSheet) {
                     viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection)
                 }
             }

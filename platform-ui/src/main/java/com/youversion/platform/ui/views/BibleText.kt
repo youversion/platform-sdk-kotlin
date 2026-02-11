@@ -432,7 +432,7 @@ private fun BibleTableBlock(
                         Modifier.drawWithContent {
                             drawContent()
                             val layoutResult = cellLayoutResult ?: return@drawWithContent
-                            drawSelectionUnderlines(layoutResult, selectedRanges, selectionColor, 2.dp.toPx())
+                            drawSelectionUnderlines(layoutResult, selectedRanges, selectionColor, 2.dp)
                         }
                     if (i == 0) {
                         Box(modifier = Modifier.weight(1f)) {
