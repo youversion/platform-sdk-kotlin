@@ -1,34 +1,35 @@
 package com.youversion.platform.reader.screens.bible
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
+import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -94,25 +95,43 @@ internal fun BibleScreen(
     val bottomScrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior()
     val passageSelectionScrollBehavior = PassageSelectionDefaults.fadeAlwaysScrollBehavior()
 
-    Scaffold(
+    val bottomSheetState =
+        rememberStandardBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            skipHiddenState = false,
+        )
+    val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = bottomSheetState)
+
+    LaunchedEffect(state.isShowingVerseActionSheet) {
+        if (state.isShowingVerseActionSheet) {
+            bottomSheetState.expand()
+        } else {
+            bottomSheetState.hide()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { bottomSheetState.currentValue }
+            .collect { sheetValue ->
+                if (sheetValue == SheetValue.Hidden && state.isShowingVerseActionSheet) {
+                    viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection)
+                }
+            }
+    }
+
+    BottomSheetScaffold(
         modifier =
             Modifier
                 .nestedScroll(passageSelectionScrollBehavior.nestedScrollConnection)
                 .nestedScroll(bottomScrollBehavior.nestedScrollConnection)
                 .nestedScroll(topScrollBehavior.nestedScrollConnection),
-        bottomBar = {
-            bottomBar?.let {
-                BottomAppBar(
-                    scrollBehavior = bottomScrollBehavior,
-                    content = {
-                        Row {
-                            it()
-                        }
-                    },
-                )
-            }
+        scaffoldState = scaffoldState,
+        sheetContent = {
+            BibleReaderVerseActionSheet(selectedVerses = state.selectedVerses)
         },
-        contentWindowInsets = WindowInsets.safeDrawing,
+        sheetPeekHeight = 0.dp,
+        sheetContainerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             BibleReaderHeader(
                 isSignInProcessing = signInState.isProcessing,
@@ -139,16 +158,6 @@ internal fun BibleScreen(
             )
         },
     ) { innerPadding ->
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(20.dp)
-                    .background(Color.Red)
-                    .padding(bottom = 16.dp),
-        ) {
-            Text("Foo")
-        }
         Box(modifier = Modifier.padding(innerPadding)) {
             // Scrollable Reader content
             Column {
@@ -265,10 +274,15 @@ internal fun BibleScreen(
                 )
             }
 
-            if (state.isShowingVerseActionSheet) {
-                BibleReaderVerseActionSheet(
-                    selectedVerses = state.selectedVerses,
-                    onDismiss = { viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection) },
+            bottomBar?.let {
+                BottomAppBar(
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    scrollBehavior = bottomScrollBehavior,
+                    content = {
+                        Row {
+                            it()
+                        }
+                    },
                 )
             }
         }
