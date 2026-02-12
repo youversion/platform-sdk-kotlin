@@ -190,13 +190,17 @@ private fun LanguageSelector(
         Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = "Language",
+            style = BibleReaderTheme.typography.labelL,
             modifier = Modifier.weight(1f),
         )
 
-        Text(activeLanguageName)
+        Text(
+            text = activeLanguageName,
+            style = BibleReaderTheme.typography.buttonLabelL,
+        )
         Spacer(modifier = Modifier.width(4.dp))
         Icon(
-            imageVector = ImageVector.vectorResource(R.drawable.ic_expand_circle_right),
+            imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_forward),
             contentDescription = null,
             modifier = Modifier.size(18.dp),
         )
