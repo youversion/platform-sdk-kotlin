@@ -409,6 +409,8 @@ private fun BibleTableBlock(
     selectedVerses: Set<BibleReference>,
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)?,
 ) {
+    val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
+
     Column(
         modifier = Modifier.padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -421,6 +423,17 @@ private fun BibleTableBlock(
             ) {
                 for (i in 0 until numCols) {
                     val cellText = row.getOrNull(i) ?: AnnotatedString("")
+                    val selectedRanges =
+                        remember(cellText, selectedVerses) {
+                            cellText.selectedCharacterRanges(selectedVerses)
+                        }
+                    var cellLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+                    val underlineModifier =
+                        Modifier.drawWithContent {
+                            drawContent()
+                            val layoutResult = cellLayoutResult ?: return@drawWithContent
+                            drawSelectionUnderlines(layoutResult, selectedRanges, selectionColor, 2.dp)
+                        }
                     if (i == 0) {
                         Box(modifier = Modifier.weight(1f)) {
                             BibleTableCell(
