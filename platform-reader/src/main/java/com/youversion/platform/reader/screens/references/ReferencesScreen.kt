@@ -33,11 +33,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.reader.R
 import com.youversion.platform.reader.components.BibleReaderTopAppBar
 import com.youversion.platform.reader.theme.readerColorScheme
 import kotlinx.coroutines.delay
@@ -83,7 +85,7 @@ internal fun ReferencesScreen(
 
     Scaffold(
         topBar = {
-            BibleReaderTopAppBar(title = "References", onBackClick = onBackClick)
+            BibleReaderTopAppBar(title = stringResource(R.string.book_chapter_picker_title), onBackClick = onBackClick)
         },
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
