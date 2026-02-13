@@ -112,7 +112,7 @@ data class BibleTextFonts(
                 ),
             BibleTextFontOption.FOOTNOTE to
                 SpanStyle(
-                    fontFamily = fontFamily,
+                    fontFamily = FontFamily.SansSerif,
                     fontSize = baseSize * 0.8,
                 ),
         )
