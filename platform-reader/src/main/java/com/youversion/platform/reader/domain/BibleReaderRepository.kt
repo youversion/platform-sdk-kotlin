@@ -51,7 +51,7 @@ class BibleReaderRepository(
             ?: lastBibleReference // If no provided reference, use the last saved reference
             ?: run {
                 // Fallback to John 1. Attempt to use the first downloaded version.
-                // If no versions have been downloaded, use NIV.
+                // If no versions have been downloaded, use BSB.
                 val downloadedVersions = bibleVersionRepository.downloadedVersions
                 val versionId = downloadedVersions.firstOrNull() ?: DEFAULT_BIBLE_VERSION_ID
                 BibleReference(

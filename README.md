@@ -136,7 +136,7 @@ Display a single verse:
 @Composable
 fun Demo() {
     BibleText(
-        reference = BibleReference(versionId = 111, bookUSFM = "JHN", chapter = 3, verse = 16)
+        reference = BibleReference(versionId = 3034, bookUSFM = "JHN", chapter = 3, verse = 16)
     )
 }
 ```
@@ -146,7 +146,7 @@ Display a verse range:
 @Composable
 fun Demo() {
     BibleText(
-        reference = BibleReference(versionId = 111, bookUSFM = "JHN", chapter = 3, verseStart = 16, verseEnd = 20)
+        reference = BibleReference(versionId = 3034, bookUSFM = "JHN", chapter = 3, verseStart = 16, verseEnd = 20)
     )
 }
 ```
@@ -156,7 +156,7 @@ Or display a full chapter:
 @Composable
 fun Demo() {
     BibleText(
-        reference = BibleReference(versionId = 111, bookUSFM = "JHN", chapter = 3)
+        reference = BibleReference(versionId = 3034, bookUSFM = "JHN", chapter = 3)
     )
 }
 ```

@@ -46,7 +46,7 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 fun CompactVerseOfTheDay(
-    bibleVersionId: Int = 111,
+    bibleVersionId: Int = 3034, // BSB
     showIcon: Boolean = true,
     dark: Boolean = isSystemInDarkTheme(),
 ) {
@@ -60,7 +60,7 @@ fun CompactVerseOfTheDay(
 
 @Composable
 fun VerseOfTheDay(
-    bibleVersionId: Int = 111,
+    bibleVersionId: Int = 3034, // BSB
     showIcon: Boolean = true,
     dark: Boolean = isSystemInDarkTheme(),
     onShareClick: () -> Unit = {},
