@@ -123,62 +123,62 @@ internal fun BibleScreen(
             }
     }
 
-    Scaffold(
-        modifier =
-            Modifier
-                .nestedScroll(passageSelectionScrollBehavior.nestedScrollConnection)
-                .nestedScroll(bottomScrollBehavior.nestedScrollConnection)
-                .nestedScroll(topScrollBehavior.nestedScrollConnection),
-        topBar = {
-            BibleReaderHeader(
-                isSignInProcessing = signInState.isProcessing,
-                signedIn = signInState.isSignedIn,
-                versionAbbreviation = state.versionAbbreviation,
-                scrollBehavior = topScrollBehavior,
-                onVersionClick = onVersionsClick,
-                onOpenHeaderMenu = { signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState) },
-                onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
-                onSignInClick = {
-                    signInLauncher(
-                        SignInParameters(
-                            context = context,
-                            launcher = authTabLauncher,
-                            permissions =
-                                setOf(
-                                    SignInWithYouVersionPermission.PROFILE,
-                                    SignInWithYouVersionPermission.EMAIL,
-                                ),
-                        ),
-                    )
-                },
-                onSignOutClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut(true)) },
-            )
+    BottomSheetScaffold(
+        scaffoldState = scaffoldState,
+        sheetContent = {
+            BibleReaderVerseActionSheet(selectedVerses = state.selectedVerses)
         },
-        bottomBar = {
-            bottomBar?.let {
-                BottomAppBar(
-                    scrollBehavior = bottomScrollBehavior,
-                    content = {
-                        Row {
-                            it()
-                        }
-                    },
-                )
-            }
-        },
+        sheetPeekHeight = 0.dp,
+        sheetContainerColor = MaterialTheme.colorScheme.surface,
         containerColor = MaterialTheme.colorScheme.background,
-    ) { innerPadding ->
-        BottomSheetScaffold(
-            modifier = Modifier.padding(innerPadding),
-            scaffoldState = scaffoldState,
-            sheetContent = {
-                BibleReaderVerseActionSheet(selectedVerses = state.selectedVerses)
+    ) { sheetPadding ->
+        Scaffold(
+            modifier =
+                Modifier
+                    .padding(sheetPadding)
+                    .nestedScroll(passageSelectionScrollBehavior.nestedScrollConnection)
+                    .nestedScroll(bottomScrollBehavior.nestedScrollConnection)
+                    .nestedScroll(topScrollBehavior.nestedScrollConnection),
+            topBar = {
+                BibleReaderHeader(
+                    isSignInProcessing = signInState.isProcessing,
+                    signedIn = signInState.isSignedIn,
+                    versionAbbreviation = state.versionAbbreviation,
+                    scrollBehavior = topScrollBehavior,
+                    onVersionClick = onVersionsClick,
+                    onOpenHeaderMenu = { signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState) },
+                    onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
+                    onSignInClick = {
+                        signInLauncher(
+                            SignInParameters(
+                                context = context,
+                                launcher = authTabLauncher,
+                                permissions =
+                                    setOf(
+                                        SignInWithYouVersionPermission.PROFILE,
+                                        SignInWithYouVersionPermission.EMAIL,
+                                    ),
+                            ),
+                        )
+                    },
+                    onSignOutClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut(true)) },
+                )
             },
-            sheetPeekHeight = 0.dp,
-            sheetContainerColor = MaterialTheme.colorScheme.surface,
+            bottomBar = {
+                bottomBar?.let {
+                    BottomAppBar(
+                        scrollBehavior = bottomScrollBehavior,
+                        content = {
+                            Row {
+                                it()
+                            }
+                        },
+                    )
+                }
+            },
             containerColor = MaterialTheme.colorScheme.background,
-        ) { sheetPadding ->
-            Box(modifier = Modifier.padding(sheetPadding)) {
+        ) { innerPadding ->
+            Box(modifier = Modifier.padding(innerPadding)) {
                 Column {
                     Column(
                         modifier =
