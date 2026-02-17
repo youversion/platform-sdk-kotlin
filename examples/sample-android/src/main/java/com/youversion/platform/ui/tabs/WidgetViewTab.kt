@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
-import com.youversion.platform.ui.views.widget.BibleWidget
+import com.youversion.platform.ui.views.card.BibleCard
 
 @Composable
 fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
@@ -26,7 +26,7 @@ fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
             versionId = 3034, // BSB
             bookUSFM = "2CO",
             chapter = 1,
-            verseStart = 3,
+            verseStart = 4,
             verseEnd = 20,
         )
 
@@ -47,7 +47,7 @@ fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                     .padding(20.dp),
             contentAlignment = Alignment.Center,
         ) {
-            BibleWidget(
+            BibleCard(
                 reference = bibleReference,
                 fontSize = 16.sp,
             )

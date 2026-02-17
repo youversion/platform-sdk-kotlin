@@ -1,4 +1,4 @@
-package com.youversion.platform.ui.views.widget
+package com.youversion.platform.ui.views.card
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -51,13 +51,13 @@ import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.parameter.parametersOf
 
 @Composable
-fun BibleWidget(
+fun BibleCard(
     reference: BibleReference,
     modifier: Modifier = Modifier,
     version: BibleVersion? = null,
     fontSize: TextUnit = 23.sp,
 ) {
-    BibleWidget(
+    BibleCard(
         reference = reference,
         version = version,
         modifier = modifier,
@@ -71,7 +71,7 @@ fun BibleWidget(
 
 @OptIn(ExperimentalMaterial3Api::class, KoinExperimentalAPI::class)
 @Composable
-fun BibleWidget(
+fun BibleCard(
     reference: BibleReference,
     textOptions: BibleTextOptions,
     modifier: Modifier = Modifier,
@@ -84,12 +84,12 @@ fun BibleWidget(
 
         val context = LocalContext.current
 
-        val viewModel: BibleWidgetViewModel = koinViewModel { parametersOf(reference, version) }
+        val viewModel: BibleCardViewModel = koinViewModel { parametersOf(reference, version) }
         val state by viewModel.state.collectAsStateWithLifecycle()
 
         ObserveAsEvents(viewModel.events) { event ->
             when (event) {
-                is BibleWidgetViewModel.Event.OnErrorLoadingBibleVersion -> {
+                is BibleCardViewModel.Event.OnErrorLoadingBibleVersion -> {
                     Toast.makeText(context, "Error loading Bible version", Toast.LENGTH_LONG).show()
                 }
             }
@@ -120,7 +120,7 @@ fun BibleWidget(
             ) {
                 Copyright(
                     version = state.bibleVersion,
-                    onClick = { viewModel.onAction(BibleWidgetViewModel.Action.OnViewCopyright) },
+                    onClick = { viewModel.onAction(BibleCardViewModel.Action.OnViewCopyright) },
                 )
                 BibleAppLogo()
             }
@@ -128,7 +128,7 @@ fun BibleWidget(
 
         if (state.showCopyright) {
             ModalBottomSheet(
-                onDismissRequest = { viewModel.onAction(BibleWidgetViewModel.Action.OnCloseCopyright) },
+                onDismissRequest = { viewModel.onAction(BibleCardViewModel.Action.OnCloseCopyright) },
             ) {
                 CopyrightSheetContent(
                     version = state.bibleVersion,
@@ -211,7 +211,7 @@ private fun CopyrightSheetContent(version: BibleVersion?) {
 
 @Preview
 @Composable
-private fun Preview_BibleWidget() {
+private fun Preview_BibleCard() {
     MaterialTheme {
         Surface {
             Box(
@@ -221,7 +221,7 @@ private fun Preview_BibleWidget() {
                         .background(Color.White)
                         .padding(20.dp),
             ) {
-                BibleWidget(
+                BibleCard(
                     reference =
                         BibleReference(
                             versionId = 3034, // BSB

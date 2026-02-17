@@ -1,4 +1,4 @@
-package com.youversion.platform.ui.views.widget
+package com.youversion.platform.ui.views.card
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-internal class BibleWidgetViewModel(
+internal class BibleCardViewModel(
     private val reference: BibleReference,
     bibleVersion: BibleVersion?,
     private val bibleVersionRepository: BibleVersionRepository,
@@ -37,7 +37,7 @@ internal class BibleWidgetViewModel(
                     _state.update { it.copy(bibleVersion = bibleVersion) }
                 } catch (e: Exception) {
                     _events.send(Event.OnErrorLoadingBibleVersion)
-                    Log.e("BibleWidget", "Error loading Bible version", e)
+                    Log.e("BibleCard", "Error loading Bible version", e)
                 }
             }
         }
