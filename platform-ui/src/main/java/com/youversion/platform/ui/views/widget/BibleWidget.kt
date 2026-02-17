@@ -224,7 +224,7 @@ private fun Preview_BibleWidget() {
                 BibleWidget(
                     reference =
                         BibleReference(
-                            versionId = 111,
+                            versionId = 3034, // BSB
                             bookUSFM = "2CO",
                             chapter = 1,
                             verseStart = 3,

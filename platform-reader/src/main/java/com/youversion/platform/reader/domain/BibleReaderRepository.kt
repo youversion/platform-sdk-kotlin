@@ -22,7 +22,7 @@ class BibleReaderRepository(
     private val languageRepository: LanguageRepository,
 ) {
     companion object {
-        private const val NIV_VERSION_ID = 111
+        private const val DEFAULT_BIBLE_VERSION_ID = 3034 // BSB
         private const val KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
     }
 
@@ -51,9 +51,9 @@ class BibleReaderRepository(
             ?: lastBibleReference // If no provided reference, use the last saved reference
             ?: run {
                 // Fallback to John 1. Attempt to use the first downloaded version.
-                // If no versions have been downloaded, use NIV.
+                // If no versions have been downloaded, use BSB.
                 val downloadedVersions = bibleVersionRepository.downloadedVersions
-                val versionId = downloadedVersions.firstOrNull() ?: NIV_VERSION_ID
+                val versionId = downloadedVersions.firstOrNull() ?: DEFAULT_BIBLE_VERSION_ID
                 BibleReference(
                     versionId = versionId,
                     bookUSFM = "JHN",
