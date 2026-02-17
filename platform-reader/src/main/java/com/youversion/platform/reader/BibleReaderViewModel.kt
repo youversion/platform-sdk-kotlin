@@ -147,6 +147,10 @@ class BibleReaderViewModel(
             is Action.OnVerseTap -> {
                 toggleVerseSelection(action.reference)
             }
+
+            is Action.ClearVerseSelection -> {
+                clearVerseSelection()
+            }
         }
     }
 
@@ -347,5 +351,7 @@ class BibleReaderViewModel(
         data class OnVerseTap(
             val reference: BibleReference,
         ) : Action
+
+        data object ClearVerseSelection : Action
     }
 }
