@@ -26,7 +26,7 @@ fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
             versionId = 3034, // BSB
             bookUSFM = "2CO",
             chapter = 1,
-            verseStart = 4,
+            verseStart = 3,
             verseEnd = 20,
         )
 
