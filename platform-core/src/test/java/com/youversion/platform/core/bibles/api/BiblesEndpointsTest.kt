@@ -105,7 +105,7 @@ class BiblesEndpointsTest {
 
     @Test
     fun `test passageUrl`() {
-        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1")
         assertEquals(
             "https://api.youversion.com/v1/bibles/1/passages/GEN.1?format=html&include_notes=true&include_headings=true",
             BiblesEndpoints.passageUrl(reference = reference),

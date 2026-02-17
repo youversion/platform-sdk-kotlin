@@ -124,7 +124,7 @@ private fun Preview_BibleReaderFootnotesSheet() {
                 BibleReference(
                     versionId = 111,
                     bookUSFM = "2CO",
-                    chapter = 1,
+                    chapter = "1",
                     verseStart = 3,
                     verseEnd = 5,
                 ),

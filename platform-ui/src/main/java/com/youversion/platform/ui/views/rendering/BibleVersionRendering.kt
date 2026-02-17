@@ -789,7 +789,7 @@ object BibleVersionRendering {
 data class BibleTextBlock(
     val id: UUID = UUID.randomUUID(),
     val text: AnnotatedString,
-    val chapter: Int,
+    val chapter: String,
     val rows: List<List<AnnotatedString>> = emptyList(),
     val headIndent: TextUnit,
     val marginTop: Dp,
@@ -844,7 +844,7 @@ fun AnnotatedString.trimTrailingWhitespace(): AnnotatedString {
 data class StateIn(
     val versionId: Int,
     val bookUSFM: String,
-    val currentChapter: Int,
+    val currentChapter: String,
     val fromVerse: Int,
     val toVerse: Int,
     val renderVerseNumbers: Boolean,
@@ -881,7 +881,7 @@ class StateUp(
     var headIndent: TextUnit = TextUnit(0f, TextUnitType.Sp),
     val versionId: Int,
     val bookUSFM: String,
-    val chapter: Int,
+    val chapter: String,
     var verse: Int,
     var textBuilder: AnnotatedString.Builder = AnnotatedString.Builder(),
     val footnotes: MutableList<AnnotatedString> = mutableListOf(),

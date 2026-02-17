@@ -246,9 +246,13 @@ class BibleReaderViewModel(
                 bibleVersion?.let { version ->
                     val bookUsfm = bibleReference.bookUSFM
                     val book = version.bookName(bookUsfm) ?: bookUsfm
-                    val chapter = bibleReference.chapter
-
-                    "$book $chapter"
+                    if (bibleReference.isIntro) {
+                        val introTitle =
+                            version.book(bookUsfm)?.intro?.title ?: "Introduction"
+                        "$book $introTitle"
+                    } else {
+                        "$book ${bibleReference.chapter}"
+                    }
                 } ?: ""
 
         val versionAbbreviation: String

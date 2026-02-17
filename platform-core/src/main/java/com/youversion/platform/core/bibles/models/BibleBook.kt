@@ -5,18 +5,30 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class BibleBook(
-    @SerialName(CodingKey.ID) val id: String?,
-    @SerialName(CodingKey.TITLE) val title: String?,
-    @SerialName(CodingKey.FULL_TITLE) val fullTitle: String?,
-    @SerialName(CodingKey.ABBREVIATION) val abbreviation: String?,
-    @SerialName(CodingKey.CANON) val canon: String?,
-    @SerialName(CodingKey.CHAPTERS) val chapters: List<BibleChapter>?,
+    @SerialName(CodingKey.ID)
+    val id: String?,
+    @SerialName(CodingKey.TITLE)
+    val title: String?,
+    @SerialName(CodingKey.FULL_TITLE)
+    val fullTitle: String?,
+    @SerialName(CodingKey.ABBREVIATION)
+    val abbreviation: String?,
+    @SerialName(CodingKey.CANON)
+    val canon: String?,
+    @SerialName(CodingKey.CHAPTERS)
+    val chapters: List<BibleChapter>?,
+    @SerialName(CodingKey.INTRO)
+    val intro: BibleBookIntro? = null,
 ) {
     val usfm: String?
         get() = id
 
     val isCanonical: Boolean
         get() = canon == "old_testament" || canon == "new_testament"
+
+    /** Whether this book has an introduction passage available. */
+    val hasIntro: Boolean
+        get() = intro != null
 
     object CodingKey {
         const val ID = "id"
@@ -25,5 +37,6 @@ data class BibleBook(
         const val ABBREVIATION = "abbreviation"
         const val CANON = "canon"
         const val CHAPTERS = "chapters"
+        const val INTRO = "intro"
     }
 }

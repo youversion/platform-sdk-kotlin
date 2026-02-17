@@ -11,7 +11,7 @@ class BibleReferenceUnvalidatedReferenceTests {
         val ref = BibleReference.unvalidatedReference("GEN.1.3", versionId = 1)
         assertNotNull(ref)
 
-        val expected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = 3)
+        val expected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1", verseStart = 3, verseEnd = 3)
         assertEquals(expected, ref)
     }
 
@@ -20,7 +20,7 @@ class BibleReferenceUnvalidatedReferenceTests {
         val ref = BibleReference.unvalidatedReference("GEN.1.3-5", versionId = 1)
         assertNotNull(ref)
 
-        val expected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = 5)
+        val expected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1", verseStart = 3, verseEnd = 5)
         assertEquals(expected, ref)
     }
 
@@ -29,7 +29,7 @@ class BibleReferenceUnvalidatedReferenceTests {
         val ref = BibleReference.unvalidatedReference("GEN.1.3-1.5", versionId = 1)
         assertNotNull(ref)
 
-        val expected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = 5)
+        val expected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1", verseStart = 3, verseEnd = 5)
         assertEquals(expected, ref)
     }
 
@@ -38,7 +38,7 @@ class BibleReferenceUnvalidatedReferenceTests {
         val ref = BibleReference.unvalidatedReference("GEN.1.3-GEN.1.5", versionId = 1)
         assertNotNull(ref)
 
-        val expected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = 5)
+        val expected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1", verseStart = 3, verseEnd = 5)
         assertEquals(expected, ref)
     }
 
@@ -61,7 +61,7 @@ class BibleReferenceUnvalidatedReferenceTests {
         val ref = BibleReference.unvalidatedReference("GEN.1", versionId = 1)
         assertNotNull(ref)
 
-        val expected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 1, verseEnd = 1)
+        val expected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1", verseStart = 1, verseEnd = 1)
         assertEquals(expected, ref)
     }
 }

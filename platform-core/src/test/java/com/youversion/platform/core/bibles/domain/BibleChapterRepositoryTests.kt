@@ -52,7 +52,7 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
     @Test
     fun `test chapter returns chapter contents from memory cache first`() =
         runTest {
-            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "1")
             val contents = "GEN.1.1 WEBUS"
             memoryCache.addChapterContents(contents, reference)
 
@@ -63,7 +63,7 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
     @Test
     fun `test chapter returns chapter contents from temporary cache if not in memory`() =
         runTest {
-            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "1")
             val contents = "GEN.1.1 WEBUS"
             temporaryCache.addChapterContents(contents, reference)
             assertNull(memoryCache.chapterContent(reference))
@@ -77,7 +77,7 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
     @Test
     fun `test chapter returns chapter contents from persistent cache if not in memory or temporary`() =
         runTest {
-            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "1")
             val contents = "GEN.1.1 WEBUS"
             persistentCache.addChapterContents(contents, reference)
             assertNull(memoryCache.chapterContent(reference))
@@ -103,7 +103,7 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
                 )
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
-            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "1")
             val chapter = repository.chapter(reference)
             assertEquals("content", chapter)
 
@@ -131,7 +131,7 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
                 )
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
-            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "1")
 
             joinAll(
                 launch { repository.chapter(reference) },
@@ -156,7 +156,7 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
     @Test
     fun `test removeVersionChapters removes chapters from all caches`() =
         runTest {
-            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "1")
             val contents = "In the beginning..."
 
             memoryCache.addChapterContents(contents, reference)

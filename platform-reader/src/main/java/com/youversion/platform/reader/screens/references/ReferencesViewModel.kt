@@ -25,6 +25,7 @@ class ReferencesViewModel(
                         bookCode = bookUsfm,
                         bookName = bibleVersion.bookName(bookUsfm),
                         chapters = bibleVersion.chapterLabels(bookUsfm),
+                        hasIntro = bibleVersion.introLabel(bookUsfm) != null,
                     )
                 } ?: emptyList()
 

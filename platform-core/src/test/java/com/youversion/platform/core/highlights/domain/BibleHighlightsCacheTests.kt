@@ -18,7 +18,7 @@ class BibleHighlightsCacheTests {
                         BibleReference(
                             versionId = 1,
                             bookUSFM = "GEN",
-                            chapter = 1,
+                            chapter = "1",
                             verse = 1,
                         ),
                 ).isEmpty(),
@@ -35,7 +35,7 @@ class BibleHighlightsCacheTests {
                     BibleReference(
                         versionId = 1,
                         bookUSFM = "GEN",
-                        chapter = 1,
+                        chapter = "1",
                         verse = 1,
                     ),
                 hexColor = "eefeef",
@@ -45,13 +45,13 @@ class BibleHighlightsCacheTests {
 
         val highlights =
             BibleHighlightCache.highlights(
-                overlapping = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1),
+                overlapping = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1"),
             )
 
         assertEquals(1, highlights.size)
         assertEquals(1, highlights.first().bibleReference.versionId)
         assertEquals("GEN", highlights.first().bibleReference.bookUSFM)
-        assertEquals(1, highlights.first().bibleReference.chapter)
+        assertEquals("1", highlights.first().bibleReference.chapter)
         assertEquals(1, highlights.first().bibleReference.verseStart)
         assertEquals("eefeef", highlights.first().hexColor)
     }
@@ -65,7 +65,7 @@ class BibleHighlightsCacheTests {
                     BibleReference(
                         versionId = 1,
                         bookUSFM = "GEN",
-                        chapter = 1,
+                        chapter = "1",
                         verse = 1,
                     ),
                 hexColor = "eefeef",
@@ -73,12 +73,12 @@ class BibleHighlightsCacheTests {
 
         BibleHighlightCache.addHighlights(listOf(highlight))
         BibleHighlightCache.removeHighlights(
-            listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+            listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1", verse = 1)),
         )
 
         val highlights =
             BibleHighlightCache.highlights(
-                overlapping = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
+                overlapping = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1", verse = 1),
             )
 
         assertTrue(highlights.isEmpty())
@@ -87,7 +87,7 @@ class BibleHighlightsCacheTests {
     @Test
     fun `test highlights update colors`() {
         BibleHighlightCache.clear()
-        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1", verse = 1)
         val highlight = BibleHighlight(bibleReference = ref, hexColor = "eefeef")
 
         BibleHighlightCache.addHighlights(listOf(highlight))
@@ -103,9 +103,9 @@ class BibleHighlightsCacheTests {
     @Test
     fun `test highlights get range`() {
         BibleHighlightCache.clear()
-        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
-        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
-        val ref3 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 3)
+        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1", verse = 1)
+        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1", verse = 2)
+        val ref3 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1", verse = 3)
         val highlight1 = BibleHighlight(bibleReference = ref1, hexColor = "eefeef")
         val highlight2 = BibleHighlight(bibleReference = ref2, hexColor = "0000ff")
         val highlight3 = BibleHighlight(bibleReference = ref3, hexColor = "00ffff")
@@ -118,7 +118,7 @@ class BibleHighlightsCacheTests {
                     BibleReference(
                         versionId = 1,
                         bookUSFM = "GEN",
-                        chapter = 1,
+                        chapter = "1",
                         verseStart = 1,
                         verseEnd = 3,
                     ),
@@ -133,8 +133,8 @@ class BibleHighlightsCacheTests {
     @Test
     fun `test highlights get cross chapter`() {
         BibleHighlightCache.clear()
-        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
-        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verse = 1)
+        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1", verse = 1)
+        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "2", verse = 1)
         val highlight1 = BibleHighlight(bibleReference = ref1, hexColor = "eefeef")
         val highlight2 = BibleHighlight(bibleReference = ref2, hexColor = "0000ff")
 
@@ -147,22 +147,22 @@ class BibleHighlightsCacheTests {
                     BibleReference(
                         versionId = 1,
                         bookUSFM = "GEN",
-                        chapter = 1,
+                        chapter = "1",
                         verseStart = 1,
                         verseEnd = 1,
                     ),
             )
 
         assertEquals(1, highlights.size)
-        assertTrue(highlights.any { it.bibleReference.chapter == 1 && it.bibleReference.verseStart == 1 })
-        assertFalse(highlights.any { it.bibleReference.chapter == 2 && it.bibleReference.verseStart == 1 })
+        assertTrue(highlights.any { it.bibleReference.chapter == "1" && it.bibleReference.verseStart == 1 })
+        assertFalse(highlights.any { it.bibleReference.chapter == "2" && it.bibleReference.verseStart == 1 })
     }
 
     // ----- Test Server Merge
     @Test
     fun `test apply server highlights`() {
         BibleHighlightCache.clear()
-        val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = "1")
         val server =
             listOf(
                 BibleHighlight(
@@ -170,7 +170,7 @@ class BibleHighlightsCacheTests {
                         BibleReference(
                             versionId = 1,
                             bookUSFM = "GEN",
-                            chapter = 1,
+                            chapter = "1",
                             verse = 1,
                         ),
                     hexColor = "#ff0000",

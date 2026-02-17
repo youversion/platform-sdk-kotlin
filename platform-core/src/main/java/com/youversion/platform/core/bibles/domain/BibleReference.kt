@@ -6,12 +6,12 @@ import kotlinx.serialization.Serializable
 data class BibleReference(
     val versionId: Int,
     val bookUSFM: String,
-    val chapter: Int,
+    val chapter: String,
     val verseStart: Int?,
     val verseEnd: Int?,
 ) : Comparable<BibleReference> {
     init {
-        require(chapter >= 1) { "Chapter must be greater than or equal to 1." }
+        require(chapter.isNotBlank()) { "Chapter must not be blank." }
         verseStart?.let {
             require(it >= 1) { "Verse must be greater than or equal to 1." }
         }
@@ -27,9 +27,17 @@ data class BibleReference(
     constructor(
         versionId: Int,
         bookUSFM: String,
-        chapter: Int,
+        chapter: String,
         verse: Int? = null,
     ) : this(versionId, bookUSFM, chapter, verseStart = verse, verseEnd = verse)
+
+    /** Whether this reference points to a book introduction passage. */
+    val isIntro: Boolean
+        get() = chapter.equals(INTRO, ignoreCase = true)
+
+    /** The chapter as an Int, or null if this is a non-numeric chapter (e.g., intro). */
+    val chapterNumber: Int?
+        get() = chapter.toIntOrNull()
 
     val chapterUSFM: String
         get() = "${bookUSFM.uppercase()}.$chapter"
@@ -158,6 +166,22 @@ data class BibleReference(
     }
 
     companion object {
+        const val INTRO = "INTRO"
+
+        private fun compareChapters(
+            a: String,
+            b: String,
+        ): Int {
+            val aNum = a.toIntOrNull()
+            val bNum = b.toIntOrNull()
+            return when {
+                aNum != null && bNum != null -> aNum.compareTo(bNum)
+                aNum != null -> 1 // numeric chapters sort after non-numeric
+                bNum != null -> -1
+                else -> a.compareTo(b, ignoreCase = true)
+            }
+        }
+
         // Static function equivalent
         fun compare(
             a: BibleReference,
@@ -168,8 +192,9 @@ data class BibleReference(
                 return if (a.bookUSFM < b.bookUSFM) -1 else 1
             }
 
-            if (a.chapter != b.chapter) {
-                return if (a.chapter < b.chapter) -1 else 1
+            val chapterComparison = compareChapters(a.chapter, b.chapter)
+            if (chapterComparison != 0) {
+                return chapterComparison
             }
 
             return when {
@@ -260,7 +285,7 @@ data class BibleReference(
         ): BibleReference? {
             fun reference(
                 bookUSFM: String,
-                chapter: Int,
+                chapter: String,
                 verseStart: Int,
                 verseEnd: Int,
             ): BibleReference? {
@@ -276,15 +301,25 @@ data class BibleReference(
                 )
             }
 
+            // GEN.INTRO
+            val patBIntro = Regex("""(\w{3})\.[Ii][Nn][Tt][Rr][Oo]""")
+            patBIntro.matchEntire(usfm)?.let { match ->
+                val bText = match.groupValues[1]
+                return BibleReference(
+                    versionId = versionId,
+                    bookUSFM = bText.uppercase(),
+                    chapter = INTRO,
+                )
+            }
+
             // GEN.1.3-1.5
             val patBCVCV = Regex("""(\w{3})\.(\d+)\.(\d+)-(\d+)\.(\d+)""")
             patBCVCV.matchEntire(usfm)?.let { match ->
                 val (bText, cText, vText, _, v2Text) = match.destructured
-                val c = cText.toIntOrNull()
                 val v = vText.toIntOrNull()
                 val v2 = v2Text.toIntOrNull()
-                if (c != null && v != null && v2 != null) {
-                    return reference(bText.uppercase(), c, v, v2)
+                if (v != null && v2 != null) {
+                    return reference(bText.uppercase(), cText, v, v2)
                 }
                 return null
             }
@@ -293,14 +328,13 @@ data class BibleReference(
             val patBCVBCV = Regex("""(\w{3})\.(\d+)\.(\d+)-(\w{3})\.(\d+)\.(\d+)""")
             patBCVBCV.matchEntire(usfm)?.let { match ->
                 val (bText, cText, vText, b2Text, _, v2Text) = match.destructured
-                val c = cText.toIntOrNull()
                 val v = vText.toIntOrNull()
                 val v2 = v2Text.toIntOrNull()
-                if (c != null && v != null && v2 != null) {
+                if (v != null && v2 != null) {
                     if (bText != b2Text) {
                         return null
                     }
-                    return reference(bText.uppercase(), c, v, v2)
+                    return reference(bText.uppercase(), cText, v, v2)
                 }
                 return null
             }
@@ -309,11 +343,10 @@ data class BibleReference(
             val patBCVV = Regex("""(\w{3})\.(\d+)\.(\d+)-(\d+)""")
             patBCVV.matchEntire(usfm)?.let { match ->
                 val (bText, cText, vText, v2Text) = match.destructured
-                val c = cText.toIntOrNull()
                 val v = vText.toIntOrNull()
                 val v2 = v2Text.toIntOrNull()
-                if (c != null && v != null && v2 != null) {
-                    return reference(bText.uppercase(), c, v, v2)
+                if (v != null && v2 != null) {
+                    return reference(bText.uppercase(), cText, v, v2)
                 }
                 return null
             }
@@ -322,10 +355,9 @@ data class BibleReference(
             val patBCV = Regex("""(\w{3})\.(\d+)\.(\d+)""")
             patBCV.matchEntire(usfm)?.let { match ->
                 val (bText, cText, vText) = match.destructured
-                val c = cText.toIntOrNull()
                 val v = vText.toIntOrNull()
-                if (c != null && v != null) {
-                    return reference(bText.uppercase(), c, v, v)
+                if (v != null) {
+                    return reference(bText.uppercase(), cText, v, v)
                 }
                 return null
             }
@@ -334,22 +366,14 @@ data class BibleReference(
             val patBC = Regex("""(\w{3})\.(\d+)""")
             patBC.matchEntire(usfm)?.let { match ->
                 val (bText, cText) = match.destructured
-                val c = cText.toIntOrNull()
-                if (c != null) {
-                    return reference(bText.uppercase(), c, 1, 1)
-                }
-                return null
+                return reference(bText.uppercase(), cText, 1, 1)
             }
 
             // GEN.1-2
             val patBCC = Regex("""(\w{3})\.(\d+)-(\d+)""")
             patBCC.matchEntire(usfm)?.let { match ->
                 val (bText, cText, _) = match.destructured
-                val c = cText.toIntOrNull()
-                if (c != null) {
-                    return reference(bText.uppercase(), c, 1, 1)
-                }
-                return null
+                return reference(bText.uppercase(), cText, 1, 1)
             }
 
             return null

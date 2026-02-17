@@ -56,48 +56,48 @@ class BibleVersionTests : YouVersionPlatformTest {
     // ----- displayTitle
     @Test
     fun `test displayTitle for single verse with abbreviation`() {
-        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verse = 1)
+        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "3", verse = 1)
         assertEquals("Genesis 3:1 WEBUS", bibleVersion.displayTitle(reference))
     }
 
     @Test
     fun `test displayTitle for single verse without abbreviation`() {
-        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verse = 1)
+        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "3", verse = 1)
         assertEquals("Genesis 3:1", bibleVersion.displayTitle(reference, includesVersionAbbreviation = false))
     }
 
     @Test
     fun `test displayTitle for verse range with abbreviation`() {
-        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verseStart = 4, verseEnd = 6)
+        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "3", verseStart = 4, verseEnd = 6)
         assertEquals("Genesis 3:4-6 WEBUS", bibleVersion.displayTitle(reference))
     }
 
     @Test
     fun `test displayTitle for verse range without abbreviation`() {
-        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verseStart = 4, verseEnd = 6)
+        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "3", verseStart = 4, verseEnd = 6)
         assertEquals("Genesis 3:4-6", bibleVersion.displayTitle(reference, includesVersionAbbreviation = false))
     }
 
     @Test
     fun `test displayTitle for chapter with abbreviation`() {
-        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3)
+        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "3")
         assertEquals("Genesis 3 WEBUS", bibleVersion.displayTitle(reference))
     }
 
     @Test
     fun `test displayTitle for chapter without abbreviation`() {
-        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3)
+        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "3")
         assertEquals("Genesis 3", bibleVersion.displayTitle(reference, includesVersionAbbreviation = false))
     }
 
     @Test
     fun `test displayTitle for rtl language`() {
         val bibleVersion = bibleVersion.copy(textDirection = "rtl")
-        with(BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3)) {
+        with(BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "3")) {
             assertEquals("3 Genesis", bibleVersion.displayTitle(this, includesVersionAbbreviation = false))
         }
 
-        with(BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verseStart = 4, verseEnd = 6)) {
+        with(BibleReference(versionId = 206, bookUSFM = "GEN", chapter = "3", verseStart = 4, verseEnd = 6)) {
             assertEquals("WEBUS 6-4:3 Genesis", bibleVersion.displayTitle(this))
         }
     }
@@ -241,7 +241,7 @@ class BibleVersionTests : YouVersionPlatformTest {
         assertNotNull(ref)
         assertEquals(206, ref.versionId)
         assertEquals("GEN", ref.bookUSFM)
-        assertEquals(1, ref.chapter)
+        assertEquals("1", ref.chapter)
         assertEquals(1, ref.verseStart)
     }
 
@@ -251,7 +251,7 @@ class BibleVersionTests : YouVersionPlatformTest {
         assertNotNull(ref)
         assertEquals(206, ref.versionId)
         assertEquals("PSA", ref.bookUSFM)
-        assertEquals(23, ref.chapter)
+        assertEquals("23", ref.chapter)
         assertEquals(1, ref.verseStart)
     }
 
@@ -261,7 +261,7 @@ class BibleVersionTests : YouVersionPlatformTest {
         assertNotNull(ref)
         assertEquals(206, ref.versionId)
         assertEquals("JHN", ref.bookUSFM)
-        assertEquals(3, ref.chapter)
+        assertEquals("3", ref.chapter)
         assertEquals(16, ref.verseStart)
         assertEquals(17, ref.verseEnd)
     }
@@ -271,7 +271,7 @@ class BibleVersionTests : YouVersionPlatformTest {
         val ref = bibleVersion.reference("  GEN.1.1  ")
         assertNotNull(ref)
         assertEquals("GEN", ref.bookUSFM)
-        assertEquals(1, ref.chapter)
+        assertEquals("1", ref.chapter)
         assertEquals(1, ref.verseStart)
     }
 
@@ -280,7 +280,7 @@ class BibleVersionTests : YouVersionPlatformTest {
         val ref = bibleVersion.reference("gen.1.1")
         assertNotNull(ref)
         assertEquals("GEN", ref.bookUSFM)
-        assertEquals(1, ref.chapter)
+        assertEquals("1", ref.chapter)
         assertEquals(1, ref.verseStart)
     }
 
@@ -297,7 +297,7 @@ class BibleVersionTests : YouVersionPlatformTest {
         val ref = bibleVersion.reference("GEN.1.1+GEN.1.2")
         assertNotNull(ref)
         assertEquals("GEN", ref.bookUSFM)
-        assertEquals(1, ref.chapter)
+        assertEquals("1", ref.chapter)
         assertEquals(1, ref.verseStart)
         assertEquals(2, ref.verseEnd)
     }
@@ -307,7 +307,7 @@ class BibleVersionTests : YouVersionPlatformTest {
         val ref = bibleVersion.reference("PSA.23.1+PSA.23.2+PSA.23.3")
         assertNotNull(ref)
         assertEquals("PSA", ref.bookUSFM)
-        assertEquals(23, ref.chapter)
+        assertEquals("23", ref.chapter)
         assertEquals(1, ref.verseStart)
         assertEquals(3, ref.verseEnd)
     }

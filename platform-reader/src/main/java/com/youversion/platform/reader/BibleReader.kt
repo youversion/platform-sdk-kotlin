@@ -110,7 +110,7 @@ fun BibleReader(
                                 BibleReference(
                                     versionId = versionId,
                                     bookUSFM = bookCode,
-                                    chapter = chapter.toInt(),
+                                    chapter = chapter,
                                 ).also { bibleReaderViewModel.onHeaderSelectionChange(it) }
                                 navController.popBackStack()
                             },

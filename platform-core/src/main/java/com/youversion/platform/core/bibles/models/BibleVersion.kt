@@ -89,8 +89,12 @@ data class BibleVersion(
             ?.filter { it.isCanonical == true }
             ?: emptyList()
 
+    /** Returns the intro's display title for a book, or null if no intro exists. */
+    fun introLabel(bookUsfm: String): String? = book(bookUsfm)?.intro?.title
+
     // Example: "https://www.bible.com/bible/111/1SA.3.10.NIV"
     fun shareUrl(reference: BibleReference): String? {
+        if (reference.isIntro) return null
         val prefix = "https://www.bible.com/bible/$id/"
         val book = reference.bookUSFM
         val version =
@@ -152,10 +156,15 @@ data class BibleVersion(
         val bookUSFM = reference.bookUSFM
         val bookName = book(bookUSFM)?.title ?: ""
 
+        if (reference.isIntro) {
+            val introTitle = book(bookUSFM)?.intro?.title ?: "Introduction"
+            return listOf(bookName, " ", introTitle)
+        }
+
         val hasOneChapter = canonicalChapters(bookUSFM).count() == 1
         val chapterSeparator = if (hasOneChapter) " " else ":"
         val bookAndChapterSeparator = if (hasOneChapter) "" else " "
-        val chapter = if (hasOneChapter) "" else reference.chapter.toString()
+        val chapter = if (hasOneChapter) "" else reference.chapter
 
         val verseStart = reference.verseStart
         val verseEnd = reference.verseEnd

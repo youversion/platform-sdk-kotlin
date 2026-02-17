@@ -32,7 +32,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl single verse`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV")
-        val reference = BibleReference(versionId = 111, bookUSFM = "1SA", chapter = 3, verse = 10)
+        val reference = BibleReference(versionId = 111, bookUSFM = "1SA", chapter = "3", verse = 10)
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/111/1SA.3.10.NIV", url)
@@ -41,7 +41,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl single verse with localized abbreviation`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV", localizedAbbreviation = "NVI")
-        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verse = 1)
+        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = "1", verse = 1)
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/111/GEN.1.1.NVI", url)
@@ -50,7 +50,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl single verse no abbreviation`() {
         val version = createBibleVersion(id = 999)
-        val reference = BibleReference(versionId = 999, bookUSFM = "PSA", chapter = 23, verse = 1)
+        val reference = BibleReference(versionId = 999, bookUSFM = "PSA", chapter = "23", verse = 1)
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/999/PSA.23.1.999", url)
@@ -61,7 +61,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl verse range`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV")
-        val reference = BibleReference(versionId = 111, bookUSFM = "1SA", chapter = 3, verseStart = 10, verseEnd = 15)
+        val reference = BibleReference(versionId = 111, bookUSFM = "1SA", chapter = "3", verseStart = 10, verseEnd = 15)
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/111/1SA.3.10-15.NIV", url)
@@ -70,7 +70,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl verse range with localized abbreviation`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV", localizedAbbreviation = "NVI")
-        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verseStart = 1, verseEnd = 5)
+        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = "1", verseStart = 1, verseEnd = 5)
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/111/GEN.1.1-5.NVI", url)
@@ -79,7 +79,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl verse range same start and end`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV")
-        val reference = BibleReference(versionId = 111, bookUSFM = "1SA", chapter = 3, verseStart = 10, verseEnd = 10)
+        val reference = BibleReference(versionId = 111, bookUSFM = "1SA", chapter = "3", verseStart = 10, verseEnd = 10)
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/111/1SA.3.10.NIV", url)
@@ -90,7 +90,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl chapter only`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV")
-        val reference = BibleReference(versionId = 111, bookUSFM = "1SA", chapter = 3)
+        val reference = BibleReference(versionId = 111, bookUSFM = "1SA", chapter = "3")
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/111/1SA.3.NIV", url)
@@ -99,7 +99,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl chapter only with localized abbreviation`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV", localizedAbbreviation = "NVI")
-        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1)
+        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = "1")
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/111/GEN.1.NVI", url)
@@ -108,7 +108,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl chapter only no abbreviation`() {
         val version = createBibleVersion(id = 999)
-        val reference = BibleReference(versionId = 999, bookUSFM = "PSA", chapter = 23)
+        val reference = BibleReference(versionId = 999, bookUSFM = "PSA", chapter = "23")
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/999/PSA.23.999", url)
@@ -122,7 +122,7 @@ class BibleVersionShareUrlTests {
         val version2 = createBibleVersion(id = 111, abbreviation = "NIV")
         val version3 = createBibleVersion(id = 999, abbreviation = "ESV")
 
-        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verse = 1)
+        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = "1", verse = 1)
 
         val url1 = version1.shareUrl(reference)
         val url2 = version2.shareUrl(reference)
@@ -139,10 +139,10 @@ class BibleVersionShareUrlTests {
     fun `test shareUrl different book usfms`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV")
 
-        val ref1 = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verse = 1)
-        val ref2 = BibleReference(versionId = 111, bookUSFM = "EXO", chapter = 2, verse = 3)
-        val ref3 = BibleReference(versionId = 111, bookUSFM = "PSA", chapter = 23, verse = 1)
-        val ref4 = BibleReference(versionId = 111, bookUSFM = "1SA", chapter = 3, verse = 10)
+        val ref1 = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = "1", verse = 1)
+        val ref2 = BibleReference(versionId = 111, bookUSFM = "EXO", chapter = "2", verse = 3)
+        val ref3 = BibleReference(versionId = 111, bookUSFM = "PSA", chapter = "23", verse = 1)
+        val ref4 = BibleReference(versionId = 111, bookUSFM = "1SA", chapter = "3", verse = 10)
 
         val url1 = version.shareUrl(ref1)
         val url2 = version.shareUrl(ref2)
@@ -160,7 +160,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl different chapter numbers`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV")
-        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 50, verse = 20)
+        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = "50", verse = 20)
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/111/GEN.50.20.NIV", url)
@@ -174,7 +174,7 @@ class BibleVersionShareUrlTests {
 
         // Create a reference with verseStart nil but verseEnd not nil
         // Since the initializers don't allow this, we'll test the logic path with chapter only
-        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1)
+        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = "1")
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/111/GEN.1.NIV", url)
@@ -183,7 +183,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl large verse numbers`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV")
-        val reference = BibleReference(versionId = 111, bookUSFM = "PSA", chapter = 119, verse = 176)
+        val reference = BibleReference(versionId = 111, bookUSFM = "PSA", chapter = "119", verse = 176)
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/111/PSA.119.176.NIV", url)
@@ -192,7 +192,8 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl large verse range`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV")
-        val reference = BibleReference(versionId = 111, bookUSFM = "PSA", chapter = 119, verseStart = 1, verseEnd = 176)
+        val reference =
+            BibleReference(versionId = 111, bookUSFM = "PSA", chapter = "119", verseStart = 1, verseEnd = 176)
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/111/PSA.119.1-176.NIV", url)
@@ -201,7 +202,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl empty abbreviation`() {
         val version = createBibleVersion(id = 111, abbreviation = "")
-        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verse = 1)
+        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = "1", verse = 1)
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/111/GEN.1.1.111", url)
@@ -210,7 +211,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl empty localized abbreviation`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV", localizedAbbreviation = "")
-        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verse = 1)
+        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = "1", verse = 1)
 
         val url = version.shareUrl(reference)
         assertEquals("https://www.bible.com/bible/111/GEN.1.1.NIV", url)
@@ -221,7 +222,7 @@ class BibleVersionShareUrlTests {
     @Test
     fun `test shareUrl returns valid url`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV")
-        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verse = 1)
+        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = "1", verse = 1)
 
         val url = version.shareUrl(reference)
 
@@ -237,13 +238,13 @@ class BibleVersionShareUrlTests {
 
         val scenarios =
             listOf(
-                BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1),
-                BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verse = 1),
-                BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verseStart = 1, verseEnd = 5),
-                BibleReference(versionId = 111, bookUSFM = "PSA", chapter = 23, verse = 1),
-                BibleReference(versionId = 111, bookUSFM = "PSA", chapter = 23, verseStart = 1, verseEnd = 6),
-                BibleReference(versionId = 111, bookUSFM = "1SA", chapter = 3, verse = 10),
-                BibleReference(versionId = 111, bookUSFM = "1SA", chapter = 3, verseStart = 10, verseEnd = 15),
+                BibleReference(versionId = 111, bookUSFM = "GEN", chapter = "1"),
+                BibleReference(versionId = 111, bookUSFM = "GEN", chapter = "1", verse = 1),
+                BibleReference(versionId = 111, bookUSFM = "GEN", chapter = "1", verseStart = 1, verseEnd = 5),
+                BibleReference(versionId = 111, bookUSFM = "PSA", chapter = "23", verse = 1),
+                BibleReference(versionId = 111, bookUSFM = "PSA", chapter = "23", verseStart = 1, verseEnd = 6),
+                BibleReference(versionId = 111, bookUSFM = "1SA", chapter = "3", verse = 10),
+                BibleReference(versionId = 111, bookUSFM = "1SA", chapter = "3", verseStart = 10, verseEnd = 15),
             )
 
         for (reference in scenarios) {

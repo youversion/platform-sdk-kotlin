@@ -147,7 +147,7 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
                         assertEquals("old_testament", canon)
 
                         // Assert chapters
-                        assertEquals(4, chapters?.size)
+                        assertEquals(3, chapters?.size)
 
                         // Assert GEN.1 chapter
                         chapters?.get(0)?.apply {
@@ -376,14 +376,13 @@ private const val VERSION_206_INDEX_JSON = """
                     "passage_id": "GEN.3",
                     "title": "3",
                     "verses": null
-                },
-                {
-                    "id": "Intro",
-                    "passage_id": "GEN.intro",
-                    "title": "Introduction",
-                    "verses": null
                 }
-            ]
+            ],
+            "intro": {
+                "id": "Intro",
+                "passage_id": "GEN.intro",
+                "title": "Introduction"
+            }
         },
         {
           "id": "EXO",

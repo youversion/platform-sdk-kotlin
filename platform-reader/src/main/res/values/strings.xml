@@ -8,4 +8,5 @@
     <string name="font_selected_check">Font selected check</string>
 
     <string name="book_chapter_picker_title">Books</string>
+    <string name="book_intro_content_description">Introduction</string>
 </resources>

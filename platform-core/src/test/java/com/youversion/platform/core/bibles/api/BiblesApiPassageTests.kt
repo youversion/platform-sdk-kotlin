@@ -19,7 +19,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class BiblesApiPassageTests : YouVersionPlatformTest {
-    val reference = BibleReference(versionId = 206, bookUSFM = "JHN", chapter = 3, verse = 1)
+    val reference = BibleReference(versionId = 206, bookUSFM = "JHN", chapter = "3", verse = 1)
 
     @AfterTest
     fun teardown() = stopYouVersionPlatformTest()

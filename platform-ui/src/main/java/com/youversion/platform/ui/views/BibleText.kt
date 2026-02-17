@@ -289,7 +289,7 @@ fun BibleReference.Companion.fromAnnotation(annotation: String): BibleReference 
     return BibleReference(
         versionId = split[0].toInt(),
         bookUSFM = split[1],
-        chapter = split[2].toInt(),
+        chapter = split[2],
         verse = split[3].toInt(),
     )
 }

@@ -36,9 +36,13 @@ class BibleReaderRepository(
      */
     var lastBibleReference: BibleReference?
         get() =
-            storage
-                .getStringOrNull(KEY_BIBLE_READER_REFERENCE)
-                ?.let { Json.decodeFromString(it) }
+            try {
+                storage
+                    .getStringOrNull(KEY_BIBLE_READER_REFERENCE)
+                    ?.let { Json.decodeFromString(it) }
+            } catch (_: Exception) {
+                null
+            }
         set(value) =
             storage
                 .putString(KEY_BIBLE_READER_REFERENCE, value?.let { Json.encodeToString(it) })
@@ -57,7 +61,7 @@ class BibleReaderRepository(
                 BibleReference(
                     versionId = versionId,
                     bookUSFM = "JHN",
-                    chapter = 1,
+                    chapter = "1",
                 )
             }
 
@@ -66,26 +70,43 @@ class BibleReaderRepository(
         bibleReference: BibleReference,
     ): BibleReference? {
         val books = version?.books ?: emptyList()
-        val previousBookIndex =
+        val currentBookIndex =
             books.indexOfFirst { it.id == bibleReference.bookUSFM }
+        val currentBook = books.getOrNull(currentBookIndex)
+        val currentChapter = bibleReference.chapterNumber
+
         return when {
-            bibleReference.chapter > 1 -> {
-                // We're navigating to a previous chapter inside the same book
-                bibleReference.copy(chapter = bibleReference.chapter - 1)
+            bibleReference.isIntro -> {
+                if (currentBookIndex > 0) {
+                    val previousBook = books[currentBookIndex - 1]
+                    val lastChapter = previousBook.chapters?.count() ?: 0
+                    bibleReference.copy(
+                        bookUSFM = previousBook.id ?: "",
+                        chapter = lastChapter.toString(),
+                    )
+                } else {
+                    null
+                }
             }
 
-            previousBookIndex > 0 -> {
-                // We're navigating to the last chapter in the previous book
-                val previousBook = books[previousBookIndex - 1]
+            currentChapter != null && currentChapter > 1 -> {
+                bibleReference.copy(chapter = (currentChapter - 1).toString())
+            }
+
+            currentChapter == 1 && currentBook?.hasIntro == true -> {
+                bibleReference.copy(chapter = BibleReference.INTRO)
+            }
+
+            currentBookIndex > 0 -> {
+                val previousBook = books[currentBookIndex - 1]
                 val lastChapter = previousBook.chapters?.count() ?: 0
                 bibleReference.copy(
                     bookUSFM = previousBook.id ?: "",
-                    chapter = lastChapter,
+                    chapter = lastChapter.toString(),
                 )
             }
 
             else -> {
-                // We're at the first chapter, intro, etc of the first book (e.g. Genesis 1)
                 null
             }
         }
@@ -99,24 +120,28 @@ class BibleReaderRepository(
         val currentBookIndex = books.indexOfFirst { it.id == bibleReference.bookUSFM }
         val currentBook = books.getOrNull(currentBookIndex)
         val lastChapter = currentBook?.chapters?.count() ?: 0
+        val currentChapter = bibleReference.chapterNumber
 
         return when {
-            bibleReference.chapter < lastChapter -> {
-                // We're navigating to the next chapter in the same book
-                bibleReference.copy(chapter = bibleReference.chapter + 1)
+            bibleReference.isIntro -> {
+                bibleReference.copy(chapter = "1")
+            }
+
+            currentChapter != null && currentChapter < lastChapter -> {
+                bibleReference.copy(chapter = (currentChapter + 1).toString())
             }
 
             currentBookIndex < books.count() - 1 -> {
-                // We're navigating to the first chapter of the next book
                 val nextBook = books.getOrNull(currentBookIndex + 1)
+                val nextChapter =
+                    if (nextBook?.hasIntro == true) BibleReference.INTRO else "1"
                 bibleReference.copy(
                     bookUSFM = nextBook?.id ?: "",
-                    chapter = 1,
+                    chapter = nextChapter,
                 )
             }
 
             else -> {
-                // We're at the end of the last book
                 null
             }
         }
