@@ -23,7 +23,7 @@ import com.youversion.platform.ui.views.widget.BibleWidget
 fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
     val bibleReference =
         BibleReference(
-            versionId = 111,
+            versionId = 3034, // BSB
             bookUSFM = "2CO",
             chapter = 1,
             verseStart = 3,
