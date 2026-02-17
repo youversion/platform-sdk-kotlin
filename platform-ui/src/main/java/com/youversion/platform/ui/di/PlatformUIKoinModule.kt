@@ -1,7 +1,7 @@
 package com.youversion.platform.ui.di
 
+import com.youversion.platform.ui.views.card.BibleCardViewModel
 import com.youversion.platform.ui.views.votd.VerseOfTheDayViewModel
-import com.youversion.platform.ui.views.widget.BibleWidgetViewModel
 import org.koin.dsl.module
 
 internal val PlatformUIKoinModule =
@@ -9,7 +9,7 @@ internal val PlatformUIKoinModule =
 
         // View Models
         factory { params ->
-            BibleWidgetViewModel(
+            BibleCardViewModel(
                 reference = params[0],
                 bibleVersion = params[1],
                 bibleVersionRepository = get(),
