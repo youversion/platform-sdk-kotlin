@@ -81,7 +81,7 @@ data class BibleTextFonts(
             BibleTextFontOption.HEADER_ITALIC to
                 SpanStyle(
                     fontFamily = fontFamily,
-                    fontSize = baseSize * 1.2,
+                    fontSize = baseSize,
                     fontStyle = FontStyle.Italic,
                 ),
             BibleTextFontOption.HEADER_SMALLER to
