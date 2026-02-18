@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,6 +46,7 @@ import com.youversion.platform.reader.components.BibleReaderPassageSelection
 import com.youversion.platform.reader.components.PassageSelectionDefaults
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
+import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
@@ -159,6 +161,32 @@ internal fun BibleScreen(
                             .verticalScroll(rememberScrollState()),
                 ) {
                     Spacer(modifier = Modifier.height(16.dp))
+                    if (state.bookName.isNotEmpty()) {
+                        Text(
+                            text = state.bookName,
+                            style =
+                                TextStyle(
+                                    fontFamily = state.fontFamily,
+                                    fontSize = state.fontSize * 1.2,
+                                    // fontWeight = FontWeight.SemiBold,
+                                    color = BibleReaderTheme.colorScheme.textMuted,
+                                ),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Text(
+                            text = state.chapterNumber.toString(),
+                            style =
+                                TextStyle(
+                                    fontFamily = state.fontFamily,
+                                    fontSize = state.fontSize * 1.5,
+                                    color = BibleReaderTheme.colorScheme.textMuted,
+                                ),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                     BibleText(
                         textOptions =
                             BibleTextOptions(
