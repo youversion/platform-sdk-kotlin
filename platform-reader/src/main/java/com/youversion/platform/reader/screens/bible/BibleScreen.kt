@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -167,8 +166,7 @@ internal fun BibleScreen(
                             style =
                                 TextStyle(
                                     fontFamily = state.fontFamily,
-                                    fontSize = state.fontSize * 1.2,
-                                    // fontWeight = FontWeight.SemiBold,
+                                    fontSize = state.fontSize * 1.2,                                    
                                     color = BibleReaderTheme.colorScheme.textMuted,
                                 ),
                             textAlign = TextAlign.Center,
@@ -179,7 +177,7 @@ internal fun BibleScreen(
                             style =
                                 TextStyle(
                                     fontFamily = state.fontFamily,
-                                    fontSize = state.fontSize * 1.5,
+                                    fontSize = state.fontSize * 2.0,
                                     color = BibleReaderTheme.colorScheme.textMuted,
                                 ),
                             textAlign = TextAlign.Center,
