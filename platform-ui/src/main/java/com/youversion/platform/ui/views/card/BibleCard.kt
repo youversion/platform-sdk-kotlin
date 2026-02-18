@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.youversion.platform.core.BibleDefaults
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.foundation.PlatformKoinGraph
@@ -224,7 +225,7 @@ private fun Preview_BibleCard() {
                 BibleCard(
                     reference =
                         BibleReference(
-                            versionId = 3034, // BSB
+                            versionId = BibleDefaults.VERSION_ID,
                             bookUSFM = "2CO",
                             chapter = 1,
                             verseStart = 3,
