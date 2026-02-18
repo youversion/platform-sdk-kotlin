@@ -51,7 +51,7 @@ data class BibleTextFonts(
             BibleTextFontOption.TEXT to
                 SpanStyle(
                     fontFamily = fontFamily,
-                    fontSize = baseSize,
+                    fontSize = baseSize * 1.2,
                 ),
             BibleTextFontOption.TEXT_ITALIC to
                 SpanStyle(
