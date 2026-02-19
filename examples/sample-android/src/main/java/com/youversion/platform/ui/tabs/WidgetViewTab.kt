@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.youversion.platform.core.BibleDefaults
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
@@ -23,7 +24,7 @@ import com.youversion.platform.ui.views.card.BibleCard
 fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
     val bibleReference =
         BibleReference(
-            versionId = 3034, // BSB
+            versionId = BibleDefaults.VERSION_ID,
             bookUSFM = "2CO",
             chapter = 1,
             verseStart = 3,
