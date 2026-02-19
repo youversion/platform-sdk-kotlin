@@ -1,5 +1,6 @@
 package com.youversion.platform.reader.domain
 
+import com.youversion.platform.core.BibleDefaults
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
@@ -22,7 +23,6 @@ class BibleReaderRepository(
     private val languageRepository: LanguageRepository,
 ) {
     companion object {
-        private const val DEFAULT_BIBLE_VERSION_ID = 3034 // BSB
         private const val KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
     }
 
@@ -53,7 +53,7 @@ class BibleReaderRepository(
                 // Fallback to John 1. Attempt to use the first downloaded version.
                 // If no versions have been downloaded, use BSB.
                 val downloadedVersions = bibleVersionRepository.downloadedVersions
-                val versionId = downloadedVersions.firstOrNull() ?: DEFAULT_BIBLE_VERSION_ID
+                val versionId = downloadedVersions.firstOrNull() ?: BibleDefaults.VERSION_ID
                 BibleReference(
                     versionId = versionId,
                     bookUSFM = "JHN",

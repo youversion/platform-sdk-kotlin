@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.youversion.platform.core.BibleDefaults
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.foundation.PlatformKoinGraph
@@ -46,7 +47,7 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 fun CompactVerseOfTheDay(
-    bibleVersionId: Int = 3034, // BSB
+    bibleVersionId: Int = BibleDefaults.VERSION_ID,
     showIcon: Boolean = true,
     dark: Boolean = isSystemInDarkTheme(),
 ) {
@@ -60,7 +61,7 @@ fun CompactVerseOfTheDay(
 
 @Composable
 fun VerseOfTheDay(
-    bibleVersionId: Int = 3034, // BSB
+    bibleVersionId: Int = BibleDefaults.VERSION_ID,
     showIcon: Boolean = true,
     dark: Boolean = isSystemInDarkTheme(),
     onShareClick: () -> Unit = {},
