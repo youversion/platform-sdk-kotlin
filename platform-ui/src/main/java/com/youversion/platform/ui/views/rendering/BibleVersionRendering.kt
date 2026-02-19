@@ -517,7 +517,7 @@ object BibleVersionRendering {
             marginTop = newMargin
         }
 
-        for (child in node.children) {
+        for ((index, child) in node.children.withIndex()) {
             if (child.type == BibleTextNodeType.BLOCK || child.type == BibleTextNodeType.TABLE) {
                 if (!stateUp.isTextEmpty()) {
                     if (stateUp.rendering) {
@@ -534,6 +534,25 @@ object BibleVersionRendering {
                         ret = resultBlocks,
                     )
                 } else { // It's a nested block
+                    val isHeader =
+                        child.classes.contains("yv-h") || child.classes.contains("yvh")
+                    val savedRendering = stateUp.rendering
+
+                    if (isHeader && !stateUp.rendering && stateIn.renderHeadlines) {
+                        val nextVerse =
+                            node.children
+                                .drop(index + 1)
+                                .firstNotNullOfOrNull { sibling ->
+                                    firstVerseInNode(sibling)
+                                }
+                        if (nextVerse != null &&
+                            nextVerse >= stateIn.fromVerse &&
+                            nextVerse <= stateIn.toVerse
+                        ) {
+                            stateUp.rendering = true
+                        }
+                    }
+
                     handleNodeBlock(
                         node = child,
                         stateIn = stateIn,
@@ -541,6 +560,10 @@ object BibleVersionRendering {
                         stateUp = stateUp,
                         resultBlocks = resultBlocks,
                     )
+
+                    if (isHeader) {
+                        stateUp.rendering = savedRendering
+                    }
                 }
             } else {
                 handleBlockChild(
@@ -760,7 +783,7 @@ object BibleVersionRendering {
                         }
 
                     stateUp.firstLineHeadIndent = noIndent
-                    if (!stateIn.renderHeadlines) {
+                    if (!stateIn.renderHeadlines || stateUp.verse >= stateIn.toVerse) {
                         stateUp.rendering = false
                     }
                 }
@@ -781,6 +804,19 @@ object BibleVersionRendering {
             smallcaps = newSmallCaps
             currentFont = newCurrentFont
         }
+    }
+
+    /**
+     * Finds the first verse number in a node's subtree by searching for verse-labeled spans.
+     */
+    private fun firstVerseInNode(node: BibleTextNode): Int? {
+        if (node.classes.contains("yv-v") || node.classes.contains("verse")) {
+            node.attributes["v"]?.toIntOrNull()?.let { return it }
+        }
+        for (child in node.children) {
+            firstVerseInNode(child)?.let { return it }
+        }
+        return null
     }
 }
 
