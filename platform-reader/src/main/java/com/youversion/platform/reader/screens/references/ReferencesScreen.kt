@@ -1,6 +1,5 @@
 package com.youversion.platform.reader.screens.references
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -11,22 +10,23 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -40,8 +40,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -69,12 +67,8 @@ internal fun ReferencesScreen(
 
     var shouldAnimateScrollTo by remember { mutableStateOf(false) }
 
-    BackHandler(enabled = state.isSearching) {
-        viewModel.stopSearching()
-    }
-
     LaunchedEffect(state.expandedBookCode) {
-        if (state.isSearching) return@LaunchedEffect
+        if (state.isSearchActive) return@LaunchedEffect
         state.expandedBookCode?.let { expandedBookCode ->
             val bookIndex = state.referenceRows.indexOfFirst { it.bookCode == expandedBookCode }
             // There are 2 items for each book (header and chapters)
@@ -100,31 +94,20 @@ internal fun ReferencesScreen(
 
     Scaffold(
         topBar = {
-            if (state.isSearching) {
-                SearchTopBar(
-                    searchQuery = state.searchQuery,
-                    onSearchQueryChange = viewModel::onSearchQueryChange,
-                    onClose = viewModel::stopSearching,
-                )
-            } else {
-                BibleReaderTopAppBar(
-                    title = stringResource(R.string.book_chapter_picker_title),
-                    onBackClick = onBackClick,
-                    actions = {
-                        IconButton(onClick = viewModel::startSearching) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = null,
-                            )
-                        }
-                    },
-                )
-            }
+            BibleReaderTopAppBar(
+                title = stringResource(R.string.book_chapter_picker_title),
+                onBackClick = onBackClick,
+            )
         },
     ) { innerPadding ->
         val rows = state.filteredReferenceRows
 
-        Box(modifier = Modifier.padding(innerPadding)) {
+        Column(modifier = Modifier.padding(innerPadding)) {
+            BookSearchBar(
+                query = state.searchQuery,
+                onQueryChange = viewModel::onSearchQueryChange,
+            )
+
             LazyColumn(state = lazyListState) {
                 rows.forEach { row ->
                     stickyHeader(key = row.bookCode) {
@@ -135,7 +118,7 @@ internal fun ReferencesScreen(
                     }
 
                     item(key = "chapters_${row.bookCode}") {
-                        val isVisible = state.isSearching || state.expandedBookCode == row.bookCode
+                        val isVisible = state.isSearchActive || state.expandedBookCode == row.bookCode
                         AnimatedVisibility(
                             visible = isVisible,
                             enter = expandVertically() + fadeIn(),
@@ -155,53 +138,49 @@ internal fun ReferencesScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SearchTopBar(
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    onClose: () -> Unit,
+private fun BookSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
 ) {
-    val focusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
-
-    BibleReaderTopAppBar(
-        title = {
-            BasicTextField(
-                value = searchQuery,
-                onValueChange = onSearchQueryChange,
-                singleLine = true,
-                textStyle =
-                    MaterialTheme.typography.titleLarge.copy(
-                        color = MaterialTheme.colorScheme.onBackground,
-                    ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                modifier = Modifier.focusRequester(focusRequester),
-                decorationBox = { innerTextField ->
-                    Box {
-                        if (searchQuery.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.search_books_hint),
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                            )
-                        }
-                        innerTextField()
+    BasicTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        singleLine = true,
+        textStyle =
+            MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+            ),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        decorationBox = { innerTextField ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(MaterialTheme.readerColorScheme.buttonPrimaryColor)
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Box(modifier = Modifier.weight(1f)) {
+                    if (query.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.search_books_hint),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
-                },
-            )
-        },
-        onBackClick = onClose,
-        actions = {
-            if (searchQuery.isNotEmpty()) {
-                IconButton(onClick = { onSearchQueryChange("") }) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = null,
-                    )
+                    innerTextField()
                 }
             }
         },

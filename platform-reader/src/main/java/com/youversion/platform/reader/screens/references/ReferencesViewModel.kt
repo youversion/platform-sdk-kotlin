@@ -41,14 +41,6 @@ class ReferencesViewModel(
         _state.update { it.copy(expandedBookCode = expanded) }
     }
 
-    fun startSearching() {
-        _state.update { it.copy(isSearching = true, searchQuery = "") }
-    }
-
-    fun stopSearching() {
-        _state.update { it.copy(isSearching = false, searchQuery = "") }
-    }
-
     fun onSearchQueryChange(query: String) {
         _state.update { it.copy(searchQuery = query) }
     }
@@ -58,8 +50,10 @@ class ReferencesViewModel(
         val referenceRows: List<ReferenceRow>,
         val expandedBookCode: String?,
         val searchQuery: String = "",
-        val isSearching: Boolean = false,
     ) {
+        val isSearchActive: Boolean
+            get() = searchQuery.isNotBlank()
+
         val filteredReferenceRows: List<ReferenceRow>
             get() =
                 if (searchQuery.isBlank()) {
