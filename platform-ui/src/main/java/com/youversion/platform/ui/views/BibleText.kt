@@ -307,7 +307,7 @@ private fun BibleTextBlock(
     Text(
         text = block.text,
         textAlign = block.alignment,
-        lineHeight = textOptions.lineSpacing ?: (textOptions.fontSize * 2),
+        lineHeight = textOptions.lineSpacing ?: (textOptions.fontSize * 1.5),
         modifier =
             Modifier
                 .padding(top = marginTop)
