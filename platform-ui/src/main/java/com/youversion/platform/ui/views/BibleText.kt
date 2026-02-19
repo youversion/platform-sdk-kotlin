@@ -38,7 +38,10 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
@@ -50,6 +53,7 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.foundation.PlatformKoinGraph
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.theme.UntitledSerif
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleTextCategory
@@ -71,7 +75,7 @@ internal val ImageFootnoteMarker: AnnotatedString =
     buildAnnotatedString { appendInlineContent(id = FOOTNOTE_IMAGE_ID) }
 
 data class BibleTextOptions(
-    val fontFamily: FontFamily = FontFamily.Serif,
+    val fontFamily: FontFamily = UntitledSerif,
     val fontSize: TextUnit = 16.sp,
     val lineSpacing: TextUnit? = null,
     val textColor: Color? = null,
