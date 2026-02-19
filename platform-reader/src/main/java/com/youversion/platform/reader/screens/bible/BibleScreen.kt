@@ -166,7 +166,7 @@ internal fun BibleScreen(
                             style =
                                 TextStyle(
                                     fontFamily = state.fontFamily,
-                                    fontSize = state.fontSize * 1.2,                                    
+                                    fontSize = state.fontSize * 1.3,
                                     color = BibleReaderTheme.colorScheme.textMuted,
                                 ),
                             textAlign = TextAlign.Center,
@@ -177,7 +177,7 @@ internal fun BibleScreen(
                             style =
                                 TextStyle(
                                     fontFamily = state.fontFamily,
-                                    fontSize = state.fontSize * 2.0,
+                                    fontSize = state.fontSize * 2.2,
                                     color = BibleReaderTheme.colorScheme.textMuted,
                                 ),
                             textAlign = TextAlign.Center,
