@@ -23,6 +23,7 @@ internal val PlatformReaderKoinModule =
                 bibleVersionRepository = get(),
                 bibleReaderRepository = get(),
                 userSettingsRepository = get(),
+                bibleChapterRepository = get(),
             )
         }
 

@@ -28,7 +28,7 @@ fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
             bookUSFM = "2CO",
             chapter = 1,
             verseStart = 3,
-            verseEnd = 20,
+            verseEnd = 11,
         )
 
     Scaffold(

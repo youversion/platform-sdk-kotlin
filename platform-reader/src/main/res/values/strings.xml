@@ -8,4 +8,7 @@
     <string name="font_selected_check">Font selected check</string>
 
     <string name="book_chapter_picker_title">Books</string>
+
+    <string name="verse_actions_copy">Copy</string>
+    <string name="verse_actions_share">Share</string>
 </resources>

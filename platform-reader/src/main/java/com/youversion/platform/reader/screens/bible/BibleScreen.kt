@@ -1,5 +1,7 @@
 package com.youversion.platform.reader.screens.bible
 
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +47,7 @@ import com.youversion.platform.reader.components.BibleReaderPassageSelection
 import com.youversion.platform.reader.components.PassageSelectionDefaults
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
+import com.youversion.platform.reader.sheets.BibleReaderVerseActionSheet
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
@@ -168,6 +171,12 @@ internal fun BibleScreen(
                                 footnoteMode = BibleTextFootnoteMode.IMAGE,
                             ),
                         reference = state.bibleReference,
+                        selectedVerses = state.selectedVerses,
+                        onVerseSelectedChange = { verses ->
+                            viewModel.onAction(
+                                BibleReaderViewModel.Action.UpdateVerseSelection(verses),
+                            )
+                        },
                         onStateChange = { loadingPhase = it },
                         onFootnoteTap = { reference, footnotes ->
                             viewModel.onAction(
@@ -228,6 +237,21 @@ internal fun BibleScreen(
                         {
                             signInViewModel.onAction(SignInViewModel.Action.SignOut(false))
                         },
+                )
+            }
+
+            if (state.isShowingVerseActions && state.selectedVerses.isNotEmpty()) {
+                val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                BibleReaderVerseActionSheet(
+                    version = state.bibleVersion,
+                    selectedVerses = state.selectedVerses,
+                    onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection) },
+                    onCopy = {
+                        viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses(clipboardManager))
+                    },
+                    onShare = {
+                        viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses(context))
+                    },
                 )
             }
 

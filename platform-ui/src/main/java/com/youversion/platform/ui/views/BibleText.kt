@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -213,6 +214,7 @@ fun BibleText(
                     BibleTextBlock(
                         block = block,
                         textOptions = textOptions,
+                        selectedVerses = selectedVerses,
                         isFirstBlock = index == 0,
                         onTap = { localPosition, textLayoutResult ->
                             coroutineScope.launch {
@@ -302,14 +304,20 @@ fun BibleReference.Companion.fromAnnotation(annotation: String): BibleReference 
 private fun BibleTextBlock(
     block: BibleTextBlock,
     textOptions: BibleTextOptions,
+    selectedVerses: Set<BibleReference>,
     isFirstBlock: Boolean,
     onTap: (position: Offset, layoutResult: TextLayoutResult) -> Unit,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     val marginTop = if (isFirstBlock) 0.dp else block.marginTop
+    val highlightColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+    val displayText =
+        remember(block.text, selectedVerses, highlightColor) {
+            highlightSelectedVerses(block.text, selectedVerses, highlightColor)
+        }
 
     Text(
-        text = block.text,
+        text = displayText,
         textAlign = block.alignment,
         lineHeight = textOptions.lineSpacing ?: (textOptions.fontSize * 2),
         modifier =
@@ -323,7 +331,6 @@ private fun BibleTextBlock(
                                 onTap(position, layoutResult)
                             }
                         },
-                        // onLongPress could also be used for selection
                     )
                 },
         onTextLayout = { result ->
@@ -331,6 +338,33 @@ private fun BibleTextBlock(
         },
         inlineContent = textOptions.inlineContentMap,
     )
+}
+
+private fun highlightSelectedVerses(
+    text: AnnotatedString,
+    selectedVerses: Set<BibleReference>,
+    highlightColor: Color,
+): AnnotatedString {
+    if (selectedVerses.isEmpty()) return text
+
+    return buildAnnotatedString {
+        append(text)
+        text
+            .getStringAnnotations(
+                tag = BibleReferenceAttribute.NAME,
+                start = 0,
+                end = text.length,
+            ).forEach { annotation ->
+                val ref = BibleReference.fromAnnotation(annotation.item)
+                if (ref in selectedVerses) {
+                    addStyle(
+                        SpanStyle(background = highlightColor),
+                        start = annotation.start,
+                        end = annotation.end,
+                    )
+                }
+            }
+    }
 }
 
 @Composable
