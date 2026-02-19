@@ -23,6 +23,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.youversion.platform.core.BibleDefaults
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.ui.views.BibleText
@@ -122,7 +123,7 @@ private fun Preview_BibleReaderFootnotesSheet() {
             version = BibleVersion.preview,
             reference =
                 BibleReference(
-                    versionId = 3034, // BSB
+                    versionId = BibleDefaults.VERSION_ID,
                     bookUSFM = "2CO",
                     chapter = 1,
                     verseStart = 3,
