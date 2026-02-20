@@ -159,7 +159,7 @@ internal fun BibleScreen(
                             .weight(1f)
                             .verticalScroll(rememberScrollState()),
                 ) {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
                     if (state.bookName.isNotEmpty()) {
                         Text(
                             text = state.bookName,
@@ -183,7 +183,7 @@ internal fun BibleScreen(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth(),
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
                     }
                     BibleText(
                         textOptions =
