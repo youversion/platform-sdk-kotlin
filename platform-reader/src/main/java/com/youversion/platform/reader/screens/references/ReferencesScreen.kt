@@ -118,9 +118,8 @@ internal fun ReferencesScreen(
                     }
 
                     item(key = "chapters_${row.bookCode}") {
-                        val isVisible = state.isSearchActive || state.expandedBookCode == row.bookCode
                         AnimatedVisibility(
-                            visible = isVisible,
+                            visible = state.expandedBookCode == row.bookCode,
                             enter = expandVertically() + fadeIn(),
                             exit = shrinkVertically() + fadeOut(),
                         ) {
