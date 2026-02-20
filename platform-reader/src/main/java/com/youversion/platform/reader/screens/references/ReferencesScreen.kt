@@ -163,13 +163,13 @@ private fun BookSearchBar(
                     Modifier
                         .clip(RoundedCornerShape(50))
                         .background(MaterialTheme.readerColorScheme.buttonPrimaryColor)
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(24.dp),
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Box(modifier = Modifier.weight(1f)) {
