@@ -538,18 +538,22 @@ object BibleVersionRendering {
                         child.classes.contains("yv-h") || child.classes.contains("yvh")
                     val savedRendering = stateUp.rendering
 
-                    if (isHeader && !stateUp.rendering && stateIn.renderHeadlines) {
+                    if (isHeader && stateIn.renderHeadlines) {
                         val nextVerse =
                             node.children
                                 .drop(index + 1)
                                 .firstNotNullOfOrNull { sibling ->
                                     firstVerseInNode(sibling)
                                 }
-                        if (nextVerse != null &&
-                            nextVerse >= stateIn.fromVerse &&
-                            nextVerse <= stateIn.toVerse
-                        ) {
+                        val isNextVerseInRange =
+                            nextVerse != null &&
+                                nextVerse >= stateIn.fromVerse &&
+                                nextVerse <= stateIn.toVerse
+
+                        if (!stateUp.rendering && isNextVerseInRange) {
                             stateUp.rendering = true
+                        } else if (stateUp.rendering && nextVerse != null && !isNextVerseInRange) {
+                            stateUp.rendering = false
                         }
                     }
 
@@ -783,7 +787,7 @@ object BibleVersionRendering {
                         }
 
                     stateUp.firstLineHeadIndent = noIndent
-                    if (!stateIn.renderHeadlines || stateUp.verse >= stateIn.toVerse) {
+                    if (!stateIn.renderHeadlines) {
                         stateUp.rendering = false
                     }
                 }
