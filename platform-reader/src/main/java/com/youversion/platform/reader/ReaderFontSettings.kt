@@ -14,7 +14,7 @@ object ReaderFontSettings {
     val lineSpacingMultiplierOptions = listOf(1.5f, 2.0f, 2.5f)
 
     val DEFAULT_FONT_SIZE: TextUnit = 18.sp
-    const val DEFAULT_LINE_SPACING_MULTIPLIER: Float = 1.75f
+    const val DEFAULT_LINE_SPACING_MULTIPLIER: Float = 1.5f
 
     val DEFAULT_FONT_DEFINITION: FontDefinition = FontDefinition("Untitled Serif", UntitledSerif)
 
