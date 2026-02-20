@@ -1,5 +1,9 @@
 package com.youversion.platform.reader.screens.bible
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -54,6 +58,7 @@ import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.signin.SignOutConfirmationAlert
 import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
 import com.youversion.platform.ui.signin.rememberYouVersionAuthLauncher
+import com.youversion.platform.ui.utilities.ObserveAsEvents
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
@@ -123,10 +128,38 @@ internal fun BibleScreen(
             }
     }
 
+    ObserveAsEvents(viewModel.events) { event ->
+        when (event) {
+            is BibleReaderViewModel.Event.CopyVerseText -> {
+                val clipboardManager =
+                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                clipboardManager.setPrimaryClip(
+                    ClipData.newPlainText("verse", event.clipboardText),
+                )
+            }
+
+            is BibleReaderViewModel.Event.ShareVerseText -> {
+                val sendIntent =
+                    Intent(Intent.ACTION_SEND).apply {
+                        putExtra(Intent.EXTRA_TEXT, event.shareText)
+                        putExtra(Intent.EXTRA_TITLE, event.shareTitle)
+                        type = "text/plain"
+                    }
+                context.startActivity(Intent.createChooser(sendIntent, null))
+            }
+
+            is BibleReaderViewModel.Event.OnErrorLoadingBibleVersion -> {}
+        }
+    }
+
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetContent = {
-            BibleReaderVerseActionSheet(selectedVerses = state.selectedVerses)
+            BibleReaderVerseActionSheet(
+                selectedVerses = state.selectedVerses,
+                onCopy = { viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses) },
+                onShare = { viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses) },
+            )
         },
         sheetPeekHeight = 0.dp,
         sheetContainerColor = MaterialTheme.colorScheme.surface,
