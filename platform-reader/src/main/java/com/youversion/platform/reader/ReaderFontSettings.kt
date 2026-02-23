@@ -11,10 +11,10 @@ import com.youversion.platform.reader.theme.UntitledSerif
  */
 object ReaderFontSettings {
     val availableSizes = listOf(9.sp, 12.sp, 15.sp, 18.sp, 21.sp, 24.sp)
-    val lineSpacingMultiplierOptions = listOf(1.75f, 2.25f, 2.75f)
+    val lineSpacingMultiplierOptions = listOf(1.5f, 2.0f, 2.5f)
 
     val DEFAULT_FONT_SIZE: TextUnit = 18.sp
-    const val DEFAULT_LINE_SPACING_MULTIPLIER: Float = 2.25f
+    const val DEFAULT_LINE_SPACING_MULTIPLIER: Float = 1.5f
 
     val DEFAULT_FONT_DEFINITION: FontDefinition = FontDefinition("Untitled Serif", UntitledSerif)
 
