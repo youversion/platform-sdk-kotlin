@@ -88,7 +88,7 @@ private fun VerseActionButton(
             imageVector = icon,
             contentDescription = label,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(20.dp),
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
