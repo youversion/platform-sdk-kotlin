@@ -285,7 +285,7 @@ private fun Copyright(version: BibleVersion?) {
             style =
                 TextStyle(
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
+                    color = BibleReaderTheme.colorScheme.textMuted,
                 ),
             modifier =
                 Modifier
