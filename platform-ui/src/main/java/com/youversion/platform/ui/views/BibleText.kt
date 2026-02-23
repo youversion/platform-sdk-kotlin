@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -396,7 +398,7 @@ fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
 
             BibleTextLoadingPhase.FAILED ->
                 PlaceholderMessage(
-                    icon = ImageVector.vectorResource(R.drawable.ic_material_warning),
+                    icon = Icons.Outlined.WifiOff,
                     message = stringResource(R.string.placeholder_offline),
                 )
 
