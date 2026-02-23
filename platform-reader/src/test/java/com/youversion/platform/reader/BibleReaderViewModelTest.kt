@@ -169,7 +169,10 @@ class BibleReaderViewModelTest {
             val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
 
-            assertTrue(viewModel.state.value.selectedVerses.contains(verseRef))
+            assertTrue(
+                viewModel.state.value.selectedVerses
+                    .contains(verseRef),
+            )
             assertTrue(viewModel.state.value.showVerseActionSheet)
 
             viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses)
