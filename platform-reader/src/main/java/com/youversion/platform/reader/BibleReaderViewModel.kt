@@ -241,15 +241,18 @@ class BibleReaderViewModel(
         val footnotesReference: BibleReference? = null,
         val footnotes: List<AnnotatedString> = emptyList(),
     ) {
-        val bookAndChapter: String
+        val bookName: String
             get() =
                 bibleVersion?.let { version ->
-                    val bookUsfm = bibleReference.bookUSFM
-                    val book = version.bookName(bookUsfm) ?: bookUsfm
-                    val chapter = bibleReference.chapter
-
-                    "$book $chapter"
+                    version.bookName(bibleReference.bookUSFM) ?: bibleReference.bookUSFM
                 } ?: ""
+
+        val chapterNumber: Int
+            get() = bibleReference.chapter
+
+        val bookAndChapter: String
+            get() =
+                if (bookName.isNotEmpty()) "$bookName $chapterNumber" else ""
 
         val versionAbbreviation: String
             get() =

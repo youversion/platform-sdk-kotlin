@@ -45,6 +45,7 @@ import com.youversion.platform.reader.components.BibleReaderPassageSelection
 import com.youversion.platform.reader.components.PassageSelectionDefaults
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
+import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
@@ -158,7 +159,32 @@ internal fun BibleScreen(
                             .weight(1f)
                             .verticalScroll(rememberScrollState()),
                 ) {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
+                    if (state.bookName.isNotEmpty()) {
+                        Text(
+                            text = state.bookName,
+                            style =
+                                TextStyle(
+                                    fontFamily = state.fontFamily,
+                                    fontSize = state.fontSize * 1.3,
+                                    color = BibleReaderTheme.colorScheme.textMuted,
+                                ),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Text(
+                            text = state.chapterNumber.toString(),
+                            style =
+                                TextStyle(
+                                    fontFamily = state.fontFamily,
+                                    fontSize = state.fontSize * 2.2,
+                                    color = BibleReaderTheme.colorScheme.textMuted,
+                                ),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
                     BibleText(
                         textOptions =
                             BibleTextOptions(
