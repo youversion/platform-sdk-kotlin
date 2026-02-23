@@ -15,7 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.IosShare
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -53,7 +53,7 @@ internal fun BibleReaderVerseActionSheet(
                 onClick = onCopy,
             )
             VerseActionButton(
-                icon = Icons.Outlined.Share,
+                icon = Icons.Outlined.IosShare,
                 label = stringResource(R.string.verse_action_share),
                 onClick = onShare,
             )
@@ -88,12 +88,12 @@ private fun VerseActionButton(
             imageVector = icon,
             contentDescription = label,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(16.dp),
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
-            fontSize = 14.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
