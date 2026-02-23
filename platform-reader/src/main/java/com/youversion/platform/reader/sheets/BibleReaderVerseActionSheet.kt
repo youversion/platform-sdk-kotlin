@@ -94,7 +94,7 @@ private fun VerseActionButton(
         Text(
             text = label,
             fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
