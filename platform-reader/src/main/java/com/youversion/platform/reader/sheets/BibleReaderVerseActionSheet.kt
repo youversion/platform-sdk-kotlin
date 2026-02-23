@@ -75,7 +75,7 @@ private fun VerseActionButton(
         verticalArrangement = Arrangement.Center,
         modifier =
             Modifier
-                .size(72.dp)
+                .size(56.dp)
                 .clip(buttonShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .clickable(
