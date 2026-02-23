@@ -73,7 +73,7 @@ fun BibleReaderBanner(
                     .padding(horizontal = 16.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(BibleReaderTheme.colorScheme.surfaceSecondary)
-                    .padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+                    .padding(start = 20.dp, top = 16.dp, bottom = 16.dp, end = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -82,7 +82,7 @@ fun BibleReaderBanner(
                 modifier = Modifier.size(20.dp),
                 tint = BibleReaderTheme.colorScheme.textMuted,
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(24.dp))
             Text(
                 text = message,
                 style = BibleReaderTheme.typography.captionL,
