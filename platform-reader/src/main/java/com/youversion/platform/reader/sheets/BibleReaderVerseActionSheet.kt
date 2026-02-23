@@ -77,7 +77,7 @@ private fun VerseActionButton(
             Modifier
                 .size(56.dp)
                 .clip(buttonShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 .clickable(
                     interactionSource = null,
                     indication = ripple(),
