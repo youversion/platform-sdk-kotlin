@@ -1,6 +1,5 @@
 package com.youversion.platform.reader.screens.bible
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,7 +27,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -40,6 +38,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.BibleReaderViewModel
+import com.youversion.platform.reader.components.BibleReaderBanner
+import com.youversion.platform.reader.components.BibleReaderBannerType
 import com.youversion.platform.reader.components.BibleReaderHeader
 import com.youversion.platform.reader.components.BibleReaderPassageSelection
 import com.youversion.platform.reader.components.PassageSelectionDefaults
@@ -89,6 +89,14 @@ internal fun BibleScreen(
         )
 
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
+    var isBannerDismissed by rememberSaveable { mutableStateOf(false) }
+
+    val bannerType =
+        when (loadingPhase) {
+            BibleTextLoadingPhase.FAILED -> BibleReaderBannerType.OFFLINE
+            BibleTextLoadingPhase.NOT_PERMITTED -> BibleReaderBannerType.VERSION_UNAVAILABLE
+            else -> null
+        }
 
     val topScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val bottomScrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior()
@@ -139,16 +147,6 @@ internal fun BibleScreen(
             )
         },
     ) { innerPadding ->
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(20.dp)
-                    .background(Color.Red)
-                    .padding(bottom = 16.dp),
-        ) {
-            Text("Foo")
-        }
         Box(modifier = Modifier.padding(innerPadding)) {
             // Scrollable Reader content
             Column {
@@ -159,6 +157,14 @@ internal fun BibleScreen(
                             .weight(1f)
                             .verticalScroll(rememberScrollState()),
                 ) {
+                    if (bannerType != null) {
+                        BibleReaderBanner(
+                            bannerType = bannerType,
+                            isVisible = !isBannerDismissed,
+                            onDismiss = { isBannerDismissed = true },
+                            modifier = Modifier.padding(bottom = 16.dp),
+                        )
+                    }
                     Spacer(modifier = Modifier.height(32.dp))
                     if (state.bookName.isNotEmpty()) {
                         Text(

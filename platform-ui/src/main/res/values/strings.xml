@@ -19,4 +19,7 @@
     <string name="sign_out_confirmation_message">Are you sure you want to sign out from YouVersion? You will need to sign in again to access your highlights.</string>
     <string name="sign_out_confirm_button_text">Sign Out</string>
     <string name="sign_out_cancel_button_text">Cancel</string>
+
+    <string name="placeholder_offline">You\'ve lost your internet connection. Re-connect and download a Bible version to proceed offline.</string>
+    <string name="placeholder_version_unavailable">Your previously selected Bible version is unavailable. Another similar Bible version has been selected for you.</string>
 </resources>
