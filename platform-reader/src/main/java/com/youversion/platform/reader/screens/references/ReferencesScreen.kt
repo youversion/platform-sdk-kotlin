@@ -10,16 +10,23 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -33,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -60,6 +68,7 @@ internal fun ReferencesScreen(
     var shouldAnimateScrollTo by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.expandedBookCode) {
+        if (state.isSearchActive) return@LaunchedEffect
         state.expandedBookCode?.let { expandedBookCode ->
             val bookIndex = state.referenceRows.indexOfFirst { it.bookCode == expandedBookCode }
             // There are 2 items for each book (header and chapters)
@@ -85,12 +94,22 @@ internal fun ReferencesScreen(
 
     Scaffold(
         topBar = {
-            BibleReaderTopAppBar(title = stringResource(R.string.book_chapter_picker_title), onBackClick = onBackClick)
+            BibleReaderTopAppBar(
+                title = stringResource(R.string.book_chapter_picker_title),
+                onBackClick = onBackClick,
+            )
         },
     ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
+        val rows = state.filteredReferenceRows
+
+        Column(modifier = Modifier.padding(innerPadding)) {
+            BookSearchBar(
+                query = state.searchQuery,
+                onQueryChange = viewModel::onSearchQueryChange,
+            )
+
             LazyColumn(state = lazyListState) {
-                state.referenceRows.forEach { row ->
+                rows.forEach { row ->
                     stickyHeader(key = row.bookCode) {
                         RowHeader(
                             bookName = row.bookName ?: row.bookCode,
@@ -116,6 +135,55 @@ internal fun ReferencesScreen(
             }
         }
     }
+}
+
+@Composable
+private fun BookSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+) {
+    BasicTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        singleLine = true,
+        textStyle =
+            MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+            ),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        decorationBox = { innerTextField ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(MaterialTheme.readerColorScheme.buttonPrimaryColor)
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp),
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Box(modifier = Modifier.weight(1f)) {
+                    if (query.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.search_books_hint),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    innerTextField()
+                }
+            }
+        },
+    )
 }
 
 @Composable

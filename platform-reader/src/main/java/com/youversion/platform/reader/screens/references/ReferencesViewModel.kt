@@ -41,11 +41,29 @@ class ReferencesViewModel(
         _state.update { it.copy(expandedBookCode = expanded) }
     }
 
+    fun onSearchQueryChange(query: String) {
+        _state.update { it.copy(searchQuery = query) }
+    }
+
     // ----- State
     data class State(
         val referenceRows: List<ReferenceRow>,
         val expandedBookCode: String?,
-    )
+        val searchQuery: String = "",
+    ) {
+        val isSearchActive: Boolean
+            get() = searchQuery.isNotBlank()
+
+        val filteredReferenceRows: List<ReferenceRow>
+            get() =
+                if (searchQuery.isBlank()) {
+                    referenceRows
+                } else {
+                    referenceRows.filter {
+                        it.bookName?.contains(searchQuery, ignoreCase = true) == true
+                    }
+                }
+    }
 
     // ----- Injection
     companion object {
