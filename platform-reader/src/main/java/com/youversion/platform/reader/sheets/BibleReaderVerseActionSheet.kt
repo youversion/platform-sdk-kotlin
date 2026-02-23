@@ -45,7 +45,7 @@ internal fun BibleReaderVerseActionSheet(
     ) {
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(24.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             VerseActionButton(
                 icon = Icons.Outlined.ContentCopy,
