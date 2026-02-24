@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
@@ -27,6 +29,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -102,6 +105,7 @@ internal fun BibleScreen(
     val bottomScrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior()
     val passageSelectionScrollBehavior = PassageSelectionDefaults.fadeAlwaysScrollBehavior()
 
+    Box {
     Scaffold(
         modifier =
             Modifier
@@ -157,14 +161,6 @@ internal fun BibleScreen(
                             .weight(1f)
                             .verticalScroll(rememberScrollState()),
                 ) {
-                    if (bannerType != null) {
-                        BibleReaderBanner(
-                            bannerType = bannerType,
-                            isVisible = !isBannerDismissed,
-                            onDismiss = { isBannerDismissed = true },
-                            modifier = Modifier.padding(bottom = 16.dp),
-                        )
-                    }
                     Spacer(modifier = Modifier.height(32.dp))
                     if (state.bookName.isNotEmpty()) {
                         Text(
@@ -277,6 +273,20 @@ internal fun BibleScreen(
                     footnotes = state.footnotes,
                 )
             }
+            }
+        }
+
+        // Banner overlay above all content including header
+        if (bannerType != null) {
+            BibleReaderBanner(
+                bannerType = bannerType,
+                isVisible = !isBannerDismissed,
+                onDismiss = { isBannerDismissed = true },
+                modifier =
+                    Modifier
+                        .statusBarsPadding()
+                        .align(Alignment.TopCenter),
+            )
         }
     }
 }
