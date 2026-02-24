@@ -398,7 +398,7 @@ fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
 
             BibleTextLoadingPhase.FAILED ->
                 PlaceholderMessage(
-                    icon = Icons.Outlined.WifiOff,
+                    icon = ImageVector.vectorResource(R.drawable.ic_wifi_exclamation),
                     message = stringResource(R.string.placeholder_offline),
                 )
 
