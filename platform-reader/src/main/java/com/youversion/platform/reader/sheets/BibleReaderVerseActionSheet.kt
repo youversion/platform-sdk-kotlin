@@ -40,7 +40,7 @@ internal fun BibleReaderVerseActionSheet(
     Column(
         modifier =
             Modifier
-                .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 8.dp),
+                .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 24.dp),
     ) {
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
