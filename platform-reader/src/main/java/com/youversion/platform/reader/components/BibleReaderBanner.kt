@@ -57,7 +57,7 @@ fun BibleReaderBanner(
                 BibleReaderBannerType.OFFLINE ->
                     ImageVector.vectorResource(R.drawable.ic_wifi_exclamation)
                 BibleReaderBannerType.VERSION_UNAVAILABLE ->
-                    Icons.Outlined.Sync
+                    ImageVector.vectorResource(R.drawable.ic_sync)
             }
 
         val message =
