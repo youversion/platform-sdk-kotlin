@@ -22,7 +22,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.reader.R
@@ -51,7 +53,7 @@ fun BibleReaderBanner(
         val icon =
             when (bannerType) {
                 BibleReaderBannerType.OFFLINE ->
-                    Icons.Outlined.WifiOff
+                    ImageVector.vectorResource(R.drawable.ic_wifi_exclamation)
                 BibleReaderBannerType.VERSION_UNAVAILABLE ->
                     Icons.Outlined.Sync
             }
