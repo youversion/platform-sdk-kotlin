@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -113,6 +114,7 @@ internal fun ReferencesScreen(
                     stickyHeader(key = row.bookCode) {
                         RowHeader(
                             bookName = row.bookName ?: row.bookCode,
+                            isExpanded = state.expandedBookCode == row.bookCode,
                             onClick = { viewModel.expandBook(row.bookCode) },
                         )
                     }
@@ -189,6 +191,7 @@ private fun BookSearchBar(
 @Composable
 private fun RowHeader(
     bookName: String,
+    isExpanded: Boolean,
     onClick: () -> Unit,
 ) {
     Row(
@@ -205,7 +208,10 @@ private fun RowHeader(
                     onClick = onClick,
                 ).padding(vertical = 16.dp, horizontal = 24.dp),
     ) {
-        Text(text = bookName)
+        Text(
+            text = bookName,
+            fontWeight = if (isExpanded) FontWeight.Bold else FontWeight.Normal,
+        )
     }
 }
 
