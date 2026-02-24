@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,19 +42,19 @@ internal fun BibleReaderVerseActionSheet(
     Column(
         modifier =
             Modifier
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = 24.dp, vertical = 8.dp),
     ) {
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             VerseActionButton(
-                icon = Icons.Outlined.ContentCopy,
+                icon = ImageVector.vectorResource(R.drawable.ic_copy),
                 label = stringResource(R.string.verse_action_copy),
                 onClick = onCopy,
             )
             VerseActionButton(
-                icon = Icons.Outlined.IosShare,
+                icon = ImageVector.vectorResource(R.drawable.ic_share),
                 label = stringResource(R.string.verse_action_share),
                 onClick = onShare,
             )
@@ -94,6 +95,7 @@ private fun VerseActionButton(
         Text(
             text = label,
             fontSize = 14.sp,
+            lineHeight = 14.sp,
             fontWeight = FontWeight.Normal,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
