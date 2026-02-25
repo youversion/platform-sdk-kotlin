@@ -283,7 +283,8 @@ internal fun BibleScreen(
                 modifier =
                     Modifier
                         .statusBarsPadding()
-                        .align(Alignment.TopCenter),
+                        .align(Alignment.TopCenter)
+                        .padding(top = 8.dp),
             )
         }
     }
