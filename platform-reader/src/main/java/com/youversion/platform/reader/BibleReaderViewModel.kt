@@ -131,15 +131,61 @@ class BibleReaderViewModel(
             }
 
             is Action.GoToNextChapter -> {
-                bibleReaderRepository
-                    .nextChapter(bibleVersion, bibleReference)
-                    ?.let { nextReference -> bibleReference = nextReference }
+                if (_state.value.isViewingIntro) {
+                    val bookUSFM = _state.value.introBookUSFM ?: bibleReference.bookUSFM
+                    _state.update { it.copy(introBookUSFM = null) }
+                    bibleReference =
+                        BibleReference(
+                            versionId = bibleReference.versionId,
+                            bookUSFM = bookUSFM,
+                            chapter = 1,
+                        )
+                } else {
+                    bibleReaderRepository
+                        .nextChapter(bibleVersion, bibleReference)
+                        ?.let { nextReference ->
+                            val nextBook = bibleVersion?.book(nextReference.bookUSFM)
+                            if (nextReference.chapter == 1 &&
+                                nextReference.bookUSFM != bibleReference.bookUSFM &&
+                                nextBook?.hasIntro == true
+                            ) {
+                                _state.update { it.copy(introBookUSFM = nextReference.bookUSFM) }
+                            } else {
+                                bibleReference = nextReference
+                            }
+                        }
+                }
             }
 
             is Action.GoToPreviousChapter -> {
-                bibleReaderRepository
-                    .previousChapter(bibleVersion, bibleReference)
-                    ?.let { prevReference -> bibleReference = prevReference }
+                if (_state.value.isViewingIntro) {
+                    val books = bibleVersion?.books ?: emptyList()
+                    val bookUSFM = _state.value.introBookUSFM
+                    val currentBookIndex = books.indexOfFirst { it.id == bookUSFM }
+                    _state.update { it.copy(introBookUSFM = null) }
+                    if (currentBookIndex > 0) {
+                        val previousBook = books[currentBookIndex - 1]
+                        val lastChapter = previousBook.chapters?.count() ?: 1
+                        bibleReference =
+                            bibleReference.copy(
+                                bookUSFM = previousBook.id ?: "",
+                                chapter = lastChapter,
+                            )
+                    }
+                } else if (bibleReference.chapter == 1) {
+                    val currentBook = bibleVersion?.book(bibleReference.bookUSFM)
+                    if (currentBook?.hasIntro == true) {
+                        _state.update { it.copy(introBookUSFM = bibleReference.bookUSFM) }
+                    } else {
+                        bibleReaderRepository
+                            .previousChapter(bibleVersion, bibleReference)
+                            ?.let { prevReference -> bibleReference = prevReference }
+                    }
+                } else {
+                    bibleReaderRepository
+                        .previousChapter(bibleVersion, bibleReference)
+                        ?.let { prevReference -> bibleReference = prevReference }
+                }
             }
         }
     }
@@ -149,6 +195,10 @@ class BibleReaderViewModel(
         onHeaderSelectionChange(newReference)
     }
 
+    fun onIntroSelected(bookUSFM: String) {
+        _state.update { it.copy(introBookUSFM = bookUSFM) }
+    }
+
     fun onHeaderSelectionChange(newReference: BibleReference) {
         viewModelScope.launch {
             if (bibleVersion?.id != newReference.versionId) {
@@ -156,6 +206,7 @@ class BibleReaderViewModel(
                 bibleVersion = newVersion
                 // TODO: INsert my version
             }
+            _state.update { it.copy(introBookUSFM = null) }
             bibleReference = newReference
         }
     }
@@ -240,11 +291,16 @@ class BibleReaderViewModel(
         val showingFootnotes: Boolean = false,
         val footnotesReference: BibleReference? = null,
         val footnotes: List<AnnotatedString> = emptyList(),
+        val introBookUSFM: String? = null,
     ) {
+        val isViewingIntro: Boolean
+            get() = introBookUSFM != null
+
         val bookName: String
             get() =
                 bibleVersion?.let { version ->
-                    version.bookName(bibleReference.bookUSFM) ?: bibleReference.bookUSFM
+                    val usfm = introBookUSFM ?: bibleReference.bookUSFM
+                    version.bookName(usfm) ?: usfm
                 } ?: ""
 
         val chapterNumber: Int
@@ -252,7 +308,11 @@ class BibleReaderViewModel(
 
         val bookAndChapter: String
             get() =
-                if (bookName.isNotEmpty()) "$bookName $chapterNumber" else ""
+                if (bookName.isNotEmpty()) {
+                    if (isViewingIntro) "$bookName Intro" else "$bookName $chapterNumber"
+                } else {
+                    ""
+                }
 
         val versionAbbreviation: String
             get() =

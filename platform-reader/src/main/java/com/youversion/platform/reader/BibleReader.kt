@@ -107,11 +107,15 @@ fun BibleReader(
                             bibleVersion = it,
                             bibleReference = bibleReaderViewModel.bibleReference,
                             onSelectionClick = { versionId, bookCode, chapter ->
-                                BibleReference(
-                                    versionId = versionId,
-                                    bookUSFM = bookCode,
-                                    chapter = chapter.toInt(),
-                                ).also { bibleReaderViewModel.onHeaderSelectionChange(it) }
+                                if (chapter == "INTRO") {
+                                    bibleReaderViewModel.onIntroSelected(bookCode)
+                                } else {
+                                    BibleReference(
+                                        versionId = versionId,
+                                        bookUSFM = bookCode,
+                                        chapter = chapter.toInt(),
+                                    ).also { bibleReaderViewModel.onHeaderSelectionChange(it) }
+                                }
                                 navController.popBackStack()
                             },
                             onBackClick = navController::popBackStack,

@@ -230,6 +230,12 @@ private fun ChaptersGrid(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 8.dp),
     ) {
+        if (row.hasIntro) {
+            ChapterCell(
+                chapter = stringResource(R.string.intro_chapter_label),
+                onClick = { onClick("INTRO") },
+            )
+        }
         row.chapters.forEach { chapter ->
             ChapterCell(
                 chapter = chapter,

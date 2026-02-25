@@ -91,6 +91,18 @@ object BiblesEndpoints : BiblesApi {
             parameter("include_headings", true)
         }
 
+    fun passageUrl(
+        versionId: Int,
+        passageId: String,
+        format: String = "html",
+    ): String =
+        buildYouVersionUrlString {
+            path("/v1/bibles/$versionId/passages/$passageId")
+            parameter("format", format)
+            parameter("include_notes", true)
+            parameter("include_headings", true)
+        }
+
     // ----- Bibles API
     override suspend fun versions(
         languageCode: String?,
@@ -191,5 +203,14 @@ object BiblesEndpoints : BiblesApi {
     ): BiblePassage =
         httpClient
             .get(passageUrl(reference, format))
+            .let { parseApiBody(it) }
+
+    override suspend fun passage(
+        versionId: Int,
+        passageId: String,
+        format: String,
+    ): BiblePassage =
+        httpClient
+            .get(passageUrl(versionId, passageId, format))
             .let { parseApiBody(it) }
 }

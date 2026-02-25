@@ -52,6 +52,7 @@ import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.signin.SignOutConfirmationAlert
 import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
 import com.youversion.platform.ui.signin.rememberYouVersionAuthLauncher
+import com.youversion.platform.ui.views.BibleIntroText
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
@@ -172,38 +173,55 @@ internal fun BibleScreen(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth(),
                         )
-                        Text(
-                            text = state.chapterNumber.toString(),
-                            style =
-                                TextStyle(
-                                    fontFamily = state.fontFamily,
-                                    fontSize = state.fontSize * 2.2,
-                                    color = BibleReaderTheme.colorScheme.textMuted,
-                                ),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
+                        if (!state.isViewingIntro) {
+                            Text(
+                                text = state.chapterNumber.toString(),
+                                style =
+                                    TextStyle(
+                                        fontFamily = state.fontFamily,
+                                        fontSize = state.fontSize * 2.2,
+                                        color = BibleReaderTheme.colorScheme.textMuted,
+                                    ),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
                         Spacer(modifier = Modifier.height(24.dp))
                     }
-                    BibleText(
-                        textOptions =
-                            BibleTextOptions(
-                                fontFamily = state.fontFamily,
-                                fontSize = state.fontSize,
-                                lineSpacing = state.lineSpacing,
-                                footnoteMode = BibleTextFootnoteMode.IMAGE,
-                            ),
-                        reference = state.bibleReference,
-                        onStateChange = { loadingPhase = it },
-                        onFootnoteTap = { reference, footnotes ->
-                            viewModel.onAction(
-                                BibleReaderViewModel.Action.OpenFootnotes(
-                                    reference = reference,
-                                    footnotes = footnotes,
+                    if (state.isViewingIntro) {
+                        BibleIntroText(
+                            versionId = state.bibleReference.versionId,
+                            bookUSFM = state.introBookUSFM ?: state.bibleReference.bookUSFM,
+                            textOptions =
+                                BibleTextOptions(
+                                    fontFamily = state.fontFamily,
+                                    fontSize = state.fontSize,
+                                    lineSpacing = state.lineSpacing,
+                                    footnoteMode = BibleTextFootnoteMode.IMAGE,
                                 ),
-                            )
-                        },
-                    )
+                            onStateChange = { loadingPhase = it },
+                        )
+                    } else {
+                        BibleText(
+                            textOptions =
+                                BibleTextOptions(
+                                    fontFamily = state.fontFamily,
+                                    fontSize = state.fontSize,
+                                    lineSpacing = state.lineSpacing,
+                                    footnoteMode = BibleTextFootnoteMode.IMAGE,
+                                ),
+                            reference = state.bibleReference,
+                            onStateChange = { loadingPhase = it },
+                            onFootnoteTap = { reference, footnotes ->
+                                viewModel.onAction(
+                                    BibleReaderViewModel.Action.OpenFootnotes(
+                                        reference = reference,
+                                        footnotes = footnotes,
+                                    ),
+                                )
+                            },
+                        )
+                    }
                     if (loadingPhase == BibleTextLoadingPhase.SUCCESS) {
                         Copyright(version = state.bibleVersion)
                     }

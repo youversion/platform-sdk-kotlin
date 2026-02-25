@@ -112,4 +112,22 @@ interface BiblesApi {
         reference: BibleReference,
         format: String = "html",
     ): BiblePassage
+
+    /**
+     * Retrieves a [BiblePassage] for a given version and passage ID string.
+     *
+     * This supports non-standard passages such as intro chapters that cannot
+     * be represented by a [BibleReference].
+     *
+     * @param versionId The identifier of the Bible version.
+     * @param passageId The passage ID string (e.g., "GEN.INTRO").
+     * @param format The desired format of the passage content.
+     * @return The [BiblePassage] for the given passage ID.
+     * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
+     */
+    suspend fun passage(
+        versionId: Int,
+        passageId: String,
+        format: String = "html",
+    ): BiblePassage
 }
