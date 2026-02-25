@@ -21,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -98,6 +99,12 @@ internal fun BibleScreen(
             BibleTextLoadingPhase.NOT_PERMITTED -> BibleReaderBannerType.VERSION_UNAVAILABLE
             else -> null
         }
+
+    LaunchedEffect(bannerType) {
+        if (bannerType == null) {
+            isBannerDismissed = false
+        }
+    }
 
     val topScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val bottomScrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior()
