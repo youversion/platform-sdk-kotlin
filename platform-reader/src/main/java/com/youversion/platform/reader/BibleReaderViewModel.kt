@@ -1,7 +1,5 @@
 package com.youversion.platform.reader
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
@@ -14,6 +12,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.domain.BibleReaderRepository
+import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.reader.screens.languages.LanguageRowItem
@@ -34,7 +33,7 @@ class BibleReaderViewModel(
     private val bibleReaderRepository: BibleReaderRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val bibleChapterRepository: BibleChapterRepository,
-    private val clipboardManager: ClipboardManager,
+    private val copyManager: CopyManager,
     private val shareManager: ShareManager,
 ) : ViewModel() {
     private val _state: MutableStateFlow<State>
@@ -242,8 +241,7 @@ class BibleReaderViewModel(
                 }
 
             if (textSegments.isNotEmpty()) {
-                val clipboardText = textSegments.joinToString("\n\n")
-                clipboardManager.setPrimaryClip(ClipData.newPlainText("verse", clipboardText))
+                copyManager.copyText(label = "verse", text = textSegments.joinToString("\n\n"))
             }
         }
     }

@@ -1,13 +1,12 @@
 package com.youversion.platform.reader
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.domain.BibleReaderRepository
+import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
@@ -15,9 +14,7 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.mockkStatic
 import io.mockk.unmockkObject
-import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,7 +37,7 @@ class BibleReaderViewModelTest {
     private lateinit var bibleReaderRepository: BibleReaderRepository
     private lateinit var userSettingsRepository: UserSettingsRepository
     private lateinit var bibleChapterRepository: BibleChapterRepository
-    private lateinit var clipboardManager: ClipboardManager
+    private lateinit var copyManager: CopyManager
     private lateinit var shareManager: ShareManager
     private lateinit var viewModel: BibleReaderViewModel
 
@@ -59,7 +56,7 @@ class BibleReaderViewModelTest {
         bibleReaderRepository = mockk(relaxed = true)
         userSettingsRepository = mockk(relaxed = true)
         bibleChapterRepository = mockk(relaxed = true)
-        clipboardManager = mockk(relaxed = true)
+        copyManager = mockk(relaxed = true)
         shareManager = mockk(relaxed = true)
 
         every { bibleReaderRepository.produceBibleReference(any()) } returns defaultReference
@@ -76,7 +73,7 @@ class BibleReaderViewModelTest {
                 bibleReaderRepository = bibleReaderRepository,
                 userSettingsRepository = userSettingsRepository,
                 bibleChapterRepository = bibleChapterRepository,
-                clipboardManager = clipboardManager,
+                copyManager = copyManager,
                 shareManager = shareManager,
             )
     }
@@ -172,11 +169,6 @@ class BibleReaderViewModelTest {
     @Test
     fun `copy action clears verse selection`() =
         runTest {
-            mockkObject(BibleVersionRendering)
-            mockkStatic(ClipData::class)
-            coEvery { BibleVersionRendering.plainTextOf(any(), any()) } returns "test"
-            every { ClipData.newPlainText(any(), any()) } returns mockk()
-
             viewModel.bibleVersion = testBibleVersion
 
             val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
@@ -195,20 +187,15 @@ class BibleReaderViewModelTest {
                     .isEmpty(),
             )
             assertFalse(viewModel.state.value.showVerseActionSheet)
-
-            unmockkStatic(ClipData::class)
-            unmockkObject(BibleVersionRendering)
         }
 
     @Test
     fun `copy action copies text to clipboard`() =
         runTest {
             mockkObject(BibleVersionRendering)
-            mockkStatic(ClipData::class)
             coEvery {
                 BibleVersionRendering.plainTextOf(any(), any())
             } returns "In the beginning God created the heavens and the earth."
-            every { ClipData.newPlainText(any(), any()) } returns mockk()
 
             viewModel.bibleVersion = testBibleVersion
 
@@ -219,8 +206,7 @@ class BibleReaderViewModelTest {
             viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses)
             testDispatcher.scheduler.advanceUntilIdle()
 
-            verify { clipboardManager.setPrimaryClip(any()) }
-            unmockkStatic(ClipData::class)
+            verify { copyManager.copyText(label = any(), text = any()) }
             unmockkObject(BibleVersionRendering)
         }
 

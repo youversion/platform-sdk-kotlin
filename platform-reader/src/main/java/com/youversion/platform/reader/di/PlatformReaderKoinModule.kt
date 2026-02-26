@@ -1,9 +1,8 @@
 package com.youversion.platform.reader.di
 
-import android.content.ClipboardManager
-import android.content.Context
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.domain.BibleReaderRepository
+import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.reader.screens.languages.LanguagesViewModel
@@ -17,11 +16,11 @@ internal val PlatformReaderKoinModule =
         // Repositories
         singleOf(::BibleReaderRepository)
         factoryOf(::UserSettingsRepository)
+        factoryOf(::CopyManager)
         factoryOf(::ShareManager)
 
         // View Models
         factory { params ->
-            val context: Context = get()
             BibleReaderViewModel(
                 bibleReference = params[0],
                 fontDefinitionProvider = params[1],
@@ -29,7 +28,7 @@ internal val PlatformReaderKoinModule =
                 bibleReaderRepository = get(),
                 userSettingsRepository = get(),
                 bibleChapterRepository = get(),
-                clipboardManager = context.getSystemService(ClipboardManager::class.java),
+                copyManager = get(),
                 shareManager = get(),
             )
         }
