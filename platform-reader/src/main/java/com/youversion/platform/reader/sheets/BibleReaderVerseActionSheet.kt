@@ -67,15 +67,14 @@ private fun VerseActionButton(
     icon: ImageVector,
     label: String,
     onClick: () -> Unit,
-) {
-    val buttonShape = RoundedCornerShape(12.dp)
+) {    
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier =
             Modifier
                 .size(56.dp)
-                .clip(buttonShape)
+                .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 .clickable(
                     interactionSource = null,
