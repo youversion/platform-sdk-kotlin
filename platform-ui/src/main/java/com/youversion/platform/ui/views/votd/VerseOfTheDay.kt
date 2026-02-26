@@ -32,7 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.core.BibleDefaults
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
-import com.youversion.platform.foundation.PlatformKoinGraph
+import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.di.PlatformUIKoinModule
 import com.youversion.platform.ui.views.BibleText
