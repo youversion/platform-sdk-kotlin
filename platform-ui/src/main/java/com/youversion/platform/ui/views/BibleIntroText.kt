@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.bibles.domain.BibleIntroRepository
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
+import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
-import com.youversion.platform.foundation.PlatformKoinGraph
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleTextCategory
 import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
