@@ -114,13 +114,14 @@ fun BibleIntroText(
             visibleBlocks.forEachIndexed { index, block ->
                 if (block.rows.isEmpty()) {
                     val marginTop = if (index == 0) 0.dp else block.marginTop
+                    val paragraphSpacing = (textOptions.paragraphSpacing ?: (textOptions.fontSize / 2)).value.dp
                     Text(
                         text = block.text,
                         textAlign = block.alignment,
                         lineHeight = textOptions.lineSpacing ?: (textOptions.fontSize * 1.5),
                         modifier =
                             Modifier
-                                .padding(top = marginTop)
+                                .padding(top = marginTop, bottom = paragraphSpacing)
                                 .fillMaxWidth(),
                         inlineContent = textOptions.inlineContentMap,
                     )

@@ -250,7 +250,11 @@ object BibleVersionRendering {
                         ParagraphStyle(
                             textIndent =
                                 TextIndent(
-                                    firstLine = stateUp.firstLineHeadIndent,
+                                    firstLine =
+                                        TextUnit(
+                                            stateUp.headIndent.value + stateUp.firstLineHeadIndent.value,
+                                            TextUnitType.Sp,
+                                        ),
                                     restLine = stateUp.headIndent,
                                 ),
                         ),
@@ -292,9 +296,17 @@ object BibleVersionRendering {
         if (stateUp.rendering && node.text.isNotEmpty()) {
             val text = if (node.text == "  ") " " else node.text
             val style =
-                stateIn.fonts.styleFor(stateDown.currentFont).let {
-                    if (stateDown.woc) it.copy(color = stateIn.wocColor) else it
-                }
+                stateIn.fonts
+                    .styleFor(stateDown.currentFont)
+                    .let {
+                        if (stateDown.woc) it.copy(color = stateIn.wocColor) else it
+                    }.let {
+                        if (stateDown.currentFont == BibleTextFontOption.VERSE_NUM) {
+                            it.copy(baselineShift = stateIn.fonts.verseNumBaselineShift)
+                        } else {
+                            it
+                        }
+                    }
             stateUp.append(text, style, stateDown.textCategory)
         }
 
@@ -585,6 +597,9 @@ object BibleVersionRendering {
             return
         }
 
+        stateUp.firstLineHeadIndent = TextUnit(0f, TextUnitType.Sp)
+        stateUp.headIndent = TextUnit(0f, TextUnitType.Sp)
+
         interpretBlockClasses(
             classes = node.classes,
             stateIn = stateIn,
@@ -646,6 +661,17 @@ object BibleVersionRendering {
                         stateUp.rendering = savedRendering
                     }
                 }
+            } else if (child.type == BibleTextNodeType.SPAN && child.classes.contains("qs")) {
+                if (!stateUp.isTextEmpty()) {
+                    if (stateUp.rendering) {
+                        resultBlocks.add(createBlock(stateDown, stateUp, marginTop))
+                        stateUp.clearText()
+                        handleBlockChild(child, stateIn, stateDown, stateUp)
+                        val selahStateDown = stateDown.copy().apply { alignment = TextAlign.End }
+                        resultBlocks.add(createBlock(selahStateDown, stateUp, marginTop))
+                    }
+                    stateUp.clearText()
+                }
             } else {
                 handleBlockChild(
                     node = child,
@@ -695,6 +721,7 @@ object BibleVersionRendering {
                 "tl", "it", "add" -> stateDown.currentFont = BibleTextFontOption.TEXT_ITALIC
                 "fq", "fqa", "add" -> stateDown.currentFont = BibleTextFontOption.TEXT_ITALIC
                 "qs", "qt" -> stateDown.currentFont = BibleTextFontOption.TEXT_ITALIC
+                "ord", "fv", "sup" -> stateDown.currentFont = BibleTextFontOption.VERSE_NUM
                 else -> {
                     if (!listOf(
                             "yv-v",
@@ -734,7 +761,7 @@ object BibleVersionRendering {
         var newSmallCaps = stateDown.smallcaps
         var newCurrentFont = stateDown.currentFont
 
-        val indentStep = TextUnit(stateIn.fonts.baseSize.value, TextUnitType.Sp).div(2)
+        val indentStep = TextUnit(stateIn.fonts.baseSize.value, TextUnitType.Sp)
         val noIndent = TextUnit(0f, TextUnitType.Sp)
 
         val ignoredTags =
@@ -810,7 +837,7 @@ object BibleVersionRendering {
                     stateUp.headIndent = indentStep.times(3)
                 }
 
-                "li1", "ili1" -> {
+                "li1", "ili", "ili1" -> {
                     stateUp.firstLineHeadIndent = noIndent
                     stateUp.headIndent = indentStep
                 }

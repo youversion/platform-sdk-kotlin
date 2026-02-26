@@ -75,6 +75,7 @@ data class BibleTextOptions(
     val fontFamily: FontFamily = UntitledSerif,
     val fontSize: TextUnit = 16.sp,
     val lineSpacing: TextUnit? = null,
+    val paragraphSpacing: TextUnit? = null,
     val textColor: Color? = null,
     val wocColor: Color = Color(0xFFF04C59), // YouVersion red
     val renderHeadlines: Boolean = true,
@@ -304,6 +305,7 @@ private fun BibleTextBlock(
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     val marginTop = if (isFirstBlock) 0.dp else block.marginTop
+    val paragraphSpacing = (textOptions.paragraphSpacing ?: (textOptions.fontSize / 2)).value.dp
 
     Text(
         text = block.text,
@@ -311,7 +313,7 @@ private fun BibleTextBlock(
         lineHeight = textOptions.lineSpacing ?: (textOptions.fontSize * 1.5),
         modifier =
             Modifier
-                .padding(top = marginTop)
+                .padding(top = marginTop, bottom = paragraphSpacing)
                 .fillMaxWidth()
                 .pointerInput(Unit) {
                     detectTapGestures(
