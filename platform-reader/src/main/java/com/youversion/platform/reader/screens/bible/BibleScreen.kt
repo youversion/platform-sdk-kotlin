@@ -1,6 +1,5 @@
 package com.youversion.platform.reader.screens.bible
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,7 +26,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -46,6 +44,7 @@ import com.youversion.platform.reader.components.BibleReaderPassageSelection
 import com.youversion.platform.reader.components.PassageSelectionDefaults
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
+import com.youversion.platform.reader.sheets.BibleReaderIntroFootnotesSheet
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInParameters
@@ -141,16 +140,6 @@ internal fun BibleScreen(
             )
         },
     ) { innerPadding ->
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(20.dp)
-                    .background(Color.Red)
-                    .padding(bottom = 16.dp),
-        ) {
-            Text("Foo")
-        }
         Box(modifier = Modifier.padding(innerPadding)) {
             // Scrollable Reader content
             Column {
@@ -203,6 +192,13 @@ internal fun BibleScreen(
                                     lineSpacing = state.lineSpacing,
                                     footnoteMode = BibleTextFootnoteMode.IMAGE,
                                 ),
+                            onFootnoteTap = { footnotes ->
+                                viewModel.onAction(
+                                    BibleReaderViewModel.Action.OpenIntroFootnotes(
+                                        footnotes = footnotes,
+                                    ),
+                                )
+                            },
                             onStateChange = { loadingPhase = it },
                         )
                     } else {
@@ -291,6 +287,13 @@ internal fun BibleScreen(
                     version = state.bibleVersion,
                     reference = state.footnotesReference,
                     footnotes = state.footnotes,
+                )
+            }
+
+            if (state.showingIntroFootnotes) {
+                BibleReaderIntroFootnotesSheet(
+                    onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseIntroFootnotes) },
+                    footnotes = state.introFootnotes,
                 )
             }
         }

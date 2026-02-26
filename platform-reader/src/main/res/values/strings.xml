@@ -10,4 +10,5 @@
     <string name="book_chapter_picker_title">Books</string>
     <string name="search_books_hint">Search</string>
     <string name="intro_chapter_label">Intro</string>
+    <string name="footnote_header_label">Footnote</string>
 </resources>

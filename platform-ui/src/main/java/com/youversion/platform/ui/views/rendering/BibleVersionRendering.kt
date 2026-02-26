@@ -592,11 +592,6 @@ object BibleVersionRendering {
         if (node.classes.contains("cl")) { // Chapter label, handled by UI, so ignore.
             return
         }
-        val imtClasses = setOf("imt", "imt1", "imte", "imte1")
-        if (node.classes.any { it in imtClasses }) { // Intro major title, handled by UI, so ignore.
-            return
-        }
-
         stateUp.firstLineHeadIndent = TextUnit(0f, TextUnitType.Sp)
         stateUp.headIndent = TextUnit(0f, TextUnitType.Sp)
 

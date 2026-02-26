@@ -1,5 +1,6 @@
 package com.youversion.platform.ui.views
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,8 +17,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -26,6 +29,8 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.foundation.PlatformKoinGraph
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
+import com.youversion.platform.ui.views.rendering.BibleTextCategory
+import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import kotlinx.coroutines.CancellationException
 
@@ -38,6 +43,7 @@ import kotlinx.coroutines.CancellationException
  * @param versionId The Bible version ID.
  * @param bookUSFM The book USFM code (e.g., "GEN"). The passage ID is derived as "{bookUSFM}.INTRO".
  * @param textOptions Text styling options (font family, font size, line spacing, etc.).
+ * @param onFootnoteTap Callback invoked when a footnote icon is tapped, providing the footnotes for that verse.
  * @param placeholder A composable to display during loading and error states.
  * @param onStateChange Callback invoked when the loading phase changes.
  */
@@ -46,6 +52,7 @@ fun BibleIntroText(
     versionId: Int,
     bookUSFM: String,
     textOptions: BibleTextOptions = BibleTextOptions(),
+    onFootnoteTap: ((footnotes: List<AnnotatedString>) -> Unit)? = null,
     placeholder: @Composable (BibleTextLoadingPhase) -> Unit = { StandardPlaceholder(it) },
     onStateChange: (BibleTextLoadingPhase) -> Unit = {},
 ) {
@@ -113,17 +120,11 @@ fun BibleIntroText(
             val visibleBlocks = remember(blocks) { blocks.filter { it.text.isNotBlank() || it.rows.isNotEmpty() } }
             visibleBlocks.forEachIndexed { index, block ->
                 if (block.rows.isEmpty()) {
-                    val marginTop = if (index == 0) 0.dp else block.marginTop
-                    val paragraphSpacing = (textOptions.paragraphSpacing ?: (textOptions.fontSize / 2)).value.dp
-                    Text(
-                        text = block.text,
-                        textAlign = block.alignment,
-                        lineHeight = textOptions.lineSpacing ?: (textOptions.fontSize * 1.5),
-                        modifier =
-                            Modifier
-                                .padding(top = marginTop, bottom = paragraphSpacing)
-                                .fillMaxWidth(),
-                        inlineContent = textOptions.inlineContentMap,
+                    IntroTextBlock(
+                        block = block,
+                        textOptions = textOptions,
+                        isFirstBlock = index == 0,
+                        onFootnoteTap = onFootnoteTap,
                     )
                 } else {
                     IntroTableBlock(block = block, textOptions = textOptions)
@@ -131,6 +132,56 @@ fun BibleIntroText(
             }
         }
     }
+}
+
+@Composable
+private fun IntroTextBlock(
+    block: BibleTextBlock,
+    textOptions: BibleTextOptions,
+    isFirstBlock: Boolean,
+    onFootnoteTap: ((footnotes: List<AnnotatedString>) -> Unit)?,
+) {
+    var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+    val marginTop = if (isFirstBlock) 0.dp else block.marginTop
+    val paragraphSpacing = (textOptions.paragraphSpacing ?: (textOptions.fontSize / 2)).value.dp
+
+    Text(
+        text = block.text,
+        textAlign = block.alignment,
+        lineHeight = textOptions.lineSpacing ?: (textOptions.fontSize * 1.5),
+        modifier =
+            Modifier
+                .padding(top = marginTop, bottom = paragraphSpacing)
+                .fillMaxWidth()
+                .pointerInput(onFootnoteTap) {
+                    detectTapGestures(
+                        onTap = { position ->
+                            val layoutResult = textLayoutResult ?: return@detectTapGestures
+                            if (onFootnoteTap == null) return@detectTapGestures
+
+                            val characterIndex = layoutResult.getOffsetForPosition(position)
+                            val isFootnote =
+                                block.text
+                                    .getStringAnnotations(
+                                        tag = BibleTextCategoryAttribute.NAME,
+                                        start = characterIndex,
+                                        end = characterIndex,
+                                    ).any {
+                                        it.item == BibleTextCategory.FOOTNOTE_MARKER.name ||
+                                            it.item == BibleTextCategory.FOOTNOTE_IMAGE.name
+                                    }
+
+                            if (isFootnote) {
+                                onFootnoteTap(block.footnotes)
+                            }
+                        },
+                    )
+                },
+        onTextLayout = { result ->
+            textLayoutResult = result
+        },
+        inlineContent = textOptions.inlineContentMap,
+    )
 }
 
 @Composable

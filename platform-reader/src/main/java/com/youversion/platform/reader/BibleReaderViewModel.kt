@@ -126,6 +126,14 @@ class BibleReaderViewModel(
                 closeFootnotes()
             }
 
+            is Action.OpenIntroFootnotes -> {
+                openIntroFootnotes(action)
+            }
+
+            is Action.CloseIntroFootnotes -> {
+                closeIntroFootnotes()
+            }
+
             is Action.SetReaderTheme -> {
                 setReaderTheme(action)
             }
@@ -260,6 +268,24 @@ class BibleReaderViewModel(
         }
     }
 
+    private fun openIntroFootnotes(action: Action.OpenIntroFootnotes) {
+        _state.update {
+            it.copy(
+                showingIntroFootnotes = true,
+                introFootnotes = action.footnotes,
+            )
+        }
+    }
+
+    private fun closeIntroFootnotes() {
+        _state.update {
+            it.copy(
+                showingIntroFootnotes = false,
+                introFootnotes = emptyList(),
+            )
+        }
+    }
+
     fun setReaderTheme(action: Action.SetReaderTheme) {
         BibleReaderTheme.selectedColorScheme.value = action.readerTheme.colorScheme
         userSettingsRepository.readerThemeId = action.readerTheme.id
@@ -291,6 +317,8 @@ class BibleReaderViewModel(
         val showingFootnotes: Boolean = false,
         val footnotesReference: BibleReference? = null,
         val footnotes: List<AnnotatedString> = emptyList(),
+        val showingIntroFootnotes: Boolean = false,
+        val introFootnotes: List<AnnotatedString> = emptyList(),
         val introBookUSFM: String? = null,
     ) {
         val isViewingIntro: Boolean
@@ -365,6 +393,12 @@ class BibleReaderViewModel(
         ) : Action
 
         data object CloseFootnotes : Action
+
+        data class OpenIntroFootnotes(
+            val footnotes: List<AnnotatedString>,
+        ) : Action
+
+        data object CloseIntroFootnotes : Action
 
         data class SetReaderTheme(
             val readerTheme: ReaderTheme,
