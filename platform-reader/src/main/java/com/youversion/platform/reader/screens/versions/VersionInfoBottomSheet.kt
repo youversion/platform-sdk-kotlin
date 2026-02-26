@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -55,38 +56,26 @@ fun VersionInfoBottomSheet(
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 20.dp),
+            modifier =
+                Modifier
+                    .padding(horizontal = 20.dp)
+                    .verticalScroll(rememberScrollState()),
         ) {
             VersionHeader(
                 bibleVersion = bibleVersion,
                 publisherName = organization?.name,
             )
-            PrimaryActions(
-                onDownloadClick = {},
-                onReadSampleClick = {},
+            OfflineAgreement()
+            VersionCopyright(
+                bibleVersion = bibleVersion,
             )
-            if (
-                bibleVersion.readerFooterUrl != null ||
-                bibleVersion.promotionalContent != null ||
-                bibleVersion.copyright != null
-            ) {
-                Text(
-                    text = "Details",
-                    style =
-                        TextStyle(
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                        ),
-                    color = MaterialTheme.readerColorScheme.readerTextMutedColor,
-                    modifier = Modifier.padding(bottom = 8.dp),
-                )
-            }
             VersionWebsite(
                 bibleVersion = bibleVersion,
                 onClick = {},
             )
-            VersionCopyright(
-                bibleVersion = bibleVersion,
+            PrimaryActions(
+                onDownloadClick = {},
+                onDismissClick = onDismissRequest,
             )
         }
     }
@@ -137,39 +126,86 @@ private fun VersionHeader(
 }
 
 @Composable
+private fun OfflineAgreement() {
+    Column(
+        modifier = Modifier.padding(top = 16.dp),
+    ) {
+        Text(
+            text =
+                "Our agreement with the publisher of this Bible version requires us to share " +
+                    "certain information with them in order to offer this version for offline use. " +
+                    "By proceeding you agree to share your information and to allow the publisher " +
+                    "to email you.",
+            style =
+                TextStyle(
+                    fontSize = 14.sp,
+                ),
+            color = MaterialTheme.readerColorScheme.readerTextPrimaryColor,
+            modifier = Modifier.padding(horizontal = 12.dp),
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "Read it anytime, anywhere\u2014even offline",
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            style =
+                TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+            color = MaterialTheme.readerColorScheme.readerTextPrimaryColor,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
 private fun PrimaryActions(
     onDownloadClick: () -> Unit,
-    onReadSampleClick: () -> Unit,
+    onDismissClick: () -> Unit,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(vertical = 20.dp),
+                .padding(top = 12.dp, bottom = 20.dp),
     ) {
         Button(
             onClick = onDownloadClick,
             colors =
                 ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.readerColorScheme.buttonPrimaryColor,
-                    contentColor = MaterialTheme.readerColorScheme.readerTextPrimaryColor,
+                    containerColor = MaterialTheme.readerColorScheme.buttonContrastColor,
+                    contentColor = MaterialTheme.readerColorScheme.textInvertedColor,
                 ),
-            modifier = Modifier.fillMaxWidth(0.8f),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
         ) {
-            Text(text = "Add")
+            Text(
+                text = "Agree and Download",
+                style =
+                    TextStyle(
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+            )
         }
 
-        Button(
-            onClick = onReadSampleClick,
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.readerColorScheme.buttonSecondaryColor,
-                    contentColor = MaterialTheme.readerColorScheme.readerTextPrimaryColor,
-                ),
-            modifier = Modifier.fillMaxWidth(0.8f),
+        TextButton(
+            onClick = onDismissClick,
+            modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(text = "Sample")
+            Text(
+                text = "Maybe Later",
+                style =
+                    TextStyle(
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 16.sp,
+                    ),
+                color = MaterialTheme.readerColorScheme.readerTextPrimaryColor.copy(alpha = 0.5f),
+            )
         }
     }
 }
@@ -205,9 +241,7 @@ private fun VersionWebsite(
 private fun VersionCopyright(bibleVersion: BibleVersion) {
     val copyright = bibleVersion.promotionalContent ?: bibleVersion.copyright
     copyright?.let {
-        Column(
-            modifier = Modifier.verticalScroll(rememberScrollState()),
-        ) {
+        Column {
             Text(
                 text = copyright,
             )
