@@ -580,6 +580,10 @@ object BibleVersionRendering {
         if (node.classes.contains("cl")) { // Chapter label, handled by UI, so ignore.
             return
         }
+        val imtClasses = setOf("imt", "imt1", "imte", "imte1")
+        if (node.classes.any { it in imtClasses }) { // Intro major title, handled by UI, so ignore.
+            return
+        }
 
         interpretBlockClasses(
             classes = node.classes,

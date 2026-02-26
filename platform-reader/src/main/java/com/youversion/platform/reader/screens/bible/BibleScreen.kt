@@ -16,7 +16,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -31,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,6 +40,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.BibleReaderViewModel
+import com.youversion.platform.reader.R
 import com.youversion.platform.reader.components.BibleReaderHeader
 import com.youversion.platform.reader.components.BibleReaderPassageSelection
 import com.youversion.platform.reader.components.PassageSelectionDefaults
@@ -173,19 +174,22 @@ internal fun BibleScreen(
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth(),
                         )
-                        if (!state.isViewingIntro) {
-                            Text(
-                                text = state.chapterNumber.toString(),
-                                style =
-                                    TextStyle(
-                                        fontFamily = state.fontFamily,
-                                        fontSize = state.fontSize * 2.2,
-                                        color = BibleReaderTheme.colorScheme.textMuted,
-                                    ),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        }
+                        Text(
+                            text =
+                                if (state.isViewingIntro) {
+                                    stringResource(R.string.intro_chapter_label)
+                                } else {
+                                    state.chapterNumber.toString()
+                                },
+                            style =
+                                TextStyle(
+                                    fontFamily = state.fontFamily,
+                                    fontSize = state.fontSize * 2.2,
+                                    color = BibleReaderTheme.colorScheme.textMuted,
+                                ),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                         Spacer(modifier = Modifier.height(24.dp))
                     }
                     if (state.isViewingIntro) {

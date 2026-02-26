@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -231,10 +232,7 @@ private fun ChaptersGrid(
                 .padding(horizontal = 24.dp, vertical = 8.dp),
     ) {
         if (row.hasIntro) {
-            ChapterCell(
-                chapter = stringResource(R.string.intro_chapter_label),
-                onClick = { onClick("INTRO") },
-            )
+            IntroCell(onClick = { onClick("INTRO") })
         }
         row.chapters.forEach { chapter ->
             ChapterCell(
@@ -242,6 +240,30 @@ private fun ChaptersGrid(
                 onClick = { onClick(chapter) },
             )
         }
+    }
+}
+
+@Composable
+private fun IntroCell(onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .size(64.dp)
+                .background(MaterialTheme.readerColorScheme.buttonPrimaryColor)
+                .clickable(
+                    interactionSource = null,
+                    enabled = true,
+                    indication = ripple(),
+                    onClick = onClick,
+                ),
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_i_icon),
+            contentDescription = stringResource(R.string.intro_chapter_label),
+            modifier = Modifier.size(24.dp),
+        )
     }
 }
 
