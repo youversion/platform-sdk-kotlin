@@ -67,7 +67,7 @@ private fun VerseActionButton(
     icon: ImageVector,
     label: String,
     onClick: () -> Unit,
-) {    
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
