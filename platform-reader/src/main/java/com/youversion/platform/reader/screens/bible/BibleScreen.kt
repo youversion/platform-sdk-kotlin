@@ -282,7 +282,7 @@ internal fun BibleScreen(
         }
 
         // Banner overlay above all content including header
-        if (bannerType != null) {
+        bannerType?.let {
             BibleReaderBanner(
                 bannerType = bannerType,
                 isVisible = !isBannerDismissed,
