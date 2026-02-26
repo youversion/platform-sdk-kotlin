@@ -83,13 +83,7 @@ object BiblesEndpoints : BiblesApi {
     fun passageUrl(
         reference: BibleReference,
         format: String = "html",
-    ): String =
-        buildYouVersionUrlString {
-            path("/v1/bibles/${reference.versionId}/passages/${reference.asUSFM}")
-            parameter("format", format)
-            parameter("include_notes", true)
-            parameter("include_headings", true)
-        }
+    ): String = passageUrl(reference.versionId, reference.asUSFM, format)
 
     fun passageUrl(
         versionId: Int,
