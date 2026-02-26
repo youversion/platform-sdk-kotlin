@@ -1,5 +1,7 @@
 package com.youversion.platform.reader
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
@@ -12,17 +14,16 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.domain.BibleReaderRepository
+import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.reader.screens.languages.LanguageRowItem
 import com.youversion.platform.reader.theme.FontDefinitionProvider
 import com.youversion.platform.reader.theme.ReaderTheme
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -33,12 +34,11 @@ class BibleReaderViewModel(
     private val bibleReaderRepository: BibleReaderRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val bibleChapterRepository: BibleChapterRepository,
+    private val clipboardManager: ClipboardManager,
+    private val shareManager: ShareManager,
 ) : ViewModel() {
     private val _state: MutableStateFlow<State>
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
-
-    private val _events = Channel<Event>()
-    val events = _events.receiveAsFlow()
 
     internal var bibleReference: BibleReference
         get() = _state.value.bibleReference
@@ -242,7 +242,8 @@ class BibleReaderViewModel(
                 }
 
             if (textSegments.isNotEmpty()) {
-                _events.send(Event.CopyVerseText(clipboardText = textSegments.joinToString("\n\n")))
+                val clipboardText = textSegments.joinToString("\n\n")
+                clipboardManager.setPrimaryClip(ClipData.newPlainText("verse", clipboardText))
             }
         }
     }
@@ -266,14 +267,7 @@ class BibleReaderViewModel(
 
         clearVerseSelection()
 
-        viewModelScope.launch {
-            _events.send(
-                Event.ShareVerseText(
-                    shareText = shareText,
-                    shareTitle = shareTitle,
-                ),
-            )
-        }
+        shareManager.shareText(text = shareText, title = shareTitle)
     }
 
     fun decreaseFontSize() {
@@ -391,20 +385,6 @@ class BibleReaderViewModel(
 
         val allFontDefinitions: List<FontDefinition>
             get() = defaultFontDefinitions + providedFontDefinitions
-    }
-
-    // ----- Events
-    sealed interface Event {
-        data object OnErrorLoadingBibleVersion : Event
-
-        data class CopyVerseText(
-            val clipboardText: String,
-        ) : Event
-
-        data class ShareVerseText(
-            val shareText: String,
-            val shareTitle: String,
-        ) : Event
     }
 
     // ----- Actions

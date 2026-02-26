@@ -1,9 +1,5 @@
 package com.youversion.platform.reader.screens.bible
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -67,7 +62,6 @@ import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.signin.SignOutConfirmationAlert
 import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
 import com.youversion.platform.ui.signin.rememberYouVersionAuthLauncher
-import com.youversion.platform.ui.utilities.ObserveAsEvents
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
@@ -135,30 +129,6 @@ internal fun BibleScreen(
                     viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection)
                 }
             }
-    }
-
-    ObserveAsEvents(viewModel.events) { event ->
-        when (event) {
-            is BibleReaderViewModel.Event.CopyVerseText -> {
-                val clipboardManager =
-                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                clipboardManager.setPrimaryClip(
-                    ClipData.newPlainText("verse", event.clipboardText),
-                )
-            }
-
-            is BibleReaderViewModel.Event.ShareVerseText -> {
-                val sendIntent =
-                    Intent(Intent.ACTION_SEND).apply {
-                        putExtra(Intent.EXTRA_TEXT, event.shareText)
-                        putExtra(Intent.EXTRA_TITLE, event.shareTitle)
-                        type = "text/plain"
-                    }
-                context.startActivity(Intent.createChooser(sendIntent, null))
-            }
-
-            is BibleReaderViewModel.Event.OnErrorLoadingBibleVersion -> {}
-        }
     }
 
     val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
