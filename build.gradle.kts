@@ -18,6 +18,11 @@ plugins {
 }
 
 subprojects {
+    // opt-in to internal APIs
+    tasks.withType<KotlinCompile> {
+        compilerOptions.optIn.add("com.youversion.platform.core.di.PlatformInternalApi")
+    }
+
     // Provides running test coverage using `./gradlew kover[Html|Xml]Report`.
     apply<KoverGradlePlugin>()
 
