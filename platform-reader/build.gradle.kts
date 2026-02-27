@@ -51,7 +51,6 @@ android {
 dependencies {
     implementation(projects.platformUi)
     implementation(projects.platformCore)
-    implementation(projects.platformFoundation)
 
     implementation(libs.kotlin.coroutines)
     implementation(libs.kotlin.serialization)

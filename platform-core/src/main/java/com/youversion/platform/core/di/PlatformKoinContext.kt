@@ -1,4 +1,4 @@
-package com.youversion.platform.foundation
+package com.youversion.platform.core.di
 
 import org.koin.core.Koin
 import org.koin.core.KoinApplication

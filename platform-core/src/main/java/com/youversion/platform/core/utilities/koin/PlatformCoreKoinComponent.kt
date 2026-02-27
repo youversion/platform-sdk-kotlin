@@ -1,7 +1,7 @@
 package com.youversion.platform.core.utilities.koin
 
+import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.users.domain.SessionRepository
-import com.youversion.platform.foundation.PlatformKoinGraph
 import io.ktor.client.HttpClient
 import org.koin.core.Koin
 import org.koin.core.component.KoinComponent

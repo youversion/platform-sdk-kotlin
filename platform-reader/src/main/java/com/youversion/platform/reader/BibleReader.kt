@@ -8,7 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.youversion.platform.core.bibles.domain.BibleReference
-import com.youversion.platform.foundation.PlatformKoinGraph
+import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.reader.di.PlatformReaderKoinModule
 import com.youversion.platform.reader.screens.bible.BibleScreen
 import com.youversion.platform.reader.screens.fonts.FontsScreen
