@@ -10,9 +10,7 @@
     <string name="book_chapter_picker_title">Books</string>
     <string name="search_books_hint">Search</string>
 
-    <string name="banner_offline_title">You\'ve lost your internet connection.</string>
-    <string name="banner_offline_description">Re-connect and download a Bible version to proceed offline.</string>
-    <string name="banner_version_unavailable_title">Your previously selected Bible version is unavailable.</string>
-    <string name="banner_version_unavailable_description">Another similar Bible version has been selected for you.</string>
+    <string name="banner_offline_message">You\'ve lost your internet connection. Re-connect and download a Bible version to proceed offline.</string>
+    <string name="banner_version_unavailable_message">Your previously selected Bible version is unavailable. Another similar Bible version has been selected for you.</string>
     <string name="banner_dismiss_content_description">Dismiss</string>
 </resources>

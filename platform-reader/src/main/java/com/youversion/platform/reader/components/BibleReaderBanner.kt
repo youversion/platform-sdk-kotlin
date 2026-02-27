@@ -63,11 +63,9 @@ fun BibleReaderBanner(
         val message =
             when (bannerType) {
                 BibleReaderBannerType.OFFLINE ->
-                    stringResource(R.string.banner_offline_title) + " " +
-                        stringResource(R.string.banner_offline_description)
+                    stringResource(R.string.banner_offline_message)
                 BibleReaderBannerType.VERSION_UNAVAILABLE ->
-                    stringResource(R.string.banner_version_unavailable_title) + " " +
-                        stringResource(R.string.banner_version_unavailable_description)
+                    stringResource(R.string.banner_version_unavailable_message)
             }
 
         Row(
