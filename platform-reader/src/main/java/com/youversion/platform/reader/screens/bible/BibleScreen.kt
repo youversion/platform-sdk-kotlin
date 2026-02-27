@@ -1,6 +1,5 @@
 package com.youversion.platform.reader.screens.bible
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -21,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,7 +29,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -40,6 +40,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.BibleReaderViewModel
+import com.youversion.platform.reader.components.BibleReaderBanner
+import com.youversion.platform.reader.components.BibleReaderBannerType
 import com.youversion.platform.reader.components.BibleReaderHeader
 import com.youversion.platform.reader.components.BibleReaderPassageSelection
 import com.youversion.platform.reader.components.PassageSelectionDefaults
@@ -89,188 +91,208 @@ internal fun BibleScreen(
         )
 
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
+    var isBannerDismissed by rememberSaveable { mutableStateOf(false) }
+
+    val bannerType =
+        when (loadingPhase) {
+            BibleTextLoadingPhase.FAILED -> BibleReaderBannerType.OFFLINE
+            BibleTextLoadingPhase.NOT_PERMITTED -> BibleReaderBannerType.VERSION_UNAVAILABLE
+            else -> null
+        }
+
+    LaunchedEffect(bannerType) {
+        if (bannerType == null) {
+            isBannerDismissed = false
+        }
+    }
 
     val topScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val bottomScrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior()
     val passageSelectionScrollBehavior = PassageSelectionDefaults.fadeAlwaysScrollBehavior()
 
-    Scaffold(
-        modifier =
-            Modifier
-                .nestedScroll(passageSelectionScrollBehavior.nestedScrollConnection)
-                .nestedScroll(bottomScrollBehavior.nestedScrollConnection)
-                .nestedScroll(topScrollBehavior.nestedScrollConnection),
-        bottomBar = {
-            bottomBar?.let {
-                BottomAppBar(
-                    scrollBehavior = bottomScrollBehavior,
-                    content = {
-                        Row {
-                            it()
-                        }
-                    },
-                )
-            }
-        },
-        contentWindowInsets = WindowInsets.safeDrawing,
-        topBar = {
-            BibleReaderHeader(
-                isSignInProcessing = signInState.isProcessing,
-                signedIn = signInState.isSignedIn,
-                versionAbbreviation = state.versionAbbreviation,
-                scrollBehavior = topScrollBehavior,
-                onVersionClick = onVersionsClick,
-                onOpenHeaderMenu = { signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState) },
-                onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
-                onSignInClick = {
-                    signInLauncher(
-                        SignInParameters(
-                            context = context,
-                            launcher = authTabLauncher,
-                            permissions =
-                                setOf(
-                                    SignInWithYouVersionPermission.PROFILE,
-                                    SignInWithYouVersionPermission.EMAIL,
-                                ),
-                        ),
-                    )
-                },
-                onSignOutClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut(true)) },
-            )
-        },
-    ) { innerPadding ->
-        Box(
+    Box {
+        Scaffold(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .height(20.dp)
-                    .background(Color.Red)
-                    .padding(bottom = 16.dp),
-        ) {
-            Text("Foo")
-        }
-        Box(modifier = Modifier.padding(innerPadding)) {
-            // Scrollable Reader content
-            Column {
-                Column(
-                    modifier =
-                        Modifier
-                            .padding(horizontal = 32.dp)
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState()),
-                ) {
-                    Spacer(modifier = Modifier.height(32.dp))
-                    if (state.bookName.isNotEmpty()) {
-                        Text(
-                            text = state.bookName,
-                            style =
-                                TextStyle(
-                                    fontFamily = state.fontFamily,
-                                    fontSize = state.fontSize * 1.3,
-                                    color = BibleReaderTheme.colorScheme.textMuted,
-                                ),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
+                    .nestedScroll(passageSelectionScrollBehavior.nestedScrollConnection)
+                    .nestedScroll(bottomScrollBehavior.nestedScrollConnection)
+                    .nestedScroll(topScrollBehavior.nestedScrollConnection),
+            bottomBar = {
+                bottomBar?.let {
+                    BottomAppBar(
+                        scrollBehavior = bottomScrollBehavior,
+                        content = {
+                            Row {
+                                it()
+                            }
+                        },
+                    )
+                }
+            },
+            contentWindowInsets = WindowInsets.safeDrawing,
+            topBar = {
+                BibleReaderHeader(
+                    isSignInProcessing = signInState.isProcessing,
+                    signedIn = signInState.isSignedIn,
+                    versionAbbreviation = state.versionAbbreviation,
+                    scrollBehavior = topScrollBehavior,
+                    onVersionClick = onVersionsClick,
+                    onOpenHeaderMenu = { signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState) },
+                    onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
+                    onSignInClick = {
+                        signInLauncher(
+                            SignInParameters(
+                                context = context,
+                                launcher = authTabLauncher,
+                                permissions =
+                                    setOf(
+                                        SignInWithYouVersionPermission.PROFILE,
+                                        SignInWithYouVersionPermission.EMAIL,
+                                    ),
+                            ),
                         )
-                        Text(
-                            text = state.chapterNumber.toString(),
-                            style =
-                                TextStyle(
+                    },
+                    onSignOutClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut(true)) },
+                )
+            },
+        ) { innerPadding ->
+            Box(modifier = Modifier.padding(innerPadding)) {
+                // Scrollable Reader content
+                Column {
+                    Column(
+                        modifier =
+                            Modifier
+                                .padding(horizontal = 32.dp)
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState()),
+                    ) {
+                        Spacer(modifier = Modifier.height(32.dp))
+                        if (state.bookName.isNotEmpty()) {
+                            Text(
+                                text = state.bookName,
+                                style =
+                                    TextStyle(
+                                        fontFamily = state.fontFamily,
+                                        fontSize = state.fontSize * 1.3,
+                                        color = BibleReaderTheme.colorScheme.textMuted,
+                                    ),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            Text(
+                                text = state.chapterNumber.toString(),
+                                style =
+                                    TextStyle(
+                                        fontFamily = state.fontFamily,
+                                        fontSize = state.fontSize * 2.2,
+                                        color = BibleReaderTheme.colorScheme.textMuted,
+                                    ),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
+                        BibleText(
+                            textOptions =
+                                BibleTextOptions(
                                     fontFamily = state.fontFamily,
-                                    fontSize = state.fontSize * 2.2,
-                                    color = BibleReaderTheme.colorScheme.textMuted,
+                                    fontSize = state.fontSize,
+                                    lineSpacing = state.lineSpacing,
+                                    footnoteMode = BibleTextFootnoteMode.IMAGE,
                                 ),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
+                            reference = state.bibleReference,
+                            onStateChange = { loadingPhase = it },
+                            onFootnoteTap = { reference, footnotes ->
+                                viewModel.onAction(
+                                    BibleReaderViewModel.Action.OpenFootnotes(
+                                        reference = reference,
+                                        footnotes = footnotes,
+                                    ),
+                                )
+                            },
                         )
-                        Spacer(modifier = Modifier.height(24.dp))
+                        if (loadingPhase == BibleTextLoadingPhase.SUCCESS) {
+                            Copyright(version = state.bibleVersion)
+                        }
+                        Spacer(modifier = Modifier.height(48.dp))
                     }
-                    BibleText(
+                    BibleReaderPassageSelection(
+                        bookAndChapter = state.bookAndChapter,
+                        onReferenceClick = onReferencesClick,
+                        onPreviousChapter = { viewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter) },
+                        onNextChapter = { viewModel.onAction(BibleReaderViewModel.Action.GoToNextChapter) },
+                        bottomBarScrollBehavior = bottomBar?.let { bottomScrollBehavior },
+                        scrollBehavior = passageSelectionScrollBehavior,
+                    )
+                }
+
+                // Any Sheets or Dialogs
+                if (state.showingFontList) {
+                    BibleReaderFontSettingsSheet(
+                        onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings) },
+                        onSmallerFontClick = { viewModel.onAction(BibleReaderViewModel.Action.DecreaseFontSize) },
+                        onBiggerFontClick = { viewModel.onAction(BibleReaderViewModel.Action.IncreaseFontSize) },
+                        onLineSpacingClick = {
+                            viewModel.onAction(BibleReaderViewModel.Action.NextLineSpacingMultiplierOption)
+                        },
+                        onFontClick = {
+                            viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings)
+                            onFontsClick()
+                        },
+                        onThemeSelect = { newReaderTheme ->
+                            viewModel.onAction(BibleReaderViewModel.Action.SetReaderTheme(newReaderTheme))
+                        },
+                        lineSpacingSettingIndex = state.lineSpacingSettingsIndex,
+                        fontDefinition = state.selectedFontDefinition,
+                    )
+                }
+
+                if (showSignInError) {
+                    SignInErrorAlert(
+                        onDismissRequest = { showSignInError = false },
+                        onConfirm = { showSignInError = false },
+                    )
+                }
+
+                if (signInState.showSignOutConfirmation) {
+                    SignOutConfirmationAlert(
+                        onDismissRequest = { signInViewModel.onAction(SignInViewModel.Action.CancelSignOut) },
+                        onConfirm =
+                            {
+                                signInViewModel.onAction(SignInViewModel.Action.SignOut(false))
+                            },
+                    )
+                }
+
+                if (state.showingFootnotes) {
+                    BibleReaderFootnotesSheet(
                         textOptions =
                             BibleTextOptions(
                                 fontFamily = state.fontFamily,
                                 fontSize = state.fontSize,
                                 lineSpacing = state.lineSpacing,
-                                footnoteMode = BibleTextFootnoteMode.IMAGE,
                             ),
-                        reference = state.bibleReference,
-                        onStateChange = { loadingPhase = it },
-                        onFootnoteTap = { reference, footnotes ->
-                            viewModel.onAction(
-                                BibleReaderViewModel.Action.OpenFootnotes(
-                                    reference = reference,
-                                    footnotes = footnotes,
-                                ),
-                            )
-                        },
+                        onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFootnotes) },
+                        version = state.bibleVersion,
+                        reference = state.footnotesReference,
+                        footnotes = state.footnotes,
                     )
-                    if (loadingPhase == BibleTextLoadingPhase.SUCCESS) {
-                        Copyright(version = state.bibleVersion)
-                    }
-                    Spacer(modifier = Modifier.height(48.dp))
                 }
-                BibleReaderPassageSelection(
-                    bookAndChapter = state.bookAndChapter,
-                    onReferenceClick = onReferencesClick,
-                    onPreviousChapter = { viewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter) },
-                    onNextChapter = { viewModel.onAction(BibleReaderViewModel.Action.GoToNextChapter) },
-                    bottomBarScrollBehavior = bottomBar?.let { bottomScrollBehavior },
-                    scrollBehavior = passageSelectionScrollBehavior,
-                )
             }
+        }
 
-            // Any Sheets or Dialogs
-            if (state.showingFontList) {
-                BibleReaderFontSettingsSheet(
-                    onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings) },
-                    onSmallerFontClick = { viewModel.onAction(BibleReaderViewModel.Action.DecreaseFontSize) },
-                    onBiggerFontClick = { viewModel.onAction(BibleReaderViewModel.Action.IncreaseFontSize) },
-                    onLineSpacingClick = {
-                        viewModel.onAction(BibleReaderViewModel.Action.NextLineSpacingMultiplierOption)
-                    },
-                    onFontClick = {
-                        viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings)
-                        onFontsClick()
-                    },
-                    onThemeSelect = { newReaderTheme ->
-                        viewModel.onAction(BibleReaderViewModel.Action.SetReaderTheme(newReaderTheme))
-                    },
-                    lineSpacingSettingIndex = state.lineSpacingSettingsIndex,
-                    fontDefinition = state.selectedFontDefinition,
-                )
-            }
-
-            if (showSignInError) {
-                SignInErrorAlert(
-                    onDismissRequest = { showSignInError = false },
-                    onConfirm = { showSignInError = false },
-                )
-            }
-
-            if (signInState.showSignOutConfirmation) {
-                SignOutConfirmationAlert(
-                    onDismissRequest = { signInViewModel.onAction(SignInViewModel.Action.CancelSignOut) },
-                    onConfirm =
-                        {
-                            signInViewModel.onAction(SignInViewModel.Action.SignOut(false))
-                        },
-                )
-            }
-
-            if (state.showingFootnotes) {
-                BibleReaderFootnotesSheet(
-                    textOptions =
-                        BibleTextOptions(
-                            fontFamily = state.fontFamily,
-                            fontSize = state.fontSize,
-                            lineSpacing = state.lineSpacing,
-                        ),
-                    onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFootnotes) },
-                    version = state.bibleVersion,
-                    reference = state.footnotesReference,
-                    footnotes = state.footnotes,
-                )
-            }
+        // Banner overlay above all content including header
+        bannerType?.let {
+            BibleReaderBanner(
+                bannerType = bannerType,
+                isVisible = !isBannerDismissed,
+                onDismiss = { isBannerDismissed = true },
+                modifier =
+                    Modifier
+                        .statusBarsPadding()
+                        .align(Alignment.TopCenter)
+                        .padding(top = 8.dp),
+            )
         }
     }
 }
