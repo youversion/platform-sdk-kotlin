@@ -52,7 +52,7 @@ fun BibleReaderFootnotesSheet(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             modifier =
                 Modifier
-                    .padding(vertical = 16.dp)
+                    .padding(bottom = 16.dp)
                     .height(360.dp),
         ) {
             Column(
