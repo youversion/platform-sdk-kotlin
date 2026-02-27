@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -131,11 +132,7 @@ private fun OfflineAgreement() {
         modifier = Modifier.padding(top = 16.dp),
     ) {
         Text(
-            text =
-                "Our agreement with the publisher of this Bible version requires us to share " +
-                    "certain information with them in order to offer this version for offline use. " +
-                    "By proceeding you agree to share your information and to allow the publisher " +
-                    "to email you.",
+            text = stringResource(R.string.version_info_offline_agreement),
             style =
                 TextStyle(
                     fontSize = 14.sp,
@@ -145,7 +142,7 @@ private fun OfflineAgreement() {
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Read it anytime, anywhere\u2014even offline",
+            text = stringResource(R.string.version_info_offline_tagline),
             textAlign = TextAlign.Center,
             maxLines = 1,
             style =
@@ -184,7 +181,7 @@ private fun PrimaryActions(
                     .height(50.dp),
         ) {
             Text(
-                text = "Agree and Download",
+                text = stringResource(R.string.version_info_agree_and_download),
                 style =
                     TextStyle(
                         fontSize = 20.sp,
@@ -198,7 +195,7 @@ private fun PrimaryActions(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
-                text = "Maybe Later",
+                text = stringResource(R.string.version_info_maybe_later),
                 style =
                     TextStyle(
                         fontWeight = FontWeight.Normal,
