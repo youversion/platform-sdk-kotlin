@@ -38,10 +38,7 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
@@ -50,8 +47,8 @@ import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
+import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
-import com.youversion.platform.foundation.PlatformKoinGraph
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.UntitledSerif
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
@@ -386,20 +383,26 @@ fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
     ) {
         when (phase) {
             BibleTextLoadingPhase.INACTIVE -> {}
-            BibleTextLoadingPhase.LOADING -> CircularProgressIndicator()
-            BibleTextLoadingPhase.NOT_PERMITTED ->
+
+            BibleTextLoadingPhase.LOADING -> {
+                CircularProgressIndicator()
+            }
+
+            BibleTextLoadingPhase.NOT_PERMITTED -> {
                 PlaceholderMessage(
                     icon = ImageVector.vectorResource(R.drawable.ic_material_lock),
                     text = "Your previously selected Bible version is unavailable. Please switch to another one.",
                 )
+            }
 
-            BibleTextLoadingPhase.FAILED ->
+            BibleTextLoadingPhase.FAILED -> {
                 PlaceholderMessage(
                     icon = ImageVector.vectorResource(R.drawable.ic_material_warning),
                     text =
                         "We’re having difficulties with your connection. " +
                             "Please download a Bible version when you’re online.",
                 )
+            }
 
             BibleTextLoadingPhase.SUCCESS -> {}
         }

@@ -49,7 +49,6 @@ android {
 }
 
 dependencies {
-    implementation(projects.platformFoundation)
     implementation(projects.platformCore)
 
     implementation(libs.androidx.browser)

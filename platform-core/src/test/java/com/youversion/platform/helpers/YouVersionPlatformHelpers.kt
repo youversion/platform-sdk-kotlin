@@ -2,10 +2,10 @@ package com.youversion.platform.helpers
 
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
+import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.domain.Storage
 import com.youversion.platform.core.utilities.koin.PlatformCoreDomainKoinModule
 import com.youversion.platform.core.utilities.koin.startCore
-import com.youversion.platform.foundation.PlatformKoinGraph
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respondOk

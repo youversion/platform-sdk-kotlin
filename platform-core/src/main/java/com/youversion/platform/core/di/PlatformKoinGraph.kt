@@ -1,9 +1,10 @@
-package com.youversion.platform.foundation
+package com.youversion.platform.core.di
 
 import org.koin.core.context.KoinContext
 import org.koin.core.module.Module
 import org.koin.dsl.koinApplication
 
+@PlatformInternalApi
 object PlatformKoinGraph {
     val koinApplication
         get() = PlatformKoinContext.koinApplication
