@@ -1,7 +1,7 @@
 package com.youversion.platform.core.utilities.koin
 
 import android.content.Context
-import com.youversion.platform.foundation.PlatformKoinGraph
+import com.youversion.platform.core.di.PlatformKoinGraph
 import org.koin.core.module.Module
 
 internal fun PlatformKoinGraph.startCore(context: Context) {

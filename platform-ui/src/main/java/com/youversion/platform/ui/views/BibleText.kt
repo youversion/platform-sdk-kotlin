@@ -50,8 +50,8 @@ import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
+import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
-import com.youversion.platform.foundation.PlatformKoinGraph
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.UntitledSerif
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
@@ -384,18 +384,24 @@ fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
     ) {
         when (phase) {
             BibleTextLoadingPhase.INACTIVE -> {}
-            BibleTextLoadingPhase.LOADING -> CircularProgressIndicator()
-            BibleTextLoadingPhase.NOT_PERMITTED ->
+
+            BibleTextLoadingPhase.LOADING -> {
+                CircularProgressIndicator()
+            }
+
+            BibleTextLoadingPhase.NOT_PERMITTED -> {
                 PlaceholderMessage(
                     icon = ImageVector.vectorResource(R.drawable.ic_material_lock),
                     message = stringResource(R.string.placeholder_version_unavailable),
                 )
+            }
 
-            BibleTextLoadingPhase.FAILED ->
+            BibleTextLoadingPhase.FAILED -> {
                 PlaceholderMessage(
                     icon = ImageVector.vectorResource(R.drawable.ic_wifi_exclamation),
                     message = stringResource(R.string.placeholder_offline),
                 )
+            }
 
             BibleTextLoadingPhase.SUCCESS -> {}
         }
