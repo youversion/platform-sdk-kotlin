@@ -1,5 +1,6 @@
 package com.youversion.platform.ui.views
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,11 +10,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -376,9 +379,7 @@ private fun BibleTableBlock(
 @Composable
 fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
     Box(
-        modifier =
-            Modifier
-                .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
         when (phase) {
@@ -391,16 +392,14 @@ fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
             BibleTextLoadingPhase.NOT_PERMITTED -> {
                 PlaceholderMessage(
                     icon = ImageVector.vectorResource(R.drawable.ic_material_lock),
-                    text = "Your previously selected Bible version is unavailable. Please switch to another one.",
+                    message = stringResource(R.string.placeholder_version_unavailable),
                 )
             }
 
             BibleTextLoadingPhase.FAILED -> {
                 PlaceholderMessage(
-                    icon = ImageVector.vectorResource(R.drawable.ic_material_warning),
-                    text =
-                        "We’re having difficulties with your connection. " +
-                            "Please download a Bible version when you’re online.",
+                    icon = ImageVector.vectorResource(R.drawable.ic_wifi_exclamation),
+                    message = stringResource(R.string.placeholder_offline),
                 )
             }
 
@@ -412,14 +411,30 @@ fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
 @Composable
 private fun PlaceholderMessage(
     icon: ImageVector,
-    text: String,
+    message: String,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-        modifier = Modifier.padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(8.dp),
+                ).padding(12.dp),
     ) {
-        Icon(imageVector = icon, contentDescription = null, modifier = Modifier.padding(end = 16.dp))
-        Text(text)
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(start = 8.dp),
+        )
     }
 }
