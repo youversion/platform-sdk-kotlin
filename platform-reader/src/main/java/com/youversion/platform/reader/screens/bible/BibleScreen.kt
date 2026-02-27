@@ -1,5 +1,6 @@
 package com.youversion.platform.reader.screens.bible
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,8 +8,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
@@ -31,6 +34,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -123,13 +131,46 @@ internal fun BibleScreen(
             }
     }
 
+    val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         sheetContent = {
-            BibleReaderVerseActionSheet(selectedVerses = state.selectedVerses)
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp)
+                        .dropShadow(sheetShape) {
+                            radius = 16f
+                            offset = Offset(0f, -8f)
+                            color = Color.Black.copy(alpha = 0.15f)
+                        }.clip(sheetShape)
+                        .background(MaterialTheme.colorScheme.surface),
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(top = 16.dp, bottom = 8.dp)
+                            .size(width = 32.dp, height = 4.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                shape = RoundedCornerShape(2.dp),
+                            ),
+                )
+                BibleReaderVerseActionSheet(
+                    selectedVerses = state.selectedVerses,
+                    onCopy = { viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses) },
+                    onShare = { viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses) },
+                )
+            }
         },
         sheetPeekHeight = 0.dp,
-        sheetContainerColor = MaterialTheme.colorScheme.surface,
+        sheetDragHandle = null,
+        sheetShape = RectangleShape,
+        sheetShadowElevation = 0.dp,
+        sheetContainerColor = Color.Transparent,
         containerColor = MaterialTheme.colorScheme.background,
     ) { sheetPadding ->
         Scaffold(

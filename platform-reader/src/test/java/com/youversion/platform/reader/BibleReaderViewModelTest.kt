@@ -1,11 +1,21 @@
 package com.youversion.platform.reader
 
+import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
+import com.youversion.platform.core.bibles.models.BibleBook
+import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.domain.BibleReaderRepository
+import com.youversion.platform.reader.domain.CopyManager
+import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
+import com.youversion.platform.ui.views.rendering.BibleVersionRendering
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -26,6 +36,9 @@ class BibleReaderViewModelTest {
     private lateinit var bibleVersionRepository: BibleVersionRepository
     private lateinit var bibleReaderRepository: BibleReaderRepository
     private lateinit var userSettingsRepository: UserSettingsRepository
+    private lateinit var bibleChapterRepository: BibleChapterRepository
+    private lateinit var copyManager: CopyManager
+    private lateinit var shareManager: ShareManager
     private lateinit var viewModel: BibleReaderViewModel
 
     private val defaultReference =
@@ -42,6 +55,9 @@ class BibleReaderViewModelTest {
         bibleVersionRepository = mockk(relaxed = true)
         bibleReaderRepository = mockk(relaxed = true)
         userSettingsRepository = mockk(relaxed = true)
+        bibleChapterRepository = mockk(relaxed = true)
+        copyManager = mockk(relaxed = true)
+        shareManager = mockk(relaxed = true)
 
         every { bibleReaderRepository.produceBibleReference(any()) } returns defaultReference
         every { userSettingsRepository.readerThemeId } returns null
@@ -56,6 +72,9 @@ class BibleReaderViewModelTest {
                 bibleVersionRepository = bibleVersionRepository,
                 bibleReaderRepository = bibleReaderRepository,
                 userSettingsRepository = userSettingsRepository,
+                bibleChapterRepository = bibleChapterRepository,
+                copyManager = copyManager,
+                shareManager = shareManager,
             )
     }
 
@@ -128,5 +147,98 @@ class BibleReaderViewModelTest {
                 viewModel.state.value.selectedVerses
                     .containsAll(setOf(verse1, verse2, verse3)),
             )
+        }
+
+    private val testBibleVersion =
+        BibleVersion(
+            id = 1,
+            abbreviation = "KJV",
+            books =
+                listOf(
+                    BibleBook(
+                        id = "GEN",
+                        title = "Genesis",
+                        fullTitle = null,
+                        abbreviation = null,
+                        canon = null,
+                        chapters = null,
+                    ),
+                ),
+        )
+
+    @Test
+    fun `copy action clears verse selection`() =
+        runTest {
+            viewModel.bibleVersion = testBibleVersion
+
+            val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
+            viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
+
+            assertTrue(
+                viewModel.state.value.selectedVerses
+                    .contains(verseRef),
+            )
+            assertTrue(viewModel.state.value.showVerseActionSheet)
+
+            viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses)
+
+            assertTrue(
+                viewModel.state.value.selectedVerses
+                    .isEmpty(),
+            )
+            assertFalse(viewModel.state.value.showVerseActionSheet)
+        }
+
+    @Test
+    fun `copy action copies text to clipboard`() =
+        runTest {
+            mockkObject(BibleVersionRendering)
+            coEvery {
+                BibleVersionRendering.plainTextOf(any(), any())
+            } returns "In the beginning God created the heavens and the earth."
+
+            viewModel.bibleVersion = testBibleVersion
+
+            viewModel.onAction(
+                BibleReaderViewModel.Action.OnVerseTap(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+            )
+
+            viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            verify { copyManager.copyText(label = any(), text = any()) }
+            unmockkObject(BibleVersionRendering)
+        }
+
+    @Test
+    fun `share action clears verse selection`() =
+        runTest {
+            viewModel.bibleVersion = testBibleVersion
+
+            viewModel.onAction(
+                BibleReaderViewModel.Action.OnVerseTap(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+            )
+
+            viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses)
+
+            assertTrue(
+                viewModel.state.value.selectedVerses
+                    .isEmpty(),
+            )
+            assertFalse(viewModel.state.value.showVerseActionSheet)
+        }
+
+    @Test
+    fun `share action shares text via ShareManager`() =
+        runTest {
+            viewModel.bibleVersion = testBibleVersion
+
+            viewModel.onAction(
+                BibleReaderViewModel.Action.OnVerseTap(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+            )
+
+            viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses)
+
+            verify { shareManager.shareText(text = any(), title = any()) }
         }
 }

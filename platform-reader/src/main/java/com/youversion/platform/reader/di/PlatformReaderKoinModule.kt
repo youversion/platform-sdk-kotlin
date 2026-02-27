@@ -2,6 +2,8 @@ package com.youversion.platform.reader.di
 
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.domain.BibleReaderRepository
+import com.youversion.platform.reader.domain.CopyManager
+import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.reader.screens.languages.LanguagesViewModel
 import com.youversion.platform.reader.screens.versions.VersionsViewModel
@@ -14,6 +16,8 @@ internal val PlatformReaderKoinModule =
         // Repositories
         singleOf(::BibleReaderRepository)
         factoryOf(::UserSettingsRepository)
+        factoryOf(::CopyManager)
+        factoryOf(::ShareManager)
 
         // View Models
         factory { params ->
@@ -23,6 +27,9 @@ internal val PlatformReaderKoinModule =
                 bibleVersionRepository = get(),
                 bibleReaderRepository = get(),
                 userSettingsRepository = get(),
+                bibleChapterRepository = get(),
+                copyManager = get(),
+                shareManager = get(),
             )
         }
 
