@@ -243,7 +243,7 @@ private fun BibleVersionRow(
                     indication = ripple(),
                     enabled = true,
                     onClick = onVersionClick,
-                ).padding(vertical = 6.dp, horizontal = 20.dp),
+                ).padding(start = 20.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
     ) {
         Column(
             verticalArrangement = Arrangement.Center,

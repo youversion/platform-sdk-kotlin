@@ -14,4 +14,7 @@
     <string name="version_info_offline_tagline">Read it anytime, anywhere\u2014even offline</string>
     <string name="version_info_agree_and_download">Agree and Download</string>
     <string name="version_info_maybe_later">Maybe Later</string>
+    <string name="banner_offline_message">You\'ve lost your internet connection. Re-connect and download a Bible version to proceed offline.</string>
+    <string name="banner_version_unavailable_message">Your previously selected Bible version is unavailable. Another similar Bible version has been selected for you.</string>
+    <string name="banner_dismiss_content_description">Dismiss</string>
 </resources>
