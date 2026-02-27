@@ -108,7 +108,6 @@ fun BibleReaderBanner(
                     imageVector = Icons.Default.Close,
                     contentDescription = stringResource(R.string.banner_dismiss_content_description),
                     modifier = Modifier.size(16.dp),
-                    tint = BibleReaderTheme.colorScheme.textMuted,
                 )
             }
         }
