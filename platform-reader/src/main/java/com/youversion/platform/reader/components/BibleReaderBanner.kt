@@ -91,7 +91,6 @@ fun BibleReaderBanner(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = BibleReaderTheme.colorScheme.textMuted,
             )
             Spacer(modifier = Modifier.width(24.dp))
             Text(
