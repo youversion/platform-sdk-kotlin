@@ -4,5 +4,5 @@ data class ReferenceRow(
     val bookCode: String,
     val bookName: String?,
     val chapters: List<String>,
-    val hasIntro: Boolean = false,
+    val introPassageId: String? = null,
 )

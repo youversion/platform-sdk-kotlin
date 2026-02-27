@@ -107,8 +107,9 @@ fun BibleReader(
                             bibleVersion = it,
                             bibleReference = bibleReaderViewModel.bibleReference,
                             onSelectionClick = { versionId, bookCode, chapter ->
-                                if (chapter == "INTRO") {
-                                    bibleReaderViewModel.onIntroSelected(bookCode)
+                                val chapterNumber = chapter.toIntOrNull()
+                                if (chapterNumber == null) {
+                                    bibleReaderViewModel.onIntroSelected(bookCode, chapter)
                                 } else {
                                     BibleReference(
                                         versionId = versionId,

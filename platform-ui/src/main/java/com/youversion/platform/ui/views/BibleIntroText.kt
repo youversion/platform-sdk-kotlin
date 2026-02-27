@@ -41,7 +41,8 @@ import kotlinx.coroutines.CancellationException
  * styling, but does not support verse selection or tapping.
  *
  * @param versionId The Bible version ID.
- * @param bookUSFM The book USFM code (e.g., "GEN"). The passage ID is derived as "{bookUSFM}.INTRO".
+ * @param bookUSFM The book USFM code (e.g., "GEN").
+ * @param passageId The intro passage ID for the book.
  * @param textOptions Text styling options (font family, font size, line spacing, etc.).
  * @param onFootnoteTap Callback invoked when a footnote icon is tapped, providing the footnotes for that verse.
  * @param placeholder A composable to display during loading and error states.
@@ -51,6 +52,7 @@ import kotlinx.coroutines.CancellationException
 fun BibleIntroText(
     versionId: Int,
     bookUSFM: String,
+    passageId: String,
     textOptions: BibleTextOptions = BibleTextOptions(),
     onFootnoteTap: ((footnotes: List<AnnotatedString>) -> Unit)? = null,
     placeholder: @Composable (BibleTextLoadingPhase) -> Unit = { StandardPlaceholder(it) },
@@ -66,12 +68,12 @@ fun BibleIntroText(
         onStateChange(loadingPhase)
     }
 
-    LaunchedEffect(versionId, bookUSFM, textOptions) {
+    LaunchedEffect(versionId, bookUSFM, passageId, textOptions) {
         loadingPhase = BibleTextLoadingPhase.LOADING
         try {
-            isVersionRightToLeft = versionRepository.version(versionId).isRightToLeft
+            val version = versionRepository.version(versionId)
+            isVersionRightToLeft = version.isRightToLeft
 
-            val passageId = "${bookUSFM.uppercase()}.INTRO"
             val htmlContent = introRepository.introContent(versionId, passageId)
             val loadedBlocks =
                 BibleVersionRendering.introTextBlocks(

@@ -231,8 +231,9 @@ private fun ChaptersGrid(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 8.dp),
     ) {
-        if (row.hasIntro) {
-            IntroCell(onClick = { onClick("INTRO") })
+        val introPassageId = row.introPassageId
+        if (introPassageId != null) {
+            IntroCell(onClick = { onClick(introPassageId) })
         }
         row.chapters.forEach { chapter ->
             ChapterCell(

@@ -141,7 +141,7 @@ class BibleReaderViewModel(
             is Action.GoToNextChapter -> {
                 if (_state.value.isViewingIntro) {
                     val bookUSFM = _state.value.introBookUSFM ?: bibleReference.bookUSFM
-                    _state.update { it.copy(introBookUSFM = null) }
+                    _state.update { it.copy(introBookUSFM = null, introPassageId = null) }
                     bibleReference =
                         BibleReference(
                             versionId = bibleReference.versionId,
@@ -157,7 +157,12 @@ class BibleReaderViewModel(
                                 nextReference.bookUSFM != bibleReference.bookUSFM &&
                                 nextBook?.hasIntro == true
                             ) {
-                                _state.update { it.copy(introBookUSFM = nextReference.bookUSFM) }
+                                _state.update {
+                                    it.copy(
+                                        introBookUSFM = nextReference.bookUSFM,
+                                        introPassageId = nextBook.intro?.passageId,
+                                    )
+                                }
                             } else {
                                 bibleReference = nextReference
                             }
@@ -170,7 +175,7 @@ class BibleReaderViewModel(
                     val books = bibleVersion?.books ?: emptyList()
                     val bookUSFM = _state.value.introBookUSFM
                     val currentBookIndex = books.indexOfFirst { it.id == bookUSFM }
-                    _state.update { it.copy(introBookUSFM = null) }
+                    _state.update { it.copy(introBookUSFM = null, introPassageId = null) }
                     if (currentBookIndex > 0) {
                         val previousBook = books[currentBookIndex - 1]
                         val lastChapter = previousBook.chapters?.count() ?: 1
@@ -183,7 +188,12 @@ class BibleReaderViewModel(
                 } else if (bibleReference.chapter == 1) {
                     val currentBook = bibleVersion?.book(bibleReference.bookUSFM)
                     if (currentBook?.hasIntro == true) {
-                        _state.update { it.copy(introBookUSFM = bibleReference.bookUSFM) }
+                        _state.update {
+                            it.copy(
+                                introBookUSFM = bibleReference.bookUSFM,
+                                introPassageId = currentBook.intro?.passageId,
+                            )
+                        }
                     } else {
                         bibleReaderRepository
                             .previousChapter(bibleVersion, bibleReference)
@@ -203,8 +213,12 @@ class BibleReaderViewModel(
         onHeaderSelectionChange(newReference)
     }
 
-    fun onIntroSelected(bookUSFM: String) {
-        _state.update { it.copy(introBookUSFM = bookUSFM) }
+    fun onIntroSelected(
+        bookUSFM: String,
+        passageId: String,
+    ) {
+        _state.update { it.copy(introBookUSFM = bookUSFM, introPassageId = passageId) }
+        bibleReference = bibleReference.copy(bookUSFM = bookUSFM, chapter = 1)
     }
 
     fun onHeaderSelectionChange(newReference: BibleReference) {
@@ -214,7 +228,7 @@ class BibleReaderViewModel(
                 bibleVersion = newVersion
                 // TODO: INsert my version
             }
-            _state.update { it.copy(introBookUSFM = null) }
+            _state.update { it.copy(introBookUSFM = null, introPassageId = null) }
             bibleReference = newReference
         }
     }
@@ -320,9 +334,10 @@ class BibleReaderViewModel(
         val showingIntroFootnotes: Boolean = false,
         val introFootnotes: List<AnnotatedString> = emptyList(),
         val introBookUSFM: String? = null,
+        val introPassageId: String? = null,
     ) {
         val isViewingIntro: Boolean
-            get() = introBookUSFM != null
+            get() = introBookUSFM != null && introPassageId != null
 
         val bookName: String
             get() =

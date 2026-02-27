@@ -181,10 +181,12 @@ internal fun BibleScreen(
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                     }
-                    if (state.isViewingIntro) {
+                    val introPassageId = state.introPassageId
+                    if (state.isViewingIntro && introPassageId != null) {
                         BibleIntroText(
                             versionId = state.bibleReference.versionId,
                             bookUSFM = state.introBookUSFM ?: state.bibleReference.bookUSFM,
+                            passageId = introPassageId,
                             textOptions =
                                 BibleTextOptions(
                                     fontFamily = state.fontFamily,
