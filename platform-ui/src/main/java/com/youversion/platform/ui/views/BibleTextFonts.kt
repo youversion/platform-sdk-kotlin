@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.sp
 enum class BibleTextFontOption {
     TEXT,
     TEXT_ITALIC,
+    TEXT_BOLD,
     VERSE_NUM,
     SMALL_CAPS,
     HEADER,
@@ -59,6 +60,8 @@ data class BibleTextFonts(
                     fontSize = baseSize,
                     fontStyle = FontStyle.Italic,
                 ),
+            BibleTextFontOption.TEXT_BOLD to
+                SpanStyle(fontFamily = fontFamily, fontSize = baseSize, fontWeight = FontWeight.Bold),
             BibleTextFontOption.VERSE_NUM to
                 SpanStyle(
                     fontFamily = fontFamily,

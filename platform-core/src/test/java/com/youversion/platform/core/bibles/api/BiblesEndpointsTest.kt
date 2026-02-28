@@ -116,4 +116,13 @@ class BiblesEndpointsTest {
             BiblesEndpoints.passageUrl(reference = reference, format = "json"),
         )
     }
+
+    @Test
+    fun `test passageUrl reference overload matches direct overload`() {
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        assertEquals(
+            BiblesEndpoints.passageUrl(versionId = 1, passageId = reference.asUSFM),
+            BiblesEndpoints.passageUrl(reference = reference),
+        )
+    }
 }

@@ -9,6 +9,12 @@
 
     <string name="book_chapter_picker_title">Books</string>
     <string name="search_books_hint">Search</string>
+    <string name="intro_chapter_label">Intro</string>
+    <string name="footnote_header_label">Footnote</string>
+
+    <string name="verse_action_copy">Copy</string>
+    <string name="verse_action_share">Share</string>
+
 
     <string name="version_info_offline_agreement">Our agreement with the publisher of this Bible version requires us to share certain information with them in order to offer this version for offline use. By proceeding you agree to share your information and to allow the publisher to email you.</string>
     <string name="version_info_offline_tagline">Read it anytime, anywhere\u2014even offline</string>
