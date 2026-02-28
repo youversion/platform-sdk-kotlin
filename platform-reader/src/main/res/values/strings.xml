@@ -11,4 +11,7 @@
     <string name="search_books_hint">Search</string>
     <string name="intro_chapter_label">Intro</string>
     <string name="footnote_header_label">Footnote</string>
+
+    <string name="verse_action_copy">Copy</string>
+    <string name="verse_action_share">Share</string>
 </resources>

@@ -7,15 +7,19 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.domain.BibleReaderRepository
+import com.youversion.platform.reader.domain.CopyManager
+import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.reader.screens.languages.LanguageRowItem
 import com.youversion.platform.reader.theme.FontDefinitionProvider
 import com.youversion.platform.reader.theme.ReaderTheme
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +32,9 @@ class BibleReaderViewModel(
     private val bibleVersionRepository: BibleVersionRepository,
     private val bibleReaderRepository: BibleReaderRepository,
     private val userSettingsRepository: UserSettingsRepository,
+    private val bibleChapterRepository: BibleChapterRepository,
+    private val copyManager: CopyManager,
+    private val shareManager: ShareManager,
 ) : ViewModel() {
     private val _state: MutableStateFlow<State>
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
@@ -139,6 +146,7 @@ class BibleReaderViewModel(
             }
 
             is Action.GoToNextChapter -> {
+                clearVerseSelection()
                 if (_state.value.isViewingIntro) {
                     val bookUSFM = _state.value.introBookUSFM ?: bibleReference.bookUSFM
                     _state.update { it.copy(introBookUSFM = null, introPassageId = null) }
@@ -171,6 +179,7 @@ class BibleReaderViewModel(
             }
 
             is Action.GoToPreviousChapter -> {
+                clearVerseSelection()
                 if (_state.value.isViewingIntro) {
                     val books = bibleVersion?.books ?: emptyList()
                     val bookUSFM = _state.value.introBookUSFM
@@ -205,6 +214,22 @@ class BibleReaderViewModel(
                         ?.let { prevReference -> bibleReference = prevReference }
                 }
             }
+
+            is Action.OnVerseTap -> {
+                toggleVerseSelection(action.reference)
+            }
+
+            is Action.ClearVerseSelection -> {
+                clearVerseSelection()
+            }
+
+            is Action.CopySelectedVerses -> {
+                copySelectedVerses()
+            }
+
+            is Action.ShareSelectedVerses -> {
+                shareSelectedVerses()
+            }
         }
     }
 
@@ -222,6 +247,7 @@ class BibleReaderViewModel(
     }
 
     fun onHeaderSelectionChange(newReference: BibleReference) {
+        clearVerseSelection()
         viewModelScope.launch {
             if (bibleVersion?.id != newReference.versionId) {
                 val newVersion = bibleVersionRepository.version(id = newReference.versionId)
@@ -231,6 +257,88 @@ class BibleReaderViewModel(
             _state.update { it.copy(introBookUSFM = null, introPassageId = null) }
             bibleReference = newReference
         }
+    }
+
+    private fun toggleVerseSelection(reference: BibleReference) {
+        _state.update { currentState ->
+            val newSelection =
+                if (currentState.selectedVerses.contains(reference)) {
+                    currentState.selectedVerses - reference
+                } else {
+                    currentState.selectedVerses + reference
+                }
+            currentState.copy(
+                selectedVerses = newSelection,
+                showVerseActionSheet = newSelection.isNotEmpty(),
+            )
+        }
+    }
+
+    private fun clearVerseSelection() {
+        _state.update {
+            it.copy(
+                selectedVerses = emptySet(),
+                showVerseActionSheet = false,
+            )
+        }
+    }
+
+    private fun copySelectedVerses() {
+        val version = bibleVersion ?: return
+        val selectedVerses = _state.value.selectedVerses.toList()
+        if (selectedVerses.isEmpty()) return
+
+        val mergedReferences = BibleReference.referencesByMerging(selectedVerses)
+
+        clearVerseSelection()
+
+        viewModelScope.launch {
+            val textSegments =
+                mergedReferences.mapNotNull { reference ->
+                    val plainText =
+                        BibleVersionRendering.plainTextOf(
+                            bibleChapterRepository,
+                            reference,
+                        ) ?: return@mapNotNull null
+                    val title = version.displayTitle(reference)
+                    val url = version.shareUrl(reference)
+                    buildString {
+                        append(plainText)
+                        append("\n")
+                        append(title)
+                        if (url != null) {
+                            append("\n")
+                            append(url)
+                        }
+                    }
+                }
+
+            if (textSegments.isNotEmpty()) {
+                copyManager.copyText(label = "verse", text = textSegments.joinToString("\n\n"))
+            }
+        }
+    }
+
+    private fun shareSelectedVerses() {
+        val version = bibleVersion ?: return
+        val selectedVerses = _state.value.selectedVerses.toList()
+        if (selectedVerses.isEmpty()) return
+
+        val mergedReferences = BibleReference.referencesByMerging(selectedVerses)
+        val shareTitle = mergedReferences.joinToString(", ") { version.displayTitle(it) }
+        val shareUrl = mergedReferences.firstNotNullOfOrNull { version.shareUrl(it) } ?: ""
+        val shareText =
+            buildString {
+                append(shareTitle)
+                if (shareUrl.isNotEmpty()) {
+                    append("\n")
+                    append(shareUrl)
+                }
+            }
+
+        clearVerseSelection()
+
+        shareManager.shareText(text = shareText, title = shareTitle)
     }
 
     fun decreaseFontSize() {
@@ -331,6 +439,8 @@ class BibleReaderViewModel(
         val showingFootnotes: Boolean = false,
         val footnotesReference: BibleReference? = null,
         val footnotes: List<AnnotatedString> = emptyList(),
+        val selectedVerses: Set<BibleReference> = emptySet(),
+        val showVerseActionSheet: Boolean = false,
         val showingIntroFootnotes: Boolean = false,
         val introFootnotes: List<AnnotatedString> = emptyList(),
         val introBookUSFM: String? = null,
@@ -381,11 +491,6 @@ class BibleReaderViewModel(
             get() = defaultFontDefinitions + providedFontDefinitions
     }
 
-    // ----- Events
-    sealed interface Event {
-        data object OnErrorLoadingBibleVersion : Event
-    }
-
     // ----- Actions
     sealed interface Action {
         data object OpenFontSettings : Action
@@ -422,5 +527,15 @@ class BibleReaderViewModel(
         data object GoToNextChapter : Action
 
         data object GoToPreviousChapter : Action
+
+        data class OnVerseTap(
+            val reference: BibleReference,
+        ) : Action
+
+        data object ClearVerseSelection : Action
+
+        data object CopySelectedVerses : Action
+
+        data object ShareSelectedVerses : Action
     }
 }
