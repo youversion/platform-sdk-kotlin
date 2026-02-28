@@ -24,6 +24,7 @@ import com.youversion.platform.ui.views.BibleTextFonts
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.ImageFootnoteMarker
 import com.youversion.platform.ui.views.convertToEnumeration
+import com.youversion.platform.ui.views.rendering.BibleVersionRendering.textBlocks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.UUID
@@ -60,6 +61,78 @@ object BibleVersionRendering {
             null
         }
     }
+
+    /**
+     * Formats intro chapter HTML into styled AnnotatedString blocks for Compose.
+     *
+     * Unlike [textBlocks], this method takes raw HTML content directly and renders
+     * all content without verse filtering or verse number rendering.
+     */
+    suspend fun introTextBlocks(
+        htmlContent: String,
+        versionId: Int,
+        bookUSFM: String,
+        renderHeadlines: Boolean = true,
+        footnoteMode: BibleTextFootnoteMode,
+        footnoteMarker: AnnotatedString? = null,
+        textColor: Color = Color.Unspecified,
+        wocColor: Color = Color.Red,
+        fonts: BibleTextFonts,
+    ): List<BibleTextBlock>? =
+        withContext(Dispatchers.IO) {
+            val rootNode: BibleTextNode? =
+                try {
+                    BibleTextNode.parse(htmlContent)
+                } catch (_: Exception) {
+                    return@withContext null
+                }
+
+            if (rootNode?.children?.isEmpty() == true) {
+                return@withContext null
+            }
+
+            val stateIn =
+                StateIn(
+                    versionId = versionId,
+                    bookUSFM = bookUSFM,
+                    currentChapter = 0,
+                    fromVerse = 1,
+                    toVerse = 999,
+                    renderVerseNumbers = false,
+                    renderHeadlines = renderHeadlines,
+                    footnoteMode = footnoteMode,
+                    footnoteMarker = footnoteMarker,
+                    textColor = textColor,
+                    wocColor = wocColor,
+                    fonts = fonts,
+                )
+
+            val resultBlocks = mutableListOf<BibleTextBlock>()
+            val stateDown =
+                StateDown(
+                    currentFont = BibleTextFontOption.TEXT,
+                    textCategory = BibleTextCategory.SCRIPTURE,
+                )
+            val stateUp =
+                StateUp(
+                    rendering = true,
+                    versionId = versionId,
+                    bookUSFM = bookUSFM,
+                    chapter = 0,
+                    verse = 0,
+                )
+
+            rootNode?.children?.first()?.let {
+                handleNodeBlock(
+                    node = it,
+                    stateIn = stateIn,
+                    parentStateDown = stateDown,
+                    stateUp = stateUp,
+                    resultBlocks = resultBlocks,
+                )
+            }
+            resultBlocks
+        }
 
     /**
      * Formats Bible data into styled AnnotatedString blocks for Compose.
@@ -177,7 +250,11 @@ object BibleVersionRendering {
                         ParagraphStyle(
                             textIndent =
                                 TextIndent(
-                                    firstLine = stateUp.firstLineHeadIndent,
+                                    firstLine =
+                                        TextUnit(
+                                            stateUp.headIndent.value + stateUp.firstLineHeadIndent.value,
+                                            TextUnitType.Sp,
+                                        ),
                                     restLine = stateUp.headIndent,
                                 ),
                         ),
@@ -219,9 +296,17 @@ object BibleVersionRendering {
         if (stateUp.rendering && node.text.isNotEmpty()) {
             val text = if (node.text == "  ") " " else node.text
             val style =
-                stateIn.fonts.styleFor(stateDown.currentFont).let {
-                    if (stateDown.woc) it.copy(color = stateIn.wocColor) else it
-                }
+                stateIn.fonts
+                    .styleFor(stateDown.currentFont)
+                    .let {
+                        if (stateDown.woc) it.copy(color = stateIn.wocColor) else it
+                    }.let {
+                        if (stateDown.currentFont == BibleTextFontOption.VERSE_NUM) {
+                            it.copy(baselineShift = stateIn.fonts.verseNumBaselineShift)
+                        } else {
+                            it
+                        }
+                    }
             stateUp.append(text, style, stateDown.textCategory)
         }
 
@@ -507,6 +592,8 @@ object BibleVersionRendering {
         if (node.classes.contains("cl")) { // Chapter label, handled by UI, so ignore.
             return
         }
+        stateUp.firstLineHeadIndent = TextUnit(0f, TextUnitType.Sp)
+        stateUp.headIndent = TextUnit(0f, TextUnitType.Sp)
 
         interpretBlockClasses(
             classes = node.classes,
@@ -569,6 +656,17 @@ object BibleVersionRendering {
                         stateUp.rendering = savedRendering
                     }
                 }
+            } else if (child.type == BibleTextNodeType.SPAN && child.classes.contains("qs")) {
+                if (!stateUp.isTextEmpty()) {
+                    if (stateUp.rendering) {
+                        resultBlocks.add(createBlock(stateDown, stateUp, marginTop))
+                        stateUp.clearText()
+                        handleBlockChild(child, stateIn, stateDown, stateUp)
+                        val selahStateDown = stateDown.copy().apply { alignment = TextAlign.End }
+                        resultBlocks.add(createBlock(selahStateDown, stateUp, marginTop))
+                    }
+                    stateUp.clearText()
+                }
             } else {
                 handleBlockChild(
                     node = child,
@@ -616,7 +714,9 @@ object BibleVersionRendering {
                 }
 
                 "tl", "it", "add" -> stateDown.currentFont = BibleTextFontOption.TEXT_ITALIC
+                "fq", "fqa", "add" -> stateDown.currentFont = BibleTextFontOption.TEXT_ITALIC
                 "qs", "qt" -> stateDown.currentFont = BibleTextFontOption.TEXT_ITALIC
+                "ord", "fv", "sup" -> stateDown.currentFont = BibleTextFontOption.VERSE_NUM
                 else -> {
                     if (!listOf(
                             "yv-v",
@@ -656,7 +756,7 @@ object BibleVersionRendering {
         var newSmallCaps = stateDown.smallcaps
         var newCurrentFont = stateDown.currentFont
 
-        val indentStep = TextUnit(stateIn.fonts.baseSize.value, TextUnitType.Sp).div(2)
+        val indentStep = TextUnit(stateIn.fonts.baseSize.value, TextUnitType.Sp)
         val noIndent = TextUnit(0f, TextUnitType.Sp)
 
         val ignoredTags =
@@ -686,16 +786,18 @@ object BibleVersionRendering {
                 "r",
                 "sr",
                 "po",
+                "im", // non-indented intro paragraph
+                "ior", // marks references in an outline
             )
 
         for (c in classes) {
             when (c) {
-                "p" -> { // Standard paragraph
+                "p", "ip", "imi", "ipi" -> { // Standard paragraph
                     stateUp.firstLineHeadIndent = indentStep * 2
                     stateUp.headIndent = noIndent
                 }
 
-                "m", "nb" -> { // No-break paragraph, flush left
+                "m", "nb", "im" -> { // No-break paragraph, flush left
                     stateUp.firstLineHeadIndent = noIndent
                     stateUp.headIndent = noIndent
                 }
@@ -721,31 +823,52 @@ object BibleVersionRendering {
                 }
 
                 "pi2" -> { // Paragraph, indented level 2
-                    stateUp.firstLineHeadIndent = indentStep.times(2)
-                    stateUp.headIndent = indentStep
+                    stateUp.firstLineHeadIndent = indentStep
+                    stateUp.headIndent = indentStep * 2
                 }
 
                 "pi3" -> { // Paragraph, indented level 3
-                    stateUp.firstLineHeadIndent = indentStep.times(4)
+                    stateUp.firstLineHeadIndent = indentStep
                     stateUp.headIndent = indentStep.times(3)
                 }
+
+                "li1", "ili", "ili1" -> {
+                    stateUp.firstLineHeadIndent = noIndent
+                    stateUp.headIndent = indentStep
+                }
+
+                "li2", "ili2" -> {
+                    stateUp.firstLineHeadIndent = noIndent
+                    stateUp.headIndent = indentStep * 2
+                }
+
+                "li3", "ili3" -> {
+                    stateUp.firstLineHeadIndent = noIndent
+                    stateUp.headIndent = indentStep * 3
+                }
+
+                "li4", "ili4" -> {
+                    stateUp.firstLineHeadIndent = noIndent
+                    stateUp.headIndent = indentStep * 4
+                }
+
                 // Poetry and lists have their indentation reset for now
-                "iq", "iq1", "q", "q1", "qm", "qm1", "li1" -> {
+                "iq", "iq1", "q", "q1", "qm", "qm1" -> {
                     stateUp.firstLineHeadIndent = noIndent
                     stateUp.headIndent = noIndent
                 }
 
-                "iq2", "q2", "qm2", "li2" -> {
+                "iq2", "q2", "qm2" -> {
                     stateUp.firstLineHeadIndent = noIndent
                     stateUp.headIndent = noIndent
                 }
 
-                "iq3", "q3", "qm3", "li3" -> {
+                "iq3", "q3", "qm3" -> {
                     stateUp.firstLineHeadIndent = noIndent
                     stateUp.headIndent = noIndent
                 }
 
-                "iq4", "q4", "qm4", "li4" -> {
+                "iq4", "q4", "qm4" -> {
                     stateUp.firstLineHeadIndent = noIndent
                     stateUp.headIndent = noIndent
                 }
@@ -763,28 +886,97 @@ object BibleVersionRendering {
                     }
                 }
 
+                "iot" -> {
+                    newCurrentFont = BibleTextFontOption.TEXT_BOLD
+                    newAlignment = TextAlign.Center
+                    setMarginTop(stateIn.fonts.baseSize.value.dp / 3)
+                }
+
+                "is", "is1" -> {
+                    newCurrentFont = BibleTextFontOption.HEADER2
+                    newAlignment = TextAlign.Center
+                    setMarginTop(stateIn.fonts.baseSize.value.dp / 2)
+                }
+
+                "is2" -> {
+                    newCurrentFont = BibleTextFontOption.TEXT_BOLD
+                    newAlignment = TextAlign.Center
+                    setMarginTop(stateIn.fonts.baseSize.value.dp / 3)
+                }
+
+                "io", "io1" -> {
+                    stateUp.headIndent = indentStep * 2
+                }
+
+                "io2" -> {
+                    stateUp.headIndent = indentStep * 3
+                }
+
+                "io3", "io4" -> {
+                    stateUp.headIndent = indentStep * 4
+                }
+
+                "imt", "imt1", "imte", "imte1" -> {
+                    newTextCategory = BibleTextCategory.HEADER
+                    newCurrentFont = BibleTextFontOption.HEADER
+                    newAlignment = TextAlign.Center
+                }
+
+                "imt2", "imte2" -> {
+                    newTextCategory = BibleTextCategory.HEADER
+                    newCurrentFont = BibleTextFontOption.HEADER_ITALIC
+                    newAlignment = TextAlign.Center
+                    setMarginTop(stateIn.fonts.baseSize.value.dp / 2)
+                }
+
+                "imt3" -> {
+                    newTextCategory = BibleTextCategory.HEADER
+                    newCurrentFont = BibleTextFontOption.HEADER3
+                    newAlignment = TextAlign.Center
+                    setMarginTop(stateIn.fonts.baseSize.value.dp / 3)
+                }
+
+                "imt4" -> {
+                    newTextCategory = BibleTextCategory.HEADER
+                    newCurrentFont = BibleTextFontOption.HEADER4
+                    newAlignment = TextAlign.Center
+                    setMarginTop(stateIn.fonts.baseSize.value.dp / 3)
+                }
+
                 "yv-h", "yvh" -> { // YouVersion-specific header
+                    val fontMap: Map<String, BibleTextFontOption> =
+                        mapOf(
+                            "s1" to BibleTextFontOption.HEADER_ITALIC,
+                            // "qa" to BibleTextFontOption.HEADER,
+                            "imt" to BibleTextFontOption.HEADER,
+                            "imt1" to BibleTextFontOption.HEADER,
+                            "ms" to BibleTextFontOption.HEADER2,
+                            "ms1" to BibleTextFontOption.HEADER2,
+                            "s2" to BibleTextFontOption.HEADER2,
+                            "ms2" to BibleTextFontOption.HEADER2,
+                            "imt2" to BibleTextFontOption.HEADER2,
+                            "s3" to BibleTextFontOption.HEADER3,
+                            "ms3" to BibleTextFontOption.HEADER3,
+                            "imt3" to BibleTextFontOption.HEADER3,
+                            "s4" to BibleTextFontOption.HEADER4,
+                            "ms4" to BibleTextFontOption.HEADER4,
+                            "imt4" to BibleTextFontOption.HEADER4,
+                            "sp" to BibleTextFontOption.HEADER_ITALIC,
+                            "r" to BibleTextFontOption.HEADER_ITALIC,
+                            "sr" to BibleTextFontOption.HEADER_ITALIC,
+                            "mr" to BibleTextFontOption.HEADER_SMALLER,
+                        )
                     newTextCategory = BibleTextCategory.HEADER
                     setMarginTop(stateIn.fonts.baseSize.value.dp)
+                    newCurrentFont = BibleTextFontOption.HEADER
 
-                    // Determine the specific header font based on other co-occurring classes
-                    newCurrentFont =
-                        when {
-                            classes.contains("ms") || classes.contains("ms1") -> BibleTextFontOption.HEADER2
-                            classes.contains("mr") -> {
-                                setMarginTop(0.dp) // Override margin for this specific header
-                                BibleTextFontOption.HEADER_SMALLER
-                            }
+                    for (c in classes) {
+                        fontMap[c]?.let { font -> newCurrentFont = font }
+                    }
 
-                            classes.contains("s2") || classes.contains("ms2") -> BibleTextFontOption.HEADER2
-                            classes.contains("s3") || classes.contains("ms3") -> BibleTextFontOption.HEADER3
-                            classes.contains("s4") || classes.contains("ms4") -> BibleTextFontOption.HEADER4
-                            classes.contains(
-                                "sp",
-                            ) || classes.contains("r") || classes.contains("sr") -> BibleTextFontOption.HEADER_ITALIC
-
-                            else -> BibleTextFontOption.HEADER // Default header style
-                        }
+                    if (classes.contains("mr")) {
+                        setMarginTop(0.dp)
+                    }
 
                     stateUp.firstLineHeadIndent = noIndent
                     if (!stateIn.renderHeadlines) {
@@ -946,7 +1138,7 @@ class StateUp(
                 start = start,
                 end = end,
             )
-            if (verse > 0) {
+            if (verse > 0 && category != BibleTextCategory.HEADER) {
                 addStringAnnotation(
                     tag = BibleReferenceAttribute.NAME,
                     annotation = "$versionId:$bookUSFM:$chapter:$verse",
