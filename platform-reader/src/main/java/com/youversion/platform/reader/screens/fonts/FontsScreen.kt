@@ -41,7 +41,15 @@ internal fun FontsScreen(
 
     Scaffold(
         topBar = {
-            BibleReaderTopAppBar(title = "Font", onBackClick = onBackClick)
+            BibleReaderTopAppBar(
+                title = {
+                    Text(
+                        text = "Font",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
+                onBackClick = onBackClick,
+            )
         },
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
