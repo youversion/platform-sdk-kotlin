@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -56,6 +57,7 @@ import com.youversion.platform.reader.theme.ReaderTheme
 import com.youversion.platform.reader.theme.Sepia
 import com.youversion.platform.reader.theme.TrueBlack
 import com.youversion.platform.reader.theme.readerColorScheme
+import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -241,6 +243,7 @@ private fun FontDisplayButton(
 ) {
     OutlinedButton(
         shape = RoundedCornerShape(8.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
         onClick = onFontClick,
     ) {
         Row(
@@ -251,14 +254,19 @@ private fun FontDisplayButton(
             Column {
                 Text(
                     text = stringResource(R.string.font_settings_label),
+                    style = TextStyle(fontSize = 12.sp),
+                    color = BibleReaderTheme.colorScheme.textMuted,
                 )
                 Text(
                     text = fontDefinition.fontName,
+                    style = TextStyle(fontSize = 20.sp, fontFamily = fontDefinition.fontFamily),
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
             Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_forward),
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
             )
         }
     }
