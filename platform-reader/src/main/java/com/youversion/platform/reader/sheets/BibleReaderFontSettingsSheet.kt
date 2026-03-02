@@ -123,7 +123,7 @@ private fun FontSizeButtons(
     onLineSpacingClick: () -> Unit,
     lineSpacingSettingIndex: Int,
 ) {
-    val minWidth = 126.dp
+    val minWidth = 144.dp
     val minHeight = 48.dp
 
     Row(
