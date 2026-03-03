@@ -35,7 +35,7 @@ class ReaderFontSettingsTests {
     @Test
     fun `nextSmallerFontSize steps down one from the second-smallest size`() {
         assertEquals(9.sp, ReaderFontSettings.nextSmallerFontSize(12.sp))
-    }   
+    }
 
     @Test
     fun `nextLargerFontSize returns next larger size for a mid-range value`() {
@@ -92,7 +92,7 @@ class ReaderFontSettingsTests {
     @Test
     fun `nextLineSpacingMultiplier wraps to smallest when given a value above all options`() {
         assertEquals(1.5f, ReaderFontSettings.nextLineSpacingMultiplier(3.0f))
-    }  
+    }
 
     @Test
     fun `getLineSpacingSettingIndex returns 0 for the first option`() {
