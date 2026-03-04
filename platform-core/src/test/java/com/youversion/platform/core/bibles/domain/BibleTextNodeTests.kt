@@ -64,6 +64,43 @@ class BibleTextNodeTests {
     }
 
     @Test
+    fun `parse should preserve space between adjacent w spans`() {
+        val html = """<div><div class="p"><span class="w">word1</span> <span class="w">word2</span></div></div>"""
+        val root = BibleTextNode.parse(html)
+        assertNotNull(root)
+        val inner =
+            root.children
+                .first()
+                .children
+                .first()
+        // Expecting: [span.w, text(" "), span.w]
+        assertEquals(3, inner.children.size)
+        assertEquals(BibleTextNodeType.TEXT, inner.children[1].type)
+        assertEquals(" ", inner.children[1].text)
+    }
+
+    @Test
+    fun `parse should not produce leading whitespace text node at the start of a block`() {
+        val html =
+            """
+            <div>
+              <div class="p">
+                <span class="w">In</span> <span class="w">the</span>
+              </div>
+            </div>
+            """.trimIndent()
+
+        val root = BibleTextNode.parse(html)
+        assertNotNull(root)
+        val inner =
+            root.children
+                .first()
+                .children
+                .first()
+        assertEquals(BibleTextNodeType.SPAN, inner.children.first().type)
+    }
+
+    @Test
     fun `parse should contain expected text from Genesis intro`() {
         val html = """
             <div>
