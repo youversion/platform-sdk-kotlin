@@ -24,12 +24,10 @@ import com.youversion.platform.ui.views.BibleTextFonts
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.ImageFootnoteMarker
 import com.youversion.platform.ui.views.convertToEnumeration
-import com.youversion.platform.ui.views.rendering.BibleVersionRendering.textBlocks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.UUID
 
-private const val DEBUG_RENDERING = false
+internal const val DEBUG_RENDERING = false
 
 /**
  * Provides functionality for rendering Bible references into plain text or rich text blocks
@@ -228,14 +226,6 @@ object BibleVersionRendering {
         val nodeType = node.type.name.lowercase()
         val indent = "_".repeat(stateDown.nodeDepth)
         println("$indent ${nodeType.padEnd(6)} ${node.classes} ${node.text}")
-    }
-
-    private fun assertionFailed(
-        message: String,
-        detail: Any? = null,
-    ) {
-        if (!DEBUG_RENDERING) return
-        println("ASSERTION FAILED: $message${detail?.toString() ?: ""}")
     }
 
     private fun createBlock(
@@ -688,320 +678,6 @@ object BibleVersionRendering {
         }
     }
 
-    private fun interpretTextAttr(
-        node: BibleTextNode,
-        stateIn: StateIn,
-        stateDown: StateDown,
-        stateUp: StateUp,
-    ) {
-        if (stateDown.smallcaps) {
-            stateDown.currentFont = BibleTextFontOption.SMALL_CAPS
-        }
-
-        node.classes.forEach { c ->
-            when (c) {
-                "wj" -> stateDown.woc = true
-                "yv-v", "verse" -> {
-                    node.attributes["v"]?.toIntOrNull()?.let { verseNum ->
-                        stateUp.verse = verseNum
-                        stateUp.rendering = (verseNum >= stateIn.fromVerse) && (verseNum <= stateIn.toVerse)
-                    }
-                }
-
-                "nd", "sc" -> {
-                    stateDown.currentFont = BibleTextFontOption.SMALL_CAPS
-                    stateDown.smallcaps = true
-                }
-
-                "tl", "it", "add" -> stateDown.currentFont = BibleTextFontOption.TEXT_ITALIC
-                "fq", "fqa", "add" -> stateDown.currentFont = BibleTextFontOption.TEXT_ITALIC
-                "qs", "qt" -> stateDown.currentFont = BibleTextFontOption.TEXT_ITALIC
-                "ord", "fv", "sup" -> stateDown.currentFont = BibleTextFontOption.VERSE_NUM
-                else -> {
-                    if (!listOf(
-                            "yv-v",
-                            "verse",
-                            "yv-vlbl",
-                            "vlbl",
-                            "yv-n",
-                            "f",
-                            "fr",
-                            "ft",
-                            "qs",
-                            "sc",
-                            "nd",
-                            "cl",
-                            "w",
-                            "litl",
-                            "rq",
-                            "x",
-                        ).contains(c)
-                    ) {
-                        assertionFailed("interpretTextAttr: unexpected ", c)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun interpretBlockClasses(
-        classes: List<String>,
-        stateIn: StateIn,
-        stateDown: StateDown,
-        stateUp: StateUp,
-        setMarginTop: (Dp) -> Unit,
-    ) {
-        var newAlignment = stateDown.alignment
-        var newTextCategory = stateDown.textCategory
-        var newSmallCaps = stateDown.smallcaps
-        var newCurrentFont = stateDown.currentFont
-
-        val indentStep = TextUnit(stateIn.fonts.baseSize.value, TextUnitType.Sp)
-        val noIndent = TextUnit(0f, TextUnitType.Sp)
-
-        val ignoredTags =
-            setOf(
-                "s1", // Change line-height to 1em. Co-occurs with "yv-h".
-                "b", // Poetry text stanza break (e.g. stanza break)
-                "lh", // A list header (introductory remark)
-                "li", // A list entry, level 1 (if single level)
-                "li1", // A list entry, level 1 (if multiple levels)
-                "li2", // A list entry, level 2
-                "li3", // A list entry, level 3
-                "li4", // A list entry, level 4
-                "lf", // List footer (introductory remark)
-                "mr", // handled inside yv-h
-                "ms", // handled inside yv-h
-                "ms1", // handled inside yv-h
-                "ms2", // handled inside yv-h
-                "ms3", // handled inside yv-h
-                "ms4", // handled inside yv-h
-                "s2", // handled inside yv-h
-                "s3", // handled inside yv-h
-                "s4", // handled inside yv-h
-                "sp", // handled inside yv-h
-                "iex", // see John 7:52
-                "ms1",
-                "qa",
-                "r",
-                "sr",
-                "po",
-                "im", // non-indented intro paragraph
-                "ior", // marks references in an outline
-            )
-
-        for (c in classes) {
-            when (c) {
-                "p", "ip", "imi", "ipi" -> { // Standard paragraph
-                    stateUp.firstLineHeadIndent = indentStep * 2
-                    stateUp.headIndent = noIndent
-                }
-
-                "m", "nb", "im" -> { // No-break paragraph, flush left
-                    stateUp.firstLineHeadIndent = noIndent
-                    stateUp.headIndent = noIndent
-                }
-
-                "pr", "qr" -> { // Right-aligned paragraph
-                    newAlignment = TextAlign.End
-                }
-
-                "pc", "qc" -> { // Centered paragraph
-                    newAlignment = TextAlign.Center
-                    newSmallCaps = true
-                    newTextCategory = BibleTextCategory.HEADER
-                }
-
-                "mi" -> { // Indented, flush-left paragraph
-                    stateUp.firstLineHeadIndent = noIndent
-                    stateUp.headIndent = indentStep.times(2)
-                }
-
-                "pi", "pi1" -> { // Paragraph, indented level 1
-                    stateUp.firstLineHeadIndent = indentStep
-                    stateUp.headIndent = noIndent
-                }
-
-                "pi2" -> { // Paragraph, indented level 2
-                    stateUp.firstLineHeadIndent = indentStep
-                    stateUp.headIndent = indentStep * 2
-                }
-
-                "pi3" -> { // Paragraph, indented level 3
-                    stateUp.firstLineHeadIndent = indentStep
-                    stateUp.headIndent = indentStep.times(3)
-                }
-
-                "li1", "ili", "ili1" -> {
-                    stateUp.firstLineHeadIndent = noIndent
-                    stateUp.headIndent = indentStep
-                }
-
-                "li2", "ili2" -> {
-                    stateUp.firstLineHeadIndent = noIndent
-                    stateUp.headIndent = indentStep * 2
-                }
-
-                "li3", "ili3" -> {
-                    stateUp.firstLineHeadIndent = noIndent
-                    stateUp.headIndent = indentStep * 3
-                }
-
-                "li4", "ili4" -> {
-                    stateUp.firstLineHeadIndent = noIndent
-                    stateUp.headIndent = indentStep * 4
-                }
-
-                // Poetry and lists have their indentation reset for now
-                "iq", "iq1", "q", "q1", "qm", "qm1" -> {
-                    stateUp.firstLineHeadIndent = noIndent
-                    stateUp.headIndent = noIndent
-                }
-
-                "iq2", "q2", "qm2" -> {
-                    stateUp.firstLineHeadIndent = noIndent
-                    stateUp.headIndent = noIndent
-                }
-
-                "iq3", "q3", "qm3" -> {
-                    stateUp.firstLineHeadIndent = noIndent
-                    stateUp.headIndent = noIndent
-                }
-
-                "iq4", "q4", "qm4" -> {
-                    stateUp.firstLineHeadIndent = noIndent
-                    stateUp.headIndent = noIndent
-                }
-
-                "pm", "pmo", "pmc", "pmr" -> { // Embedded text paragraph
-                    stateUp.firstLineHeadIndent = noIndent
-                    stateUp.headIndent = indentStep.times(2)
-                }
-
-                "d" -> { // Descriptive title (e.g., in Psalms)
-                    newCurrentFont = BibleTextFontOption.HEADER_ITALIC
-                    newTextCategory = BibleTextCategory.HEADER
-                    if (!stateIn.renderHeadlines) {
-                        stateUp.rendering = false
-                    }
-                }
-
-                "iot" -> {
-                    newCurrentFont = BibleTextFontOption.TEXT_BOLD
-                    newAlignment = TextAlign.Center
-                    setMarginTop(stateIn.fonts.baseSize.value.dp / 3)
-                }
-
-                "is", "is1" -> {
-                    newCurrentFont = BibleTextFontOption.HEADER2
-                    newAlignment = TextAlign.Center
-                    setMarginTop(stateIn.fonts.baseSize.value.dp / 2)
-                }
-
-                "is2" -> {
-                    newCurrentFont = BibleTextFontOption.TEXT_BOLD
-                    newAlignment = TextAlign.Center
-                    setMarginTop(stateIn.fonts.baseSize.value.dp / 3)
-                }
-
-                "io", "io1" -> {
-                    stateUp.headIndent = indentStep * 2
-                }
-
-                "io2" -> {
-                    stateUp.headIndent = indentStep * 3
-                }
-
-                "io3", "io4" -> {
-                    stateUp.headIndent = indentStep * 4
-                }
-
-                "imt", "imt1", "imte", "imte1" -> {
-                    newTextCategory = BibleTextCategory.HEADER
-                    newCurrentFont = BibleTextFontOption.HEADER
-                    newAlignment = TextAlign.Center
-                }
-
-                "imt2", "imte2" -> {
-                    newTextCategory = BibleTextCategory.HEADER
-                    newCurrentFont = BibleTextFontOption.HEADER_ITALIC
-                    newAlignment = TextAlign.Center
-                    setMarginTop(stateIn.fonts.baseSize.value.dp / 2)
-                }
-
-                "imt3" -> {
-                    newTextCategory = BibleTextCategory.HEADER
-                    newCurrentFont = BibleTextFontOption.HEADER3
-                    newAlignment = TextAlign.Center
-                    setMarginTop(stateIn.fonts.baseSize.value.dp / 3)
-                }
-
-                "imt4" -> {
-                    newTextCategory = BibleTextCategory.HEADER
-                    newCurrentFont = BibleTextFontOption.HEADER4
-                    newAlignment = TextAlign.Center
-                    setMarginTop(stateIn.fonts.baseSize.value.dp / 3)
-                }
-
-                "yv-h", "yvh" -> { // YouVersion-specific header
-                    val fontMap: Map<String, BibleTextFontOption> =
-                        mapOf(
-                            "s1" to BibleTextFontOption.HEADER_ITALIC,
-                            // "qa" to BibleTextFontOption.HEADER,
-                            "imt" to BibleTextFontOption.HEADER,
-                            "imt1" to BibleTextFontOption.HEADER,
-                            "ms" to BibleTextFontOption.HEADER2,
-                            "ms1" to BibleTextFontOption.HEADER2,
-                            "s2" to BibleTextFontOption.HEADER2,
-                            "ms2" to BibleTextFontOption.HEADER2,
-                            "imt2" to BibleTextFontOption.HEADER2,
-                            "s3" to BibleTextFontOption.HEADER3,
-                            "ms3" to BibleTextFontOption.HEADER3,
-                            "imt3" to BibleTextFontOption.HEADER3,
-                            "s4" to BibleTextFontOption.HEADER4,
-                            "ms4" to BibleTextFontOption.HEADER4,
-                            "imt4" to BibleTextFontOption.HEADER4,
-                            "sp" to BibleTextFontOption.HEADER_ITALIC,
-                            "r" to BibleTextFontOption.HEADER_ITALIC,
-                            "sr" to BibleTextFontOption.HEADER_ITALIC,
-                            "mr" to BibleTextFontOption.HEADER_SMALLER,
-                        )
-                    newTextCategory = BibleTextCategory.HEADER
-                    setMarginTop(stateIn.fonts.baseSize.value.dp)
-                    newCurrentFont = BibleTextFontOption.HEADER
-
-                    for (c in classes) {
-                        fontMap[c]?.let { font -> newCurrentFont = font }
-                    }
-
-                    if (classes.contains("mr")) {
-                        setMarginTop(0.dp)
-                    }
-
-                    stateUp.firstLineHeadIndent = noIndent
-                    if (!stateIn.renderHeadlines) {
-                        stateUp.rendering = false
-                    }
-                }
-
-                else -> {
-                    if (c !in ignoredTags &&
-                        !c.startsWith("ms") && !c.startsWith("s") // Ignore other header variants already handled
-                    ) {
-                        assertionFailed("interpreting block classes: unexpected ", c)
-                    }
-                }
-            }
-        }
-
-        stateDown.apply {
-            alignment = newAlignment
-            textCategory = newTextCategory
-            smallcaps = newSmallCaps
-            currentFont = newCurrentFont
-        }
-    }
-
     /**
      * Finds the first verse number in a node's subtree by searching for verse-labeled spans.
      */
@@ -1016,59 +692,12 @@ object BibleVersionRendering {
     }
 }
 
-// --- Data Classes and Helpers ---
-
-data class BibleTextBlock(
-    val id: UUID = UUID.randomUUID(),
-    val text: AnnotatedString,
-    val chapter: Int,
-    val rows: List<List<AnnotatedString>> = emptyList(),
-    val headIndent: TextUnit,
-    val marginTop: Dp,
-    val alignment: TextAlign,
-    val footnotes: List<AnnotatedString>,
-)
-
-enum class BibleTextCategory {
-    SCRIPTURE,
-    VERSE_LABEL,
-    FOOTNOTE_MARKER,
-    FOOTNOTE_IMAGE,
-    FOOTNOTE_TEXT,
-    HEADER,
-}
-
-/**
- * This adds a metadata tag to a range of text.
- */
-fun AnnotatedString.Builder.addTextCategoryAnnotation(
-    category: BibleTextCategory,
-    start: Int,
-    end: Int,
+internal fun assertionFailed(
+    message: String,
+    detail: Any? = null,
 ) {
-    addStringAnnotation(
-        tag = BibleTextCategoryAttribute.NAME,
-        annotation = category.name,
-        start = start,
-        end = end,
-    )
-}
-
-/**
- * A helper to trim trailing whitespace from an AnnotatedString.
- * Since AnnotatedString is immutable, this function returns a new one.
- */
-fun AnnotatedString.trimTrailingWhitespace(): AnnotatedString {
-    var endIndex = this.text.length - 1
-    while (endIndex >= 0 && this.text[endIndex].isWhitespace()) {
-        endIndex--
-    }
-
-    if (endIndex < this.text.length - 1) {
-        return this.subSequence(0, endIndex + 1)
-    }
-
-    return this // Return the original if no whitespace was trimmed
+    if (!DEBUG_RENDERING) return
+    println("ASSERTION FAILED: $message${detail?.toString() ?: ""}")
 }
 
 // --- State Management Classes ---
@@ -1180,13 +809,4 @@ class StateUp(
     }
 
     fun isTextEmpty(): Boolean = textBuilder.length == 0
-}
-
-// --- Annotation Tags for AnnotatedString ---
-object BibleReferenceAttribute {
-    const val NAME = "BibleReference"
-}
-
-object BibleTextCategoryAttribute {
-    const val NAME = "BibleTextCategory"
 }
