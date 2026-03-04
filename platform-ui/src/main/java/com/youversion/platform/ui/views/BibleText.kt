@@ -250,7 +250,7 @@ fun BibleText(
 
                                     if (tappedFootnote != null) {
                                         val footNotes =
-                                            block.footnotes.filter { footnote ->
+                                            visibleBlocks.flatMap { it.footnotes }.filter { footnote ->
                                                 val referenceAnnotation =
                                                     footnote
                                                         .getStringAnnotations(

@@ -149,18 +149,18 @@ data class BibleTextNode(
             val foundString = String(ch, start, length)
 
             // Collapse multiple whitespace characters into a single space, like HTML does.
-            val collapsed = foundString.replace(Regex("\\s+"), " ")
-            val core = collapsed.trim()
-            if (core.isEmpty()) return
-
-            // Preserve leading/trailing space which might be significant between text segments.
-            val leadingSpace = collapsed.firstOrNull()?.isWhitespace() == true
-            val trailingSpace = collapsed.lastOrNull()?.isWhitespace() == true && core.length > 1
-            var segment = core
-            if (leadingSpace) segment = " $segment"
-            if (trailingSpace) segment += " "
+            val segment = foundString.replace(Regex("\\s+"), " ")
+            if (segment.isEmpty()) return
 
             val current = stack.last()
+
+            // Only preserve a standalone space when the previous sibling is a span or text node.
+            // This prevents spurious leading spaces from HTML indentation while preserving the
+            // space between adjacent inline elements like <span class="w">.
+            if (segment == " ") {
+                val previousChild = current.children.lastOrNull() ?: return
+                if (previousChild.type != BibleTextNodeType.SPAN && previousChild.type != BibleTextNodeType.TEXT) return
+            }
 
             // Coalesce adjacent text nodes for efficiency.
             if (current.children.lastOrNull()?.type == BibleTextNodeType.TEXT) {
