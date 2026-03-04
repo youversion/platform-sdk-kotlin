@@ -359,7 +359,7 @@ object BibleVersionRendering {
                         )
                     buildAnnotatedString {
                         withStyle(style) {
-                            append(stateUp.nextFootnoteMarker)
+                            append(stateUp.nextFootnoteMarker())
                         }
                     }
                 }
@@ -746,12 +746,18 @@ class StateUp(
     var verse: Int,
     var textBuilder: AnnotatedString.Builder = AnnotatedString.Builder(),
     val footnotes: MutableList<AnnotatedString> = mutableListOf(),
+    private var footnoteCount: Int = 0,
+    private var footnoteVerseTracker: Int = 0,
 ) {
-    val nextFootnoteMarker: String
-        get() {
-            val marker = footnotes.size.convertToEnumeration()
-            return "\u00A0$marker "
+    fun nextFootnoteMarker(): String {
+        if (verse != footnoteVerseTracker) {
+            footnoteCount = 0
+            footnoteVerseTracker = verse
         }
+        val marker = footnoteCount.convertToEnumeration()
+        footnoteCount++
+        return "\u00A0$marker "
+    }
 
     fun append(
         text: String,
