@@ -364,9 +364,6 @@ internal fun BibleScreen(
                             onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings) },
                             onSmallerFontClick = { viewModel.onAction(BibleReaderViewModel.Action.DecreaseFontSize) },
                             onBiggerFontClick = { viewModel.onAction(BibleReaderViewModel.Action.IncreaseFontSize) },
-                            onLineSpacingClick = {
-                                viewModel.onAction(BibleReaderViewModel.Action.NextLineSpacingMultiplierOption)
-                            },
                             onFontClick = {
                                 viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings)
                                 onFontsClick()
@@ -374,7 +371,6 @@ internal fun BibleScreen(
                             onThemeSelect = { newReaderTheme ->
                                 viewModel.onAction(BibleReaderViewModel.Action.SetReaderTheme(newReaderTheme))
                             },
-                            lineSpacingSettingIndex = state.lineSpacingSettingsIndex,
                             fontDefinition = state.selectedFontDefinition,
                         )
                     }

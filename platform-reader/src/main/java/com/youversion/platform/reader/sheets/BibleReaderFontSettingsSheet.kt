@@ -1,6 +1,5 @@
 package com.youversion.platform.reader.sheets
 
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,11 +15,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -31,7 +30,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +54,7 @@ import com.youversion.platform.reader.theme.ReaderTheme
 import com.youversion.platform.reader.theme.Sepia
 import com.youversion.platform.reader.theme.TrueBlack
 import com.youversion.platform.reader.theme.readerColorScheme
+import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,10 +63,8 @@ fun BibleReaderFontSettingsSheet(
     onDismissRequest: () -> Unit,
     onSmallerFontClick: () -> Unit,
     onBiggerFontClick: () -> Unit,
-    onLineSpacingClick: () -> Unit,
     onFontClick: () -> Unit,
     onThemeSelect: (ReaderTheme) -> Unit,
-    lineSpacingSettingIndex: Int,
     fontDefinition: FontDefinition,
 ) {
     val sheetState =
@@ -93,8 +90,6 @@ fun BibleReaderFontSettingsSheet(
                 FontSizeButtons(
                     onSmallerFontClick = onSmallerFontClick,
                     onBiggerFontClick = onBiggerFontClick,
-                    onLineSpacingClick = onLineSpacingClick,
-                    lineSpacingSettingIndex = lineSpacingSettingIndex,
                 )
                 FontDisplayButton(
                     fontDefinition = fontDefinition,
@@ -120,116 +115,60 @@ fun BibleReaderFontSettingsSheet(
 private fun FontSizeButtons(
     onSmallerFontClick: () -> Unit,
     onBiggerFontClick: () -> Unit,
-    onLineSpacingClick: () -> Unit,
-    lineSpacingSettingIndex: Int,
 ) {
-    val minWidth = 126.dp
     val minHeight = 48.dp
 
     Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .heightIn(min = minHeight)
+                    .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp))
+                    .background(MaterialTheme.readerColorScheme.buttonSecondaryColor)
+                    .clickable(
+                        interactionSource = null,
+                        enabled = true,
+                        indication = ripple(),
+                        onClick = onSmallerFontClick,
+                    ),
         ) {
-            // Left button (Smaller Font)
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier =
-                    Modifier
-                        .heightIn(min = minHeight)
-                        .widthIn(min = minWidth)
-                        .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp))
-                        .background(MaterialTheme.readerColorScheme.buttonPrimaryColor)
-                        .clickable(
-                            interactionSource = null,
-                            enabled = true,
-                            indication = ripple(),
-                            onClick = onSmallerFontClick,
-                        ),
-            ) {
-                Text(
-                    text = "A",
-                    style =
-                        TextStyle(
-                            fontSize = 14.sp,
-                        ),
-                )
-            }
-
-            // Right button (Larger Font)
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier =
-                    Modifier
-                        .heightIn(min = minHeight)
-                        .widthIn(min = minWidth)
-                        .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp))
-                        .background(MaterialTheme.readerColorScheme.buttonPrimaryColor)
-                        .clickable(
-                            interactionSource = null,
-                            enabled = true,
-                            indication = ripple(),
-                            onClick = onBiggerFontClick,
-                        ),
-            ) {
-                Text(
-                    text = "A",
-                    style =
-                        TextStyle(
-                            fontSize = 28.sp,
-                        ),
-                )
-            }
+            Text(
+                text = "A",
+                style =
+                    TextStyle(
+                        fontSize = 14.sp,
+                    ),
+            )
         }
 
         Box(
             contentAlignment = Alignment.Center,
             modifier =
                 Modifier
+                    .weight(1f)
                     .heightIn(min = minHeight)
-                    .widthIn(min = 57.dp)
-                    .clip(RoundedCornerShape(size = 8.dp))
-                    .background(MaterialTheme.readerColorScheme.buttonPrimaryColor)
+                    .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp))
+                    .background(MaterialTheme.readerColorScheme.buttonSecondaryColor)
                     .clickable(
                         interactionSource = null,
                         enabled = true,
                         indication = ripple(),
-                        onClick = onLineSpacingClick,
+                        onClick = onBiggerFontClick,
                     ),
         ) {
-            val targetSpacing = (3 * (lineSpacingSettingIndex + 1)).dp
-            val animatedSpacing by animateDpAsState(targetValue = targetSpacing, label = "lineSpacingAnimation")
-
-            Column(
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.spacedBy((animatedSpacing)),
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .width(32.dp)
-                            .height(2.dp)
-                            .background(MaterialTheme.colorScheme.onBackground),
-                )
-                Box(
-                    modifier =
-                        Modifier
-                            .width(32.dp)
-                            .height(2.dp)
-                            .background(MaterialTheme.colorScheme.onBackground),
-                )
-                Box(
-                    modifier =
-                        Modifier
-                            .width(32.dp)
-                            .height(2.dp)
-                            .background(MaterialTheme.colorScheme.onBackground),
-                )
-            }
+            Text(
+                text = "A",
+                style =
+                    TextStyle(
+                        fontSize = 28.sp,
+                    ),
+            )
         }
     }
 }
@@ -241,6 +180,7 @@ private fun FontDisplayButton(
 ) {
     OutlinedButton(
         shape = RoundedCornerShape(8.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
         onClick = onFontClick,
     ) {
         Row(
@@ -251,14 +191,19 @@ private fun FontDisplayButton(
             Column {
                 Text(
                     text = stringResource(R.string.font_settings_label),
+                    style = TextStyle(fontSize = 12.sp),
+                    color = BibleReaderTheme.colorScheme.textMuted,
                 )
                 Text(
                     text = fontDefinition.fontName,
+                    style = TextStyle(fontSize = 20.sp, fontFamily = fontDefinition.fontFamily),
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
             Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_forward),
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
             )
         }
     }
@@ -302,7 +247,7 @@ private fun ThemePickerItem(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier =
             Modifier
-                .width(56.dp)
+                .width(64.dp)
                 .height(94.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .clickable(
@@ -312,8 +257,8 @@ private fun ThemePickerItem(
                     onClick = onClick,
                 ).background(colorScheme.background)
                 .border(1.dp, colorScheme.borderSecondaryColor, RoundedCornerShape(8.dp))
-                .padding(horizontal = 16.dp, vertical = 16.dp)
-                .padding(top = 4.dp),
+                .padding(horizontal = 12.dp)
+                .padding(top = 20.dp, bottom = 10.dp),
     ) {
         TextLinePlaceholder(colorScheme = colorScheme)
         TextLinePlaceholder(widthFraction = 0.8f, colorScheme = colorScheme)
@@ -338,9 +283,9 @@ private fun ThemePickerItem(
                     if (selected) {
                         colorScheme.readerTextPrimaryColor
                     } else {
-                        colorScheme.readerTextMutedColor
+                        colorScheme.foreground
                     },
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(24.dp),
             )
         }
     }
@@ -368,10 +313,8 @@ private fun Preview_BibleReaderFontSettingsSheet() {
             onDismissRequest = {},
             onSmallerFontClick = {},
             onBiggerFontClick = {},
-            onLineSpacingClick = {},
             onFontClick = {},
             onThemeSelect = {},
-            lineSpacingSettingIndex = 1,
             fontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
         )
     }
