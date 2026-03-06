@@ -19,7 +19,7 @@ data class YouVersionUserInfo(
 
     val avatarUrl: String?
         get() {
-            var urlString = avatarUrlFormat ?: return null
+            var urlString = avatarUrlFormat?.takeIf { it.isNotBlank() } ?: return null
 
             if (urlString.startsWith("//")) {
                 urlString = "https:$urlString"
