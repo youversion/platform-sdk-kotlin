@@ -29,6 +29,7 @@ ktor = "3.3.3"
 kotlinSerialization = "1.9.0"
 kermit = "2.0.8"
 navigation = "2.9.6"
+turbine = "1.2.1"
 
 [libraries]
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
@@ -67,6 +68,8 @@ ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "k
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 
 touchlab-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
+
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

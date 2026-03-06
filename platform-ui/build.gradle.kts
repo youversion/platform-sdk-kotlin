@@ -69,6 +69,7 @@ dependencies {
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlin.coroutines.test)
+    testImplementation(libs.turbine)
 }
 
 mavenPublishing {
