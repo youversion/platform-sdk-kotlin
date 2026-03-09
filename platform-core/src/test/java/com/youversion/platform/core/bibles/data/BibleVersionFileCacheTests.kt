@@ -345,6 +345,46 @@ class BibleVersionFileCacheTests {
             }
         }
 
+    // ----- Chapter isolation
+
+    @Test
+    fun `test multiple chapters for same version are stored independently`() =
+        runTest {
+            val gen1 = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val gen2 = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 2, verse = 1)
+
+            cache.addChapterContents("Genesis 1 content", gen1)
+            cache.addChapterContents("Genesis 2 content", gen2)
+
+            assertEquals("Genesis 1 content", cache.chapterContent(gen1))
+            assertEquals("Genesis 2 content", cache.chapterContent(gen2))
+        }
+
+    @Test
+    fun `test same chapter across different versions are isolated`() =
+        runTest {
+            val refV111 = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val refV222 = BibleReference(versionId = 222, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            cache.addChapterContents("NIV Genesis 1", refV111)
+            cache.addChapterContents("KJV Genesis 1", refV222)
+
+            assertEquals("NIV Genesis 1", cache.chapterContent(refV111))
+            assertEquals("KJV Genesis 1", cache.chapterContent(refV222))
+        }
+
+    @Test
+    fun `test addVersion succeeds when directory already exists from chapter writes`() =
+        runTest {
+            cache.addChapterContents("content", testReference)
+            assertTrue(cache.chaptersArePresent(111))
+
+            cache.addVersion(testVersion)
+
+            assertTrue(cache.versionIsPresent(111))
+            assertEquals("content", cache.chapterContent(testReference))
+        }
+
     // ----- chaptersArePresent edge cases
 
     @Test
