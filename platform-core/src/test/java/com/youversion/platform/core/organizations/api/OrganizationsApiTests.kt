@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class OrganizationsApiTests : YouVersionPlatformTest {
     @AfterTest
@@ -52,7 +53,16 @@ class OrganizationsApiTests : YouVersionPlatformTest {
             YouVersionPlatformConfiguration.configure(appKey = "app")
 
             val orgs = YouVersionApi.organizations.organizations(111)
-            assertEquals("abc123", orgs[0].id)
+            val org = orgs[0]
+            assertEquals("abc123", org.id)
+            assertNull(org.parentOrgId)
+            assertEquals("Foo", org.name)
+            assertEquals("Foo Bar", org.description)
+            assertNull(org.email)
+            assertNull(org.phone)
+            assertEquals("en", org.primaryLanguage)
+            assertEquals("https://www.example.com", org.websiteUrl)
+            assertNull(org.address)
         }
 
     @Test
@@ -79,7 +89,45 @@ class OrganizationsApiTests : YouVersionPlatformTest {
             YouVersionApi.organizations.organizations(111)
         }
 
-    // ----- organizations
+    @Test
+    fun `test organizations success deserializes non-null optional fields`() =
+        runTest {
+            MockEngine { request ->
+                respondJson(
+                    """
+                    {
+                        "data": [
+                            {
+                                "id": "xyz789",
+                                "parent_organization_id": "parent456",
+                                "name": "Bar Org",
+                                "description": "A test organization",
+                                "email": "test@example.com",
+                                "phone": "+1-555-0100",
+                                "primary_language": "es",
+                                "website_url": "https://www.bar.com",
+                                "address": "123 Main St"
+                            }
+                        ]
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+
+            val org = YouVersionApi.organizations.organizations(222)[0]
+            assertEquals("xyz789", org.id)
+            assertEquals("parent456", org.parentOrgId)
+            assertEquals("Bar Org", org.name)
+            assertEquals("A test organization", org.description)
+            assertEquals("test@example.com", org.email)
+            assertEquals("+1-555-0100", org.phone)
+            assertEquals("es", org.primaryLanguage)
+            assertEquals("https://www.bar.com", org.websiteUrl)
+            assertEquals("123 Main St", org.address)
+        }
+
+    // ----- organization
     @Test
     fun `test organization success returns object`() =
         runTest {
@@ -106,29 +154,37 @@ class OrganizationsApiTests : YouVersionPlatformTest {
 
             val org = YouVersionApi.organizations.organization("abc123")
             assertEquals("abc123", org.id)
+            assertNull(org.parentOrgId)
+            assertEquals("Foo", org.name)
+            assertEquals("Foo Bar", org.description)
+            assertNull(org.email)
+            assertNull(org.phone)
+            assertEquals("en", org.primaryLanguage)
+            assertEquals("https://www.example.com", org.websiteUrl)
+            assertNull(org.address)
         }
 
     @Test
     fun `test organization throws not permitted if unauthorized`() =
         testUnauthorizedNotPermitted {
-            YouVersionApi.organizations.organizations(111)
+            YouVersionApi.organizations.organization("abc123")
         }
 
     @Test
     fun `test organization throws not permitted if forbidden`() =
         testForbiddenNotPermitted {
-            YouVersionApi.organizations.organizations(111)
+            YouVersionApi.organizations.organization("abc123")
         }
 
     @Test
     fun `test organization throws cannot download if request failed`() =
         testCannotDownload {
-            YouVersionApi.organizations.organizations(111)
+            YouVersionApi.organizations.organization("abc123")
         }
 
     @Test
     fun `test organization throws invalid response if cannot parse`() =
         testInvalidResponse {
-            YouVersionApi.organizations.organizations(111)
+            YouVersionApi.organizations.organization("abc123")
         }
 }
