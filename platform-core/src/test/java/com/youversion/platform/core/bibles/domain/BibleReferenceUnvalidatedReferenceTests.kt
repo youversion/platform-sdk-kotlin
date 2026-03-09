@@ -64,4 +64,15 @@ class BibleReferenceUnvalidatedReferenceTests {
         val expected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 1, verseEnd = 1)
         assertEquals(expected, ref)
     }
+
+    @Test
+    fun `test unvalidatedReference chapter range`() {
+        val ref = BibleReference.unvalidatedReference("GEN.1-2", versionId = 1)
+
+        assertNotNull(ref)
+        assertEquals("GEN", ref.bookUSFM)
+        assertEquals(1, ref.chapter)
+        assertEquals(1, ref.verseStart)
+        assertEquals(1, ref.verseEnd)
+    }
 }

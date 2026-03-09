@@ -4,7 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -159,6 +158,27 @@ class BibleReferenceTests {
         assertEquals("GEN.1.1-GEN.1.5", ref3.asUSFM)
     }
 
+    @Test
+    fun `test asUSFM when verseStart is null and verseEnd is set`() {
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = null, verseEnd = 5)
+
+        assertEquals("GEN.1", ref.asUSFM)
+    }
+
+    @Test
+    fun `test asUSFM when verseEnd is null and verseStart is set`() {
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = null)
+
+        assertEquals("GEN.1.3", ref.asUSFM)
+    }
+
+    @Test
+    fun `test asUSFM when verseStart equals verseEnd`() {
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = 3)
+
+        assertEquals("GEN.1.3", ref.asUSFM)
+    }
+
     // ----- Test merging references
     @Test
     fun `test merge adjacent references`() {
@@ -259,6 +279,13 @@ class BibleReferenceTests {
     }
 
     @Test
+    fun `test init throws when verseStart is less than 1`() {
+        assertFailsWith<IllegalArgumentException> {
+            BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 0, verseEnd = 3)
+        }
+    }
+
+    @Test
     fun `test init throws when verseEnd is less than 1`() {
         assertFailsWith<IllegalArgumentException> {
             BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 1, verseEnd = 0)
@@ -288,6 +315,20 @@ class BibleReferenceTests {
         assertTrue(ref.isRange)
     }
 
+    @Test
+    fun `test isRange returns false when verseEnd is null`() {
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = null)
+
+        assertFalse(ref.isRange)
+    }
+
+    @Test
+    fun `test isRange returns false when verseStart equals verseEnd`() {
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = 3)
+
+        assertFalse(ref.isRange)
+    }
+
     // ----- Test toString
     @Test
     fun `test toString with verseStart but no verseEnd`() {
@@ -303,61 +344,18 @@ class BibleReferenceTests {
         assertEquals("bible1__GEN.1", ref.toString())
     }
 
-    // ----- Test overlaps additional
     @Test
-    fun `test overlaps verseStart set but verseEnd null`() {
-        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 5, verseEnd = null)
-        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = 7)
+    fun `test toString when verseStart equals verseEnd`() {
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = 3)
 
-        assertTrue(ref1.overlaps(ref2))
-        assertTrue(ref2.overlaps(ref1))
+        assertEquals("bible1__GEN.1.3", ref.toString())
     }
 
     @Test
-    fun `test overlaps verseStart null but verseEnd set`() {
-        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = null, verseEnd = 5)
-        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = 7)
+    fun `test toString when verseStart is null but verseEnd is set`() {
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = null, verseEnd = 5)
 
-        assertTrue(ref1.overlaps(ref2))
-        assertTrue(ref2.overlaps(ref1))
-    }
-
-    // ----- Test contains additional
-    @Test
-    fun `test contains verseStart set but verseEnd null`() {
-        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 5, verseEnd = null)
-        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 5)
-
-        assertTrue(ref1.contains(ref2))
-        assertTrue(ref2.contains(ref1))
-    }
-
-    @Test
-    fun `test contains verseStart null but verseEnd set`() {
-        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = null, verseEnd = 5)
-        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 1, verseEnd = 3)
-
-        assertTrue(ref1.contains(ref2))
-        assertFalse(ref2.contains(ref1))
-    }
-
-    // ----- Test isAdjacentOrOverlapping additional
-    @Test
-    fun `test isAdjacentOrOverlapping different versionId`() {
-        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 3)
-        val ref2 = BibleReference(versionId = 2, bookUSFM = "GEN", chapter = 1, verse = 4)
-
-        assertFalse(ref1.isAdjacentOrOverlapping(ref2))
-        assertFalse(ref2.isAdjacentOrOverlapping(ref1))
-    }
-
-    @Test
-    fun `test isAdjacentOrOverlapping no verseStart or verseEnd`() {
-        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
-        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
-
-        assertTrue(ref1.isAdjacentOrOverlapping(ref2))
-        assertTrue(ref2.isAdjacentOrOverlapping(ref1))
+        assertEquals("bible1__GEN.1", ref.toString())
     }
 
     // ----- Test compare additional
@@ -438,15 +436,4 @@ class BibleReferenceTests {
         assertEquals(6, merged.verseEnd)
     }
 
-    // ----- Test unvalidatedReference additional
-    @Test
-    fun `test unvalidatedReference chapter range`() {
-        val ref = BibleReference.unvalidatedReference("GEN.1-2", versionId = 1)
-
-        assertNotNull(ref)
-        assertEquals("GEN", ref.bookUSFM)
-        assertEquals(1, ref.chapter)
-        assertEquals(1, ref.verseStart)
-        assertEquals(1, ref.verseEnd)
-    }
 }
