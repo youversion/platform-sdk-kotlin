@@ -206,6 +206,72 @@ class BiblesApiBooksTests : YouVersionPlatformTest {
                     assertEquals("The First Book of Moses, Commonly Called Genesis", fullTitle)
                     assertEquals("Gen", abbreviation)
                     assertEquals("old_testament", canon)
+                    assertEquals(false, hasIntro)
+                }
+        }
+
+    @Test
+    fun `test book success deserializes intro fields`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals(HttpMethod.Get, request.method)
+                assertEquals(request.url.encodedPath, "/v1/bibles/206/books/GEN")
+                respondJson(
+                    """
+                    {
+                        "id": "GEN",
+                        "title": "Genesis",
+                        "full_title": "The First Book of Moses, Commonly Called Genesis",
+                        "abbreviation": "Gen",
+                        "canon": "old_testament",
+                        "chapters": [],
+                        "intro": {
+                            "id": "GEN.intro",
+                            "passage_id": "GEN.0",
+                            "title": "Introduction to Genesis"
+                        }
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            YouVersionApi.bible
+                .book(versionId = 206, bookUsfm = "GEN")
+                .apply {
+                    assertEquals(true, hasIntro)
+                    assertEquals("GEN.intro", intro?.id)
+                    assertEquals("GEN.0", intro?.passageId)
+                    assertEquals("Introduction to Genesis", intro?.title)
+                }
+        }
+
+    @Test
+    fun `test book success treats explicit null intro as no intro`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals(HttpMethod.Get, request.method)
+                assertEquals(request.url.encodedPath, "/v1/bibles/206/books/GEN")
+                respondJson(
+                    """
+                    {
+                        "id": "GEN",
+                        "title": "Genesis",
+                        "full_title": "The First Book of Moses, Commonly Called Genesis",
+                        "abbreviation": "Gen",
+                        "canon": "old_testament",
+                        "chapters": [],
+                        "intro": null
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            YouVersionApi.bible
+                .book(versionId = 206, bookUsfm = "GEN")
+                .apply {
+                    assertEquals(false, hasIntro)
                 }
         }
 
