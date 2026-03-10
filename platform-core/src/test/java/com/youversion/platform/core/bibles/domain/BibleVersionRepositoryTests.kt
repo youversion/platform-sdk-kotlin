@@ -2,6 +2,7 @@ package com.youversion.platform.core.bibles.domain
 
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
+import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.helpers.FixtureLoader
 import com.youversion.platform.helpers.YouVersionPlatformTest
@@ -429,6 +430,32 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
             assertFalse(memoryCache.versionIsPresent(999))
             assertFalse(temporaryCache.versionIsPresent(999))
             assertFalse(persistentCache.versionIsPresent(999))
+        }
+
+    // ----- chaptersArePresent
+
+    @Test
+    fun `test chaptersArePresent returns true when chapters are cached for version`() =
+        runTest {
+            val ref = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1)
+            memoryCache.addChapterContents("content", ref)
+
+            assertTrue(memoryCache.chaptersArePresent(111))
+        }
+
+    @Test
+    fun `test chaptersArePresent returns false when no chapters are cached`() =
+        runTest {
+            assertFalse(memoryCache.chaptersArePresent(111))
+        }
+
+    @Test
+    fun `test chaptersArePresent returns false when chapters are cached for a different version`() =
+        runTest {
+            val ref = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+            memoryCache.addChapterContents("content", ref)
+
+            assertFalse(memoryCache.chaptersArePresent(111))
         }
 
     @Test
