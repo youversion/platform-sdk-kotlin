@@ -34,6 +34,61 @@ class BiblesEndpointsTest {
     }
 
     @Test
+    fun `test versionsUrl fields and pageSize interaction`() {
+        // >3 fields with explicit pageSize — uses numeric pageSize, not *
+        assertEquals(
+            "https://api.youversion.com/v1/bibles?language_ranges%5B%5D=%2A" +
+                "&fields%5B%5D=id&fields%5B%5D=language_tag&fields%5B%5D=title&fields%5B%5D=abbreviation" +
+                "&page_size=50",
+            BiblesEndpoints.versionsUrl(
+                fields = listOf("id", "language_tag", "title", "abbreviation"),
+                pageSize = 50,
+            ),
+        )
+
+        // Exactly 3 fields — boundary of 1..3 range, uses *
+        assertEquals(
+            "https://api.youversion.com/v1/bibles?language_ranges%5B%5D=%2A" +
+                "&fields%5B%5D=id&fields%5B%5D=language_tag&fields%5B%5D=title" +
+                "&page_size=%2A",
+            BiblesEndpoints.versionsUrl(fields = listOf("id", "language_tag", "title")),
+        )
+
+        // Empty fields list — no fields[] params, no page_size
+        assertEquals(
+            "https://api.youversion.com/v1/bibles?language_ranges%5B%5D=%2A",
+            BiblesEndpoints.versionsUrl(fields = emptyList()),
+        )
+
+        // Exactly 1 field — lower boundary of 1..3 range, uses *
+        assertEquals(
+            "https://api.youversion.com/v1/bibles?language_ranges%5B%5D=%2A" +
+                "&fields%5B%5D=id&page_size=%2A",
+            BiblesEndpoints.versionsUrl(fields = listOf("id")),
+        )
+
+        // >3 fields with null pageSize — fields present, page_size omitted
+        assertEquals(
+            "https://api.youversion.com/v1/bibles?language_ranges%5B%5D=%2A" +
+                "&fields%5B%5D=id&fields%5B%5D=language_tag&fields%5B%5D=title&fields%5B%5D=abbreviation",
+            BiblesEndpoints.versionsUrl(
+                fields = listOf("id", "language_tag", "title", "abbreviation"),
+            ),
+        )
+
+        // Exactly 3 fields with explicit pageSize — * overrides numeric pageSize
+        assertEquals(
+            "https://api.youversion.com/v1/bibles?language_ranges%5B%5D=%2A" +
+                "&fields%5B%5D=id&fields%5B%5D=language_tag&fields%5B%5D=title" +
+                "&page_size=%2A",
+            BiblesEndpoints.versionsUrl(
+                fields = listOf("id", "language_tag", "title"),
+                pageSize = 25,
+            ),
+        )
+    }
+
+    @Test
     fun `test versionUrl`() {
         assertEquals(
             "https://api.youversion.com/v1/bibles/1",
