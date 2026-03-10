@@ -50,6 +50,29 @@ class BiblesApiPassageTests : YouVersionPlatformTest {
         }
 
     @Test
+    fun `test passage with versionId and passageId returns decoded passage`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals(HttpMethod.Get, request.method)
+                assertEquals(request.url.encodedPath, "/v1/bibles/206/passages/JHN.3.1")
+                respondJson(
+                    """
+                    {
+                        "id": "JHN.3.1",
+                        "content": "content",
+                        "reference": "John 3:1"
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val passage = YouVersionApi.bible.passage(versionId = 206, passageId = "JHN.3.1")
+
+            assertEquals("JHN.3.1", passage.id)
+        }
+
+    @Test
     fun `test passage throws not permitted if unauthorized`() =
         testUnauthorizedNotPermitted { YouVersionApi.bible.passage(reference) }
 
