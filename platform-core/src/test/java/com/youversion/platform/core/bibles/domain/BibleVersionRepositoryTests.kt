@@ -1,5 +1,6 @@
 package com.youversion.platform.core.bibles.domain
 
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -8,7 +9,12 @@ import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
+import com.youversion.platform.helpers.testCannotDownload
+import com.youversion.platform.helpers.testForbiddenNotPermitted
+import com.youversion.platform.helpers.testInvalidResponse
+import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
+import io.ktor.http.HttpMethod
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -456,4 +462,120 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
             assertFalse(persistentCache.versionIsPresent(111))
             assertFalse(persistentCache.versionIsPresent(206))
         }
+
+    // ----- permittedVersions
+
+    @Test
+    fun `test permittedVersions returns versions from API`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals(HttpMethod.Get, request.method)
+                assertEquals("/v1/bibles", request.url.encodedPath)
+                respondJson(PERMITTED_VERSIONS_JSON)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val versions = repository.permittedVersions()
+
+            assertEquals(2, versions.size)
+            assertEquals(12, versions[0].id)
+            assertEquals("en", versions[0].languageTag)
+            assertEquals(206, versions[1].id)
+            assertEquals("en", versions[1].languageTag)
+        }
+
+    @Test
+    fun `test permittedVersions passes languageTag as languageCode`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals("eng", request.url.parameters["language_ranges[]"])
+                respondJson(PERMITTED_VERSIONS_JSON)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.permittedVersions(languageTag = "eng")
+        }
+
+    @Test
+    fun `test permittedVersions passes null languageTag as wildcard`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals("*", request.url.parameters["language_ranges[]"])
+                respondJson(PERMITTED_VERSIONS_JSON)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.permittedVersions()
+        }
+
+    @Test
+    fun `test permittedVersions sends correct fields`() =
+        runTest {
+            MockEngine { request ->
+                val fields = request.url.parameters.getAll("fields[]")
+                assertEquals(listOf("id", "language_tag"), fields)
+                respondJson(PERMITTED_VERSIONS_JSON)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.permittedVersions()
+        }
+
+    @Test
+    fun `test permittedVersions returns empty list when API returns no data`() =
+        runTest {
+            MockEngine { request ->
+                respondJson(
+                    """
+                    {
+                        "data": []
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val versions = repository.permittedVersions()
+
+            assertTrue(versions.isEmpty())
+        }
+
+    @Test
+    fun `test permittedVersions throws not permitted if unauthorized`() =
+        testUnauthorizedNotPermitted {
+            repository.permittedVersions()
+        }
+
+    @Test
+    fun `test permittedVersions throws not permitted if forbidden`() =
+        testForbiddenNotPermitted {
+            repository.permittedVersions()
+        }
+
+    @Test
+    fun `test permittedVersions throws cannot download if request failed`() =
+        testCannotDownload {
+            repository.permittedVersions()
+        }
+
+    @Test
+    fun `test permittedVersions throws invalid response if cannot parse`() =
+        testInvalidResponse {
+            repository.permittedVersions()
+        }
 }
+
+private const val PERMITTED_VERSIONS_JSON = """
+{
+    "data": [
+        {
+            "id": 12,
+            "language_tag": "en"
+        },
+        {
+            "id": 206,
+            "language_tag": "en"
+        }
+    ]
+}
+"""
