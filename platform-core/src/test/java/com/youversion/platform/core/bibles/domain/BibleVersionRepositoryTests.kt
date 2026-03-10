@@ -202,7 +202,7 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
 
             MockEngine { request ->
                 val count = requestCount.incrementAndFetch()
-                if (count <= 2) {
+                if (count <= 1) {
                     respond("", HttpStatusCode.InternalServerError)
                 } else {
                     val bible206Json = FixtureLoader().loadFixtureString("bible_206")
