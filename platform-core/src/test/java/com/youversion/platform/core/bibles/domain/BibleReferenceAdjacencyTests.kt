@@ -91,7 +91,7 @@ class BibleReferenceAdjacencyTests {
 
     @Test
     fun `test isAdjacentOrOverlapping verseStart null and verseEnd null on one side verse ref on other`() {
-        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = null, verseEnd = null)
         val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 5)
 
         assertTrue(ref1.isAdjacentOrOverlapping(ref2))
