@@ -1,5 +1,6 @@
 package com.youversion.platform.reader
 
+import androidx.lifecycle.viewModelScope
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
@@ -18,6 +19,7 @@ import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -80,6 +82,7 @@ class BibleReaderViewModelTest {
 
     @AfterTest
     fun teardown() {
+        viewModel.viewModelScope.cancel()
         Dispatchers.resetMain()
     }
 
