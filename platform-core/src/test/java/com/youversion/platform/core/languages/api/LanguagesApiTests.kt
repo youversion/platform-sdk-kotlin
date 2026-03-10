@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class LanguagesApiTests : YouVersionPlatformTest {
@@ -70,12 +71,67 @@ class LanguagesApiTests : YouVersionPlatformTest {
             val languages = YouVersionApi.languages.languages().data
 
             assertEquals(2, languages.size)
+
+            val english = languages[0]
+            assertEquals("en", english.id)
+            assertEquals("English", english.language)
+            assertEquals("Latn", english.script)
+            assertEquals("Latin", english.scriptName)
+            assertEquals(listOf("eng"), english.aliases)
+            assertEquals(mapOf("en" to "English", "es" to "Inglés"), english.displayNames)
+            assertEquals(listOf("Latn"), english.scripts)
+            assertEquals(listOf("US", "GB"), english.variants)
+            assertEquals(listOf("US", "GB", "CA"), english.countries)
+            assertEquals("ltr", english.textDirection)
+            assertEquals(111, english.defaultBibleVersionId)
+
+            val spanish = languages[1]
+            assertEquals("es", spanish.id)
+            assertEquals("Spanish", spanish.language)
+            assertEquals("Latn", spanish.script)
+            assertEquals("Latin", spanish.scriptName)
+            assertEquals(listOf("spa"), spanish.aliases)
+            assertEquals(mapOf("en" to "Spanish", "es" to "Español"), spanish.displayNames)
+            assertEquals(listOf("Latn"), spanish.scripts)
+            assertEquals(listOf("ES", "MX"), spanish.variants)
+            assertEquals(listOf("ES", "MX", "AR"), spanish.countries)
+            assertEquals("ltr", spanish.textDirection)
+            assertEquals(128, spanish.defaultBibleVersionId)
+        }
+
+    @Test
+    fun `test languages defaults textDirection to ltr when omitted`() =
+        runTest {
+            MockEngine { request ->
+                respondJson(
+                    """
+                    {
+                        "data": [
+                            {
+                                "id": "en",
+                                "language": "English"
+                            }
+                        ]
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val languages = YouVersionApi.languages.languages().data
+
+            assertEquals(1, languages.size)
             assertEquals("en", languages[0].id)
             assertEquals("English", languages[0].language)
-            assertEquals(111, languages[0].defaultBibleVersionId)
-            assertEquals("es", languages[1].id)
-            assertEquals("Spanish", languages[1].language)
-            assertEquals(128, languages[1].defaultBibleVersionId)
+            assertEquals("ltr", languages[0].textDirection)
+            assertNull(languages[0].script)
+            assertNull(languages[0].scriptName)
+            assertNull(languages[0].aliases)
+            assertNull(languages[0].displayNames)
+            assertNull(languages[0].scripts)
+            assertNull(languages[0].variants)
+            assertNull(languages[0].countries)
+            assertNull(languages[0].defaultBibleVersionId)
         }
 
     @Test
