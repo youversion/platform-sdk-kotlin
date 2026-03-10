@@ -23,12 +23,31 @@ class YouVersionApiTests : YouVersionPlatformTest {
     @AfterTest
     fun teardown() = stopYouVersionPlatformTest()
 
+    private fun configureTestEnvironment(
+        mockEngine: MockEngine? = null,
+        appKey: String? = "app",
+        accessToken: String = "old_token",
+        refreshToken: String? = "refresh",
+        idToken: String? = null,
+        expiryDate: Date? = null,
+    ) {
+        if (mockEngine != null) startYouVersionPlatformTest(mockEngine) else startYouVersionPlatformTest()
+        YouVersionPlatformConfiguration.configure(appKey = appKey)
+        if (expiryDate != null) {
+            YouVersionPlatformConfiguration.saveAuthData(
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                idToken = idToken,
+                expiryDate = expiryDate,
+                persist = false,
+            )
+        }
+    }
+
     @Test
     fun `test hasValidToken returns false when expiryDate is null`() =
         runTest {
-            startYouVersionPlatformTest()
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
+            configureTestEnvironment()
 
             assertFalse(YouVersionApi.hasValidToken())
         }
@@ -36,17 +55,14 @@ class YouVersionApiTests : YouVersionPlatformTest {
     @Test
     fun `test hasValidToken returns true without refresh when expiryDate is far in future`() =
         runTest {
-            MockEngine {
-                throw AssertionError("No network request should be made")
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            YouVersionPlatformConfiguration.saveAuthData(
+            val engine =
+                MockEngine {
+                    throw AssertionError("No network request should be made")
+                }
+            configureTestEnvironment(
+                mockEngine = engine,
                 accessToken = "token",
-                refreshToken = "refresh",
-                idToken = null,
                 expiryDate = Date(System.currentTimeMillis() + 60_000L),
-                persist = false,
             )
 
             assertTrue(YouVersionApi.hasValidToken())
@@ -55,55 +71,51 @@ class YouVersionApiTests : YouVersionPlatformTest {
     @Test
     fun `test hasValidToken refreshes and returns true when expiryDate is in the past`() =
         runTest {
-            MockEngine {
-                respondJson(REFRESH_SUCCESS_JSON)
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            YouVersionPlatformConfiguration.saveAuthData(
-                accessToken = "old_token",
-                refreshToken = "refresh",
-                idToken = null,
+            var wasRefreshCalled = false
+            val engine =
+                MockEngine {
+                    wasRefreshCalled = true
+                    respondJson(REFRESH_SUCCESS_JSON)
+                }
+            configureTestEnvironment(
+                mockEngine = engine,
                 expiryDate = Date(System.currentTimeMillis() - 60_000L),
-                persist = false,
             )
 
             assertTrue(YouVersionApi.hasValidToken())
+            assertEquals("new_access_token", YouVersionPlatformConfiguration.accessToken)
+            assertTrue(wasRefreshCalled)
         }
 
     @Test
     fun `test hasValidToken refreshes and returns true when expiryDate is within 30 seconds`() =
         runTest {
-            MockEngine {
-                respondJson(REFRESH_SUCCESS_JSON)
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            YouVersionPlatformConfiguration.saveAuthData(
-                accessToken = "old_token",
-                refreshToken = "refresh",
-                idToken = null,
+            var wasRefreshCalled = false
+            val engine =
+                MockEngine {
+                    wasRefreshCalled = true
+                    respondJson(REFRESH_SUCCESS_JSON)
+                }
+            configureTestEnvironment(
+                mockEngine = engine,
                 expiryDate = Date(System.currentTimeMillis() + 15_000L),
-                persist = false,
             )
 
             assertTrue(YouVersionApi.hasValidToken())
+            assertEquals("new_access_token", YouVersionPlatformConfiguration.accessToken)
+            assertTrue(wasRefreshCalled)
         }
 
     @Test
     fun `test hasValidToken returns false when expiryDate is expired and refresh fails`() =
         runTest {
-            MockEngine {
-                respond("", HttpStatusCode.InternalServerError)
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            YouVersionPlatformConfiguration.saveAuthData(
-                accessToken = "old_token",
-                refreshToken = "refresh",
-                idToken = null,
+            val engine =
+                MockEngine {
+                    respond("", HttpStatusCode.InternalServerError)
+                }
+            configureTestEnvironment(
+                mockEngine = engine,
                 expiryDate = Date(System.currentTimeMillis() - 60_000L),
-                persist = false,
             )
 
             assertFalse(YouVersionApi.hasValidToken())
@@ -112,15 +124,9 @@ class YouVersionApiTests : YouVersionPlatformTest {
     @Test
     fun `test hasValidToken returns false when refreshToken is null and token is expired`() =
         runTest {
-            startYouVersionPlatformTest()
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            YouVersionPlatformConfiguration.saveAuthData(
-                accessToken = "old_token",
+            configureTestEnvironment(
                 refreshToken = null,
-                idToken = null,
                 expiryDate = Date(System.currentTimeMillis() - 60_000L),
-                persist = false,
             )
 
             assertFalse(YouVersionApi.hasValidToken())
@@ -129,15 +135,9 @@ class YouVersionApiTests : YouVersionPlatformTest {
     @Test
     fun `test hasValidToken returns false when appKey is null and token is expired`() =
         runTest {
-            startYouVersionPlatformTest()
-
-            YouVersionPlatformConfiguration.configure(appKey = null)
-            YouVersionPlatformConfiguration.saveAuthData(
-                accessToken = "old_token",
-                refreshToken = "refresh",
-                idToken = null,
+            configureTestEnvironment(
+                appKey = null,
                 expiryDate = Date(System.currentTimeMillis() - 60_000L),
-                persist = false,
             )
 
             assertFalse(YouVersionApi.hasValidToken())
@@ -146,21 +146,16 @@ class YouVersionApiTests : YouVersionPlatformTest {
     @Test
     fun `test hasValidToken updates configuration after successful refresh`() =
         runTest {
-            MockEngine {
-                respondJson(REFRESH_SUCCESS_JSON)
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            YouVersionPlatformConfiguration.saveAuthData(
-                accessToken = "old_token",
-                refreshToken = "refresh",
-                idToken = null,
+            val engine =
+                MockEngine {
+                    respondJson(REFRESH_SUCCESS_JSON)
+                }
+            configureTestEnvironment(
+                mockEngine = engine,
                 expiryDate = Date(System.currentTimeMillis() - 60_000L),
-                persist = false,
             )
 
             assertTrue(YouVersionApi.hasValidToken())
-
             assertEquals("new_access_token", YouVersionPlatformConfiguration.accessToken)
             assertEquals("new_refresh_token", YouVersionPlatformConfiguration.refreshToken)
             assertNotNull(YouVersionPlatformConfiguration.expiryDate)
@@ -170,38 +165,31 @@ class YouVersionApiTests : YouVersionPlatformTest {
     fun `test hasValidToken refreshes when expiryDate is exactly 30 seconds from now`() =
         runTest {
             var wasRefreshCalled = false
-            MockEngine {
-                wasRefreshCalled = true
-                respondJson(REFRESH_SUCCESS_JSON)
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            YouVersionPlatformConfiguration.saveAuthData(
-                accessToken = "old_token",
-                refreshToken = "refresh",
-                idToken = null,
+            val engine =
+                MockEngine {
+                    wasRefreshCalled = true
+                    respondJson(REFRESH_SUCCESS_JSON)
+                }
+            configureTestEnvironment(
+                mockEngine = engine,
                 expiryDate = Date(System.currentTimeMillis() + 30_000L),
-                persist = false,
             )
 
             assertTrue(YouVersionApi.hasValidToken())
+            assertEquals("new_access_token", YouVersionPlatformConfiguration.accessToken)
             assertTrue(wasRefreshCalled)
         }
 
     @Test
     fun `test hasValidToken returns false when refresh returns malformed JSON`() =
         runTest {
-            MockEngine {
-                respondJson("not valid json")
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            YouVersionPlatformConfiguration.saveAuthData(
-                accessToken = "old_token",
-                refreshToken = "refresh",
-                idToken = null,
+            val engine =
+                MockEngine {
+                    respondJson("not valid json")
+                }
+            configureTestEnvironment(
+                mockEngine = engine,
                 expiryDate = Date(System.currentTimeMillis() - 60_000L),
-                persist = false,
             )
 
             assertFalse(YouVersionApi.hasValidToken())
@@ -210,17 +198,13 @@ class YouVersionApiTests : YouVersionPlatformTest {
     @Test
     fun `test hasValidToken returns false when network error occurs during refresh`() =
         runTest {
-            MockEngine {
-                throw IOException("Connection refused")
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            YouVersionPlatformConfiguration.saveAuthData(
-                accessToken = "old_token",
-                refreshToken = "refresh",
-                idToken = null,
+            val engine =
+                MockEngine {
+                    throw IOException("Connection refused")
+                }
+            configureTestEnvironment(
+                mockEngine = engine,
                 expiryDate = Date(System.currentTimeMillis() - 60_000L),
-                persist = false,
             )
 
             assertFalse(YouVersionApi.hasValidToken())
@@ -230,18 +214,14 @@ class YouVersionApiTests : YouVersionPlatformTest {
     fun `test hasValidToken does not refresh on second call after successful refresh`() =
         runTest {
             val requestCount = AtomicInteger(0)
-            MockEngine {
-                requestCount.incrementAndGet()
-                respondJson(REFRESH_SUCCESS_JSON)
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            YouVersionPlatformConfiguration.saveAuthData(
-                accessToken = "old_token",
-                refreshToken = "refresh",
-                idToken = null,
+            val engine =
+                MockEngine {
+                    requestCount.incrementAndGet()
+                    respondJson(REFRESH_SUCCESS_JSON)
+                }
+            configureTestEnvironment(
+                mockEngine = engine,
                 expiryDate = Date(System.currentTimeMillis() - 60_000L),
-                persist = false,
             )
 
             assertTrue(YouVersionApi.hasValidToken())
@@ -252,17 +232,14 @@ class YouVersionApiTests : YouVersionPlatformTest {
     @Test
     fun `test hasValidToken preserves idToken after successful refresh`() =
         runTest {
-            MockEngine {
-                respondJson(REFRESH_SUCCESS_JSON)
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            YouVersionPlatformConfiguration.saveAuthData(
-                accessToken = "old_token",
-                refreshToken = "refresh",
+            val engine =
+                MockEngine {
+                    respondJson(REFRESH_SUCCESS_JSON)
+                }
+            configureTestEnvironment(
+                mockEngine = engine,
                 idToken = "original_id_token",
                 expiryDate = Date(System.currentTimeMillis() - 60_000L),
-                persist = false,
             )
 
             assertTrue(YouVersionApi.hasValidToken())
