@@ -165,6 +165,12 @@ class BibleTextNodeTests {
     }
 
     @Test
+    fun `type returns BLOCK for block name`() {
+        val node = BibleTextNode(name = "block")
+        assertEquals(BibleTextNodeType.BLOCK, node.type)
+    }
+
+    @Test
     fun `type throws IllegalArgumentException for unknown node name`() {
         val node = BibleTextNode(name = "unknown")
         assertFailsWith<IllegalArgumentException> {
@@ -180,6 +186,15 @@ class BibleTextNodeTests {
         val block = root.children.first()
         assertEquals(1, block.children.size)
         assertEquals("Hello & world", block.children.first().text)
+    }
+
+    @Test
+    fun `parse should filter blank entries from class attribute`() {
+        val html = """<div class="  foo   bar  "><span>text</span></div>"""
+        val root = BibleTextNode.parse(html)
+        assertNotNull(root)
+        val block = root.children.first()
+        assertEquals(listOf("foo", "bar"), block.classes)
     }
 
     @Test
