@@ -133,6 +133,27 @@ class BiblesApiPassageTests : YouVersionPlatformTest {
         }
 
     @Test
+    fun `test passage with versionId and passageId sends include_notes and include_headings`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals("true", request.url.parameters["include_notes"])
+                assertEquals("true", request.url.parameters["include_headings"])
+                respondJson(
+                    """
+                    {
+                        "id": "GEN.INTRO",
+                        "content": "content",
+                        "reference": "Genesis Intro"
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            YouVersionApi.bible.passage(versionId = 206, passageId = "GEN.INTRO")
+        }
+
+    @Test
     fun `test passage with versionId and passageId throws not permitted if unauthorized`() =
         testUnauthorizedNotPermitted {
             YouVersionApi.bible.passage(versionId = 206, passageId = "GEN.INTRO")

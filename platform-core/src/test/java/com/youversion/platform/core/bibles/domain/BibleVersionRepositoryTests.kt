@@ -1,6 +1,7 @@
 package com.youversion.platform.core.bibles.domain
 
 import com.youversion.platform.core.YouVersionPlatformConfiguration
+import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -14,7 +15,9 @@ import com.youversion.platform.helpers.testForbiddenNotPermitted
 import com.youversion.platform.helpers.testInvalidResponse
 import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -26,6 +29,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -189,6 +193,36 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
             assertEquals(4, count.load())
         }
 
+    @OptIn(ExperimentalAtomicApi::class)
+    @Test
+    fun `test version propagates API error and allows retry`() =
+        runTest {
+            val requestCount = AtomicInt(0)
+
+            MockEngine { request ->
+                val count = requestCount.incrementAndFetch()
+                if (count <= 2) {
+                    respond("", HttpStatusCode.InternalServerError)
+                } else {
+                    val bible206Json = FixtureLoader().loadFixtureString("bible_206")
+                    val bible206IndexJson = FixtureLoader().loadFixtureString("bible_206_index")
+
+                    when (request.url.encodedPath) {
+                        "/v1/bibles/206" -> respondJson(bible206Json)
+                        "/v1/bibles/206/index" -> respondJson(bible206IndexJson)
+                        else -> throw IllegalArgumentException("Unexpected request path: ${request.url.encodedPath}")
+                    }
+                }
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            assertFailsWith<YouVersionNetworkException> {
+                repository.version(206)
+            }
+
+            val version = repository.version(206)
+            assertEquals(206, version.id)
+        }
+
     // ----- versionIsPresent
 
     @Test
@@ -308,6 +342,28 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
             assertFalse(temporaryCache.versionIsPresent(111))
             // Verify version remains in memory cache
             assertTrue(memoryCache.versionIsPresent(111))
+        }
+
+    @Test
+    fun `test downloadVersion fetches from API when version not in any cache`() =
+        runTest {
+            MockEngine { request ->
+                val bible206Json = FixtureLoader().loadFixtureString("bible_206")
+                val bible206IndexJson = FixtureLoader().loadFixtureString("bible_206_index")
+
+                when (request.url.encodedPath) {
+                    "/v1/bibles/206" -> respondJson(bible206Json)
+                    "/v1/bibles/206/index" -> respondJson(bible206IndexJson)
+                    else -> throw IllegalArgumentException("Unexpected request path: ${request.url.encodedPath}")
+                }
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            assertFalse(persistentCache.versionIsPresent(206))
+
+            repository.downloadVersion(206)
+
+            assertTrue(persistentCache.versionIsPresent(206))
+            assertFalse(temporaryCache.versionIsPresent(206))
         }
 
     // ----- downloadStatus
