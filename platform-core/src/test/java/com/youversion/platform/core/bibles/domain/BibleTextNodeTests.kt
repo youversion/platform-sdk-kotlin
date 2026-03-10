@@ -2,6 +2,7 @@ package com.youversion.platform.core.bibles.domain
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -138,5 +139,57 @@ class BibleTextNodeTests {
         assertTrue(
             fullSentence.contains("In the beginning, God created the heavens and the earth."),
         )
+    }
+
+    @Test
+    fun `parse should correctly handle table with rows and cells`() {
+        val html = """<table><tr><td>Cell 1</td><td>Cell 2</td></tr></table>"""
+        val root = BibleTextNode.parse(html)
+        assertNotNull(root)
+
+        val table = root.children.first()
+        assertEquals(BibleTextNodeType.TABLE, table.type)
+        assertEquals(1, table.children.size)
+
+        val row = table.children.first()
+        assertEquals(BibleTextNodeType.ROW, row.type)
+        assertEquals(2, row.children.size)
+
+        val cell1 = row.children[0]
+        assertEquals(BibleTextNodeType.CELL, cell1.type)
+        assertEquals("Cell 1", cell1.children.first().text)
+
+        val cell2 = row.children[1]
+        assertEquals(BibleTextNodeType.CELL, cell2.type)
+        assertEquals("Cell 2", cell2.children.first().text)
+    }
+
+    @Test
+    fun `type throws IllegalArgumentException for unknown node name`() {
+        val node = BibleTextNode(name = "unknown")
+        assertFailsWith<IllegalArgumentException> {
+            node.type
+        }
+    }
+
+    @Test
+    fun `parse should merge adjacent text segments into one text node`() {
+        val html = """<div>Hello &amp; world</div>"""
+        val root = BibleTextNode.parse(html)
+        assertNotNull(root)
+        val block = root.children.first()
+        assertEquals(1, block.children.size)
+        assertEquals("Hello & world", block.children.first().text)
+    }
+
+    @Test
+    fun `parse should not add space when previous sibling is not span or text`() {
+        val html = """<div><div class="p"></div> <span class="w">word</span></div>"""
+        val root = BibleTextNode.parse(html)
+        assertNotNull(root)
+        val outer = root.children.first()
+        assertEquals(2, outer.children.size)
+        assertEquals(BibleTextNodeType.BLOCK, outer.children[0].type)
+        assertEquals(BibleTextNodeType.SPAN, outer.children[1].type)
     }
 }
