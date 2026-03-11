@@ -289,4 +289,40 @@ class BibleReferenceOverlapsTests {
         assertFalse(chapter1.overlaps(chapter2))
         assertFalse(chapter2.overlaps(chapter1))
     }
+
+    @Test
+    fun `test overlaps verseStart set but verseEnd null`() {
+        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 5, verseEnd = null)
+        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = 7)
+
+        assertTrue(ref1.overlaps(ref2))
+        assertTrue(ref2.overlaps(ref1))
+    }
+
+    @Test
+    fun `test overlaps verseStart null but verseEnd set`() {
+        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = null, verseEnd = 5)
+        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = 7)
+
+        assertTrue(ref1.overlaps(ref2))
+        assertTrue(ref2.overlaps(ref1))
+    }
+
+    @Test
+    fun `test overlaps verseStart set verseEnd null on both sides`() {
+        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = null)
+        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = null)
+
+        assertTrue(ref1.overlaps(ref2))
+        assertTrue(ref2.overlaps(ref1))
+    }
+
+    @Test
+    fun `test overlaps verseStart null verseEnd set on b side`() {
+        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 1, verseEnd = 5)
+        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = null, verseEnd = 3)
+
+        assertTrue(ref1.overlaps(ref2))
+        assertTrue(ref2.overlaps(ref1))
+    }
 }
