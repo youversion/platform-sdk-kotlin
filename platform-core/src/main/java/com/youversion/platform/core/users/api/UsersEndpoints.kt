@@ -32,12 +32,6 @@ object UsersEndpoints : UsersApi {
         get() = PlatformCoreKoinComponent.httpClient
 
     // ----- User URLs
-    fun userUrl(accessToken: String): String =
-        buildYouVersionUrlString {
-            path("/auth/me")
-            parameter("lat", accessToken)
-        }
-
     fun authorizeUrl(
         appKey: String,
         permissions: Set<SignInWithYouVersionPermission>,

@@ -180,4 +180,17 @@ class BiblesEndpointsTest {
             BiblesEndpoints.passageUrl(reference = reference),
         )
     }
+
+    @Test
+    fun `test passageUrl with versionId and passageId`() {
+        assertEquals(
+            "https://api.youversion.com/v1/bibles/1/passages/GEN.1?format=html&include_notes=true&include_headings=true",
+            BiblesEndpoints.passageUrl(versionId = 1, passageId = "GEN.1"),
+        )
+
+        assertEquals(
+            "https://api.youversion.com/v1/bibles/1/passages/GEN.1?format=json&include_notes=true&include_headings=true",
+            BiblesEndpoints.passageUrl(versionId = 1, passageId = "GEN.1", format = "json"),
+        )
+    }
 }

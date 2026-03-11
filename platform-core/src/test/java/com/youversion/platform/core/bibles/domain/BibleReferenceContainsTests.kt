@@ -222,4 +222,22 @@ class BibleReferenceContainsTests {
             )
         }
     }
+
+    @Test
+    fun `test contains verseStart set but verseEnd null`() {
+        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 5, verseEnd = null)
+        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 5)
+
+        assertTrue(ref1.contains(ref2))
+        assertTrue(ref2.contains(ref1))
+    }
+
+    @Test
+    fun `test contains verseStart null but verseEnd set`() {
+        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = null, verseEnd = 5)
+        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 1, verseEnd = 3)
+
+        assertTrue(ref1.contains(ref2))
+        assertFalse(ref2.contains(ref1))
+    }
 }
