@@ -6,7 +6,6 @@ import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfigured
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.koin.test.inject
 import java.util.Date
 import kotlin.test.AfterTest
@@ -28,15 +27,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
 
     @AfterTest
     fun teardown() {
-        // Configuration is a singleton with no explicit reset functionality,
-        // so we're using reflection to reset state between states
-        val configStateField =
-            YouVersionPlatformConfiguration::class.java
-                .getDeclaredField("_configState")
-        configStateField.isAccessible = true
-        @Suppress("UNCHECKED_CAST")
-        val flow = configStateField.get(YouVersionPlatformConfiguration) as MutableStateFlow<Config?>
-        flow.value = null
+        YouVersionPlatformConfiguration.reset()
         stopYouVersionPlatformTest()
     }
 
