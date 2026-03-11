@@ -179,6 +179,10 @@ object YouVersionPlatformConfiguration {
         val currentConfig = config ?: throw YouVersionNotConfiguredException()
         _configState.value = currentConfig.copy(apiHost = apiHost)
     }
+
+    internal fun reset() {
+        _configState.value = null
+    }
 }
 
 data class Config(

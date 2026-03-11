@@ -2,6 +2,8 @@ package com.youversion.platform.core.bibles.model
 
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleBook
+import com.youversion.platform.core.bibles.models.BibleChapter
+import com.youversion.platform.core.bibles.models.BibleVerse
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.helpers.FixtureLoader
 import com.youversion.platform.helpers.YouVersionPlatformTest
@@ -329,5 +331,270 @@ class BibleVersionTests : YouVersionPlatformTest {
     fun `test reference handles malformed input gracefully`() {
         assertNull(bibleVersion.reference("..."))
         assertNull(bibleVersion.reference("GEN..1"))
+    }
+
+    // ----- chapterLabels
+
+    @Test
+    fun `test chapterLabels returns labels for known book`() {
+        val labels = bibleVersion.chapterLabels("GEN")
+        assertEquals(50, labels.size)
+        assertEquals("1", labels.first())
+        assertEquals("50", labels.last())
+    }
+
+    @Test
+    fun `test chapterLabels returns empty list for unknown book`() {
+        assertEquals(emptyList(), bibleVersion.chapterLabels("INVALID"))
+    }
+
+    @Test
+    fun `test chapterLabels filters non-canonical chapters`() {
+        val canonicalChapter =
+            BibleChapter(
+                id = "1",
+                passageId = "TST.1",
+                title = "1",
+                verses = listOf(BibleVerse("1", "TST.1.1", "1")),
+            )
+        val nonCanonicalChapter =
+            BibleChapter(
+                id = "INTRO",
+                passageId = "TST.INTRO",
+                title = "Intro",
+                verses = emptyList(),
+            )
+        val testBook =
+            BibleBook(
+                id = "TST",
+                title = "Test",
+                fullTitle = null,
+                abbreviation = "Tst",
+                canon = "new_testament",
+                chapters = listOf(nonCanonicalChapter, canonicalChapter),
+            )
+        val version = bibleVersion.copy(books = listOf(testBook))
+
+        val labels = version.chapterLabels("TST")
+        assertEquals(listOf("1"), labels)
+    }
+
+    @Test
+    fun `test chapterLabels excludes chapters with null title`() {
+        val chapterWithNullTitle =
+            BibleChapter(
+                id = "1",
+                passageId = "TST.1",
+                title = null,
+                verses = listOf(BibleVerse("1", "TST.1.1", "1")),
+            )
+        val chapterWithTitle =
+            BibleChapter(
+                id = "2",
+                passageId = "TST.2",
+                title = "2",
+                verses = listOf(BibleVerse("1", "TST.2.1", "1")),
+            )
+        val testBook =
+            BibleBook(
+                id = "TST",
+                title = "Test",
+                fullTitle = null,
+                abbreviation = "Tst",
+                canon = "new_testament",
+                chapters = listOf(chapterWithNullTitle, chapterWithTitle),
+            )
+        val version = bibleVersion.copy(books = listOf(testBook))
+
+        val labels = version.chapterLabels("TST")
+        assertEquals(listOf("2"), labels)
+    }
+
+    @Test
+    fun `test chapterLabels for single-chapter book`() {
+        val labels = bibleVersion.chapterLabels("JUD")
+        assertEquals(1, labels.size)
+        assertEquals("1", labels.first())
+    }
+
+    // ----- canonicalChapters
+
+    @Test
+    fun `test canonicalChapters returns all chapters for fully canonical book`() {
+        val chapters = bibleVersion.canonicalChapters("GEN")
+        assertEquals(50, chapters.size)
+    }
+
+    @Test
+    fun `test canonicalChapters returns empty list for unknown book`() {
+        assertEquals(emptyList(), bibleVersion.canonicalChapters("INVALID"))
+    }
+
+    @Test
+    fun `test canonicalChapters filters non-canonical chapters`() {
+        val canonicalChapter =
+            BibleChapter(
+                id = "1",
+                passageId = "TST.1",
+                title = "1",
+                verses = listOf(BibleVerse("1", "TST.1.1", "1")),
+            )
+        val nonCanonicalChapter =
+            BibleChapter(
+                id = "INTRO",
+                passageId = "TST.INTRO",
+                title = "Intro",
+                verses = emptyList(),
+            )
+        val testBook =
+            BibleBook(
+                id = "TST",
+                title = "Test",
+                fullTitle = null,
+                abbreviation = "Tst",
+                canon = "new_testament",
+                chapters = listOf(nonCanonicalChapter, canonicalChapter),
+            )
+        val version = bibleVersion.copy(books = listOf(testBook))
+
+        val chapters = version.canonicalChapters("TST")
+        assertEquals(1, chapters.size)
+        assertEquals("1", chapters.first().id)
+    }
+
+    @Test
+    fun `test canonicalChapters for single-chapter book`() {
+        val chapters = bibleVersion.canonicalChapters("JUD")
+        assertEquals(1, chapters.size)
+    }
+
+    // ----- equals and hashCode
+
+    @Test
+    fun `test equals returns true for same instance`() {
+        assertTrue { bibleVersion.equals(bibleVersion) }
+    }
+
+    @Test
+    fun `test equals returns true for same id with different fields`() {
+        val other = BibleVersion(id = 206, abbreviation = "OTHER", title = "Different Title")
+        assertTrue { bibleVersion.equals(other) }
+    }
+
+    @Test
+    fun `test equals returns false for different id`() {
+        val other = BibleVersion(id = 1, abbreviation = "KJV")
+        assertFalse { bibleVersion.equals(other) }
+    }
+
+    @Test
+    fun `test equals returns false for non-BibleVersion`() {
+        assertFalse { bibleVersion.equals("not a BibleVersion") }
+        assertFalse { bibleVersion.equals(206) }
+        assertFalse { bibleVersion.equals(null) }
+    }
+
+    @Test
+    fun `test hashCode is consistent for same id`() {
+        val other = BibleVersion(id = 206, abbreviation = "OTHER")
+        assertEquals(bibleVersion.hashCode(), other.hashCode())
+    }
+
+    @Test
+    fun `test hashCode differs for different id`() {
+        val other = BibleVersion(id = 1)
+        assertFalse { bibleVersion.hashCode() == other.hashCode() }
+    }
+
+    // ----- displayTitle for single-chapter book (JUD)
+
+    @Test
+    fun `test displayTitle for single-chapter book chapter only`() {
+        val reference = BibleReference(versionId = 206, bookUSFM = "JUD", chapter = 1)
+        assertEquals("Jude WEBUS", bibleVersion.displayTitle(reference))
+    }
+
+    @Test
+    fun `test displayTitle for single-chapter book chapter only without abbreviation`() {
+        val reference = BibleReference(versionId = 206, bookUSFM = "JUD", chapter = 1)
+        assertEquals("Jude", bibleVersion.displayTitle(reference, includesVersionAbbreviation = false))
+    }
+
+    @Test
+    fun `test displayTitle for single-chapter book single verse`() {
+        val reference = BibleReference(versionId = 206, bookUSFM = "JUD", chapter = 1, verse = 5)
+        assertEquals("Jude 5 WEBUS", bibleVersion.displayTitle(reference))
+    }
+
+    @Test
+    fun `test displayTitle for single-chapter book single verse without abbreviation`() {
+        val reference = BibleReference(versionId = 206, bookUSFM = "JUD", chapter = 1, verse = 5)
+        assertEquals("Jude 5", bibleVersion.displayTitle(reference, includesVersionAbbreviation = false))
+    }
+
+    @Test
+    fun `test displayTitle for single-chapter book verse range`() {
+        val reference = BibleReference(versionId = 206, bookUSFM = "JUD", chapter = 1, verseStart = 3, verseEnd = 5)
+        assertEquals("Jude 3-5 WEBUS", bibleVersion.displayTitle(reference))
+    }
+
+    @Test
+    fun `test displayTitle for single-chapter book verse range without abbreviation`() {
+        val reference = BibleReference(versionId = 206, bookUSFM = "JUD", chapter = 1, verseStart = 3, verseEnd = 5)
+        assertEquals("Jude 3-5", bibleVersion.displayTitle(reference, includesVersionAbbreviation = false))
+    }
+
+    @Test
+    fun `test displayTitle for single-chapter book rtl`() {
+        val rtlVersion = bibleVersion.copy(textDirection = "rtl")
+        val reference = BibleReference(versionId = 206, bookUSFM = "JUD", chapter = 1, verse = 5)
+        assertEquals("WEBUS 5 Jude", rtlVersion.displayTitle(reference))
+    }
+
+    // ----- displayTitle for single verse via range (verseStart == verseEnd)
+
+    @Test
+    fun `test displayTitle for verse range where start equals end`() {
+        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verseStart = 16, verseEnd = 16)
+        assertEquals("Genesis 3:16 WEBUS", bibleVersion.displayTitle(reference))
+    }
+
+    @Test
+    fun `test displayTitle for verse range where start equals end without abbreviation`() {
+        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verseStart = 16, verseEnd = 16)
+        assertEquals("Genesis 3:16", bibleVersion.displayTitle(reference, includesVersionAbbreviation = false))
+    }
+
+    // ----- displayTitle edge cases
+
+    @Test
+    fun `test displayTitle omits abbreviation when both are null`() {
+        val version = bibleVersion.copy(localizedAbbreviation = null, abbreviation = null)
+        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verse = 1)
+        assertEquals("Genesis 3:1", version.displayTitle(reference))
+    }
+
+    @Test
+    fun `test displayTitle for whole chapter with verseEnd 999`() {
+        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verseStart = 1, verseEnd = 999)
+        assertEquals("Genesis 3 WEBUS", bibleVersion.displayTitle(reference))
+    }
+
+    @Test
+    fun `test displayTitle for single-chapter book with verseEnd 999`() {
+        val reference = BibleReference(versionId = 206, bookUSFM = "JUD", chapter = 1, verseStart = 1, verseEnd = 999)
+        assertEquals("Jude WEBUS", bibleVersion.displayTitle(reference))
+    }
+
+    @Test
+    fun `test displayTitle for verse with no verseEnd`() {
+        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verseStart = 16, verseEnd = null)
+        assertEquals("Genesis 3:16 WEBUS", bibleVersion.displayTitle(reference))
+    }
+
+    @Test
+    fun `test displayTitle for single-chapter book verse with no verseEnd`() {
+        val reference = BibleReference(versionId = 206, bookUSFM = "JUD", chapter = 1, verseStart = 5, verseEnd = null)
+        assertEquals("Jude 5 WEBUS", bibleVersion.displayTitle(reference))
     }
 }
