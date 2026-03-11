@@ -79,7 +79,7 @@ class BibleReaderViewModelTest {
     }
 
     @AfterTest
-    fun teardown() {        
+    fun teardown() {
         Dispatchers.resetMain()
     }
 
