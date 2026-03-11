@@ -38,6 +38,11 @@ android {
             )
         }
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -64,6 +69,7 @@ dependencies {
     testImplementation(libs.kotlin.coroutines.test)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.turbine)
+    testImplementation(libs.robolectric)
 }
 
 mavenPublishing {

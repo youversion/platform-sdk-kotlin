@@ -161,6 +161,15 @@ object YouVersionPlatformConfiguration {
     }
 
     /**
+     * Resets the configuration state to its initial uninitialized state.
+     *
+     * This is intended for use in tests only.
+     */
+    internal fun reset() {
+        _configState.value = null
+    }
+
+    /**
      * Updates the [apiHost] to be used by the SDK.
      *
      * @param apiHost The new apiHost to be used by the SDK
@@ -169,10 +178,6 @@ object YouVersionPlatformConfiguration {
     fun setApiHost(apiHost: String) {
         val currentConfig = config ?: throw YouVersionNotConfiguredException()
         _configState.value = currentConfig.copy(apiHost = apiHost)
-    }
-
-    internal fun reset() {
-        _configState.value = null
     }
 }
 
