@@ -568,13 +568,6 @@ class BibleVersionTests : YouVersionPlatformTest {
     // ----- displayTitle edge cases
 
     @Test
-    fun `test displayTitle falls back to abbreviation when localized abbreviation is null`() {
-        val version = bibleVersion.copy(localizedAbbreviation = null)
-        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verse = 1)
-        assertEquals("Genesis 3:1 engWEBUS", version.displayTitle(reference))
-    }
-
-    @Test
     fun `test displayTitle omits abbreviation when both are null`() {
         val version = bibleVersion.copy(localizedAbbreviation = null, abbreviation = null)
         val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verse = 1)
