@@ -1,5 +1,6 @@
 package com.youversion.platform.helpers
 
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
 import com.youversion.platform.core.di.PlatformKoinGraph
@@ -42,4 +43,7 @@ internal fun startYouVersionPlatformTest(engine: HttpClientEngine = MockEngine.c
         ),
     )
 
-internal fun stopYouVersionPlatformTest() = PlatformKoinGraph.stop()
+internal fun stopYouVersionPlatformTest() {
+    PlatformKoinGraph.stop()
+    YouVersionPlatformConfiguration.reset()
+}
