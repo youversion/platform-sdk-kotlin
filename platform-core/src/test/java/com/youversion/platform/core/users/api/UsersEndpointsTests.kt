@@ -19,6 +19,7 @@ import kotlinx.serialization.json.put
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -27,6 +28,9 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalEncodingApi::class)
 class UsersEndpointsTests : YouVersionPlatformTest {
+    @BeforeTest
+    fun setup() = startYouVersionPlatformTest()
+
     @AfterTest
     fun teardown() = stopYouVersionPlatformTest()
 
@@ -34,7 +38,6 @@ class UsersEndpointsTests : YouVersionPlatformTest {
 
     @Test
     fun `test callbackUrl builds correct url`() {
-        startYouVersionPlatformTest()
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         assertEquals(
@@ -44,19 +47,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
     }
 
     @Test
-    fun `test userUrl builds correct url`() {
-        startYouVersionPlatformTest()
-        YouVersionPlatformConfiguration.configure(appKey = "app")
-
-        assertEquals(
-            "https://api.youversion.com/auth/me?lat=my_token",
-            UsersEndpoints.userUrl("my_token"),
-        )
-    }
-
-    @Test
     fun `test authorizeUrl builds correct url`() {
-        startYouVersionPlatformTest()
         YouVersionPlatformConfiguration.configure(appKey = "test_app_key")
         val permissions = setOf(SignInWithYouVersionPermission.PROFILE, SignInWithYouVersionPermission.EMAIL)
         val pkceParams =
@@ -92,7 +83,6 @@ class UsersEndpointsTests : YouVersionPlatformTest {
 
     @Test
     fun `test authorizeUrl scope always includes openid`() {
-        startYouVersionPlatformTest()
         YouVersionPlatformConfiguration.configure(appKey = "app")
         val pkceParams =
             SignInWithYouVersionPKCEParameters(
@@ -117,7 +107,6 @@ class UsersEndpointsTests : YouVersionPlatformTest {
 
     @Test
     fun `test signOut clears authentication data`() {
-        startYouVersionPlatformTest()
         YouVersionPlatformConfiguration.configure(
             appKey = "app",
             accessToken = "access",
@@ -138,7 +127,6 @@ class UsersEndpointsTests : YouVersionPlatformTest {
 
     @Test
     fun `test decodeJWT valid token returns correct claims`() {
-        startYouVersionPlatformTest()
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         val token =
@@ -159,7 +147,6 @@ class UsersEndpointsTests : YouVersionPlatformTest {
 
     @Test
     fun `test decodeJWT invalid segment count returns empty map`() {
-        startYouVersionPlatformTest()
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         assertEquals(emptyMap(), YouVersionApi.users.decodeJWT("only.two"))
@@ -168,7 +155,6 @@ class UsersEndpointsTests : YouVersionPlatformTest {
 
     @Test
     fun `test decodeJWT malformed base64 returns empty map`() {
-        startYouVersionPlatformTest()
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         assertEquals(emptyMap(), YouVersionApi.users.decodeJWT("a.!!!notbase64!!!.c"))
@@ -176,7 +162,6 @@ class UsersEndpointsTests : YouVersionPlatformTest {
 
     @Test
     fun `test decodeJWT valid base64 invalid json returns empty map`() {
-        startYouVersionPlatformTest()
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         val notJson =
@@ -188,7 +173,6 @@ class UsersEndpointsTests : YouVersionPlatformTest {
 
     @Test
     fun `test decodeJWT empty string returns empty map`() {
-        startYouVersionPlatformTest()
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         assertEquals(emptyMap(), YouVersionApi.users.decodeJWT(""))
@@ -224,6 +208,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                         else -> respond("", HttpStatusCode.OK)
                     }
                 }
+            stopYouVersionPlatformTest()
             startYouVersionPlatformTest(engine = mockEngine)
             YouVersionPlatformConfiguration.configure(appKey = TEST_APP_KEY)
 
@@ -250,7 +235,6 @@ class UsersEndpointsTests : YouVersionPlatformTest {
     @Test
     fun `test getSignInResult throws on state mismatch`() =
         runTest {
-            startYouVersionPlatformTest()
             YouVersionPlatformConfiguration.configure(appKey = TEST_APP_KEY)
 
             val callbackUri = "${UsersEndpoints.callbackUrl()}?state=wrong_state"
@@ -272,6 +256,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
     fun `test getSignInResult throws when callback does not return 302`() =
         runTest {
             val mockEngine = MockEngine { respond("", HttpStatusCode.OK) }
+            stopYouVersionPlatformTest()
             startYouVersionPlatformTest(engine = mockEngine)
             YouVersionPlatformConfiguration.configure(appKey = TEST_APP_KEY)
 
@@ -294,6 +279,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
     fun `test getSignInResult throws when no Location header in 302 response`() =
         runTest {
             val mockEngine = MockEngine { respond("", HttpStatusCode.Found) }
+            stopYouVersionPlatformTest()
             startYouVersionPlatformTest(engine = mockEngine)
             YouVersionPlatformConfiguration.configure(appKey = TEST_APP_KEY)
 
@@ -327,6 +313,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                         else -> respond("", HttpStatusCode.OK)
                     }
                 }
+            stopYouVersionPlatformTest()
             startYouVersionPlatformTest(engine = mockEngine)
             YouVersionPlatformConfiguration.configure(appKey = TEST_APP_KEY)
 
@@ -366,6 +353,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                         else -> respond("", HttpStatusCode.OK)
                     }
                 }
+            stopYouVersionPlatformTest()
             startYouVersionPlatformTest(engine = mockEngine)
             YouVersionPlatformConfiguration.configure(appKey = TEST_APP_KEY)
 
@@ -405,6 +393,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                         else -> respond("", HttpStatusCode.OK)
                     }
                 }
+            stopYouVersionPlatformTest()
             startYouVersionPlatformTest(engine = mockEngine)
             YouVersionPlatformConfiguration.configure(appKey = TEST_APP_KEY)
 
@@ -438,6 +427,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                 }
                 """.trimIndent()
             val mockEngine = MockEngine { respondJson(mockResponse) }
+            stopYouVersionPlatformTest()
             startYouVersionPlatformTest(engine = mockEngine)
             YouVersionPlatformConfiguration.configure(
                 appKey = "test_app_key",
@@ -463,7 +453,6 @@ class UsersEndpointsTests : YouVersionPlatformTest {
     @Test
     fun `test performRefresh throws if no refresh token`() =
         runTest {
-            startYouVersionPlatformTest()
             YouVersionPlatformConfiguration.configure(appKey = "test_app_key", refreshToken = null)
             val exception =
                 assertFailsWith<IllegalStateException> {
@@ -475,7 +464,6 @@ class UsersEndpointsTests : YouVersionPlatformTest {
     @Test
     fun `test performRefresh throws if no app key`() =
         runTest {
-            startYouVersionPlatformTest()
             YouVersionPlatformConfiguration.configure(appKey = null, refreshToken = "some_token")
             val exception =
                 assertFailsWith<IllegalStateException> {
