@@ -23,6 +23,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -101,6 +102,28 @@ class UsersEndpointsTests : YouVersionPlatformTest {
             )
 
         assertTrue(url.contains("scope=openid+profile"))
+    }
+
+    @Test
+    fun `test authorizeUrl omits installation id when installId is null`() {
+        val pkceParams =
+            SignInWithYouVersionPKCEParameters(
+                codeChallenge = "c",
+                codeVerifier = "v",
+                nonce = "n",
+                state = "s",
+            )
+
+        val url =
+            UsersEndpoints.authorizeUrl(
+                appKey = "app",
+                permissions = setOf(SignInWithYouVersionPermission.PROFILE),
+                redirectUri = "app://callback",
+                parameters = pkceParams,
+            )
+
+        assertNull(YouVersionPlatformConfiguration.installId)
+        assertFalse(url.contains("x-yvp-installation-id"))
     }
 
     // ----- signOut
