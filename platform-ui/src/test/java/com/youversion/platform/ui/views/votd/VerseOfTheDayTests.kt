@@ -88,7 +88,7 @@ class VerseOfTheDayTests {
     fun `VerseOfTheDay shows no content when VOTD fails to load`() {
         coEvery { mockVotdApi.verseOfTheDay(any()) } throws Exception("VOTD failed")
         composeTestRule.setContent { VerseOfTheDay(bibleVersionId = 1) }
-        composeTestRule.onNodeWithText("VERSE OF THE DAY").assertDoesNotExist()
+        composeTestRule.onNodeWithText("VERSE OF THE DAY", ignoreCase = true).assertDoesNotExist()
     }
 
     @Test
@@ -146,7 +146,7 @@ class VerseOfTheDayTests {
     fun `CompactVerseOfTheDay shows no content when VOTD fails to load`() {
         coEvery { mockVotdApi.verseOfTheDay(any()) } throws Exception("VOTD failed")
         composeTestRule.setContent { CompactVerseOfTheDay(bibleVersionId = 1) }
-        composeTestRule.onNodeWithText("VERSE OF THE DAY").assertDoesNotExist()
+        composeTestRule.onNodeWithText("VERSE OF THE DAY", ignoreCase = true).assertDoesNotExist()
     }
 
     @Test
@@ -167,14 +167,14 @@ class VerseOfTheDayTests {
     fun `CompactVerseOfTheDay renders in dark mode`() {
         composeTestRule.setContent { CompactVerseOfTheDay(bibleVersionId = 1, dark = true) }
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("VERSE OF THE DAY").assertIsDisplayed()
+        composeTestRule.onNodeWithText("VERSE OF THE DAY", ignoreCase = true).assertIsDisplayed()
     }
 
     @Test
     fun `CompactVerseOfTheDay renders in light mode`() {
         composeTestRule.setContent { CompactVerseOfTheDay(bibleVersionId = 1, dark = false) }
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("VERSE OF THE DAY").assertIsDisplayed()
+        composeTestRule.onNodeWithText("VERSE OF THE DAY", ignoreCase = true).assertIsDisplayed()
     }
 
     @Test
