@@ -143,7 +143,7 @@ private fun VerseOfTheDayContent(
                 Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.ic_votd),
                     modifier = Modifier.size(44.dp),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.tab_votd),
                 )
             }
             Text(
@@ -157,7 +157,7 @@ private fun VerseOfTheDayContent(
                 Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.ic_material_share),
                     modifier = Modifier.size(24.dp),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.share_content_desc),
                 )
             }
         }
@@ -219,7 +219,7 @@ private fun CompactVerseOfTheDayContent(
                 Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.ic_votd),
                     modifier = Modifier.size(44.dp),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.tab_votd),
                 )
             }
             Column {
