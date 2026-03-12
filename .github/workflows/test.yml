@@ -1,6 +1,9 @@
 name: Test
 
-on: [pull_request]
+on:
+  pull_request:
+  push:
+    branches: [main]
 
 jobs:
   test:
@@ -36,3 +39,12 @@ jobs:
 
       - name: Run Tests with Coverage
         run: ./gradlew koverXmlReport
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: '**/build/reports/kover/report.xml'
+          flags: unittests
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

@@ -3,6 +3,7 @@
 
 ![Platform](https://img.shields.io/badge/Platform-Android-green)
 [![License](https://img.shields.io/badge/license-Apache-blue.svg)](LICENSE)
+[![codecov](https://codecov.io/gh/youversion/platform-sdk-kotlin/branch/main/graph/badge.svg)](https://codecov.io/gh/youversion/platform-sdk-kotlin)
 
 # YouVersion Platform SDK for Kotlin
 
