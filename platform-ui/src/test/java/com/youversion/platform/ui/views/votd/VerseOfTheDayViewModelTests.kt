@@ -200,6 +200,7 @@ class VerseOfTheDayViewModelTests {
                 advanceUntilIdle()
                 assertEquals(VerseOfTheDayViewModel.Event.OnErrorLoadingVerseOfTheDay, awaitItem())
             }
+            assertNull(viewModel.state.value.bibleReference)
         }
 
     @Test
@@ -211,7 +212,11 @@ class VerseOfTheDayViewModelTests {
                 advanceUntilIdle()
                 expectNoEvents()
             }
-            assertNotNull(viewModel.state.value.bibleReference)
+            val reference = viewModel.state.value.bibleReference
+            assertNotNull(reference)
+            assertEquals("ISA", reference.bookUSFM)
+            assertEquals(43, reference.chapter)
+            assertEquals(19, reference.verseStart)
         }
 
     @Test
@@ -225,6 +230,7 @@ class VerseOfTheDayViewModelTests {
                 advanceUntilIdle()
                 assertEquals(VerseOfTheDayViewModel.Event.OnErrorLoadingVerseOfTheDay, awaitItem())
             }
+            assertNull(viewModel.state.value.bibleReference)
         }
 
     @Test
@@ -236,7 +242,11 @@ class VerseOfTheDayViewModelTests {
                 advanceUntilIdle()
                 expectNoEvents()
             }
-            assertNotNull(viewModel.state.value.bibleReference)
+            val reference = viewModel.state.value.bibleReference
+            assertNotNull(reference)
+            assertEquals("ISA", reference.bookUSFM)
+            assertEquals(43, reference.chapter)
+            assertEquals(19, reference.verseStart)
         }
 }
 
