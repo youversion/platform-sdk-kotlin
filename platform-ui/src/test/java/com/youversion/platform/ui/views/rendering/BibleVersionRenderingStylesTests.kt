@@ -15,6 +15,7 @@ import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class BibleVersionRenderingStylesTests {
@@ -345,6 +346,21 @@ class BibleVersionRenderingStylesTests {
     }
 
     @Test
+    fun `interpretBlockClasses sets HEADER_ITALIC and keeps rendering for d class with renderHeadlines`() {
+        val stateDown = defaultStateDown()
+        val stateUp = defaultStateUp()
+        callInterpretBlock(
+            listOf("d"),
+            stateIn = defaultStateIn(renderHeadlines = true),
+            stateDown = stateDown,
+            stateUp = stateUp,
+        )
+        assertEquals(BibleTextFontOption.HEADER_ITALIC, stateDown.currentFont)
+        assertEquals(BibleTextCategory.HEADER, stateDown.textCategory)
+        assertTrue(stateUp.rendering)
+    }
+
+    @Test
     fun `interpretBlockClasses sets TEXT_BOLD and center for iot class`() {
         val stateDown = defaultStateDown()
         val margin = callInterpretBlock(listOf("iot"), stateDown = stateDown)
@@ -472,17 +488,47 @@ class BibleVersionRenderingStylesTests {
     }
 
     @Test
-    fun `interpretBlockClasses does not fail for unknown class matching ignored tag`() {
-        val stateDown = defaultStateDown()
-        callInterpretBlock(listOf("s1"), stateDown = stateDown)
-        assertEquals(BibleTextFontOption.TEXT, stateDown.currentFont)
+    fun `interpretBlockClasses does not change state for ignored tags`() {
+        val ignoredTags =
+            listOf(
+                "s1",
+                "b",
+                "lh",
+                "li",
+                "lf",
+                "mr",
+                "ms",
+                "ms1",
+                "ms2",
+                "ms3",
+                "ms4",
+                "s2",
+                "s3",
+                "s4",
+                "sp",
+                "iex",
+                "qa",
+                "r",
+                "sr",
+                "po",
+                "ior",
+            )
+        ignoredTags.forEach { tag ->
+            val stateDown = defaultStateDown()
+            callInterpretBlock(listOf(tag), stateDown = stateDown)
+            assertEquals(BibleTextFontOption.TEXT, stateDown.currentFont)
+            assertEquals(BibleTextCategory.SCRIPTURE, stateDown.textCategory)
+        }
     }
 
     @Test
     fun `interpretBlockClasses does not change state for truly unknown class`() {
         val stateDown = defaultStateDown()
-        callInterpretBlock(listOf("zzz"), stateDown = stateDown)
+        val margin = callInterpretBlock(listOf("zzz"), stateDown = stateDown)
         assertEquals(BibleTextFontOption.TEXT, stateDown.currentFont)
+        assertEquals(BibleTextCategory.SCRIPTURE, stateDown.textCategory)
+        assertEquals(TextAlign.Start, stateDown.alignment)
+        assertNull(margin)
     }
 
     @Test
@@ -501,5 +547,72 @@ class BibleVersionRenderingStylesTests {
         assertEquals(0.dp, margin)
         assertEquals(noIndent, stateUp.firstLineHeadIndent)
         assertFalse(stateUp.rendering)
+    }
+
+    @Test
+    fun `interpretBlockClasses handles yvh alias same as yv-h`() {
+        val stateDown = defaultStateDown()
+        val stateUp = defaultStateUp()
+        val margin =
+            callInterpretBlock(
+                listOf("yvh", "s2"),
+                stateDown = stateDown,
+                stateUp = stateUp,
+            )
+        assertEquals(BibleTextCategory.HEADER, stateDown.textCategory)
+        assertEquals(BibleTextFontOption.HEADER2, stateDown.currentFont)
+        assertEquals(fonts.baseSize.value.dp, margin)
+        assertEquals(noIndent, stateUp.firstLineHeadIndent)
+    }
+
+    @Test
+    fun `interpretBlockClasses handles yv-h font mappings for ignored-tag classes`() {
+        val fontMappings =
+            mapOf(
+                "s1" to BibleTextFontOption.HEADER_ITALIC,
+                "ms" to BibleTextFontOption.HEADER2,
+                "ms1" to BibleTextFontOption.HEADER2,
+                "s2" to BibleTextFontOption.HEADER2,
+                "ms2" to BibleTextFontOption.HEADER2,
+                "s3" to BibleTextFontOption.HEADER3,
+                "ms3" to BibleTextFontOption.HEADER3,
+                "s4" to BibleTextFontOption.HEADER4,
+                "ms4" to BibleTextFontOption.HEADER4,
+                "sp" to BibleTextFontOption.HEADER_ITALIC,
+                "r" to BibleTextFontOption.HEADER_ITALIC,
+                "sr" to BibleTextFontOption.HEADER_ITALIC,
+                "mr" to BibleTextFontOption.HEADER_SMALLER,
+            )
+        fontMappings.forEach { (className, expectedFont) ->
+            val stateDown = defaultStateDown()
+            callInterpretBlock(listOf("yv-h", className), stateDown = stateDown)
+            assertEquals(expectedFont, stateDown.currentFont)
+            assertEquals(BibleTextCategory.HEADER, stateDown.textCategory)
+        }
+    }
+
+    @Test
+    fun `interpretBlockClasses handles yv-h with renderHeadlines true keeps rendering`() {
+        val stateDown = defaultStateDown()
+        val stateUp = defaultStateUp()
+        val margin =
+            callInterpretBlock(
+                listOf("yv-h", "s1"),
+                stateIn = defaultStateIn(renderHeadlines = true),
+                stateDown = stateDown,
+                stateUp = stateUp,
+            )
+        assertEquals(BibleTextCategory.HEADER, stateDown.textCategory)
+        assertEquals(BibleTextFontOption.HEADER_ITALIC, stateDown.currentFont)
+        assertEquals(fonts.baseSize.value.dp, margin)
+        assertTrue(stateUp.rendering)
+    }
+
+    @Test
+    fun `interpretBlockClasses handles yv-h with no font mapping uses default HEADER`() {
+        val stateDown = defaultStateDown()
+        callInterpretBlock(listOf("yv-h"), stateDown = stateDown)
+        assertEquals(BibleTextFontOption.HEADER, stateDown.currentFont)
+        assertEquals(BibleTextCategory.HEADER, stateDown.textCategory)
     }
 }
