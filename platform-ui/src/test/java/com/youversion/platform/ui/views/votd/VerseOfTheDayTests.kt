@@ -134,6 +134,20 @@ class VerseOfTheDayTests {
     }
 
     @Test
+    fun `VerseOfTheDay renders in dark mode`() {
+        composeTestRule.setContent { VerseOfTheDay(bibleVersionId = 1, dark = true) }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("VERSE OF THE DAY", ignoreCase = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun `VerseOfTheDay renders in light mode`() {
+        composeTestRule.setContent { VerseOfTheDay(bibleVersionId = 1, dark = false) }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("VERSE OF THE DAY", ignoreCase = true).assertIsDisplayed()
+    }
+
+    @Test
     fun `VerseOfTheDay displays bible version title`() {
         composeTestRule.setContent { VerseOfTheDay(bibleVersionId = 1) }
         composeTestRule.waitForIdle()
