@@ -125,39 +125,49 @@ class BibleVersionRenderingStylesTests {
     }
 
     @Test
-    fun `interpretTextAttr sets SMALL_CAPS and smallcaps for nd class`() {
-        val stateDown = defaultStateDown()
-        interpretTextAttr(node("nd"), defaultStateIn(), stateDown, defaultStateUp())
-        assertEquals(BibleTextFontOption.SMALL_CAPS, stateDown.currentFont)
-        assertTrue(stateDown.smallcaps)
+    fun `interpretTextAttr sets SMALL_CAPS and smallcaps for nd and sc classes`() {
+        listOf("nd", "sc").forEach { className ->
+            val stateDown = defaultStateDown()
+            interpretTextAttr(node(className), defaultStateIn(), stateDown, defaultStateUp())
+            assertEquals(BibleTextFontOption.SMALL_CAPS, stateDown.currentFont)
+            assertTrue(stateDown.smallcaps)
+        }
     }
 
     @Test
-    fun `interpretTextAttr sets TEXT_ITALIC for tl class`() {
-        val stateDown = defaultStateDown()
-        interpretTextAttr(node("tl"), defaultStateIn(), stateDown, defaultStateUp())
-        assertEquals(BibleTextFontOption.TEXT_ITALIC, stateDown.currentFont)
+    fun `interpretTextAttr sets TEXT_ITALIC for tl, it, and add classes`() {
+        listOf("tl", "it", "add").forEach { className ->
+            val stateDown = defaultStateDown()
+            interpretTextAttr(node(className), defaultStateIn(), stateDown, defaultStateUp())
+            assertEquals(BibleTextFontOption.TEXT_ITALIC, stateDown.currentFont)
+        }
     }
 
     @Test
-    fun `interpretTextAttr sets TEXT_ITALIC for fq class`() {
-        val stateDown = defaultStateDown()
-        interpretTextAttr(node("fq"), defaultStateIn(), stateDown, defaultStateUp())
-        assertEquals(BibleTextFontOption.TEXT_ITALIC, stateDown.currentFont)
+    fun `interpretTextAttr sets TEXT_ITALIC for fq and fqa classes`() {
+        listOf("fq", "fqa").forEach { className ->
+            val stateDown = defaultStateDown()
+            interpretTextAttr(node(className), defaultStateIn(), stateDown, defaultStateUp())
+            assertEquals(BibleTextFontOption.TEXT_ITALIC, stateDown.currentFont)
+        }
     }
 
     @Test
-    fun `interpretTextAttr sets TEXT_ITALIC for qs class`() {
-        val stateDown = defaultStateDown()
-        interpretTextAttr(node("qs"), defaultStateIn(), stateDown, defaultStateUp())
-        assertEquals(BibleTextFontOption.TEXT_ITALIC, stateDown.currentFont)
+    fun `interpretTextAttr sets TEXT_ITALIC for qs and qt classes`() {
+        listOf("qs", "qt").forEach { className ->
+            val stateDown = defaultStateDown()
+            interpretTextAttr(node(className), defaultStateIn(), stateDown, defaultStateUp())
+            assertEquals(BibleTextFontOption.TEXT_ITALIC, stateDown.currentFont)
+        }
     }
 
     @Test
-    fun `interpretTextAttr sets VERSE_NUM for ord class`() {
-        val stateDown = defaultStateDown()
-        interpretTextAttr(node("ord"), defaultStateIn(), stateDown, defaultStateUp())
-        assertEquals(BibleTextFontOption.VERSE_NUM, stateDown.currentFont)
+    fun `interpretTextAttr sets VERSE_NUM for ord, fv, and sup classes`() {
+        listOf("ord", "fv", "sup").forEach { className ->
+            val stateDown = defaultStateDown()
+            interpretTextAttr(node(className), defaultStateIn(), stateDown, defaultStateUp())
+            assertEquals(BibleTextFontOption.VERSE_NUM, stateDown.currentFont)
+        }
     }
 
     @Test
