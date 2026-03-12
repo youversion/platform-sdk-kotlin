@@ -2,7 +2,6 @@ package com.youversion.platform.ui.views.votd
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -129,14 +128,7 @@ class VerseOfTheDayTests {
                 onFullChapterClick = { fullChapterClicked = true },
             )
         }
-        composeTestRule.waitUntil(timeoutMillis = 5000L) {
-            try {
-                composeTestRule.onNodeWithText("Full Chapter").assertIsDisplayed()
-                true
-            } catch (_: AssertionError) {
-                false
-            }
-        }
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Full Chapter").performClick()
         assertTrue(fullChapterClicked)
     }
@@ -144,14 +136,8 @@ class VerseOfTheDayTests {
     @Test
     fun `VerseOfTheDay displays bible version title`() {
         composeTestRule.setContent { VerseOfTheDay(bibleVersionId = 1) }
-        composeTestRule.waitUntil(timeoutMillis = 5000L) {
-            try {
-                composeTestRule.onNodeWithText("Genesis 3:16 KJV").assertIsDisplayed()
-                true
-            } catch (_: AssertionError) {
-                false
-            }
-        }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Genesis 3:16 KJV").assertIsDisplayed()
     }
 
     // ----- CompactVerseOfTheDay (public)
