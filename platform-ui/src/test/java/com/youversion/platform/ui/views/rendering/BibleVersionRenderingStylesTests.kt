@@ -72,8 +72,6 @@ class BibleVersionRenderingStylesTests {
             attributes = attributes,
         )
 
-    // region interpretTextAttr
-
     @Test
     fun `interpretTextAttr sets SMALL_CAPS when smallcaps is already true`() {
         val stateDown = defaultStateDown(smallcaps = true)
@@ -170,15 +168,11 @@ class BibleVersionRenderingStylesTests {
     }
 
     @Test
-    fun `interpretTextAttr calls assertionFailed for unknown class`() {
+    fun `interpretTextAttr does not change font for unknown class`() {
         val stateDown = defaultStateDown()
         interpretTextAttr(node("zzz"), defaultStateIn(), stateDown, defaultStateUp())
         assertEquals(BibleTextFontOption.TEXT, stateDown.currentFont)
     }
-
-    // endregion
-
-    // region interpretBlockClasses
 
     private fun callInterpretBlock(
         classes: List<String>,
@@ -437,7 +431,7 @@ class BibleVersionRenderingStylesTests {
     }
 
     @Test
-    fun `interpretBlockClasses calls assertionFailed for truly unknown class`() {
+    fun `interpretBlockClasses does not change state for truly unknown class`() {
         val stateDown = defaultStateDown()
         callInterpretBlock(listOf("zzz"), stateDown = stateDown)
         assertEquals(BibleTextFontOption.TEXT, stateDown.currentFont)
@@ -461,5 +455,4 @@ class BibleVersionRenderingStylesTests {
         assertFalse(stateUp.rendering)
     }
 
-    // endregion
 }
