@@ -113,16 +113,6 @@ class BibleCardViewModelTests {
                 testDispatcher.scheduler.advanceUntilIdle()
                 assertEquals(BibleCardViewModel.Event.OnErrorLoadingBibleVersion, awaitItem())
             }
-        }
-
-    @Test
-    fun `state version remains null when loading fails`() =
-        runTest {
-            coEvery { bibleVersionRepository.version(id = any()) } throws RuntimeException("Network error")
-
-            val viewModel = createViewModel(bibleVersion = null)
-            testDispatcher.scheduler.advanceUntilIdle()
-
             assertNull(viewModel.state.value.bibleVersion)
         }
 
@@ -141,18 +131,7 @@ class BibleCardViewModelTests {
         }
 
     @Test
-    fun `OnCloseCopyright sets showCopyright to false`() =
-        runTest {
-            val viewModel = createViewModel(bibleVersion = testBibleVersion)
-
-            viewModel.onAction(BibleCardViewModel.Action.OnViewCopyright)
-            viewModel.onAction(BibleCardViewModel.Action.OnCloseCopyright)
-
-            assertFalse(viewModel.state.value.showCopyright)
-        }
-
-    @Test
-    fun `copyright toggle sequence returns to hidden`() =
+    fun `copyright toggle sequence shows copyright then returns to hidden`() =
         runTest {
             val viewModel = createViewModel(bibleVersion = testBibleVersion)
 
