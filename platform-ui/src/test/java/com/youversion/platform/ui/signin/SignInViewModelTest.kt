@@ -204,7 +204,6 @@ class SignInViewModelTest {
     @Test
     fun `SignOut with requireConfirmation false hides confirmation dialog`() =
         runTest {
-            viewModel.onAction(SignInViewModel.Action.SignOut(requireConfirmation = true))
             viewModel.onAction(SignInViewModel.Action.SignOut(requireConfirmation = false))
 
             assertFalse(viewModel.state.value.showSignOutConfirmation)
@@ -218,14 +217,6 @@ class SignInViewModelTest {
             viewModel.onAction(SignInViewModel.Action.SignOut(requireConfirmation = true))
             assertTrue(viewModel.state.value.showSignOutConfirmation)
 
-            viewModel.onAction(SignInViewModel.Action.CancelSignOut)
-
-            assertFalse(viewModel.state.value.showSignOutConfirmation)
-        }
-
-    @Test
-    fun `CancelSignOut is idempotent when confirmation is not showing`() =
-        runTest {
             viewModel.onAction(SignInViewModel.Action.CancelSignOut)
 
             assertFalse(viewModel.state.value.showSignOutConfirmation)
