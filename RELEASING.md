@@ -86,4 +86,3 @@ For patching older major versions, create a branch named `N.x` (e.g., `1.x`). Co
 | `ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD` | Maven Central (Sonatype) password |
 | `SIGNINGKEY` | GPG signing key (armored, base64-encoded) |
 | `SIGNINGKEY_PASSWORD` | GPG signing key passphrase |
-| `CODECOV_TOKEN` | Codecov upload token (optional for public repos) |
