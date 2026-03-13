@@ -124,6 +124,26 @@ class SignInViewModelTest {
     // ---- ProcessAuthCallback
 
     @Test
+    fun `ProcessAuthCallback sets isProcessing to true while processing`() =
+        runTest {
+            val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+            coEvery { YouVersionAuthentication.handleAuthCallback(any(), any()) } coAnswers {
+                gate.await()
+                null
+            }
+
+            viewModel.onAction(SignInViewModel.Action.ProcessAuthCallback(mockk(relaxed = true)))
+            advanceUntilIdle()
+
+            assertTrue(viewModel.state.value.isProcessing)
+
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.state.value.isProcessing)
+        }
+
+    @Test
     fun `ProcessAuthCallback sets isProcessing to false on success`() =
         runTest {
             coEvery { YouVersionAuthentication.handleAuthCallback(any(), any()) } returns null
