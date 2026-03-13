@@ -85,7 +85,7 @@ class BibleReaderViewModelTest {
 
     @Test
     fun `selecting verse adds it to selectedVerses`() =
-        runTest {
+        runTest(testDispatcher) {
             val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
@@ -98,7 +98,7 @@ class BibleReaderViewModelTest {
 
     @Test
     fun `selecting verse sets showVerseActionSheet to true`() =
-        runTest {
+        runTest(testDispatcher) {
             val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
@@ -108,7 +108,7 @@ class BibleReaderViewModelTest {
 
     @Test
     fun `selecting already selected verse removes it`() =
-        runTest {
+        runTest(testDispatcher) {
             val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
@@ -122,7 +122,7 @@ class BibleReaderViewModelTest {
 
     @Test
     fun `deselecting last verse sets showVerseActionSheet to false`() =
-        runTest {
+        runTest(testDispatcher) {
             val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
@@ -133,7 +133,7 @@ class BibleReaderViewModelTest {
 
     @Test
     fun `can select multiple verses`() =
-        runTest {
+        runTest(testDispatcher) {
             val verse1 = defaultReference.copy(verseStart = 1, verseEnd = 1)
             val verse2 = defaultReference.copy(verseStart = 2, verseEnd = 2)
             val verse3 = defaultReference.copy(verseStart = 3, verseEnd = 3)
@@ -168,7 +168,7 @@ class BibleReaderViewModelTest {
 
     @Test
     fun `copy action clears verse selection`() =
-        runTest {
+        runTest(testDispatcher) {
             viewModel.bibleVersion = testBibleVersion
 
             val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
@@ -191,7 +191,7 @@ class BibleReaderViewModelTest {
 
     @Test
     fun `copy action copies text to clipboard`() =
-        runTest {
+        runTest(testDispatcher) {
             mockkObject(BibleVersionRendering)
             coEvery {
                 BibleVersionRendering.plainTextOf(any(), any())
@@ -212,7 +212,7 @@ class BibleReaderViewModelTest {
 
     @Test
     fun `share action clears verse selection`() =
-        runTest {
+        runTest(testDispatcher) {
             viewModel.bibleVersion = testBibleVersion
 
             viewModel.onAction(
@@ -230,7 +230,7 @@ class BibleReaderViewModelTest {
 
     @Test
     fun `share action shares text via ShareManager`() =
-        runTest {
+        runTest(testDispatcher) {
             viewModel.bibleVersion = testBibleVersion
 
             viewModel.onAction(

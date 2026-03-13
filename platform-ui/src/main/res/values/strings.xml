@@ -10,6 +10,7 @@
     <string name="tab_votd">Verse of the Day</string>
 
     <string name="footnote_content_desc">footnote</string>
+    <string name="share_content_desc">Share</string>
 
     <string name="sign_in_error_title">Sign-In Failed</string>
     <string name="sign_in_error_message">We were unable to sign you in at this time. Please try again.</string>
