@@ -25,6 +25,7 @@ currently not available.
   - [Authentication](#authentication)
 - [Sample App](#sample-app)
 - [For Different Use Cases](#-for-different-use-cases)
+- [Development Setup](#development-setup)
 - [Contributing](#contributing-starting-early-2026)
 - [Documentation](#documentation)
 - [Support](#support)
@@ -302,6 +303,16 @@ Need direct access to YouVersion Platform APIs? See [our comprehensive API docum
 ### 🤖 LLM Integration
 
 Building AI applications with Bible content? Access YouVersion's LLM-optimized endpoints and structured data designed for language models. See [our LLM documentation](https://developers.youversion.com/for-llms) for details.
+
+## Development Setup
+
+After cloning the repo, install Node.js dependencies to enable git hooks (commit message linting):
+
+```bash
+npm install
+```
+
+This installs [husky](https://typicode.github.io/husky/) and [commitlint](https://commitlint.js.org/), which enforce [Conventional Commits](https://www.conventionalcommits.org/) on every commit. Without this step, commits with non-conforming messages will pass locally but fail in CI.
 
 ## Contributing (Starting Early 2026)
 
