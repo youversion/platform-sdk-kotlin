@@ -1,0 +1,99 @@
+name: Code Coverage
+
+on:
+  workflow_run:
+    workflows: ["Release"]
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run Tests with Coverage
+        run: ./gradlew koverXmlReport
+
+      - name: Calculate coverage percentage
+        id: coverage
+        run: |
+          # Find the Kover XML report
+          REPORT_FILE=$(find . -path "*/build/reports/kover/report.xml" | head -1)
+          if [ -z "$REPORT_FILE" ]; then
+            echo "No Kover report found"
+            echo "percentage=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Parse JaCoCo XML format: sum INSTRUCTION covered/missed across all counters
+          COVERAGE=$(awk -F'"' '
+            /<counter type="INSTRUCTION"/ {
+              for (i=1; i<=NF; i++) {
+                if ($(i) ~ /missed=/) missed += $(i+1)
+                if ($(i) ~ /covered=/) covered += $(i+1)
+              }
+            }
+            END {
+              total = missed + covered
+              if (total > 0) printf "%.1f", (covered / total) * 100
+              else print "0"
+            }
+          ' "$REPORT_FILE")
+          echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
+          echo "Coverage: $COVERAGE%"
+
+      - name: Update coverage JSON for shields.io
+        run: |
+          mkdir -p .github/badges
+          COVERAGE="${{ steps.coverage.outputs.percentage }}"
+
+          # Determine color based on coverage
+          if (( $(echo "$COVERAGE >= 80" | bc -l) )); then
+            COLOR="brightgreen"
+          elif (( $(echo "$COVERAGE >= 60" | bc -l) )); then
+            COLOR="yellow"
+          elif (( $(echo "$COVERAGE >= 40" | bc -l) )); then
+            COLOR="orange"
+          else
+            COLOR="red"
+          fi
+
+          # Create JSON endpoint for shields.io
+          cat > .github/badges/coverage.json << EOF
+          {
+            "schemaVersion": 1,
+            "label": "coverage",
+            "message": "${COVERAGE}%",
+            "color": "${COLOR}"
+          }
+          EOF
+
+      - name: Commit coverage data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase --autostash origin main
+          git add .github/badges/coverage.json
+          git diff --staged --quiet || git commit -m "chore: update coverage badge [skip ci]"
+          git push

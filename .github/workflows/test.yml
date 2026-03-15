@@ -36,3 +36,14 @@ jobs:
 
       - name: Run Tests with Coverage
         run: ./gradlew koverXmlReport
+
+      - name: Save PR number
+        run: echo ${{ github.event.number }} > pr-number
+
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data
+          path: |
+            **/build/reports/kover/report.xml
+            pr-number

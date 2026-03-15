@@ -1,0 +1,25 @@
+{
+  "branches": [
+    "main",
+    { "name": "beta", "prerelease": true },
+    { "name": "alpha", "prerelease": true },
+    "+([0-9])?(.{+([0-9]),x}).x"
+  ],
+  "tagFormat": "${version}",
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    ["@semantic-release/changelog", {
+      "changelogFile": "CHANGELOG.md"
+    }],
+    ["@semantic-release/exec", {
+      "prepareCmd": "sed -i 's/youversionPlatform = \".*\"/youversionPlatform = \"${nextRelease.version}\"/' gradle/libs.versions.toml",
+      "publishCmd": "./gradlew publishToMavenCentral"
+    }],
+    ["@semantic-release/git", {
+      "assets": ["gradle/libs.versions.toml", "CHANGELOG.md"],
+      "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+    }],
+    "@semantic-release/github"
+  ]
+}

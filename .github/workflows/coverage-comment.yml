@@ -1,0 +1,83 @@
+name: Coverage Comment
+
+on:
+  workflow_run:
+    workflows: ["Test"]
+    types:
+      - completed
+
+permissions:
+  pull-requests: write
+  actions: read
+
+jobs:
+  comment:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data
+          path: ./coverage
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Read PR number and calculate coverage
+        run: |
+          echo "PR_NUMBER=$(cat ./coverage/pr-number)" >> $GITHUB_ENV
+
+          # Find the Kover XML report
+          REPORT_FILE=$(find ./coverage -name "report.xml" | head -1)
+          if [ -z "$REPORT_FILE" ]; then
+            echo "No Kover report found"
+            echo "COVERAGE=unknown" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          # Parse JaCoCo XML format: sum INSTRUCTION covered/missed
+          COVERAGE=$(awk -F'"' '
+            /<counter type="INSTRUCTION"/ {
+              for (i=1; i<=NF; i++) {
+                if ($(i) ~ /missed=/) missed += $(i+1)
+                if ($(i) ~ /covered=/) covered += $(i+1)
+              }
+            }
+            END {
+              total = missed + covered
+              if (total > 0) printf "%.1f", (covered / total) * 100
+              else print "0"
+            }
+          ' "$REPORT_FILE")
+          echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
+
+      - name: Post coverage comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = parseInt(process.env.PR_NUMBER);
+            const coverage = process.env.COVERAGE;
+            const body = `## Code Coverage Report\n\n**Overall Coverage:** ${coverage}%\n\n_Generated from Kover XML report._`;
+
+            // Delete previous coverage comments
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            for (const comment of comments.data) {
+              if (comment.body.startsWith('## Code Coverage Report')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id,
+                });
+              }
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body,
+            });
