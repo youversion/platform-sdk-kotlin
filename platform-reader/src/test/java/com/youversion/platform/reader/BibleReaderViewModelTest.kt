@@ -113,6 +113,7 @@ class BibleReaderViewModelTest {
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
+            testDispatcher.scheduler.advanceUntilIdle()
 
             assertFalse(
                 viewModel.state.value.selectedVerses

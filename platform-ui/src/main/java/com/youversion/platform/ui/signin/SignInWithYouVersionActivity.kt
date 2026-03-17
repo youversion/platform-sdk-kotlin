@@ -15,7 +15,7 @@ abstract class SignInWithYouVersionActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
-    override fun onNewIntent(intent: Intent) {
+    public override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleIntent(intent)
     }
