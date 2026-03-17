@@ -22,5 +22,7 @@
     <string name="sign_out_cancel_button_text">Cancel</string>
 
     <string name="placeholder_offline">You\'ve lost your internet connection. Re-connect and download a Bible version to proceed offline.</string>
+    <string name="placeholder_offline_icon_content_desc">No Wi-Fi</string>
     <string name="placeholder_version_unavailable">Your previously selected Bible version is unavailable. Another similar Bible version has been selected for you.</string>
+    <string name="placeholder_version_unavailable_icon_content_desc">Version unavailable</string>
 </resources>

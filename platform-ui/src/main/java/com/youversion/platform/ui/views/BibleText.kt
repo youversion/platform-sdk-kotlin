@@ -530,6 +530,7 @@ fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
             BibleTextLoadingPhase.NOT_PERMITTED -> {
                 PlaceholderMessage(
                     icon = ImageVector.vectorResource(R.drawable.ic_material_lock),
+                    iconContentDescription = stringResource(R.string.placeholder_version_unavailable_icon_content_desc),
                     message = stringResource(R.string.placeholder_version_unavailable),
                 )
             }
@@ -537,6 +538,7 @@ fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
             BibleTextLoadingPhase.FAILED -> {
                 PlaceholderMessage(
                     icon = ImageVector.vectorResource(R.drawable.ic_wifi_exclamation),
+                    iconContentDescription = stringResource(R.string.placeholder_offline_icon_content_desc),
                     message = stringResource(R.string.placeholder_offline),
                 )
             }
@@ -549,6 +551,7 @@ fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
 @Composable
 private fun PlaceholderMessage(
     icon: ImageVector,
+    iconContentDescription: String,
     message: String,
 ) {
     Row(
@@ -564,7 +567,7 @@ private fun PlaceholderMessage(
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
+            contentDescription = iconContentDescription,
             modifier = Modifier.size(20.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
