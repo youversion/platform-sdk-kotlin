@@ -1,10 +1,12 @@
 package com.youversion.platform.ui.views.rendering
 
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.ui.views.fromAnnotation
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class StateUpAnnotationTests {
@@ -170,5 +172,87 @@ class StateUpAnnotationTests {
 
         assertEquals(annotationString(verse = 1), verse1Annotations.first().item)
         assertEquals(annotationString(verse = 2), verse2Annotations.first().item)
+    }
+
+    // ----- StateUp utility methods
+
+    @Test
+    fun `nextFootnoteMarker returns sequential letter markers`() {
+        val stateUp = createStateUp(verse = 1)
+        assertEquals("\u00A0a ", stateUp.nextFootnoteMarker())
+        assertEquals("\u00A0b ", stateUp.nextFootnoteMarker())
+        assertEquals("\u00A0c ", stateUp.nextFootnoteMarker())
+    }
+
+    @Test
+    fun `nextFootnoteMarker resets on new verse`() {
+        val stateUp = createStateUp(verse = 1)
+        stateUp.nextFootnoteMarker()
+        stateUp.nextFootnoteMarker()
+
+        stateUp.verse = 2
+        assertEquals("\u00A0a ", stateUp.nextFootnoteMarker())
+    }
+
+    @Test
+    fun `endsWithSpace returns false when text builder is empty`() {
+        val stateUp = createStateUp()
+        assertFalse(stateUp.endsWithSpace())
+    }
+
+    @Test
+    fun `endsWithSpace returns true when text ends with whitespace`() {
+        val stateUp = createStateUp()
+        stateUp.append("hello ", SpanStyle(), BibleTextCategory.SCRIPTURE)
+        assertTrue(stateUp.endsWithSpace())
+    }
+
+    @Test
+    fun `endsWithSpace returns false for non-whitespace`() {
+        val stateUp = createStateUp()
+        stateUp.append("hello", SpanStyle(), BibleTextCategory.SCRIPTURE)
+        assertFalse(stateUp.endsWithSpace())
+    }
+
+    @Test
+    fun `clearText resets the text builder`() {
+        val stateUp = createStateUp()
+        stateUp.append("some text", SpanStyle(), BibleTextCategory.SCRIPTURE)
+        stateUp.clearText()
+        assertTrue(stateUp.isTextEmpty())
+    }
+
+    @Test
+    fun `isTextEmpty returns true when empty`() {
+        val stateUp = createStateUp()
+        assertTrue(stateUp.isTextEmpty())
+    }
+
+    @Test
+    fun `isTextEmpty returns false after appending text`() {
+        val stateUp = createStateUp()
+        stateUp.append("text", SpanStyle(), BibleTextCategory.SCRIPTURE)
+        assertFalse(stateUp.isTextEmpty())
+    }
+
+    @Test
+    fun `appendFootnote appends text with reference annotation`() {
+        val stateUp = createStateUp(verse = 3)
+        stateUp.appendFootnote(
+            AnnotatedString("note text"),
+            BibleTextCategory.FOOTNOTE_MARKER,
+        )
+
+        val result = stateUp.textBuilder.toAnnotatedString()
+        assertTrue(result.text.contains("note text"))
+
+        val annotations =
+            result.getStringAnnotations(
+                tag = BibleReferenceAttribute.NAME,
+                start = 0,
+                end = result.length,
+            )
+        assertTrue(annotations.isNotEmpty())
+        assertEquals(annotationString(verse = 3), annotations.first().item)
     }
 }
