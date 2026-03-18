@@ -18,7 +18,11 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class SignInWithYouVersionActivityTest {
-    class TestSignInWithYouVersionActivity : SignInWithYouVersionActivity()
+    class TestSignInWithYouVersionActivity : SignInWithYouVersionActivity() {
+        fun triggerOnNewIntent(intent: Intent) {
+            onNewIntent(intent)
+        }
+    }
 
     @Before
     fun setUp() {
@@ -75,7 +79,7 @@ class SignInWithYouVersionActivityTest {
         val uri = Uri.parse("youversionauth://callback")
         val newIntent = Intent(Intent.ACTION_VIEW, uri)
 
-        activity.onNewIntent(newIntent)
+        activity.triggerOnNewIntent(newIntent)
 
         verify(exactly = 1) {
             anyConstructed<SignInViewModel>().onAction(
@@ -95,7 +99,7 @@ class SignInWithYouVersionActivityTest {
 
         val newIntent = Intent()
 
-        activity.onNewIntent(newIntent)
+        activity.triggerOnNewIntent(newIntent)
 
         verify(exactly = 0) {
             anyConstructed<SignInViewModel>().onAction(any())
