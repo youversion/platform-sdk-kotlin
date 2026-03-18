@@ -31,37 +31,19 @@ class PKCEStateStoreTests {
     // ----- save and retrieve
 
     @Test
-    fun `test save stores codeVerifier that can be retrieved`() {
+    fun `test save stores all parameters that can be retrieved`() {
         PKCEStateStore.save(context, codeVerifier = "verifier", state = "state", nonce = "nonce")
         assertEquals("verifier", PKCEStateStore.getCodeVerifier(context))
-    }
-
-    @Test
-    fun `test save stores state that can be retrieved`() {
-        PKCEStateStore.save(context, codeVerifier = "verifier", state = "state", nonce = "nonce")
         assertEquals("state", PKCEStateStore.getState(context))
-    }
-
-    @Test
-    fun `test save stores nonce that can be retrieved`() {
-        PKCEStateStore.save(context, codeVerifier = "verifier", state = "state", nonce = "nonce")
         assertEquals("nonce", PKCEStateStore.getNonce(context))
     }
 
     // ----- get returns null when nothing is saved
 
     @Test
-    fun `test getCodeVerifier returns null when nothing is saved`() {
+    fun `test all getters return null when nothing is saved`() {
         assertNull(PKCEStateStore.getCodeVerifier(context))
-    }
-
-    @Test
-    fun `test getState returns null when nothing is saved`() {
         assertNull(PKCEStateStore.getState(context))
-    }
-
-    @Test
-    fun `test getNonce returns null when nothing is saved`() {
         assertNull(PKCEStateStore.getNonce(context))
     }
 
