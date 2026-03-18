@@ -20,7 +20,9 @@ class PKCEStateStoreTests {
     }
 
     @AfterTest
+    @AfterTest
     fun teardown() {
+        PKCEStateStore.clear(context)
         PKCEStateStore::class.java.getDeclaredField("prefs").apply {
             isAccessible = true
             set(PKCEStateStore, null)
