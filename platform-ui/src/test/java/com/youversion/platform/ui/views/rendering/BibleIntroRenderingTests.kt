@@ -165,19 +165,18 @@ class BibleIntroRenderingTests {
         }
 
     @Test
-    fun `intro blocks return empty list for empty HTML`() =
+    fun `intro blocks return null for empty HTML`() =
         runTest {
             val result =
                 BibleVersionRendering.introTextBlocks(
-                    htmlContent = "<div></div>",
+                    htmlContent = "",
                     versionId = 111,
                     bookUSFM = "GEN",
                     footnoteMode = BibleTextFootnoteMode.IMAGE,
                     textColor = Color.Black,
                     fonts = fonts,
                 )
-            assertNotNull(result)
-            assertTrue(result.isEmpty())
+            assertNull(result)
         }
 
     @Test

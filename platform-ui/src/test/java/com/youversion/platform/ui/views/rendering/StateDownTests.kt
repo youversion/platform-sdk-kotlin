@@ -4,7 +4,7 @@ import androidx.compose.ui.text.style.TextAlign
 import com.youversion.platform.ui.views.BibleTextFontOption
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class StateDownTests {
@@ -36,5 +36,9 @@ class StateDownTests {
         assertTrue(original.woc)
         assertTrue(original.smallcaps)
         assertEquals(BibleTextFontOption.HEADER_ITALIC, original.currentFont)
+
+        assertNotEquals(original.woc, copy.woc)
+        assertNotEquals(original.smallcaps, copy.smallcaps)
+        assertNotEquals(original.currentFont, copy.currentFont)
     }
 }
