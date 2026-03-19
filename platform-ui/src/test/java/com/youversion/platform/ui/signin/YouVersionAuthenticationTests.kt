@@ -17,7 +17,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.unmockkObject
+import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -62,9 +62,7 @@ class YouVersionAuthenticationTests {
 
     @AfterTest
     fun teardown() {
-        unmockkObject(YouVersionPlatformConfiguration)
-        unmockkObject(PKCEStateStore)
-        unmockkObject(YouVersionApi)
+        unmockkAll()
         Dispatchers.resetMain()
     }
 
@@ -80,7 +78,7 @@ class YouVersionAuthenticationTests {
             permissions = setOf(SignInWithYouVersionPermission.OPENID),
         )
 
-        verify { PKCEStateStore.save(context, any(), any(), any()) }
+        verify(exactly = 1) { PKCEStateStore.save(context, any(), any(), any()) }
     }
 
     @Test
@@ -88,13 +86,15 @@ class YouVersionAuthenticationTests {
         every { YouVersionPlatformConfiguration.appKey } returns null
         val launcher = mockk<ActivityResultLauncher<Intent>>(relaxed = true)
 
-        assertFailsWith<YouVersionNetworkException> {
-            YouVersionAuthentication.signIn(
-                context = context,
-                launcher = launcher,
-                permissions = setOf(SignInWithYouVersionPermission.OPENID),
-            )
-        }
+        val exception =
+            assertFailsWith<YouVersionNetworkException> {
+                YouVersionAuthentication.signIn(
+                    context = context,
+                    launcher = launcher,
+                    permissions = setOf(SignInWithYouVersionPermission.OPENID),
+                )
+            }
+        assertEquals(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION, exception.reason)
     }
 
     @Test
@@ -200,6 +200,7 @@ class YouVersionAuthenticationTests {
             val result = YouVersionAuthentication.handleAuthCallback(context, intent)
 
             assertEquals(expectedResult, result)
+            verify { PKCEStateStore.clear(context) }
         }
 
     @Test
@@ -222,6 +223,21 @@ class YouVersionAuthenticationTests {
                     idToken = expectedResult.idToken,
                     expiryDate = expectedResult.expiryDate,
                 )
+            }
+            verify { PKCEStateStore.clear(context) }
+        }
+
+    @Test
+    fun `test handleAuthCallback throws on token exchange failure`() =
+        runTest {
+            val intent = intentWithValidCallback()
+            stubPKCEStoreWithValues()
+            coEvery {
+                mockUsersApi.getSignInResult(any(), any(), any(), any(), any())
+            } throws YouVersionNetworkException(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD)
+
+            assertFailsWith<YouVersionNetworkException> {
+                YouVersionAuthentication.handleAuthCallback(context, intent)
             }
         }
 
