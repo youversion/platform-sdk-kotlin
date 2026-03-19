@@ -24,6 +24,7 @@ import com.youversion.platform.ui.views.BibleTextFonts
 import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.slot
@@ -53,9 +54,17 @@ class BibleCardTests {
             verse = 1,
         )
 
-    private val genesisChapter =
+    private val genesisChapter1 =
         BibleChapter(
             id = "1",
+            passageId = null,
+            title = null,
+            verses = listOf(BibleVerse(id = "1", passageId = null, title = null)),
+        )
+
+    private val genesisChapter2 =
+        BibleChapter(
+            id = "2",
             passageId = null,
             title = null,
             verses = listOf(BibleVerse(id = "1", passageId = null, title = null)),
@@ -68,7 +77,7 @@ class BibleCardTests {
             fullTitle = null,
             abbreviation = "Gen",
             canon = "old_testament",
-            chapters = listOf(genesisChapter, genesisChapter),
+            chapters = listOf(genesisChapter1, genesisChapter2),
         )
 
     private val testBibleVersion =
@@ -142,6 +151,36 @@ class BibleCardTests {
         }
         composeTestRule.waitForIdle()
 
+        composeTestRule.onNodeWithText("Genesis 1:1 KJV").assertIsDisplayed()
+        composeTestRule.onNodeWithText("© Test").assertIsDisplayed()
+    }
+
+    @Test
+    fun `displays header and copyright after async version load when version is null`() {
+        coEvery {
+            BibleVersionRendering.textBlocks(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } returns emptyList()
+
+        setBibleCardContent {
+            BibleCard(
+                reference = testReference,
+                version = null,
+                fontSize = 20.sp,
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        coVerify(atLeast = 1) { mockVersionRepository.version(any()) }
         composeTestRule.onNodeWithText("Genesis 1:1 KJV").assertIsDisplayed()
         composeTestRule.onNodeWithText("© Test").assertIsDisplayed()
     }
