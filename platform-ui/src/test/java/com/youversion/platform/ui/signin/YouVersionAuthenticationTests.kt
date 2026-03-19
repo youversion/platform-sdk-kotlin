@@ -13,6 +13,7 @@ import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.users.model.SignInWithYouVersionResult
 import io.mockk.Runs
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -44,6 +45,14 @@ class YouVersionAuthenticationTests {
 
     private lateinit var context: Context
     private lateinit var mockUsersApi: UsersApi
+
+    companion object {
+        private const val STORED_STATE = "stored-state"
+        private const val STORED_CODE_VERIFIER = "stored-verifier"
+        private const val STORED_NONCE = "stored-nonce"
+        private const val VALID_CALLBACK_URI =
+            "youversionauth://callback?code=abc&state=$STORED_STATE"
+    }
 
     @BeforeTest
     fun setup() {
@@ -200,6 +209,15 @@ class YouVersionAuthenticationTests {
             val result = YouVersionAuthentication.handleAuthCallback(context, intent)
 
             assertEquals(expectedResult, result)
+            coVerify {
+                mockUsersApi.getSignInResult(
+                    callbackUri = VALID_CALLBACK_URI,
+                    state = STORED_STATE,
+                    codeVerifier = STORED_CODE_VERIFIER,
+                    redirectUri = "youversionauth://callback",
+                    nonce = STORED_NONCE,
+                )
+            }
             verify { PKCEStateStore.clear(context) }
         }
 
@@ -241,6 +259,7 @@ class YouVersionAuthenticationTests {
                     YouVersionAuthentication.handleAuthCallback(context, intent)
                 }
             assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, exception.reason)
+            verify { PKCEStateStore.clear(context) }
         }
 
     // ----- cancelAuthentication
@@ -296,14 +315,14 @@ class YouVersionAuthenticationTests {
 
     private fun intentWithValidCallback(): Intent {
         val intent = mockk<Intent>()
-        every { intent.data } returns Uri.parse("youversionauth://callback?code=abc&state=xyz")
+        every { intent.data } returns Uri.parse(VALID_CALLBACK_URI)
         return intent
     }
 
     private fun stubPKCEStoreWithValues() {
-        every { PKCEStateStore.getState(context) } returns "stored-state"
-        every { PKCEStateStore.getCodeVerifier(context) } returns "stored-verifier"
-        every { PKCEStateStore.getNonce(context) } returns "stored-nonce"
+        every { PKCEStateStore.getState(context) } returns STORED_STATE
+        every { PKCEStateStore.getCodeVerifier(context) } returns STORED_CODE_VERIFIER
+        every { PKCEStateStore.getNonce(context) } returns STORED_NONCE
         every { PKCEStateStore.clear(context) } just Runs
     }
 
