@@ -236,9 +236,11 @@ class YouVersionAuthenticationTests {
                 mockUsersApi.getSignInResult(any(), any(), any(), any(), any())
             } throws YouVersionNetworkException(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD)
 
-            assertFailsWith<YouVersionNetworkException> {
-                YouVersionAuthentication.handleAuthCallback(context, intent)
-            }
+            val exception =
+                assertFailsWith<YouVersionNetworkException> {
+                    YouVersionAuthentication.handleAuthCallback(context, intent)
+                }
+            assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, exception.reason)
         }
 
     // ----- cancelAuthentication
