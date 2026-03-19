@@ -10,7 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class BibleVersionRenderingStyleTests {
+class BibleVersionRenderBlocksTests {
     private val oneIndent = RENDERING_TEST_FONTS.baseSize.value
     private val twoIndent = oneIndent * 2
     private val threeIndent = oneIndent * 3
