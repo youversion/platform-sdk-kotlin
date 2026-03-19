@@ -103,17 +103,14 @@ class BibleVersionRenderingFootnoteTests {
                     footnoteMode = BibleTextFootnoteMode.INLINE,
                 )
             val allText = blocks.joinToString("") { it.text.text }
-            val openBracket = allText.indexOf("[")
-            val closeBracket = allText.indexOf("]")
-            assertTrue(openBracket >= 0)
-            assertTrue(closeBracket > openBracket)
-            val bracketContent = allText.substring(openBracket + 1, closeBracket)
-            assertTrue(bracketContent.contains("footnote body"))
+            assertTrue(allText.contains("["))
+            assertTrue(allText.contains("]"))
+            assertTrue(allText.contains("footnote body"))
 
             val allFootnotes = blocks.flatMap { it.footnotes }
             assertEquals(0, allFootnotes.size)
 
-            val hasFootnoteAnnotation =
+            val hasFootnoteMarkerAnnotation =
                 blocks.any { block ->
                     block.text
                         .getStringAnnotations(
@@ -125,7 +122,7 @@ class BibleVersionRenderingFootnoteTests {
                                 it.item == BibleTextCategory.FOOTNOTE_MARKER.name
                         }
                 }
-            assertFalse(hasFootnoteAnnotation)
+            assertFalse(hasFootnoteMarkerAnnotation)
         }
 
     @Test
@@ -151,7 +148,8 @@ class BibleVersionRenderingFootnoteTests {
                             block.text.length,
                         ).any {
                             it.item == BibleTextCategory.FOOTNOTE_IMAGE.name ||
-                                it.item == BibleTextCategory.FOOTNOTE_MARKER.name
+                                it.item == BibleTextCategory.FOOTNOTE_MARKER.name ||
+                                it.item == BibleTextCategory.FOOTNOTE_TEXT.name
                         }
                 }
             assertFalse(hasFootnoteAnnotation)

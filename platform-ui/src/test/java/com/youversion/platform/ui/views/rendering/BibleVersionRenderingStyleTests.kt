@@ -11,6 +11,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BibleVersionRenderingStyleTests {
+    private val oneIndent = RENDERING_TEST_FONTS.baseSize.value
+    private val twoIndent = oneIndent * 2
+    private val threeIndent = oneIndent * 3
+    private val fourIndent = oneIndent * 4
+
     // ----- indentation
 
     @Test
@@ -33,9 +38,10 @@ class BibleVersionRenderingStyleTests {
                     block.text.paragraphStyles
                         .first()
                         .item
-                assertTrue(
-                    paragraphStyle.textIndent!!.firstLine.value > 0,
-                    "Expected first line indent for class '$className'",
+                assertEquals(
+                    twoIndent,
+                    paragraphStyle.textIndent!!.firstLine.value,
+                    "Expected two-indent first line for class '$className'",
                 )
             }
         }
@@ -59,7 +65,7 @@ class BibleVersionRenderingStyleTests {
                 block.text.paragraphStyles
                     .first()
                     .item
-            assertTrue(paragraphStyle.textIndent!!.restLine.value > 0)
+            assertEquals(twoIndent, paragraphStyle.textIndent!!.restLine.value)
         }
 
     @Test
@@ -82,9 +88,10 @@ class BibleVersionRenderingStyleTests {
                     block.text.paragraphStyles
                         .first()
                         .item
-                assertTrue(
-                    paragraphStyle.textIndent!!.firstLine.value > 0,
-                    "Expected first line indent for class '$className'",
+                assertEquals(
+                    oneIndent,
+                    paragraphStyle.textIndent!!.firstLine.value,
+                    "Expected one-indent first line for class '$className'",
                 )
             }
         }
@@ -108,8 +115,8 @@ class BibleVersionRenderingStyleTests {
                 block.text.paragraphStyles
                     .first()
                     .item
-            assertTrue(paragraphStyle.textIndent!!.firstLine.value > 0)
-            assertTrue(paragraphStyle.textIndent!!.restLine.value > 0)
+            assertEquals(threeIndent, paragraphStyle.textIndent!!.firstLine.value)
+            assertEquals(twoIndent, paragraphStyle.textIndent!!.restLine.value)
         }
 
     @Test
@@ -131,8 +138,8 @@ class BibleVersionRenderingStyleTests {
                 block.text.paragraphStyles
                     .first()
                     .item
-            assertTrue(paragraphStyle.textIndent!!.firstLine.value > 0)
-            assertTrue(paragraphStyle.textIndent!!.restLine.value > 0)
+            assertEquals(fourIndent, paragraphStyle.textIndent!!.firstLine.value)
+            assertEquals(threeIndent, paragraphStyle.textIndent!!.restLine.value)
         }
 
     @Test
@@ -155,9 +162,10 @@ class BibleVersionRenderingStyleTests {
                     block.text.paragraphStyles
                         .first()
                         .item
-                assertTrue(
-                    paragraphStyle.textIndent!!.restLine.value > 0,
-                    "Expected head indent for class '$className'",
+                assertEquals(
+                    oneIndent,
+                    paragraphStyle.textIndent!!.restLine.value,
+                    "Expected one-indent head for class '$className'",
                 )
             }
         }
@@ -182,9 +190,10 @@ class BibleVersionRenderingStyleTests {
                     block.text.paragraphStyles
                         .first()
                         .item
-                assertTrue(
-                    paragraphStyle.textIndent!!.restLine.value > 0,
-                    "Expected head indent for class '$className'",
+                assertEquals(
+                    twoIndent,
+                    paragraphStyle.textIndent!!.restLine.value,
+                    "Expected two-indent head for class '$className'",
                 )
             }
         }
@@ -209,9 +218,10 @@ class BibleVersionRenderingStyleTests {
                     block.text.paragraphStyles
                         .first()
                         .item
-                assertTrue(
-                    paragraphStyle.textIndent!!.restLine.value > 0,
-                    "Expected head indent for class '$className'",
+                assertEquals(
+                    threeIndent,
+                    paragraphStyle.textIndent!!.restLine.value,
+                    "Expected three-indent head for class '$className'",
                 )
             }
         }
@@ -236,9 +246,10 @@ class BibleVersionRenderingStyleTests {
                     block.text.paragraphStyles
                         .first()
                         .item
-                assertTrue(
-                    paragraphStyle.textIndent!!.restLine.value > 0,
-                    "Expected head indent for class '$className'",
+                assertEquals(
+                    fourIndent,
+                    paragraphStyle.textIndent!!.restLine.value,
+                    "Expected four-indent head for class '$className'",
                 )
             }
         }
