@@ -253,6 +253,7 @@ class YouVersionAuthenticationTests {
             coEvery {
                 mockUsersApi.getSignInResult(any(), any(), any(), any(), any())
             } throws YouVersionNetworkException(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD)
+            every { YouVersionPlatformConfiguration.saveAuthData(any(), any(), any(), any()) } just Runs
 
             val exception =
                 assertFailsWith<YouVersionNetworkException> {
