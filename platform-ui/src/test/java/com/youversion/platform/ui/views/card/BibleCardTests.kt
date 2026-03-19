@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
@@ -178,7 +179,14 @@ class BibleCardTests {
                 fontSize = 20.sp,
             )
         }
-        composeTestRule.waitForIdle()
+
+        composeTestRule.waitUntil(
+            conditionDescription = "Header and copyright appear after async version load",
+            timeoutMillis = 5_000,
+        ) {
+            composeTestRule.onAllNodesWithText("Genesis 1:1 KJV").fetchSemanticsNodes().isNotEmpty() &&
+                composeTestRule.onAllNodesWithText("© Test").fetchSemanticsNodes().isNotEmpty()
+        }
 
         coVerify(atLeast = 1) { mockVersionRepository.version(any()) }
         composeTestRule.onNodeWithText("Genesis 1:1 KJV").assertIsDisplayed()
