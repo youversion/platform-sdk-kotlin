@@ -64,12 +64,38 @@ class SignInWithYouVersionButtonTests {
     }
 
     @Test
-    fun `renders in FULL COMPACT ICON_ONLY with stroked filled and dark light`() {
+    fun `renders FULL mode in all variants`() {
+        renderAndAssertAllVariants(SignInWithYouVersionButtonMode.FULL) { fullLabel, compactLabel, iconLabel ->
+            composeTestRule.onNodeWithText(fullLabel).assertIsDisplayed()
+            composeTestRule.onNodeWithText(compactLabel).assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `renders COMPACT mode in all variants`() {
+        renderAndAssertAllVariants(SignInWithYouVersionButtonMode.COMPACT) { fullLabel, compactLabel, iconLabel ->
+            composeTestRule.onNodeWithText(compactLabel).assertIsDisplayed()
+            composeTestRule.onNodeWithText(fullLabel).assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `renders ICON_ONLY mode in all variants`() {
+        renderAndAssertAllVariants(SignInWithYouVersionButtonMode.ICON_ONLY) { fullLabel, compactLabel, iconLabel ->
+            composeTestRule.onNodeWithText(fullLabel).assertDoesNotExist()
+            composeTestRule.onNodeWithText(compactLabel).assertDoesNotExist()
+        }
+    }
+
+    private fun renderAndAssertAllVariants(
+        mode: SignInWithYouVersionButtonMode,
+        assertModeSpecificContent: (fullLabel: String, compactLabel: String, iconLabel: String) -> Unit,
+    ) {
         val fullLabel = "Sign in with YouVersion"
         val compactLabel = "Sign in"
         val iconLabel = "Bible Logo"
 
-        val modeState = mutableStateOf(SignInWithYouVersionButtonMode.FULL)
+        val modeState = mutableStateOf(mode)
         val strokedState = mutableStateOf(false)
         val darkState = mutableStateOf(true)
 
@@ -82,42 +108,29 @@ class SignInWithYouVersionButtonTests {
             )
         }
 
-        val modes =
-            listOf(
-                SignInWithYouVersionButtonMode.FULL,
-                SignInWithYouVersionButtonMode.COMPACT,
-                SignInWithYouVersionButtonMode.ICON_ONLY,
-            )
+        for (stroked in listOf(false, true)) {
+            for (dark in listOf(true, false)) {
+                strokedState.value = stroked
+                darkState.value = dark
+                composeTestRule.waitForIdle()
 
-        for (mode in modes) {
-            for (stroked in listOf(false, true)) {
-                for (dark in listOf(true, false)) {
-                    modeState.value = mode
-                    strokedState.value = stroked
-                    darkState.value = dark
-                    composeTestRule.waitForIdle()
-
-                    // Icon always renders.
+                assertWithContext(stroked, dark) {
                     composeTestRule.onNodeWithContentDescription(iconLabel).assertIsDisplayed()
-
-                    when (mode) {
-                        SignInWithYouVersionButtonMode.FULL -> {
-                            composeTestRule.onNodeWithText(fullLabel).assertIsDisplayed()
-                            composeTestRule.onNodeWithText(compactLabel).assertDoesNotExist()
-                        }
-
-                        SignInWithYouVersionButtonMode.COMPACT -> {
-                            composeTestRule.onNodeWithText(compactLabel).assertIsDisplayed()
-                            composeTestRule.onNodeWithText(fullLabel).assertDoesNotExist()
-                        }
-
-                        SignInWithYouVersionButtonMode.ICON_ONLY -> {
-                            composeTestRule.onNodeWithText(fullLabel).assertDoesNotExist()
-                            composeTestRule.onNodeWithText(compactLabel).assertDoesNotExist()
-                        }
-                    }
+                    assertModeSpecificContent(fullLabel, compactLabel, iconLabel)
                 }
             }
+        }
+    }
+
+    private fun assertWithContext(
+        stroked: Boolean,
+        dark: Boolean,
+        block: () -> Unit,
+    ) {
+        try {
+            block()
+        } catch (e: AssertionError) {
+            throw AssertionError("stroked=$stroked, dark=$dark: ${e.message}", e)
         }
     }
 
