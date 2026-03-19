@@ -146,4 +146,13 @@ internal fun List<BibleTextBlock>.hasHeaderContaining(text: String): Boolean =
     }
 
 internal fun List<BibleTextBlock>.hasScriptureContaining(text: String): Boolean =
-    any { block -> block.text.text.contains(text) }
+    any { block ->
+        val annotations =
+            block.text.getStringAnnotations(
+                tag = BibleTextCategoryAttribute.NAME,
+                start = 0,
+                end = block.text.length,
+            )
+        annotations.any { it.item == BibleTextCategory.SCRIPTURE.name } &&
+            block.text.text.contains(text)
+    }
