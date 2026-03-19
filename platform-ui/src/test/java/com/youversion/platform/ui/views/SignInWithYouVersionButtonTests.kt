@@ -52,8 +52,6 @@ class SignInWithYouVersionButtonTests {
 
         mockUsersApi = mockk(relaxed = true)
         every { YouVersionApi.users } returns mockUsersApi
-        every { mockUsersApi.currentUserName } returns null
-        every { mockUsersApi.currentUserEmail } returns null
     }
 
     @After
