@@ -23,7 +23,6 @@ jobs:
           fetch-depth: 0
           ref: main
           ssh-key: ${{ secrets.DEPLOY_KEY }}
-          persist-credentials: false
 
       - name: Set up JDK
         uses: actions/setup-java@v4
