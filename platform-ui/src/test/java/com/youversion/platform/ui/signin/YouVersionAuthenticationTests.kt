@@ -246,7 +246,7 @@ class YouVersionAuthenticationTests {
         }
 
     @Test
-    fun `test handleAuthCallback throws on token exchange failure`() =
+    fun `test handleAuthCallback does not save auth data on token exchange failure`() =
         runTest {
             val intent = intentWithValidCallback()
             stubPKCEStoreWithValues()
@@ -255,11 +255,12 @@ class YouVersionAuthenticationTests {
             } throws YouVersionNetworkException(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD)
             every { YouVersionPlatformConfiguration.saveAuthData(any(), any(), any(), any()) } just Runs
 
-            val exception =
-                assertFailsWith<YouVersionNetworkException> {
-                    YouVersionAuthentication.handleAuthCallback(context, intent)
-                }
-            assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, exception.reason)
+            assertFailsWith<YouVersionNetworkException> {
+                YouVersionAuthentication.handleAuthCallback(context, intent)
+            }
+            verify(exactly = 0) {
+                YouVersionPlatformConfiguration.saveAuthData(any(), any(), any(), any())
+            }
             verify { PKCEStateStore.clear(context) }
         }
 
