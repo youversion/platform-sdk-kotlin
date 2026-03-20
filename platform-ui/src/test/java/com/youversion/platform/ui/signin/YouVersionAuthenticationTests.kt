@@ -104,6 +104,7 @@ class YouVersionAuthenticationTests {
                 )
             }
         assertEquals(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION, exception.reason)
+        verify(exactly = 0) { PKCEStateStore.save(context, any(), any(), any()) }
     }
 
     @Test
@@ -289,8 +290,6 @@ class YouVersionAuthenticationTests {
     @Test
     fun `test isAuthenticationInProgress returns false when code verifier is null`() {
         every { PKCEStateStore.getCodeVerifier(context) } returns null
-        every { PKCEStateStore.getState(context) } returns "state"
-        every { PKCEStateStore.getNonce(context) } returns "nonce"
 
         assertFalse(YouVersionAuthentication.isAuthenticationInProgress(context))
     }
@@ -299,7 +298,6 @@ class YouVersionAuthenticationTests {
     fun `test isAuthenticationInProgress returns false when state is null`() {
         every { PKCEStateStore.getCodeVerifier(context) } returns "verifier"
         every { PKCEStateStore.getState(context) } returns null
-        every { PKCEStateStore.getNonce(context) } returns "nonce"
 
         assertFalse(YouVersionAuthentication.isAuthenticationInProgress(context))
     }
