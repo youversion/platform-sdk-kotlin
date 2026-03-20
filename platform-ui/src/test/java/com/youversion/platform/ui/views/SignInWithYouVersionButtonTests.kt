@@ -33,6 +33,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.shadows.ShadowDialog
+import kotlin.test.assertNotNull
 
 @RunWith(RobolectricTestRunner::class)
 class SignInWithYouVersionButtonTests {
@@ -190,8 +191,11 @@ class SignInWithYouVersionButtonTests {
         composeTestRule.onNodeWithText("Sign-In Failed").assertIsDisplayed()
 
         composeTestRule.runOnUiThread {
-            val dialog = ShadowDialog.getLatestDialog() as? ComponentDialog
-            dialog?.onBackPressedDispatcher?.onBackPressed()
+            val dialog =
+                assertNotNull(ShadowDialog.getLatestDialog() as? ComponentDialog) {
+                    "Expected latest dialog to be ComponentDialog so back press can dismiss SignInErrorAlert"
+                }
+            dialog.onBackPressedDispatcher.onBackPressed()
         }
         composeTestRule.waitForIdle()
 
