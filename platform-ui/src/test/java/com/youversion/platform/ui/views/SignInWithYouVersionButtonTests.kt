@@ -192,9 +192,10 @@ class SignInWithYouVersionButtonTests {
 
         composeTestRule.runOnUiThread {
             val dialog =
-                assertNotNull(ShadowDialog.getLatestDialog() as? ComponentDialog) {
-                    "Expected latest dialog to be ComponentDialog so back press can dismiss SignInErrorAlert"
-                }
+                assertNotNull(
+                    ShadowDialog.getLatestDialog() as? ComponentDialog,
+                    "Expected latest dialog to be ComponentDialog so back press can dismiss SignInErrorAlert",
+                )
             dialog.onBackPressedDispatcher.onBackPressed()
         }
         composeTestRule.waitForIdle()
