@@ -2,7 +2,7 @@ package com.youversion.platform.ui.views
 
 import android.content.Intent
 import androidx.activity.ComponentActivity
-import androidx.compose.runtime.mutableStateOf
+import androidx.activity.ComponentDialog
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -11,6 +11,7 @@ import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.lifecycle.ViewModelProvider
 import com.youversion.platform.core.Config
 import com.youversion.platform.core.YouVersionPlatformConfiguration
@@ -22,7 +23,7 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
-import io.mockk.unmockkObject
+import io.mockk.unmockkAll
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
@@ -31,6 +32,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.shadows.ShadowDialog
 
 @RunWith(RobolectricTestRunner::class)
 class SignInWithYouVersionButtonTests {
@@ -39,6 +41,33 @@ class SignInWithYouVersionButtonTests {
 
     private lateinit var configStateFlow: MutableStateFlow<Config?>
     private lateinit var mockUsersApi: UsersApi
+
+    /**
+     * Renders once per mode. We do not vary [stroked] or [dark] here: those only affect border and
+     * colors, which are not asserted in Compose semantics tests; verifying them would require
+     * pixel or screenshot assertions.
+     */
+    private fun assertModeRenders(
+        mode: SignInWithYouVersionButtonMode,
+        assertModeSpecificContent: (fullLabel: String, compactLabel: String) -> Unit,
+    ) {
+        val fullLabel = "Sign in with YouVersion"
+        val compactLabel = "Sign in"
+        val iconLabel = "Bible Logo"
+
+        composeTestRule.setContent {
+            SignInWithYouVersionButton(
+                permissions = { emptySet() },
+                mode = mode,
+                stroked = false,
+                dark = true,
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithContentDescription(iconLabel).assertIsDisplayed()
+        assertModeSpecificContent(fullLabel, compactLabel)
+    }
 
     @Before
     fun setUp() {
@@ -56,79 +85,30 @@ class SignInWithYouVersionButtonTests {
 
     @After
     fun tearDown() {
-        unmockkObject(YouVersionPlatformConfiguration)
-        unmockkObject(YouVersionApi)
-        unmockkObject(YouVersionAuthentication)
+        unmockkAll()
     }
 
     @Test
-    fun `renders FULL mode in all variants`() {
-        renderAndAssertAllVariants(SignInWithYouVersionButtonMode.FULL) { fullLabel, compactLabel, iconLabel ->
+    fun `renders FULL mode`() {
+        assertModeRenders(SignInWithYouVersionButtonMode.FULL) { fullLabel, compactLabel ->
             composeTestRule.onNodeWithText(fullLabel).assertIsDisplayed()
             composeTestRule.onNodeWithText(compactLabel).assertDoesNotExist()
         }
     }
 
     @Test
-    fun `renders COMPACT mode in all variants`() {
-        renderAndAssertAllVariants(SignInWithYouVersionButtonMode.COMPACT) { fullLabel, compactLabel, iconLabel ->
+    fun `renders COMPACT mode`() {
+        assertModeRenders(SignInWithYouVersionButtonMode.COMPACT) { fullLabel, compactLabel ->
             composeTestRule.onNodeWithText(compactLabel).assertIsDisplayed()
             composeTestRule.onNodeWithText(fullLabel).assertDoesNotExist()
         }
     }
 
     @Test
-    fun `renders ICON_ONLY mode in all variants`() {
-        renderAndAssertAllVariants(SignInWithYouVersionButtonMode.ICON_ONLY) { fullLabel, compactLabel, iconLabel ->
+    fun `renders ICON_ONLY mode`() {
+        assertModeRenders(SignInWithYouVersionButtonMode.ICON_ONLY) { fullLabel, compactLabel ->
             composeTestRule.onNodeWithText(fullLabel).assertDoesNotExist()
             composeTestRule.onNodeWithText(compactLabel).assertDoesNotExist()
-        }
-    }
-
-    private fun renderAndAssertAllVariants(
-        mode: SignInWithYouVersionButtonMode,
-        assertModeSpecificContent: (fullLabel: String, compactLabel: String, iconLabel: String) -> Unit,
-    ) {
-        val fullLabel = "Sign in with YouVersion"
-        val compactLabel = "Sign in"
-        val iconLabel = "Bible Logo"
-
-        val modeState = mutableStateOf(mode)
-        val strokedState = mutableStateOf(false)
-        val darkState = mutableStateOf(true)
-
-        composeTestRule.setContent {
-            SignInWithYouVersionButton(
-                permissions = { emptySet() },
-                mode = modeState.value,
-                stroked = strokedState.value,
-                dark = darkState.value,
-            )
-        }
-
-        for (stroked in listOf(false, true)) {
-            for (dark in listOf(true, false)) {
-                strokedState.value = stroked
-                darkState.value = dark
-                composeTestRule.waitForIdle()
-
-                assertWithContext(stroked, dark) {
-                    composeTestRule.onNodeWithContentDescription(iconLabel).assertIsDisplayed()
-                    assertModeSpecificContent(fullLabel, compactLabel, iconLabel)
-                }
-            }
-        }
-    }
-
-    private fun assertWithContext(
-        stroked: Boolean,
-        dark: Boolean,
-        block: () -> Unit,
-    ) {
-        try {
-            block()
-        } catch (e: AssertionError) {
-            throw AssertionError("stroked=$stroked, dark=$dark: ${e.message}", e)
         }
     }
 
@@ -168,5 +148,53 @@ class SignInWithYouVersionButtonTests {
         composeTestRule
             .onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate))
             .assertDoesNotExist()
+    }
+
+    @Test
+    fun `sign in error dialog dismisses on confirm`() {
+        every { YouVersionAuthentication.signIn(any(), any(), any()) } throws RuntimeException("sign in failed")
+
+        composeTestRule.setContent {
+            SignInWithYouVersionButton(
+                permissions = { emptySet() },
+                mode = SignInWithYouVersionButtonMode.FULL,
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Sign in with YouVersion").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Sign-In Failed").assertIsDisplayed()
+        composeTestRule.onNodeWithText("OK").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Sign-In Failed").assertDoesNotExist()
+    }
+
+    @Test
+    fun `sign in error dialog dismisses on back press`() {
+        every { YouVersionAuthentication.signIn(any(), any(), any()) } throws RuntimeException("sign in failed")
+
+        composeTestRule.setContent {
+            SignInWithYouVersionButton(
+                permissions = { emptySet() },
+                mode = SignInWithYouVersionButtonMode.FULL,
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Sign in with YouVersion").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Sign-In Failed").assertIsDisplayed()
+
+        composeTestRule.runOnUiThread {
+            val dialog = ShadowDialog.getLatestDialog() as? ComponentDialog
+            dialog?.onBackPressedDispatcher?.onBackPressed()
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Sign-In Failed").assertDoesNotExist()
     }
 }
