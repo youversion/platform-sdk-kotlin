@@ -127,6 +127,12 @@ class BibleCardTests {
         }
     }
 
+    /**
+     * [BibleCardViewModel] skips loading when a version is provided; that contract is covered by
+     * [BibleCardViewModelTests.`does not load version from repository when initialized with version`].
+     * This UI test does not assert [BibleVersionRepository.version] is never called: [BibleText]
+     * still invokes it for [com.youversion.platform.core.bibles.models.BibleVersion.isRightToLeft].
+     */
     @Test
     fun `simple overload displays header and copyright`() {
         coEvery {
