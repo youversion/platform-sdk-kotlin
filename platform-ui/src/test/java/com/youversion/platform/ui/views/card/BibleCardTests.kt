@@ -1,17 +1,11 @@
 package com.youversion.platform.ui.views.card
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
@@ -37,7 +31,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.shadows.ShadowToast
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 @RunWith(RobolectricTestRunner::class)
 class BibleCardTests {
@@ -115,18 +111,6 @@ class BibleCardTests {
         unmockkObject(BibleVersionRendering)
     }
 
-    private fun setBibleCardContent(content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            MaterialTheme {
-                Surface {
-                    Box(Modifier.height(400.dp)) {
-                        content()
-                    }
-                }
-            }
-        }
-    }
-
     /**
      * [BibleCardViewModel] skips loading when a version is provided; that contract is covered by
      * [BibleCardViewModelTests.`does not load version from repository when initialized with version`].
@@ -149,12 +133,14 @@ class BibleCardTests {
             )
         } returns emptyList()
 
-        setBibleCardContent {
-            BibleCard(
-                reference = testReference,
-                version = testBibleVersion,
-                fontSize = 20.sp,
-            )
+        composeTestRule.setContent {
+            MaterialTheme {
+                BibleCard(
+                    reference = testReference,
+                    version = testBibleVersion,
+                    fontSize = 20.sp,
+                )
+            }
         }
         composeTestRule.waitForIdle()
 
@@ -178,12 +164,14 @@ class BibleCardTests {
             )
         } returns emptyList()
 
-        setBibleCardContent {
-            BibleCard(
-                reference = testReference,
-                version = null,
-                fontSize = 20.sp,
-            )
+        composeTestRule.setContent {
+            MaterialTheme {
+                BibleCard(
+                    reference = testReference,
+                    version = null,
+                    fontSize = 20.sp,
+                )
+            }
         }
 
         composeTestRule.waitUntil(
@@ -197,6 +185,50 @@ class BibleCardTests {
         coVerify(atLeast = 1) { mockVersionRepository.version(any()) }
         composeTestRule.onNodeWithText("Genesis 1:1 KJV").assertIsDisplayed()
         composeTestRule.onNodeWithText("© Test").assertIsDisplayed()
+    }
+
+    /**
+     * [BibleCardViewModel] emits [BibleCardViewModel.Event.OnErrorLoadingBibleVersion] when async
+     * version loading fails; that contract is covered by
+     * [BibleCardViewModelTests.`emits error event when version loading fails`].
+     * This UI test asserts the toast shown when that event is handled in [BibleCard].
+     */
+    @Test
+    fun `shows error toast when async version load fails`() {
+        coEvery { mockVersionRepository.version(any()) } throws RuntimeException("Network error")
+        coEvery {
+            BibleVersionRendering.textBlocks(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } returns emptyList()
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                BibleCard(
+                    reference = testReference,
+                    version = null,
+                    fontSize = 20.sp,
+                )
+            }
+        }
+
+        composeTestRule.waitUntil(
+            conditionDescription = "Error toast is shown after version load fails",
+            timeoutMillis = 5_000,
+        ) {
+            ShadowToast.getLatestToast() != null
+        }
+
+        assertNotNull(ShadowToast.getLatestToast())
+        assertEquals("Error loading Bible version", ShadowToast.getTextOfLatestToast())
     }
 
     @Test
@@ -217,12 +249,14 @@ class BibleCardTests {
         } returns emptyList()
 
         val testFontSize = 20.sp
-        setBibleCardContent {
-            BibleCard(
-                reference = testReference,
-                version = testBibleVersion,
-                fontSize = testFontSize,
-            )
+        composeTestRule.setContent {
+            MaterialTheme {
+                BibleCard(
+                    reference = testReference,
+                    version = testBibleVersion,
+                    fontSize = testFontSize,
+                )
+            }
         }
         composeTestRule.waitForIdle()
 
@@ -247,16 +281,18 @@ class BibleCardTests {
             )
         } returns emptyList()
 
-        setBibleCardContent {
-            BibleCard(
-                reference = testReference,
-                textOptions =
-                    BibleTextOptions(
-                        renderVerseNumbers = false,
-                        renderHeadlines = false,
-                    ),
-                version = testBibleVersion,
-            )
+        composeTestRule.setContent {
+            MaterialTheme {
+                BibleCard(
+                    reference = testReference,
+                    textOptions =
+                        BibleTextOptions(
+                            renderVerseNumbers = false,
+                            renderHeadlines = false,
+                        ),
+                    version = testBibleVersion,
+                )
+            }
         }
         composeTestRule.waitForIdle()
 
@@ -280,12 +316,14 @@ class BibleCardTests {
             )
         } returns emptyList()
 
-        setBibleCardContent {
-            BibleCard(
-                reference = testReference,
-                textOptions = BibleTextOptions(),
-                version = testBibleVersion,
-            )
+        composeTestRule.setContent {
+            MaterialTheme {
+                BibleCard(
+                    reference = testReference,
+                    textOptions = BibleTextOptions(),
+                    version = testBibleVersion,
+                )
+            }
         }
         composeTestRule.waitForIdle()
 
