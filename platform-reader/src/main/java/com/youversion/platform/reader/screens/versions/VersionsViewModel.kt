@@ -25,6 +25,11 @@ class VersionsViewModel(
         loadVersions()
     }
 
+    /**
+     * Loads permitted and active-language listings concurrently. `supervisorScope` ensures child failures
+     * surface when awaiting, so the outer try/catch handles them. Both results are required: if the first
+     * await throws, the second is not awaited and state is not updated — partial success is not applied.
+     */
     private fun loadVersions() {
         viewModelScope.launch {
             try {
@@ -57,16 +62,12 @@ class VersionsViewModel(
     fun loadVersionsForLanguage(languageTag: String) {
         viewModelScope.launch {
             try {
-                _state.update {
-                    it.copy(
-                        initializing = true,
-                        activeLanguageTag = languageTag,
-                    )
-                }
+                _state.update { it.copy(initializing = true) }
                 val versions = bibleReaderRepository.fetchVersionsInLanguage(languageTag)
                 val languageName = bibleReaderRepository.languageName(languageTag)
                 _state.update {
                     it.copy(
+                        activeLanguageTag = languageTag,
                         activeLanguageVersions = versions,
                         activeLanguageName = languageName,
                     )
