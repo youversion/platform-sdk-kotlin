@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 
 class VersionsViewModel(
     private val bibleReaderRepository: BibleReaderRepository,
@@ -27,21 +28,23 @@ class VersionsViewModel(
     private fun loadVersions() {
         viewModelScope.launch {
             try {
-                val deferredPermittedVersions = async { bibleReaderRepository.permittedVersionsListing() }
-                val deferredActiveLanguageVersions =
-                    async {
-                        val chosenLanguage = _state.value.activeLanguageTag
-                        bibleReaderRepository.fetchVersionsInLanguage(chosenLanguage)
+                supervisorScope {
+                    val deferredPermittedVersions = async { bibleReaderRepository.permittedVersionsListing() }
+                    val deferredActiveLanguageVersions =
+                        async {
+                            val chosenLanguage = _state.value.activeLanguageTag
+                            bibleReaderRepository.fetchVersionsInLanguage(chosenLanguage)
+                        }
+
+                    val permittedVersions = deferredPermittedVersions.await()
+                    val activeLanguageVersions = deferredActiveLanguageVersions.await()
+
+                    _state.update {
+                        it.copy(
+                            activeLanguageVersions = activeLanguageVersions,
+                            permittedMinimalVersions = permittedVersions,
+                        )
                     }
-
-                val permittedVersions = deferredPermittedVersions.await()
-                val activeLanguageVersions = deferredActiveLanguageVersions.await()
-
-                _state.update {
-                    it.copy(
-                        activeLanguageVersions = activeLanguageVersions,
-                        permittedMinimalVersions = permittedVersions,
-                    )
                 }
             } catch (e: Exception) {
                 Logger.e("Error loading versions", e)
