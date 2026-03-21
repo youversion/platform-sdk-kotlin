@@ -258,7 +258,12 @@ class BibleCardTests {
                 )
             }
         }
-        composeTestRule.waitForIdle()
+        composeTestRule.waitUntil(
+            conditionDescription = "BibleText LaunchedEffect invokes textBlocks and captures fonts",
+            timeoutMillis = 5_000,
+        ) {
+            fontsSlot.isCaptured
+        }
 
         assertEquals(testFontSize, fontsSlot.captured.baseSize)
     }
@@ -294,7 +299,13 @@ class BibleCardTests {
                 )
             }
         }
-        composeTestRule.waitForIdle()
+        composeTestRule.waitUntil(
+            conditionDescription =
+                "BibleText LaunchedEffect invokes textBlocks and captures renderVerseNumbers and renderHeadlines",
+            timeoutMillis = 5_000,
+        ) {
+            renderVerseNumbersSlot.isCaptured && renderHeadlinesSlot.isCaptured
+        }
 
         assertEquals(false, renderVerseNumbersSlot.captured)
         assertEquals(false, renderHeadlinesSlot.captured)
