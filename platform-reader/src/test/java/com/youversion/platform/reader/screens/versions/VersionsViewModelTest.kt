@@ -43,8 +43,14 @@ class VersionsViewModelTest {
         bibleReaderRepository = mockk(relaxed = true)
     }
 
+    /**
+     * ViewModel work runs on [Dispatchers.Main] and is not a child of [runTest]'s scope. Draining the shared
+     * [StandardTestDispatcher] avoids cancellation or failure propagation finishing after the test body and
+     * tripping [kotlinx.coroutines.test.UncaughtExceptionsBeforeTest] on the following test.
+     */
     @AfterTest
     fun teardown() {
+        testDispatcher.scheduler.advanceUntilIdle()
         Dispatchers.resetMain()
     }
 
@@ -109,6 +115,9 @@ class VersionsViewModelTest {
                 viewModel.state.value.activeLanguageVersions
                     .isEmpty(),
             )
+            // Both `async` children are scheduled before either `await` runs. With StandardTestDispatcher’s
+            // FIFO order, the second child runs to completion before the first `await` rethrows, and
+            // `supervisorScope` does not cancel siblings on child failure—so both repository calls occur.
             coVerify(exactly = 1) { bibleReaderRepository.permittedVersionsListing() }
             coVerify(exactly = 1) { bibleReaderRepository.fetchVersionsInLanguage("en") }
         }
@@ -168,6 +177,32 @@ class VersionsViewModelTest {
             assertEquals(versionsBefore, viewModel.state.value.activeLanguageVersions)
             assertEquals(nameBefore, viewModel.state.value.activeLanguageName)
             assertFalse(viewModel.state.value.initializing)
+        }
+
+    @Test
+    fun `loadVersionsForLanguage when languageName throws after fetch keeps prior language state`() =
+        runTest(testDispatcher) {
+            coEvery { bibleReaderRepository.permittedVersionsListing() } returns listOf(permittedEn)
+            coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns listOf(activeEn)
+            coEvery { bibleReaderRepository.fetchVersionsInLanguage("es") } returns listOf(spanishVersion)
+            every { bibleReaderRepository.languageName("es") } throws RuntimeException("name lookup failed")
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            val versionsBefore = viewModel.state.value.activeLanguageVersions
+            val nameBefore = viewModel.state.value.activeLanguageName
+            val tagBefore = viewModel.state.value.activeLanguageTag
+
+            viewModel.loadVersionsForLanguage("es")
+            advanceUntilIdle()
+
+            assertEquals(tagBefore, viewModel.state.value.activeLanguageTag)
+            assertEquals(versionsBefore, viewModel.state.value.activeLanguageVersions)
+            assertEquals(nameBefore, viewModel.state.value.activeLanguageName)
+            assertFalse(viewModel.state.value.initializing)
+            coVerify(exactly = 1) { bibleReaderRepository.fetchVersionsInLanguage("es") }
+            coVerify(exactly = 1) { bibleReaderRepository.languageName("es") }
         }
 
     @Test
