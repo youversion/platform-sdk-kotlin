@@ -48,7 +48,7 @@ class VersionsViewModel(
                             Result.success(deferredPermittedVersions.await())
                         } catch (e: CancellationException) {
                             throw e
-                        } catch (e: Throwable) {
+                        } catch (e: Exception) {
                             Result.failure(e)
                         }
                     val activeResult =
@@ -56,7 +56,7 @@ class VersionsViewModel(
                             Result.success(deferredActiveLanguageVersions.await())
                         } catch (e: CancellationException) {
                             throw e
-                        } catch (e: Throwable) {
+                        } catch (e: Exception) {
                             Result.failure(e)
                         }
                     if (permittedResult.isFailure || activeResult.isFailure) {
