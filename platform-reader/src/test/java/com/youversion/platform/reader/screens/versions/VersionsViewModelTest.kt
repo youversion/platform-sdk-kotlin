@@ -116,9 +116,8 @@ class VersionsViewModelTest {
                 viewModel.state.value.activeLanguageVersions
                     .isEmpty(),
             )
-            // Both `async` children are scheduled before either `await` runs. With StandardTestDispatcher’s
-            // FIFO order, the second child runs to completion before the first `await` rethrows, and
-            // `supervisorScope` does not cancel siblings on child failure—so both repository calls occur.
+            // Each `async` child catches its own exceptions internally, so both always complete
+            // regardless of individual failures—both repository calls occur.
             coVerify(exactly = 1) { bibleReaderRepository.permittedVersionsListing() }
             coVerify(exactly = 1) { bibleReaderRepository.fetchVersionsInLanguage("en") }
         }
