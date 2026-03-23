@@ -6,9 +6,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -60,8 +60,9 @@ class LanguagesViewModelTest {
     @Test
     fun `state has initializing true and empty lists before load completes`() =
         runTest(testDispatcher) {
+            val loadDeferred = CompletableDeferred<Unit>()
             coEvery { bibleReaderRepository.loadLanguageNames(any()) } coAnswers {
-                delay(Long.MAX_VALUE)
+                loadDeferred.await()
             }
             viewModel = createViewModel(bibleVersion = null)
 
@@ -74,6 +75,7 @@ class LanguagesViewModelTest {
                 viewModel.state.value.allLanguages
                     .isEmpty(),
             )
+            loadDeferred.completeExceptionally(RuntimeException("test cancel"))
         }
 
     // ----- Constructor Variants
