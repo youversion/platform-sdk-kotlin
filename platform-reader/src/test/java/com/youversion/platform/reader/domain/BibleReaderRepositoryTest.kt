@@ -30,7 +30,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class BibleReaderRepositoryTest {
@@ -198,7 +197,7 @@ class BibleReaderRepositoryTest {
     }
 
     @Test
-    fun `previousChapter throws when previous book has null chapters because chapter must be at least one`() {
+    fun `previousChapter returns null when previous book has no chapter metadata`() {
         val repository = createRepository()
         val genWithoutChapters =
             BibleBook(
@@ -213,9 +212,7 @@ class BibleReaderRepositoryTest {
         val version = versionWithBooks(genWithoutChapters, exo)
         val reference = BibleReference(versionId = 1, bookUSFM = "EXO", chapter = 1)
 
-        assertFailsWith<IllegalArgumentException> {
-            repository.previousChapter(version, reference)
-        }
+        assertNull(repository.previousChapter(version, reference))
     }
 
     @Test

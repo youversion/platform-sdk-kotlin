@@ -77,7 +77,11 @@ class BibleReaderRepository(
             previousBookIndex > 0 -> {
                 // We're navigating to the last chapter in the previous book
                 val previousBook = books[previousBookIndex - 1]
-                val lastChapter = previousBook.chapters?.count() ?: 0
+                val chapters = previousBook.chapters ?: return null
+                val lastChapter = chapters.count()
+                if (lastChapter < 1) {
+                    return null
+                }
                 bibleReference.copy(
                     bookUSFM = previousBook.id ?: "",
                     chapter = lastChapter,
