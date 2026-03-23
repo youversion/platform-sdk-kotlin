@@ -7,6 +7,7 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.organizations.models.Organization
 import com.youversion.platform.reader.domain.BibleReaderRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,9 +27,10 @@ class VersionsViewModel(
     }
 
     /**
-     * Loads permitted and active-language listings concurrently. `supervisorScope` ensures child failures
-     * surface when awaiting, so the outer try/catch handles them. Both results are required: if the first
-     * await throws, the second is not awaited and state is not updated — partial success is not applied.
+     * Loads permitted and active-language listings concurrently. `supervisorScope` lets both requests run
+     * independently; each `Deferred` is awaited so a failure in one branch still observes the other (avoids
+     * unhandled async failures when only the first `await` would run). The outer try/catch handles any error;
+     * state is only updated when both succeed.
      */
     private fun loadVersions() {
         viewModelScope.launch {
@@ -41,13 +43,30 @@ class VersionsViewModel(
                             bibleReaderRepository.fetchVersionsInLanguage(chosenLanguage)
                         }
 
-                    val permittedVersions = deferredPermittedVersions.await()
-                    val activeLanguageVersions = deferredActiveLanguageVersions.await()
+                    val permittedResult =
+                        try {
+                            Result.success(deferredPermittedVersions.await())
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Throwable) {
+                            Result.failure(e)
+                        }
+                    val activeResult =
+                        try {
+                            Result.success(deferredActiveLanguageVersions.await())
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Throwable) {
+                            Result.failure(e)
+                        }
+                    if (permittedResult.isFailure || activeResult.isFailure) {
+                        throw permittedResult.exceptionOrNull() ?: activeResult.exceptionOrNull()!!
+                    }
 
                     _state.update {
                         it.copy(
-                            activeLanguageVersions = activeLanguageVersions,
-                            permittedMinimalVersions = permittedVersions,
+                            activeLanguageVersions = activeResult.getOrThrow(),
+                            permittedMinimalVersions = permittedResult.getOrThrow(),
                         )
                     }
                 }
