@@ -160,13 +160,16 @@ class BibleReaderRepository(
 
         // collator allows for locale-specific string comparisons
         val collator = Collator.getInstance()
-        return unsortedVersions
-            .distinctBy { it.id }
-            .sortedWith { a, b ->
-                val aTitle = comparableString(a).lowercase()
-                val bTitle = comparableString(b).lowercase()
-                collator.compare(aTitle, bTitle)
-            }
+        val result =
+            unsortedVersions
+                .distinctBy { it.id }
+                .sortedWith { a, b ->
+                    val aTitle = comparableString(a).lowercase()
+                    val bTitle = comparableString(b).lowercase()
+                    collator.compare(aTitle, bTitle)
+                }
+        versionsInLanguage[languageCode] = result
+        return result
     }
 
     // ----- Languages
@@ -187,13 +190,16 @@ class BibleReaderRepository(
         val data = languageRepository.suggestedLanguages(localeCountryCode)
         val codes = if (data.isEmpty()) listOf("en", "es") else extractLanguageCodes(data)
 
-        return permittedVersions?.let { permittedVersions ->
-            codes
-                .filter { languageCode ->
-                    permittedVersions.isEmpty() ||
-                        permittedVersions.any { it.languageTag == languageCode }
-                }
-        } ?: codes
+        val result =
+            permittedVersions?.let { permittedVersions ->
+                codes
+                    .filter { languageCode ->
+                        permittedVersions.isEmpty() ||
+                            permittedVersions.any { it.languageTag == languageCode }
+                    }
+            } ?: codes
+        suggestedLanguageTags = result
+        return result
     }
 
     private fun extractLanguageCodes(languages: List<Language>): List<String> =
@@ -225,10 +231,11 @@ class BibleReaderRepository(
         languageNames = langNames
     }
 
-    fun languageName(lang: String): String =
-        languageNames[lang]
-            ?: Locale.getDefault().getDisplayLanguage(Locale(lang))
-            ?: lang
+    fun languageName(lang: String): String {
+        languageNames[lang]?.let { return it }
+        val displayName = Locale.forLanguageTag(lang).getDisplayLanguage(Locale.getDefault())
+        return displayName.takeIf { it.isNotBlank() } ?: lang
+    }
 
     private fun bestDisplayName(
         names: Map<String, String?>,
