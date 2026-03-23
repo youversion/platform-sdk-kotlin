@@ -22,8 +22,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import io.mockk.verify
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import java.util.Locale
 import kotlin.test.AfterTest
@@ -34,7 +33,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class BibleReaderRepositoryTest {
     private lateinit var previousDefaultLocale: Locale
 
@@ -45,7 +43,11 @@ class BibleReaderRepositoryTest {
     }
 
     @AfterTest
-    fun restoreLocale() {
+    fun restoreLocaleAndCleanup() {
+        try {
+            unmockkObject(YouVersionApi)
+        } catch (_: Throwable) {
+        }
         Locale.setDefault(previousDefaultLocale)
     }
 
@@ -271,7 +273,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `permittedVersionsListing fetches once and returns cached result on second call`() =
-        runTest {
+        runBlocking {
             val bibleVersionRepository = mockk<BibleVersionRepository>()
             val versions =
                 listOf(
@@ -289,7 +291,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `fetchVersionsInLanguage deduplicates by id sorts with collator and caches`() =
-        runTest {
+        runBlocking {
             mockkObject(YouVersionApi)
             try {
                 val mockBiblesApi = mockk<BiblesApi>()
@@ -333,7 +335,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `fetchVersionsInLanguage comparable string uses title when localized title absent`() =
-        runTest {
+        runBlocking {
             mockkObject(YouVersionApi)
             try {
                 val mockBiblesApi = mockk<BiblesApi>()
@@ -375,7 +377,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `allPermittedLanguageTags returns distinct language tags from permitted versions`() =
-        runTest {
+        runBlocking {
             val bibleVersionRepository = mockk<BibleVersionRepository>()
             val versions =
                 listOf(
@@ -400,7 +402,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `suggestedLanguageTags returns codes from language repository`() =
-        runTest {
+        runBlocking {
             val languageRepository = mockk<LanguageRepository>()
             val languages =
                 listOf(
@@ -415,7 +417,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `suggestedLanguageTags uses en and es when API returns empty`() =
-        runTest {
+        runBlocking {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.suggestedLanguages(any()) } returns emptyList()
             val repository = createRepository(languageRepository = languageRepository)
@@ -425,7 +427,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `suggestedLanguageTags filters by permitted versions when loaded`() =
-        runTest {
+        runBlocking {
             val bibleVersionRepository = mockk<BibleVersionRepository>()
             val languageRepository = mockk<LanguageRepository>()
             coEvery { bibleVersionRepository.permittedVersions(null) } returns
@@ -448,7 +450,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `suggestedLanguageTags returns all codes when permittedVersions is null`() =
-        runTest {
+        runBlocking {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.suggestedLanguages(any()) } returns
                 listOf(
@@ -462,7 +464,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `suggestedLanguageTags returns cached value on second call`() =
-        runTest {
+        runBlocking {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.suggestedLanguages(any()) } returns listOf(Language(language = "en"))
             val repository = createRepository(languageRepository = languageRepository)
@@ -476,7 +478,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `loadLanguageNames no-ops when languageNames already populated`() =
-        runTest {
+        runBlocking {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
                 listOf(
@@ -492,7 +494,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `loadLanguageNames builds language name map using best display name`() =
-        runTest {
+        runBlocking {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
                 listOf(
@@ -510,7 +512,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `loadLanguageNames skips languages with null language code`() =
-        runTest {
+        runBlocking {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
                 listOf(
@@ -526,7 +528,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `loadLanguageNames skips languages with null displayNames`() =
-        runTest {
+        runBlocking {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
                 listOf(
@@ -542,7 +544,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `loadLanguageNames uses single displayNames entry without locale match`() =
-        runTest {
+        runBlocking {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
                 listOf(
@@ -557,7 +559,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `loadLanguageNames prefers locale language code in displayNames`() =
-        runTest {
+        runBlocking {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
                 listOf(
@@ -579,7 +581,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `loadLanguageNames prefers version languageTag when locale does not match`() =
-        runTest {
+        runBlocking {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
                 listOf(
@@ -602,7 +604,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `loadLanguageNames falls back to en key in displayNames`() =
-        runTest {
+        runBlocking {
             val savedLocale = Locale.getDefault()
             Locale.setDefault(Locale.FRANCE)
             try {
@@ -630,7 +632,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `loadLanguageNames falls back to first map entry when no preferred key matches`() =
-        runTest {
+        runBlocking {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
                 listOf(
@@ -652,7 +654,7 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `languageName returns cached name when available`() =
-        runTest {
+        runBlocking {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
                 listOf(Language(language = "fr", displayNames = mapOf("en" to "French")))
