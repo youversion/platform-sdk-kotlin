@@ -29,8 +29,9 @@ class VersionsViewModel(
     /**
      * Loads permitted and active-language listings concurrently. `supervisorScope` lets both requests run
      * independently; each `Deferred` is awaited so a failure in one branch still observes the other (avoids
-     * unhandled async failures when only the first `await` would run). The outer try/catch handles any error;
-     * state is only updated when both succeed.
+     * unhandled async failures when only the first `await` would run). When both fail, the active-language
+     * error is attached via [Throwable.addSuppressed] so logging retains both causes. The outer try/catch
+     * handles any error; state is only updated when both succeed.
      */
     private fun loadVersions() {
         viewModelScope.launch {
@@ -60,7 +61,7 @@ class VersionsViewModel(
                             Result.failure(e)
                         }
                     if (permittedResult.isFailure || activeResult.isFailure) {
-                        throw permittedResult.exceptionOrNull() ?: activeResult.exceptionOrNull()!!
+                        combineConcurrentLoadFailures(permittedResult, activeResult)
                     }
 
                     _state.update {
@@ -171,4 +172,24 @@ class VersionsViewModel(
 
         data object VersionDismissed : Action
     }
+}
+
+/**
+ * Throws the permitted-list failure when present, otherwise the active-language failure. When both
+ * [Result]s fail, the active-language exception is [Throwable.addSuppressed] on the primary so callers
+ * (for example [Logger]) see both concurrent errors.
+ */
+internal fun combineConcurrentLoadFailures(
+    permittedResult: Result<List<BibleVersion>>,
+    activeResult: Result<List<BibleVersion>>,
+): Nothing {
+    val primary = permittedResult.exceptionOrNull() ?: activeResult.exceptionOrNull()!!
+    if (permittedResult.isFailure && activeResult.isFailure) {
+        activeResult.exceptionOrNull()?.let { secondary ->
+            if (secondary !== primary) {
+                primary.addSuppressed(secondary)
+            }
+        }
+    }
+    throw primary
 }

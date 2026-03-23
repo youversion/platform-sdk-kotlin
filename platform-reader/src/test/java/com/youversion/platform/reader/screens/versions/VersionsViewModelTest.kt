@@ -22,6 +22,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -121,6 +122,88 @@ class VersionsViewModelTest {
             coVerify(exactly = 1) { bibleReaderRepository.permittedVersionsListing() }
             coVerify(exactly = 1) { bibleReaderRepository.fetchVersionsInLanguage("en") }
         }
+
+    @Test
+    fun `loadVersions when both concurrent calls fail leaves initializing false and calls both repositories`() =
+        runTest(testDispatcher) {
+            val unauthorized = RuntimeException("401 Unauthorized")
+            val unavailable = RuntimeException("503 Service Unavailable")
+            coEvery { bibleReaderRepository.permittedVersionsListing() } coAnswers { throw unauthorized }
+            coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } coAnswers { throw unavailable }
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.state.value.initializing)
+            assertTrue(
+                viewModel.state.value.permittedMinimalVersions
+                    .isEmpty(),
+            )
+            assertTrue(
+                viewModel.state.value.activeLanguageVersions
+                    .isEmpty(),
+            )
+            coVerify(exactly = 1) { bibleReaderRepository.permittedVersionsListing() }
+            coVerify(exactly = 1) { bibleReaderRepository.fetchVersionsInLanguage("en") }
+        }
+
+    @Test
+    fun `combineConcurrentLoadFailures adds active exception as suppressed when both fail`() {
+        val permitted = RuntimeException("401 Unauthorized")
+        val active = RuntimeException("503 Service Unavailable")
+        val thrown =
+            assertFailsWith<RuntimeException> {
+                combineConcurrentLoadFailures(
+                    Result.failure(permitted),
+                    Result.failure(active),
+                )
+            }
+        assertEquals(permitted, thrown)
+        assertEquals(1, thrown.suppressedExceptions.size)
+        assertEquals(active, thrown.suppressedExceptions.single())
+    }
+
+    @Test
+    fun `combineConcurrentLoadFailures throws permitted failure when only permitted fails`() {
+        val permitted = RuntimeException("401 Unauthorized")
+        val thrown =
+            assertFailsWith<RuntimeException> {
+                combineConcurrentLoadFailures(
+                    Result.failure(permitted),
+                    Result.success(emptyList()),
+                )
+            }
+        assertEquals(permitted, thrown)
+        assertTrue(thrown.suppressedExceptions.isEmpty())
+    }
+
+    @Test
+    fun `combineConcurrentLoadFailures throws active failure when only active fails`() {
+        val active = RuntimeException("503 Service Unavailable")
+        val thrown =
+            assertFailsWith<RuntimeException> {
+                combineConcurrentLoadFailures(
+                    Result.success(emptyList()),
+                    Result.failure(active),
+                )
+            }
+        assertEquals(active, thrown)
+        assertTrue(thrown.suppressedExceptions.isEmpty())
+    }
+
+    @Test
+    fun `combineConcurrentLoadFailures does not addSuppressed when both results share the same exception instance`() {
+        val shared = RuntimeException("shared")
+        val thrown =
+            assertFailsWith<RuntimeException> {
+                combineConcurrentLoadFailures(
+                    Result.failure(shared),
+                    Result.failure(shared),
+                )
+            }
+        assertEquals(shared, thrown)
+        assertTrue(thrown.suppressedExceptions.isEmpty())
+    }
 
     @Test
     fun `loadVersions sets initializing to false on success`() =
