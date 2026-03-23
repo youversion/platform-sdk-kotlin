@@ -334,6 +334,41 @@ class BibleReaderRepositoryTest {
         }
 
     @Test
+    fun `fetchVersionsInLanguage caches empty API response`() =
+        runBlocking {
+            mockkObject(YouVersionApi)
+            try {
+                val mockBiblesApi = mockk<BiblesApi>()
+                every { YouVersionApi.bible } returns mockBiblesApi
+                coEvery {
+                    mockBiblesApi.versions(
+                        languageCode = "eng",
+                        fields = null,
+                        pageSize = 99,
+                        pageToken = null,
+                    )
+                } returns PaginatedResponse(data = emptyList(), nextPageToken = null, totalSize = null)
+                val repository = createRepository()
+
+                val first = repository.fetchVersionsInLanguage("eng")
+                val second = repository.fetchVersionsInLanguage("eng")
+
+                assertContentEquals(emptyList(), first)
+                assertContentEquals(emptyList(), second)
+                coVerify(exactly = 1) {
+                    mockBiblesApi.versions(
+                        languageCode = "eng",
+                        fields = null,
+                        pageSize = 99,
+                        pageToken = null,
+                    )
+                }
+            } finally {
+                unmockkObject(YouVersionApi)
+            }
+        }
+
+    @Test
     fun `fetchVersionsInLanguage comparable string uses title when localized title absent`() =
         runBlocking {
             mockkObject(YouVersionApi)
@@ -446,6 +481,28 @@ class BibleReaderRepositoryTest {
             repository.permittedVersionsListing()
 
             assertContentEquals(listOf("en"), repository.suggestedLanguageTags())
+        }
+
+    @Test
+    fun `suggestedLanguageTags returns all codes when permittedVersions is empty list`() =
+        runBlocking {
+            val bibleVersionRepository = mockk<BibleVersionRepository>()
+            val languageRepository = mockk<LanguageRepository>()
+            coEvery { bibleVersionRepository.permittedVersions(null) } returns emptyList()
+            coEvery { languageRepository.suggestedLanguages(any()) } returns
+                listOf(
+                    Language(language = "en"),
+                    Language(language = "de"),
+                )
+            val repository =
+                createRepository(
+                    bibleVersionRepository = bibleVersionRepository,
+                    languageRepository = languageRepository,
+                )
+
+            repository.permittedVersionsListing()
+
+            assertContentEquals(listOf("en", "de"), repository.suggestedLanguageTags())
         }
 
     @Test

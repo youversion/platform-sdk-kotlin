@@ -142,9 +142,8 @@ class BibleReaderRepository(
      * Returns complete information about Bible versions available in a specific language.
      */
     suspend fun fetchVersionsInLanguage(languageCode: String): List<BibleVersion> {
-        // Check if we already have the versions for this language locally
-        if (!versionsInLanguage[languageCode].isNullOrEmpty()) {
-            return versionsInLanguage[languageCode] ?: emptyList()
+        versionsInLanguage[languageCode]?.let {
+            return it
         }
 
         // There is currently no language with more than 99 versions so ignore pagination for now
