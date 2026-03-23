@@ -70,6 +70,8 @@ class VersionsViewModel(
                         )
                     }
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Logger.e("Error loading versions", e)
             } finally {
@@ -91,6 +93,8 @@ class VersionsViewModel(
                         activeLanguageName = languageName,
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Logger.e("Error loading versions for language $languageTag", e)
             } finally {
@@ -118,6 +122,8 @@ class VersionsViewModel(
                 try {
                     val org = YouVersionApi.organizations.organization(it)
                     _state.update { it.copy(selectedOrganization = org) }
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Logger.e("Failed to get org", e)
                 }
