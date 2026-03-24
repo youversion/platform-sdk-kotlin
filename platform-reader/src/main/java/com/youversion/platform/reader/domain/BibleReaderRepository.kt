@@ -77,7 +77,11 @@ class BibleReaderRepository(
             previousBookIndex > 0 -> {
                 // We're navigating to the last chapter in the previous book
                 val previousBook = books[previousBookIndex - 1]
-                val lastChapter = previousBook.chapters?.count() ?: 0
+                val chapters = previousBook.chapters ?: return null
+                val lastChapter = chapters.count()
+                if (lastChapter < 1) {
+                    return null
+                }
                 bibleReference.copy(
                     bookUSFM = previousBook.id ?: "",
                     chapter = lastChapter,
@@ -142,9 +146,8 @@ class BibleReaderRepository(
      * Returns complete information about Bible versions available in a specific language.
      */
     suspend fun fetchVersionsInLanguage(languageCode: String): List<BibleVersion> {
-        // Check if we already have the versions for this language locally
-        if (!versionsInLanguage[languageCode].isNullOrEmpty()) {
-            return versionsInLanguage[languageCode] ?: emptyList()
+        versionsInLanguage[languageCode]?.let {
+            return it
         }
 
         // There is currently no language with more than 99 versions so ignore pagination for now
@@ -160,13 +163,16 @@ class BibleReaderRepository(
 
         // collator allows for locale-specific string comparisons
         val collator = Collator.getInstance()
-        return unsortedVersions
-            .distinctBy { it.id }
-            .sortedWith { a, b ->
-                val aTitle = comparableString(a).lowercase()
-                val bTitle = comparableString(b).lowercase()
-                collator.compare(aTitle, bTitle)
-            }
+        val result =
+            unsortedVersions
+                .distinctBy { it.id }
+                .sortedWith { a, b ->
+                    val aTitle = comparableString(a).lowercase()
+                    val bTitle = comparableString(b).lowercase()
+                    collator.compare(aTitle, bTitle)
+                }
+        versionsInLanguage[languageCode] = result
+        return result
     }
 
     // ----- Languages
@@ -187,13 +193,16 @@ class BibleReaderRepository(
         val data = languageRepository.suggestedLanguages(localeCountryCode)
         val codes = if (data.isEmpty()) listOf("en", "es") else extractLanguageCodes(data)
 
-        return permittedVersions?.let { permittedVersions ->
-            codes
-                .filter { languageCode ->
-                    permittedVersions.isEmpty() ||
-                        permittedVersions.any { it.languageTag == languageCode }
-                }
-        } ?: codes
+        val result =
+            permittedVersions?.let { permittedVersions ->
+                codes
+                    .filter { languageCode ->
+                        permittedVersions.isEmpty() ||
+                            permittedVersions.any { it.languageTag == languageCode }
+                    }
+            } ?: codes
+        suggestedLanguageTags = result
+        return result
     }
 
     private fun extractLanguageCodes(languages: List<Language>): List<String> =
@@ -225,10 +234,11 @@ class BibleReaderRepository(
         languageNames = langNames
     }
 
-    fun languageName(lang: String): String =
-        languageNames[lang]
-            ?: Locale.getDefault().getDisplayLanguage(Locale(lang))
-            ?: lang
+    fun languageName(lang: String): String {
+        languageNames[lang]?.let { return it }
+        val displayName = Locale.forLanguageTag(lang).getDisplayLanguage(Locale.getDefault())
+        return displayName.takeIf { it.isNotBlank() } ?: lang
+    }
 
     private fun bestDisplayName(
         names: Map<String, String?>,
