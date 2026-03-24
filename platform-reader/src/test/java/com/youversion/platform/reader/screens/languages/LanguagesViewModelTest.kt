@@ -64,6 +64,9 @@ class LanguagesViewModelTest {
             coEvery { bibleReaderRepository.loadLanguageNames(any()) } coAnswers {
                 loadDeferred.await()
             }
+            every { bibleReaderRepository.allPermittedLanguageTags } returns emptyList()
+            coEvery { bibleReaderRepository.suggestedLanguageTags() } returns emptyList()
+
             viewModel = createViewModel(bibleVersion = null)
 
             assertTrue(viewModel.state.value.initializing)
@@ -75,7 +78,7 @@ class LanguagesViewModelTest {
                 viewModel.state.value.allLanguages
                     .isEmpty(),
             )
-            loadDeferred.completeExceptionally(RuntimeException("test cancel"))
+            loadDeferred.complete(Unit)
             advanceUntilIdle()
         }
 
