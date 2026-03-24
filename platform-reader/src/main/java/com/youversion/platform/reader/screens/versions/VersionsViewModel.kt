@@ -83,12 +83,16 @@ class VersionsViewModel(
     fun loadVersionsForLanguage(languageTag: String) {
         viewModelScope.launch {
             try {
-                _state.update { it.copy(initializing = true) }
+                _state.update {
+                    it.copy(
+                        initializing = true,
+                        activeLanguageTag = languageTag,
+                    )
+                }
                 val versions = bibleReaderRepository.fetchVersionsInLanguage(languageTag)
                 val languageName = bibleReaderRepository.languageName(languageTag)
                 _state.update {
                     it.copy(
-                        activeLanguageTag = languageTag,
                         activeLanguageVersions = versions,
                         activeLanguageName = languageName,
                     )

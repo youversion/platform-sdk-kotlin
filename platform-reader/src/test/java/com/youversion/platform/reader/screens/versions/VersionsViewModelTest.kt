@@ -237,7 +237,32 @@ class VersionsViewModelTest {
         }
 
     @Test
-    fun `loadVersionsForLanguage on exception does not update language state and clears initializing`() =
+    fun `loadVersionsForLanguage sets initializing and activeLanguageTag before fetching`() =
+        runTest(testDispatcher) {
+            coEvery { bibleReaderRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns emptyList()
+            lateinit var viewModel: VersionsViewModel
+            coEvery { bibleReaderRepository.fetchVersionsInLanguage("es") } coAnswers {
+                assertTrue(viewModel.state.value.initializing)
+                assertEquals("es", viewModel.state.value.activeLanguageTag)
+                listOf(spanishVersion)
+            }
+            every { bibleReaderRepository.languageName("es") } returns "Español"
+
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.loadVersionsForLanguage("es")
+            advanceUntilIdle()
+
+            assertEquals("es", viewModel.state.value.activeLanguageTag)
+            assertEquals(listOf(spanishVersion), viewModel.state.value.activeLanguageVersions)
+            assertEquals("Español", viewModel.state.value.activeLanguageName)
+            assertFalse(viewModel.state.value.initializing)
+        }
+
+    @Test
+    fun `loadVersionsForLanguage on exception leaves prior versions and name and clears initializing`() =
         runTest(testDispatcher) {
             coEvery { bibleReaderRepository.permittedVersionsListing() } returns listOf(permittedEn)
             coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns listOf(activeEn)
@@ -250,19 +275,18 @@ class VersionsViewModelTest {
 
             val versionsBefore = viewModel.state.value.activeLanguageVersions
             val nameBefore = viewModel.state.value.activeLanguageName
-            val tagBefore = viewModel.state.value.activeLanguageTag
 
             viewModel.loadVersionsForLanguage("es")
             advanceUntilIdle()
 
-            assertEquals(tagBefore, viewModel.state.value.activeLanguageTag)
+            assertEquals("es", viewModel.state.value.activeLanguageTag)
             assertEquals(versionsBefore, viewModel.state.value.activeLanguageVersions)
             assertEquals(nameBefore, viewModel.state.value.activeLanguageName)
             assertFalse(viewModel.state.value.initializing)
         }
 
     @Test
-    fun `loadVersionsForLanguage when languageName throws after fetch keeps prior language state`() =
+    fun `loadVersionsForLanguage when languageName throws after fetch keeps prior versions and name`() =
         runTest(testDispatcher) {
             coEvery { bibleReaderRepository.permittedVersionsListing() } returns listOf(permittedEn)
             coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns listOf(activeEn)
@@ -274,12 +298,11 @@ class VersionsViewModelTest {
 
             val versionsBefore = viewModel.state.value.activeLanguageVersions
             val nameBefore = viewModel.state.value.activeLanguageName
-            val tagBefore = viewModel.state.value.activeLanguageTag
 
             viewModel.loadVersionsForLanguage("es")
             advanceUntilIdle()
 
-            assertEquals(tagBefore, viewModel.state.value.activeLanguageTag)
+            assertEquals("es", viewModel.state.value.activeLanguageTag)
             assertEquals(versionsBefore, viewModel.state.value.activeLanguageVersions)
             assertEquals(nameBefore, viewModel.state.value.activeLanguageName)
             assertFalse(viewModel.state.value.initializing)
