@@ -76,6 +76,7 @@ class LanguagesViewModelTest {
                     .isEmpty(),
             )
             loadDeferred.completeExceptionally(RuntimeException("test cancel"))
+            advanceUntilIdle()
         }
 
     // ----- Constructor Variants
