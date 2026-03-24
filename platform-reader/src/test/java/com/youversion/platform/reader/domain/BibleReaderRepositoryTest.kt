@@ -274,8 +274,8 @@ class BibleReaderRepositoryTest {
             val bibleVersionRepository = mockk<BibleVersionRepository>()
             val versions =
                 listOf(
-                    BibleVersion(id = 1, languageTag = "en"),
-                    BibleVersion(id = 2, languageTag = "es"),
+                    BibleVersion(id = 1, languageTag = LANGUAGE_EN),
+                    BibleVersion(id = 2, languageTag = LANGUAGE_ES),
                 )
             coEvery { bibleVersionRepository.permittedVersions(null) } returns versions
             val repository = createRepository(bibleVersionRepository = bibleVersionRepository)
@@ -301,7 +301,7 @@ class BibleReaderRepositoryTest {
                     )
                 coEvery {
                     mockBiblesApi.versions(
-                        languageCode = "eng",
+                        languageCode = LANGUAGE_ENG,
                         fields = null,
                         pageSize = 99,
                         pageToken = null,
@@ -309,17 +309,21 @@ class BibleReaderRepositoryTest {
                 } returns PaginatedResponse(data = versions, nextPageToken = null, totalSize = null)
                 val repository = createRepository()
 
-                val first = repository.fetchVersionsInLanguage("eng")
-                val second = repository.fetchVersionsInLanguage("eng")
+                val first = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
+                val second = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
 
                 assertEquals(first, second)
                 assertEquals(
                     listOf(2, 1),
                     first.map { it.id },
                 )
+                assertEquals(
+                    listOf("Bible A", "Bible B"),
+                    first.map { it.title },
+                )
                 coVerify(exactly = 1) {
                     mockBiblesApi.versions(
-                        languageCode = "eng",
+                        languageCode = LANGUAGE_ENG,
                         fields = null,
                         pageSize = 99,
                         pageToken = null,
@@ -339,7 +343,7 @@ class BibleReaderRepositoryTest {
                 every { YouVersionApi.bible } returns mockBiblesApi
                 coEvery {
                     mockBiblesApi.versions(
-                        languageCode = "eng",
+                        languageCode = LANGUAGE_ENG,
                         fields = null,
                         pageSize = 99,
                         pageToken = null,
@@ -347,14 +351,14 @@ class BibleReaderRepositoryTest {
                 } returns PaginatedResponse(data = emptyList(), nextPageToken = null, totalSize = null)
                 val repository = createRepository()
 
-                val first = repository.fetchVersionsInLanguage("eng")
-                val second = repository.fetchVersionsInLanguage("eng")
+                val first = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
+                val second = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
 
                 assertContentEquals(emptyList(), first)
                 assertContentEquals(emptyList(), second)
                 coVerify(exactly = 1) {
                     mockBiblesApi.versions(
-                        languageCode = "eng",
+                        languageCode = LANGUAGE_ENG,
                         fields = null,
                         pageSize = 99,
                         pageToken = null,
@@ -391,7 +395,7 @@ class BibleReaderRepositoryTest {
                     )
                 coEvery {
                     mockBiblesApi.versions(
-                        languageCode = "eng",
+                        languageCode = LANGUAGE_ENG,
                         fields = null,
                         pageSize = 99,
                         pageToken = null,
@@ -399,7 +403,7 @@ class BibleReaderRepositoryTest {
                 } returns PaginatedResponse(data = versions, nextPageToken = null, totalSize = null)
                 val repository = createRepository()
 
-                val sorted = repository.fetchVersionsInLanguage("eng")
+                val sorted = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
 
                 assertEquals(listOf(11, 10), sorted.map { it.id })
             } finally {
@@ -413,16 +417,16 @@ class BibleReaderRepositoryTest {
             val bibleVersionRepository = mockk<BibleVersionRepository>()
             val versions =
                 listOf(
-                    BibleVersion(id = 1, languageTag = "en"),
-                    BibleVersion(id = 2, languageTag = "en"),
-                    BibleVersion(id = 3, languageTag = "fr"),
+                    BibleVersion(id = 1, languageTag = LANGUAGE_EN),
+                    BibleVersion(id = 2, languageTag = LANGUAGE_EN),
+                    BibleVersion(id = 3, languageTag = LANGUAGE_FR),
                 )
             coEvery { bibleVersionRepository.permittedVersions(null) } returns versions
             val repository = createRepository(bibleVersionRepository = bibleVersionRepository)
 
             repository.permittedVersionsListing()
 
-            assertContentEquals(listOf("en", "fr"), repository.allPermittedLanguageTags)
+            assertContentEquals(listOf(LANGUAGE_EN, LANGUAGE_FR), repository.allPermittedLanguageTags)
         }
 
     @Test
@@ -438,25 +442,26 @@ class BibleReaderRepositoryTest {
             val languageRepository = mockk<LanguageRepository>()
             val languages =
                 listOf(
-                    Language(language = "de"),
-                    Language(language = "fr"),
+                    Language(language = LANGUAGE_DE),
+                    Language(language = LANGUAGE_FR),
                 )
             coEvery { languageRepository.suggestedLanguages(any()) } returns languages
             val repository = createRepository(languageRepository = languageRepository)
 
-            assertContentEquals(listOf("de", "fr"), repository.suggestedLanguageTags())
+            assertContentEquals(listOf(LANGUAGE_DE, LANGUAGE_FR), repository.suggestedLanguageTags())
         }
 
     @Test
     fun `suggestedLanguageTags fetches from language repository using localeCountryCode`() =
         runTest {
             val languageRepository = mockk<LanguageRepository>()
-            coEvery { languageRepository.suggestedLanguages("US") } returns listOf(Language(language = "en"))
+            coEvery { languageRepository.suggestedLanguages(LOCALE_COUNTRY_US) } returns
+                listOf(Language(language = LANGUAGE_EN))
             val repository = createRepository(languageRepository = languageRepository)
 
             repository.suggestedLanguageTags()
 
-            coVerify(exactly = 1) { languageRepository.suggestedLanguages("US") }
+            coVerify(exactly = 1) { languageRepository.suggestedLanguages(LOCALE_COUNTRY_US) }
         }
 
     @Test
@@ -466,7 +471,7 @@ class BibleReaderRepositoryTest {
             coEvery { languageRepository.suggestedLanguages(any()) } returns emptyList()
             val repository = createRepository(languageRepository = languageRepository)
 
-            assertContentEquals(listOf("en", "es"), repository.suggestedLanguageTags())
+            assertContentEquals(listOf(LANGUAGE_EN, LANGUAGE_ES), repository.suggestedLanguageTags())
         }
 
     @Test
@@ -475,11 +480,11 @@ class BibleReaderRepositoryTest {
             val bibleVersionRepository = mockk<BibleVersionRepository>()
             val languageRepository = mockk<LanguageRepository>()
             coEvery { bibleVersionRepository.permittedVersions(null) } returns
-                listOf(BibleVersion(id = 1, languageTag = "en"))
+                listOf(BibleVersion(id = 1, languageTag = LANGUAGE_EN))
             coEvery { languageRepository.suggestedLanguages(any()) } returns
                 listOf(
-                    Language(language = "en"),
-                    Language(language = "de"),
+                    Language(language = LANGUAGE_EN),
+                    Language(language = LANGUAGE_DE),
                 )
             val repository =
                 createRepository(
@@ -489,7 +494,7 @@ class BibleReaderRepositoryTest {
 
             repository.permittedVersionsListing()
 
-            assertContentEquals(listOf("en"), repository.suggestedLanguageTags())
+            assertContentEquals(listOf(LANGUAGE_EN), repository.suggestedLanguageTags())
         }
 
     @Test
@@ -500,8 +505,8 @@ class BibleReaderRepositoryTest {
             coEvery { bibleVersionRepository.permittedVersions(null) } returns emptyList()
             coEvery { languageRepository.suggestedLanguages(any()) } returns
                 listOf(
-                    Language(language = "en"),
-                    Language(language = "de"),
+                    Language(language = LANGUAGE_EN),
+                    Language(language = LANGUAGE_DE),
                 )
             val repository =
                 createRepository(
@@ -511,7 +516,7 @@ class BibleReaderRepositoryTest {
 
             repository.permittedVersionsListing()
 
-            assertContentEquals(listOf("en", "de"), repository.suggestedLanguageTags())
+            assertContentEquals(listOf(LANGUAGE_EN, LANGUAGE_DE), repository.suggestedLanguageTags())
         }
 
     @Test
@@ -520,19 +525,20 @@ class BibleReaderRepositoryTest {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.suggestedLanguages(any()) } returns
                 listOf(
-                    Language(language = "en"),
-                    Language(language = "de"),
+                    Language(language = LANGUAGE_EN),
+                    Language(language = LANGUAGE_DE),
                 )
             val repository = createRepository(languageRepository = languageRepository)
 
-            assertContentEquals(listOf("en", "de"), repository.suggestedLanguageTags())
+            assertContentEquals(listOf(LANGUAGE_EN, LANGUAGE_DE), repository.suggestedLanguageTags())
         }
 
     @Test
     fun `suggestedLanguageTags returns cached value on second call`() =
         runTest {
             val languageRepository = mockk<LanguageRepository>()
-            coEvery { languageRepository.suggestedLanguages(any()) } returns listOf(Language(language = "en"))
+            coEvery { languageRepository.suggestedLanguages(any()) } returns
+                listOf(Language(language = LANGUAGE_EN))
             val repository = createRepository(languageRepository = languageRepository)
 
             val first = repository.suggestedLanguageTags()
@@ -548,7 +554,7 @@ class BibleReaderRepositoryTest {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
                 listOf(
-                    Language(language = "en", displayNames = mapOf("en" to "English")),
+                    Language(language = LANGUAGE_EN, displayNames = mapOf(LANGUAGE_EN to "English")),
                 )
             val repository = createRepository(languageRepository = languageRepository)
 
@@ -565,15 +571,15 @@ class BibleReaderRepositoryTest {
             coEvery { languageRepository.languages() } returns
                 listOf(
                     Language(
-                        language = "en",
-                        displayNames = mapOf("en" to "English", "fr" to "Anglais"),
+                        language = LANGUAGE_EN,
+                        displayNames = mapOf(LANGUAGE_EN to "English", LANGUAGE_FR to "Anglais"),
                     ),
                 )
             val repository = createRepository(languageRepository = languageRepository)
 
             repository.loadLanguageNames(null)
 
-            assertEquals("English", repository.languageName("en"))
+            assertEquals("English", repository.languageName(LANGUAGE_EN))
         }
 
     @Test
@@ -582,14 +588,21 @@ class BibleReaderRepositoryTest {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
                 listOf(
-                    Language(language = null, displayNames = mapOf("en" to "X")),
-                    Language(language = "en", displayNames = mapOf("en" to "English")),
+                    Language(language = null, displayNames = mapOf(LANGUAGE_EN to "X")),
+                    Language(
+                        language = LANGUAGE_EN,
+                        displayNames =
+                            mapOf(
+                                LANGUAGE_FR to "Anglais",
+                                LANGUAGE_EN to "English",
+                            ),
+                    ),
                 )
             val repository = createRepository(languageRepository = languageRepository)
 
             repository.loadLanguageNames(null)
 
-            assertEquals("English", repository.languageName("en"))
+            assertEquals("English", repository.languageName(LANGUAGE_EN))
         }
 
     @Test
@@ -598,14 +611,14 @@ class BibleReaderRepositoryTest {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
                 listOf(
-                    Language(language = "en", displayNames = null),
-                    Language(language = "en", displayNames = mapOf("en" to "English")),
+                    Language(language = LANGUAGE_EN, displayNames = null),
+                    Language(language = LANGUAGE_EN, displayNames = mapOf(LANGUAGE_EN to "English")),
                 )
             val repository = createRepository(languageRepository = languageRepository)
 
             repository.loadLanguageNames(null)
 
-            assertEquals("English", repository.languageName("en"))
+            assertEquals("English", repository.languageName(LANGUAGE_EN))
         }
 
     @Test
@@ -614,13 +627,13 @@ class BibleReaderRepositoryTest {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
                 listOf(
-                    Language(language = "de", displayNames = mapOf("de" to "Deutsch")),
+                    Language(language = LANGUAGE_DE, displayNames = mapOf(LANGUAGE_DE to "Deutsch")),
                 )
             val repository = createRepository(languageRepository = languageRepository)
 
             repository.loadLanguageNames(null)
 
-            assertEquals("Deutsch", repository.languageName("de"))
+            assertEquals("Deutsch", repository.languageName(LANGUAGE_DE))
         }
 
     @Test
@@ -630,11 +643,11 @@ class BibleReaderRepositoryTest {
             coEvery { languageRepository.languages() } returns
                 listOf(
                     Language(
-                        language = "de",
+                        language = LANGUAGE_DE,
                         displayNames =
                             mapOf(
-                                "en" to "German (en)",
-                                "de" to "German (de)",
+                                LANGUAGE_EN to "German (en)",
+                                LANGUAGE_DE to "German (de)",
                             ),
                     ),
                 )
@@ -642,7 +655,7 @@ class BibleReaderRepositoryTest {
 
             repository.loadLanguageNames(null)
 
-            assertEquals("German (en)", repository.languageName("de"))
+            assertEquals("German (en)", repository.languageName(LANGUAGE_DE))
         }
 
     @Test
@@ -652,20 +665,20 @@ class BibleReaderRepositoryTest {
             coEvery { languageRepository.languages() } returns
                 listOf(
                     Language(
-                        language = "de",
+                        language = LANGUAGE_DE,
                         displayNames =
                             mapOf(
                                 "xx" to "Wrong",
-                                "de" to "Deutsch",
+                                LANGUAGE_DE to "Deutsch",
                             ),
                     ),
                 )
-            val version = BibleVersion(id = 1, languageTag = "de")
+            val version = BibleVersion(id = 1, languageTag = LANGUAGE_DE)
             val repository = createRepository(languageRepository = languageRepository)
 
             repository.loadLanguageNames(version)
 
-            assertEquals("Deutsch", repository.languageName("de"))
+            assertEquals("Deutsch", repository.languageName(LANGUAGE_DE))
         }
 
     @Test
@@ -678,11 +691,11 @@ class BibleReaderRepositoryTest {
                 coEvery { languageRepository.languages() } returns
                     listOf(
                         Language(
-                            language = "de",
+                            language = LANGUAGE_DE,
                             displayNames =
                                 mapOf(
                                     "xx" to "Wrong",
-                                    "en" to "German",
+                                    LANGUAGE_EN to "German",
                                 ),
                         ),
                     )
@@ -690,7 +703,7 @@ class BibleReaderRepositoryTest {
 
                 repository.loadLanguageNames(BibleVersion(id = 1, languageTag = "yy"))
 
-                assertEquals("German", repository.languageName("de"))
+                assertEquals("German", repository.languageName(LANGUAGE_DE))
             } finally {
                 Locale.setDefault(savedLocale)
             }
@@ -703,7 +716,7 @@ class BibleReaderRepositoryTest {
             coEvery { languageRepository.languages() } returns
                 listOf(
                     Language(
-                        language = "de",
+                        language = LANGUAGE_DE,
                         displayNames =
                             mapOf(
                                 "aa" to "First",
@@ -715,7 +728,7 @@ class BibleReaderRepositoryTest {
 
             repository.loadLanguageNames(BibleVersion(id = 1, languageTag = "yy"))
 
-            assertEquals("First", repository.languageName("de"))
+            assertEquals("First", repository.languageName(LANGUAGE_DE))
         }
 
     @Test
@@ -723,19 +736,19 @@ class BibleReaderRepositoryTest {
         runTest {
             val languageRepository = mockk<LanguageRepository>()
             coEvery { languageRepository.languages() } returns
-                listOf(Language(language = "fr", displayNames = mapOf("en" to "French")))
+                listOf(Language(language = LANGUAGE_FR, displayNames = mapOf(LANGUAGE_EN to "French")))
             val repository = createRepository(languageRepository = languageRepository)
 
             repository.loadLanguageNames(null)
 
-            assertEquals("French", repository.languageName("fr"))
+            assertEquals("French", repository.languageName(LANGUAGE_FR))
         }
 
     @Test
     fun `languageName falls back to JVM display language when not cached`() {
         val repository = createRepository()
 
-        assertEquals("French", repository.languageName("fr"))
+        assertEquals("French", repository.languageName(LANGUAGE_FR))
     }
 
     @Test
@@ -782,5 +795,11 @@ class BibleReaderRepositoryTest {
 
     private companion object {
         private const val STORAGE_KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
+        private const val LOCALE_COUNTRY_US = "US"
+        private const val LANGUAGE_ENG = "eng"
+        private const val LANGUAGE_EN = "en"
+        private const val LANGUAGE_ES = "es"
+        private const val LANGUAGE_FR = "fr"
+        private const val LANGUAGE_DE = "de"
     }
 }
