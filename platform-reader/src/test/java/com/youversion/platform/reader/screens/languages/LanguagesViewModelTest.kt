@@ -1,14 +1,15 @@
 package com.youversion.platform.reader.screens.languages
 
+import androidx.lifecycle.viewModelScope
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -40,6 +41,9 @@ class LanguagesViewModelTest {
 
     @AfterTest
     fun teardown() {
+        if (::viewModel.isInitialized) {
+            viewModel.viewModelScope.cancel()
+        }
         Dispatchers.resetMain()
     }
 
@@ -62,13 +66,7 @@ class LanguagesViewModelTest {
     @Test
     fun `state has initializing true and empty lists before load completes`() =
         runTest(testDispatcher) {
-            val loadDeferred = CompletableDeferred<Unit>()
-            coEvery { bibleReaderRepository.loadLanguageNames(any()) } coAnswers {
-                loadDeferred.await()
-            }
-            every { bibleReaderRepository.allPermittedLanguageTags } returns emptyList()
-            coEvery { bibleReaderRepository.suggestedLanguageTags() } returns emptyList()
-
+            stubSuccessfulLoad()
             viewModel = createViewModel(bibleVersion = null)
 
             assertTrue(viewModel.state.value.initializing)
@@ -80,7 +78,6 @@ class LanguagesViewModelTest {
                 viewModel.state.value.allLanguages
                     .isEmpty(),
             )
-            loadDeferred.complete(Unit)
             advanceUntilIdle()
         }
 
