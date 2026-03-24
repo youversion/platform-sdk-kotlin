@@ -45,7 +45,7 @@ class BibleReaderRepositoryTest {
     fun restoreLocaleAndCleanup() {
         try {
             unmockkObject(YouVersionApi)
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
         }
         Locale.setDefault(previousDefaultLocale)
     }
