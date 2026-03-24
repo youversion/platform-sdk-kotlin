@@ -448,6 +448,18 @@ class BibleReaderRepositoryTest {
         }
 
     @Test
+    fun `suggestedLanguageTags fetches from language repository using localeCountryCode`() =
+        runBlocking {
+            val languageRepository = mockk<LanguageRepository>()
+            coEvery { languageRepository.suggestedLanguages("US") } returns listOf(Language(language = "en"))
+            val repository = createRepository(languageRepository = languageRepository)
+
+            repository.suggestedLanguageTags()
+
+            coVerify(exactly = 1) { languageRepository.suggestedLanguages("US") }
+        }
+
+    @Test
     fun `suggestedLanguageTags uses en and es when API returns empty`() =
         runBlocking {
             val languageRepository = mockk<LanguageRepository>()
@@ -724,6 +736,13 @@ class BibleReaderRepositoryTest {
         val repository = createRepository()
 
         assertEquals("French", repository.languageName("fr"))
+    }
+
+    @Test
+    fun `languageName falls back to raw language code as last resort`() {
+        val repository = createRepository()
+
+        assertEquals("und", repository.languageName("und"))
     }
 
     private fun createRepository(
