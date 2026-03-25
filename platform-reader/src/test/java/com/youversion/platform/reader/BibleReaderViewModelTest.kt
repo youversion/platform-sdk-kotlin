@@ -1,5 +1,6 @@
 package com.youversion.platform.reader
 
+import androidx.lifecycle.ViewModelStore
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
@@ -84,6 +85,9 @@ class BibleReaderViewModelTest {
 
     @AfterTest
     fun teardown() {
+        val store = ViewModelStore()
+        store.put("test", viewModel)
+        store.clear()
         testDispatcher.scheduler.advanceUntilIdle()
         Dispatchers.resetMain()
     }
