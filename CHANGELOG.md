@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/youversion/platform-sdk-kotlin/compare/1.0.2...1.0.3) (2026-03-25)
+
+
+### Bug Fixes
+
+* **test:** use UnconfinedTestDispatcher and remove resetMain to fix flaky test ([#118](https://github.com/youversion/platform-sdk-kotlin/issues/118)) ([d5b2564](https://github.com/youversion/platform-sdk-kotlin/commit/d5b256441b8c8a5d4e183a6cdacd83a0ac852c25))
+
 ## [1.0.2](https://github.com/youversion/platform-sdk-kotlin/compare/1.0.1...1.0.2) (2026-03-25)
 
 
