@@ -1,3 +1,10 @@
+## [0.8.1](https://github.com/youversion/platform-sdk-kotlin/compare/0.8.0...0.8.1) (2026-03-25)
+
+
+### Bug Fixes
+
+* **ci:** add production environment to release workflow ([#116](https://github.com/youversion/platform-sdk-kotlin/issues/116)) ([bdb97e9](https://github.com/youversion/platform-sdk-kotlin/commit/bdb97e9c81929d16b2816a4c72147c0d053220bc))
+
 # [0.8.0](https://github.com/youversion/platform-sdk-kotlin/compare/0.7.0...0.8.0) (2026-03-20)
 
 
