@@ -8,12 +8,12 @@ class VotdEndpointsTests {
     fun `test votd url`() {
         assertEquals(
             "https://api.youversion.com/v1/verse_of_the_days/1",
-            VotdEndpoints.votdUrl(1).toString(),
+            VotdEndpoints.votdUrl(1),
         )
 
         assertEquals(
             "https://api.youversion.com/v1/verse_of_the_days",
-            VotdEndpoints.votdUrl().toString(),
+            VotdEndpoints.votdUrl(),
         )
     }
 }
