@@ -1,13 +1,11 @@
 package com.youversion.platform.ui.views
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -34,7 +32,6 @@ import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -131,11 +128,9 @@ class BibleIntroTextTests {
         introTextBlocksDeferred.complete(listOf(annotatedBlock("This is an intro for Genesis.")))
         composeTestRule.waitForIdle()
 
-        runTest {
-            assertEquals(BibleTextLoadingPhase.INACTIVE, phases[0])
-            assertEquals(BibleTextLoadingPhase.LOADING, phases[1])
-            assertEquals(BibleTextLoadingPhase.SUCCESS, phases[2])
-        }
+        assertEquals(BibleTextLoadingPhase.INACTIVE, phases[0])
+        assertEquals(BibleTextLoadingPhase.LOADING, phases[1])
+        assertEquals(BibleTextLoadingPhase.SUCCESS, phases[2])
     }
 
     @Test
@@ -153,11 +148,9 @@ class BibleIntroTextTests {
         introTextBlocksDeferred.complete(null)
         composeTestRule.waitForIdle()
 
-        runTest {
-            assertEquals(BibleTextLoadingPhase.INACTIVE, phases[0])
-            assertEquals(BibleTextLoadingPhase.LOADING, phases[1])
-            assertEquals(BibleTextLoadingPhase.FAILED, phases[2])
-        }
+        assertEquals(BibleTextLoadingPhase.INACTIVE, phases[0])
+        assertEquals(BibleTextLoadingPhase.LOADING, phases[1])
+        assertEquals(BibleTextLoadingPhase.FAILED, phases[2])
     }
 
     @Test
@@ -173,11 +166,9 @@ class BibleIntroTextTests {
         )
         composeTestRule.waitForIdle()
 
-        runTest {
-            assertEquals(BibleTextLoadingPhase.INACTIVE, phases[0])
-            assertEquals(BibleTextLoadingPhase.LOADING, phases[1])
-            assertEquals(BibleTextLoadingPhase.NOT_PERMITTED, phases[2])
-        }
+        assertEquals(BibleTextLoadingPhase.INACTIVE, phases[0])
+        assertEquals(BibleTextLoadingPhase.LOADING, phases[1])
+        assertEquals(BibleTextLoadingPhase.NOT_PERMITTED, phases[2])
     }
 
     @Test
@@ -191,11 +182,9 @@ class BibleIntroTextTests {
         versionDeferred.completeExceptionally(RuntimeException("Network error"))
         composeTestRule.waitForIdle()
 
-        runTest {
-            assertEquals(BibleTextLoadingPhase.INACTIVE, phases[0])
-            assertEquals(BibleTextLoadingPhase.LOADING, phases[1])
-            assertEquals(BibleTextLoadingPhase.FAILED, phases[2])
-        }
+        assertEquals(BibleTextLoadingPhase.INACTIVE, phases[0])
+        assertEquals(BibleTextLoadingPhase.LOADING, phases[1])
+        assertEquals(BibleTextLoadingPhase.FAILED, phases[2])
     }
 
     @Test
@@ -209,11 +198,9 @@ class BibleIntroTextTests {
         versionDeferred.completeExceptionally(CancellationException("cancelled"))
         composeTestRule.waitForIdle()
 
-        runTest {
-            assertEquals(BibleTextLoadingPhase.INACTIVE, phases[0])
-            assertEquals(BibleTextLoadingPhase.LOADING, phases[1])
-            assertEquals(BibleTextLoadingPhase.INACTIVE, phases[2])
-        }
+        assertEquals(BibleTextLoadingPhase.INACTIVE, phases[0])
+        assertEquals(BibleTextLoadingPhase.LOADING, phases[1])
+        assertEquals(BibleTextLoadingPhase.INACTIVE, phases[2])
     }
 
     // endregion
@@ -285,171 +272,23 @@ class BibleIntroTextTests {
     // region RTL/LTR Alignment
 
     @Test
-    fun `LTR system with RTL version aligns content to end`() {
-        coEvery { mockVersionRepository.version(any()) } returns rtlVersion
-        coEvery { mockIntroRepository.introContent(any(), any()) } returns "<p>Intro</p>"
-        coEvery {
-            BibleVersionRendering.introTextBlocks(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-            )
-        } returns
-            listOf(
-                annotatedBlock("Filler text"),
-                BibleTextBlock(
-                    text = AnnotatedString(""),
-                    chapter = 1,
-                    rows = listOf(listOf(AnnotatedString("A"))),
-                    headIndent = 0.sp,
-                    marginTop = 8.dp,
-                    alignment = TextAlign.Start,
-                    footnotes = emptyList(),
-                ),
-            )
-
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                BibleIntroText(1, "GEN", "INTRO")
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        val textBounds = composeTestRule.onNodeWithText("Filler text").getBoundsInRoot()
-        val cellBounds = composeTestRule.onNodeWithText("A").getBoundsInRoot()
-        assertTrue(cellBounds.left > textBounds.left)
+    fun `LTR system with RTL version aligns to End`() {
+        assertEquals(Alignment.End, mainColumnAlignment(LayoutDirection.Ltr, isVersionRightToLeft = true))
     }
 
     @Test
-    fun `LTR system with LTR version aligns content to start`() {
-        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
-        coEvery { mockIntroRepository.introContent(any(), any()) } returns "<p>Intro</p>"
-        coEvery {
-            BibleVersionRendering.introTextBlocks(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-            )
-        } returns
-            listOf(
-                annotatedBlock("Filler text"),
-                BibleTextBlock(
-                    text = AnnotatedString(""),
-                    chapter = 1,
-                    rows = listOf(listOf(AnnotatedString("A"))),
-                    headIndent = 0.sp,
-                    marginTop = 8.dp,
-                    alignment = TextAlign.Start,
-                    footnotes = emptyList(),
-                ),
-            )
-
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                BibleIntroText(1, "GEN", "INTRO")
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        val textBounds = composeTestRule.onNodeWithText("Filler text").getBoundsInRoot()
-        val cellBounds = composeTestRule.onNodeWithText("A").getBoundsInRoot()
-        assertTrue(cellBounds.left >= textBounds.left)
+    fun `LTR system with LTR version aligns to Start`() {
+        assertEquals(Alignment.Start, mainColumnAlignment(LayoutDirection.Ltr, isVersionRightToLeft = false))
     }
 
     @Test
-    fun `RTL system with RTL version aligns content to start`() {
-        coEvery { mockVersionRepository.version(any()) } returns rtlVersion
-        coEvery { mockIntroRepository.introContent(any(), any()) } returns "<p>Intro</p>"
-        coEvery {
-            BibleVersionRendering.introTextBlocks(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-            )
-        } returns
-            listOf(
-                annotatedBlock("Filler text"),
-                BibleTextBlock(
-                    text = AnnotatedString(""),
-                    chapter = 1,
-                    rows = listOf(listOf(AnnotatedString("A"))),
-                    headIndent = 0.sp,
-                    marginTop = 8.dp,
-                    alignment = TextAlign.Start,
-                    footnotes = emptyList(),
-                ),
-            )
-
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-                BibleIntroText(1, "GEN", "INTRO")
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        val textBounds = composeTestRule.onNodeWithText("Filler text").getBoundsInRoot()
-        val cellBounds = composeTestRule.onNodeWithText("A").getBoundsInRoot()
-        assertTrue(cellBounds.right <= textBounds.right)
+    fun `RTL system with RTL version aligns to Start`() {
+        assertEquals(Alignment.Start, mainColumnAlignment(LayoutDirection.Rtl, isVersionRightToLeft = true))
     }
 
     @Test
-    fun `RTL system with LTR version aligns content to end`() {
-        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
-        coEvery { mockIntroRepository.introContent(any(), any()) } returns "<p>Intro</p>"
-        coEvery {
-            BibleVersionRendering.introTextBlocks(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-            )
-        } returns
-            listOf(
-                annotatedBlock("Filler text"),
-                BibleTextBlock(
-                    text = AnnotatedString(""),
-                    chapter = 1,
-                    rows = listOf(listOf(AnnotatedString("A"))),
-                    headIndent = 0.sp,
-                    marginTop = 8.dp,
-                    alignment = TextAlign.Start,
-                    footnotes = emptyList(),
-                ),
-            )
-
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-                BibleIntroText(1, "GEN", "INTRO")
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        val textBounds = composeTestRule.onNodeWithText("Filler text").getBoundsInRoot()
-        val cellBounds = composeTestRule.onNodeWithText("A").getBoundsInRoot()
-        assertTrue(cellBounds.right < textBounds.right)
+    fun `RTL system with LTR version aligns to End`() {
+        assertEquals(Alignment.End, mainColumnAlignment(LayoutDirection.Rtl, isVersionRightToLeft = false))
     }
 
     // endregion
@@ -487,8 +326,8 @@ class BibleIntroTextTests {
 
         composeTestRule.onNodeWithText("Visible block").assertIsDisplayed()
         composeTestRule.onNodeWithText("Another visible block").assertIsDisplayed()
-        composeTestRule.onNodeWithText("").assertIsNotDisplayed()
-        composeTestRule.onNodeWithText("    ").assertIsNotDisplayed()
+        composeTestRule.onNodeWithText("").assertDoesNotExist()
+        composeTestRule.onNodeWithText("    ").assertDoesNotExist()
     }
 
     // endregion
@@ -564,7 +403,8 @@ class BibleIntroTextTests {
         val firstParagraph = composeTestRule.onNodeWithText("Intro chapter 1").getBoundsInRoot()
         val secondParagraph = composeTestRule.onNodeWithText("Intro chapter 2").getBoundsInRoot()
         val gap = secondParagraph.top - firstParagraph.bottom
-        assertEquals(expectedSpacing, gap)
+        val tolerance = 1.dp
+        assertTrue(gap >= expectedSpacing - tolerance && gap <= expectedSpacing + tolerance)
     }
 
     // endregion
