@@ -1,5 +1,6 @@
 package com.youversion.platform.reader
 
+import androidx.lifecycle.ViewModelStore
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
@@ -18,8 +19,8 @@ import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
@@ -31,7 +32,7 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BibleReaderViewModelTest {
-    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var testDispatcher: TestDispatcher
 
     private lateinit var bibleVersionRepository: BibleVersionRepository
     private lateinit var bibleReaderRepository: BibleReaderRepository
@@ -50,6 +51,7 @@ class BibleReaderViewModelTest {
 
     @BeforeTest
     fun setup() {
+        testDispatcher = UnconfinedTestDispatcher()
         Dispatchers.setMain(testDispatcher)
 
         bibleVersionRepository = mockk(relaxed = true)
@@ -64,6 +66,10 @@ class BibleReaderViewModelTest {
         every { userSettingsRepository.readerFontFamilyName } returns null
         every { userSettingsRepository.readerLineSpacing } returns null
         every { userSettingsRepository.readerFontSize } returns null
+
+        coEvery { bibleVersionRepository.version(any()) } returns
+            BibleVersion(id = 1, abbreviation = "KJV")
+        coEvery { bibleReaderRepository.loadLanguageNames(any()) } returns Unit
 
         viewModel =
             BibleReaderViewModel(
@@ -80,7 +86,10 @@ class BibleReaderViewModelTest {
 
     @AfterTest
     fun teardown() {
-        Dispatchers.resetMain()
+        val store = ViewModelStore()
+        store.put("test", viewModel)
+        store.clear()
+        testDispatcher.scheduler.advanceUntilIdle()
     }
 
     @Test
