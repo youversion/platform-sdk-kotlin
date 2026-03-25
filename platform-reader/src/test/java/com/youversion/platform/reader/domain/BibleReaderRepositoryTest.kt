@@ -21,7 +21,6 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -285,129 +284,120 @@ class BibleReaderRepositoryTest {
         }
 
     @Test
-    fun `fetchVersionsInLanguage deduplicates by id sorts with collator and caches`() =
+    fun `fetchVersionsInLanguage deduplicates by id sorts with collator and caches`() {
+        mockkObject(YouVersionApi)
         runTest {
-            mockkObject(YouVersionApi)
-            try {
-                val mockBiblesApi = mockk<BiblesApi>()
-                every { YouVersionApi.bible } returns mockBiblesApi
-                val versions =
-                    listOf(
-                        BibleVersion(id = 1, title = "Bible B"),
-                        BibleVersion(id = 1, title = "Duplicate id"),
-                        BibleVersion(id = 2, title = "Bible A"),
-                    )
-                coEvery {
-                    mockBiblesApi.versions(
-                        languageCode = LANGUAGE_ENG,
-                        fields = null,
-                        pageSize = 99,
-                        pageToken = null,
-                    )
-                } returns PaginatedResponse(data = versions, nextPageToken = null, totalSize = null)
-                val repository = createRepository()
-
-                val first = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
-                val second = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
-
-                assertEquals(first, second)
-                assertEquals(
-                    listOf(2, 1),
-                    first.map { it.id },
+            val mockBiblesApi = mockk<BiblesApi>()
+            every { YouVersionApi.bible } returns mockBiblesApi
+            val versions =
+                listOf(
+                    BibleVersion(id = 1, title = "Bible B"),
+                    BibleVersion(id = 1, title = "Duplicate id"),
+                    BibleVersion(id = 2, title = "Bible A"),
                 )
-                assertEquals(
-                    listOf("Bible A", "Bible B"),
-                    first.map { it.title },
+            coEvery {
+                mockBiblesApi.versions(
+                    languageCode = LANGUAGE_ENG,
+                    fields = null,
+                    pageSize = 99,
+                    pageToken = null,
                 )
-                coVerify(exactly = 1) {
-                    mockBiblesApi.versions(
-                        languageCode = LANGUAGE_ENG,
-                        fields = null,
-                        pageSize = 99,
-                        pageToken = null,
-                    )
-                }
-            } finally {
-                unmockkObject(YouVersionApi)
+            } returns PaginatedResponse(data = versions, nextPageToken = null, totalSize = null)
+            val repository = createRepository()
+
+            val first = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
+            val second = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
+
+            assertEquals(first, second)
+            assertEquals(
+                listOf(2, 1),
+                first.map { it.id },
+            )
+            assertEquals(
+                listOf("Bible A", "Bible B"),
+                first.map { it.title },
+            )
+            coVerify(exactly = 1) {
+                mockBiblesApi.versions(
+                    languageCode = LANGUAGE_ENG,
+                    fields = null,
+                    pageSize = 99,
+                    pageToken = null,
+                )
             }
         }
+    }
 
     @Test
-    fun `fetchVersionsInLanguage caches empty API response`() =
+    fun `fetchVersionsInLanguage caches empty API response`() {
+        mockkObject(YouVersionApi)
         runTest {
-            mockkObject(YouVersionApi)
-            try {
-                val mockBiblesApi = mockk<BiblesApi>()
-                every { YouVersionApi.bible } returns mockBiblesApi
-                coEvery {
-                    mockBiblesApi.versions(
-                        languageCode = LANGUAGE_ENG,
-                        fields = null,
-                        pageSize = 99,
-                        pageToken = null,
-                    )
-                } returns PaginatedResponse(data = emptyList(), nextPageToken = null, totalSize = null)
-                val repository = createRepository()
+            val mockBiblesApi = mockk<BiblesApi>()
+            every { YouVersionApi.bible } returns mockBiblesApi
+            coEvery {
+                mockBiblesApi.versions(
+                    languageCode = LANGUAGE_ENG,
+                    fields = null,
+                    pageSize = 99,
+                    pageToken = null,
+                )
+            } returns PaginatedResponse(data = emptyList(), nextPageToken = null, totalSize = null)
+            val repository = createRepository()
 
-                val first = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
-                val second = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
+            val first = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
+            val second = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
 
-                assertContentEquals(emptyList(), first)
-                assertContentEquals(emptyList(), second)
-                coVerify(exactly = 1) {
-                    mockBiblesApi.versions(
-                        languageCode = LANGUAGE_ENG,
-                        fields = null,
-                        pageSize = 99,
-                        pageToken = null,
-                    )
-                }
-            } finally {
-                unmockkObject(YouVersionApi)
+            assertContentEquals(emptyList(), first)
+            assertContentEquals(emptyList(), second)
+            coVerify(exactly = 1) {
+                mockBiblesApi.versions(
+                    languageCode = LANGUAGE_ENG,
+                    fields = null,
+                    pageSize = 99,
+                    pageToken = null,
+                )
             }
         }
+    }
 
     @Test
-    fun `fetchVersionsInLanguage comparable string uses title when localized title absent`() =
+    fun `fetchVersionsInLanguage comparable string uses title when localized title absent`() {
+        mockkObject(YouVersionApi)
         runTest {
-            mockkObject(YouVersionApi)
-            try {
-                val mockBiblesApi = mockk<BiblesApi>()
-                every { YouVersionApi.bible } returns mockBiblesApi
-                val versions =
-                    listOf(
-                        BibleVersion(
-                            id = 10,
-                            localizedTitle = null,
-                            title = "Zebra",
-                            localizedAbbreviation = null,
-                            abbreviation = null,
-                        ),
-                        BibleVersion(
-                            id = 11,
-                            localizedTitle = null,
-                            title = "Alpha",
-                            localizedAbbreviation = null,
-                            abbreviation = null,
-                        ),
-                    )
-                coEvery {
-                    mockBiblesApi.versions(
-                        languageCode = LANGUAGE_ENG,
-                        fields = null,
-                        pageSize = 99,
-                        pageToken = null,
-                    )
-                } returns PaginatedResponse(data = versions, nextPageToken = null, totalSize = null)
-                val repository = createRepository()
+            val mockBiblesApi = mockk<BiblesApi>()
+            every { YouVersionApi.bible } returns mockBiblesApi
+            val versions =
+                listOf(
+                    BibleVersion(
+                        id = 10,
+                        localizedTitle = null,
+                        title = "Zebra",
+                        localizedAbbreviation = null,
+                        abbreviation = null,
+                    ),
+                    BibleVersion(
+                        id = 11,
+                        localizedTitle = null,
+                        title = "Alpha",
+                        localizedAbbreviation = null,
+                        abbreviation = null,
+                    ),
+                )
+            coEvery {
+                mockBiblesApi.versions(
+                    languageCode = LANGUAGE_ENG,
+                    fields = null,
+                    pageSize = 99,
+                    pageToken = null,
+                )
+            } returns PaginatedResponse(data = versions, nextPageToken = null, totalSize = null)
+            val repository = createRepository()
 
-                val sorted = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
+            val sorted = repository.fetchVersionsInLanguage(LANGUAGE_ENG)
 
-                assertEquals(listOf(11, 10), sorted.map { it.id })
-            } finally {
-                unmockkObject(YouVersionApi)
-            }
+            assertEquals(listOf(11, 10), sorted.map { it.id })
         }
+    }
 
     @Test
     fun `allPermittedLanguageTags returns distinct language tags from permitted versions`() =
