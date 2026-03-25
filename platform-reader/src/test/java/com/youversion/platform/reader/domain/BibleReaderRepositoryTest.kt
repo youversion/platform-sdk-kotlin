@@ -20,6 +20,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.unmockkAll
 import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
@@ -43,10 +44,7 @@ class BibleReaderRepositoryTest {
 
     @AfterTest
     fun restoreLocaleAndCleanup() {
-        try {
-            unmockkObject(YouVersionApi)
-        } catch (_: Exception) {
-        }
+        unmockkAll()
         Locale.setDefault(previousDefaultLocale)
     }
 
