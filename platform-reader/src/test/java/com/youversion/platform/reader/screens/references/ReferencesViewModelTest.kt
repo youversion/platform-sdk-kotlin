@@ -137,6 +137,17 @@ class ReferencesViewModelTest {
         assertNull(viewModel.state.value.expandedBookCode)
     }
 
+    @Test
+    fun `expandBook expands a book when no book is currently expanded`() {
+        val viewModel = ReferencesViewModel(testVersion, defaultReference)
+        viewModel.expandBook("GEN")
+        assertNull(viewModel.state.value.expandedBookCode)
+
+        viewModel.expandBook("GEN")
+
+        assertEquals("GEN", viewModel.state.value.expandedBookCode)
+    }
+
     // ----- onSearchQueryChange
 
     @Test
@@ -218,7 +229,7 @@ class ReferencesViewModelTest {
     }
 
     @Test
-    fun `filteredReferenceRows excludes rows with null bookName`() {
+    fun `filteredReferenceRows excludes rows with null bookName when search is active`() {
         val versionWithNullBookName =
             BibleVersion(
                 id = 1,
