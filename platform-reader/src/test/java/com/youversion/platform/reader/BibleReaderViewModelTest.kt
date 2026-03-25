@@ -19,8 +19,8 @@ import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
@@ -32,7 +32,7 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BibleReaderViewModelTest {
-    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var testDispatcher: TestDispatcher
 
     private lateinit var bibleVersionRepository: BibleVersionRepository
     private lateinit var bibleReaderRepository: BibleReaderRepository
@@ -51,6 +51,7 @@ class BibleReaderViewModelTest {
 
     @BeforeTest
     fun setup() {
+        testDispatcher = UnconfinedTestDispatcher()
         Dispatchers.setMain(testDispatcher)
 
         bibleVersionRepository = mockk(relaxed = true)
@@ -89,7 +90,6 @@ class BibleReaderViewModelTest {
         store.put("test", viewModel)
         store.clear()
         testDispatcher.scheduler.advanceUntilIdle()
-        Dispatchers.resetMain()
     }
 
     @Test
