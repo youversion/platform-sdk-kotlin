@@ -1,7 +1,7 @@
 [versions]
 
 # Library Version
-youversionPlatform = "1.0.1" # .get()
+youversionPlatform = "0.8.0" # .get()
 
 # Android SDK Versions
 compileSdk = "36" # .get()

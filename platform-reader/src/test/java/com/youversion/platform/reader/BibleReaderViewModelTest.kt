@@ -65,6 +65,10 @@ class BibleReaderViewModelTest {
         every { userSettingsRepository.readerLineSpacing } returns null
         every { userSettingsRepository.readerFontSize } returns null
 
+        coEvery { bibleVersionRepository.version(any()) } returns
+            BibleVersion(id = 1, abbreviation = "KJV")
+        coEvery { bibleReaderRepository.loadLanguageNames(any()) } returns Unit
+
         viewModel =
             BibleReaderViewModel(
                 bibleReference = null,
@@ -80,6 +84,7 @@ class BibleReaderViewModelTest {
 
     @AfterTest
     fun teardown() {
+        testDispatcher.scheduler.advanceUntilIdle()
         Dispatchers.resetMain()
     }
 
@@ -113,6 +118,7 @@ class BibleReaderViewModelTest {
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
+            testDispatcher.scheduler.advanceUntilIdle()
 
             assertFalse(
                 viewModel.state.value.selectedVerses
@@ -127,6 +133,7 @@ class BibleReaderViewModelTest {
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
+            testDispatcher.scheduler.advanceUntilIdle()
 
             assertFalse(viewModel.state.value.showVerseActionSheet)
         }
