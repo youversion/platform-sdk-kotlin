@@ -106,14 +106,7 @@ fun BibleIntroText(
     }
 
     val systemLayoutDirection = LocalLayoutDirection.current
-    val mainColumnAlignment =
-        when {
-            systemLayoutDirection == LayoutDirection.Ltr && isVersionRightToLeft -> Alignment.End
-            systemLayoutDirection == LayoutDirection.Ltr && !isVersionRightToLeft -> Alignment.Start
-            systemLayoutDirection == LayoutDirection.Rtl && isVersionRightToLeft -> Alignment.Start
-            systemLayoutDirection == LayoutDirection.Rtl && !isVersionRightToLeft -> Alignment.End
-            else -> Alignment.Start
-        }
+    val mainColumnAlignment = mainColumnAlignment(systemLayoutDirection, isVersionRightToLeft)
 
     if (loadingPhase != BibleTextLoadingPhase.SUCCESS) {
         placeholder(loadingPhase)
@@ -185,6 +178,22 @@ private fun IntroTextBlock(
         inlineContent = textOptions.inlineContentMap,
     )
 }
+
+/**
+ * Determines the horizontal alignment for Bible intro content based on the system layout
+ * direction and the Bible version's text direction.
+ */
+internal fun mainColumnAlignment(
+    systemLayoutDirection: LayoutDirection,
+    isVersionRightToLeft: Boolean,
+): Alignment.Horizontal =
+    when {
+        systemLayoutDirection == LayoutDirection.Ltr && isVersionRightToLeft -> Alignment.End
+        systemLayoutDirection == LayoutDirection.Ltr && !isVersionRightToLeft -> Alignment.Start
+        systemLayoutDirection == LayoutDirection.Rtl && isVersionRightToLeft -> Alignment.Start
+        systemLayoutDirection == LayoutDirection.Rtl && !isVersionRightToLeft -> Alignment.End
+        else -> Alignment.Start
+    }
 
 @Composable
 private fun IntroTableBlock(

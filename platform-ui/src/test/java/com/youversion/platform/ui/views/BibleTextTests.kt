@@ -14,7 +14,6 @@ import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
@@ -1070,13 +1069,13 @@ class BibleTextTests {
         composeTestRule.waitForIdle()
 
         assertTrue(tappedReference != null)
-        assertEquals(1, tappedReference!!.versionId)
-        assertEquals("GEN", tappedReference!!.bookUSFM)
-        assertEquals(1, tappedReference!!.chapter)
-        assertEquals(1, tappedReference!!.verseStart)
+        assertEquals(1, tappedReference.versionId)
+        assertEquals("GEN", tappedReference.bookUSFM)
+        assertEquals(1, tappedReference.chapter)
+        assertEquals(1, tappedReference.verseStart)
         assertTrue(tappedFootnotes != null)
-        assertEquals(1, tappedFootnotes!!.size)
-        assertEquals("This is a footnote", tappedFootnotes!!.first().text)
+        assertEquals(1, tappedFootnotes.size)
+        assertEquals("This is a footnote", tappedFootnotes.first().text)
     }
 
     // endregion
