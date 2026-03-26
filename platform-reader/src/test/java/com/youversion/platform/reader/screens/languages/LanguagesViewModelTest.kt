@@ -133,7 +133,6 @@ class LanguagesViewModelTest {
             assertFalse(viewModel.state.value.initializing)
         }
 
-
     @Test
     fun `on loadLanguageNames exception does not update suggestedLanguages or allLanguages`() =
         runTest(testDispatcher) {
