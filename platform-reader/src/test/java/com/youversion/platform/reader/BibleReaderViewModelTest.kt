@@ -10,6 +10,7 @@ import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
+import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import io.mockk.coEvery
 import io.mockk.every
@@ -62,10 +63,6 @@ class BibleReaderViewModelTest {
         shareManager = mockk(relaxed = true)
 
         every { bibleReaderRepository.produceBibleReference(any()) } returns defaultReference
-        every { userSettingsRepository.readerThemeId } returns null
-        every { userSettingsRepository.readerFontFamilyName } returns null
-        every { userSettingsRepository.readerLineSpacing } returns null
-        every { userSettingsRepository.readerFontSize } returns null
 
         coEvery { bibleVersionRepository.version(any()) } returns
             BibleVersion(id = 1, abbreviation = "KJV")
@@ -90,7 +87,10 @@ class BibleReaderViewModelTest {
         store.put("test", viewModel)
         store.clear()
         testDispatcher.scheduler.advanceUntilIdle()
+        BibleReaderTheme.selectedColorScheme.value = null
     }
+
+    // ----- Verse Selection
 
     @Test
     fun `selecting verse adds it to selectedVerses`() =
@@ -122,7 +122,6 @@ class BibleReaderViewModelTest {
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
-            testDispatcher.scheduler.advanceUntilIdle()
 
             assertFalse(
                 viewModel.state.value.selectedVerses
@@ -137,7 +136,6 @@ class BibleReaderViewModelTest {
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
-            testDispatcher.scheduler.advanceUntilIdle()
 
             assertFalse(viewModel.state.value.showVerseActionSheet)
         }
@@ -159,6 +157,27 @@ class BibleReaderViewModelTest {
                     .containsAll(setOf(verse1, verse2, verse3)),
             )
         }
+
+    @Test
+    fun `ClearVerseSelection action clears all selected verses`() =
+        runTest(testDispatcher) {
+            val verse1 = defaultReference.copy(verseStart = 1, verseEnd = 1)
+            val verse2 = defaultReference.copy(verseStart = 2, verseEnd = 2)
+
+            viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verse1))
+            viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verse2))
+            assertEquals(2, viewModel.state.value.selectedVerses.size)
+
+            viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection)
+
+            assertTrue(
+                viewModel.state.value.selectedVerses
+                    .isEmpty(),
+            )
+            assertFalse(viewModel.state.value.showVerseActionSheet)
+        }
+
+    // ----- Copy & Share
 
     private val testBibleVersion =
         BibleVersion(
