@@ -1,3 +1,26 @@
+## [1.0.3](https://github.com/youversion/platform-sdk-kotlin/compare/1.0.2...1.0.3) (2026-03-25)
+
+
+### Bug Fixes
+
+* **test:** use UnconfinedTestDispatcher and remove resetMain to fix flaky test ([#118](https://github.com/youversion/platform-sdk-kotlin/issues/118)) ([d5b2564](https://github.com/youversion/platform-sdk-kotlin/commit/d5b256441b8c8a5d4e183a6cdacd83a0ac852c25))
+
+## [1.0.2](https://github.com/youversion/platform-sdk-kotlin/compare/1.0.1...1.0.2) (2026-03-25)
+
+
+### Bug Fixes
+
+* **ci:** add production environment to release workflow ([#116](https://github.com/youversion/platform-sdk-kotlin/issues/116)) ([bdb97e9](https://github.com/youversion/platform-sdk-kotlin/commit/bdb97e9c81929d16b2816a4c72147c0d053220bc))
+* commitlint config for broken release action ([#110](https://github.com/youversion/platform-sdk-kotlin/issues/110)) ([6aae41c](https://github.com/youversion/platform-sdk-kotlin/commit/6aae41c034d8bba2929bb9c848f5f86ba8a6bb07))
+* **release:** sync SDK version with Maven Central ([#117](https://github.com/youversion/platform-sdk-kotlin/issues/117)) ([524e721](https://github.com/youversion/platform-sdk-kotlin/commit/524e7216a2788f2c6fd3f02f12fc4ed88be1ac20))
+
+## [0.8.1](https://github.com/youversion/platform-sdk-kotlin/compare/0.8.0...0.8.1) (2026-03-25)
+
+
+### Bug Fixes
+
+* **ci:** add production environment to release workflow ([#116](https://github.com/youversion/platform-sdk-kotlin/issues/116)) ([bdb97e9](https://github.com/youversion/platform-sdk-kotlin/commit/bdb97e9c81929d16b2816a4c72147c0d053220bc))
+
 # [0.8.0](https://github.com/youversion/platform-sdk-kotlin/compare/0.7.0...0.8.0) (2026-03-20)
 
 
