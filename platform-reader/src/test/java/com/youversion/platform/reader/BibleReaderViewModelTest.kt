@@ -63,10 +63,6 @@ class BibleReaderViewModelTest {
         shareManager = mockk(relaxed = true)
 
         every { bibleReaderRepository.produceBibleReference(any()) } returns defaultReference
-        every { userSettingsRepository.readerThemeId } returns null
-        every { userSettingsRepository.readerFontFamilyName } returns null
-        every { userSettingsRepository.readerLineSpacing } returns null
-        every { userSettingsRepository.readerFontSize } returns null
 
         coEvery { bibleVersionRepository.version(any()) } returns
             BibleVersion(id = 1, abbreviation = "KJV")
@@ -126,7 +122,6 @@ class BibleReaderViewModelTest {
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
-            testDispatcher.scheduler.advanceUntilIdle()
 
             assertFalse(
                 viewModel.state.value.selectedVerses
@@ -141,7 +136,6 @@ class BibleReaderViewModelTest {
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
-            testDispatcher.scheduler.advanceUntilIdle()
 
             assertFalse(viewModel.state.value.showVerseActionSheet)
         }

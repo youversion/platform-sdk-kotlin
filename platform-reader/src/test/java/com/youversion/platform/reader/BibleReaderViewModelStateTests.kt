@@ -13,9 +13,8 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -26,7 +25,7 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BibleReaderViewModelStateTests {
-    private val testDispatcher = StandardTestDispatcher()
+    private val testDispatcher = UnconfinedTestDispatcher()
 
     private lateinit var viewModel: BibleReaderViewModel
 
@@ -86,8 +85,6 @@ class BibleReaderViewModelStateTests {
                 bibleReaderRepository = bibleReaderRepository,
                 userSettingsRepository =
                     mockk(relaxed = true) {
-                        every { readerThemeId } returns null
-                        every { readerFontFamilyName } returns null
                         every { readerLineSpacing } returns null
                         every { readerFontSize } returns null
                     },
@@ -106,130 +103,115 @@ class BibleReaderViewModelStateTests {
     // ----- isViewingIntro
 
     @Test
-    fun `isViewingIntro is true when both introBookUSFM and introPassageId are non-null`() =
-        runTest(testDispatcher) {
-            assertFalse(viewModel.state.value.isViewingIntro)
+    fun `isViewingIntro is true when both introBookUSFM and introPassageId are non-null`() {
+        assertFalse(viewModel.state.value.isViewingIntro)
 
-            viewModel.onIntroSelected("GEN", "GEN.INTRO1")
+        viewModel.onIntroSelected("GEN", "GEN.INTRO1")
 
-            assertTrue(viewModel.state.value.isViewingIntro)
-        }
+        assertTrue(viewModel.state.value.isViewingIntro)
+    }
 
     // ----- bookName
 
     @Test
-    fun `bookName returns book name from version when version exists`() =
-        runTest(testDispatcher) {
-            viewModel.bibleVersion = multiBookVersion
+    fun `bookName returns book name from version when version exists`() {
+        viewModel.bibleVersion = multiBookVersion
 
-            assertEquals("Genesis", viewModel.state.value.bookName)
-        }
-
-    @Test
-    fun `bookName uses introBookUSFM when viewing intro`() =
-        runTest(testDispatcher) {
-            viewModel.bibleVersion = multiBookVersion
-            viewModel.onIntroSelected("LEV", "LEV.INTRO1")
-
-            assertEquals("Leviticus", viewModel.state.value.bookName)
-        }
+        assertEquals("Genesis", viewModel.state.value.bookName)
+    }
 
     @Test
-    fun `bookName returns empty string when version is null`() =
-        runTest(testDispatcher) {
-            assertEquals("", viewModel.state.value.bookName)
-        }
+    fun `bookName uses introBookUSFM when viewing intro`() {
+        viewModel.bibleVersion = multiBookVersion
+        viewModel.onIntroSelected("LEV", "LEV.INTRO1")
+
+        assertEquals("Leviticus", viewModel.state.value.bookName)
+    }
+
+    @Test
+    fun `bookName returns empty string when version is null`() {
+        assertEquals("", viewModel.state.value.bookName)
+    }
 
     // ----- bookAndChapter
 
     @Test
-    fun `bookAndChapter returns book name and chapter number`() =
-        runTest(testDispatcher) {
-            viewModel.bibleVersion = multiBookVersion
+    fun `bookAndChapter returns book name and chapter number`() {
+        viewModel.bibleVersion = multiBookVersion
 
-            assertEquals("Genesis 1", viewModel.state.value.bookAndChapter)
-        }
-
-    @Test
-    fun `bookAndChapter returns book name with Intro when viewing intro`() =
-        runTest(testDispatcher) {
-            viewModel.bibleVersion = multiBookVersion
-            viewModel.onIntroSelected("LEV", "LEV.INTRO1")
-
-            assertEquals("Leviticus Intro", viewModel.state.value.bookAndChapter)
-        }
+        assertEquals("Genesis 1", viewModel.state.value.bookAndChapter)
+    }
 
     @Test
-    fun `bookAndChapter returns empty string when bookName is empty`() =
-        runTest(testDispatcher) {
-            assertEquals("", viewModel.state.value.bookAndChapter)
-        }
+    fun `bookAndChapter returns book name with Intro when viewing intro`() {
+        viewModel.bibleVersion = multiBookVersion
+        viewModel.onIntroSelected("LEV", "LEV.INTRO1")
+
+        assertEquals("Leviticus Intro", viewModel.state.value.bookAndChapter)
+    }
+
+    @Test
+    fun `bookAndChapter returns empty string when bookName is empty`() {
+        assertEquals("", viewModel.state.value.bookAndChapter)
+    }
 
     // ----- versionAbbreviation
 
     @Test
-    fun `versionAbbreviation returns localizedAbbreviation when available`() =
-        runTest(testDispatcher) {
-            viewModel.bibleVersion = BibleVersion(id = 1, abbreviation = "KJV", localizedAbbreviation = "KJV-Local")
+    fun `versionAbbreviation returns localizedAbbreviation when available`() {
+        viewModel.bibleVersion = BibleVersion(id = 1, abbreviation = "KJV", localizedAbbreviation = "KJV-Local")
 
-            assertEquals("KJV-Local", viewModel.state.value.versionAbbreviation)
-        }
-
-    @Test
-    fun `versionAbbreviation falls back to abbreviation`() =
-        runTest(testDispatcher) {
-            viewModel.bibleVersion = BibleVersion(id = 1, abbreviation = "KJV")
-
-            assertEquals("KJV", viewModel.state.value.versionAbbreviation)
-        }
+        assertEquals("KJV-Local", viewModel.state.value.versionAbbreviation)
+    }
 
     @Test
-    fun `versionAbbreviation falls back to id when no abbreviation`() =
-        runTest(testDispatcher) {
-            viewModel.bibleVersion = BibleVersion(id = 42)
+    fun `versionAbbreviation falls back to abbreviation`() {
+        viewModel.bibleVersion = BibleVersion(id = 1, abbreviation = "KJV")
 
-            assertEquals("42", viewModel.state.value.versionAbbreviation)
-        }
+        assertEquals("KJV", viewModel.state.value.versionAbbreviation)
+    }
 
     @Test
-    fun `versionAbbreviation returns empty string when version is null`() =
-        runTest(testDispatcher) {
-            assertEquals("", viewModel.state.value.versionAbbreviation)
-        }
+    fun `versionAbbreviation falls back to id when no abbreviation`() {
+        viewModel.bibleVersion = BibleVersion(id = 42)
+
+        assertEquals("42", viewModel.state.value.versionAbbreviation)
+    }
+
+    @Test
+    fun `versionAbbreviation returns empty string when version is null`() {
+        assertEquals("", viewModel.state.value.versionAbbreviation)
+    }
 
     // ----- lineSpacingSettingsIndex
 
     @Test
-    fun `lineSpacingSettingsIndex returns correct index for default spacing`() =
-        runTest(testDispatcher) {
-            assertEquals(0, viewModel.state.value.lineSpacingSettingsIndex)
-        }
+    fun `lineSpacingSettingsIndex returns correct index for default spacing`() {
+        assertEquals(0, viewModel.state.value.lineSpacingSettingsIndex)
+    }
 
     // ----- lineSpacing
 
     @Test
-    fun `lineSpacing returns fontSize multiplied by lineSpacingMultiplier`() =
-        runTest(testDispatcher) {
-            assertEquals(27.sp, viewModel.state.value.lineSpacing)
-        }
+    fun `lineSpacing returns fontSize multiplied by lineSpacingMultiplier`() {
+        assertEquals(27.sp, viewModel.state.value.lineSpacing)
+    }
 
     // ----- fontFamily
 
     @Test
-    fun `fontFamily returns selectedFontDefinition fontFamily`() =
-        runTest(testDispatcher) {
-            assertEquals(
-                ReaderFontSettings.DEFAULT_FONT_DEFINITION.fontFamily,
-                viewModel.state.value.fontFamily,
-            )
-        }
+    fun `fontFamily returns selectedFontDefinition fontFamily`() {
+        assertEquals(
+            ReaderFontSettings.DEFAULT_FONT_DEFINITION.fontFamily,
+            viewModel.state.value.fontFamily,
+        )
+    }
 
     @Test
-    fun `fontFamily reflects updated selectedFontDefinition`() =
-        runTest(testDispatcher) {
-            val monoFont = FontDefinition("Monospace", FontFamily.Monospace)
-            viewModel.onAction(BibleReaderViewModel.Action.SetFontDefinition(monoFont))
+    fun `fontFamily reflects updated selectedFontDefinition`() {
+        val monoFont = FontDefinition("Monospace", FontFamily.Monospace)
+        viewModel.onAction(BibleReaderViewModel.Action.SetFontDefinition(monoFont))
 
-            assertEquals(FontFamily.Monospace, viewModel.state.value.fontFamily)
-        }
+        assertEquals(FontFamily.Monospace, viewModel.state.value.fontFamily)
+    }
 }
