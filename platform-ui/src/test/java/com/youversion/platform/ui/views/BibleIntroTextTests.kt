@@ -39,7 +39,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
@@ -494,7 +496,7 @@ class BibleIntroTextTests {
         composeTestRule.onNodeWithText("*").performClick()
         composeTestRule.waitForIdle()
 
-        assertTrue(tappedFootnotes != null)
+        assertNotNull(tappedFootnotes)
         assertEquals(1, tappedFootnotes.size)
         assertEquals("This is a footnote", tappedFootnotes.first().text)
     }
@@ -535,7 +537,7 @@ class BibleIntroTextTests {
         composeTestRule.onNodeWithText("†").performClick()
         composeTestRule.waitForIdle()
 
-        assertTrue(tappedFootnotes != null)
+        assertNotNull(tappedFootnotes)
         assertEquals(1, tappedFootnotes.size)
         assertEquals("Image footnote", tappedFootnotes.first().text)
     }
@@ -550,6 +552,7 @@ class BibleIntroTextTests {
         val bookUSFMState = mutableStateOf("GEN")
         val passageIdState = mutableStateOf("INTRO")
         val textOptionsState = mutableStateOf(BibleTextOptions())
+        val callCount = AtomicInteger(0)
 
         coEvery { mockVersionRepository.version(any()) } returns ltrVersion
         coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
@@ -565,14 +568,10 @@ class BibleIntroTextTests {
                 any(),
                 any(),
             )
-        } returnsMany
-            listOf(
-                listOf(annotatedBlock("Content 1")),
-                listOf(annotatedBlock("Content 2")),
-                listOf(annotatedBlock("Content 3")),
-                listOf(annotatedBlock("Content 4")),
-                listOf(annotatedBlock("Content 5")),
-            )
+        } answers {
+            val index = callCount.incrementAndGet()
+            listOf(annotatedBlock("Content $index"))
+        }
 
         composeTestRule.setContent {
             val versionId by remember { versionIdState }
@@ -582,23 +581,32 @@ class BibleIntroTextTests {
             BibleIntroText(versionId, bookUSFM, passageId, textOptions = textOptions)
         }
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Content 1").assertIsDisplayed()
+        val initialCount = callCount.get()
+        composeTestRule.onNodeWithText("Content $initialCount").assertIsDisplayed()
 
         versionIdState.intValue = 2
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Content 2").assertIsDisplayed()
+        val afterVersionChange = callCount.get()
+        assertTrue(afterVersionChange > initialCount)
+        composeTestRule.onNodeWithText("Content $afterVersionChange").assertIsDisplayed()
 
         bookUSFMState.value = "EXO"
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Content 3").assertIsDisplayed()
+        val afterBookChange = callCount.get()
+        assertTrue(afterBookChange > afterVersionChange)
+        composeTestRule.onNodeWithText("Content $afterBookChange").assertIsDisplayed()
 
         passageIdState.value = "GEN:1"
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Content 4").assertIsDisplayed()
+        val afterPassageChange = callCount.get()
+        assertTrue(afterPassageChange > afterBookChange)
+        composeTestRule.onNodeWithText("Content $afterPassageChange").assertIsDisplayed()
 
         textOptionsState.value = BibleTextOptions(fontSize = 24.sp)
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Content 5").assertIsDisplayed()
+        val afterTextOptionsChange = callCount.get()
+        assertTrue(afterTextOptionsChange > afterPassageChange)
+        composeTestRule.onNodeWithText("Content $afterTextOptionsChange").assertIsDisplayed()
     }
 
     // endregion
