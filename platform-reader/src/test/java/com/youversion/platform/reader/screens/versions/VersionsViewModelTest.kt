@@ -32,7 +32,7 @@ class VersionsViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var bibleReaderRepository: BibleReaderRepository
-    private val mockOrganizationsApi = mockk<OrganizationsApi>()
+    private lateinit var mockOrganizationsApi: OrganizationsApi
 
     private val permittedEn = BibleVersion(id = 10, abbreviation = "KJV", languageTag = "en")
     private val activeEn = BibleVersion(id = 20, abbreviation = "NIV", languageTag = "en")
@@ -42,6 +42,7 @@ class VersionsViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         bibleReaderRepository = mockk(relaxed = true)
+        mockOrganizationsApi = mockk()
     }
 
     /**
