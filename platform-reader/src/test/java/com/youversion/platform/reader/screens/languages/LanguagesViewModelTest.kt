@@ -133,7 +133,6 @@ class LanguagesViewModelTest {
             assertFalse(viewModel.state.value.initializing)
         }
 
-    // ----- Exception Path
 
     @Test
     fun `on loadLanguageNames exception does not update suggestedLanguages or allLanguages`() =
@@ -161,6 +160,29 @@ class LanguagesViewModelTest {
             viewModel = createViewModel(bibleVersion = null)
             advanceUntilIdle()
 
+            assertFalse(viewModel.state.value.initializing)
+        }
+
+    @Test
+    fun `on suggestedLanguageTags exception does not update suggestedLanguages or allLanguages`() =
+        runTest(testDispatcher) {
+            coEvery { bibleReaderRepository.loadLanguageNames(any()) } returns Unit
+            every { bibleReaderRepository.allPermittedLanguageTags } returns listOf("en", "es")
+            every { bibleReaderRepository.languageName("en") } returns "English"
+            every { bibleReaderRepository.languageName("es") } returns "Spanish"
+            coEvery { bibleReaderRepository.suggestedLanguageTags() } throws RuntimeException("test")
+
+            viewModel = createViewModel(bibleVersion = null)
+            advanceUntilIdle()
+
+            assertTrue(
+                viewModel.state.value.suggestedLanguages
+                    .isEmpty(),
+            )
+            assertTrue(
+                viewModel.state.value.allLanguages
+                    .isEmpty(),
+            )
             assertFalse(viewModel.state.value.initializing)
         }
 
