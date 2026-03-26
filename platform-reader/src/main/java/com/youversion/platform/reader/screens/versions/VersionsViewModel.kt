@@ -7,6 +7,7 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.organizations.models.Organization
 import com.youversion.platform.reader.domain.BibleReaderRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,25 +25,53 @@ class VersionsViewModel(
         loadVersions()
     }
 
+    /**
+     * Loads permitted and active-language listings concurrently. Each [async] block catches its own
+     * exceptions so the [kotlinx.coroutines.Deferred] always completes successfully with a [Result],
+     * guaranteeing both requests run to completion regardless of individual failures. When both fail,
+     * the active-language error is attached via [Throwable.addSuppressed] so logging retains both
+     * causes. State is only updated when both succeed.
+     */
     private fun loadVersions() {
         viewModelScope.launch {
             try {
-                val deferredPermittedVersions = async { bibleReaderRepository.permittedVersionsListing() }
+                val deferredPermittedVersions =
+                    async {
+                        try {
+                            Result.success(bibleReaderRepository.permittedVersionsListing())
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            Result.failure(e)
+                        }
+                    }
                 val deferredActiveLanguageVersions =
                     async {
-                        val chosenLanguage = _state.value.activeLanguageTag
-                        bibleReaderRepository.fetchVersionsInLanguage(chosenLanguage)
+                        try {
+                            val chosenLanguage = _state.value.activeLanguageTag
+                            Result.success(bibleReaderRepository.fetchVersionsInLanguage(chosenLanguage))
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            Result.failure(e)
+                        }
                     }
 
-                val permittedVersions = deferredPermittedVersions.await()
-                val activeLanguageVersions = deferredActiveLanguageVersions.await()
+                val permittedResult = deferredPermittedVersions.await()
+                val activeResult = deferredActiveLanguageVersions.await()
+
+                if (permittedResult.isFailure || activeResult.isFailure) {
+                    combineConcurrentLoadFailures(permittedResult, activeResult)
+                }
 
                 _state.update {
                     it.copy(
-                        activeLanguageVersions = activeLanguageVersions,
-                        permittedMinimalVersions = permittedVersions,
+                        activeLanguageVersions = activeResult.getOrThrow(),
+                        permittedMinimalVersions = permittedResult.getOrThrow(),
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Logger.e("Error loading versions", e)
             } finally {
@@ -68,6 +97,8 @@ class VersionsViewModel(
                         activeLanguageName = languageName,
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Logger.e("Error loading versions for language $languageTag", e)
             } finally {
@@ -95,6 +126,8 @@ class VersionsViewModel(
                 try {
                     val org = YouVersionApi.organizations.organization(it)
                     _state.update { it.copy(selectedOrganization = org) }
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Logger.e("Failed to get org", e)
                 }
@@ -142,4 +175,24 @@ class VersionsViewModel(
 
         data object VersionDismissed : Action
     }
+}
+
+/**
+ * Throws the permitted-list failure when present, otherwise the active-language failure. When both
+ * [Result]s fail, the active-language exception is [Throwable.addSuppressed] on the primary so callers
+ * (for example [Logger]) see both concurrent errors.
+ */
+internal fun combineConcurrentLoadFailures(
+    permittedResult: Result<List<BibleVersion>>,
+    activeResult: Result<List<BibleVersion>>,
+): Nothing {
+    val primary = permittedResult.exceptionOrNull() ?: activeResult.exceptionOrNull()!!
+    if (permittedResult.isFailure && activeResult.isFailure) {
+        activeResult.exceptionOrNull()?.let { secondary ->
+            if (secondary !== primary) {
+                primary.addSuppressed(secondary)
+            }
+        }
+    }
+    throw primary
 }
