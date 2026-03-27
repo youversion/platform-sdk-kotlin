@@ -107,8 +107,7 @@ fun BibleCard(
             Box(
                 modifier =
                     Modifier
-                        .weight(1f, fill = false)
-                        .verticalScroll(rememberScrollState()),
+                        .weight(1f, fill = false),
             ) {
                 BibleText(
                     reference = reference,

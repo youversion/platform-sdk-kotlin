@@ -20,6 +20,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -28,7 +30,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.SpanStyle
@@ -39,15 +40,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.signin.SignInErrorAlert
-import com.youversion.platform.ui.signin.SignInParameters
-import com.youversion.platform.ui.signin.SignInViewModel
-import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
-import com.youversion.platform.ui.signin.rememberYouVersionAuthLauncher
+import com.youversion.platform.ui.signin.rememberSignIn
+import kotlinx.coroutines.launch
 
 enum class SignInWithYouVersionButtonMode {
     FULL,
@@ -69,6 +66,19 @@ object SignInWithYouVersionButtonDefaults {
         get() = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
 }
 
+/**
+ * A YouVersion-branded sign-in button that handles the full authentication flow internally.
+ *
+ * The button uses [rememberSignIn] to launch the sign-in flow when tapped, manages its own
+ * processing state, and displays an error alert on failure.
+ *
+ * @param permissions The set of permissions to request from the user.
+ * @param paddingValues Content padding for the button.
+ * @param shape The button shape.
+ * @param mode The display mode controlling which text is shown.
+ * @param stroked Whether to show a border stroke.
+ * @param dark Whether to use dark-mode colors.
+ */
 @Composable
 fun SignInWithYouVersionButton(
     permissions: () -> Set<SignInWithYouVersionPermission>,
@@ -78,23 +88,17 @@ fun SignInWithYouVersionButton(
     stroked: Boolean = false,
     dark: Boolean = isSystemInDarkTheme(),
 ) {
-    val context = LocalContext.current
-    val signInViewModel = viewModel<SignInViewModel>()
-    val state by signInViewModel.state.collectAsStateWithLifecycle()
-
+    val scope = rememberCoroutineScope()
+    val signIn = rememberSignIn()
+    var isProcessing by remember { mutableStateOf(false) }
     var showSignInError by rememberSaveable { mutableStateOf(false) }
 
-    val authTabLauncher =
-        rememberYouVersionAuthLauncher { intent ->
-            signInViewModel.onAction(SignInViewModel.Action.ProcessAuthCallback(intent))
-        }
-
-    val signInLauncher =
-        rememberSignInWithYouVersion(
-            onSignInError = {
-                showSignInError = true
-            },
+    if (showSignInError) {
+        SignInErrorAlert(
+            onDismissRequest = { showSignInError = false },
+            onConfirm = { showSignInError = false },
         )
+    }
 
     val colorGray15 = Color(0xFFDDDBDB)
     val colorGray35 = Color(0xFF474545)
@@ -102,15 +106,18 @@ fun SignInWithYouVersionButton(
     val strokeWidth = if (dark) 2.dp else 1.dp
 
     Button(
-        enabled = !state.isProcessing,
+        enabled = !isProcessing,
         onClick = {
-            signInLauncher(
-                SignInParameters(
-                    context = context,
-                    launcher = authTabLauncher,
-                    permissions = permissions(),
-                ),
-            )
+            scope.launch {
+                isProcessing = true
+                try {
+                    signIn(permissions())
+                } catch (_: Exception) {
+                    showSignInError = true
+                } finally {
+                    isProcessing = false
+                }
+            }
         },
         contentPadding = paddingValues,
         shape = shape,
@@ -121,13 +128,6 @@ fun SignInWithYouVersionButton(
                 contentColor = if (dark) Color.Green else Color.Black,
             ),
     ) {
-        if (showSignInError) {
-            SignInErrorAlert(
-                onDismissRequest = { showSignInError = false },
-                onConfirm = { showSignInError = false },
-            )
-        }
-
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -140,14 +140,14 @@ fun SignInWithYouVersionButton(
                         Modifier
                             .size(26.dp)
                             .alpha(
-                                if (state.isProcessing) {
+                                if (isProcessing) {
                                     0.5f
                                 } else {
                                     1.0f
                                 },
                             ),
                 )
-                if (state.isProcessing) {
+                if (isProcessing) {
                     CircularProgressIndicator()
                 }
             }
@@ -228,7 +228,7 @@ private fun ButtonPreview(
     Column {
         PreviewBackground(true) {
             SignInWithYouVersionButton(
-                permissions = { setOf() },
+                permissions = { emptySet() },
                 mode = mode,
                 shape = shape,
                 stroked = false,
@@ -237,7 +237,7 @@ private fun ButtonPreview(
         }
         PreviewBackground(true) {
             SignInWithYouVersionButton(
-                permissions = { setOf() },
+                permissions = { emptySet() },
                 mode = mode,
                 shape = shape,
                 stroked = true,
@@ -246,7 +246,7 @@ private fun ButtonPreview(
         }
         PreviewBackground(false) {
             SignInWithYouVersionButton(
-                permissions = { setOf() },
+                permissions = { emptySet() },
                 mode = mode,
                 shape = shape,
                 stroked = false,
@@ -255,7 +255,7 @@ private fun ButtonPreview(
         }
         PreviewBackground(false) {
             SignInWithYouVersionButton(
-                permissions = { setOf() },
+                permissions = { emptySet() },
                 mode = mode,
                 shape = shape,
                 stroked = true,
