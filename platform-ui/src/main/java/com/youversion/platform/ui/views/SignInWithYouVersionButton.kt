@@ -108,8 +108,9 @@ fun SignInWithYouVersionButton(
     Button(
         enabled = !isProcessing,
         onClick = {
+            if (isProcessing) return@Button
+            isProcessing = true
             scope.launch {
-                isProcessing = true
                 try {
                     signIn(permissions())
                 } catch (_: Exception) {
