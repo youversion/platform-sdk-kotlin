@@ -1,6 +1,8 @@
 package com.youversion.platform.ui.signin
 
 import android.content.Context
+import android.content.Intent
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.contract.ActivityResultContracts
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
@@ -35,19 +37,22 @@ class SignInHandler(
      * @throws Exception if the token exchange or sign-in launch fails.
      */
     suspend fun signIn(permissions: Set<SignInWithYouVersionPermission>): SignInWithYouVersionResult? {
+        lateinit var launcher: ActivityResultLauncher<Intent>
         val callbackIntent =
-            suspendCancellableCoroutine { continuation ->
-                val launcher =
-                    activityResultRegistry.register(
-                        "youversion-sign-in",
-                        ActivityResultContracts.StartActivityForResult(),
-                    ) { result ->
-                        continuation.resume(result.data)
-                    }
+            try {
+                suspendCancellableCoroutine { continuation ->
+                    launcher =
+                        activityResultRegistry.register(
+                            "youversion-sign-in",
+                            ActivityResultContracts.StartActivityForResult(),
+                        ) { result ->
+                            continuation.resume(result.data)
+                        }
 
-                continuation.invokeOnCancellation { launcher.unregister() }
-
-                YouVersionAuthentication.signIn(context, launcher, permissions)
+                    YouVersionAuthentication.signIn(context, launcher, permissions)
+                }
+            } finally {
+                launcher.unregister()
             }
 
         return YouVersionAuthentication.handleAuthCallback(context, callbackIntent)
