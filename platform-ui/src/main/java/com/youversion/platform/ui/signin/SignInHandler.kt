@@ -37,7 +37,7 @@ class SignInHandler(
      * @throws Exception if the token exchange or sign-in launch fails.
      */
     suspend fun signIn(permissions: Set<SignInWithYouVersionPermission>): SignInWithYouVersionResult? {
-        lateinit var launcher: ActivityResultLauncher<Intent>
+        var launcher: ActivityResultLauncher<Intent>? = null
         val callbackIntent =
             try {
                 suspendCancellableCoroutine { continuation ->
@@ -52,7 +52,7 @@ class SignInHandler(
                     YouVersionAuthentication.signIn(context, launcher, permissions)
                 }
             } finally {
-                launcher.unregister()
+                launcher?.unregister()
             }
 
         return YouVersionAuthentication.handleAuthCallback(context, callbackIntent)

@@ -78,7 +78,7 @@ object SignInWithYouVersionButtonDefaults {
  * @param mode The display mode controlling which text is shown.
  * @param stroked Whether to show a border stroke.
  * @param dark Whether to use dark-mode colors.
- * @param onTap Optional tap callback. When non-null the built-in auth flow is bypassed.
+ * @param onClick Optional click callback. When non-null the built-in auth flow is bypassed.
  */
 @Composable
 fun SignInWithYouVersionButton(
@@ -88,7 +88,7 @@ fun SignInWithYouVersionButton(
     mode: SignInWithYouVersionButtonMode = SignInWithYouVersionButtonDefaults.mode,
     stroked: Boolean = false,
     dark: Boolean = isSystemInDarkTheme(),
-    onTap: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val signIn = rememberSignIn()
@@ -110,8 +110,8 @@ fun SignInWithYouVersionButton(
     Button(
         enabled = !isProcessing,
         onClick = {
-            if (onTap != null) {
-                onTap()
+            if (onClick != null) {
+                onClick()
             } else {
                 if (isProcessing) return@Button
                 isProcessing = true

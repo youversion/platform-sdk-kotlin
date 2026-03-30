@@ -220,7 +220,7 @@ fun BibleText(
                         textOptions = textOptions,
                         isFirstBlock = index == 0,
                         selectedVerses = selectedVerses,
-                        onTap = { localPosition, textLayoutResult ->
+                        onClick = { localPosition, textLayoutResult ->
                             coroutineScope.launch {
                                 val characterIndex = textLayoutResult.getOffsetForPosition(localPosition)
 
@@ -368,7 +368,7 @@ private fun BibleTextBlock(
     textOptions: BibleTextOptions,
     isFirstBlock: Boolean,
     selectedVerses: Set<BibleReference>,
-    onTap: (position: Offset, layoutResult: TextLayoutResult) -> Unit,
+    onClick: (position: Offset, layoutResult: TextLayoutResult) -> Unit,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     val marginTop = if (isFirstBlock) 0.dp else block.marginTop
@@ -396,7 +396,7 @@ private fun BibleTextBlock(
                     detectTapGestures(
                         onTap = { position ->
                             textLayoutResult?.let { layoutResult ->
-                                onTap(position, layoutResult)
+                                onClick(position, layoutResult)
                             }
                         },
                     )
