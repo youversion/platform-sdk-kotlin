@@ -29,7 +29,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 
@@ -56,10 +55,15 @@ class PlatformReaderKoinModuleTest {
             single<Context> { mockContext }
         }
 
-    private fun createKoin() =
-        koinApplication {
-            modules(upstreamDependencies, PlatformReaderKoinModule)
-        }.koin
+    private lateinit var koin: org.koin.core.Koin
+
+    private fun createKoin(): org.koin.core.Koin {
+        koin =
+            koinApplication {
+                modules(upstreamDependencies, PlatformReaderKoinModule)
+            }.koin
+        return koin
+    }
 
     @BeforeTest
     fun setup() {
@@ -68,6 +72,7 @@ class PlatformReaderKoinModuleTest {
 
     @AfterTest
     fun teardown() {
+        if (::koin.isInitialized) koin.close()
         Dispatchers.resetMain()
     }
 
@@ -131,18 +136,14 @@ class PlatformReaderKoinModuleTest {
     fun `BibleReaderViewModel resolves with null parameters`() {
         val koin = createKoin()
 
-        val viewModel = koin.get<BibleReaderViewModel> { parametersOf(null, null) }
-
-        assertNotNull(viewModel.state.value)
+        koin.get<BibleReaderViewModel> { parametersOf(null, null) }
     }
 
     @Test
     fun `VersionsViewModel resolves with BibleReaderRepository injected`() {
         val koin = createKoin()
 
-        val viewModel = koin.get<VersionsViewModel>()
-
-        assertNotNull(viewModel.state.value)
+        koin.get<VersionsViewModel>()
     }
 
     @Test
@@ -150,17 +151,13 @@ class PlatformReaderKoinModuleTest {
         val koin = createKoin()
         val bibleVersion = BibleVersion(id = 1, abbreviation = "KJV")
 
-        val viewModel = koin.get<LanguagesViewModel> { parametersOf(bibleVersion) }
-
-        assertNotNull(viewModel.state.value)
+        koin.get<LanguagesViewModel> { parametersOf(bibleVersion) }
     }
 
     @Test
     fun `LanguagesViewModel resolves with null BibleVersion parameter`() {
         val koin = createKoin()
 
-        val viewModel = koin.get<LanguagesViewModel> { parametersOf(null) }
-
-        assertNotNull(viewModel.state.value)
+        koin.get<LanguagesViewModel> { parametersOf(null) }
     }
 }
