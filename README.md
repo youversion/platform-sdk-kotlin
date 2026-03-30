@@ -272,7 +272,7 @@ fun ProfileScreen() {
 }
 ```
 
-That's it. The `SignInViewModel` will automatically update its state, and your UI will recompose to reflect the user's authentication status.
+The `SignInViewModel` automatically updates its state when authentication completes, and your UI will recompose to reflect the user's authentication status.
 
 ## Sample App
 

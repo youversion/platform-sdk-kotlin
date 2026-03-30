@@ -104,17 +104,10 @@ fun BibleCard(
                 reference = reference,
                 version = state.bibleVersion,
             )
-            Box(
-                modifier =
-                    Modifier
-                        .weight(1f, fill = false)
-                        .verticalScroll(rememberScrollState()),
-            ) {
-                BibleText(
-                    reference = reference,
-                    textOptions = textOptions,
-                )
-            }
+            BibleText(
+                reference = reference,
+                textOptions = textOptions,
+            )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),

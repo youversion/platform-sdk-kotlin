@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -41,7 +42,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -64,16 +64,15 @@ import com.youversion.platform.reader.sheets.BibleReaderIntroFootnotesSheet
 import com.youversion.platform.reader.sheets.BibleReaderVerseActionSheet
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.signin.SignInErrorAlert
-import com.youversion.platform.ui.signin.SignInParameters
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.signin.SignOutConfirmationAlert
-import com.youversion.platform.ui.signin.rememberSignInWithYouVersion
-import com.youversion.platform.ui.signin.rememberYouVersionAuthLauncher
+import com.youversion.platform.ui.signin.rememberSignIn
 import com.youversion.platform.ui.views.BibleIntroText
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
 import com.youversion.platform.ui.views.BibleTextOptions
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,7 +85,6 @@ internal fun BibleScreen(
     onVersionsClick: () -> Unit,
     onFontsClick: () -> Unit,
 ) {
-    val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     val signInViewModel = viewModel<SignInViewModel>()
@@ -94,17 +92,22 @@ internal fun BibleScreen(
 
     var showSignInError by rememberSaveable { mutableStateOf(false) }
 
-    val authTabLauncher =
-        rememberYouVersionAuthLauncher { intent ->
-            signInViewModel.onAction(SignInViewModel.Action.ProcessAuthCallback(intent))
-        }
-
-    val signInLauncher =
-        rememberSignInWithYouVersion(
-            onSignInError = {
-                showSignInError = true
-            },
+    val scope = rememberCoroutineScope()
+    val signIn = rememberSignIn()
+    val permissions =
+        setOf(
+            SignInWithYouVersionPermission.PROFILE,
+            SignInWithYouVersionPermission.EMAIL,
         )
+    val launchSignIn: () -> Unit = {
+        scope.launch {
+            try {
+                signIn(permissions)
+            } catch (_: Exception) {
+                showSignInError = true
+            }
+        }
+    }
 
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
     var isBannerDismissed by rememberSaveable { mutableStateOf(false) }
@@ -212,19 +215,7 @@ internal fun BibleScreen(
                         onVersionClick = onVersionsClick,
                         onOpenHeaderMenu = { signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState) },
                         onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
-                        onSignInClick = {
-                            signInLauncher(
-                                SignInParameters(
-                                    context = context,
-                                    launcher = authTabLauncher,
-                                    permissions =
-                                        setOf(
-                                            SignInWithYouVersionPermission.PROFILE,
-                                            SignInWithYouVersionPermission.EMAIL,
-                                        ),
-                                ),
-                            )
-                        },
+                        onSignInClick = launchSignIn,
                         onSignOutClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut(true)) },
                     )
                 },
@@ -319,17 +310,7 @@ internal fun BibleScreen(
                                         if (signInState.isSignedIn) {
                                             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(reference))
                                         } else {
-                                            signInLauncher(
-                                                SignInParameters(
-                                                    context = context,
-                                                    launcher = authTabLauncher,
-                                                    permissions =
-                                                        setOf(
-                                                            SignInWithYouVersionPermission.PROFILE,
-                                                            SignInWithYouVersionPermission.EMAIL,
-                                                        ),
-                                                ),
-                                            )
+                                            launchSignIn()
                                         }
                                     },
                                     onStateChange = { loadingPhase = it },
