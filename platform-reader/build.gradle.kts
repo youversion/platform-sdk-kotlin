@@ -79,6 +79,9 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.robolectric)
     testImplementation(libs.turbine)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+
+    testImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
 mavenPublishing {
