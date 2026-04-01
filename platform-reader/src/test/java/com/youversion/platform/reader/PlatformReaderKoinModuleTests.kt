@@ -8,6 +8,7 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.domain.Storage
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.reader.di.PlatformReaderKoinModule
+import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.screens.versions.VersionsViewModel
@@ -27,7 +28,6 @@ import org.koin.core.parameter.parametersOf
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
-import kotlin.test.assertNotNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -44,7 +44,7 @@ class PlatformReaderKoinModuleTests {
         )
 
     private val bibleReaderRepository =
-        mockk<com.youversion.platform.reader.domain.BibleReaderRepository>(relaxed = true) {
+        mockk<BibleReaderRepository>(relaxed = true) {
             every { produceBibleReference(any()) } returns defaultReference
         }
 
@@ -85,9 +85,7 @@ class PlatformReaderKoinModuleTests {
                 modules(PlatformReaderKoinModule, testDependenciesModule)
             }.koin
 
-        val viewModel: BibleReaderViewModel = koin.get { parametersOf(null, null) }
-
-        assertNotNull(viewModel)
+        koin.get<BibleReaderViewModel> { parametersOf(null, null) }
         koin.close()
     }
 
@@ -101,9 +99,7 @@ class PlatformReaderKoinModuleTests {
                 modules(PlatformReaderKoinModule, testDependenciesModule)
             }.koin
 
-        val viewModel: VersionsViewModel = koin.get()
-
-        assertNotNull(viewModel)
+        koin.get<VersionsViewModel>()
         koin.close()
     }
 }
