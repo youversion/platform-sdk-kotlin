@@ -136,7 +136,7 @@ fun BibleReader(
     }
 }
 
-private sealed class BibleReaderDestination(
+internal sealed class BibleReaderDestination(
     val route: String,
 ) {
     data object Reader : BibleReaderDestination("reader")

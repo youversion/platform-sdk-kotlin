@@ -19,7 +19,7 @@ class BibleReaderNavigationTests {
 
     private lateinit var navController: NavHostController
 
-    private fun setNavigationContent(startDestination: String = "reader") {
+    private fun setNavigationContent(startDestination: String = BibleReaderDestination.Reader.route) {
         composeTestRule.setContent {
             navController = rememberNavController()
 
@@ -27,11 +27,11 @@ class BibleReaderNavigationTests {
                 navController = navController,
                 startDestination = startDestination,
             ) {
-                composable("reader") { Text("Reader Screen") }
-                composable("versions") { Text("Versions Screen") }
-                composable("languages") { Text("Languages Screen") }
-                composable("references") { Text("References Screen") }
-                composable("fonts") { Text("Fonts Screen") }
+                composable(BibleReaderDestination.Reader.route) { Text("Reader Screen") }
+                composable(BibleReaderDestination.Versions.route) { Text("Versions Screen") }
+                composable(BibleReaderDestination.Languages.route) { Text("Languages Screen") }
+                composable(BibleReaderDestination.References.route) { Text("References Screen") }
+                composable(BibleReaderDestination.Fonts.route) { Text("Fonts Screen") }
             }
         }
     }
@@ -42,7 +42,7 @@ class BibleReaderNavigationTests {
     fun `default start destination is reader`() {
         setNavigationContent()
 
-        assertEquals("reader", navController.currentDestination?.route)
+        assertEquals(BibleReaderDestination.Reader.route, navController.currentDestination?.route)
     }
 
     // ----- Reader Navigation
@@ -50,34 +50,37 @@ class BibleReaderNavigationTests {
     @Test
     fun `navigating to versions route shows versions destination`() {
         setNavigationContent()
+        assertEquals(BibleReaderDestination.Reader.route, navController.currentDestination?.route)
 
         composeTestRule.runOnUiThread {
-            navController.navigate("versions")
+            navController.navigate(BibleReaderDestination.Versions.route)
         }
 
-        assertEquals("versions", navController.currentDestination?.route)
+        assertEquals(BibleReaderDestination.Versions.route, navController.currentDestination?.route)
     }
 
     @Test
     fun `navigating to references route shows references destination`() {
         setNavigationContent()
+        assertEquals(BibleReaderDestination.Reader.route, navController.currentDestination?.route)
 
         composeTestRule.runOnUiThread {
-            navController.navigate("references")
+            navController.navigate(BibleReaderDestination.References.route)
         }
 
-        assertEquals("references", navController.currentDestination?.route)
+        assertEquals(BibleReaderDestination.References.route, navController.currentDestination?.route)
     }
 
     @Test
     fun `navigating to fonts route shows fonts destination`() {
         setNavigationContent()
+        assertEquals(BibleReaderDestination.Reader.route, navController.currentDestination?.route)
 
         composeTestRule.runOnUiThread {
-            navController.navigate("fonts")
+            navController.navigate(BibleReaderDestination.Fonts.route)
         }
 
-        assertEquals("fonts", navController.currentDestination?.route)
+        assertEquals(BibleReaderDestination.Fonts.route, navController.currentDestination?.route)
     }
 
     // ----- Versions Navigation
@@ -87,13 +90,13 @@ class BibleReaderNavigationTests {
         setNavigationContent()
 
         composeTestRule.runOnUiThread {
-            navController.navigate("versions")
+            navController.navigate(BibleReaderDestination.Versions.route)
         }
         composeTestRule.runOnUiThread {
-            navController.navigate("languages")
+            navController.navigate(BibleReaderDestination.Languages.route)
         }
 
-        assertEquals("languages", navController.currentDestination?.route)
+        assertEquals(BibleReaderDestination.Languages.route, navController.currentDestination?.route)
     }
 
     @Test
@@ -101,15 +104,15 @@ class BibleReaderNavigationTests {
         setNavigationContent()
 
         composeTestRule.runOnUiThread {
-            navController.navigate("versions")
+            navController.navigate(BibleReaderDestination.Versions.route)
         }
-        assertEquals("versions", navController.currentDestination?.route)
+        assertEquals(BibleReaderDestination.Versions.route, navController.currentDestination?.route)
 
         composeTestRule.runOnUiThread {
             navController.popBackStack()
         }
 
-        assertEquals("reader", navController.currentDestination?.route)
+        assertEquals(BibleReaderDestination.Reader.route, navController.currentDestination?.route)
     }
 
     // ----- Languages Navigation
@@ -119,16 +122,16 @@ class BibleReaderNavigationTests {
         setNavigationContent()
 
         composeTestRule.runOnUiThread {
-            navController.navigate("versions")
-            navController.navigate("languages")
+            navController.navigate(BibleReaderDestination.Versions.route)
+            navController.navigate(BibleReaderDestination.Languages.route)
         }
-        assertEquals("languages", navController.currentDestination?.route)
+        assertEquals(BibleReaderDestination.Languages.route, navController.currentDestination?.route)
 
         composeTestRule.runOnUiThread {
             navController.popBackStack()
         }
 
-        assertEquals("versions", navController.currentDestination?.route)
+        assertEquals(BibleReaderDestination.Versions.route, navController.currentDestination?.route)
     }
 
     // ----- References Navigation
@@ -138,15 +141,15 @@ class BibleReaderNavigationTests {
         setNavigationContent()
 
         composeTestRule.runOnUiThread {
-            navController.navigate("references")
+            navController.navigate(BibleReaderDestination.References.route)
         }
-        assertEquals("references", navController.currentDestination?.route)
+        assertEquals(BibleReaderDestination.References.route, navController.currentDestination?.route)
 
         composeTestRule.runOnUiThread {
             navController.popBackStack()
         }
 
-        assertEquals("reader", navController.currentDestination?.route)
+        assertEquals(BibleReaderDestination.Reader.route, navController.currentDestination?.route)
     }
 
     // ----- Fonts Navigation
@@ -156,26 +159,14 @@ class BibleReaderNavigationTests {
         setNavigationContent()
 
         composeTestRule.runOnUiThread {
-            navController.navigate("fonts")
+            navController.navigate(BibleReaderDestination.Fonts.route)
         }
-        assertEquals("fonts", navController.currentDestination?.route)
+        assertEquals(BibleReaderDestination.Fonts.route, navController.currentDestination?.route)
 
         composeTestRule.runOnUiThread {
             navController.popBackStack()
         }
 
-        assertEquals("reader", navController.currentDestination?.route)
-    }
-
-    // ----- BibleReaderDestination Routes
-
-    @Test
-    fun `navigation graph contains all five expected routes`() {
-        setNavigationContent()
-
-        val expectedRoutes = setOf("reader", "versions", "languages", "references", "fonts")
-        val actualRoutes = navController.graph.map { it.route }.toSet()
-
-        assertEquals(expectedRoutes, actualRoutes)
+        assertEquals(BibleReaderDestination.Reader.route, navController.currentDestination?.route)
     }
 }
