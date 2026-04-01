@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
@@ -228,6 +229,7 @@ private fun ThemePicker(onThemeSelect: (ReaderTheme) -> Unit) {
     ) {
         items(ReaderTheme.allThemes) { readerTheme ->
             ThemePickerItem(
+                testTag = "theme_${readerTheme.id}",
                 colorScheme = readerTheme.colorScheme,
                 selected = MaterialTheme.readerColorScheme == readerTheme.colorScheme,
                 onClick = { onThemeSelect(readerTheme) },
@@ -238,6 +240,7 @@ private fun ThemePicker(onThemeSelect: (ReaderTheme) -> Unit) {
 
 @Composable
 private fun ThemePickerItem(
+    testTag: String,
     colorScheme: ReaderColorScheme,
     selected: Boolean,
     onClick: () -> Unit,
@@ -247,6 +250,7 @@ private fun ThemePickerItem(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier =
             Modifier
+                .testTag(testTag)
                 .width(64.dp)
                 .height(94.dp)
                 .clip(RoundedCornerShape(8.dp))
