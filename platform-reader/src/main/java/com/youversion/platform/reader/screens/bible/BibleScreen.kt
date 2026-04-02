@@ -42,6 +42,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -165,6 +166,7 @@ internal fun BibleScreen(
                 Column(
                     modifier =
                         Modifier
+                            .testTag("verse_action_sheet")
                             .fillMaxWidth()
                             .padding(top = 24.dp)
                             .dropShadow(sheetShape) {
