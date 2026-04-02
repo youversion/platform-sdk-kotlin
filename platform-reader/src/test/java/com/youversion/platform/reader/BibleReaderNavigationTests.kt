@@ -209,8 +209,6 @@ class BibleReaderNavigationTests {
 
         composeTestRule.runOnUiThread {
             navController.navigate(BibleReaderDestination.Versions.route)
-        }
-        composeTestRule.runOnUiThread {
             navController.navigate(BibleReaderDestination.Languages.route)
         }
 
