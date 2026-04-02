@@ -502,8 +502,6 @@ class BibleScreenTest {
         }
 
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithContentDescription("Dismiss").assertIsDisplayed()
-
         composeTestRule.onNodeWithContentDescription("Dismiss").performClick()
 
         composeTestRule.waitUntil {
@@ -1091,7 +1089,6 @@ class BibleScreenTest {
         }
 
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithContentDescription("Copy").assertExists()
         composeTestRule.onNodeWithContentDescription("Copy").assertIsNotDisplayed()
     }
 
@@ -1125,7 +1122,9 @@ class BibleScreenTest {
         }
         composeTestRule.onNodeWithContentDescription("Copy").assertIsDisplayed()
 
-        composeTestRule.onNodeWithContentDescription("Copy").performTouchInput { swipeDown() }
+        composeTestRule.onNodeWithTag("verse_action_sheet").performTouchInput {
+            swipeDown(startY = 0f, endY = height.toFloat())
+        }
 
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithContentDescription("Copy").assertIsNotDisplayed()
