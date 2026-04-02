@@ -22,6 +22,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import org.koin.core.Koin
 import org.koin.core.parameter.parametersOf
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
@@ -55,9 +56,9 @@ class PlatformReaderKoinModuleTest {
             single<Context> { mockContext }
         }
 
-    private lateinit var koin: org.koin.core.Koin
+    private lateinit var koin: Koin
 
-    private fun createKoin(): org.koin.core.Koin {
+    private fun createKoin(): Koin {
         koin =
             koinApplication {
                 modules(upstreamDependencies, PlatformReaderKoinModule)
