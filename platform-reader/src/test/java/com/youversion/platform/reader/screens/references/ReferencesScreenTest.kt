@@ -1,8 +1,6 @@
 package com.youversion.platform.reader.screens.references
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -15,6 +13,7 @@ import com.youversion.platform.core.bibles.models.BibleBookIntro
 import com.youversion.platform.core.bibles.models.BibleChapter
 import com.youversion.platform.core.bibles.models.BibleVerse
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -94,7 +93,7 @@ class ReferencesScreenTest {
         onBackClick: () -> Unit = {},
     ) {
         composeTestRule.setContent {
-            MaterialTheme {
+            BibleReaderMaterialTheme {
                 ReferencesScreen(
                     bibleVersion = bibleVersion,
                     bibleReference = bibleReference,
@@ -148,7 +147,7 @@ class ReferencesScreenTest {
         composeTestRule.onNodeWithText("Exodus").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("3").assertIsNotDisplayed()
+        composeTestRule.onNodeWithText("3").assertDoesNotExist()
     }
 
     @Test
@@ -176,8 +175,8 @@ class ReferencesScreenTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Exodus").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Genesis").assertIsNotDisplayed()
-        composeTestRule.onNodeWithText("Leviticus").assertIsNotDisplayed()
+        composeTestRule.onNodeWithText("Genesis").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Leviticus").assertDoesNotExist()
     }
 
     @Test
