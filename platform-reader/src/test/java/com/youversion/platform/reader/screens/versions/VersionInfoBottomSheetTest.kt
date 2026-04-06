@@ -214,12 +214,12 @@ class VersionInfoBottomSheetTest {
 
     @Test
     fun `tapping maybe later calls onDismissRequest`() {
-        var dismissed = false
+        var isDismissed = false
 
-        renderSheet(onDismissRequest = { dismissed = true })
+        renderSheet(onDismissRequest = { isDismissed = true })
 
         composeTestRule.onNodeWithText("Maybe Later").performClick()
         composeTestRule.waitForIdle()
-        assertTrue(dismissed)
+        assertTrue(isDismissed)
     }
 }

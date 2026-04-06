@@ -109,13 +109,13 @@ class VersionsScreenTest {
             VersionsViewModel.State(
                 initializing = true,
             )
-        var languagesClicked = false
+        var isLanguagesClicked = false
 
-        renderScreen(onLanguagesClick = { languagesClicked = true })
+        renderScreen(onLanguagesClick = { isLanguagesClicked = true })
 
         composeTestRule.onNodeWithText("Language").performClick()
         composeTestRule.waitForIdle()
-        assertFalse(languagesClicked)
+        assertFalse(isLanguagesClicked)
     }
 
     @Test
@@ -125,13 +125,13 @@ class VersionsScreenTest {
                 initializing = false,
                 permittedMinimalVersions = listOf(BibleVersion(id = 1, languageTag = "en")),
             )
-        var languagesClicked = false
+        var isLanguagesClicked = false
 
-        renderScreen(onLanguagesClick = { languagesClicked = true })
+        renderScreen(onLanguagesClick = { isLanguagesClicked = true })
 
         composeTestRule.onNodeWithText("Language").performClick()
         composeTestRule.waitForIdle()
-        assertTrue(languagesClicked)
+        assertTrue(isLanguagesClicked)
     }
 
     // ----- Section Header
@@ -340,6 +340,7 @@ class VersionsScreenTest {
                             id = 42,
                             localizedAbbreviation = null,
                             abbreviation = null,
+                            title = "Forty Two",
                             languageTag = "en",
                         ),
                     ),
