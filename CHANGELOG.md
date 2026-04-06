@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.0.3...1.1.0) (2026-04-06)
+
+
+### Features
+
+* **tests:** test coverage for ReferencesScreen YPE-1677 ([#126](https://github.com/youversion/platform-sdk-kotlin/issues/126)) ([b0a4a85](https://github.com/youversion/platform-sdk-kotlin/commit/b0a4a85f8b8f4c9defd85dab8c9e828fc3477e84))
+
 ## [1.0.3](https://github.com/youversion/platform-sdk-kotlin/compare/1.0.2...1.0.3) (2026-03-25)
 
 
