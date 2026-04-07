@@ -1,6 +1,8 @@
 package com.youversion.platform.reader.screens.versions
 
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -158,7 +160,7 @@ class VersionsScreenTest {
     // ----- Loading State
 
     @Test
-    fun `does not show empty state when initializing`() {
+    fun `shows CircularProgressIndicator when initializing`() {
         stateFlow.value =
             VersionsViewModel.State(
                 initializing = true,
@@ -166,6 +168,9 @@ class VersionsScreenTest {
 
         renderScreen()
 
+        composeTestRule
+            .onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate))
+            .assertIsDisplayed()
         composeTestRule.onNodeWithText("No versions found for this language").assertDoesNotExist()
     }
 
