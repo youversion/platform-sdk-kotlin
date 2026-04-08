@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Sync
-import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -39,6 +37,11 @@ enum class BibleReaderBannerType {
     VERSION_UNAVAILABLE,
 }
 
+data class BannerIcon(
+    val icon: ImageVector,
+    val contentDescription: String,
+)
+
 /** A dismissible informational banner displayed at the top of the Bible reader. */
 @Composable
 fun BibleReaderBanner(
@@ -55,15 +58,23 @@ fun BibleReaderBanner(
         val icon =
             when (bannerType) {
                 BibleReaderBannerType.OFFLINE ->
-                    ImageVector.vectorResource(R.drawable.ic_wifi_exclamation)
+                    BannerIcon(
+                        icon = ImageVector.vectorResource(R.drawable.ic_wifi_exclamation),
+                        contentDescription = stringResource(R.string.banner_offline_icon),
+                    )
+
                 BibleReaderBannerType.VERSION_UNAVAILABLE ->
-                    ImageVector.vectorResource(R.drawable.ic_sync)
+                    BannerIcon(
+                        icon = ImageVector.vectorResource(R.drawable.ic_sync),
+                        contentDescription = stringResource(R.string.banner_version_unavailable_icon),
+                    )
             }
 
         val message =
             when (bannerType) {
                 BibleReaderBannerType.OFFLINE ->
                     stringResource(R.string.banner_offline_message)
+
                 BibleReaderBannerType.VERSION_UNAVAILABLE ->
                     stringResource(R.string.banner_version_unavailable_message)
             }
@@ -86,8 +97,8 @@ fun BibleReaderBanner(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = icon,
-                contentDescription = null,
+                imageVector = icon.icon,
+                contentDescription = icon.contentDescription,
                 modifier = Modifier.size(20.dp),
             )
             Spacer(modifier = Modifier.width(24.dp))
