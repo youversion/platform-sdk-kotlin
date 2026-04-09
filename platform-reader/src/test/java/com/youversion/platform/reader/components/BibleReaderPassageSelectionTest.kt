@@ -25,7 +25,7 @@ private class FakeScrollBehavior(
     override val nestedScrollConnection = object : NestedScrollConnection {}
 }
 
-@ExperimentalMaterial3Api
+@OptIn(ExperimentalMaterial3Api::class)
 @RunWith(RobolectricTestRunner::class)
 class BibleReaderPassageSelectionTest {
     @get:Rule

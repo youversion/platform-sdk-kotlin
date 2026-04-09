@@ -37,7 +37,7 @@ enum class BibleReaderBannerType {
     VERSION_UNAVAILABLE,
 }
 
-data class BannerIcon(
+private data class BannerIcon(
     val icon: ImageVector,
     val contentDescription: String,
 )
