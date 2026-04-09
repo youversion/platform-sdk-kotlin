@@ -183,6 +183,7 @@ private fun FontDisplayButton(
         shape = RoundedCornerShape(8.dp),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
         onClick = onFontClick,
+        modifier = Modifier.testTag("font_display_button"),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -282,7 +283,7 @@ private fun ThemePickerItem(
                     } else {
                         ImageVector.vectorResource(R.drawable.ic_circle)
                     },
-                contentDescription = if (selected) "Selected" else null,
+                contentDescription = if (selected) stringResource(R.string.theme_selected) else null,
                 tint =
                     if (selected) {
                         colorScheme.readerTextPrimaryColor

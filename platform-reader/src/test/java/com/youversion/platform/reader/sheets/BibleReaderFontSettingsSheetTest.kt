@@ -106,7 +106,7 @@ class BibleReaderFontSettingsSheetTest {
 
         renderSheet(onFontClick = { isClicked = true })
 
-        composeTestRule.onNodeWithText("Untitled Serif").performClick()
+        composeTestRule.onNodeWithTag("font_display_button").performClick()
         composeTestRule.waitForIdle()
         assertTrue(isClicked)
     }
