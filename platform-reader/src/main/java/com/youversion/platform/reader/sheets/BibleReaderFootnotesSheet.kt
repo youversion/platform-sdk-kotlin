@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -119,7 +120,7 @@ fun BibleReaderFootnotesSheet(
 @Composable
 fun Footnotes(footnotes: List<AnnotatedString>) {
     Column {
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp).testTag("footnote_divider"))
         footnotes.forEachIndexed { index, footnote ->
             val enumeration = index.convertToEnumeration() + "."
             val style = footnote.spanStyles.firstOrNull()?.item
@@ -136,7 +137,7 @@ fun Footnotes(footnotes: List<AnnotatedString>) {
                 Text(footnoteEnumeration, modifier = Modifier.padding(end = 4.dp))
                 Text(footnote)
             }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp).testTag("footnote_divider"))
         }
     }
 }
