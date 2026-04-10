@@ -9,9 +9,11 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.font.FontFamily
+import androidx.test.core.app.ApplicationProvider
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.FontDefinition
+import com.youversion.platform.reader.R
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -64,14 +66,17 @@ class FontsScreenTest {
     fun `renders the check icon when the font is selected`() {
         composeTestRule.setContent { FontsScreen(viewModel = mockBibleReaderViewModel, onBackClick = {}) }
 
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         composeTestRule
             .onNode(
-                hasContentDescription("Font selected check") and hasAnySibling(hasText("Serif")),
+                hasContentDescription(context.getString(R.string.font_selected_check)) and
+                    hasAnySibling(hasText("Serif")),
                 useUnmergedTree = true,
             ).assertExists()
         composeTestRule
             .onNode(
-                hasContentDescription("Font selected check") and hasAnySibling(hasText("Monospace")),
+                hasContentDescription(context.getString(R.string.font_selected_check)) and
+                    hasAnySibling(hasText("Monospace")),
                 useUnmergedTree = true,
             ).assertDoesNotExist()
     }
@@ -109,7 +114,8 @@ class FontsScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Back").performClick()
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        composeTestRule.onNodeWithContentDescription(context.getString(R.string.back_button)).performClick()
         assertTrue(onBackClicked)
     }
 }
