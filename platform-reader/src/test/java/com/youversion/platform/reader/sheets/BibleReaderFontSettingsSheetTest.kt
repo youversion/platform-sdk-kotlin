@@ -67,7 +67,7 @@ class BibleReaderFontSettingsSheetTest {
         renderSheet(onSmallerFontClick = { isClicked = true })
 
         composeTestRule.onNodeWithTag("smaller_font_button").performClick()
-        composeTestRule.waitForIdle()
+
         assertTrue(isClicked)
     }
 
@@ -78,7 +78,7 @@ class BibleReaderFontSettingsSheetTest {
         renderSheet(onBiggerFontClick = { isClicked = true })
 
         composeTestRule.onNodeWithTag("larger_font_button").performClick()
-        composeTestRule.waitForIdle()
+
         assertTrue(isClicked)
     }
 
@@ -107,14 +107,14 @@ class BibleReaderFontSettingsSheetTest {
         renderSheet(onFontClick = { isClicked = true })
 
         composeTestRule.onNodeWithTag("font_display_button").performClick()
-        composeTestRule.waitForIdle()
+
         assertTrue(isClicked)
     }
 
     // ----- ThemePicker
 
     @Test
-    fun `renders all seven theme items`() {
+    fun `renders all theme items`() {
         renderSheet()
 
         ReaderTheme.allThemes.forEach { theme ->
@@ -154,7 +154,7 @@ class BibleReaderFontSettingsSheetTest {
         renderSheet(onThemeSelect = { selectedTheme = it })
 
         composeTestRule.onNodeWithTag("theme_3").performClick()
-        composeTestRule.waitForIdle()
+
         assertEquals(ReaderTheme.allThemes.first { it.id == 3 }, selectedTheme)
     }
 }

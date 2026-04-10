@@ -57,7 +57,7 @@ class BibleReaderVerseActionSheetTest {
         renderSheet(onCopy = { isCopied = true })
 
         composeTestRule.onNodeWithText("Copy").performClick()
-        composeTestRule.waitForIdle()
+
         assertTrue(isCopied)
     }
 
@@ -68,7 +68,7 @@ class BibleReaderVerseActionSheetTest {
         renderSheet(onShare = { isShared = true })
 
         composeTestRule.onNodeWithText("Share").performClick()
-        composeTestRule.waitForIdle()
+
         assertTrue(isShared)
     }
 
