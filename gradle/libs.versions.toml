@@ -10,7 +10,7 @@ targetSdk = "36" # .get()
 
 # Tooling
 agp = "8.13.2"
-kotlin = "2.3.0"
+kotlin = "2.2.21"
 spotless = "8.1.0"
 ktlint = "1.7.1" # .get()
 kover = "0.9.4"

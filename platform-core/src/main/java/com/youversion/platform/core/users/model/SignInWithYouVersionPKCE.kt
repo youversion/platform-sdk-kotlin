@@ -4,6 +4,7 @@ import com.youversion.platform.core.users.api.UsersEndpoints
 import java.security.MessageDigest
 import java.security.SecureRandom
 import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
  * Data class holding the parameters required for a PKCE authorization flow.
@@ -94,6 +95,7 @@ data class SignInWithYouVersionPKCEAuthorizationRequest(
         /**
          * Encodes a byte array into a Base64 string safe for use in URLs.
          */
+        @OptIn(ExperimentalEncodingApi::class)
         private fun base64URLEncodedString(data: ByteArray): String =
             Base64.UrlSafe
                 .withPadding(Base64.PaddingOption.ABSENT)
