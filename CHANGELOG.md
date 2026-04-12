@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/youversion/platform-sdk-kotlin/compare/1.1.0...1.1.1) (2026-04-12)
+
+
+### Bug Fixes
+
+* downgrade to kotlin version 2.2.21 ([24b1d2f](https://github.com/youversion/platform-sdk-kotlin/commit/24b1d2fc86f25936b5086387819fc797b938e10f))
+
 # [1.1.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.0.3...1.1.0) (2026-04-06)
 
 
