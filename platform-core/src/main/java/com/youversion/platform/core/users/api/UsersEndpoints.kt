@@ -26,6 +26,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 object UsersEndpoints : UsersApi {
     private val httpClient: HttpClient
@@ -130,6 +131,7 @@ object UsersEndpoints : UsersApi {
         )
     }
 
+    @OptIn(ExperimentalEncodingApi::class)
     override fun decodeJWT(token: String): Map<String, Any?> {
         return try {
             val segments = token.split('.')
