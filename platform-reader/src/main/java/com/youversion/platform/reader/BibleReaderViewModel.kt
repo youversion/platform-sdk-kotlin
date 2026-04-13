@@ -77,11 +77,6 @@ class BibleReaderViewModel(
             _state.update { it.copy(selectedFontDefinition = savedFontDefinition) }
         }
 
-        // Restore Line Spacing
-        userSettingsRepository.readerLineSpacing?.let { savedLineSpacing ->
-            _state.update { it.copy(lineSpacingMultiplier = savedLineSpacing) }
-        }
-
         userSettingsRepository.readerFontSize?.let { savedFontSize ->
             _state.update { it.copy(fontSize = savedFontSize.sp) }
         }
@@ -115,10 +110,6 @@ class BibleReaderViewModel(
 
             is Action.IncreaseFontSize -> {
                 increaseFontSize()
-            }
-
-            is Action.NextLineSpacingMultiplierOption -> {
-                nextLineSpacingMultiplierOption()
             }
 
             is Action.SetFontDefinition -> {
@@ -358,13 +349,6 @@ class BibleReaderViewModel(
         _state.update { it.copy(fontSize = size) }
     }
 
-    fun nextLineSpacingMultiplierOption() {
-        val currentLineSpacing = _state.value.lineSpacingMultiplier
-        val nextLineSpacing = ReaderFontSettings.nextLineSpacingMultiplier(currentLineSpacing)
-        userSettingsRepository.readerLineSpacing = nextLineSpacing
-        _state.update { it.copy(lineSpacingMultiplier = nextLineSpacing) }
-    }
-
     fun setFontFamily(action: Action.SetFontDefinition) {
         userSettingsRepository.readerFontFamilyName = action.fontDefinition.fontName
         _state.update { it.copy(selectedFontDefinition = action.fontDefinition) }
@@ -434,7 +418,6 @@ class BibleReaderViewModel(
         val providedFontDefinitions: List<FontDefinition> = listOf(),
         val selectedFontDefinition: FontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
         val fontSize: TextUnit = ReaderFontSettings.DEFAULT_FONT_SIZE,
-        val lineSpacingMultiplier: Float = ReaderFontSettings.DEFAULT_LINE_SPACING_MULTIPLIER,
         val suggestedLanguages: List<LanguageRowItem> = emptyList(),
         val showingFootnotes: Boolean = false,
         val footnotesReference: BibleReference? = null,
@@ -475,15 +458,6 @@ class BibleReaderViewModel(
                         ?: version.id.toString()
                 } ?: ""
 
-        val lineSpacingSettingsIndex: Int
-            get() =
-                ReaderFontSettings.getLineSpacingSettingIndex(
-                    lineSpacingMultiplier,
-                )
-
-        val lineSpacing: TextUnit
-            get() = fontSize * lineSpacingMultiplier
-
         val fontFamily: FontFamily
             get() = selectedFontDefinition.fontFamily
 
@@ -500,8 +474,6 @@ class BibleReaderViewModel(
         data object DecreaseFontSize : Action
 
         data object IncreaseFontSize : Action
-
-        data object NextLineSpacingMultiplierOption : Action
 
         data class SetFontDefinition(
             val fontDefinition: FontDefinition,
