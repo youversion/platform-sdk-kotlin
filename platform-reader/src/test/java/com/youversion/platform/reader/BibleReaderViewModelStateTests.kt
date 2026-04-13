@@ -85,7 +85,6 @@ class BibleReaderViewModelStateTests {
                 bibleReaderRepository = bibleReaderRepository,
                 userSettingsRepository =
                     mockk(relaxed = true) {
-                        every { readerLineSpacing } returns null
                         every { readerFontSize } returns null
                     },
                 bibleChapterRepository = mockk(relaxed = true),
@@ -181,20 +180,6 @@ class BibleReaderViewModelStateTests {
     @Test
     fun `versionAbbreviation returns empty string when version is null`() {
         assertEquals("", viewModel.state.value.versionAbbreviation)
-    }
-
-    // ----- lineSpacingSettingsIndex
-
-    @Test
-    fun `lineSpacingSettingsIndex returns correct index for default spacing`() {
-        assertEquals(0, viewModel.state.value.lineSpacingSettingsIndex)
-    }
-
-    // ----- lineSpacing
-
-    @Test
-    fun `lineSpacing returns fontSize multiplied by lineSpacingMultiplier`() {
-        assertEquals(27.sp, viewModel.state.value.lineSpacing)
     }
 
     // ----- fontFamily

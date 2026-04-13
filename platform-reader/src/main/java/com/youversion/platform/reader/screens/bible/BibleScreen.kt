@@ -285,7 +285,6 @@ internal fun BibleScreen(
                                         BibleTextOptions(
                                             fontFamily = state.fontFamily,
                                             fontSize = state.fontSize,
-                                            lineSpacing = state.lineSpacing,
                                             footnoteMode = BibleTextFootnoteMode.IMAGE,
                                         ),
                                     onFootnoteTap = { footnotes ->
@@ -303,7 +302,6 @@ internal fun BibleScreen(
                                         BibleTextOptions(
                                             fontFamily = state.fontFamily,
                                             fontSize = state.fontSize,
-                                            lineSpacing = state.lineSpacing,
                                             footnoteMode = BibleTextFootnoteMode.IMAGE,
                                         ),
                                     reference = state.bibleReference,
@@ -381,7 +379,6 @@ internal fun BibleScreen(
                                 BibleTextOptions(
                                     fontFamily = state.fontFamily,
                                     fontSize = state.fontSize,
-                                    lineSpacing = state.lineSpacing,
                                 ),
                             onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFootnotes) },
                             version = state.bibleVersion,

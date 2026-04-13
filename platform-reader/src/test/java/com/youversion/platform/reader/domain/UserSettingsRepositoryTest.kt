@@ -95,48 +95,6 @@ class UserSettingsRepositoryTest {
         verify { storage.putFloat("bible-reader-view--font-size", null) }
     }
 
-    // ----- readerLineSpacing
-
-    @Test
-    fun `readerLineSpacing getter returns null when storage key is absent`() {
-        val storage = mockk<Storage>()
-        every { storage.getFloatOrNull("bible-reader-view--line-spacing") } returns null
-        val repository = UserSettingsRepository(storage)
-
-        assertNull(repository.readerLineSpacing)
-    }
-
-    @Test
-    fun `readerLineSpacing getter returns stored float value`() {
-        val storage = mockk<Storage>()
-        every { storage.getFloatOrNull("bible-reader-view--line-spacing") } returns 1.75f
-        val repository = UserSettingsRepository(storage)
-
-        assertEquals(1.75f, repository.readerLineSpacing)
-    }
-
-    @Test
-    fun `readerLineSpacing setter writes float value to storage`() {
-        val storage = mockk<Storage>()
-        every { storage.putFloat("bible-reader-view--line-spacing", 1.75f) } just Runs
-        val repository = UserSettingsRepository(storage)
-
-        repository.readerLineSpacing = 1.75f
-
-        verify { storage.putFloat("bible-reader-view--line-spacing", 1.75f) }
-    }
-
-    @Test
-    fun `readerLineSpacing setter writes null to storage`() {
-        val storage = mockk<Storage>()
-        every { storage.putFloat("bible-reader-view--line-spacing", null) } just Runs
-        val repository = UserSettingsRepository(storage)
-
-        repository.readerLineSpacing = null
-
-        verify { storage.putFloat("bible-reader-view--line-spacing", null) }
-    }
-
     // ----- readerFontFamilyName
 
     @Test

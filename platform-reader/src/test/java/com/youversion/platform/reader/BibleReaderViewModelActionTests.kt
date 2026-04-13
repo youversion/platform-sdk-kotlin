@@ -108,19 +108,6 @@ class BibleReaderViewModelActionTests {
         verify { userSettingsRepository.readerFontSize = expectedSize.value }
     }
 
-    // ----- Line Spacing
-
-    @Test
-    fun `NextLineSpacingMultiplierOption cycles spacing and persists`() {
-        val initialSpacing = viewModel.state.value.lineSpacingMultiplier
-        val expectedSpacing = ReaderFontSettings.nextLineSpacingMultiplier(initialSpacing)
-
-        viewModel.onAction(BibleReaderViewModel.Action.NextLineSpacingMultiplierOption)
-
-        assertEquals(expectedSpacing, viewModel.state.value.lineSpacingMultiplier)
-        verify { userSettingsRepository.readerLineSpacing = expectedSpacing }
-    }
-
     // ----- SetFontDefinition
 
     @Test
