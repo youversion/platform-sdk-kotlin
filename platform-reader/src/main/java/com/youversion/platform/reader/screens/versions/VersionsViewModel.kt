@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.organizations.models.Organization
 import com.youversion.platform.reader.domain.BibleReaderRepository
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 
 class VersionsViewModel(
     private val bibleReaderRepository: BibleReaderRepository,
+    private val bibleVersionRepository: BibleVersionRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
@@ -38,7 +40,7 @@ class VersionsViewModel(
                 val deferredPermittedVersions =
                     async {
                         try {
-                            Result.success(bibleReaderRepository.permittedVersionsListing())
+                            Result.success(bibleVersionRepository.permittedVersionsListing())
                         } catch (e: CancellationException) {
                             throw e
                         } catch (e: Exception) {
@@ -49,7 +51,7 @@ class VersionsViewModel(
                     async {
                         try {
                             val chosenLanguage = _state.value.activeLanguageTag
-                            Result.success(bibleReaderRepository.fetchVersionsInLanguage(chosenLanguage))
+                            Result.success(bibleVersionRepository.fullVersions(chosenLanguage))
                         } catch (e: CancellationException) {
                             throw e
                         } catch (e: Exception) {
@@ -89,7 +91,7 @@ class VersionsViewModel(
                         activeLanguageTag = languageTag,
                     )
                 }
-                val versions = bibleReaderRepository.fetchVersionsInLanguage(languageTag)
+                val versions = bibleVersionRepository.fullVersions(languageTag)
                 val languageName = bibleReaderRepository.languageName(languageTag)
                 _state.update {
                     it.copy(

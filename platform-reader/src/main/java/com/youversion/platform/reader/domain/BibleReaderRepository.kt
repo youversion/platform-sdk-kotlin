@@ -1,7 +1,6 @@
 package com.youversion.platform.reader.domain
 
 import com.youversion.platform.core.BibleDefaults
-import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -9,7 +8,6 @@ import com.youversion.platform.core.domain.Storage
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.languages.models.Language
 import kotlinx.serialization.json.Json
-import java.text.Collator
 import java.util.Locale
 
 /**
@@ -126,59 +124,10 @@ class BibleReaderRepository(
         }
     }
 
-    /** In-memory cache of bible versions which have been fetched by language */
-    private var versionsInLanguage: MutableMap<String, List<BibleVersion>> = mutableMapOf()
-
-    /** Holds minimal information about all Bible versions available to this app, in all languages. */
-    var permittedVersions: List<BibleVersion>? = null
-        private set
-
-    /**
-     * Returns minimal information about all Bible versions available to this app, in all languages
-     */
-    suspend fun permittedVersionsListing(): List<BibleVersion> =
-        permittedVersions
-            ?: bibleVersionRepository
-                .permittedVersions()
-                .also { permittedVersions = it }
-
-    /**
-     * Returns complete information about Bible versions available in a specific language.
-     */
-    suspend fun fetchVersionsInLanguage(languageCode: String): List<BibleVersion> {
-        versionsInLanguage[languageCode]?.let {
-            return it
-        }
-
-        // There is currently no language with more than 99 versions so ignore pagination for now
-        val unsortedVersions =
-            YouVersionApi.bible
-                .versions(languageCode = languageCode, pageSize = 99)
-                .data
-
-        fun comparableString(bibleVersion: BibleVersion): String =
-            bibleVersion.localizedTitle ?: bibleVersion.title ?: bibleVersion.localizedAbbreviation
-                ?: bibleVersion.abbreviation
-                ?: bibleVersion.id.toString()
-
-        // collator allows for locale-specific string comparisons
-        val collator = Collator.getInstance()
-        val result =
-            unsortedVersions
-                .distinctBy { it.id }
-                .sortedWith { a, b ->
-                    val aTitle = comparableString(a).lowercase()
-                    val bTitle = comparableString(b).lowercase()
-                    collator.compare(aTitle, bTitle)
-                }
-        versionsInLanguage[languageCode] = result
-        return result
-    }
-
     // ----- Languages
     val allPermittedLanguageTags: List<String>
         get() =
-            permittedVersions
+            bibleVersionRepository.permittedVersions
                 ?.mapNotNull { it.languageTag }
                 ?.distinct()
                 ?: emptyList()
@@ -194,7 +143,7 @@ class BibleReaderRepository(
         val codes = if (data.isEmpty()) listOf("en", "es") else extractLanguageCodes(data)
 
         val result =
-            permittedVersions?.let { permittedVersions ->
+            bibleVersionRepository.permittedVersions?.let { permittedVersions ->
                 codes
                     .filter { languageCode ->
                         permittedVersions.isEmpty() ||

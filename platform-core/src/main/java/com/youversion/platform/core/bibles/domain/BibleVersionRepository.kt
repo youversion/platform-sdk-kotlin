@@ -7,6 +7,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.text.Collator
 
 enum class BibleVersionDownloadStatus {
     DOWNLOADABLE,
@@ -21,6 +22,9 @@ class BibleVersionRepository(
 ) {
     private val inFlightTasks = mutableMapOf<Int, Deferred<BibleVersion>>()
     private val inFlightTasksMutex = Mutex()
+
+    /** In-memory cache of bible versions which have been fetched by language */
+    private var versionsInLanguage: MutableMap<String, List<BibleVersion>> = mutableMapOf()
 
     // ----- Versions
     suspend fun versionIfCached(id: Int): BibleVersion? =
@@ -107,4 +111,46 @@ class BibleVersionRepository(
                         BibleVersion.CodingKey.LANGUAGE_TAG,
                     ),
             ).data
+
+    /** Holds minimal information about all Bible versions available to this app, in all languages. */
+    var permittedVersions: List<BibleVersion>? = null
+        private set
+
+    /**
+     * Returns minimal information about all Bible versions available to this app, in all languages
+     */
+    suspend fun permittedVersionsListing(): List<BibleVersion> =
+        permittedVersions
+            ?: permittedVersions()
+                .also { permittedVersions = it }
+
+    suspend fun fullVersions(languageTag: String): List<BibleVersion> {
+        versionsInLanguage[languageTag]?.let {
+            return it
+        }
+
+        // There is currently no language with more than 99 versions so ignore pagination for now
+        val unsortedVersions =
+            YouVersionApi.bible
+                .versions(languageCode = languageTag, pageSize = 99)
+                .data
+
+        fun comparableString(bibleVersion: BibleVersion): String =
+            bibleVersion.localizedTitle ?: bibleVersion.title ?: bibleVersion.localizedAbbreviation
+                ?: bibleVersion.abbreviation
+                ?: bibleVersion.id.toString()
+
+        // collator allows for locale-specific string comparisons
+        val collator = Collator.getInstance()
+        val result =
+            unsortedVersions
+                .distinctBy { it.id }
+                .sortedWith { a, b ->
+                    val aTitle = comparableString(a).lowercase()
+                    val bTitle = comparableString(b).lowercase()
+                    collator.compare(aTitle, bTitle)
+                }
+        versionsInLanguage[languageTag] = result
+        return result
+    }
 }

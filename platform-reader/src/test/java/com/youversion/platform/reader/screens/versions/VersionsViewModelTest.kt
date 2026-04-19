@@ -61,23 +61,23 @@ class VersionsViewModelTest {
     @Test
     fun `loadVersions on success loads permitted and active language versions concurrently`() =
         runTest(testDispatcher) {
-            coEvery { bibleReaderRepository.permittedVersionsListing() } returns listOf(permittedEn)
-            coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns listOf(activeEn)
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(permittedEn)
+            coEvery { bibleVersionRepository.fullVersions("en") } returns listOf(activeEn)
 
             val viewModel = createViewModel()
             advanceUntilIdle()
 
             assertEquals(listOf(permittedEn), viewModel.state.value.permittedMinimalVersions)
             assertEquals(listOf(activeEn), viewModel.state.value.activeLanguageVersions)
-            coVerify(exactly = 1) { bibleReaderRepository.permittedVersionsListing() }
-            coVerify(exactly = 1) { bibleReaderRepository.fetchVersionsInLanguage("en") }
+            coVerify(exactly = 1) { bibleVersionRepository.permittedVersionsListing() }
+            coVerify(exactly = 1) { bibleVersionRepository.fullVersions("en") }
         }
 
     @Test
     fun `loadVersions on exception leaves initializing false and does not crash`() =
         runTest(testDispatcher) {
-            coEvery { bibleReaderRepository.permittedVersionsListing() } returns listOf(permittedEn)
-            coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } coAnswers {
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(permittedEn)
+            coEvery { bibleVersionRepository.fullVersions("en") } coAnswers {
                 throw RuntimeException("boom")
             }
 
@@ -93,17 +93,17 @@ class VersionsViewModelTest {
                 viewModel.state.value.activeLanguageVersions
                     .isEmpty(),
             )
-            coVerify(exactly = 1) { bibleReaderRepository.permittedVersionsListing() }
-            coVerify(exactly = 1) { bibleReaderRepository.fetchVersionsInLanguage("en") }
+            coVerify(exactly = 1) { bibleVersionRepository.permittedVersionsListing() }
+            coVerify(exactly = 1) { bibleVersionRepository.fullVersions("en") }
         }
 
     @Test
     fun `loadVersions when permitted listing throws leaves initializing false`() =
         runTest(testDispatcher) {
-            coEvery { bibleReaderRepository.permittedVersionsListing() } coAnswers {
+            coEvery { bibleVersionRepository.permittedVersionsListing() } coAnswers {
                 throw RuntimeException("listing failed")
             }
-            coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns listOf(activeEn)
+            coEvery { bibleVersionRepository.fullVersions("en") } returns listOf(activeEn)
 
             val viewModel = createViewModel()
             advanceUntilIdle()
@@ -119,8 +119,8 @@ class VersionsViewModelTest {
             )
             // Each `async` child catches its own exceptions internally, so both always complete
             // regardless of individual failures—both repository calls occur.
-            coVerify(exactly = 1) { bibleReaderRepository.permittedVersionsListing() }
-            coVerify(exactly = 1) { bibleReaderRepository.fetchVersionsInLanguage("en") }
+            coVerify(exactly = 1) { bibleVersionRepository.permittedVersionsListing() }
+            coVerify(exactly = 1) { bibleVersionRepository.fullVersions("en") }
         }
 
     @Test
@@ -128,8 +128,8 @@ class VersionsViewModelTest {
         runTest(testDispatcher) {
             val unauthorized = RuntimeException("401 Unauthorized")
             val unavailable = RuntimeException("503 Service Unavailable")
-            coEvery { bibleReaderRepository.permittedVersionsListing() } coAnswers { throw unauthorized }
-            coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } coAnswers { throw unavailable }
+            coEvery { bibleVersionRepository.permittedVersionsListing() } coAnswers { throw unauthorized }
+            coEvery { bibleVersionRepository.fullVersions("en") } coAnswers { throw unavailable }
 
             val viewModel = createViewModel()
             advanceUntilIdle()
@@ -143,8 +143,8 @@ class VersionsViewModelTest {
                 viewModel.state.value.activeLanguageVersions
                     .isEmpty(),
             )
-            coVerify(exactly = 1) { bibleReaderRepository.permittedVersionsListing() }
-            coVerify(exactly = 1) { bibleReaderRepository.fetchVersionsInLanguage("en") }
+            coVerify(exactly = 1) { bibleVersionRepository.permittedVersionsListing() }
+            coVerify(exactly = 1) { bibleVersionRepository.fullVersions("en") }
         }
 
     @Test
@@ -208,8 +208,8 @@ class VersionsViewModelTest {
     @Test
     fun `loadVersions sets initializing to false on success`() =
         runTest(testDispatcher) {
-            coEvery { bibleReaderRepository.permittedVersionsListing() } returns emptyList()
-            coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns emptyList()
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
 
             val viewModel = createViewModel()
             advanceUntilIdle()
@@ -220,9 +220,9 @@ class VersionsViewModelTest {
     @Test
     fun `loadVersionsForLanguage on success updates active language versions and name`() =
         runTest(testDispatcher) {
-            coEvery { bibleReaderRepository.permittedVersionsListing() } returns emptyList()
-            coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns emptyList()
-            coEvery { bibleReaderRepository.fetchVersionsInLanguage("es") } returns listOf(spanishVersion)
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("es") } returns listOf(spanishVersion)
             every { bibleReaderRepository.languageName("es") } returns "Español"
 
             val viewModel = createViewModel()
@@ -240,10 +240,10 @@ class VersionsViewModelTest {
     @Test
     fun `loadVersionsForLanguage sets initializing and activeLanguageTag before fetching`() =
         runTest(testDispatcher) {
-            coEvery { bibleReaderRepository.permittedVersionsListing() } returns emptyList()
-            coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns emptyList()
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
             lateinit var viewModel: VersionsViewModel
-            coEvery { bibleReaderRepository.fetchVersionsInLanguage("es") } coAnswers {
+            coEvery { bibleVersionRepository.fullVersions("es") } coAnswers {
                 assertTrue(viewModel.state.value.initializing)
                 assertEquals("es", viewModel.state.value.activeLanguageTag)
                 listOf(spanishVersion)
@@ -265,9 +265,9 @@ class VersionsViewModelTest {
     @Test
     fun `loadVersionsForLanguage on exception leaves prior versions and name and clears initializing`() =
         runTest(testDispatcher) {
-            coEvery { bibleReaderRepository.permittedVersionsListing() } returns listOf(permittedEn)
-            coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns listOf(activeEn)
-            coEvery { bibleReaderRepository.fetchVersionsInLanguage("es") } coAnswers {
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(permittedEn)
+            coEvery { bibleVersionRepository.fullVersions("en") } returns listOf(activeEn)
+            coEvery { bibleVersionRepository.fullVersions("es") } coAnswers {
                 throw RuntimeException("network")
             }
 
@@ -289,9 +289,9 @@ class VersionsViewModelTest {
     @Test
     fun `loadVersionsForLanguage when languageName throws after fetch keeps prior versions and name`() =
         runTest(testDispatcher) {
-            coEvery { bibleReaderRepository.permittedVersionsListing() } returns listOf(permittedEn)
-            coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns listOf(activeEn)
-            coEvery { bibleReaderRepository.fetchVersionsInLanguage("es") } returns listOf(spanishVersion)
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(permittedEn)
+            coEvery { bibleVersionRepository.fullVersions("en") } returns listOf(activeEn)
+            coEvery { bibleVersionRepository.fullVersions("es") } returns listOf(spanishVersion)
             every { bibleReaderRepository.languageName("es") } throws RuntimeException("name lookup failed")
 
             val viewModel = createViewModel()
@@ -307,7 +307,7 @@ class VersionsViewModelTest {
             assertEquals(versionsBefore, viewModel.state.value.activeLanguageVersions)
             assertEquals(nameBefore, viewModel.state.value.activeLanguageName)
             assertFalse(viewModel.state.value.initializing)
-            coVerify(exactly = 1) { bibleReaderRepository.fetchVersionsInLanguage("es") }
+            coVerify(exactly = 1) { bibleVersionRepository.fullVersions("es") }
             coVerify(exactly = 1) { bibleReaderRepository.languageName("es") }
         }
 
@@ -319,8 +319,8 @@ class VersionsViewModelTest {
                 every { YouVersionApi.organizations } returns mockOrganizationsApi
                 coEvery { mockOrganizationsApi.organization("org-1") } returns Organization.preview
 
-                coEvery { bibleReaderRepository.permittedVersionsListing() } returns emptyList()
-                coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns emptyList()
+                coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+                coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
 
                 val version =
                     BibleVersion(
@@ -350,8 +350,8 @@ class VersionsViewModelTest {
             try {
                 every { YouVersionApi.organizations } returns mockOrganizationsApi
 
-                coEvery { bibleReaderRepository.permittedVersionsListing() } returns emptyList()
-                coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns emptyList()
+                coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+                coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
 
                 val version = BibleVersion(id = 100, abbreviation = "X", languageTag = "en", organizationId = null)
                 val viewModel = createViewModel()
@@ -378,8 +378,8 @@ class VersionsViewModelTest {
                     throw RuntimeException("api error")
                 }
 
-                coEvery { bibleReaderRepository.permittedVersionsListing() } returns emptyList()
-                coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns emptyList()
+                coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+                coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
 
                 val version =
                     BibleVersion(
@@ -409,8 +409,8 @@ class VersionsViewModelTest {
                 every { YouVersionApi.organizations } returns mockOrganizationsApi
                 coEvery { mockOrganizationsApi.organization("org-1") } returns Organization.preview
 
-                coEvery { bibleReaderRepository.permittedVersionsListing() } returns emptyList()
-                coEvery { bibleReaderRepository.fetchVersionsInLanguage("en") } returns emptyList()
+                coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+                coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
 
                 val version =
                     BibleVersion(
