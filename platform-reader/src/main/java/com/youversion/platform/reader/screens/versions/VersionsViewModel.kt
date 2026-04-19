@@ -6,8 +6,8 @@ import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.organizations.models.Organization
-import com.youversion.platform.reader.domain.BibleReaderRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class VersionsViewModel(
-    private val bibleReaderRepository: BibleReaderRepository,
+    private val languageRepository: LanguageRepository,
     private val bibleVersionRepository: BibleVersionRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(State())
@@ -92,7 +92,7 @@ class VersionsViewModel(
                     )
                 }
                 val versions = bibleVersionRepository.fullVersions(languageTag)
-                val languageName = bibleReaderRepository.languageName(languageTag)
+                val languageName = languageRepository.languageName(languageTag)
                 _state.update {
                     it.copy(
                         activeLanguageVersions = versions,

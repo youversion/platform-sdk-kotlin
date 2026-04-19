@@ -66,7 +66,7 @@ class BibleReaderViewModelTest {
 
         coEvery { bibleVersionRepository.version(any()) } returns
             BibleVersion(id = 1, abbreviation = "KJV")
-        coEvery { bibleReaderRepository.loadLanguageNames(any()) } returns Unit
+        coEvery { languageRepository.loadLanguageNames(any()) } returns Unit
 
         viewModel =
             BibleReaderViewModel(

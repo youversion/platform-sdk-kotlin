@@ -223,7 +223,7 @@ class VersionsViewModelTest {
             coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
             coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
             coEvery { bibleVersionRepository.fullVersions("es") } returns listOf(spanishVersion)
-            every { bibleReaderRepository.languageName("es") } returns "Español"
+            every { languageRepository.languageName("es") } returns "Español"
 
             val viewModel = createViewModel()
             advanceUntilIdle()
@@ -248,7 +248,7 @@ class VersionsViewModelTest {
                 assertEquals("es", viewModel.state.value.activeLanguageTag)
                 listOf(spanishVersion)
             }
-            every { bibleReaderRepository.languageName("es") } returns "Español"
+            every { languageRepository.languageName("es") } returns "Español"
 
             viewModel = createViewModel()
             advanceUntilIdle()
@@ -292,7 +292,7 @@ class VersionsViewModelTest {
             coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(permittedEn)
             coEvery { bibleVersionRepository.fullVersions("en") } returns listOf(activeEn)
             coEvery { bibleVersionRepository.fullVersions("es") } returns listOf(spanishVersion)
-            every { bibleReaderRepository.languageName("es") } throws RuntimeException("name lookup failed")
+            every { languageRepository.languageName("es") } throws RuntimeException("name lookup failed")
 
             val viewModel = createViewModel()
             advanceUntilIdle()
@@ -308,7 +308,7 @@ class VersionsViewModelTest {
             assertEquals(nameBefore, viewModel.state.value.activeLanguageName)
             assertFalse(viewModel.state.value.initializing)
             coVerify(exactly = 1) { bibleVersionRepository.fullVersions("es") }
-            coVerify(exactly = 1) { bibleReaderRepository.languageName("es") }
+            coVerify(exactly = 1) { languageRepository.languageName("es") }
         }
 
     @Test

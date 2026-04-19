@@ -54,11 +54,11 @@ class LanguagesViewModelTest {
         )
 
     private fun stubSuccessfulLoad() {
-        coEvery { bibleReaderRepository.loadLanguageNames(any()) } returns Unit
-        every { bibleReaderRepository.allPermittedLanguageTags } returns listOf("en", "es")
-        every { bibleReaderRepository.languageName("en") } returns "English"
-        every { bibleReaderRepository.languageName("es") } returns "Spanish"
-        coEvery { bibleReaderRepository.suggestedLanguageTags() } returns listOf("en")
+        coEvery { languageRepository.loadLanguageNames(any()) } returns Unit
+        every { languageRepository.allPermittedLanguageTags } returns listOf("en", "es")
+        every { languageRepository.languageName("en") } returns "English"
+        every { languageRepository.languageName("es") } returns "Spanish"
+        coEvery { languageRepository.suggestedLanguageTags() } returns listOf("en")
     }
 
     // ----- State Initial Values
@@ -87,24 +87,24 @@ class LanguagesViewModelTest {
     fun `init calls loadLanguageNames with null when bibleVersion is null`() =
         runTest(testDispatcher) {
             stubSuccessfulLoad()
-            coEvery { bibleReaderRepository.loadLanguageNames(null) } returns Unit
+            coEvery { languageRepository.loadLanguageNames(null) } returns Unit
 
             viewModel = createViewModel(bibleVersion = null)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { bibleReaderRepository.loadLanguageNames(null) }
+            coVerify(exactly = 1) { languageRepository.loadLanguageNames(null) }
         }
 
     @Test
     fun `init calls loadLanguageNames with provided bibleVersion when non-null`() =
         runTest(testDispatcher) {
             stubSuccessfulLoad()
-            coEvery { bibleReaderRepository.loadLanguageNames(testBibleVersion) } returns Unit
+            coEvery { languageRepository.loadLanguageNames(testBibleVersion) } returns Unit
 
             viewModel = createViewModel(bibleVersion = testBibleVersion)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { bibleReaderRepository.loadLanguageNames(testBibleVersion) }
+            coVerify(exactly = 1) { languageRepository.loadLanguageNames(testBibleVersion) }
         }
 
     // ----- Success Path
@@ -136,7 +136,7 @@ class LanguagesViewModelTest {
     @Test
     fun `on loadLanguageNames exception does not update suggestedLanguages or allLanguages`() =
         runTest(testDispatcher) {
-            coEvery { bibleReaderRepository.loadLanguageNames(any()) } throws RuntimeException("test")
+            coEvery { languageRepository.loadLanguageNames(any()) } throws RuntimeException("test")
 
             viewModel = createViewModel(bibleVersion = null)
             advanceUntilIdle()
@@ -154,7 +154,7 @@ class LanguagesViewModelTest {
     @Test
     fun `on exception initializing is set to false in finally block`() =
         runTest(testDispatcher) {
-            coEvery { bibleReaderRepository.loadLanguageNames(any()) } throws RuntimeException("test")
+            coEvery { languageRepository.loadLanguageNames(any()) } throws RuntimeException("test")
 
             viewModel = createViewModel(bibleVersion = null)
             advanceUntilIdle()
@@ -165,11 +165,11 @@ class LanguagesViewModelTest {
     @Test
     fun `on suggestedLanguageTags exception does not update suggestedLanguages or allLanguages`() =
         runTest(testDispatcher) {
-            coEvery { bibleReaderRepository.loadLanguageNames(any()) } returns Unit
-            every { bibleReaderRepository.allPermittedLanguageTags } returns listOf("en", "es")
-            every { bibleReaderRepository.languageName("en") } returns "English"
-            every { bibleReaderRepository.languageName("es") } returns "Spanish"
-            coEvery { bibleReaderRepository.suggestedLanguageTags() } throws RuntimeException("test")
+            coEvery { languageRepository.loadLanguageNames(any()) } returns Unit
+            every { languageRepository.allPermittedLanguageTags } returns listOf("en", "es")
+            every { languageRepository.languageName("en") } returns "English"
+            every { languageRepository.languageName("es") } returns "Spanish"
+            coEvery { languageRepository.suggestedLanguageTags() } throws RuntimeException("test")
 
             viewModel = createViewModel(bibleVersion = null)
             advanceUntilIdle()
@@ -201,12 +201,12 @@ class LanguagesViewModelTest {
     fun `loadLanguageNames is called before suggestedLanguageTags`() =
         runTest(testDispatcher) {
             val callOrder = mutableListOf<String>()
-            coEvery { bibleReaderRepository.loadLanguageNames(any()) } answers {
+            coEvery { languageRepository.loadLanguageNames(any()) } answers {
                 callOrder.add("loadLanguageNames")
             }
-            every { bibleReaderRepository.allPermittedLanguageTags } returns listOf("en")
-            every { bibleReaderRepository.languageName("en") } returns "English"
-            coEvery { bibleReaderRepository.suggestedLanguageTags() } answers {
+            every { languageRepository.allPermittedLanguageTags } returns listOf("en")
+            every { languageRepository.languageName("en") } returns "English"
+            coEvery { languageRepository.suggestedLanguageTags() } answers {
                 callOrder.add("suggestedLanguageTags")
                 listOf("en")
             }

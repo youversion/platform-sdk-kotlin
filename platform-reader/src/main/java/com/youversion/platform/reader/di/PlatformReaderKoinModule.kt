@@ -28,6 +28,7 @@ internal val PlatformReaderKoinModule =
                 bibleReaderRepository = get(),
                 userSettingsRepository = get(),
                 bibleChapterRepository = get(),
+                languageRepository = get(),
                 copyManager = get(),
                 shareManager = get(),
             )
@@ -38,7 +39,7 @@ internal val PlatformReaderKoinModule =
         factory { params ->
             LanguagesViewModel(
                 bibleVersion = params[0],
-                bibleReaderRepository = get(),
+                languageRepository = get(),
             )
         }
     }

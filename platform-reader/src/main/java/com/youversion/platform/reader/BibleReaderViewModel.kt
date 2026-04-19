@@ -11,6 +11,7 @@ import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
@@ -33,6 +34,7 @@ class BibleReaderViewModel(
     private val bibleReaderRepository: BibleReaderRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val bibleChapterRepository: BibleChapterRepository,
+    private val languageRepository: LanguageRepository,
     private val copyManager: CopyManager,
     private val shareManager: ShareManager,
 ) : ViewModel() {
@@ -401,7 +403,7 @@ class BibleReaderViewModel(
     private fun loadLanguages() {
         viewModelScope.launch {
             try {
-                bibleReaderRepository.loadLanguageNames(bibleVersion)
+                languageRepository.loadLanguageNames(bibleVersion)
             } catch (e: Exception) {
                 Logger.w("Failed to get languages", e)
             }
