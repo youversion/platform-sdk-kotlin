@@ -3,6 +3,7 @@ package com.youversion.platform.reader.screens.languages
 import androidx.lifecycle.viewModelScope
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.domain.BibleReaderRepository
+import com.youversion.platform.ui.views.components.LanguageRowItem
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

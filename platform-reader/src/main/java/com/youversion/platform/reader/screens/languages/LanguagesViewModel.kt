@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.languages.domain.LanguageRepository
+import com.youversion.platform.ui.views.components.LanguageRowItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update

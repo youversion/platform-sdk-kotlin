@@ -16,10 +16,10 @@ import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
-import com.youversion.platform.reader.screens.languages.LanguageRowItem
 import com.youversion.platform.reader.theme.FontDefinitionProvider
 import com.youversion.platform.reader.theme.ReaderTheme
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.views.components.LanguageRowItem
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -334,13 +334,13 @@ class BibleReaderViewModel(
         shareManager.shareText(text = shareText, title = shareTitle)
     }
 
-    fun decreaseFontSize() {
+    private fun decreaseFontSize() {
         val currentFontSize = _state.value.fontSize
         val nextFontSize = ReaderFontSettings.nextSmallerFontSize(currentFontSize)
         setFontSize(nextFontSize)
     }
 
-    fun increaseFontSize() {
+    private fun increaseFontSize() {
         val currentFontSize = _state.value.fontSize
         val nextFontSize = ReaderFontSettings.nextLargerFontSize(currentFontSize)
         setFontSize(nextFontSize)
@@ -351,12 +351,12 @@ class BibleReaderViewModel(
         _state.update { it.copy(fontSize = size) }
     }
 
-    fun setFontFamily(action: Action.SetFontDefinition) {
+    private fun setFontFamily(action: Action.SetFontDefinition) {
         userSettingsRepository.readerFontFamilyName = action.fontDefinition.fontName
         _state.update { it.copy(selectedFontDefinition = action.fontDefinition) }
     }
 
-    fun openFootnotes(action: Action.OpenFootnotes) {
+    private fun openFootnotes(action: Action.OpenFootnotes) {
         _state.update {
             it.copy(
                 showingFootnotes = true,
@@ -366,7 +366,7 @@ class BibleReaderViewModel(
         }
     }
 
-    fun closeFootnotes() {
+    private fun closeFootnotes() {
         _state.update {
             it.copy(
                 showingFootnotes = false,
@@ -394,7 +394,7 @@ class BibleReaderViewModel(
         }
     }
 
-    fun setReaderTheme(action: Action.SetReaderTheme) {
+    private fun setReaderTheme(action: Action.SetReaderTheme) {
         BibleReaderTheme.selectedColorScheme.value = action.readerTheme.colorScheme
         userSettingsRepository.readerThemeId = action.readerTheme.id
     }

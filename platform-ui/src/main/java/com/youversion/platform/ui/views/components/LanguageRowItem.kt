@@ -1,4 +1,4 @@
-package com.youversion.platform.reader.screens.languages
+package com.youversion.platform.ui.views.components
 
 data class LanguageRowItem(
     val languageTag: String,

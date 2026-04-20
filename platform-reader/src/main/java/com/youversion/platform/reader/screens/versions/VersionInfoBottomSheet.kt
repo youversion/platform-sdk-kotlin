@@ -40,6 +40,7 @@ import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
 import com.youversion.platform.reader.theme.Charcoal
 import com.youversion.platform.reader.theme.UntitledSerif
 import com.youversion.platform.reader.theme.readerColorScheme
+import com.youversion.platform.ui.R as UiR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -223,7 +224,7 @@ private fun VersionWebsite(
                     ).padding(vertical = 8.dp),
         ) {
             Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.ic_material_language),
+                imageVector = ImageVector.vectorResource(UiR.drawable.ic_material_language),
                 contentDescription = null,
             )
 
