@@ -6,7 +6,7 @@ import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.reader.screens.languages.LanguagesViewModel
-import com.youversion.platform.reader.screens.versions.VersionsViewModel
+import com.youversion.platform.ui.views.versions.VersionsViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module

@@ -1,4 +1,4 @@
-package com.youversion.platform.reader.screens.versions
+package com.youversion.platform.ui.views.versions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

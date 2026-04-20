@@ -30,6 +30,7 @@ import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.BibleVersionRow
 import com.youversion.platform.ui.views.components.LanguageSelector
+import com.youversion.platform.ui.views.versions.VersionsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
