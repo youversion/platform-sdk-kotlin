@@ -2,7 +2,7 @@ package com.youversion.platform.reader.screens.languages
 
 import androidx.lifecycle.viewModelScope
 import com.youversion.platform.core.bibles.models.BibleVersion
-import com.youversion.platform.reader.domain.BibleReaderRepository
+import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.ui.views.components.LanguageRowItem
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -28,7 +28,7 @@ import kotlin.test.assertTrue
 class LanguagesViewModelTest {
     private lateinit var testDispatcher: TestDispatcher
 
-    private lateinit var bibleReaderRepository: BibleReaderRepository
+    private lateinit var languageRepository: LanguageRepository
     private lateinit var viewModel: LanguagesViewModel
 
     private val testBibleVersion = BibleVersion(id = 1, abbreviation = "KJV", languageTag = "en")
@@ -37,7 +37,7 @@ class LanguagesViewModelTest {
     fun setup() {
         testDispatcher = StandardTestDispatcher()
         Dispatchers.setMain(testDispatcher)
-        bibleReaderRepository = mockk(relaxed = true)
+        languageRepository = mockk(relaxed = true)
     }
 
     @AfterTest
@@ -51,7 +51,7 @@ class LanguagesViewModelTest {
     private fun createViewModel(bibleVersion: BibleVersion?): LanguagesViewModel =
         LanguagesViewModel(
             bibleVersion = bibleVersion,
-            bibleReaderRepository = bibleReaderRepository,
+            languageRepository = languageRepository,
         )
 
     private fun stubSuccessfulLoad() {

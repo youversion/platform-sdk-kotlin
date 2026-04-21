@@ -74,6 +74,7 @@ class BibleReaderViewModelInitTests {
             bibleReaderRepository = bibleReaderRepository,
             userSettingsRepository = userSettingsRepository,
             bibleChapterRepository = mockk(relaxed = true),
+            languageRepository = mockk(relaxed = true),
             copyManager = mockk(relaxed = true),
             shareManager = mockk(relaxed = true),
         )
@@ -184,29 +185,6 @@ class BibleReaderViewModelInitTests {
 
             assertEquals(ReaderFontSettings.DEFAULT_FONT_DEFINITION, vm.state.value.selectedFontDefinition)
             assertEquals(ReaderFontSettings.DEFAULT_FONT_SIZE, vm.state.value.fontSize)
-        }
-
-    // ----- loadVersionIfNeeded
-
-    @Test
-    fun `init loads version when bibleVersion is null`() =
-        runTest(testDispatcher) {
-            createViewModel()
-            testDispatcher.scheduler.advanceUntilIdle()
-
-            coVerify { bibleVersionRepository.version(id = defaultReference.versionId) }
-        }
-
-    @Test
-    fun `init loads version exactly once during initialization`() =
-        runTest(testDispatcher) {
-            val testVersion = BibleVersion(id = 1, abbreviation = "KJV")
-            coEvery { bibleVersionRepository.version(id = 1) } returns testVersion
-
-            createViewModel()
-            testDispatcher.scheduler.advanceUntilIdle()
-
-            coVerify(exactly = 1) { bibleVersionRepository.version(id = 1) }
         }
 
     @Test

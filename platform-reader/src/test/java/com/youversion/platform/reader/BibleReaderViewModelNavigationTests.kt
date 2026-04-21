@@ -93,6 +93,7 @@ class BibleReaderViewModelNavigationTests {
                 bibleReaderRepository = bibleReaderRepository,
                 userSettingsRepository = mockk(relaxed = true),
                 bibleChapterRepository = mockk(relaxed = true),
+                languageRepository = mockk(relaxed = true),
                 copyManager = mockk(relaxed = true),
                 shareManager = mockk(relaxed = true),
             )

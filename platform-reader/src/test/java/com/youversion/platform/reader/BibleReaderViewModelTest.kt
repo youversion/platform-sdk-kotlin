@@ -6,6 +6,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
@@ -39,6 +40,7 @@ class BibleReaderViewModelTest {
     private lateinit var bibleReaderRepository: BibleReaderRepository
     private lateinit var userSettingsRepository: UserSettingsRepository
     private lateinit var bibleChapterRepository: BibleChapterRepository
+    private lateinit var languageRepository: LanguageRepository
     private lateinit var copyManager: CopyManager
     private lateinit var shareManager: ShareManager
     private lateinit var viewModel: BibleReaderViewModel
@@ -59,6 +61,7 @@ class BibleReaderViewModelTest {
         bibleReaderRepository = mockk(relaxed = true)
         userSettingsRepository = mockk(relaxed = true)
         bibleChapterRepository = mockk(relaxed = true)
+        languageRepository = mockk(relaxed = true)
         copyManager = mockk(relaxed = true)
         shareManager = mockk(relaxed = true)
 
@@ -76,6 +79,7 @@ class BibleReaderViewModelTest {
                 bibleReaderRepository = bibleReaderRepository,
                 userSettingsRepository = userSettingsRepository,
                 bibleChapterRepository = bibleChapterRepository,
+                languageRepository = languageRepository,
                 copyManager = copyManager,
                 shareManager = shareManager,
             )

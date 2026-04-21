@@ -18,7 +18,6 @@ import com.youversion.platform.reader.screens.references.ReferencesScreen
 import com.youversion.platform.reader.screens.versions.VersionsScreen
 import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
 import com.youversion.platform.reader.theme.FontDefinitionProvider
-import com.youversion.platform.ui.views.versions.VersionsViewModel
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinIsolatedContext
 import org.koin.compose.module.rememberKoinModules
@@ -41,7 +40,7 @@ fun BibleReader(
 
         val bibleReaderViewModel: BibleReaderViewModel =
             koinViewModel { parametersOf(bibleReference, fontDefinitionProvider) }
-        val versionViewModel: VersionsViewModel = koinViewModel()
+        val versionViewModel = bibleReaderViewModel.bibleVersionsViewModel
 
         val navController = rememberNavController()
         val onDestinationClick: (BibleReaderDestination) -> Unit = { destination ->

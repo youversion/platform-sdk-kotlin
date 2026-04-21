@@ -30,12 +30,12 @@ import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.BibleVersionRow
 import com.youversion.platform.ui.views.components.LanguageSelector
-import com.youversion.platform.ui.views.versions.VersionsViewModel
+import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun VersionsScreen(
-    viewModel: VersionsViewModel,
+    viewModel: BibleVersionsViewModel,
     onBackClick: () -> Unit,
     onLanguagesClick: () -> Unit,
     onVersionSelect: (BibleVersion) -> Unit,
@@ -127,7 +127,7 @@ internal fun VersionsScreen(
                                 bibleVersion = version,
                                 onVersionInfoClick = {
                                     viewModel.onAction(
-                                        VersionsViewModel.Action.VersionInfoTapped(version),
+                                        BibleVersionsViewModel.Action.VersionInfoTapped(version),
                                     )
                                 },
                                 onVersionClick = {
@@ -143,7 +143,7 @@ internal fun VersionsScreen(
                 VersionInfoBottomSheet(
                     bibleVersion = it,
                     organization = state.selectedOrganization,
-                    onDismissRequest = { viewModel.onAction(VersionsViewModel.Action.VersionDismissed) },
+                    onDismissRequest = { viewModel.onAction(BibleVersionsViewModel.Action.VersionDismissed) },
                 )
             }
         }

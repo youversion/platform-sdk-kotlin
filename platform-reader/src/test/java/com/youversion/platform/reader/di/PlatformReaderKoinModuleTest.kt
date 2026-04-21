@@ -14,7 +14,6 @@ import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.reader.screens.languages.LanguagesViewModel
-import com.youversion.platform.reader.screens.versions.VersionsViewModel
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -138,13 +137,6 @@ class PlatformReaderKoinModuleTest {
         val koin = createKoin()
 
         koin.get<BibleReaderViewModel> { parametersOf(null, null) }
-    }
-
-    @Test
-    fun `VersionsViewModel resolves with BibleReaderRepository injected`() {
-        val koin = createKoin()
-
-        koin.get<VersionsViewModel>()
     }
 
     @Test

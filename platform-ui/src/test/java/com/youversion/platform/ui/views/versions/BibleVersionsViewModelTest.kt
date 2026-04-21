@@ -1,10 +1,11 @@
-package com.youversion.platform.reader.screens.versions
+package com.youversion.platform.ui.views.versions
 
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.organizations.api.OrganizationsApi
 import com.youversion.platform.core.organizations.models.Organization
-import com.youversion.platform.reader.domain.BibleReaderRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -28,10 +29,11 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class VersionsViewModelTest {
+class BibleVersionsViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var bibleReaderRepository: BibleReaderRepository
+    private lateinit var bibleVersionRepository: BibleVersionRepository
+    private lateinit var languageRepository: LanguageRepository
     private lateinit var mockOrganizationsApi: OrganizationsApi
 
     private val permittedEn = BibleVersion(id = 10, abbreviation = "KJV", languageTag = "en")
@@ -41,7 +43,8 @@ class VersionsViewModelTest {
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        bibleReaderRepository = mockk(relaxed = true)
+        bibleVersionRepository = mockk(relaxed = true)
+        languageRepository = mockk(relaxed = true)
         mockOrganizationsApi = mockk()
     }
 
@@ -56,7 +59,60 @@ class VersionsViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(): VersionsViewModel = VersionsViewModel(bibleReaderRepository)
+    private fun createViewModel(
+        initialVersionId: Int? = null,
+        onVersionChange: (BibleVersion) -> Unit = {},
+    ): BibleVersionsViewModel =
+        BibleVersionsViewModel(
+            initialVersionId = initialVersionId,
+            onVersionChange = onVersionChange,
+            languageRepository = languageRepository,
+            bibleVersionRepository = bibleVersionRepository,
+        )
+
+    @Test
+    fun `loadVersion fires onVersionChange with loaded version when initialVersionId is provided`() =
+        runTest(testDispatcher) {
+            val loaded = BibleVersion(id = 42, abbreviation = "NIV", languageTag = "en")
+            coEvery { bibleVersionRepository.version(id = 42) } returns loaded
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
+
+            var received: BibleVersion? = null
+            createViewModel(initialVersionId = 42, onVersionChange = { received = it })
+            advanceUntilIdle()
+
+            assertEquals(loaded, received)
+            coVerify(exactly = 1) { bibleVersionRepository.version(id = 42) }
+        }
+
+    @Test
+    fun `loadVersion does not fire onVersionChange when initialVersionId is null`() =
+        runTest(testDispatcher) {
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
+
+            var received: BibleVersion? = null
+            createViewModel(initialVersionId = null, onVersionChange = { received = it })
+            advanceUntilIdle()
+
+            assertNull(received)
+            coVerify(exactly = 0) { bibleVersionRepository.version(any()) }
+        }
+
+    @Test
+    fun `loadVersion does not fire onVersionChange when repository throws`() =
+        runTest(testDispatcher) {
+            coEvery { bibleVersionRepository.version(id = 42) } coAnswers { throw RuntimeException("boom") }
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
+
+            var received: BibleVersion? = null
+            createViewModel(initialVersionId = 42, onVersionChange = { received = it })
+            advanceUntilIdle()
+
+            assertNull(received)
+        }
 
     @Test
     fun `loadVersions on success loads permitted and active language versions concurrently`() =
@@ -117,8 +173,6 @@ class VersionsViewModelTest {
                 viewModel.state.value.activeLanguageVersions
                     .isEmpty(),
             )
-            // Each `async` child catches its own exceptions internally, so both always complete
-            // regardless of individual failures—both repository calls occur.
             coVerify(exactly = 1) { bibleVersionRepository.permittedVersionsListing() }
             coVerify(exactly = 1) { bibleVersionRepository.fullVersions("en") }
         }
@@ -242,7 +296,7 @@ class VersionsViewModelTest {
         runTest(testDispatcher) {
             coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
             coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
-            lateinit var viewModel: VersionsViewModel
+            lateinit var viewModel: BibleVersionsViewModel
             coEvery { bibleVersionRepository.fullVersions("es") } coAnswers {
                 assertTrue(viewModel.state.value.initializing)
                 assertEquals("es", viewModel.state.value.activeLanguageTag)
@@ -332,7 +386,7 @@ class VersionsViewModelTest {
                 val viewModel = createViewModel()
                 advanceUntilIdle()
 
-                viewModel.onAction(VersionsViewModel.Action.VersionInfoTapped(version))
+                viewModel.onAction(BibleVersionsViewModel.Action.VersionInfoTapped(version))
                 advanceUntilIdle()
 
                 assertEquals(version, viewModel.state.value.selectedBibleVersion)
@@ -357,7 +411,7 @@ class VersionsViewModelTest {
                 val viewModel = createViewModel()
                 advanceUntilIdle()
 
-                viewModel.onAction(VersionsViewModel.Action.VersionInfoTapped(version))
+                viewModel.onAction(BibleVersionsViewModel.Action.VersionInfoTapped(version))
                 advanceUntilIdle()
 
                 assertEquals(version, viewModel.state.value.selectedBibleVersion)
@@ -391,7 +445,7 @@ class VersionsViewModelTest {
                 val viewModel = createViewModel()
                 advanceUntilIdle()
 
-                viewModel.onAction(VersionsViewModel.Action.VersionInfoTapped(version))
+                viewModel.onAction(BibleVersionsViewModel.Action.VersionInfoTapped(version))
                 advanceUntilIdle()
 
                 assertEquals(version, viewModel.state.value.selectedBibleVersion)
@@ -422,11 +476,11 @@ class VersionsViewModelTest {
                 val viewModel = createViewModel()
                 advanceUntilIdle()
 
-                viewModel.onAction(VersionsViewModel.Action.VersionInfoTapped(version))
+                viewModel.onAction(BibleVersionsViewModel.Action.VersionInfoTapped(version))
                 advanceUntilIdle()
                 assertEquals(Organization.preview, viewModel.state.value.selectedOrganization)
 
-                viewModel.onAction(VersionsViewModel.Action.VersionDismissed)
+                viewModel.onAction(BibleVersionsViewModel.Action.VersionDismissed)
 
                 assertNull(viewModel.state.value.selectedBibleVersion)
                 assertNull(viewModel.state.value.selectedOrganization)
@@ -438,7 +492,7 @@ class VersionsViewModelTest {
     @Test
     fun `State versionsCount returns permitted minimal versions count`() {
         val state =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 permittedMinimalVersions = listOf(permittedEn, activeEn),
             )
         assertEquals(2, state.versionsCount)
@@ -448,7 +502,7 @@ class VersionsViewModelTest {
     fun `State languagesCount returns distinct language tags count`() {
         val en2 = BibleVersion(id = 3, abbreviation = "A", languageTag = "en")
         val state =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 permittedMinimalVersions = listOf(permittedEn, spanishVersion, en2),
             )
         assertEquals(2, state.languagesCount)
@@ -457,7 +511,7 @@ class VersionsViewModelTest {
     @Test
     fun `State showEmptyState is true when not initializing and no permitted versions`() {
         val empty =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = emptyList(),
             )
@@ -467,7 +521,7 @@ class VersionsViewModelTest {
     @Test
     fun `State showEmptyState is false when initializing`() {
         val loading =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = true,
                 permittedMinimalVersions = emptyList(),
             )
@@ -477,7 +531,7 @@ class VersionsViewModelTest {
     @Test
     fun `State activeLanguageVersionsCount counts versions matching active language tag`() {
         val state =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 permittedMinimalVersions = listOf(permittedEn, spanishVersion),
                 activeLanguageTag = "en",
             )

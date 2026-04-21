@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -26,10 +27,10 @@ class VersionsScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private val stateFlow = MutableStateFlow(VersionsViewModel.State())
+    private val stateFlow = MutableStateFlow(BibleVersionsViewModel.State())
 
     private val mockViewModel =
-        mockk<VersionsViewModel>(relaxed = true) {
+        mockk<BibleVersionsViewModel>(relaxed = true) {
             every { state } returns stateFlow
         }
 
@@ -62,7 +63,7 @@ class VersionsScreenTest {
     @Test
     fun `shows version count and language count subtitle when versionsCount is greater than zero`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions =
                     listOf(
@@ -80,7 +81,7 @@ class VersionsScreenTest {
     @Test
     fun `does not show subtitle when versionsCount is zero`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = emptyList(),
             )
@@ -95,7 +96,7 @@ class VersionsScreenTest {
     @Test
     fun `displays Language label and active language name in language selector`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 activeLanguageName = "Español",
             )
 
@@ -108,7 +109,7 @@ class VersionsScreenTest {
     @Test
     fun `language selector is disabled during initialization`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = true,
             )
         var isLanguagesClicked = false
@@ -123,7 +124,7 @@ class VersionsScreenTest {
     @Test
     fun `language selector calls onLanguagesClick when enabled`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = listOf(BibleVersion(id = 1, languageTag = "en")),
             )
@@ -141,7 +142,7 @@ class VersionsScreenTest {
     @Test
     fun `shows section header with active language name and version count`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 activeLanguageName = "English",
                 activeLanguageTag = "en",
@@ -162,7 +163,7 @@ class VersionsScreenTest {
     @Test
     fun `shows CircularProgressIndicator when initializing`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = true,
             )
 
@@ -179,7 +180,7 @@ class VersionsScreenTest {
     @Test
     fun `shows empty state message when showEmptyState is true`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = emptyList(),
             )
@@ -194,7 +195,7 @@ class VersionsScreenTest {
     @Test
     fun `renders version rows when versions are available`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = listOf(BibleVersion(id = 1, languageTag = "en")),
                 activeLanguageVersions =
@@ -239,7 +240,7 @@ class VersionsScreenTest {
                 languageTag = "en",
             )
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions =
                     listOf(
@@ -271,7 +272,7 @@ class VersionsScreenTest {
                 languageTag = "en",
             )
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = listOf(BibleVersion(id = 1, languageTag = "en")),
                 activeLanguageVersions = listOf(version),
@@ -283,7 +284,7 @@ class VersionsScreenTest {
         composeTestRule.waitForIdle()
 
         verify {
-            mockViewModel.onAction(VersionsViewModel.Action.VersionInfoTapped(version))
+            mockViewModel.onAction(BibleVersionsViewModel.Action.VersionInfoTapped(version))
         }
     }
 
@@ -292,7 +293,7 @@ class VersionsScreenTest {
     @Test
     fun `displays localizedAbbreviation when available`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = listOf(BibleVersion(id = 1, languageTag = "en")),
                 activeLanguageVersions =
@@ -314,7 +315,7 @@ class VersionsScreenTest {
     @Test
     fun `displays abbreviation when localizedAbbreviation is null`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = listOf(BibleVersion(id = 1, languageTag = "en")),
                 activeLanguageVersions =
@@ -336,7 +337,7 @@ class VersionsScreenTest {
     @Test
     fun `displays id as abbreviation when both localizedAbbreviation and abbreviation are null`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = listOf(BibleVersion(id = 42, languageTag = "en")),
                 activeLanguageVersions =
@@ -359,7 +360,7 @@ class VersionsScreenTest {
     @Test
     fun `displays localizedTitle when available`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = listOf(BibleVersion(id = 1, languageTag = "en")),
                 activeLanguageVersions =
@@ -381,7 +382,7 @@ class VersionsScreenTest {
     @Test
     fun `displays title when localizedTitle is null`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = listOf(BibleVersion(id = 1, languageTag = "en")),
                 activeLanguageVersions =
@@ -403,7 +404,7 @@ class VersionsScreenTest {
     @Test
     fun `displays id as title when both localizedTitle and title are null`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = listOf(BibleVersion(id = 77, languageTag = "en")),
                 activeLanguageVersions =
@@ -428,7 +429,7 @@ class VersionsScreenTest {
     @Test
     fun `does not show VersionInfoBottomSheet when selectedBibleVersion is null`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = listOf(BibleVersion(id = 1, languageTag = "en")),
                 selectedBibleVersion = null,
@@ -443,7 +444,7 @@ class VersionsScreenTest {
     @Test
     fun `shows VersionInfoBottomSheet when selectedBibleVersion is non-null`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = listOf(BibleVersion(id = 1, languageTag = "en")),
                 selectedBibleVersion = BibleVersion.preview,
@@ -458,7 +459,7 @@ class VersionsScreenTest {
     @Test
     fun `dismissing bottom sheet via Maybe Later dispatches VersionDismissed action`() {
         stateFlow.value =
-            VersionsViewModel.State(
+            BibleVersionsViewModel.State(
                 initializing = false,
                 permittedMinimalVersions = listOf(BibleVersion(id = 1, languageTag = "en")),
                 selectedBibleVersion = BibleVersion.preview,
@@ -470,6 +471,6 @@ class VersionsScreenTest {
         composeTestRule.onNodeWithText("Maybe Later").performClick()
         composeTestRule.waitForIdle()
 
-        verify { mockViewModel.onAction(VersionsViewModel.Action.VersionDismissed) }
+        verify { mockViewModel.onAction(BibleVersionsViewModel.Action.VersionDismissed) }
     }
 }

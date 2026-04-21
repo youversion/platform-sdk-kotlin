@@ -21,6 +21,7 @@ import com.youversion.platform.reader.theme.ReaderTheme
 import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.LanguageRowItem
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
+import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,12 +30,13 @@ import kotlinx.coroutines.launch
 
 class BibleReaderViewModel(
     bibleReference: BibleReference?,
-    private val fontDefinitionProvider: FontDefinitionProvider?,
+    fontDefinitionProvider: FontDefinitionProvider?,
     private val bibleVersionRepository: BibleVersionRepository,
     private val bibleReaderRepository: BibleReaderRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val bibleChapterRepository: BibleChapterRepository,
     private val languageRepository: LanguageRepository,
+    bibleVersionsViewModel: BibleVersionsViewModel? = null,
     private val copyManager: CopyManager,
     private val shareManager: ShareManager,
 ) : ViewModel() {
@@ -47,9 +49,12 @@ class BibleReaderViewModel(
             bibleReaderRepository.lastBibleReference = value
             _state.update { it.copy(bibleReference = value) }
         }
+
     internal var bibleVersion: BibleVersion?
         get() = _state.value.bibleVersion
         set(value) = _state.update { it.copy(bibleVersion = value) }
+
+    internal val bibleVersionsViewModel: BibleVersionsViewModel
 
     init {
         val reference = bibleReaderRepository.produceBibleReference(bibleReference)
@@ -61,8 +66,19 @@ class BibleReaderViewModel(
                 ),
             )
 
+        this.bibleVersionsViewModel =
+            bibleVersionsViewModel ?: BibleVersionsViewModel(
+                initialVersionId = reference.versionId,
+                onVersionChange = {},
+                languageRepository = languageRepository,
+                bibleVersionRepository = bibleVersionRepository,
+            )
+        this.bibleVersionsViewModel.onVersionChange = { version ->
+            this.bibleVersion = version
+            onHeaderSelectionChange(this.bibleReference.copy(versionId = version.id))
+        }
+
         loadUserSettingsFromStorage()
-        loadVersionIfNeeded()
         loadLanguages()
     }
 
@@ -81,18 +97,6 @@ class BibleReaderViewModel(
 
         userSettingsRepository.readerFontSize?.let { savedFontSize ->
             _state.update { it.copy(fontSize = savedFontSize.sp) }
-        }
-    }
-
-    private fun loadVersionIfNeeded() {
-        if (bibleVersion == null || bibleVersion?.id != bibleReference.versionId) {
-            viewModelScope.launch {
-                try {
-                    bibleVersion = bibleVersionRepository.version(id = bibleReference.versionId)
-                } catch (e: Exception) {
-                    // TODO: Select fallback version error
-                }
-            }
         }
     }
 

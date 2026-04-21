@@ -88,6 +88,7 @@ class BibleReaderViewModelStateTests {
                         every { readerFontSize } returns null
                     },
                 bibleChapterRepository = mockk(relaxed = true),
+                languageRepository = mockk(relaxed = true),
                 copyManager = mockk(relaxed = true),
                 shareManager = mockk(relaxed = true),
             )

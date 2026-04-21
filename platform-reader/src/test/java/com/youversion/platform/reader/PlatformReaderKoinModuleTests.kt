@@ -11,7 +11,6 @@ import com.youversion.platform.reader.di.PlatformReaderKoinModule
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
-import com.youversion.platform.reader.screens.versions.VersionsViewModel
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -86,20 +85,6 @@ class PlatformReaderKoinModuleTests {
             }.koin
 
         koin.get<BibleReaderViewModel> { parametersOf(null, null) }
-        koin.close()
-    }
-
-    // ----- VersionsViewModel
-
-    @Test
-    fun `module resolves VersionsViewModel`() {
-        val koin =
-            koinApplication {
-                allowOverride(true)
-                modules(PlatformReaderKoinModule, testDependenciesModule)
-            }.koin
-
-        koin.get<VersionsViewModel>()
         koin.close()
     }
 }

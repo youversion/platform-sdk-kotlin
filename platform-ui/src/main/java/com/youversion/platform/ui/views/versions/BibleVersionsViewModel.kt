@@ -16,7 +16,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class VersionsViewModel(
+/**
+ * @param onVersionChange called when the user has chosen a new version (or their first). The caller
+ *   should ensure their current reference exists in this new version and choose a new one if not.
+ */
+class BibleVersionsViewModel(
+    initialVersionId: Int? = null,
+    var onVersionChange: (BibleVersion) -> Unit,
     private val languageRepository: LanguageRepository,
     private val bibleVersionRepository: BibleVersionRepository,
 ) : ViewModel() {
@@ -24,7 +30,28 @@ class VersionsViewModel(
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
 
     init {
+        viewModelScope.launch {
+            loadVersion(versionId = initialVersionId)
+        }
         loadVersions()
+    }
+
+    private suspend fun loadVersion(versionId: Int?) {
+        var loadedVersion: BibleVersion? = null
+        if (versionId != null) {
+            try {
+                loadedVersion = bibleVersionRepository.version(id = versionId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Logger.e("Error loading default version", e)
+            }
+        }
+        if (loadedVersion != null) {
+            onVersionChange(loadedVersion)
+        } else {
+            // TODO: selectFallbackVersion
+        }
     }
 
     /**
