@@ -12,6 +12,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -92,11 +93,11 @@ class BibleVersionsViewModelTest {
             coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
             coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
 
-            var received: BibleVersion? = null
-            createViewModel(initialVersionId = null, onVersionChange = { received = it })
+            val onVersionChange = mockk<(BibleVersion) -> Unit>(relaxed = true)
+            createViewModel(initialVersionId = null, onVersionChange = onVersionChange)
             advanceUntilIdle()
 
-            assertNull(received)
+            verify(exactly = 0) { onVersionChange(any()) }
             coVerify(exactly = 0) { bibleVersionRepository.version(any()) }
         }
 
@@ -107,11 +108,80 @@ class BibleVersionsViewModelTest {
             coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
             coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
 
+            val onVersionChange = mockk<(BibleVersion) -> Unit>(relaxed = true)
+            createViewModel(initialVersionId = 42, onVersionChange = onVersionChange)
+            advanceUntilIdle()
+
+            verify(exactly = 0) { onVersionChange(any()) }
+        }
+
+    @Test
+    fun `selectFallbackVersion picks first downloaded version when downloads are not empty`() =
+        runTest(testDispatcher) {
+            val downloaded = BibleVersion(id = 77, abbreviation = "D", languageTag = "en")
+            every { bibleVersionRepository.downloadedVersions } returns listOf(77)
+            coEvery { bibleVersionRepository.version(id = 77) } returns downloaded
+
+            var received: BibleVersion? = null
+            createViewModel(initialVersionId = null, onVersionChange = { received = it })
+            advanceUntilIdle()
+
+            assertEquals(downloaded, received)
+        }
+
+    @Test
+    fun `selectFallbackVersion picks first English permitted version when downloads are empty`() =
+        runTest(testDispatcher) {
+            val english = BibleVersion(id = 11, abbreviation = "NIV", languageTag = "en")
+            coEvery { bibleVersionRepository.permittedVersions() } returns listOf(spanishVersion, english)
+            coEvery { bibleVersionRepository.version(id = 11) } returns english
+
+            var received: BibleVersion? = null
+            createViewModel(initialVersionId = null, onVersionChange = { received = it })
+            advanceUntilIdle()
+
+            assertEquals(english, received)
+        }
+
+    @Test
+    fun `selectFallbackVersion picks first permitted version when no English is available`() =
+        runTest(testDispatcher) {
+            val french = BibleVersion(id = 55, abbreviation = "LSG", languageTag = "fr")
+            coEvery { bibleVersionRepository.permittedVersions() } returns listOf(french, spanishVersion)
+            coEvery { bibleVersionRepository.version(id = 55) } returns french
+
+            var received: BibleVersion? = null
+            createViewModel(initialVersionId = null, onVersionChange = { received = it })
+            advanceUntilIdle()
+
+            assertEquals(french, received)
+        }
+
+    @Test
+    fun `selectFallbackVersion does not fire onVersionChange when permittedVersions throws`() =
+        runTest(testDispatcher) {
+            coEvery { bibleVersionRepository.permittedVersions() } coAnswers { throw RuntimeException("offline") }
+
+            val onVersionChange = mockk<(BibleVersion) -> Unit>(relaxed = true)
+            createViewModel(initialVersionId = null, onVersionChange = onVersionChange)
+            advanceUntilIdle()
+
+            verify(exactly = 0) { onVersionChange(any()) }
+        }
+
+    @Test
+    fun `loadVersion falls back when initialVersionId load throws`() =
+        runTest(testDispatcher) {
+            val english = BibleVersion(id = 11, abbreviation = "NIV", languageTag = "en")
+            coEvery { bibleVersionRepository.version(id = 42) } coAnswers { throw RuntimeException("not permitted") }
+            coEvery { bibleVersionRepository.permittedVersions() } returns listOf(english)
+            coEvery { bibleVersionRepository.version(id = 11) } returns english
+
             var received: BibleVersion? = null
             createViewModel(initialVersionId = 42, onVersionChange = { received = it })
             advanceUntilIdle()
 
-            assertNull(received)
+            assertEquals(english, received)
         }
 
     @Test

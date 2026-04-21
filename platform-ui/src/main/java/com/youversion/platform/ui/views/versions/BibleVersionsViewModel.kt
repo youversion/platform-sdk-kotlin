@@ -50,8 +50,47 @@ class BibleVersionsViewModel(
         if (loadedVersion != null) {
             onVersionChange(loadedVersion)
         } else {
-            // TODO: selectFallbackVersion
+            selectFallbackVersion()
         }
+    }
+
+    private suspend fun selectFallbackVersion() {
+        val fallbackId = acceptableFallbackVersionId()
+        val version =
+            fallbackId?.let {
+                try {
+                    bibleVersionRepository.version(id = it)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        if (version == null) {
+            // TODO: navigate to the VersionsScreen so user can select a version.
+            return
+        }
+        onVersionChange(version)
+    }
+
+    private suspend fun acceptableFallbackVersionId(): Int? {
+        val downloads = bibleVersionRepository.downloadedVersions
+        if (downloads.isNotEmpty()) {
+            return downloads.first()
+        }
+
+        val versions =
+            try {
+                bibleVersionRepository.permittedVersions()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Logger.e("Could not fetch the permitted versions.", e)
+                return null
+            }
+
+        versions.firstOrNull { it.languageTag == "en" }?.let { return it.id }
+        return versions.firstOrNull()?.id
     }
 
     /**
