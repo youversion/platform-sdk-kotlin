@@ -16,9 +16,8 @@ import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
-import com.youversion.platform.reader.theme.FontDefinitionProvider
-import com.youversion.platform.reader.theme.ReaderTheme
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.theme.ReaderTheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.LanguageRowItem
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import com.youversion.platform.ui.views.versions.BibleVersionsViewModel

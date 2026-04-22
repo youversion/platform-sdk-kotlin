@@ -63,11 +63,11 @@ import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
 import com.youversion.platform.reader.sheets.BibleReaderIntroFootnotesSheet
 import com.youversion.platform.reader.sheets.BibleReaderVerseActionSheet
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.signin.SignOutConfirmationAlert
 import com.youversion.platform.ui.signin.rememberSignIn
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.BibleIntroText
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextFootnoteMode

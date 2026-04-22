@@ -1,4 +1,4 @@
-package com.youversion.platform.reader.theme
+package com.youversion.platform.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

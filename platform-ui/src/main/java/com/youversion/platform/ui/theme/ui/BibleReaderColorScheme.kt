@@ -1,10 +1,10 @@
-package com.youversion.platform.reader.theme.ui
+package com.youversion.platform.ui.theme.ui
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import com.youversion.platform.reader.theme.tokens.BibleColorDarkTokens
-import com.youversion.platform.reader.theme.tokens.BibleColorLightTokens
+import com.youversion.platform.ui.theme.tokens.BibleColorDarkTokens
+import com.youversion.platform.ui.theme.tokens.BibleColorLightTokens
 
 @Immutable
 class BibleReaderColorScheme(

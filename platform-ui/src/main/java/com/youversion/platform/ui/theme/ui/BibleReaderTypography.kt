@@ -1,8 +1,8 @@
-package com.youversion.platform.reader.theme.ui
+package com.youversion.platform.ui.theme.ui
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.text.TextStyle
-import com.youversion.platform.reader.theme.tokens.BibleTypographyTokens
+import com.youversion.platform.ui.theme.tokens.BibleTypographyTokens
 
 class BibleReaderTypography internal constructor(
     val headerXXL: TextStyle = BibleTypographyTokens.HeaderXXL,

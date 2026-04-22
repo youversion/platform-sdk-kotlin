@@ -1,10 +1,10 @@
-package com.youversion.platform.reader.theme.ui
+package com.youversion.platform.ui.theme.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.mutableStateOf
-import com.youversion.platform.reader.theme.ReaderColorScheme
+import com.youversion.platform.ui.theme.ReaderColorScheme
 
 @Composable
 internal fun BibleReaderTheme(

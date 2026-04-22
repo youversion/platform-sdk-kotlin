@@ -1,4 +1,4 @@
-package com.youversion.platform.reader.theme
+package com.youversion.platform.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -8,9 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
-import com.youversion.platform.reader.theme.ui.darkBibleReaderColorScheme
-import com.youversion.platform.reader.theme.ui.lightBibleReaderColorScheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.theme.ui.darkBibleReaderColorScheme
+import com.youversion.platform.ui.theme.ui.lightBibleReaderColorScheme
 
 private val LocalReaderColorScheme = staticCompositionLocalOf { PureWhite }
 

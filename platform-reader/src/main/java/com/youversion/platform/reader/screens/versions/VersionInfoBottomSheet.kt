@@ -35,11 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.organizations.models.Organization
-import com.youversion.platform.reader.R
-import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
-import com.youversion.platform.reader.theme.Charcoal
-import com.youversion.platform.reader.theme.UntitledSerif
-import com.youversion.platform.reader.theme.readerColorScheme
+import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.theme.Charcoal
+import com.youversion.platform.ui.theme.UntitledSerif
+import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.R as UiR
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -133,7 +132,7 @@ private fun OfflineAgreement() {
         modifier = Modifier.padding(top = 16.dp),
     ) {
         Text(
-            text = stringResource(R.string.version_info_offline_agreement),
+            text = stringResource(UiR.string.version_info_offline_agreement),
             style =
                 TextStyle(
                     fontSize = 14.sp,
@@ -143,7 +142,7 @@ private fun OfflineAgreement() {
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = stringResource(R.string.version_info_offline_tagline),
+            text = stringResource(UiR.string.version_info_offline_tagline),
             textAlign = TextAlign.Center,
             maxLines = 1,
             style =
@@ -182,7 +181,7 @@ private fun PrimaryActions(
                     .height(50.dp),
         ) {
             Text(
-                text = stringResource(R.string.version_info_agree_and_download),
+                text = stringResource(UiR.string.version_info_agree_and_download),
                 style =
                     TextStyle(
                         fontSize = 20.sp,
@@ -196,7 +195,7 @@ private fun PrimaryActions(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
-                text = stringResource(R.string.version_info_maybe_later),
+                text = stringResource(UiR.string.version_info_maybe_later),
                 style =
                     TextStyle(
                         fontWeight = FontWeight.Normal,

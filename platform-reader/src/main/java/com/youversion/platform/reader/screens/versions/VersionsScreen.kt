@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.components.BibleReaderTopAppBar
-import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.BibleVersionRow
 import com.youversion.platform.ui.views.components.LanguageSelector
 import com.youversion.platform.ui.views.versions.BibleVersionsViewModel

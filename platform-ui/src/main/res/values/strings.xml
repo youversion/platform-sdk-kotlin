@@ -25,4 +25,9 @@
     <string name="placeholder_offline_icon_content_desc">No Wi-Fi</string>
     <string name="placeholder_version_unavailable">Your previously selected Bible version is unavailable. Another similar Bible version has been selected for you.</string>
     <string name="placeholder_version_unavailable_icon_content_desc">Version unavailable</string>
+
+    <string name="version_info_offline_agreement">Our agreement with the publisher of this Bible version requires us to share certain information with them in order to offer this version for offline use. By proceeding you agree to share your information and to allow the publisher to email you.</string>
+    <string name="version_info_offline_tagline">Read it anytime, anywhere\u2014even offline</string>
+    <string name="version_info_agree_and_download">Agree and Download</string>
+    <string name="version_info_maybe_later">Maybe Later</string>
 </resources>

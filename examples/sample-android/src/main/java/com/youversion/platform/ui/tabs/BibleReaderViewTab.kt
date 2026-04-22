@@ -3,7 +3,7 @@ package com.youversion.platform.ui.tabs
 import androidx.compose.runtime.Composable
 import com.youversion.platform.reader.BibleReader
 import com.youversion.platform.reader.FontDefinition
-import com.youversion.platform.reader.theme.FontDefinitionProvider
+import com.youversion.platform.reader.FontDefinitionProvider
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.theme.CormorantGaramond
