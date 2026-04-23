@@ -175,8 +175,8 @@ class BibleReaderViewModel(
                     val books = bibleVersion?.books ?: emptyList()
                     val bookUSFM = _state.value.introBookUSFM
                     val currentBookIndex = books.indexOfFirst { it.id == bookUSFM }
-                    _state.update { it.copy(introBookUSFM = null, introPassageId = null) }
                     if (currentBookIndex > 0) {
+                        _state.update { it.copy(introBookUSFM = null, introPassageId = null) }
                         val previousBook = books[currentBookIndex - 1]
                         val lastChapter = previousBook.chapters?.count() ?: 1
                         bibleReference =
