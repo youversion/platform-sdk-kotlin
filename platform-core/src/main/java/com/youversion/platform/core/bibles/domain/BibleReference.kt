@@ -1,5 +1,6 @@
 package com.youversion.platform.core.bibles.domain
 
+import com.youversion.platform.core.bibles.models.BibleVersion
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -59,12 +60,29 @@ data class BibleReference(
             return when {
                 verseStart != null && verseEnd != null && verseStart != verseEnd ->
                     "$upperBookUSFM.$chapter.$verseStart-$upperBookUSFM.$chapter.$verseEnd"
+
                 verseStart != null ->
                     "$upperBookUSFM.$chapter.$verseStart"
+
                 else ->
                     "$upperBookUSFM.$chapter"
             }
         }
+
+    fun existsIn(version: BibleVersion): Boolean {
+        val normalizedBookUSFM = bookUSFM.uppercase()
+        if (!version.bookUSFMs.any { it.uppercase() == normalizedBookUSFM }) return false
+
+        val book = version.book(normalizedBookUSFM) ?: return true
+        val chapters = book.chapters ?: return true
+
+        val chapterText = chapter.toString()
+        return chapters.any { chapterMetadata ->
+            chapterMetadata.id == chapterText ||
+                chapterMetadata.title == chapterText ||
+                chapterMetadata.passageId == chapterUSFM
+        }
+    }
 
     fun overlaps(otherReference: BibleReference): Boolean {
         if (versionId != otherReference.versionId || bookUSFM != otherReference.bookUSFM) {
