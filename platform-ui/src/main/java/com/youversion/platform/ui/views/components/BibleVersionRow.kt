@@ -10,7 +10,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -18,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
 @Composable
 fun BibleVersionRow(
@@ -41,7 +41,8 @@ fun BibleVersionRow(
                     indication = ripple(),
                     enabled = true,
                     onClick = onVersionClick,
-                ).padding(start = 20.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                )
+                .padding(start = 20.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
     ) {
         Column(
             verticalArrangement = Arrangement.Center,
@@ -50,13 +51,13 @@ fun BibleVersionRow(
             Text(
                 text = abbreviation,
                 maxLines = 1,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = BibleReaderTheme.typography.labelL,
+                color = BibleReaderTheme.colorScheme.textPrimary,
             )
             Text(
                 text = bibleVersion.localizedTitle ?: bibleVersion.title ?: bibleVersion.id.toString(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = BibleReaderTheme.typography.labelM,
+                color = BibleReaderTheme.colorScheme.textMuted,
             )
         }
 

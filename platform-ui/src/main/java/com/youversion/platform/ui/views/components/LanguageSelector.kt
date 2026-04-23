@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
 @Composable
 fun LanguageSelector(
@@ -37,12 +38,14 @@ fun LanguageSelector(
                 .fillMaxWidth()
                 .background(
                     color = MaterialTheme.colorScheme.surfaceVariant,
-                ).clickable(
+                )
+                .clickable(
                     interactionSource = null,
                     indication = ripple(),
                     enabled = enabled,
                     onClick = onClick,
-                ).padding(16.dp),
+                )
+                .padding(16.dp),
     ) {
         Icon(
             imageVector = ImageVector.vectorResource(R.drawable.ic_material_language),
@@ -51,13 +54,13 @@ fun LanguageSelector(
         Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = "Language",
-            style = MaterialTheme.typography.labelLarge,
+            style = BibleReaderTheme.typography.labelL,
             modifier = Modifier.weight(1f),
         )
 
         Text(
             text = activeLanguageName,
-            style = MaterialTheme.typography.labelLarge,
+            style = BibleReaderTheme.typography.buttonLabelL,
         )
         Spacer(modifier = Modifier.width(4.dp))
         Icon(
