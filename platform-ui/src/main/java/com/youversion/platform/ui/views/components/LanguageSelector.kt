@@ -38,14 +38,12 @@ fun LanguageSelector(
                 .fillMaxWidth()
                 .background(
                     color = MaterialTheme.colorScheme.surfaceVariant,
-                )
-                .clickable(
+                ).clickable(
                     interactionSource = null,
                     indication = ripple(),
                     enabled = enabled,
                     onClick = onClick,
-                )
-                .padding(16.dp),
+                ).padding(16.dp),
     ) {
         Icon(
             imageVector = ImageVector.vectorResource(R.drawable.ic_material_language),

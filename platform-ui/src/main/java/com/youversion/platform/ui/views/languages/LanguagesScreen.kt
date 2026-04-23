@@ -1,4 +1,4 @@
-package com.youversion.platform.reader.screens.languages
+package com.youversion.platform.ui.views.languages
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.reader.components.BibleReaderTopAppBar
+import com.youversion.platform.reader.screens.languages.LanguagesViewModel
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.BibleLanguageRow
 import com.youversion.platform.ui.views.components.LanguageRowItem
@@ -37,7 +38,7 @@ private enum class LanguageTab(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun LanguagesScreen(
+fun LanguagesScreen(
     viewModel: LanguagesViewModel,
     onBackClick: () -> Unit,
     onLanguageTagSelected: (String) -> Unit,
