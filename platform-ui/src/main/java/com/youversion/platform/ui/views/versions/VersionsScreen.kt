@@ -1,4 +1,4 @@
-package com.youversion.platform.reader.screens.versions
+package com.youversion.platform.ui.views.versions
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,15 +26,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.components.BibleReaderTopAppBar
+import com.youversion.platform.reader.screens.versions.VersionInfoBottomSheet
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.BibleVersionRow
 import com.youversion.platform.ui.views.components.LanguageSelector
-import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun VersionsScreen(
+fun VersionsScreen(
     viewModel: BibleVersionsViewModel,
     onBackClick: () -> Unit,
     onLanguagesClick: () -> Unit,

@@ -15,8 +15,8 @@ import com.youversion.platform.reader.screens.fonts.FontsScreen
 import com.youversion.platform.reader.screens.languages.LanguagesScreen
 import com.youversion.platform.reader.screens.languages.LanguagesViewModel
 import com.youversion.platform.reader.screens.references.ReferencesScreen
-import com.youversion.platform.reader.screens.versions.VersionsScreen
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.views.versions.VersionsScreen
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinIsolatedContext
 import org.koin.compose.module.rememberKoinModules

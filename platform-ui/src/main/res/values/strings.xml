@@ -30,4 +30,6 @@
     <string name="version_info_offline_tagline">Read it anytime, anywhere\u2014even offline</string>
     <string name="version_info_agree_and_download">Agree and Download</string>
     <string name="version_info_maybe_later">Maybe Later</string>
+
+    <string name="back_button">Back</string>
 </resources>

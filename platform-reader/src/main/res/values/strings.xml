@@ -21,6 +21,4 @@
     <string name="banner_version_unavailable_message">Your previously selected Bible version is unavailable. Another similar Bible version has been selected for you.</string>
     <string name="banner_version_unavailable_icon">Version Unavailable Icon</string>
     <string name="banner_dismiss_content_description">Dismiss</string>
-
-    <string name="back_button">Back</string>
 </resources>
