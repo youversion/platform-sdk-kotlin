@@ -1,4 +1,4 @@
-package com.youversion.platform.reader.screens.languages
+package com.youversion.platform.ui.views.languages
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

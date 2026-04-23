@@ -5,11 +5,11 @@ import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.reader.FontDefinitionProvider
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.UserSettingsRepository
-import com.youversion.platform.reader.theme.FontDefinitionProvider
-import com.youversion.platform.reader.theme.ReaderTheme
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.theme.ReaderTheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

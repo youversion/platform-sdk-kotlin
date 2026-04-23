@@ -1,4 +1,4 @@
-package com.youversion.platform.reader.screens.languages
+package com.youversion.platform.ui.views.languages
 
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
@@ -6,7 +6,7 @@ import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.views.components.LanguageRowItem
 import io.mockk.every
 import io.mockk.mockk

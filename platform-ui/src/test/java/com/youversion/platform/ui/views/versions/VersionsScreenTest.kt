@@ -1,4 +1,4 @@
-package com.youversion.platform.reader.screens.versions
+package com.youversion.platform.ui.views.versions
 
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
@@ -8,8 +8,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.youversion.platform.core.bibles.models.BibleVersion
-import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
-import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
+import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify

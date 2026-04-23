@@ -5,8 +5,8 @@ import androidx.compose.ui.text.font.FontFamily
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.UserSettingsRepository
-import com.youversion.platform.reader.theme.ReaderTheme
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.theme.ReaderTheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify

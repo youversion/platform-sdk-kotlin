@@ -1,4 +1,4 @@
-package com.youversion.platform.reader.components
+package com.youversion.platform.ui.views.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share

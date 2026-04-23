@@ -14,9 +14,9 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.text.font.FontFamily
 import com.youversion.platform.reader.FontDefinition
 import com.youversion.platform.reader.ReaderFontSettings
-import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
-import com.youversion.platform.reader.theme.Cream
-import com.youversion.platform.reader.theme.ReaderTheme
+import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.theme.Cream
+import com.youversion.platform.ui.theme.ReaderTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

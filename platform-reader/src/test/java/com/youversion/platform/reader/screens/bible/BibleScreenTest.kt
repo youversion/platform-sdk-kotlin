@@ -30,7 +30,7 @@ import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.users.api.UsersApi
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.reader.BibleReaderViewModel
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleTextCategory

@@ -12,10 +12,10 @@ import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.reader.di.PlatformReaderKoinModule
 import com.youversion.platform.reader.screens.bible.BibleScreen
 import com.youversion.platform.reader.screens.fonts.FontsScreen
-import com.youversion.platform.reader.screens.languages.LanguagesViewModel
 import com.youversion.platform.reader.screens.references.ReferencesScreen
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.views.languages.LanguagesScreen
+import com.youversion.platform.ui.views.languages.LanguagesViewModel
 import com.youversion.platform.ui.views.versions.VersionsScreen
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinIsolatedContext

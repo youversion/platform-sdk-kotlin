@@ -6,7 +6,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.youversion.platform.core.bibles.domain.BibleReference
-import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -1,4 +1,4 @@
-package com.youversion.platform.reader.screens.versions
+package com.youversion.platform.ui.views.versions
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

@@ -50,8 +50,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.R
-import com.youversion.platform.reader.components.BibleReaderTopAppBar
 import com.youversion.platform.ui.theme.readerColorScheme
+import com.youversion.platform.ui.views.components.BibleReaderTopAppBar
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
