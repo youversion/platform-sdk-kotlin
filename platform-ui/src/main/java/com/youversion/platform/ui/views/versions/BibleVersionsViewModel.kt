@@ -8,6 +8,7 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.organizations.models.Organization
+import com.youversion.platform.ui.views.components.LanguageRowItem
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -203,6 +204,51 @@ class BibleVersionsViewModel(
         }
     }
 
+    internal fun loadLanguages() {
+        if (_state.value.allLanguages.isNotEmpty()) return
+        viewModelScope.launch {
+            _state.update { it.copy(languagesInitializing = true) }
+            try {
+                languageRepository.loadLanguageNames(null)
+
+                val allPermittedLanguageTags = languageRepository.allPermittedLanguageTags
+                val allLanguages =
+                    allPermittedLanguageTags
+                        .map { tag ->
+                            LanguageRowItem(
+                                languageTag = tag,
+                                displayName = languageRepository.languageName(tag),
+                                localeDisplayName = null,
+                            )
+                        }
+
+                val suggestedLanguageTags = languageRepository.suggestedLanguageTags()
+                val suggestedLanguages =
+                    suggestedLanguageTags
+                        .map { tag ->
+                            LanguageRowItem(
+                                languageTag = tag,
+                                displayName = languageRepository.languageName(tag),
+                                localeDisplayName = null,
+                            )
+                        }
+
+                _state.update {
+                    it.copy(
+                        suggestedLanguages = suggestedLanguages,
+                        allLanguages = allLanguages,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Logger.e("Failed to get languages", e)
+            } finally {
+                _state.update { it.copy(languagesInitializing = false) }
+            }
+        }
+    }
+
     // ----- State
     data class State(
         val initializing: Boolean = true,
@@ -214,6 +260,9 @@ class BibleVersionsViewModel(
         val selectedBibleVersion: BibleVersion? = null,
         val selectedOrganization: Organization? = null,
         val searchQuery: String = "",
+        val suggestedLanguages: List<LanguageRowItem> = emptyList(),
+        val allLanguages: List<LanguageRowItem> = emptyList(),
+        val languagesInitializing: Boolean = false,
     ) {
         val versionsCount: Int
             get() = permittedMinimalVersions.count()

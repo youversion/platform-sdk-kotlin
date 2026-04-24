@@ -5,7 +5,6 @@ import android.content.Context
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
-import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.domain.Storage
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.reader.BibleReaderViewModel
@@ -13,7 +12,6 @@ import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
-import com.youversion.platform.ui.views.languages.LanguagesViewModel
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -137,20 +135,5 @@ class PlatformReaderKoinModuleTest {
         val koin = createKoin()
 
         koin.get<BibleReaderViewModel> { parametersOf(null, null) }
-    }
-
-    @Test
-    fun `LanguagesViewModel resolves with parameter and BibleReaderRepository injected`() {
-        val koin = createKoin()
-        val bibleVersion = BibleVersion(id = 1, abbreviation = "KJV")
-
-        koin.get<LanguagesViewModel> { parametersOf(bibleVersion) }
-    }
-
-    @Test
-    fun `LanguagesViewModel resolves with null BibleVersion parameter`() {
-        val koin = createKoin()
-
-        koin.get<LanguagesViewModel> { parametersOf(null) }
     }
 }

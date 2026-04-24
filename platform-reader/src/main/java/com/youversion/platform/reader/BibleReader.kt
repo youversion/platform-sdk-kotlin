@@ -14,8 +14,8 @@ import com.youversion.platform.reader.screens.bible.BibleScreen
 import com.youversion.platform.reader.screens.fonts.FontsScreen
 import com.youversion.platform.reader.screens.references.ReferencesScreen
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
-import com.youversion.platform.ui.views.languages.LanguagesScreen
-import com.youversion.platform.ui.views.languages.LanguagesViewModel
+import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
+import com.youversion.platform.ui.views.versions.LanguagesScreen
 import com.youversion.platform.ui.views.versions.VersionsScreen
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinIsolatedContext
@@ -89,8 +89,8 @@ fun BibleReader(
                 composable(
                     route = BibleReaderDestination.Languages.route,
                 ) {
-                    val languagesViewModel: LanguagesViewModel =
-                        koinViewModel { parametersOf(bibleReaderViewModel.bibleVersion) }
+                    val languagesViewModel: BibleVersionsViewModel =
+                        koinViewModel { parametersOf() }
                     LanguagesScreen(
                         viewModel = languagesViewModel,
                         onBackClick = navController::popBackStack,

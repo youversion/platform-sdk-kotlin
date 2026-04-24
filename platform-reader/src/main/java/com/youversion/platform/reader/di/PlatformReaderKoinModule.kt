@@ -6,7 +6,6 @@ import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
-import com.youversion.platform.ui.views.languages.LanguagesViewModel
 import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -41,13 +40,6 @@ internal val PlatformReaderKoinModule =
                 onVersionChange = params.getOrNull<(BibleVersion) -> Unit>() ?: {},
                 languageRepository = get(),
                 bibleVersionRepository = get(),
-            )
-        }
-
-        factory { params ->
-            LanguagesViewModel(
-                bibleVersion = params[0],
-                languageRepository = get(),
             )
         }
     }

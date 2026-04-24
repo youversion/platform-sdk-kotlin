@@ -6,6 +6,7 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.organizations.api.OrganizationsApi
 import com.youversion.platform.core.organizations.models.Organization
+import com.youversion.platform.ui.views.components.LanguageRowItem
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -433,6 +434,87 @@ class BibleVersionsViewModelTest {
             assertFalse(viewModel.state.value.initializing)
             coVerify(exactly = 1) { bibleVersionRepository.fullVersions("es") }
             coVerify(exactly = 1) { languageRepository.languageName("es") }
+        }
+
+    private fun stubSuccessfulLanguageLoad() {
+        coEvery { languageRepository.loadLanguageNames(null) } returns Unit
+        every { languageRepository.allPermittedLanguageTags } returns listOf("en", "es")
+        every { languageRepository.languageName("en") } returns "English"
+        every { languageRepository.languageName("es") } returns "Spanish"
+        coEvery { languageRepository.suggestedLanguageTags() } returns listOf("en")
+    }
+
+    @Test
+    fun `loadLanguages populates suggested and all language lists`() =
+        runTest(testDispatcher) {
+            stubSuccessfulLanguageLoad()
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.loadLanguages()
+            advanceUntilIdle()
+
+            assertEquals(2, viewModel.state.value.allLanguages.size)
+            assertEquals(
+                LanguageRowItem("en", "English", null),
+                viewModel.state.value.allLanguages[0],
+            )
+            assertEquals(
+                LanguageRowItem("es", "Spanish", null),
+                viewModel.state.value.allLanguages[1],
+            )
+            assertEquals(1, viewModel.state.value.suggestedLanguages.size)
+            assertEquals(
+                LanguageRowItem("en", "English", null),
+                viewModel.state.value.suggestedLanguages[0],
+            )
+            assertFalse(viewModel.state.value.languagesInitializing)
+        }
+
+    @Test
+    fun `loadLanguages on loadLanguageNames exception leaves lists empty and clears flag`() =
+        runTest(testDispatcher) {
+            coEvery { languageRepository.loadLanguageNames(null) } throws RuntimeException("test")
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.loadLanguages()
+            advanceUntilIdle()
+
+            assertTrue(
+                viewModel.state.value.allLanguages
+                    .isEmpty(),
+            )
+            assertTrue(
+                viewModel.state.value.suggestedLanguages
+                    .isEmpty(),
+            )
+            assertFalse(viewModel.state.value.languagesInitializing)
+        }
+
+    @Test
+    fun `loadLanguages is idempotent after first successful load`() =
+        runTest(testDispatcher) {
+            stubSuccessfulLanguageLoad()
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.loadLanguages()
+            advanceUntilIdle()
+            viewModel.loadLanguages()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { languageRepository.loadLanguageNames(null) }
+            coVerify(exactly = 1) { languageRepository.suggestedLanguageTags() }
         }
 
     @Test

@@ -1,4 +1,4 @@
-package com.youversion.platform.ui.views.languages
+package com.youversion.platform.ui.views.versions
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,6 +16,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -38,11 +39,15 @@ private enum class LanguageTab(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LanguagesScreen(
-    viewModel: LanguagesViewModel,
+    viewModel: BibleVersionsViewModel,
     onBackClick: () -> Unit,
     onLanguageTagSelected: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadLanguages()
+    }
 
     val pagerState =
         rememberPagerState(initialPage = LanguageTab.SUGGESTED.ordinal) { 2 }
@@ -90,7 +95,7 @@ fun LanguagesScreen(
                     0 -> {
                         LanguagesTab(
                             languages = state.suggestedLanguages,
-                            showProgress = state.initializing,
+                            showProgress = state.languagesInitializing,
                             onLanguageClick = onLanguageTagSelected,
                         )
                     }
@@ -98,7 +103,7 @@ fun LanguagesScreen(
                     1 -> {
                         LanguagesTab(
                             languages = state.allLanguages,
-                            showProgress = state.initializing,
+                            showProgress = state.languagesInitializing,
                             onLanguageClick = onLanguageTagSelected,
                         )
                     }

@@ -1,4 +1,4 @@
-package com.youversion.platform.ui.views.languages
+package com.youversion.platform.ui.views.versions
 
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
@@ -22,10 +22,10 @@ class LanguagesScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private val stateFlow = MutableStateFlow(LanguagesViewModel.State())
+    private val stateFlow = MutableStateFlow(BibleVersionsViewModel.State())
 
     private val mockViewModel =
-        mockk<LanguagesViewModel>(relaxed = true) {
+        mockk<BibleVersionsViewModel>(relaxed = true) {
             every { state } returns stateFlow
         }
 
@@ -68,8 +68,8 @@ class LanguagesScreenTest {
     @Test
     fun `shows CircularProgressIndicator when initializing`() {
         stateFlow.value =
-            LanguagesViewModel.State(
-                initializing = true,
+            BibleVersionsViewModel.State(
+                languagesInitializing = true,
             )
 
         renderScreen()
@@ -81,10 +81,7 @@ class LanguagesScreenTest {
 
     @Test
     fun `does not show CircularProgressIndicator when not initializing`() {
-        stateFlow.value =
-            LanguagesViewModel.State(
-                initializing = false,
-            )
+        stateFlow.value = BibleVersionsViewModel.State()
 
         renderScreen()
 
@@ -98,8 +95,7 @@ class LanguagesScreenTest {
     @Test
     fun `displays suggested languages on first tab`() {
         stateFlow.value =
-            LanguagesViewModel.State(
-                initializing = false,
+            BibleVersionsViewModel.State(
                 suggestedLanguages =
                     listOf(
                         LanguageRowItem(
@@ -124,8 +120,7 @@ class LanguagesScreenTest {
     @Test
     fun `displays localeDisplayName when non-null`() {
         stateFlow.value =
-            LanguagesViewModel.State(
-                initializing = false,
+            BibleVersionsViewModel.State(
                 suggestedLanguages =
                     listOf(
                         LanguageRowItem(
@@ -145,8 +140,7 @@ class LanguagesScreenTest {
     @Test
     fun `does not display localeDisplayName when null`() {
         stateFlow.value =
-            LanguagesViewModel.State(
-                initializing = false,
+            BibleVersionsViewModel.State(
                 suggestedLanguages =
                     listOf(
                         LanguageRowItem(
@@ -165,8 +159,7 @@ class LanguagesScreenTest {
     @Test
     fun `clicking a language row calls onLanguageTagSelected with correct tag`() {
         stateFlow.value =
-            LanguagesViewModel.State(
-                initializing = false,
+            BibleVersionsViewModel.State(
                 suggestedLanguages =
                     listOf(
                         LanguageRowItem(
@@ -197,8 +190,8 @@ class LanguagesScreenTest {
     @Test
     fun `shows CircularProgressIndicator on All tab when initializing`() {
         stateFlow.value =
-            LanguagesViewModel.State(
-                initializing = true,
+            BibleVersionsViewModel.State(
+                languagesInitializing = true,
             )
 
         renderScreen()
@@ -216,8 +209,7 @@ class LanguagesScreenTest {
     @Test
     fun `displays all languages after switching to All tab`() {
         stateFlow.value =
-            LanguagesViewModel.State(
-                initializing = false,
+            BibleVersionsViewModel.State(
                 suggestedLanguages =
                     listOf(
                         LanguageRowItem(
@@ -255,8 +247,7 @@ class LanguagesScreenTest {
     @Test
     fun `clicking a language on All tab calls onLanguageTagSelected with correct tag`() {
         stateFlow.value =
-            LanguagesViewModel.State(
-                initializing = false,
+            BibleVersionsViewModel.State(
                 allLanguages =
                     listOf(
                         LanguageRowItem(
