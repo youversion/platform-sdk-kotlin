@@ -49,10 +49,9 @@ fun BibleVersionPickingButton(
 
     if (isShowingSheet) {
         ModalBottomSheet(onDismissRequest = { isShowingSheet = false }, sheetState = sheetState) {
-            VersionsScreen(
+            BibleVersionsStack(
                 viewModel = viewModel,
-                onBackClick = { isShowingSheet = false },
-                onLanguagesClick = {},
+                onDismiss = { isShowingSheet = false },
                 onVersionSelect = { selectedVersion ->
                     viewModel.onVersionChange(selectedVersion)
                     isShowingSheet = false
