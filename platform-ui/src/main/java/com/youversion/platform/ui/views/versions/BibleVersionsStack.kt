@@ -26,7 +26,8 @@ fun BibleVersionsStack(
 
         composable(route = Destination.Languages.route) {
             LanguagesScreen(
-                viewModel = viewModel, onBackClick = navController::popBackStack,
+                viewModel = viewModel,
+                onBackClick = navController::popBackStack,
                 onLanguageTagSelected =
                     { languageTag ->
                         viewModel.loadVersionsForLanguage(languageTag)
@@ -37,7 +38,10 @@ fun BibleVersionsStack(
     }
 }
 
-private sealed class Destination(val route: String) {
+private sealed class Destination(
+    val route: String,
+) {
     data object Versions : Destination("versions")
+
     data object Languages : Destination("languages")
 }

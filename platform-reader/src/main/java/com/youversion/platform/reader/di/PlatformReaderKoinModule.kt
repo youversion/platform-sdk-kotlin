@@ -1,18 +1,19 @@
 package com.youversion.platform.reader.di
 
-import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
-import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
+import com.youversion.platform.ui.di.PlatformUIKoinModule
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 internal val PlatformReaderKoinModule =
     module {
+        includes(PlatformUIKoinModule)
+
         // Repositories
         singleOf(::BibleReaderRepository)
         factoryOf(::UserSettingsRepository)
@@ -31,15 +32,6 @@ internal val PlatformReaderKoinModule =
                 languageRepository = get(),
                 copyManager = get(),
                 shareManager = get(),
-            )
-        }
-
-        factory { params ->
-            BibleVersionsViewModel(
-                initialVersionId = params.getOrNull<Int>(),
-                onVersionChange = params.getOrNull<(BibleVersion) -> Unit>() ?: {},
-                languageRepository = get(),
-                bibleVersionRepository = get(),
             )
         }
     }
