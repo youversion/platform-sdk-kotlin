@@ -31,5 +31,7 @@
     <string name="version_info_agree_and_download">Agree and Download</string>
     <string name="version_info_maybe_later">Maybe Later</string>
 
+    <string name="bible_card_unavailable_reference">This passage is unavailable in the selected Bible version.</string>
+
     <string name="back_button">Back</string>
 </resources>
