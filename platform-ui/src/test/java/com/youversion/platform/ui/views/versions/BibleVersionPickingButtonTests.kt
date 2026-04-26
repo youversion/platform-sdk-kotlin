@@ -11,6 +11,7 @@ import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import org.junit.After
 import org.junit.Before
@@ -109,7 +110,6 @@ class BibleVersionPickingButtonTests {
         }
 
         composeTestRule.onNodeWithText("KJV").performClick()
-        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Versions").assertIsDisplayed()
     }
@@ -145,7 +145,6 @@ class BibleVersionPickingButtonTests {
         }
 
         composeTestRule.onNodeWithText("KJV").performClick()
-        composeTestRule.waitForIdle()
 
         composeTestRule.waitUntil(
             conditionDescription = "Version row visible inside sheet",
@@ -159,6 +158,98 @@ class BibleVersionPickingButtonTests {
             conditionDescription = "Selected version delivered to onVersionChange",
         ) {
             receivedVersions.lastOrNull() == newVersion
+        }
+    }
+
+    @Test
+    fun `tapping Languages in the sheet navigates to the languages screen`() {
+        val testVersion =
+            BibleVersion(
+                id = 2,
+                abbreviation = "NIV",
+                localizedAbbreviation = "NIV",
+                title = "New International Version",
+                languageTag = "en",
+            )
+        coEvery { mockVersionRepository.fullVersions("en") } returns listOf(testVersion)
+        coEvery { mockVersionRepository.permittedVersionsListing() } returns listOf(testVersion)
+
+        composeTestRule.setContent {
+            BibleReaderMaterialTheme {
+                BibleVersionPickingButton(initialVersionId = 1)
+            }
+        }
+
+        composeTestRule.waitUntil(
+            conditionDescription = "Initial version loaded",
+        ) {
+            composeTestRule.onAllNodesWithText("KJV").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeTestRule.onNodeWithText("KJV").performClick()
+
+        composeTestRule.waitUntil(
+            conditionDescription = "Versions screen finished loading",
+        ) {
+            composeTestRule.onAllNodesWithText("New International Version").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeTestRule.onNodeWithText("Language").performClick()
+
+        composeTestRule.onNodeWithText("Suggested").assertIsDisplayed()
+    }
+
+    @Test
+    fun `selecting a language returns to versions screen with versions for that language`() {
+        val englishVersion =
+            BibleVersion(
+                id = 2,
+                abbreviation = "NIV",
+                localizedAbbreviation = "NIV",
+                title = "New International Version",
+                languageTag = "en",
+            )
+        val spanishVersion =
+            BibleVersion(
+                id = 3,
+                abbreviation = "RV",
+                localizedAbbreviation = "RV",
+                title = "Reina-Valera",
+                languageTag = "es",
+            )
+
+        coEvery { mockVersionRepository.fullVersions("en") } returns listOf(englishVersion)
+        coEvery { mockVersionRepository.fullVersions("es") } returns listOf(spanishVersion)
+        coEvery { mockVersionRepository.permittedVersionsListing() } returns listOf(englishVersion, spanishVersion)
+
+        every { mockLanguageRepository.allPermittedLanguageTags } returns listOf("en", "es")
+        coEvery { mockLanguageRepository.suggestedLanguageTags() } returns listOf("es")
+        every { mockLanguageRepository.languageName("es") } returns "Spanish"
+        every { mockLanguageRepository.languageName("en") } returns "English"
+
+        composeTestRule.setContent {
+            BibleReaderMaterialTheme {
+                BibleVersionPickingButton(initialVersionId = 1)
+            }
+        }
+
+        composeTestRule.waitUntil(conditionDescription = "Initial version loaded") {
+            composeTestRule.onAllNodesWithText("KJV").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("KJV").performClick()
+
+        composeTestRule.waitUntil(conditionDescription = "Versions screen loaded") {
+            composeTestRule.onAllNodesWithText("New International Version").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("Language").performClick()
+
+        composeTestRule.waitUntil(conditionDescription = "Languages screen rendered with rows") {
+            composeTestRule.onAllNodesWithText("Spanish").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("Spanish").performClick()
+
+        composeTestRule.waitUntil(conditionDescription = "Returned to versions screen with Spanish versions") {
+            composeTestRule.onAllNodesWithText("Reina-Valera").fetchSemanticsNodes().isNotEmpty()
         }
     }
 }
