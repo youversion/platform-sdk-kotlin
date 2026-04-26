@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.sp
@@ -15,6 +16,7 @@ import com.youversion.platform.core.bibles.models.BibleChapter
 import com.youversion.platform.core.bibles.models.BibleVerse
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
+import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.ui.views.BibleTextFonts
 import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
@@ -40,8 +42,9 @@ class BibleCardTests {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private val mockVersionRepository = mockk<BibleVersionRepository>()
+    private val mockVersionRepository = mockk<BibleVersionRepository>(relaxed = true)
     private val mockChapterRepository = mockk<BibleChapterRepository>()
+    private val mockLanguageRepository = mockk<LanguageRepository>(relaxed = true)
 
     private val testReference =
         BibleReference(
@@ -100,6 +103,7 @@ class BibleCardTests {
                 module {
                     single { mockVersionRepository }
                     single { mockChapterRepository }
+                    single { mockLanguageRepository }
                 },
             ),
         )
@@ -343,5 +347,60 @@ class BibleCardTests {
 
         composeTestRule.onNodeWithText("KJV Copyright").assertIsDisplayed()
         composeTestRule.onNodeWithText("Promo content for testing").assertIsDisplayed()
+    }
+
+    @Test
+    fun `simple overload displays version picker button when showVersionPicker is true`() {
+        coEvery {
+            BibleVersionRendering.textBlocks(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } returns emptyList()
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                BibleCard(
+                    reference = testReference,
+                    version = testBibleVersion,
+                    fontSize = 20.sp,
+                    showVersionPicker = true,
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag("bible_card_version_picker").assertIsDisplayed()
+    }
+
+    @Test
+    fun `displays unavailable message when reference does not exist in version`() {
+        val versionWithoutGenesis =
+            BibleVersion(
+                id = 2,
+                abbreviation = "NIV",
+                localizedAbbreviation = "NIV",
+                books = emptyList(),
+            )
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                BibleCard(
+                    reference = testReference,
+                    version = versionWithoutGenesis,
+                    fontSize = 20.sp,
+                )
+            }
+        }
+
+        composeTestRule
+            .onNodeWithText("This passage is unavailable in the selected Bible version.")
+            .assertIsDisplayed()
     }
 }
