@@ -296,7 +296,9 @@ class BibleVersionsViewModel(
 
         data object VersionDismissed : Action
 
-        data class VersionSelected(val bibleVersion: BibleVersion) : Action
+        data class VersionSelected(
+            val bibleVersion: BibleVersion,
+        ) : Action
     }
 }
 

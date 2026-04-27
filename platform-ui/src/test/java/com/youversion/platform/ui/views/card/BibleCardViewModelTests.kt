@@ -207,7 +207,7 @@ class BibleCardViewModelTests {
         }
 
     @Test
-    fun `switchToVersion emits error event and keeps prior version when fetch fails`() =
+    fun `switchToVersion emits error event and keeps prior reference and version when fetch fails`() =
         runTest {
             val newVersionId = 42
             coEvery { bibleVersionRepository.version(id = newVersionId) } throws RuntimeException("Network error")
@@ -221,7 +221,7 @@ class BibleCardViewModelTests {
                 assertEquals(BibleCardViewModel.Event.OnErrorLoadingBibleVersion, awaitItem())
             }
 
-            assertEquals(newVersionId, viewModel.state.value.reference.versionId)
+            assertEquals(defaultReference.versionId, viewModel.state.value.reference.versionId)
             assertEquals(testBibleVersion, viewModel.state.value.bibleVersion)
         }
 

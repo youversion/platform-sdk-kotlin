@@ -46,10 +46,14 @@ internal class BibleCardViewModel(
 
     fun switchToVersion(versionId: Int) {
         viewModelScope.launch {
-            _state.update { it.copy(reference = it.reference.copy(versionId = versionId)) }
             try {
                 val newVersion = bibleVersionRepository.version(versionId)
-                _state.update { it.copy(bibleVersion = newVersion) }
+                _state.update {
+                    it.copy(
+                        reference = it.reference.copy(versionId = versionId),
+                        bibleVersion = newVersion,
+                    )
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
