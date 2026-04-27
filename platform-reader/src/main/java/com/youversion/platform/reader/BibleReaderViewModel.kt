@@ -68,15 +68,13 @@ class BibleReaderViewModel(
         this.bibleVersionsViewModel =
             bibleVersionsViewModel ?: BibleVersionsViewModel(
                 initialVersionId = reference.versionId,
-                onVersionChange = {},
+                onVersionChange = { version ->
+                    this.bibleVersion = version
+                    onHeaderSelectionChange(this.bibleReference.copy(versionId = version.id))
+                },
                 languageRepository = languageRepository,
                 bibleVersionRepository = bibleVersionRepository,
             )
-        this.bibleVersionsViewModel.onVersionChange = { version ->
-            this.bibleVersion = version
-            onHeaderSelectionChange(this.bibleReference.copy(versionId = version.id))
-        }
-
         loadUserSettingsFromStorage()
         loadLanguages()
     }
