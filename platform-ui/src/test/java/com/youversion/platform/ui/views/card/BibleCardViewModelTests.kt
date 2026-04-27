@@ -188,41 +188,20 @@ class BibleCardViewModelTests {
     // region Version Switching
 
     @Test
-    fun `switchToVersion rebuilds reference and updates version on success`() =
+    fun `switchToVersion updates reference versionId and bibleVersion atomically`() =
         runTest {
-            val newVersionId = 42
-            val newVersion = BibleVersion(id = newVersionId, abbreviation = "NIV")
-            coEvery { bibleVersionRepository.version(id = newVersionId) } returns newVersion
+            val newVersion = BibleVersion(id = 42, abbreviation = "NIV")
 
             val viewModel = createViewModel(bibleVersion = testBibleVersion)
             testDispatcher.scheduler.advanceUntilIdle()
 
-            viewModel.switchToVersion(newVersionId)
-            testDispatcher.scheduler.advanceUntilIdle()
+            viewModel.switchToVersion(newVersion)
 
-            assertEquals(newVersionId, viewModel.state.value.reference.versionId)
+            assertEquals(newVersion.id, viewModel.state.value.reference.versionId)
             assertEquals("GEN", viewModel.state.value.reference.bookUSFM)
             assertEquals(1, viewModel.state.value.reference.chapter)
             assertEquals(newVersion, viewModel.state.value.bibleVersion)
-        }
-
-    @Test
-    fun `switchToVersion emits error event and keeps prior reference and version when fetch fails`() =
-        runTest {
-            val newVersionId = 42
-            coEvery { bibleVersionRepository.version(id = newVersionId) } throws RuntimeException("Network error")
-
-            val viewModel = createViewModel(bibleVersion = testBibleVersion)
-            testDispatcher.scheduler.advanceUntilIdle()
-
-            viewModel.events.test {
-                viewModel.switchToVersion(newVersionId)
-                testDispatcher.scheduler.advanceUntilIdle()
-                assertEquals(BibleCardViewModel.Event.OnErrorLoadingBibleVersion, awaitItem())
-            }
-
-            assertEquals(defaultReference.versionId, viewModel.state.value.reference.versionId)
-            assertEquals(testBibleVersion, viewModel.state.value.bibleVersion)
+            coVerify(exactly = 0) { bibleVersionRepository.version(id = newVersion.id) }
         }
 
     // endregion
