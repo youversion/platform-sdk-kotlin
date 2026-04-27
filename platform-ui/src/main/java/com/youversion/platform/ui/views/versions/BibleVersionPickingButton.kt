@@ -79,7 +79,7 @@ fun BibleVersionPickingButton(
                     viewModel = viewModel,
                     onDismiss = { isShowingSheet = false },
                     onVersionSelect = { selectedVersion ->
-                        viewModel.onVersionChange(selectedVersion)
+                        viewModel.onAction(BibleVersionsViewModel.Action.VersionSelected(selectedVersion))
                         isShowingSheet = false
                     },
                 )

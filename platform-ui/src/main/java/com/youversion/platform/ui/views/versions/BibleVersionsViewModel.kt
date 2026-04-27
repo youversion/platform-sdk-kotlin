@@ -186,6 +186,10 @@ class BibleVersionsViewModel(
             is Action.VersionDismissed -> {
                 _state.update { it.copy(selectedBibleVersion = null, selectedOrganization = null) }
             }
+
+            is Action.VersionSelected -> {
+                onVersionChange(action.bibleVersion)
+            }
         }
     }
 
@@ -291,6 +295,8 @@ class BibleVersionsViewModel(
         ) : Action
 
         data object VersionDismissed : Action
+
+        data class VersionSelected(val bibleVersion: BibleVersion) : Action
     }
 }
 
