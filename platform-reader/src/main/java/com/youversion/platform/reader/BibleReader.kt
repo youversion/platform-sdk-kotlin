@@ -14,7 +14,6 @@ import com.youversion.platform.reader.screens.bible.BibleScreen
 import com.youversion.platform.reader.screens.fonts.FontsScreen
 import com.youversion.platform.reader.screens.references.ReferencesScreen
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
-import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
 import com.youversion.platform.ui.views.versions.LanguagesScreen
 import com.youversion.platform.ui.views.versions.VersionsScreen
 import org.koin.androidx.compose.koinViewModel
@@ -89,10 +88,8 @@ fun BibleReader(
                 composable(
                     route = BibleReaderDestination.Languages.route,
                 ) {
-                    val bibleVersionsViewModel: BibleVersionsViewModel =
-                        koinViewModel { parametersOf() }
                     LanguagesScreen(
-                        viewModel = bibleVersionsViewModel,
+                        viewModel = versionViewModel,
                         onBackClick = navController::popBackStack,
                         onLanguageTagSelected = { languageTag ->
                             versionViewModel.loadVersionsForLanguage(languageTag)
