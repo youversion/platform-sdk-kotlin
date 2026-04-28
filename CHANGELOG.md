@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/youversion/platform-sdk-kotlin/compare/1.1.1...1.1.2) (2026-04-28)
+
+
+### Bug Fixes
+
+* **reader:** prevent navigation from intro of first book YPE-1889 ([#135](https://github.com/youversion/platform-sdk-kotlin/issues/135)) ([06be46d](https://github.com/youversion/platform-sdk-kotlin/commit/06be46dfd696bf5d70fff880c5ea390fe14eac9f))
+
 ## [1.1.1](https://github.com/youversion/platform-sdk-kotlin/compare/1.1.0...1.1.1) (2026-04-12)
 
 
