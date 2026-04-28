@@ -139,8 +139,8 @@ class BibleVersionRepository(
 
             fun comparableString(bibleVersion: BibleVersion): String =
                 bibleVersion.localizedTitle ?: bibleVersion.title ?: bibleVersion.localizedAbbreviation
-                ?: bibleVersion.abbreviation
-                ?: bibleVersion.id.toString()
+                    ?: bibleVersion.abbreviation
+                    ?: bibleVersion.id.toString()
 
             // collator allows for locale-specific string comparisons
             val collator = Collator.getInstance(Locale.forLanguageTag(languageTag))
