@@ -215,7 +215,7 @@ class BibleReaderViewModelNavigationTests {
     }
 
     @Test
-    fun `GoToPreviousChapter when viewing intro of first book clears intro without navigation`() {
+    fun `GoToPreviousChapter when viewing intro of first book does nothing`() {
         val versionWithIntroOnFirst =
             BibleVersion(
                 id = 1,
@@ -240,11 +240,13 @@ class BibleReaderViewModelNavigationTests {
             )
         viewModel.bibleVersion = versionWithIntroOnFirst
         viewModel.onIntroSelected("GEN", "GEN.INTRO1")
+        assertTrue(viewModel.state.value.isViewingIntro)
 
         viewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter)
 
-        assertFalse(viewModel.state.value.isViewingIntro)
-        assertEquals("GEN", viewModel.state.value.bibleReference.bookUSFM)
+        assertTrue(viewModel.state.value.isViewingIntro)
+        assertEquals("GEN", viewModel.state.value.introBookUSFM)
+        assertEquals("GEN.INTRO1", viewModel.state.value.introPassageId)
     }
 
     @Test
