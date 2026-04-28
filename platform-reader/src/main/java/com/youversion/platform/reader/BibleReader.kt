@@ -89,10 +89,10 @@ fun BibleReader(
                 composable(
                     route = BibleReaderDestination.Languages.route,
                 ) {
-                    val languagesViewModel: BibleVersionsViewModel =
+                    val bibleVersionsViewModel: BibleVersionsViewModel =
                         koinViewModel { parametersOf() }
                     LanguagesScreen(
-                        viewModel = languagesViewModel,
+                        viewModel = bibleVersionsViewModel,
                         onBackClick = navController::popBackStack,
                         onLanguageTagSelected = { languageTag ->
                             versionViewModel.loadVersionsForLanguage(languageTag)
