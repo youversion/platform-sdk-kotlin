@@ -8,6 +8,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.text.Collator
+import java.util.Locale
 
 enum class BibleVersionDownloadStatus {
     DOWNLOADABLE,
@@ -138,11 +139,11 @@ class BibleVersionRepository(
 
             fun comparableString(bibleVersion: BibleVersion): String =
                 bibleVersion.localizedTitle ?: bibleVersion.title ?: bibleVersion.localizedAbbreviation
-                    ?: bibleVersion.abbreviation
-                    ?: bibleVersion.id.toString()
+                ?: bibleVersion.abbreviation
+                ?: bibleVersion.id.toString()
 
             // collator allows for locale-specific string comparisons
-            val collator = Collator.getInstance()
+            val collator = Collator.getInstance(Locale.forLanguageTag(languageTag))
             val result =
                 unsortedVersions
                     .distinctBy { it.id }
