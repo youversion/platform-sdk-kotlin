@@ -48,9 +48,7 @@ class LanguageRepository(
     private var suggestedLanguageTags: List<String>? = null
 
     suspend fun suggestedLanguageTags(): List<String> {
-        if (!suggestedLanguageTags.isNullOrEmpty()) {
-            return suggestedLanguageTags!!
-        }
+        suggestedLanguageTags?.let { return it }
 
         val data = suggestedLanguages(localeCountryCode)
         val codes = if (data.isEmpty()) listOf("en", "es") else extractLanguageCodes(data)
