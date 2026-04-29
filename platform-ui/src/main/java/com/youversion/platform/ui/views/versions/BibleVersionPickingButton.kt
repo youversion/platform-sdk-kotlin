@@ -24,6 +24,7 @@ import org.koin.compose.KoinIsolatedContext
 import org.koin.compose.module.rememberKoinModules
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.parameter.parametersOf
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class, KoinExperimentalAPI::class)
 @Composable
@@ -39,9 +40,10 @@ fun BibleVersionPickingButton(
         var isShowingSheet by remember { mutableStateOf(false) }
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         val latestOnVersionChange = rememberUpdatedState(onVersionChange)
+        val viewModelKey = remember { UUID.randomUUID().toString() }
 
         val viewModel: BibleVersionsViewModel =
-            koinViewModel {
+            koinViewModel(key = viewModelKey) {
                 parametersOf(
                     initialVersionId,
                     { newVersion: BibleVersion ->
