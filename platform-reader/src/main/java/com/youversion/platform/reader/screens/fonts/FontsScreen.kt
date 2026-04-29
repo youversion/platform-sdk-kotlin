@@ -29,7 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.FontDefinition
 import com.youversion.platform.reader.R
-import com.youversion.platform.reader.components.BibleReaderTopAppBar
+import com.youversion.platform.ui.views.components.BibleReaderTopAppBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

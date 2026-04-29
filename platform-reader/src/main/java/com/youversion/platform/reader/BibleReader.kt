@@ -12,13 +12,10 @@ import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.reader.di.PlatformReaderKoinModule
 import com.youversion.platform.reader.screens.bible.BibleScreen
 import com.youversion.platform.reader.screens.fonts.FontsScreen
-import com.youversion.platform.reader.screens.languages.LanguagesScreen
-import com.youversion.platform.reader.screens.languages.LanguagesViewModel
 import com.youversion.platform.reader.screens.references.ReferencesScreen
-import com.youversion.platform.reader.screens.versions.VersionsScreen
-import com.youversion.platform.reader.screens.versions.VersionsViewModel
-import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
-import com.youversion.platform.reader.theme.FontDefinitionProvider
+import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.views.versions.LanguagesScreen
+import com.youversion.platform.ui.views.versions.VersionsScreen
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinIsolatedContext
 import org.koin.compose.module.rememberKoinModules
@@ -41,7 +38,7 @@ fun BibleReader(
 
         val bibleReaderViewModel: BibleReaderViewModel =
             koinViewModel { parametersOf(bibleReference, fontDefinitionProvider) }
-        val versionViewModel: VersionsViewModel = koinViewModel()
+        val versionViewModel = bibleReaderViewModel.bibleVersionsViewModel
 
         val navController = rememberNavController()
         val onDestinationClick: (BibleReaderDestination) -> Unit = { destination ->
@@ -91,10 +88,8 @@ fun BibleReader(
                 composable(
                     route = BibleReaderDestination.Languages.route,
                 ) {
-                    val languagesViewModel: LanguagesViewModel =
-                        koinViewModel { parametersOf(bibleReaderViewModel.bibleVersion) }
                     LanguagesScreen(
-                        viewModel = languagesViewModel,
+                        viewModel = versionViewModel,
                         onBackClick = navController::popBackStack,
                         onLanguageTagSelected = { languageTag ->
                             versionViewModel.loadVersionsForLanguage(languageTag)

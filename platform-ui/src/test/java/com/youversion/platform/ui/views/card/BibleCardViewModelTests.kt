@@ -184,4 +184,27 @@ class BibleCardViewModelTests {
         }
 
     // endregion
+
+    // region Version Switching
+
+    @Test
+    fun `switchToVersion fetches version and updates reference and bibleVersion`() =
+        runTest {
+            val newVersion = BibleVersion(id = 42, abbreviation = "NIV")
+            coEvery { bibleVersionRepository.version(id = newVersion.id) } returns newVersion
+
+            val viewModel = createViewModel(bibleVersion = testBibleVersion)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            viewModel.switchToVersion(newVersion.id)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(newVersion.id, viewModel.state.value.reference.versionId)
+            assertEquals("GEN", viewModel.state.value.reference.bookUSFM)
+            assertEquals(1, viewModel.state.value.reference.chapter)
+            assertEquals(newVersion, viewModel.state.value.bibleVersion)
+            coVerify(exactly = 1) { bibleVersionRepository.version(id = newVersion.id) }
+        }
+
+    // endregion
 }

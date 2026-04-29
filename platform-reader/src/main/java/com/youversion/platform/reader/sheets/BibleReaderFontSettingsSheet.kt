@@ -45,17 +45,17 @@ import androidx.compose.ui.unit.sp
 import com.youversion.platform.reader.FontDefinition
 import com.youversion.platform.reader.R
 import com.youversion.platform.reader.ReaderFontSettings
-import com.youversion.platform.reader.theme.Charcoal
-import com.youversion.platform.reader.theme.Cream
-import com.youversion.platform.reader.theme.MidnightBlue
-import com.youversion.platform.reader.theme.PaperGray
-import com.youversion.platform.reader.theme.PureWhite
-import com.youversion.platform.reader.theme.ReaderColorScheme
-import com.youversion.platform.reader.theme.ReaderTheme
-import com.youversion.platform.reader.theme.Sepia
-import com.youversion.platform.reader.theme.TrueBlack
-import com.youversion.platform.reader.theme.readerColorScheme
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.theme.Charcoal
+import com.youversion.platform.ui.theme.Cream
+import com.youversion.platform.ui.theme.MidnightBlue
+import com.youversion.platform.ui.theme.PaperGray
+import com.youversion.platform.ui.theme.PureWhite
+import com.youversion.platform.ui.theme.ReaderColorScheme
+import com.youversion.platform.ui.theme.ReaderTheme
+import com.youversion.platform.ui.theme.Sepia
+import com.youversion.platform.ui.theme.TrueBlack
+import com.youversion.platform.ui.theme.readerColorScheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

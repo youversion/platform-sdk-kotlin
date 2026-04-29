@@ -6,11 +6,12 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import io.mockk.coEvery
 import io.mockk.every
@@ -39,6 +40,7 @@ class BibleReaderViewModelTest {
     private lateinit var bibleReaderRepository: BibleReaderRepository
     private lateinit var userSettingsRepository: UserSettingsRepository
     private lateinit var bibleChapterRepository: BibleChapterRepository
+    private lateinit var languageRepository: LanguageRepository
     private lateinit var copyManager: CopyManager
     private lateinit var shareManager: ShareManager
     private lateinit var viewModel: BibleReaderViewModel
@@ -59,6 +61,7 @@ class BibleReaderViewModelTest {
         bibleReaderRepository = mockk(relaxed = true)
         userSettingsRepository = mockk(relaxed = true)
         bibleChapterRepository = mockk(relaxed = true)
+        languageRepository = mockk(relaxed = true)
         copyManager = mockk(relaxed = true)
         shareManager = mockk(relaxed = true)
 
@@ -66,7 +69,7 @@ class BibleReaderViewModelTest {
 
         coEvery { bibleVersionRepository.version(any()) } returns
             BibleVersion(id = 1, abbreviation = "KJV")
-        coEvery { bibleReaderRepository.loadLanguageNames(any()) } returns Unit
+        coEvery { languageRepository.loadLanguageNames(any()) } returns Unit
 
         viewModel =
             BibleReaderViewModel(
@@ -76,6 +79,7 @@ class BibleReaderViewModelTest {
                 bibleReaderRepository = bibleReaderRepository,
                 userSettingsRepository = userSettingsRepository,
                 bibleChapterRepository = bibleChapterRepository,
+                languageRepository = languageRepository,
                 copyManager = copyManager,
                 shareManager = shareManager,
             )

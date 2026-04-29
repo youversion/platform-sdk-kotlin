@@ -1,5 +1,8 @@
 package com.youversion.platform.core.bibles.domain
 
+import com.youversion.platform.core.bibles.models.BibleBook
+import com.youversion.platform.core.bibles.models.BibleChapter
+import com.youversion.platform.core.bibles.models.BibleVersion
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -436,4 +439,210 @@ class BibleReferenceTests {
         assertEquals(6, merged.verseEnd)
     }
 
+    // ----- Test existsIn
+
+    @Test
+    fun `test existsIn returns false when book not in version`() {
+        val version =
+            BibleVersion(
+                id = 1,
+                books = listOf(bookWithChapters("EXO", listOf(chapter(id = "1")))),
+            )
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        assertFalse(ref.existsIn(version))
+    }
+
+    @Test
+    fun `test existsIn returns true when version has null books`() {
+        val version = BibleVersion(id = 1, books = null)
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        assertTrue(ref.existsIn(version))
+    }
+
+    @Test
+    fun `test existsIn returns false when version has empty books`() {
+        val version = BibleVersion(id = 1, books = emptyList())
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        assertFalse(ref.existsIn(version))
+    }
+
+    @Test
+    fun `test existsIn matches book USFM case-insensitively`() {
+        val version =
+            BibleVersion(
+                id = 1,
+                books = listOf(bookWithChapters("GEN", listOf(chapter(id = "1")))),
+            )
+        assertTrue(BibleReference(versionId = 1, bookUSFM = "gen", chapter = 1).existsIn(version))
+        assertTrue(BibleReference(versionId = 1, bookUSFM = "GeN", chapter = 1).existsIn(version))
+    }
+
+    @Test
+    fun `test existsIn returns true optimistically when book lookup fails despite USFM match`() {
+        // bookUSFMs does a case-insensitive contains check, but version.book() does an exact match.
+        // When stored USFM case differs, book() returns null and existsIn short-circuits to true.
+        val version =
+            BibleVersion(
+                id = 1,
+                books = listOf(bookWithChapters("gen", listOf(chapter(id = "1")))),
+            )
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 99)
+        assertTrue(ref.existsIn(version))
+    }
+
+    @Test
+    fun `test existsIn returns true optimistically when book has null chapters`() {
+        val version =
+            BibleVersion(
+                id = 1,
+                books = listOf(bookWithChapters("GEN", null)),
+            )
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 999)
+        assertTrue(ref.existsIn(version))
+    }
+
+    @Test
+    fun `test existsIn matches chapter by id`() {
+        val version =
+            BibleVersion(
+                id = 1,
+                books = listOf(bookWithChapters("GEN", listOf(chapter(id = "3")))),
+            )
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 3)
+        assertTrue(ref.existsIn(version))
+    }
+
+    @Test
+    fun `test existsIn matches chapter by title`() {
+        val version =
+            BibleVersion(
+                id = 1,
+                books = listOf(bookWithChapters("GEN", listOf(chapter(title = "3")))),
+            )
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 3)
+        assertTrue(ref.existsIn(version))
+    }
+
+    @Test
+    fun `test existsIn matches chapter by passageId using chapterUSFM`() {
+        val version =
+            BibleVersion(
+                id = 1,
+                books = listOf(bookWithChapters("GEN", listOf(chapter(passageId = "GEN.3")))),
+            )
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 3)
+        assertTrue(ref.existsIn(version))
+    }
+
+    @Test
+    fun `test existsIn matches chapter by passageId when reference book is lowercase`() {
+        val version =
+            BibleVersion(
+                id = 1,
+                books = listOf(bookWithChapters("GEN", listOf(chapter(passageId = "GEN.3")))),
+            )
+        val ref = BibleReference(versionId = 1, bookUSFM = "gen", chapter = 3)
+        assertTrue(ref.existsIn(version))
+    }
+
+    @Test
+    fun `test existsIn returns false when chapter not found`() {
+        val version =
+            BibleVersion(
+                id = 1,
+                books =
+                    listOf(
+                        bookWithChapters(
+                            "GEN",
+                            listOf(
+                                chapter(id = "1", passageId = "GEN.1", title = "1"),
+                                chapter(id = "2", passageId = "GEN.2", title = "2"),
+                            ),
+                        ),
+                    ),
+            )
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 999)
+        assertFalse(ref.existsIn(version))
+    }
+
+    @Test
+    fun `test existsIn returns false when book has empty chapters`() {
+        val version =
+            BibleVersion(
+                id = 1,
+                books = listOf(bookWithChapters("GEN", emptyList())),
+            )
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        assertFalse(ref.existsIn(version))
+    }
+
+    @Test
+    fun `test existsIn ignores verseStart and verseEnd`() {
+        val version =
+            BibleVersion(
+                id = 1,
+                books =
+                    listOf(
+                        bookWithChapters(
+                            "GEN",
+                            listOf(chapter(id = "1", passageId = "GEN.1", title = "1")),
+                        ),
+                    ),
+            )
+        assertTrue(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1).existsIn(version))
+        assertTrue(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 500).existsIn(version))
+        assertTrue(
+            BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 1, verseEnd = 999).existsIn(version),
+        )
+    }
+
+    @Test
+    fun `test existsIn with multiple books only matches correct chapters`() {
+        val version =
+            BibleVersion(
+                id = 1,
+                books =
+                    listOf(
+                        bookWithChapters(
+                            "GEN",
+                            listOf(
+                                chapter(id = "1", passageId = "GEN.1", title = "1"),
+                                chapter(id = "2", passageId = "GEN.2", title = "2"),
+                            ),
+                        ),
+                        bookWithChapters(
+                            "EXO",
+                            listOf(chapter(id = "1", passageId = "EXO.1", title = "1")),
+                        ),
+                    ),
+            )
+        assertTrue(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2).existsIn(version))
+        assertTrue(BibleReference(versionId = 1, bookUSFM = "EXO", chapter = 1).existsIn(version))
+        assertFalse(BibleReference(versionId = 1, bookUSFM = "EXO", chapter = 2).existsIn(version))
+    }
+
+    private fun chapter(
+        id: String? = null,
+        passageId: String? = null,
+        title: String? = null,
+    ): BibleChapter =
+        BibleChapter(
+            id = id,
+            passageId = passageId,
+            title = title,
+            verses = null,
+        )
+
+    private fun bookWithChapters(
+        usfm: String?,
+        chapters: List<BibleChapter>?,
+    ): BibleBook =
+        BibleBook(
+            id = usfm,
+            title = usfm,
+            fullTitle = null,
+            abbreviation = null,
+            canon = "old_testament",
+            chapters = chapters,
+        )
 }

@@ -11,15 +11,16 @@ import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
-import com.youversion.platform.reader.screens.languages.LanguageRowItem
-import com.youversion.platform.reader.theme.FontDefinitionProvider
-import com.youversion.platform.reader.theme.ReaderTheme
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.theme.ReaderTheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.views.components.LanguageRowItem
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
+import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,11 +29,13 @@ import kotlinx.coroutines.launch
 
 class BibleReaderViewModel(
     bibleReference: BibleReference?,
-    private val fontDefinitionProvider: FontDefinitionProvider?,
+    fontDefinitionProvider: FontDefinitionProvider?,
     private val bibleVersionRepository: BibleVersionRepository,
     private val bibleReaderRepository: BibleReaderRepository,
     private val userSettingsRepository: UserSettingsRepository,
     private val bibleChapterRepository: BibleChapterRepository,
+    private val languageRepository: LanguageRepository,
+    bibleVersionsViewModel: BibleVersionsViewModel? = null,
     private val copyManager: CopyManager,
     private val shareManager: ShareManager,
 ) : ViewModel() {
@@ -45,9 +48,12 @@ class BibleReaderViewModel(
             bibleReaderRepository.lastBibleReference = value
             _state.update { it.copy(bibleReference = value) }
         }
+
     internal var bibleVersion: BibleVersion?
         get() = _state.value.bibleVersion
         set(value) = _state.update { it.copy(bibleVersion = value) }
+
+    internal val bibleVersionsViewModel: BibleVersionsViewModel
 
     init {
         val reference = bibleReaderRepository.produceBibleReference(bibleReference)
@@ -59,8 +65,17 @@ class BibleReaderViewModel(
                 ),
             )
 
+        this.bibleVersionsViewModel =
+            bibleVersionsViewModel ?: BibleVersionsViewModel(
+                initialVersionId = reference.versionId,
+                onVersionChange = { version ->
+                    this.bibleVersion = version
+                    onHeaderSelectionChange(this.bibleReference.copy(versionId = version.id))
+                },
+                languageRepository = languageRepository,
+                bibleVersionRepository = bibleVersionRepository,
+            )
         loadUserSettingsFromStorage()
-        loadVersionIfNeeded()
         loadLanguages()
     }
 
@@ -79,18 +94,6 @@ class BibleReaderViewModel(
 
         userSettingsRepository.readerFontSize?.let { savedFontSize ->
             _state.update { it.copy(fontSize = savedFontSize.sp) }
-        }
-    }
-
-    private fun loadVersionIfNeeded() {
-        if (bibleVersion == null || bibleVersion?.id != bibleReference.versionId) {
-            viewModelScope.launch {
-                try {
-                    bibleVersion = bibleVersionRepository.version(id = bibleReference.versionId)
-                } catch (e: Exception) {
-                    // TODO: Select fallback version error
-                }
-            }
         }
     }
 
@@ -332,13 +335,13 @@ class BibleReaderViewModel(
         shareManager.shareText(text = shareText, title = shareTitle)
     }
 
-    fun decreaseFontSize() {
+    private fun decreaseFontSize() {
         val currentFontSize = _state.value.fontSize
         val nextFontSize = ReaderFontSettings.nextSmallerFontSize(currentFontSize)
         setFontSize(nextFontSize)
     }
 
-    fun increaseFontSize() {
+    private fun increaseFontSize() {
         val currentFontSize = _state.value.fontSize
         val nextFontSize = ReaderFontSettings.nextLargerFontSize(currentFontSize)
         setFontSize(nextFontSize)
@@ -349,12 +352,12 @@ class BibleReaderViewModel(
         _state.update { it.copy(fontSize = size) }
     }
 
-    fun setFontFamily(action: Action.SetFontDefinition) {
+    private fun setFontFamily(action: Action.SetFontDefinition) {
         userSettingsRepository.readerFontFamilyName = action.fontDefinition.fontName
         _state.update { it.copy(selectedFontDefinition = action.fontDefinition) }
     }
 
-    fun openFootnotes(action: Action.OpenFootnotes) {
+    private fun openFootnotes(action: Action.OpenFootnotes) {
         _state.update {
             it.copy(
                 showingFootnotes = true,
@@ -364,7 +367,7 @@ class BibleReaderViewModel(
         }
     }
 
-    fun closeFootnotes() {
+    private fun closeFootnotes() {
         _state.update {
             it.copy(
                 showingFootnotes = false,
@@ -392,7 +395,7 @@ class BibleReaderViewModel(
         }
     }
 
-    fun setReaderTheme(action: Action.SetReaderTheme) {
+    private fun setReaderTheme(action: Action.SetReaderTheme) {
         BibleReaderTheme.selectedColorScheme.value = action.readerTheme.colorScheme
         userSettingsRepository.readerThemeId = action.readerTheme.id
     }
@@ -401,7 +404,7 @@ class BibleReaderViewModel(
     private fun loadLanguages() {
         viewModelScope.launch {
             try {
-                bibleReaderRepository.loadLanguageNames(bibleVersion)
+                languageRepository.loadLanguageNames(bibleVersion)
             } catch (e: Exception) {
                 Logger.w("Failed to get languages", e)
             }

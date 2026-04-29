@@ -23,6 +23,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertTrue
+import com.youversion.platform.ui.R as UiR
 
 @RunWith(RobolectricTestRunner::class)
 class FontsScreenTest {
@@ -115,7 +116,7 @@ class FontsScreenTest {
         }
 
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        composeTestRule.onNodeWithContentDescription(context.getString(R.string.back_button)).performClick()
+        composeTestRule.onNodeWithContentDescription(context.getString(UiR.string.back_button)).performClick()
         assertTrue(onBackClicked)
     }
 }

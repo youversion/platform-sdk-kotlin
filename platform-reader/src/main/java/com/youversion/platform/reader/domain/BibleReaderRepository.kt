@@ -1,16 +1,11 @@
 package com.youversion.platform.reader.domain
 
 import com.youversion.platform.core.BibleDefaults
-import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.domain.Storage
-import com.youversion.platform.core.languages.domain.LanguageRepository
-import com.youversion.platform.core.languages.models.Language
 import kotlinx.serialization.json.Json
-import java.text.Collator
-import java.util.Locale
 
 /**
  * Responsible for fetching and managing data related to the Bible
@@ -20,16 +15,10 @@ import java.util.Locale
 class BibleReaderRepository(
     private val storage: Storage,
     private val bibleVersionRepository: BibleVersionRepository,
-    private val languageRepository: LanguageRepository,
 ) {
     companion object {
         private const val KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
     }
-
-    val localeCountryCode: String
-        get() = Locale.getDefault().country ?: "US"
-    val localeLanguageCode: String
-        get() = Locale.getDefault().language ?: "en"
 
     /**
      * Returns the last Bible reference that the Reader was viewing.
@@ -124,133 +113,5 @@ class BibleReaderRepository(
                 null
             }
         }
-    }
-
-    /** In-memory cache of bible versions which have been fetched by language */
-    private var versionsInLanguage: MutableMap<String, List<BibleVersion>> = mutableMapOf()
-
-    /** Holds minimal information about all Bible versions available to this app, in all languages. */
-    var permittedVersions: List<BibleVersion>? = null
-        private set
-
-    /**
-     * Returns minimal information about all Bible versions available to this app, in all languages
-     */
-    suspend fun permittedVersionsListing(): List<BibleVersion> =
-        permittedVersions
-            ?: bibleVersionRepository
-                .permittedVersions()
-                .also { permittedVersions = it }
-
-    /**
-     * Returns complete information about Bible versions available in a specific language.
-     */
-    suspend fun fetchVersionsInLanguage(languageCode: String): List<BibleVersion> {
-        versionsInLanguage[languageCode]?.let {
-            return it
-        }
-
-        // There is currently no language with more than 99 versions so ignore pagination for now
-        val unsortedVersions =
-            YouVersionApi.bible
-                .versions(languageCode = languageCode, pageSize = 99)
-                .data
-
-        fun comparableString(bibleVersion: BibleVersion): String =
-            bibleVersion.localizedTitle ?: bibleVersion.title ?: bibleVersion.localizedAbbreviation
-                ?: bibleVersion.abbreviation
-                ?: bibleVersion.id.toString()
-
-        // collator allows for locale-specific string comparisons
-        val collator = Collator.getInstance()
-        val result =
-            unsortedVersions
-                .distinctBy { it.id }
-                .sortedWith { a, b ->
-                    val aTitle = comparableString(a).lowercase()
-                    val bTitle = comparableString(b).lowercase()
-                    collator.compare(aTitle, bTitle)
-                }
-        versionsInLanguage[languageCode] = result
-        return result
-    }
-
-    // ----- Languages
-    val allPermittedLanguageTags: List<String>
-        get() =
-            permittedVersions
-                ?.mapNotNull { it.languageTag }
-                ?.distinct()
-                ?: emptyList()
-
-    private var suggestedLanguageTags: List<String>? = null
-
-    suspend fun suggestedLanguageTags(): List<String> {
-        if (!suggestedLanguageTags.isNullOrEmpty()) {
-            return suggestedLanguageTags!!
-        }
-
-        val data = languageRepository.suggestedLanguages(localeCountryCode)
-        val codes = if (data.isEmpty()) listOf("en", "es") else extractLanguageCodes(data)
-
-        val result =
-            permittedVersions?.let { permittedVersions ->
-                codes
-                    .filter { languageCode ->
-                        permittedVersions.isEmpty() ||
-                            permittedVersions.any { it.languageTag == languageCode }
-                    }
-            } ?: codes
-        suggestedLanguageTags = result
-        return result
-    }
-
-    private fun extractLanguageCodes(languages: List<Language>): List<String> =
-        languages
-            .mapNotNull { it.language }
-            .distinct()
-
-    private var languageNames: Map<String, String> = emptyMap()
-
-    suspend fun loadLanguageNames(version: BibleVersion?) {
-        if (languageNames.isNotEmpty()) return
-
-        val result =
-            languageRepository
-                .languages()
-
-        val langNames =
-            result
-                .mapNotNull { language ->
-                    language.language?.let { code ->
-                        language.displayNames?.let { displayNames ->
-                            bestDisplayName(displayNames, version)?.let { name ->
-                                code to name
-                            }
-                        }
-                    }
-                }.toMap()
-
-        languageNames = langNames
-    }
-
-    fun languageName(lang: String): String {
-        languageNames[lang]?.let { return it }
-        val displayName = Locale.forLanguageTag(lang).getDisplayLanguage(Locale.getDefault())
-        return displayName.takeIf { it.isNotBlank() } ?: lang
-    }
-
-    private fun bestDisplayName(
-        names: Map<String, String?>,
-        version: BibleVersion?,
-    ): String? {
-        if (names.isEmpty()) return null
-        if (names.size < 2) return names.entries.firstOrNull()?.value
-
-        names[localeLanguageCode]?.let { return it }
-        version?.languageTag?.let { names[it] }?.let { return it }
-        names["en"]?.let { return it }
-
-        return names.entries.firstOrNull()?.value
     }
 }

@@ -22,8 +22,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

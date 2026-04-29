@@ -646,6 +646,83 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
         testInvalidResponse {
             repository.permittedVersions()
         }
+
+    // ----- permittedVersionsListing
+
+    @OptIn(ExperimentalAtomicApi::class)
+    @Test
+    fun `test permittedVersionsListing fetches once and caches result across calls`() =
+        runTest {
+            val requestCount = AtomicInt(0)
+            MockEngine { _ ->
+                requestCount.incrementAndFetch()
+                respondJson(PERMITTED_VERSIONS_JSON)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val first = repository.permittedVersionsListing()
+            val second = repository.permittedVersionsListing()
+
+            assertEquals(first, second)
+            assertEquals(1, requestCount.load())
+        }
+
+    // ----- fullVersions
+
+    @Test
+    fun `test fullVersions deduplicates by id and sorts using locale collator`() =
+        runTest {
+            MockEngine { _ ->
+                respondJson(FULL_VERSIONS_JSON)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val versions = repository.fullVersions("en")
+
+            assertEquals(listOf(2, 1), versions.map { it.id })
+            assertEquals(listOf("Bible A", "Bible B"), versions.map { it.title })
+        }
+
+    @OptIn(ExperimentalAtomicApi::class)
+    @Test
+    fun `test fullVersions caches result across calls including empty responses`() =
+        runTest {
+            val requestCount = AtomicInt(0)
+            MockEngine { _ ->
+                requestCount.incrementAndFetch()
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val first = repository.fullVersions("en")
+            val second = repository.fullVersions("en")
+
+            assertTrue(first.isEmpty())
+            assertTrue(second.isEmpty())
+            assertEquals(1, requestCount.load())
+        }
+
+    @Test
+    fun `test fullVersions falls back to title when localizedTitle is absent`() =
+        runTest {
+            MockEngine { _ ->
+                respondJson(
+                    """
+                    {
+                        "data": [
+                            {"id": 10, "title": "Zebra"},
+                            {"id": 11, "title": "Alpha"}
+                        ]
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val versions = repository.fullVersions("en")
+
+            assertEquals(listOf(11, 10), versions.map { it.id })
+        }
 }
 
 private const val PERMITTED_VERSIONS_JSON = """
@@ -659,6 +736,16 @@ private const val PERMITTED_VERSIONS_JSON = """
             "id": 206,
             "language_tag": "en"
         }
+    ]
+}
+"""
+
+private const val FULL_VERSIONS_JSON = """
+{
+    "data": [
+        {"id": 1, "title": "Bible B"},
+        {"id": 1, "title": "Duplicate id"},
+        {"id": 2, "title": "Bible A"}
     ]
 }
 """

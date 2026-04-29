@@ -5,7 +5,7 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.domain.BibleReaderRepository
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -74,6 +74,7 @@ class BibleReaderViewModelReferenceTests {
                 bibleReaderRepository = bibleReaderRepository,
                 userSettingsRepository = mockk(relaxed = true),
                 bibleChapterRepository = mockk(relaxed = true),
+                languageRepository = mockk(relaxed = true),
                 copyManager = mockk(relaxed = true),
                 shareManager = mockk(relaxed = true),
             )
