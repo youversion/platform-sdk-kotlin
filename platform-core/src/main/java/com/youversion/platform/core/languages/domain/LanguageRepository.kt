@@ -38,12 +38,15 @@ class LanguageRepository(
                 fields = listOf(Language.CodingKey.LANGUAGE, Language.CodingKey.DISPLAY_NAMES),
             ).data
 
-    val allPermittedLanguageTags: List<String>
-        get() =
-            bibleVersionRepository.permittedVersions
-                ?.mapNotNull { it.languageTag }
-                ?.distinct()
-                ?: emptyList()
+    /**
+     * Returns the distinct language tags across all permitted versions, awaiting the
+     * permitted-versions load if it has not yet completed.
+     */
+    suspend fun allPermittedLanguageTags(): List<String> =
+        bibleVersionRepository
+            .permittedVersionsListing()
+            .mapNotNull { it.languageTag }
+            .distinct()
 
     private var suggestedLanguageTags: List<String>? = null
 
@@ -53,14 +56,16 @@ class LanguageRepository(
         val data = suggestedLanguages(localeCountryCode)
         val codes = if (data.isEmpty()) listOf("en", "es") else extractLanguageCodes(data)
 
+        val permittedVersions = bibleVersionRepository.permittedVersionsListing()
         val result =
-            bibleVersionRepository.permittedVersions?.let { permittedVersions ->
+            if (permittedVersions.isEmpty()) {
                 codes
-                    .filter { languageCode ->
-                        permittedVersions.isEmpty() ||
-                            permittedVersions.any { it.languageTag == languageCode }
-                    }
-            } ?: codes
+            } else {
+                codes.filter { languageCode ->
+                    permittedVersions.any { it.languageTag == languageCode }
+                }
+            }
+
         suggestedLanguageTags = result
         return result
     }

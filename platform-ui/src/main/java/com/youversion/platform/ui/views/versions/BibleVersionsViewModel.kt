@@ -215,7 +215,7 @@ class BibleVersionsViewModel(
             try {
                 languageRepository.loadLanguageNames(null)
 
-                val allPermittedLanguageTags = languageRepository.allPermittedLanguageTags
+                val allPermittedLanguageTags = languageRepository.allPermittedLanguageTags()
                 val allLanguages =
                     allPermittedLanguageTags
                         .map { tag ->

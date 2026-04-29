@@ -19,7 +19,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class LanguageRepositoryTest : YouVersionPlatformTest {
     private lateinit var memoryCache: BibleVersionCache
@@ -71,15 +70,9 @@ class LanguageRepositoryTest : YouVersionPlatformTest {
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
-            bibleVersionRepository.permittedVersionsListing()
 
-            assertEquals(listOf("en", "fr"), repository.allPermittedLanguageTags)
+            assertEquals(listOf("en", "fr"), repository.allPermittedLanguageTags())
         }
-
-    @Test
-    fun `test allPermittedLanguageTags returns empty when permittedVersions not loaded`() {
-        assertTrue(repository.allPermittedLanguageTags.isEmpty())
-    }
 
     // ----- suggestedLanguageTags
 
@@ -153,10 +146,20 @@ class LanguageRepositoryTest : YouVersionPlatformTest {
     @Test
     fun `test suggestedLanguageTags is cached on second call`() =
         runTest {
-            val requestCount = AtomicInt(0)
-            MockEngine { _ ->
-                requestCount.incrementAndFetch()
-                respondJson("""{"data": [{"id": "en", "language": "en"}]}""")
+            val languagesRequestCount = AtomicInt(0)
+            val biblesRequestCount = AtomicInt(0)
+            MockEngine { request ->
+                when (request.url.encodedPath) {
+                    "/v1/languages" -> {
+                        languagesRequestCount.incrementAndFetch()
+                        respondJson("""{"data": [{"id": "en", "language": "en"}]}""")
+                    }
+                    "/v1/bibles" -> {
+                        biblesRequestCount.incrementAndFetch()
+                        respondJson("""{"data": [{"id": 1, "language_tag": "en"}]}""")
+                    }
+                    else -> error("Unexpected path: ${request.url.encodedPath}")
+                }
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
@@ -164,7 +167,8 @@ class LanguageRepositoryTest : YouVersionPlatformTest {
             val second = repository.suggestedLanguageTags()
 
             assertEquals(first, second)
-            assertEquals(1, requestCount.load())
+            assertEquals(1, languagesRequestCount.load())
+            assertEquals(1, biblesRequestCount.load())
         }
 
     // ----- languageName display-name preference

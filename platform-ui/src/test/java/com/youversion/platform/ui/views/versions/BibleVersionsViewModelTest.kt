@@ -438,7 +438,7 @@ class BibleVersionsViewModelTest {
 
     private fun stubSuccessfulLanguageLoad() {
         coEvery { languageRepository.loadLanguageNames(null) } returns Unit
-        every { languageRepository.allPermittedLanguageTags } returns listOf("en", "es")
+        coEvery { languageRepository.allPermittedLanguageTags() } returns listOf("en", "es")
         every { languageRepository.languageName("en") } returns "English"
         every { languageRepository.languageName("es") } returns "Spanish"
         coEvery { languageRepository.suggestedLanguageTags() } returns listOf("en")

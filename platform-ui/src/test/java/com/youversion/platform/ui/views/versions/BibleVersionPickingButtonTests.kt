@@ -222,7 +222,7 @@ class BibleVersionPickingButtonTests {
         coEvery { mockVersionRepository.fullVersions("es") } returns listOf(spanishVersion)
         coEvery { mockVersionRepository.permittedVersionsListing() } returns listOf(englishVersion, spanishVersion)
 
-        every { mockLanguageRepository.allPermittedLanguageTags } returns listOf("en", "es")
+        coEvery { mockLanguageRepository.allPermittedLanguageTags() } returns listOf("en", "es")
         coEvery { mockLanguageRepository.suggestedLanguageTags() } returns listOf("es")
         every { mockLanguageRepository.languageName("es") } returns "Spanish"
         every { mockLanguageRepository.languageName("en") } returns "English"
