@@ -126,7 +126,7 @@ fun BibleCard(
                         initialVersionId = state.reference.versionId,
                         modifier = Modifier.testTag("bible_card_version_picker"),
                         onVersionChange = { newVersion ->
-                            viewModel.switchToVersion(newVersion)
+                            viewModel.switchToVersion(newVersion.id)
                             onVersionChange?.invoke(newVersion)
                         },
                     )

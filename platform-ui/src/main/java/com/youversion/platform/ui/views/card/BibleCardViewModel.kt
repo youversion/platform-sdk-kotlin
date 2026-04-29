@@ -48,12 +48,22 @@ internal class BibleCardViewModel(
         }
     }
 
-    fun switchToVersion(version: BibleVersion) {
-        _state.update {
-            it.copy(
-                reference = it.reference.copy(versionId = version.id),
-                bibleVersion = version,
-            )
+    fun switchToVersion(versionId: Int) {
+        viewModelScope.launch {
+            try {
+                val newVersion = bibleVersionRepository.version(id = versionId)
+                _state.update {
+                    it.copy(
+                        reference = it.reference.copy(versionId = versionId),
+                        bibleVersion = newVersion,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _events.send(Event.OnErrorLoadingBibleVersion)
+                Log.e("BibleCard", "Error loading Bible version", e)
+            }
         }
     }
 
