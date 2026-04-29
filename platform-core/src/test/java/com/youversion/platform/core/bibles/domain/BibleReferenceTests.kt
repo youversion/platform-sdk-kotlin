@@ -453,10 +453,10 @@ class BibleReferenceTests {
     }
 
     @Test
-    fun `test existsIn returns false when version has null books`() {
+    fun `test existsIn returns true when version has null books`() {
         val version = BibleVersion(id = 1, books = null)
         val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
-        assertFalse(ref.existsIn(version))
+        assertTrue(ref.existsIn(version))
     }
 
     @Test

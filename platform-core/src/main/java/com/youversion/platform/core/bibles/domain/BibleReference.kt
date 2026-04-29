@@ -72,10 +72,14 @@ data class BibleReference(
     /**
      * Returns whether this reference exists in [version].
      *
-     * If [version] has not been fully populated (its book or chapter metadata is absent), this
-     * function optimistically returns `true` rather than reporting a false negative.
+     * If [version] has not been fully populated (its books list, book metadata, or chapter
+     * metadata is absent), this function optimistically returns `true` rather than reporting a
+     * false negative. A version whose books list is explicitly empty is treated as not containing
+     * any reference.
      */
     fun existsIn(version: BibleVersion): Boolean {
+        if (version.books == null) return true
+
         val normalizedBookUSFM = bookUSFM.uppercase()
         if (!version.bookUSFMs.any { it.uppercase() == normalizedBookUSFM }) return false
 
