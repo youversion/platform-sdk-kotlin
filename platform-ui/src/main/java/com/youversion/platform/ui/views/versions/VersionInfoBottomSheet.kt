@@ -66,7 +66,8 @@ fun VersionInfoBottomSheet(
                 bibleVersion = bibleVersion,
                 publisherName = organization?.name,
             )
-            OfflineAgreement()
+            // TODO: Uncomment this when ready for Offline Downloads
+            // OfflineAgreement()
             VersionCopyright(
                 bibleVersion = bibleVersion,
             )
@@ -74,10 +75,12 @@ fun VersionInfoBottomSheet(
                 bibleVersion = bibleVersion,
                 onClick = {},
             )
-            PrimaryActions(
-                onDownloadClick = {},
-                onDismissClick = onDismissRequest,
-            )
+            Spacer(Modifier.height(16.dp))
+            // TODO: Uncomment this when ready for Offline Downloads
+            // PrimaryActions(
+            // onDownloadClick = {},
+            // onDismissClick = {},
+            // )
         }
     }
 }
