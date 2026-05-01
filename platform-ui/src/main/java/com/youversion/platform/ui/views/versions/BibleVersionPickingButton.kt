@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.ui.di.PlatformUIKoinModule
+import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinIsolatedContext
@@ -53,38 +54,40 @@ fun BibleVersionPickingButton(
                 )
             }
 
-        Button(
-            onClick = { isShowingSheet = true },
-            modifier = modifier,
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = BibleReaderTheme.colorScheme.buttonSecondary,
-                    contentColor = BibleReaderTheme.colorScheme.textPrimary,
-                ),
-            contentPadding =
-                PaddingValues(
-                    start = 12.dp,
-                    top = 4.dp,
-                    end = 12.dp,
-                    bottom = 4.dp,
-                ),
-        ) {
-            Text(
-                text = version?.localizedAbbreviation ?: version?.abbreviation ?: " ",
-                style = BibleReaderTheme.typography.buttonLabelS,
-            )
-        }
-
-        if (isShowingSheet) {
-            ModalBottomSheet(onDismissRequest = { isShowingSheet = false }, sheetState = sheetState) {
-                BibleVersionsStack(
-                    viewModel = viewModel,
-                    onDismiss = { isShowingSheet = false },
-                    onVersionSelect = { selectedVersion ->
-                        viewModel.onAction(BibleVersionsViewModel.Action.VersionSelected(selectedVersion))
-                        isShowingSheet = false
-                    },
+        BibleReaderMaterialTheme {
+            Button(
+                onClick = { isShowingSheet = true },
+                modifier = modifier,
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = BibleReaderTheme.colorScheme.buttonSecondary,
+                        contentColor = BibleReaderTheme.colorScheme.textPrimary,
+                    ),
+                contentPadding =
+                    PaddingValues(
+                        start = 12.dp,
+                        top = 4.dp,
+                        end = 12.dp,
+                        bottom = 4.dp,
+                    ),
+            ) {
+                Text(
+                    text = version?.localizedAbbreviation ?: version?.abbreviation ?: " ",
+                    style = BibleReaderTheme.typography.buttonLabelS,
                 )
+            }
+
+            if (isShowingSheet) {
+                ModalBottomSheet(onDismissRequest = { isShowingSheet = false }, sheetState = sheetState) {
+                    BibleVersionsStack(
+                        viewModel = viewModel,
+                        onDismiss = { isShowingSheet = false },
+                        onVersionSelect = { selectedVersion ->
+                            viewModel.onAction(BibleVersionsViewModel.Action.VersionSelected(selectedVersion))
+                            isShowingSheet = false
+                        },
+                    )
+                }
             }
         }
     }
