@@ -8,6 +8,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,6 +17,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.ui.di.PlatformUIKoinModule
@@ -38,7 +40,6 @@ fun BibleVersionPickingButton(
     KoinIsolatedContext(context = PlatformKoinGraph.koinApplication) {
         rememberKoinModules { listOf(PlatformUIKoinModule) }
 
-        var version by remember { mutableStateOf<BibleVersion?>(null) }
         var isShowingSheet by remember { mutableStateOf(false) }
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         val latestOnVersionChange = rememberUpdatedState(onVersionChange)
@@ -46,14 +47,14 @@ fun BibleVersionPickingButton(
 
         val viewModel: BibleVersionsViewModel =
             koinViewModel(key = viewModelKey) {
-                parametersOf(
-                    initialVersionId,
-                    { newVersion: BibleVersion ->
-                        version = newVersion
-                        latestOnVersionChange.value?.invoke(newVersion)
-                    },
-                )
+                parametersOf(initialVersionId)
             }
+        val state by viewModel.state.collectAsStateWithLifecycle()
+        val currentVersion = state.currentVersion
+
+        LaunchedEffect(currentVersion) {
+            currentVersion?.let { latestOnVersionChange.value?.invoke(it) }
+        }
 
         BibleReaderMaterialTheme {
             Button(
@@ -73,7 +74,7 @@ fun BibleVersionPickingButton(
                     ),
             ) {
                 Text(
-                    text = version?.localizedAbbreviation ?: version?.abbreviation ?: " ",
+                    text = currentVersion?.localizedAbbreviation ?: currentVersion?.abbreviation ?: " ",
                     style = BibleReaderTheme.typography.buttonLabelS,
                 )
             }

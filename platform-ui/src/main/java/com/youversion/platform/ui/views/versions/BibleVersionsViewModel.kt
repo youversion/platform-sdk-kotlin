@@ -49,10 +49,15 @@ class BibleVersionsViewModel(
             }
         }
         if (loadedVersion != null) {
-            onVersionChange(loadedVersion)
+            setCurrentVersion(loadedVersion)
         } else {
             selectFallbackVersion()
         }
+    }
+
+    private fun setCurrentVersion(version: BibleVersion) {
+        _state.update { it.copy(currentVersion = version) }
+        onVersionChange(version)
     }
 
     private suspend fun selectFallbackVersion() {
@@ -71,7 +76,7 @@ class BibleVersionsViewModel(
             // TODO: navigate to the VersionsScreen so user can select a version.
             return
         }
-        onVersionChange(version)
+        setCurrentVersion(version)
     }
 
     private suspend fun acceptableFallbackVersionId(): Int? {
@@ -188,7 +193,7 @@ class BibleVersionsViewModel(
             }
 
             is Action.VersionSelected -> {
-                onVersionChange(action.bibleVersion)
+                setCurrentVersion(action.bibleVersion)
             }
         }
     }
@@ -256,6 +261,7 @@ class BibleVersionsViewModel(
     // ----- State
     data class State(
         val initializing: Boolean = true,
+        val currentVersion: BibleVersion? = null,
         val permittedMinimalVersions: List<BibleVersion> = emptyList(),
         val activeLanguageVersions: List<BibleVersion> = emptyList(),
         val activeLanguageTag: String = "en",
