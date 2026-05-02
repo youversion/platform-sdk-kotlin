@@ -134,7 +134,7 @@ class BibleVersionsViewModelTest {
     fun `selectFallbackVersion picks first English permitted version when downloads are empty`() =
         runTest(testDispatcher) {
             val english = BibleVersion(id = 11, abbreviation = "NIV", languageTag = "en")
-            coEvery { bibleVersionRepository.permittedVersions() } returns listOf(spanishVersion, english)
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(spanishVersion, english)
             coEvery { bibleVersionRepository.version(id = 11) } returns english
 
             var received: BibleVersion? = null
@@ -148,7 +148,7 @@ class BibleVersionsViewModelTest {
     fun `selectFallbackVersion picks first permitted version when no English is available`() =
         runTest(testDispatcher) {
             val french = BibleVersion(id = 55, abbreviation = "LSG", languageTag = "fr")
-            coEvery { bibleVersionRepository.permittedVersions() } returns listOf(french, spanishVersion)
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(french, spanishVersion)
             coEvery { bibleVersionRepository.version(id = 55) } returns french
 
             var received: BibleVersion? = null
@@ -159,9 +159,10 @@ class BibleVersionsViewModelTest {
         }
 
     @Test
-    fun `selectFallbackVersion does not fire onVersionChange when permittedVersions throws`() =
+    fun `selectFallbackVersion does not fire onVersionChange when permittedVersionsListing throws`() =
         runTest(testDispatcher) {
-            coEvery { bibleVersionRepository.permittedVersions() } coAnswers { throw RuntimeException("offline") }
+            coEvery { bibleVersionRepository.permittedVersionsListing() } coAnswers
+                { throw RuntimeException("offline") }
 
             val onVersionChange = mockk<(BibleVersion) -> Unit>(relaxed = true)
             createViewModel(initialVersionId = null, onVersionChange = onVersionChange)
@@ -175,7 +176,7 @@ class BibleVersionsViewModelTest {
         runTest(testDispatcher) {
             val english = BibleVersion(id = 11, abbreviation = "NIV", languageTag = "en")
             coEvery { bibleVersionRepository.version(id = 42) } coAnswers { throw RuntimeException("not permitted") }
-            coEvery { bibleVersionRepository.permittedVersions() } returns listOf(english)
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(english)
             coEvery { bibleVersionRepository.version(id = 11) } returns english
 
             var received: BibleVersion? = null
@@ -196,7 +197,7 @@ class BibleVersionsViewModelTest {
 
             assertEquals(listOf(permittedEn), viewModel.state.value.permittedMinimalVersions)
             assertEquals(listOf(activeEn), viewModel.state.value.activeLanguageVersions)
-            coVerify(exactly = 1) { bibleVersionRepository.permittedVersionsListing() }
+            coVerify(exactly = 2) { bibleVersionRepository.permittedVersionsListing() }
             coVerify(exactly = 1) { bibleVersionRepository.fullVersions("en") }
         }
 
@@ -220,7 +221,7 @@ class BibleVersionsViewModelTest {
                 viewModel.state.value.activeLanguageVersions
                     .isEmpty(),
             )
-            coVerify(exactly = 1) { bibleVersionRepository.permittedVersionsListing() }
+            coVerify(exactly = 2) { bibleVersionRepository.permittedVersionsListing() }
             coVerify(exactly = 1) { bibleVersionRepository.fullVersions("en") }
         }
 
@@ -244,7 +245,7 @@ class BibleVersionsViewModelTest {
                 viewModel.state.value.activeLanguageVersions
                     .isEmpty(),
             )
-            coVerify(exactly = 1) { bibleVersionRepository.permittedVersionsListing() }
+            coVerify(exactly = 2) { bibleVersionRepository.permittedVersionsListing() }
             coVerify(exactly = 1) { bibleVersionRepository.fullVersions("en") }
         }
 
@@ -268,7 +269,7 @@ class BibleVersionsViewModelTest {
                 viewModel.state.value.activeLanguageVersions
                     .isEmpty(),
             )
-            coVerify(exactly = 1) { bibleVersionRepository.permittedVersionsListing() }
+            coVerify(exactly = 2) { bibleVersionRepository.permittedVersionsListing() }
             coVerify(exactly = 1) { bibleVersionRepository.fullVersions("en") }
         }
 

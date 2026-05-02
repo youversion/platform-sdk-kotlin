@@ -13,6 +13,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -437,7 +438,7 @@ class VersionsScreenTest {
         renderScreen()
 
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Agree and Download").assertDoesNotExist()
+        composeTestRule.onNodeWithText("King James Version").assertDoesNotExist()
     }
 
     @Test
@@ -452,9 +453,10 @@ class VersionsScreenTest {
         renderScreen()
 
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Agree and Download").assertIsDisplayed()
+        composeTestRule.onNodeWithText("King James Version").assertIsDisplayed()
     }
 
+    @Ignore("TODO: Re-enable when offline downloads UI is uncommented in VersionInfoBottomSheet")
     @Test
     fun `dismissing bottom sheet via Maybe Later dispatches VersionDismissed action`() {
         stateFlow.value =

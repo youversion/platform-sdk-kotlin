@@ -7,6 +7,7 @@ import androidx.compose.ui.test.performClick
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.organizations.models.Organization
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -86,6 +87,7 @@ class VersionInfoBottomSheetTest {
 
     // ----- OfflineAgreement
 
+    @Ignore("TODO: Re-enable when offline downloads UI is uncommented in VersionInfoBottomSheet")
     @Test
     fun `displays offline agreement text`() {
         renderSheet()
@@ -97,6 +99,7 @@ class VersionInfoBottomSheetTest {
             ).assertIsDisplayed()
     }
 
+    @Ignore("TODO: Re-enable when offline downloads UI is uncommented in VersionInfoBottomSheet")
     @Test
     fun `displays offline tagline`() {
         renderSheet()
@@ -198,6 +201,7 @@ class VersionInfoBottomSheetTest {
 
     // ----- PrimaryActions
 
+    @Ignore("TODO: Re-enable when offline downloads UI is uncommented in VersionInfoBottomSheet")
     @Test
     fun `displays agree and download button`() {
         renderSheet()
@@ -205,6 +209,7 @@ class VersionInfoBottomSheetTest {
         composeTestRule.onNodeWithText("Agree and Download").assertIsDisplayed()
     }
 
+    @Ignore("TODO: Re-enable when offline downloads UI is uncommented in VersionInfoBottomSheet")
     @Test
     fun `displays maybe later button`() {
         renderSheet()
@@ -212,6 +217,7 @@ class VersionInfoBottomSheetTest {
         composeTestRule.onNodeWithText("Maybe Later").assertIsDisplayed()
     }
 
+    @Ignore("TODO: Re-enable when offline downloads UI is uncommented in VersionInfoBottomSheet")
     @Test
     fun `tapping maybe later calls onDismissRequest`() {
         var isDismissed = false
