@@ -82,7 +82,7 @@ class BibleVersionsViewModel(
 
         val versions =
             try {
-                bibleVersionRepository.permittedVersions()
+                bibleVersionRepository.permittedVersionsListing()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
