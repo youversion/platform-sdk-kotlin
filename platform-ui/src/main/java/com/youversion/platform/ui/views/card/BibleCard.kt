@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -56,6 +57,7 @@ import org.koin.compose.KoinIsolatedContext
 import org.koin.compose.module.rememberKoinModules
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.parameter.parametersOf
+import java.util.UUID
 
 @Composable
 fun BibleCard(
@@ -97,7 +99,9 @@ fun BibleCard(
 
         val context = LocalContext.current
 
-        val viewModel: BibleCardViewModel = koinViewModel { parametersOf(reference, version) }
+        val viewModelKey = rememberSaveable { UUID.randomUUID().toString() }
+        val viewModel: BibleCardViewModel =
+            koinViewModel(key = viewModelKey) { parametersOf(reference, version) }
         val state by viewModel.state.collectAsStateWithLifecycle()
 
         ObserveAsEvents(viewModel.events) { event ->

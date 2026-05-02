@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -41,7 +42,7 @@ fun BibleVersionPickingButton(
         var isShowingSheet by remember { mutableStateOf(false) }
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         val latestOnVersionChange = rememberUpdatedState(onVersionChange)
-        val viewModelKey = remember { UUID.randomUUID().toString() }
+        val viewModelKey = rememberSaveable { UUID.randomUUID().toString() }
 
         val viewModel: BibleVersionsViewModel =
             koinViewModel(key = viewModelKey) {
