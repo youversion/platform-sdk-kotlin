@@ -104,7 +104,8 @@ class BibleVersionsViewModel(
      * exceptions so the [kotlinx.coroutines.Deferred] always completes successfully with a [Result],
      * guaranteeing both requests run to completion regardless of individual failures. When both fail,
      * the active-language error is attached via [Throwable.addSuppressed] so logging retains both
-     * causes. State is only updated when both succeed.
+     * causes. State is only updated when both succeed; on any failure [State.hasLoadFailed] is set so
+     * the empty-state UI can distinguish a failed load from a genuinely empty result.
      */
     private fun loadVersions() {
         viewModelScope.launch {
@@ -142,12 +143,14 @@ class BibleVersionsViewModel(
                     it.copy(
                         activeLanguageVersions = activeResult.getOrThrow(),
                         permittedMinimalVersions = permittedResult.getOrThrow(),
+                        hasLoadFailed = false,
                     )
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Logger.e("Error loading versions", e)
+                _state.update { it.copy(hasLoadFailed = true) }
             } finally {
                 _state.update { it.copy(initializing = false) }
             }
@@ -273,6 +276,7 @@ class BibleVersionsViewModel(
         val suggestedLanguages: List<LanguageRowItem> = emptyList(),
         val allLanguages: List<LanguageRowItem> = emptyList(),
         val languagesInitializing: Boolean = false,
+        val hasLoadFailed: Boolean = false,
     ) {
         val versionsCount: Int
             get() = permittedMinimalVersions.count()
@@ -283,7 +287,7 @@ class BibleVersionsViewModel(
                     .count()
 
         val showEmptyState: Boolean
-            get() = !initializing && permittedMinimalVersions.isEmpty()
+            get() = !initializing && !hasLoadFailed && permittedMinimalVersions.isEmpty()
 
         val activeLanguageVersionsCount: Int
             get() =

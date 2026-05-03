@@ -197,6 +197,7 @@ class BibleVersionsViewModelTest {
 
             assertEquals(listOf(permittedEn), viewModel.state.value.permittedMinimalVersions)
             assertEquals(listOf(activeEn), viewModel.state.value.activeLanguageVersions)
+            assertFalse(viewModel.state.value.hasLoadFailed)
             coVerify(exactly = 2) { bibleVersionRepository.permittedVersionsListing() }
             coVerify(exactly = 1) { bibleVersionRepository.fullVersions("en") }
         }
@@ -221,6 +222,8 @@ class BibleVersionsViewModelTest {
                 viewModel.state.value.activeLanguageVersions
                     .isEmpty(),
             )
+            assertTrue(viewModel.state.value.hasLoadFailed)
+            assertFalse(viewModel.state.value.showEmptyState)
             coVerify(exactly = 2) { bibleVersionRepository.permittedVersionsListing() }
             coVerify(exactly = 1) { bibleVersionRepository.fullVersions("en") }
         }
@@ -245,6 +248,8 @@ class BibleVersionsViewModelTest {
                 viewModel.state.value.activeLanguageVersions
                     .isEmpty(),
             )
+            assertTrue(viewModel.state.value.hasLoadFailed)
+            assertFalse(viewModel.state.value.showEmptyState)
             coVerify(exactly = 2) { bibleVersionRepository.permittedVersionsListing() }
             coVerify(exactly = 1) { bibleVersionRepository.fullVersions("en") }
         }
@@ -269,6 +274,8 @@ class BibleVersionsViewModelTest {
                 viewModel.state.value.activeLanguageVersions
                     .isEmpty(),
             )
+            assertTrue(viewModel.state.value.hasLoadFailed)
+            assertFalse(viewModel.state.value.showEmptyState)
             coVerify(exactly = 2) { bibleVersionRepository.permittedVersionsListing() }
             coVerify(exactly = 1) { bibleVersionRepository.fullVersions("en") }
         }
@@ -679,6 +686,17 @@ class BibleVersionsViewModelTest {
                 permittedMinimalVersions = emptyList(),
             )
         assertFalse(loading.showEmptyState)
+    }
+
+    @Test
+    fun `State showEmptyState is false when hasLoadFailed`() {
+        val failed =
+            BibleVersionsViewModel.State(
+                initializing = false,
+                permittedMinimalVersions = emptyList(),
+                hasLoadFailed = true,
+            )
+        assertFalse(failed.showEmptyState)
     }
 
     @Test

@@ -104,6 +104,22 @@ fun VersionsScreen(
                         }
                     }
 
+                    state.hasLoadFailed -> {
+                        item {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp),
+                            ) {
+                                Text(
+                                    text = "Couldn't load versions. Check your connection and try again.",
+                                )
+                            }
+                        }
+                    }
+
                     state.showEmptyState -> {
                         item {
                             Box(
