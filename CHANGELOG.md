@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.1.2...1.2.0) (2026-05-04)
+
+
+### Features
+
+* **ui:** add version picker to BibleCard ([3ab6c92](https://github.com/youversion/platform-sdk-kotlin/commit/3ab6c92974bde83dad342f4a274779e2b50d11d7))
+
 ## [1.1.2](https://github.com/youversion/platform-sdk-kotlin/compare/1.1.1...1.1.2) (2026-04-28)
 
 
