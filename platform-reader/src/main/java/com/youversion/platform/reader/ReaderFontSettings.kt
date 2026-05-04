@@ -3,7 +3,7 @@ package com.youversion.platform.reader
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import com.youversion.platform.reader.theme.UntitledSerif
+import com.youversion.platform.ui.theme.UntitledSerif
 
 /**
  * A utility object that provides constants and helper functions for managing font settings

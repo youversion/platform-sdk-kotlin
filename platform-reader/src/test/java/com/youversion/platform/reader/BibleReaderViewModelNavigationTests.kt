@@ -6,7 +6,7 @@ import com.youversion.platform.core.bibles.models.BibleBookIntro
 import com.youversion.platform.core.bibles.models.BibleChapter
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.domain.BibleReaderRepository
-import com.youversion.platform.reader.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -93,6 +93,7 @@ class BibleReaderViewModelNavigationTests {
                 bibleReaderRepository = bibleReaderRepository,
                 userSettingsRepository = mockk(relaxed = true),
                 bibleChapterRepository = mockk(relaxed = true),
+                languageRepository = mockk(relaxed = true),
                 copyManager = mockk(relaxed = true),
                 shareManager = mockk(relaxed = true),
             )

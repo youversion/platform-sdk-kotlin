@@ -11,10 +11,14 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
@@ -22,10 +26,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -45,11 +51,13 @@ import com.youversion.platform.ui.utilities.ObserveAsEvents
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.components.BibleAppLogo
+import com.youversion.platform.ui.views.versions.BibleVersionPickingButton
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinIsolatedContext
 import org.koin.compose.module.rememberKoinModules
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.parameter.parametersOf
+import java.util.UUID
 
 @Composable
 fun BibleCard(
@@ -57,6 +65,8 @@ fun BibleCard(
     modifier: Modifier = Modifier,
     version: BibleVersion? = null,
     fontSize: TextUnit = 23.sp,
+    showVersionPicker: Boolean = false,
+    onVersionChange: ((BibleVersion) -> Unit)? = null,
 ) {
     BibleCard(
         reference = reference,
@@ -67,6 +77,8 @@ fun BibleCard(
                 fontSize = fontSize,
                 textColor = MaterialTheme.colorScheme.onBackground,
             ),
+        showVersionPicker = showVersionPicker,
+        onVersionChange = onVersionChange,
     )
 }
 
@@ -77,6 +89,8 @@ fun BibleCard(
     textOptions: BibleTextOptions,
     modifier: Modifier = Modifier,
     version: BibleVersion? = null,
+    showVersionPicker: Boolean = false,
+    onVersionChange: ((BibleVersion) -> Unit)? = null,
 ) {
     KoinIsolatedContext(
         context = PlatformKoinGraph.koinApplication,
@@ -85,7 +99,9 @@ fun BibleCard(
 
         val context = LocalContext.current
 
-        val viewModel: BibleCardViewModel = koinViewModel { parametersOf(reference, version) }
+        val viewModelKey = rememberSaveable { UUID.randomUUID().toString() }
+        val viewModel: BibleCardViewModel =
+            koinViewModel(key = viewModelKey) { parametersOf(reference, version) }
         val state by viewModel.state.collectAsStateWithLifecycle()
 
         ObserveAsEvents(viewModel.events) { event ->
@@ -100,14 +116,34 @@ fun BibleCard(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = modifier,
         ) {
-            HeaderReference(
-                reference = reference,
-                version = state.bibleVersion,
-            )
-            BibleText(
-                reference = reference,
-                textOptions = textOptions,
-            )
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                HeaderReference(
+                    reference = state.reference,
+                    version = state.bibleVersion,
+                )
+                if (showVersionPicker) {
+                    BibleVersionPickingButton(
+                        initialVersionId = state.reference.versionId,
+                        modifier = Modifier.testTag("bible_card_version_picker"),
+                        onVersionChange = { newVersion ->
+                            viewModel.switchToVersion(newVersion.id)
+                            onVersionChange?.invoke(newVersion)
+                        },
+                    )
+                }
+            }
+            if (state.isReferenceUnavailable) {
+                UnavailableReferenceView()
+            } else {
+                BibleText(
+                    reference = state.reference,
+                    textOptions = textOptions,
+                )
+            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -149,6 +185,26 @@ private fun HeaderReference(
                     ),
             )
         }
+}
+
+@Composable
+private fun UnavailableReferenceView() {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 80.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Default.Warning,
+            contentDescription = null,
+        )
+        Text(
+            text = stringResource(R.string.bible_card_unavailable_reference),
+        )
+    }
 }
 
 @Composable

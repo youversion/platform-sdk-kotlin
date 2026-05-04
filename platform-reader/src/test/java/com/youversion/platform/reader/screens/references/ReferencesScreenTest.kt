@@ -13,7 +13,7 @@ import com.youversion.platform.core.bibles.models.BibleBookIntro
 import com.youversion.platform.core.bibles.models.BibleChapter
 import com.youversion.platform.core.bibles.models.BibleVerse
 import com.youversion.platform.core.bibles.models.BibleVersion
-import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

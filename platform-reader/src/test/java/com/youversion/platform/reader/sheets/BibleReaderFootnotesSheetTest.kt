@@ -12,7 +12,7 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
-import com.youversion.platform.reader.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import io.mockk.coEvery

@@ -55,6 +55,7 @@ fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                 BibleCard(
                     reference = bibleReference,
                     fontSize = 16.sp,
+                    showVersionPicker = true,
                 )
             }
         }
