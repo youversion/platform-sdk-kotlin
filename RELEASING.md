@@ -12,7 +12,7 @@ Releases are fully automated via [semantic-release](https://github.com/semantic-
    - `BREAKING CHANGE:` or `feat!:` / `fix!:` bumps the **major** version (e.g., `0.5.0` -> `1.0.0`)
 4. The version in `gradle/libs.versions.toml` is updated.
 5. `CHANGELOG.md` is generated/updated.
-6. All three modules (`platform-core`, `platform-ui`, `platform-reader`) are published to Maven Central.
+6. All three modules (`platform-core`, `platform-ui`, `platform-reader`) are published to Maven Central. The workflow passes the resolved version to Gradle via `-PsdkVersion=${nextRelease.version}`, which bakes it into `platform-core`'s `BuildConfig.SDK_VERSION`. At runtime, every SDK request sends an `x-yvp-sdk: KotlinSDK={version}` header so the data team can attribute traffic accurately. Non-release builds use the default value `Dev`.
 7. A git tag and GitHub Release are created.
 8. The version bump and changelog are committed back to the branch.
 
@@ -65,6 +65,50 @@ Push to `beta` or `alpha` branches to publish pre-release versions:
 ## Maintenance Releases
 
 For patching older major versions, create a branch named `N.x` (e.g., `1.x`). Commits merged to that branch will produce patch releases for that major version line.
+
+## Verifying a Release Locally
+
+`scripts/verify-release.sh` smoke-tests the release pipeline without publishing. Run it before merging to confirm that the version-stamping pieces still work end-to-end.
+
+### What it checks
+
+1. **AAR contents** — builds `platform-core`'s release AAR with a fake `-PsdkVersion` and confirms the value is present in `BuildConfig.SDK_VERSION` inside the published bytes.
+2. **`.releaserc.json` template** — confirms semantic-release's `publishCmd` still passes `-PsdkVersion=${nextRelease.version}` to `publishToMavenCentral`.
+3. *(optional, with `--with-dry-run`)* **semantic-release dry-run** — runs `npx semantic-release --dry-run` against your current branch, reports the version that would be released, and reconstructs the planned gradle command.
+
+### Usage
+
+```bash
+# Tiers 1 + 2 (Gradle build only, ~15s)
+scripts/verify-release.sh
+
+# Override the test version used for AAR inspection
+scripts/verify-release.sh --version 2.0.0-beta.3
+
+# Add Tier 3 — npx semantic-release --dry-run
+scripts/verify-release.sh --with-dry-run
+```
+
+Sample successful output:
+
+```
+==> Building platform-core AAR with -PsdkVersion=1.99.0-verify.local
+==> Inspecting BuildConfig.SDK_VERSION inside the AAR
+    PASS  BuildConfig.SDK_VERSION = "1.99.0-verify.local"
+
+==> Verifying .releaserc.json publishCmd template
+    PASS  publishCmd: ./gradlew publishToMavenCentral -PsdkVersion=${nextRelease.version}
+
+==> Running semantic-release --dry-run (treating current branch as a release branch)
+    PASS  computed next version: 1.3.0
+    PASS  would invoke: ./gradlew publishToMavenCentral -PsdkVersion=1.3.0
+```
+
+### Notes
+
+- The script never publishes anything — Tier 1 builds locally, Tier 3 uses dry-run mode.
+- `--with-dry-run` requires `node_modules` (the script runs `npm ci` if missing). It does **not** require `GITHUB_TOKEN`: the script temporarily mutates `.releaserc.json` to strip the GitHub plugin and pin `branches` to your current branch, which must already be pushed to the remote.
+- `.releaserc.json` is restored unconditionally by an `EXIT` trap, even on `Ctrl-C` or unexpected failure. A leftover `.releaserc.json.verify-release.bak` would indicate the trap didn't fire — the file is gitignored so it won't accidentally be committed.
 
 ## Troubleshooting
 

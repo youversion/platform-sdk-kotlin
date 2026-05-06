@@ -27,6 +27,13 @@ android {
                 .toInt()
 
         consumerProguardFiles("consumer-rules.pro")
+
+        val sdkVersion = (project.findProperty("sdkVersion") as? String) ?: "Dev"
+        buildConfigField("String", "SDK_VERSION", "\"$sdkVersion\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
