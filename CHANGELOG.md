@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.2.0...1.3.0) (2026-05-06)
+
+
+### Features
+
+* **core:** send x-yvp-sdk header identifying SDK version YPE-2294 ([#137](https://github.com/youversion/platform-sdk-kotlin/issues/137)) ([ea67e4a](https://github.com/youversion/platform-sdk-kotlin/commit/ea67e4a3ea68c8eedfe04bdda492faf1b3619263))
+
 # [1.2.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.1.2...1.2.0) (2026-05-04)
 
 
