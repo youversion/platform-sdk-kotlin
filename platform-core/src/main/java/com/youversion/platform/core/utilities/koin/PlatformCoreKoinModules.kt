@@ -1,6 +1,7 @@
 package com.youversion.platform.core.utilities.koin
 
 import android.content.Context
+import com.youversion.platform.core.BuildConfig
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
@@ -99,6 +100,8 @@ internal val PlatformCoreKoinModule =
 
 private fun HttpMessageBuilder.defaultRequestHeaders(): HeadersBuilder =
     headers {
+        append("x-yvp-sdk", "KotlinSDK=${BuildConfig.SDK_VERSION}")
+
         YouVersionPlatformConfiguration.appKey?.let {
             append("x-yvp-app-key", it)
         }

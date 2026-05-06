@@ -14,7 +14,7 @@
     }],
     ["@semantic-release/exec", {
       "prepareCmd": "sed -i 's/youversionPlatform = \".*\"/youversionPlatform = \"${nextRelease.version}\"/' gradle/libs.versions.toml",
-      "publishCmd": "./gradlew publishToMavenCentral"
+      "publishCmd": "./gradlew publishToMavenCentral -PsdkVersion=${nextRelease.version}"
     }],
     ["@semantic-release/git", {
       "assets": ["gradle/libs.versions.toml", "CHANGELOG.md"],
