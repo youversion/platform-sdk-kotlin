@@ -120,6 +120,32 @@ sdk.dir=/path/to/your/Android/sdk
 
 Or set `ANDROID_HOME` environment variable.
 
+## Git Branching Process
+
+**⚠️ IMPORTANT: Every change goes on a branch, every branch is named after its Jira ticket, and every merge into `main` goes through a pull request. No direct edits or pushes to `main`.**
+
+**Branch naming**: `<JIRA-TICKET>-<kebab-description>`
+
+- Examples: `YPE-2293-swift-sdk-add-x-yvp-sdk-http-header-for-version-reporting`, `BA-1204-plans-update`, `BA-5678-bibles-cache-cleanup`
+- The ticket prefix comes first; no initials prefix, no `feature/` prefix.
+- Every branch — including doc-only edits, tooling changes, and small fixes — must have a Jira ticket and follow this pattern. If there's no ticket, create one before starting work.
+
+**Standard workflow**:
+1. Create the branch from `main`.
+2. Make changes on the branch.
+3. Open a PR back to `main`. PR title matches the first line of the commit message.
+
+**Feature branches** (for large tasks or risky changes spanning multiple sub-tickets):
+1. Create the feature branch from `main` using the parent epic's ticket: `<EPIC-TICKET>-<kebab-description>` (e.g., `YPE-1900-offline-search`).
+2. Create task branches off the feature branch using each sub-ticket: `<TASK-TICKET>-<kebab-description>`.
+3. Open PRs from task branches targeting the feature branch.
+4. Open a final PR from the feature branch to `main` once the feature is complete.
+
+**Updating feature branches with changes from `main`**:
+- Merge `main` into the feature branch first.
+- Then merge the updated feature branch into the task branch.
+- Never merge `main` directly into a task branch.
+
 ## Code style and conventions
 
 - Use GitHub to create pull requests (PRs).
