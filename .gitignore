@@ -38,3 +38,6 @@ google-services.json
 
 # Node.js (semantic-release)
 node_modules/
+
+# verify-release.sh leftovers if interrupted
+.releaserc.json.verify-release.bak

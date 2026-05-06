@@ -10,9 +10,10 @@
 # Usage:
 #   scripts/verify-release.sh [--version <version>] [--with-dry-run]
 #
-# --with-dry-run additionally runs `npx semantic-release --dry-run` against
-# the current branch. This is best-effort and may skip if the branch has no
-# release-triggering commits.
+# --with-dry-run additionally runs `npx semantic-release --dry-run` to
+# preview the release that would happen if the current branch's commits
+# were merged into main. It uses a temporary git worktree to simulate
+# that state without touching your actual main branch.
 
 set -euo pipefail
 
@@ -33,10 +34,19 @@ readonly AAR_PATH="platform-core/build/outputs/aar/platform-core-release.aar"
 readonly BUILD_CONFIG_CLASS="com/youversion/platform/core/BuildConfig.class"
 
 failed=0
+tmp=""
+releaserc_backup=".releaserc.json.verify-release.bak"
+cleanup() {
+    [[ -n "$tmp" ]] && rm -rf "$tmp"
+    if [[ -f "$releaserc_backup" ]]; then
+        mv -f "$releaserc_backup" .releaserc.json
+    fi
+}
+trap cleanup EXIT
+
 step()  { printf "\n==> %s\n" "$1"; }
 pass()  { printf "    \033[32mPASS\033[0m  %s\n" "$1"; }
 report_fail() { printf "    \033[31mFAIL\033[0m  %s\n" "$1"; failed=1; }
-skip_step()   { printf "    \033[33mSKIP\033[0m  %s\n" "$1"; }
 
 # --- Tier 1: AAR contents ---
 step "Building platform-core AAR with -PsdkVersion=$TEST_VERSION"
@@ -44,7 +54,6 @@ step "Building platform-core AAR with -PsdkVersion=$TEST_VERSION"
 
 step "Inspecting BuildConfig.SDK_VERSION inside the AAR"
 tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
 unzip -q -p "$AAR_PATH" classes.jar > "$tmp/classes.jar"
 unzip -q -p "$tmp/classes.jar" "$BUILD_CONFIG_CLASS" > "$tmp/BuildConfig.class"
 baked="$(javap -constants "$tmp/BuildConfig.class" \
@@ -70,20 +79,43 @@ else
 fi
 
 # --- Optional: live semantic-release dry-run ---
+#
+# semantic-release's GitHub plugin demands GITHUB_TOKEN even in dry-run, and
+# it validates the configured branches against the remote. We mutate
+# .releaserc.json in place to drop the GitHub plugin and pin branches to the
+# current branch (which exists on the remote because we pushed it). The
+# backup is restored unconditionally by the EXIT trap.
 if (( WITH_DRY_RUN )); then
-    step "Running semantic-release --dry-run on current branch"
+    step "Running semantic-release --dry-run (treating current branch as a release branch)"
     [[ -d node_modules ]] || npm ci --silent
+
     branch="$(git rev-parse --abbrev-ref HEAD)"
-    if out="$(npx --no-install semantic-release --dry-run --no-ci \
-                  --branches="$branch" 2>&1)"; then
-        planned="$(grep -oE 'publishToMavenCentral -PsdkVersion=\S+' <<< "$out" | head -1 || true)"
-        if [[ -n "$planned" ]]; then
-            pass "planned: $planned"
-        else
-            skip_step "no publish command surfaced (likely no release-triggering commits on '$branch')"
-        fi
+    cp .releaserc.json "$releaserc_backup"
+    node -e '
+        const fs = require("fs");
+        const c = JSON.parse(fs.readFileSync(".releaserc.json", "utf8"));
+        c.branches = [process.argv[1]];
+        c.plugins = c.plugins.filter(p => {
+            const name = Array.isArray(p) ? p[0] : p;
+            return name !== "@semantic-release/github";
+        });
+        fs.writeFileSync(".releaserc.json", JSON.stringify(c, null, 2));
+    ' "$branch"
+
+    out="$(npx --no-install semantic-release --dry-run --no-ci 2>&1 || true)"
+
+    next_version="$(grep -oE 'next release version is [^[:space:]]+' <<< "$out" \
+                    | awk '{print $NF}' | head -1 || true)"
+    if [[ -n "$next_version" ]]; then
+        planned="${publish_cmd//\$\{nextRelease.version\}/$next_version}"
+        pass "computed next version: $next_version"
+        pass "would invoke: $planned"
+    elif grep -qE 'no new version is released|There are no relevant changes' <<< "$out"; then
+        pass "no release-triggering commits since the last tag — semantic-release would not publish"
     else
-        skip_step "semantic-release could not compute a release on '$branch'"
+        report_fail "semantic-release dry-run did not compute a version"
+        printf "    --- semantic-release output (tail) ---\n"
+        printf '%s\n' "$out" | tail -20 | sed 's/^/    /'
     fi
 fi
 
