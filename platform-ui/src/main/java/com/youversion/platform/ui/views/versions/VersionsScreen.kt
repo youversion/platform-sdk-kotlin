@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,17 +20,23 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.BibleReaderTopAppBar
 import com.youversion.platform.ui.views.components.BibleVersionRow
 import com.youversion.platform.ui.views.components.LanguageSelector
+import com.youversion.platform.ui.views.components.SearchBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +47,7 @@ fun VersionsScreen(
     onVersionSelect: (BibleVersion) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var isSearchVisible by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -60,106 +68,131 @@ fun VersionsScreen(
                 },
                 onBackClick = onBackClick,
                 actions = {
-                    IconButton(onClick = {}) {
+                    IconButton(
+                        onClick = {
+                            isSearchVisible = !isSearchVisible
+                            if (!isSearchVisible) viewModel.onSearchQueryChange("")
+                        },
+                    ) {
                         Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null,
+                            imageVector = if (!isSearchVisible) Icons.Default.Search else Icons.Default.Close,
+                            contentDescription =
+                                stringResource(
+                                    if (!isSearchVisible) R.string.search_bible_versions else R.string.close_search_bar,
+                                ),
                         )
                     }
                 },
             )
         },
     ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            LazyColumn(
-                contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp),
-            ) {
-                item {
-                    Box(modifier = Modifier.padding(horizontal = 20.dp)) {
-                        LanguageSelector(
-                            activeLanguageName = state.activeLanguageName,
-                            enabled = !state.initializing,
-                            onClick = onLanguagesClick,
-                        )
-                    }
-                }
-
-                item {
-                    BibleVersionsSectionHeader(
-                        title = "${state.activeLanguageName} Versions (${state.activeLanguageVersionsCount})",
-                    )
-                }
-
-                when {
-                    state.initializing -> {
-                        item {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth(),
-                            ) {
-                                CircularProgressIndicator()
-                            }
+        Column(modifier = Modifier.padding(innerPadding)) {
+            if (isSearchVisible) {
+                SearchBar(
+                    query = state.searchQuery,
+                    onQueryChange = viewModel::onSearchQueryChange,
+                    modifier =
+                        Modifier.padding(
+                            horizontal = 20.dp,
+                        ),
+                )
+            }
+            Box {
+                LazyColumn(
+                    contentPadding =
+                        PaddingValues(
+                            top = if (isSearchVisible) 0.dp else 16.dp,
+                            bottom = 32.dp,
+                        ),
+                ) {
+                    item {
+                        Box(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            LanguageSelector(
+                                activeLanguageName = state.activeLanguageName,
+                                enabled = !state.initializing,
+                                onClick = onLanguagesClick,
+                            )
                         }
                     }
 
-                    state.hasLoadFailed -> {
-                        item {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp),
-                            ) {
-                                Text(
-                                    text = "Couldn't load versions. Check your connection and try again.",
+                    item {
+                        BibleVersionsSectionHeader(
+                            title = "${state.activeLanguageName} Versions (${state.activeLanguageVersionsCount})",
+                        )
+                    }
+
+                    when {
+                        state.initializing -> {
+                            item {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth(),
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
+
+                        state.hasLoadFailed -> {
+                            item {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp),
+                                ) {
+                                    Text(
+                                        text = "Couldn't load versions. Check your connection and try again.",
+                                    )
+                                }
+                            }
+                        }
+
+                        state.showEmptyState -> {
+                            item {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth(),
+                                ) {
+                                    Text("No versions found for this language")
+                                }
+                            }
+                        }
+
+                        else -> {
+                            items(
+                                items = state.filteredVersions,
+                                key = { it.id },
+                            ) { version ->
+                                BibleVersionRow(
+                                    bibleVersion = version,
+                                    onVersionInfoClick = {
+                                        viewModel.onAction(
+                                            BibleVersionsViewModel.Action.VersionInfoTapped(version),
+                                        )
+                                    },
+                                    onVersionClick = {
+                                        viewModel.onAction(BibleVersionsViewModel.Action.VersionSelected(version))
+                                        onVersionSelect(version)
+                                    },
                                 )
                             }
                         }
                     }
-
-                    state.showEmptyState -> {
-                        item {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth(),
-                            ) {
-                                Text("No versions found for this language")
-                            }
-                        }
-                    }
-
-                    else -> {
-                        items(
-                            items = state.activeLanguageVersions,
-                            key = { it.id },
-                        ) { version ->
-                            BibleVersionRow(
-                                bibleVersion = version,
-                                onVersionInfoClick = {
-                                    viewModel.onAction(
-                                        BibleVersionsViewModel.Action.VersionInfoTapped(version),
-                                    )
-                                },
-                                onVersionClick = {
-                                    onVersionSelect(version)
-                                },
-                            )
-                        }
-                    }
                 }
-            }
 
-            state.selectedBibleVersion?.let {
-                VersionInfoBottomSheet(
-                    bibleVersion = it,
-                    organization = state.selectedOrganization,
-                    onDismissRequest = { viewModel.onAction(BibleVersionsViewModel.Action.VersionDismissed) },
-                )
+                state.selectedBibleVersion?.let {
+                    VersionInfoBottomSheet(
+                        bibleVersion = it,
+                        organization = state.selectedOrganization,
+                        onDismissRequest = { viewModel.onAction(BibleVersionsViewModel.Action.VersionDismissed) },
+                    )
+                }
             }
         }
     }

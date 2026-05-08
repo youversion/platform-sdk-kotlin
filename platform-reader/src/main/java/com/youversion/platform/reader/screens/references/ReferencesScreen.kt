@@ -14,17 +14,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +46,7 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.R
 import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.views.components.BibleReaderTopAppBar
+import com.youversion.platform.ui.views.components.SearchBar
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -105,7 +100,7 @@ internal fun ReferencesScreen(
         val rows = state.filteredReferenceRows
 
         Column(modifier = Modifier.padding(innerPadding)) {
-            BookSearchBar(
+            SearchBar(
                 query = state.searchQuery,
                 onQueryChange = viewModel::onSearchQueryChange,
             )
@@ -138,55 +133,6 @@ internal fun ReferencesScreen(
             }
         }
     }
-}
-
-@Composable
-private fun BookSearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-) {
-    BasicTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        singleLine = true,
-        textStyle =
-            MaterialTheme.typography.bodyLarge.copy(
-                color = MaterialTheme.colorScheme.onSurface,
-            ),
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-        decorationBox = { innerTextField ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(MaterialTheme.readerColorScheme.buttonPrimaryColor)
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp),
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Box(modifier = Modifier.weight(1f)) {
-                    if (query.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.search_books_hint),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    innerTextField()
-                }
-            }
-        },
-    )
 }
 
 @Composable
