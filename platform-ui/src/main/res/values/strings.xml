@@ -30,6 +30,9 @@
     <string name="version_info_offline_tagline">Read it anytime, anywhere\u2014even offline</string>
     <string name="version_info_agree_and_download">Agree and Download</string>
     <string name="version_info_maybe_later">Maybe Later</string>
+    <string name="search">Search</string>
+    <string name="search_bible_versions">Search for a bible version</string>
+    <string name="close_search_bar">Close the search input</string>
 
     <string name="bible_card_unavailable_reference">This passage is unavailable in the selected Bible version.</string>
 
