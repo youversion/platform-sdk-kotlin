@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/youversion/platform-sdk-kotlin/compare/1.4.0...1.4.1) (2026-05-11)
+
+
+### Bug Fixes
+
+* **ui:** respect BibleTextOptions.textColor in BibleText and BibleIntroText YPE-2346 ([#138](https://github.com/youversion/platform-sdk-kotlin/issues/138)) ([5d5a01c](https://github.com/youversion/platform-sdk-kotlin/commit/5d5a01c0be5f9d7f43a70ecb841c91e464630a9e))
+
 # [1.4.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.3.0...1.4.0) (2026-05-11)
 
 
