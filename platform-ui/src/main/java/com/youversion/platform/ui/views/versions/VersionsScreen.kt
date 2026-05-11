@@ -74,13 +74,15 @@ fun VersionsScreen(
             LazyColumn(
                 contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp),
             ) {
-                item {
-                    Box(modifier = Modifier.padding(horizontal = 20.dp)) {
-                        LanguageSelector(
-                            activeLanguageName = state.activeLanguageName,
-                            enabled = !state.initializing,
-                            onClick = onLanguagesClick,
-                        )
+                if (state.showLanguageSelector) {
+                    item {
+                        Box(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            LanguageSelector(
+                                activeLanguageName = state.activeLanguageName,
+                                enabled = !state.initializing,
+                                onClick = onLanguagesClick,
+                            )
+                        }
                     }
                 }
 

@@ -1,5 +1,6 @@
 package com.youversion.platform.ui.views.versions
 
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -128,6 +129,47 @@ class BibleVersionsViewModelTest {
             advanceUntilIdle()
 
             assertEquals(downloaded, received)
+        }
+
+    @Test
+    fun `selectFallbackVersion skips downloaded versions excluded by permittedVersionIds`() =
+        runTest(testDispatcher) {
+            mockkObject(YouVersionPlatformConfiguration)
+            try {
+                every { YouVersionPlatformConfiguration.permittedVersionIds } returns setOf(88)
+                val permitted = BibleVersion(id = 88, abbreviation = "P", languageTag = "en")
+                every { bibleVersionRepository.downloadedVersions } returns listOf(77, 88)
+                coEvery { bibleVersionRepository.version(id = 88) } returns permitted
+
+                var received: BibleVersion? = null
+                createViewModel(initialVersionId = null, onVersionChange = { received = it })
+                advanceUntilIdle()
+
+                assertEquals(permitted, received)
+            } finally {
+                unmockkObject(YouVersionPlatformConfiguration)
+            }
+        }
+
+    @Test
+    fun `selectFallbackVersion falls back to permitted listing when no downloaded id is permitted`() =
+        runTest(testDispatcher) {
+            mockkObject(YouVersionPlatformConfiguration)
+            try {
+                every { YouVersionPlatformConfiguration.permittedVersionIds } returns setOf(99)
+                val permitted = BibleVersion(id = 99, abbreviation = "P", languageTag = "en")
+                every { bibleVersionRepository.downloadedVersions } returns listOf(77)
+                coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(permitted)
+                coEvery { bibleVersionRepository.version(id = 99) } returns permitted
+
+                var received: BibleVersion? = null
+                createViewModel(initialVersionId = null, onVersionChange = { received = it })
+                advanceUntilIdle()
+
+                assertEquals(permitted, received)
+            } finally {
+                unmockkObject(YouVersionPlatformConfiguration)
+            }
         }
 
     @Test
@@ -707,5 +749,41 @@ class BibleVersionsViewModelTest {
                 activeLanguageTag = "en",
             )
         assertEquals(1, state.activeLanguageVersionsCount)
+    }
+
+    @Test
+    fun `State showLanguageSelector is true while initializing`() {
+        val state = BibleVersionsViewModel.State(initializing = true)
+        assertTrue(state.showLanguageSelector)
+    }
+
+    @Test
+    fun `State showLanguageSelector is true when multiple languages are permitted`() {
+        val state =
+            BibleVersionsViewModel.State(
+                initializing = false,
+                permittedMinimalVersions = listOf(permittedEn, spanishVersion),
+            )
+        assertTrue(state.showLanguageSelector)
+    }
+
+    @Test
+    fun `State showLanguageSelector is false when only one language is permitted`() {
+        val state =
+            BibleVersionsViewModel.State(
+                initializing = false,
+                permittedMinimalVersions = listOf(permittedEn),
+            )
+        assertFalse(state.showLanguageSelector)
+    }
+
+    @Test
+    fun `State showLanguageSelector is false when no languages are permitted post-load`() {
+        val state =
+            BibleVersionsViewModel.State(
+                initializing = false,
+                permittedMinimalVersions = emptyList(),
+            )
+        assertFalse(state.showLanguageSelector)
     }
 }

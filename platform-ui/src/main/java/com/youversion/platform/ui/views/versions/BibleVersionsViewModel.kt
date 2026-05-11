@@ -3,6 +3,7 @@ package com.youversion.platform.ui.views.versions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -80,10 +81,11 @@ class BibleVersionsViewModel(
     }
 
     private suspend fun acceptableFallbackVersionId(): Int? {
+        val permittedIds = YouVersionPlatformConfiguration.permittedVersionIds
         val downloads = bibleVersionRepository.downloadedVersions
-        if (downloads.isNotEmpty()) {
-            return downloads.first()
-        }
+        downloads
+            .firstOrNull { permittedIds == null || it in permittedIds }
+            ?.let { return it }
 
         val versions =
             try {
@@ -293,6 +295,14 @@ class BibleVersionsViewModel(
             get() =
                 permittedMinimalVersions
                     .count { it.languageTag == activeLanguageTag }
+
+        /**
+         * Whether the language selector should be shown. While the permitted-versions list is still
+         * loading we show the selector; once loaded we hide it when only a single language is
+         * available so users are not presented with a no-op picker.
+         */
+        val showLanguageSelector: Boolean
+            get() = initializing || languagesCount > 1
     }
 
     // ----- Events

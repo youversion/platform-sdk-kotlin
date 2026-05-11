@@ -723,6 +723,104 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
 
             assertEquals(listOf(11, 10), versions.map { it.id })
         }
+
+    // ----- Permitted filter (configuration)
+
+    @Test
+    fun `test permittedVersions filters by configured permittedLanguageTags`() =
+        runTest {
+            MockEngine { _ -> respondJson(MULTI_LANG_PERMITTED_VERSIONS_JSON) }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(
+                appKey = "app",
+                permittedLanguageTags = setOf("en"),
+            )
+
+            val versions = repository.permittedVersions()
+            assertEquals(listOf(12, 206), versions.map { it.id })
+        }
+
+    @Test
+    fun `test permittedVersions filters by configured permittedVersionIds`() =
+        runTest {
+            MockEngine { _ -> respondJson(MULTI_LANG_PERMITTED_VERSIONS_JSON) }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(
+                appKey = "app",
+                permittedVersionIds = setOf(206, 1588),
+            )
+
+            val versions = repository.permittedVersions()
+            assertEquals(listOf(206, 1588), versions.map { it.id })
+        }
+
+    @Test
+    fun `test permittedVersions intersects permittedLanguageTags and permittedVersionIds`() =
+        runTest {
+            MockEngine { _ -> respondJson(MULTI_LANG_PERMITTED_VERSIONS_JSON) }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(
+                appKey = "app",
+                permittedLanguageTags = setOf("en"),
+                permittedVersionIds = setOf(206, 1588),
+            )
+
+            val versions = repository.permittedVersions()
+            assertEquals(listOf(206), versions.map { it.id })
+        }
+
+    @Test
+    fun `test permittedVersions excludes versions with null languageTag when permittedLanguageTags is set`() =
+        runTest {
+            MockEngine { _ ->
+                respondJson(
+                    """
+                    {
+                        "data": [
+                            {"id": 12, "language_tag": "en"},
+                            {"id": 999}
+                        ]
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(
+                appKey = "app",
+                permittedLanguageTags = setOf("en"),
+            )
+
+            val versions = repository.permittedVersions()
+            assertEquals(listOf(12), versions.map { it.id })
+        }
+
+    @Test
+    fun `test fullVersions filters by configured permittedVersionIds`() =
+        runTest {
+            MockEngine { _ ->
+                respondJson(
+                    """
+                    {
+                        "data": [
+                            {"id": 1, "title": "Bible B", "language_tag": "en"},
+                            {"id": 2, "title": "Bible A", "language_tag": "en"}
+                        ]
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(
+                appKey = "app",
+                permittedVersionIds = setOf(2),
+            )
+
+            val versions = repository.fullVersions("en")
+            assertEquals(listOf(2), versions.map { it.id })
+        }
 }
 
 private const val PERMITTED_VERSIONS_JSON = """
@@ -746,6 +844,17 @@ private const val FULL_VERSIONS_JSON = """
         {"id": 1, "title": "Bible B"},
         {"id": 1, "title": "Duplicate id"},
         {"id": 2, "title": "Bible A"}
+    ]
+}
+"""
+
+private const val MULTI_LANG_PERMITTED_VERSIONS_JSON = """
+{
+    "data": [
+        {"id": 12, "language_tag": "en"},
+        {"id": 206, "language_tag": "en"},
+        {"id": 130, "language_tag": "es"},
+        {"id": 1588, "language_tag": "es"}
     ]
 }
 """

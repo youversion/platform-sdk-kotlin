@@ -68,6 +68,46 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     }
 
     @Test
+    fun `permittedLanguageTags and permittedVersionIds default to null`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+
+            assertNull(permittedLanguageTags)
+            assertNull(permittedVersionIds)
+        }
+    }
+
+    @Test
+    fun `configure sets permittedLanguageTags and permittedVersionIds when provided`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(
+                appKey = "appKey",
+                permittedLanguageTags = setOf("en", "es"),
+                permittedVersionIds = setOf(111, 1588),
+            )
+
+            assertEquals(setOf("en", "es"), permittedLanguageTags)
+            assertEquals(setOf(111, 1588), permittedVersionIds)
+        }
+    }
+
+    @Test
+    fun `reconfigure clears permittedLanguageTags and permittedVersionIds when omitted`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(
+                appKey = "appKey",
+                permittedLanguageTags = setOf("en"),
+                permittedVersionIds = setOf(111),
+            )
+            assertEquals(setOf("en"), permittedLanguageTags)
+
+            configure(appKey = "appKey")
+            assertNull(permittedLanguageTags)
+            assertNull(permittedVersionIds)
+        }
+    }
+
+    @Test
     fun `configure with saved values`() {
         sessionRepository.accessToken = "stored_token"
         sessionRepository.setInstallId("existing_id")
