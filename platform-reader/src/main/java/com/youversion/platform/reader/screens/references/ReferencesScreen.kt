@@ -103,6 +103,7 @@ internal fun ReferencesScreen(
             SearchBar(
                 query = state.searchQuery,
                 onQueryChange = viewModel::onSearchQueryChange,
+                modifier = Modifier.padding(horizontal = 16.dp),
             )
 
             LazyColumn(state = lazyListState) {

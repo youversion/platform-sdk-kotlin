@@ -262,6 +262,7 @@ class BibleVersionsViewModel(
         }
     }
 
+    /** Updates the search query used to filter Bible versions. */
     fun onSearchQueryChange(query: String) {
         _state.update { it.copy(searchQuery = query) }
     }
