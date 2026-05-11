@@ -786,4 +786,132 @@ class BibleVersionsViewModelTest {
             )
         assertFalse(state.showLanguageSelector)
     }
+
+    // ----- Search
+
+    @Test
+    fun `State filteredVersions returns activeLanguageVersions when searchQuery is blank`() {
+        val versions =
+            listOf(
+                BibleVersion(id = 1, abbreviation = "KJV", languageTag = "en"),
+                BibleVersion(id = 2, abbreviation = "NIV", languageTag = "en"),
+            )
+        val state =
+            BibleVersionsViewModel.State(
+                activeLanguageVersions = versions,
+                searchQuery = "",
+            )
+        assertEquals(versions, state.filteredVersions)
+    }
+
+    @Test
+    fun `State filteredVersions returns activeLanguageVersions when searchQuery is whitespace`() {
+        val versions =
+            listOf(
+                BibleVersion(id = 1, abbreviation = "KJV", languageTag = "en"),
+            )
+        val state =
+            BibleVersionsViewModel.State(
+                activeLanguageVersions = versions,
+                searchQuery = "   ",
+            )
+        assertEquals(versions, state.filteredVersions)
+    }
+
+    @Test
+    fun `State filteredVersions matches title case-insensitively`() {
+        val match = BibleVersion(id = 1, title = "King James Version", languageTag = "en")
+        val other = BibleVersion(id = 2, title = "New International Version", languageTag = "en")
+        val state =
+            BibleVersionsViewModel.State(
+                activeLanguageVersions = listOf(match, other),
+                searchQuery = "king",
+            )
+        assertEquals(listOf(match), state.filteredVersions)
+    }
+
+    @Test
+    fun `State filteredVersions matches abbreviation case-insensitively`() {
+        val match = BibleVersion(id = 1, abbreviation = "KJV", languageTag = "en")
+        val other = BibleVersion(id = 2, abbreviation = "NIV", languageTag = "en")
+        val state =
+            BibleVersionsViewModel.State(
+                activeLanguageVersions = listOf(match, other),
+                searchQuery = "kjv",
+            )
+        assertEquals(listOf(match), state.filteredVersions)
+    }
+
+    @Test
+    fun `State filteredVersions matches localizedTitle case-insensitively`() {
+        val match = BibleVersion(id = 1, localizedTitle = "Reina Valera", languageTag = "es")
+        val other = BibleVersion(id = 2, localizedTitle = "Nueva Versión", languageTag = "es")
+        val state =
+            BibleVersionsViewModel.State(
+                activeLanguageVersions = listOf(match, other),
+                searchQuery = "REINA",
+            )
+        assertEquals(listOf(match), state.filteredVersions)
+    }
+
+    @Test
+    fun `State filteredVersions matches localizedAbbreviation case-insensitively`() {
+        val match = BibleVersion(id = 1, localizedAbbreviation = "RVR", languageTag = "es")
+        val other = BibleVersion(id = 2, localizedAbbreviation = "NVI", languageTag = "es")
+        val state =
+            BibleVersionsViewModel.State(
+                activeLanguageVersions = listOf(match, other),
+                searchQuery = "rvr",
+            )
+        assertEquals(listOf(match), state.filteredVersions)
+    }
+
+    @Test
+    fun `State filteredVersions returns empty list when no versions match`() {
+        val state =
+            BibleVersionsViewModel.State(
+                activeLanguageVersions =
+                    listOf(
+                        BibleVersion(id = 1, abbreviation = "KJV", title = "King James", languageTag = "en"),
+                        BibleVersion(id = 2, abbreviation = "NIV", title = "New International", languageTag = "en"),
+                    ),
+                searchQuery = "zzzz",
+            )
+        assertTrue(state.filteredVersions.isEmpty())
+    }
+
+    @Test
+    fun `onSearchQueryChange updates searchQuery in state`() =
+        runTest(testDispatcher) {
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
+
+            val viewModel = createViewModel()
+
+            viewModel.onSearchQueryChange("john")
+            assertEquals("john", viewModel.state.value.searchQuery)
+
+            viewModel.onSearchQueryChange("")
+            assertEquals("", viewModel.state.value.searchQuery)
+        }
+
+    @Test
+    fun `Action VersionSelected clears searchQuery`() =
+        runTest(testDispatcher) {
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
+
+            val viewModel = createViewModel()
+
+            viewModel.onSearchQueryChange("kjv")
+            assertEquals("kjv", viewModel.state.value.searchQuery)
+
+            viewModel.onAction(
+                BibleVersionsViewModel.Action.VersionSelected(
+                    BibleVersion(id = 1, abbreviation = "KJV", languageTag = "en"),
+                ),
+            )
+
+            assertEquals("", viewModel.state.value.searchQuery)
+        }
 }

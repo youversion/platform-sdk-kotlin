@@ -3,10 +3,12 @@ package com.youversion.platform.ui.views.versions
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import io.mockk.every
@@ -507,5 +509,74 @@ class VersionsScreenTest {
         composeTestRule.waitForIdle()
 
         verify { mockViewModel.onAction(BibleVersionsViewModel.Action.VersionDismissed) }
+    }
+
+    // ----- Search Bar
+
+    @Test
+    fun `search toggle icon is shown by default`() {
+        renderScreen()
+
+        composeTestRule.onNodeWithContentDescription("Search for a bible version").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Close the search input").assertDoesNotExist()
+    }
+
+    @Test
+    fun `search bar is hidden by default`() {
+        renderScreen()
+
+        composeTestRule.onNodeWithText("Search").assertDoesNotExist()
+    }
+
+    @Test
+    fun `clicking search toggle icon shows search bar and swaps icon to close`() {
+        renderScreen()
+
+        composeTestRule.onNodeWithContentDescription("Search for a bible version").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Search").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Close the search input").assertIsDisplayed()
+    }
+
+    @Test
+    fun `clicking close icon hides search bar and clears non-empty search query`() {
+        stateFlow.value = BibleVersionsViewModel.State(searchQuery = "john")
+
+        renderScreen()
+        composeTestRule.onNodeWithContentDescription("Search for a bible version").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("john").assertIsDisplayed()
+
+        composeTestRule.onNodeWithContentDescription("Close the search input").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithContentDescription("Search for a bible version").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Close the search input").assertDoesNotExist()
+        verify { mockViewModel.onSearchQueryChange("") }
+    }
+
+    @Test
+    fun `typing in search bar calls onSearchQueryChange`() {
+        renderScreen()
+
+        composeTestRule.onNodeWithContentDescription("Search for a bible version").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("k")
+        composeTestRule.waitForIdle()
+
+        verify { mockViewModel.onSearchQueryChange("k") }
+    }
+
+    @Test
+    fun `search bar reflects current searchQuery from state`() {
+        stateFlow.value = BibleVersionsViewModel.State(searchQuery = "john")
+
+        renderScreen()
+        composeTestRule.onNodeWithContentDescription("Search for a bible version").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("john").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Search").assertDoesNotExist()
     }
 }

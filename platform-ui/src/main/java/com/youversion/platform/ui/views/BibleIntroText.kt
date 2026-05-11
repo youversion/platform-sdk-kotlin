@@ -144,6 +144,7 @@ private fun IntroTextBlock(
         text = block.text,
         textAlign = block.alignment,
         lineHeight = textOptions.lineSpacing ?: (textOptions.fontSize * 1.5),
+        color = textOptions.textColor ?: Color.Unspecified,
         modifier =
             Modifier
                 .padding(top = marginTop, bottom = paragraphSpacing)

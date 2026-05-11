@@ -199,6 +199,7 @@ class BibleVersionsViewModel(
 
             is Action.VersionSelected -> {
                 setCurrentVersion(action.bibleVersion)
+                _state.update { it.copy(searchQuery = "") }
             }
         }
     }
@@ -263,6 +264,11 @@ class BibleVersionsViewModel(
         }
     }
 
+    /** Updates the search query used to filter Bible versions. */
+    fun onSearchQueryChange(query: String) {
+        _state.update { it.copy(searchQuery = query) }
+    }
+
     // ----- State
     data class State(
         val initializing: Boolean = true,
@@ -303,6 +309,19 @@ class BibleVersionsViewModel(
          */
         val showLanguageSelector: Boolean
             get() = initializing || languagesCount > 1
+
+        val filteredVersions: List<BibleVersion>
+            get() =
+                if (searchQuery.isBlank()) {
+                    activeLanguageVersions
+                } else {
+                    activeLanguageVersions.filter { version ->
+                        version.title?.contains(searchQuery, ignoreCase = true) == true ||
+                            version.abbreviation?.contains(searchQuery, ignoreCase = true) == true ||
+                            version.localizedAbbreviation?.contains(searchQuery, ignoreCase = true) == true ||
+                            version.localizedTitle?.contains(searchQuery, ignoreCase = true) == true
+                    }
+                }
     }
 
     // ----- Events
