@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.3.0...1.4.0) (2026-05-11)
+
+
+### Features
+
+* **ui, reader:** add search to version picker ([8315746](https://github.com/youversion/platform-sdk-kotlin/commit/83157463d7b5fcf2951228dd59822e1c3abec5df))
+
 # [1.3.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.2.0...1.3.0) (2026-05-06)
 
 
