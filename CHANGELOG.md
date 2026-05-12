@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.5.0...1.6.0) (2026-05-12)
+
+
+### Features
+
+* **core, ui:** filter versions by permitted languages and ids YPE-2359 ([#140](https://github.com/youversion/platform-sdk-kotlin/issues/140)) ([1ca3e10](https://github.com/youversion/platform-sdk-kotlin/commit/1ca3e10db7b1e17167152f7b62651869efadabe0))
+
 # [1.5.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.4.1...1.5.0) (2026-05-12)
 
 
