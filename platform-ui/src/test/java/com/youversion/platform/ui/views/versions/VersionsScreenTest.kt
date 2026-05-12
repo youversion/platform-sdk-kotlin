@@ -1,10 +1,11 @@
 package com.youversion.platform.ui.views.versions
 
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -27,7 +28,7 @@ import kotlin.test.assertTrue
 @RunWith(RobolectricTestRunner::class)
 class VersionsScreenTest {
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     private val stateFlow = MutableStateFlow(BibleVersionsViewModel.State())
 
@@ -507,7 +508,7 @@ class VersionsScreenTest {
 
     @Test
     fun `clicking close icon hides search bar and clears non-empty search query`() {
-        stateFlow.value = BibleVersionsViewModel.State(searchQuery = "john")
+        stateFlow.value = BibleVersionsViewModel.State(versionSearchQuery = "john")
 
         renderScreen()
         composeTestRule.onNodeWithContentDescription("Search for a bible version").performClick()
@@ -519,11 +520,11 @@ class VersionsScreenTest {
 
         composeTestRule.onNodeWithContentDescription("Search for a bible version").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Close the search input").assertDoesNotExist()
-        verify { mockViewModel.onSearchQueryChange("") }
+        verify { mockViewModel.onVersionSearchQueryChange("") }
     }
 
     @Test
-    fun `typing in search bar calls onSearchQueryChange`() {
+    fun `typing in search bar calls onVersionSearchQueryChange`() {
         renderScreen()
 
         composeTestRule.onNodeWithContentDescription("Search for a bible version").performClick()
@@ -531,12 +532,12 @@ class VersionsScreenTest {
         composeTestRule.onNode(hasSetTextAction()).performTextInput("k")
         composeTestRule.waitForIdle()
 
-        verify { mockViewModel.onSearchQueryChange("k") }
+        verify { mockViewModel.onVersionSearchQueryChange("k") }
     }
 
     @Test
-    fun `search bar reflects current searchQuery from state`() {
-        stateFlow.value = BibleVersionsViewModel.State(searchQuery = "john")
+    fun `search bar reflects current versionSearchQuery from state`() {
+        stateFlow.value = BibleVersionsViewModel.State(versionSearchQuery = "john")
 
         renderScreen()
         composeTestRule.onNodeWithContentDescription("Search for a bible version").performClick()
@@ -544,5 +545,36 @@ class VersionsScreenTest {
 
         composeTestRule.onNodeWithText("john").assertIsDisplayed()
         composeTestRule.onNodeWithText("Search").assertDoesNotExist()
+    }
+
+    @Test
+    fun `clicking back arrow clears version search query and invokes onBackClick`() {
+        stateFlow.value = BibleVersionsViewModel.State(versionSearchQuery = "john")
+        var backInvoked = false
+
+        renderScreen(onBackClick = { backInvoked = true })
+
+        composeTestRule.onNodeWithContentDescription("Back").performClick()
+        composeTestRule.waitForIdle()
+
+        verify { mockViewModel.onVersionSearchQueryChange("") }
+        assertEquals(true, backInvoked)
+    }
+
+    @Test
+    fun `system back exits search mode and clears query when search is visible`() {
+        renderScreen()
+        composeTestRule.onNodeWithContentDescription("Search for a bible version").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithContentDescription("Close the search input").assertIsDisplayed()
+
+        composeTestRule.runOnUiThread {
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithContentDescription("Search for a bible version").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Close the search input").assertDoesNotExist()
+        verify { mockViewModel.onVersionSearchQueryChange("") }
     }
 }

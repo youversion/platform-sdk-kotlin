@@ -32,6 +32,7 @@
     <string name="version_info_maybe_later">Maybe Later</string>
     <string name="search">Search</string>
     <string name="search_bible_versions">Search for a bible version</string>
+    <string name="search_languages">Search for a language</string>
     <string name="close_search_bar">Close the search input</string>
 
     <string name="bible_card_unavailable_reference">This passage is unavailable in the selected Bible version.</string>

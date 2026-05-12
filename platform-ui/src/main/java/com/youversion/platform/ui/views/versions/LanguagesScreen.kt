@@ -1,5 +1,6 @@
 package com.youversion.platform.ui.views.versions
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,8 +9,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -18,15 +24,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.BibleLanguageRow
 import com.youversion.platform.ui.views.components.BibleReaderTopAppBar
 import com.youversion.platform.ui.views.components.LanguageRowItem
+import com.youversion.platform.ui.views.components.SearchBar
 import kotlinx.coroutines.launch
 
 private enum class LanguageTab(
@@ -44,6 +56,7 @@ fun LanguagesScreen(
     onLanguageTagSelected: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var isSearchVisible by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadLanguages()
@@ -53,59 +66,103 @@ fun LanguagesScreen(
         rememberPagerState(initialPage = LanguageTab.SUGGESTED.ordinal) { 2 }
     val scope = rememberCoroutineScope()
 
+    val handleBack = {
+        isSearchVisible = false
+        viewModel.onLanguageSearchQueryChange("")
+        onBackClick()
+    }
+
+    BackHandler(enabled = isSearchVisible) {
+        isSearchVisible = false
+        viewModel.onLanguageSearchQueryChange("")
+    }
+
     Scaffold(
         topBar = {
             BibleReaderTopAppBar(
-                title = "Select a Languages",
-                onBackClick = onBackClick,
+                title = "Select a Language",
+                onBackClick = handleBack,
+                actions = {
+                    IconButton(
+                        onClick = {
+                            isSearchVisible = !isSearchVisible
+                            if (!isSearchVisible) viewModel.onLanguageSearchQueryChange("")
+                        },
+                    ) {
+                        Icon(
+                            imageVector = if (!isSearchVisible) Icons.Default.Search else Icons.Default.Close,
+                            contentDescription =
+                                stringResource(
+                                    if (!isSearchVisible) {
+                                        R.string.search_languages
+                                    } else {
+                                        R.string.close_search_bar
+                                    },
+                                ),
+                        )
+                    }
+                },
             )
         },
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
-            PrimaryTabRow(
-                selectedTabIndex = pagerState.currentPage,
-                containerColor = BibleReaderTheme.colorScheme.canvasPrimary,
-                contentColor = BibleReaderTheme.colorScheme.textPrimary,
-                indicator = {
-                    TabRowDefaults.PrimaryIndicator(
-                        modifier = Modifier.tabIndicatorOffset(pagerState.targetPage, matchContentSize = true),
-                        color = BibleReaderTheme.colorScheme.textPrimary,
-                        width = Dp.Unspecified,
-                    )
-                },
-            ) {
-                LanguageTab.entries.forEachIndexed { index, destination ->
-                    Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(index)
-                            }
-                        },
-                        text = {
-                            Text(text = destination.label)
-                        },
-                    )
-                }
-            }
-            HorizontalPager(
-                state = pagerState,
-            ) { page ->
-                when (page) {
-                    0 -> {
-                        LanguagesTab(
-                            languages = state.suggestedLanguages,
-                            showProgress = state.languagesInitializing,
-                            onLanguageClick = onLanguageTagSelected,
+            if (isSearchVisible) {
+                SearchBar(
+                    query = state.languageSearchQuery,
+                    onQueryChange = viewModel::onLanguageSearchQueryChange,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+                LanguagesTab(
+                    languages = state.filteredAllLanguages,
+                    showProgress = state.languagesInitializing,
+                    onLanguageClick = onLanguageTagSelected,
+                )
+            } else {
+                PrimaryTabRow(
+                    selectedTabIndex = pagerState.currentPage,
+                    containerColor = BibleReaderTheme.colorScheme.canvasPrimary,
+                    contentColor = BibleReaderTheme.colorScheme.textPrimary,
+                    indicator = {
+                        TabRowDefaults.PrimaryIndicator(
+                            modifier = Modifier.tabIndicatorOffset(pagerState.targetPage, matchContentSize = true),
+                            color = BibleReaderTheme.colorScheme.textPrimary,
+                            width = Dp.Unspecified,
+                        )
+                    },
+                ) {
+                    LanguageTab.entries.forEachIndexed { index, destination ->
+                        Tab(
+                            selected = pagerState.currentPage == index,
+                            onClick = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(index)
+                                }
+                            },
+                            text = {
+                                Text(text = destination.label)
+                            },
                         )
                     }
+                }
+                HorizontalPager(
+                    state = pagerState,
+                ) { page ->
+                    when (page) {
+                        0 -> {
+                            LanguagesTab(
+                                languages = state.suggestedLanguages,
+                                showProgress = state.languagesInitializing,
+                                onLanguageClick = onLanguageTagSelected,
+                            )
+                        }
 
-                    1 -> {
-                        LanguagesTab(
-                            languages = state.allLanguages,
-                            showProgress = state.languagesInitializing,
-                            onLanguageClick = onLanguageTagSelected,
-                        )
+                        1 -> {
+                            LanguagesTab(
+                                languages = state.allLanguages,
+                                showProgress = state.languagesInitializing,
+                                onLanguageClick = onLanguageTagSelected,
+                            )
+                        }
                     }
                 }
             }
@@ -130,6 +187,7 @@ private fun LanguagesTab(
         }
         items(
             items = languages,
+            key = { it.languageTag },
         ) { language ->
             BibleLanguageRow(
                 language = language,
