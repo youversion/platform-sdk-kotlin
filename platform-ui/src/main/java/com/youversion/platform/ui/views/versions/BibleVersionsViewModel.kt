@@ -164,6 +164,8 @@ class BibleVersionsViewModel(
                     it.copy(
                         initializing = true,
                         activeLanguageTag = languageTag,
+                        versionSearchQuery = "",
+                        languageSearchQuery = "",
                     )
                 }
                 val versions = bibleVersionRepository.fullVersions(languageTag)
@@ -197,7 +199,7 @@ class BibleVersionsViewModel(
 
             is Action.VersionSelected -> {
                 setCurrentVersion(action.bibleVersion)
-                _state.update { it.copy(searchQuery = "") }
+                _state.update { it.copy(versionSearchQuery = "") }
             }
         }
     }
@@ -263,8 +265,12 @@ class BibleVersionsViewModel(
     }
 
     /** Updates the search query used to filter Bible versions. */
-    fun onSearchQueryChange(query: String) {
-        _state.update { it.copy(searchQuery = query) }
+    fun onVersionSearchQueryChange(query: String) {
+        _state.update { it.copy(versionSearchQuery = query) }
+    }
+
+    fun onLanguageSearchQueryChange(query: String) {
+        _state.update { it.copy(languageSearchQuery = query) }
     }
 
     // ----- State
@@ -278,7 +284,8 @@ class BibleVersionsViewModel(
         val showBibleVersionLoading: Boolean = false,
         val selectedBibleVersion: BibleVersion? = null,
         val selectedOrganization: Organization? = null,
-        val searchQuery: String = "",
+        val versionSearchQuery: String = "",
+        val languageSearchQuery: String = "",
         val suggestedLanguages: List<LanguageRowItem> = emptyList(),
         val allLanguages: List<LanguageRowItem> = emptyList(),
         val languagesInitializing: Boolean = false,
@@ -302,16 +309,18 @@ class BibleVersionsViewModel(
 
         val filteredVersions: List<BibleVersion>
             get() =
-                if (searchQuery.isBlank()) {
+                if (versionSearchQuery.isBlank()) {
                     activeLanguageVersions
                 } else {
                     activeLanguageVersions.filter { version ->
-                        version.title?.contains(searchQuery, ignoreCase = true) == true ||
-                            version.abbreviation?.contains(searchQuery, ignoreCase = true) == true ||
-                            version.localizedAbbreviation?.contains(searchQuery, ignoreCase = true) == true ||
-                            version.localizedTitle?.contains(searchQuery, ignoreCase = true) == true
+                        version.title?.contains(versionSearchQuery, ignoreCase = true) == true ||
+                            version.abbreviation?.contains(versionSearchQuery, ignoreCase = true) == true ||
+                            version.localizedAbbreviation?.contains(versionSearchQuery, ignoreCase = true) == true ||
+                            version.localizedTitle?.contains(versionSearchQuery, ignoreCase = true) == true
                     }
                 }
+        val filteredAllLanguages: List<LanguageRowItem>
+            get() = filterLanguages(allLanguages, languageSearchQuery)
     }
 
     // ----- Events
@@ -349,4 +358,14 @@ internal fun combineConcurrentLoadFailures(
         }
     }
     throw primary
+}
+
+private fun filterLanguages(
+    languages: List<LanguageRowItem>,
+    query: String,
+): List<LanguageRowItem> {
+    if (query.isNotBlank()) {
+        return languages.filter { it.displayName.contains(query, ignoreCase = true) }
+    }
+    return languages
 }
