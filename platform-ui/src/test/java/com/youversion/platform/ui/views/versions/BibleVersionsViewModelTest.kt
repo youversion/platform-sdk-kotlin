@@ -832,7 +832,7 @@ class BibleVersionsViewModelTest {
     // ----- Search
 
     @Test
-    fun `State filteredVersions returns activeLanguageVersions when searchQuery is blank`() {
+    fun `State filteredVersions returns activeLanguageVersions when versionSearchQuery is blank`() {
         val versions =
             listOf(
                 BibleVersion(id = 1, abbreviation = "KJV", languageTag = "en"),
@@ -841,13 +841,13 @@ class BibleVersionsViewModelTest {
         val state =
             BibleVersionsViewModel.State(
                 activeLanguageVersions = versions,
-                searchQuery = "",
+                versionSearchQuery = "",
             )
         assertEquals(versions, state.filteredVersions)
     }
 
     @Test
-    fun `State filteredVersions returns activeLanguageVersions when searchQuery is whitespace`() {
+    fun `State filteredVersions returns activeLanguageVersions when versionSearchQuery is whitespace`() {
         val versions =
             listOf(
                 BibleVersion(id = 1, abbreviation = "KJV", languageTag = "en"),
@@ -855,7 +855,7 @@ class BibleVersionsViewModelTest {
         val state =
             BibleVersionsViewModel.State(
                 activeLanguageVersions = versions,
-                searchQuery = "   ",
+                versionSearchQuery = "   ",
             )
         assertEquals(versions, state.filteredVersions)
     }
@@ -867,7 +867,7 @@ class BibleVersionsViewModelTest {
         val state =
             BibleVersionsViewModel.State(
                 activeLanguageVersions = listOf(match, other),
-                searchQuery = "king",
+                versionSearchQuery = "king",
             )
         assertEquals(listOf(match), state.filteredVersions)
     }
@@ -879,7 +879,7 @@ class BibleVersionsViewModelTest {
         val state =
             BibleVersionsViewModel.State(
                 activeLanguageVersions = listOf(match, other),
-                searchQuery = "kjv",
+                versionSearchQuery = "kjv",
             )
         assertEquals(listOf(match), state.filteredVersions)
     }
@@ -891,7 +891,7 @@ class BibleVersionsViewModelTest {
         val state =
             BibleVersionsViewModel.State(
                 activeLanguageVersions = listOf(match, other),
-                searchQuery = "REINA",
+                versionSearchQuery = "REINA",
             )
         assertEquals(listOf(match), state.filteredVersions)
     }
@@ -903,7 +903,7 @@ class BibleVersionsViewModelTest {
         val state =
             BibleVersionsViewModel.State(
                 activeLanguageVersions = listOf(match, other),
-                searchQuery = "rvr",
+                versionSearchQuery = "rvr",
             )
         assertEquals(listOf(match), state.filteredVersions)
     }
@@ -917,36 +917,36 @@ class BibleVersionsViewModelTest {
                         BibleVersion(id = 1, abbreviation = "KJV", title = "King James", languageTag = "en"),
                         BibleVersion(id = 2, abbreviation = "NIV", title = "New International", languageTag = "en"),
                     ),
-                searchQuery = "zzzz",
+                versionSearchQuery = "zzzz",
             )
         assertTrue(state.filteredVersions.isEmpty())
     }
 
     @Test
-    fun `onSearchQueryChange updates searchQuery in state`() =
+    fun `onVersionSearchQueryChange updates versionSearchQuery in state`() =
         runTest(testDispatcher) {
             coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
             coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
 
             val viewModel = createViewModel()
 
-            viewModel.onSearchQueryChange("john")
-            assertEquals("john", viewModel.state.value.searchQuery)
+            viewModel.onVersionSearchQueryChange("john")
+            assertEquals("john", viewModel.state.value.versionSearchQuery)
 
-            viewModel.onSearchQueryChange("")
-            assertEquals("", viewModel.state.value.searchQuery)
+            viewModel.onVersionSearchQueryChange("")
+            assertEquals("", viewModel.state.value.versionSearchQuery)
         }
 
     @Test
-    fun `Action VersionSelected clears searchQuery`() =
+    fun `Action VersionSelected clears versionSearchQuery`() =
         runTest(testDispatcher) {
             coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
             coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
 
             val viewModel = createViewModel()
 
-            viewModel.onSearchQueryChange("kjv")
-            assertEquals("kjv", viewModel.state.value.searchQuery)
+            viewModel.onVersionSearchQueryChange("kjv")
+            assertEquals("kjv", viewModel.state.value.versionSearchQuery)
 
             viewModel.onAction(
                 BibleVersionsViewModel.Action.VersionSelected(
@@ -954,6 +954,98 @@ class BibleVersionsViewModelTest {
                 ),
             )
 
-            assertEquals("", viewModel.state.value.searchQuery)
+            assertEquals("", viewModel.state.value.versionSearchQuery)
+        }
+
+    // ----- Language search
+
+    @Test
+    fun `State filteredAllLanguages returns allLanguages when languageSearchQuery is blank`() {
+        val languages =
+            listOf(
+                LanguageRowItem("en", "English", null),
+                LanguageRowItem("es", "Spanish", null),
+            )
+        val state =
+            BibleVersionsViewModel.State(
+                allLanguages = languages,
+                languageSearchQuery = "",
+            )
+        assertEquals(languages, state.filteredAllLanguages)
+    }
+
+    @Test
+    fun `State filteredAllLanguages returns allLanguages when languageSearchQuery is whitespace`() {
+        val languages = listOf(LanguageRowItem("en", "English", null))
+        val state =
+            BibleVersionsViewModel.State(
+                allLanguages = languages,
+                languageSearchQuery = "   ",
+            )
+        assertEquals(languages, state.filteredAllLanguages)
+    }
+
+    @Test
+    fun `State filteredAllLanguages matches displayName case-insensitively`() {
+        val match = LanguageRowItem("es", "Spanish", null)
+        val other = LanguageRowItem("en", "English", null)
+        val state =
+            BibleVersionsViewModel.State(
+                allLanguages = listOf(match, other),
+                languageSearchQuery = "SPAN",
+            )
+        assertEquals(listOf(match), state.filteredAllLanguages)
+    }
+
+    @Test
+    fun `State filteredAllLanguages returns empty list when no languages match`() {
+        val state =
+            BibleVersionsViewModel.State(
+                allLanguages =
+                    listOf(
+                        LanguageRowItem("en", "English", null),
+                        LanguageRowItem("es", "Spanish", null),
+                    ),
+                languageSearchQuery = "zzzz",
+            )
+        assertTrue(state.filteredAllLanguages.isEmpty())
+    }
+
+    @Test
+    fun `onLanguageSearchQueryChange updates languageSearchQuery in state`() =
+        runTest(testDispatcher) {
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
+
+            val viewModel = createViewModel()
+
+            viewModel.onLanguageSearchQueryChange("eng")
+            assertEquals("eng", viewModel.state.value.languageSearchQuery)
+
+            viewModel.onLanguageSearchQueryChange("")
+            assertEquals("", viewModel.state.value.languageSearchQuery)
+        }
+
+    @Test
+    fun `loadVersionsForLanguage clears languageSearchQuery and versionSearchQuery`() =
+        runTest(testDispatcher) {
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("en") } returns emptyList()
+            coEvery { bibleVersionRepository.fullVersions("es") } returns emptyList()
+            every { languageRepository.languageName("es") } returns "Spanish"
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.onLanguageSearchQueryChange("eng")
+            viewModel.onVersionSearchQueryChange("kjv")
+            assertEquals("eng", viewModel.state.value.languageSearchQuery)
+            assertEquals("kjv", viewModel.state.value.versionSearchQuery)
+
+            viewModel.loadVersionsForLanguage("es")
+            advanceUntilIdle()
+
+            assertEquals("", viewModel.state.value.languageSearchQuery)
+            assertEquals("", viewModel.state.value.versionSearchQuery)
         }
 }

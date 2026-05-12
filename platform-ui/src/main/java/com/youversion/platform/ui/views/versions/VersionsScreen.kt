@@ -1,5 +1,6 @@
 package com.youversion.platform.ui.views.versions
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -49,6 +50,17 @@ fun VersionsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     var isSearchVisible by rememberSaveable { mutableStateOf(false) }
 
+    val handleBack = {
+        isSearchVisible = false
+        viewModel.onVersionSearchQueryChange("")
+        onBackClick()
+    }
+
+    BackHandler(enabled = isSearchVisible) {
+        isSearchVisible = false
+        viewModel.onVersionSearchQueryChange("")
+    }
+
     Scaffold(
         topBar = {
             BibleReaderTopAppBar(
@@ -66,12 +78,12 @@ fun VersionsScreen(
                         }
                     }
                 },
-                onBackClick = onBackClick,
+                onBackClick = handleBack,
                 actions = {
                     IconButton(
                         onClick = {
                             isSearchVisible = !isSearchVisible
-                            if (!isSearchVisible) viewModel.onSearchQueryChange("")
+                            if (!isSearchVisible) viewModel.onVersionSearchQueryChange("")
                         },
                     ) {
                         Icon(
@@ -89,8 +101,8 @@ fun VersionsScreen(
         Column(modifier = Modifier.padding(innerPadding)) {
             if (isSearchVisible) {
                 SearchBar(
-                    query = state.searchQuery,
-                    onQueryChange = viewModel::onSearchQueryChange,
+                    query = state.versionSearchQuery,
+                    onQueryChange = viewModel::onVersionSearchQueryChange,
                     modifier =
                         Modifier.padding(
                             horizontal = 20.dp,

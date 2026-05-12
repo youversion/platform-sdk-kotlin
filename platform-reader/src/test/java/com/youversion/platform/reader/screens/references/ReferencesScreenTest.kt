@@ -165,7 +165,7 @@ class ReferencesScreenTest {
         assertEquals(Triple(1, "GEN", "1"), clicks[0])
     }
 
-    // ----- BookSearchBar
+    // ----- SearchBar
 
     @Test
     fun `typing in search bar filters books`() {
