@@ -129,7 +129,11 @@ class VersionsScreenTest {
         stateFlow.value =
             BibleVersionsViewModel.State(
                 initializing = false,
-                permittedMinimalVersions = listOf(BibleVersion(id = 1, languageTag = "en")),
+                permittedMinimalVersions =
+                    listOf(
+                        BibleVersion(id = 1, languageTag = "en"),
+                        BibleVersion(id = 2, languageTag = "es"),
+                    ),
             )
         var isLanguagesClicked = false
 
@@ -138,6 +142,36 @@ class VersionsScreenTest {
         composeTestRule.onNodeWithText("Language").performClick()
         composeTestRule.waitForIdle()
         assertTrue(isLanguagesClicked)
+    }
+
+    @Test
+    fun `hides language selector when only one language is permitted`() {
+        stateFlow.value =
+            BibleVersionsViewModel.State(
+                initializing = false,
+                permittedMinimalVersions = listOf(BibleVersion(id = 1, languageTag = "en")),
+            )
+
+        renderScreen()
+
+        composeTestRule.onNodeWithText("Language").assertDoesNotExist()
+    }
+
+    @Test
+    fun `shows language selector when multiple languages are permitted`() {
+        stateFlow.value =
+            BibleVersionsViewModel.State(
+                initializing = false,
+                permittedMinimalVersions =
+                    listOf(
+                        BibleVersion(id = 1, languageTag = "en"),
+                        BibleVersion(id = 2, languageTag = "es"),
+                    ),
+            )
+
+        renderScreen()
+
+        composeTestRule.onNodeWithText("Language").assertIsDisplayed()
     }
 
     // ----- Section Header

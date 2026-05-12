@@ -3,6 +3,7 @@ package com.youversion.platform.ui.views.versions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -81,8 +82,14 @@ class BibleVersionsViewModel(
 
     private suspend fun acceptableFallbackVersionId(): Int? {
         val downloads = bibleVersionRepository.downloadedVersions
-        if (downloads.isNotEmpty()) {
-            return downloads.first()
+        val hasFilters =
+            YouVersionPlatformConfiguration.permittedLanguageTags != null ||
+                YouVersionPlatformConfiguration.permittedVersionIds != null
+
+        // Without filters configured, every downloaded version is permitted, so keep the offline-friendly
+        // fast path and avoid a network round trip.
+        if (!hasFilters) {
+            downloads.firstOrNull()?.let { return it }
         }
 
         val versions =
@@ -94,6 +101,13 @@ class BibleVersionsViewModel(
                 Logger.e("Could not fetch the permitted versions.", e)
                 return null
             }
+
+        // With filters configured, intersect downloads with the already-filtered listing so a downloaded
+        // version excluded by either filter is not returned as the fallback.
+        if (hasFilters) {
+            val permittedIdSet = versions.mapTo(mutableSetOf()) { it.id }
+            downloads.firstOrNull { it in permittedIdSet }?.let { return it }
+        }
 
         versions.firstOrNull { it.languageTag == "en" }?.let { return it.id }
         return versions.firstOrNull()?.id
@@ -307,6 +321,14 @@ class BibleVersionsViewModel(
             get() =
                 permittedMinimalVersions
                     .count { it.languageTag == activeLanguageTag }
+
+        /**
+         * Whether the language selector should be shown. While the permitted-versions list is still
+         * loading we show the selector; once loaded we hide it when only a single language is
+         * available so users are not presented with a no-op picker.
+         */
+        val showLanguageSelector: Boolean
+            get() = initializing || languagesCount > 1
 
         val filteredVersions: List<BibleVersion>
             get() =

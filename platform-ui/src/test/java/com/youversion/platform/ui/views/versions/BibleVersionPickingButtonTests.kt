@@ -171,8 +171,16 @@ class BibleVersionPickingButtonTests {
                 title = "New International Version",
                 languageTag = "en",
             )
+        val spanishVersion =
+            BibleVersion(
+                id = 3,
+                abbreviation = "RV",
+                localizedAbbreviation = "RV",
+                title = "Reina-Valera",
+                languageTag = "es",
+            )
         coEvery { mockVersionRepository.fullVersions("en") } returns listOf(testVersion)
-        coEvery { mockVersionRepository.permittedVersionsListing() } returns listOf(testVersion)
+        coEvery { mockVersionRepository.permittedVersionsListing() } returns listOf(testVersion, spanishVersion)
 
         composeTestRule.setContent {
             BibleReaderMaterialTheme {

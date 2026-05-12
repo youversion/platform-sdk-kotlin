@@ -1,5 +1,6 @@
 package com.youversion.platform.core.bibles.domain
 
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -113,6 +114,7 @@ class BibleVersionRepository(
                         BibleVersion.CodingKey.LANGUAGE_TAG,
                     ),
             ).data
+            .filter { it.isPermittedByConfiguration() }
 
     /** Holds minimal information about all Bible versions available to this app, in all languages. */
     var permittedVersions: List<BibleVersion>? = null
@@ -127,6 +129,21 @@ class BibleVersionRepository(
             permittedVersions ?: permittedVersions().also { permittedVersions = it }
         }
 
+    /**
+     * Clears the in-memory listings of versions returned by [permittedVersionsListing] and [fullVersions].
+     * Call this when the configured [YouVersionPlatformConfiguration.permittedLanguageTags] or
+     * [YouVersionPlatformConfiguration.permittedVersionIds] change so callers do not receive stale
+     * filtered results from a previous configuration.
+     *
+     * Reassigns rather than mutates the language-keyed map so a fetch already running under
+     * [fullVersionsMutex] keeps its own reference and only its post-fetch write becomes orphaned —
+     * the next call reads the fresh map and triggers a refetch.
+     */
+    fun clearVersionListings() {
+        permittedVersions = null
+        versionsInLanguage = mutableMapOf()
+    }
+
     suspend fun fullVersions(languageTag: String): List<BibleVersion> =
         fullVersionsMutex.withLock {
             versionsInLanguage[languageTag]?.let { return@withLock it }
@@ -136,6 +153,7 @@ class BibleVersionRepository(
                 YouVersionApi.bible
                     .versions(languageCode = languageTag, pageSize = 99)
                     .data
+                    .filter { it.isPermittedByConfiguration() }
 
             fun comparableString(bibleVersion: BibleVersion): String =
                 bibleVersion.localizedTitle ?: bibleVersion.title ?: bibleVersion.localizedAbbreviation
@@ -155,4 +173,19 @@ class BibleVersionRepository(
             versionsInLanguage[languageTag] = result
             result
         }
+}
+
+/**
+ * Returns true when this version satisfies the configured [YouVersionPlatformConfiguration.permittedLanguageTags]
+ * and [YouVersionPlatformConfiguration.permittedVersionIds] filters. A `null` filter means
+ * "no restriction" on that dimension.
+ */
+private fun BibleVersion.isPermittedByConfiguration(): Boolean {
+    YouVersionPlatformConfiguration.permittedLanguageTags?.let { permittedTags ->
+        if (languageTag == null || languageTag !in permittedTags) return false
+    }
+    YouVersionPlatformConfiguration.permittedVersionIds?.let { permittedIds ->
+        if (id !in permittedIds) return false
+    }
+    return true
 }

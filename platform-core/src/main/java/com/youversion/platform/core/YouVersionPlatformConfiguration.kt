@@ -38,6 +38,23 @@ object YouVersionPlatformConfiguration {
     val expiryDate: Date?
         get() = config?.expiryDate
 
+    /**
+     * When set, only Bible versions whose `languageTag` is in this set are made available
+     * in the version picker UI and other version listings. When `null` (the default), versions
+     * in all languages are available. Tags follow BCP 47 (e.g. `"en"` for English).
+     */
+    val permittedLanguageTags: Set<String>?
+        get() = config?.permittedLanguageTags
+
+    /**
+     * When set, only Bible versions whose `id` is in this set are made available in the
+     * version picker UI and other version listings. When `null` (the default), all versions
+     * are available. Combines with [permittedLanguageTags] — a version must satisfy both
+     * filters to be available.
+     */
+    val permittedVersionIds: Set<Int>?
+        get() = config?.permittedVersionIds
+
     val isSignedIn: Boolean
         get() = accessToken != null
 
@@ -51,6 +68,8 @@ object YouVersionPlatformConfiguration {
         expiryDate: Date? = null,
         apiHost: String = DEFAULT_API_HOST,
         hostEnv: String? = null,
+        permittedLanguageTags: Set<String>? = null,
+        permittedVersionIds: Set<Int>? = null,
     ) {
         if (config != null) {
             Logger.w("YouVersionPlatform SDK has already been configured. Reconfiguring.")
@@ -71,6 +90,8 @@ object YouVersionPlatformConfiguration {
             expiryDate = expiryDate,
             apiHost = apiHost,
             hostEnv = hostEnv,
+            permittedLanguageTags = permittedLanguageTags,
+            permittedVersionIds = permittedVersionIds,
         )
     }
 
@@ -83,8 +104,11 @@ object YouVersionPlatformConfiguration {
         expiryDate: Date? = null,
         apiHost: String = DEFAULT_API_HOST,
         hostEnv: String? = null,
+        permittedLanguageTags: Set<String>? = null,
+        permittedVersionIds: Set<Int>? = null,
     ) {
         val sessionRepository = PlatformCoreKoinComponent.sessionRepository
+        val previousConfig = config
 
         _configState.value =
             Config(
@@ -97,7 +121,22 @@ object YouVersionPlatformConfiguration {
                 refreshToken = refreshToken ?: sessionRepository.refreshToken,
                 idToken = idToken ?: sessionRepository.idToken,
                 expiryDate = expiryDate ?: sessionRepository.expiryDate,
+                permittedLanguageTags = permittedLanguageTags,
+                permittedVersionIds = permittedVersionIds,
             )
+
+        // The Koin graph (and therefore the BibleVersionRepository singleton) survives reconfiguration
+        // through the internal overload, so the in-memory version listings — which were filtered using
+        // the previous configuration — must be invalidated when the filters change.
+        val filtersChanged =
+            previousConfig != null &&
+                (
+                    previousConfig.permittedLanguageTags != permittedLanguageTags ||
+                        previousConfig.permittedVersionIds != permittedVersionIds
+                )
+        if (filtersChanged) {
+            PlatformCoreKoinComponent.bibleVersionRepository.clearVersionListings()
+        }
     }
 
     /**
@@ -191,6 +230,8 @@ data class Config(
     val refreshToken: String?,
     val idToken: String?,
     val expiryDate: Date?,
+    val permittedLanguageTags: Set<String>? = null,
+    val permittedVersionIds: Set<Int>? = null,
 ) {
     val isSignedIn = accessToken != null
 }

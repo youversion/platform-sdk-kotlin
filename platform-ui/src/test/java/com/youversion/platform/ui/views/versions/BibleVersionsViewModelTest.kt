@@ -1,8 +1,12 @@
 package com.youversion.platform.ui.views.versions
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.organizations.api.OrganizationsApi
 import com.youversion.platform.core.organizations.models.Organization
@@ -21,6 +25,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -31,6 +37,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class BibleVersionsViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
@@ -53,12 +60,23 @@ class BibleVersionsViewModelTest {
     /**
      * ViewModel work runs on [Dispatchers.Main] and is not a child of [runTest]'s scope. Draining the shared
      * [StandardTestDispatcher] avoids cancellation or failure propagation finishing after the test body and
-     * tripping [kotlinx.coroutines.test.UncaughtExceptionsBeforeTest] on the following test.
+     * tripping [kotlinx.coroutines.test.UncaughtExceptionsBeforeTest] on the following test. The configure()
+     * call returns the SDK to an unfiltered state so filter overrides in one test do not leak into the next.
      */
     @AfterTest
     fun teardown() {
         testDispatcher.scheduler.advanceUntilIdle()
         Dispatchers.resetMain()
+        // Tests that called configureFilters() leave Koin started and filter state set; reconfigure
+        // back to a clean baseline so subsequent tests do not see leftover filters, then stop Koin
+        // so state does not leak into other test classes sharing the JVM.
+        if (YouVersionPlatformConfiguration.permittedLanguageTags != null ||
+            YouVersionPlatformConfiguration.permittedVersionIds != null
+        ) {
+            val context = ApplicationProvider.getApplicationContext<Context>()
+            YouVersionPlatformConfiguration.configure(context = context, appKey = "test")
+        }
+        PlatformKoinGraph.stop()
     }
 
     private fun createViewModel(
@@ -71,6 +89,24 @@ class BibleVersionsViewModelTest {
             languageRepository = languageRepository,
             bibleVersionRepository = bibleVersionRepository,
         )
+
+    /**
+     * Drives the real [YouVersionPlatformConfiguration] (rather than mocking it) for tests that need
+     * permitted-language/version filters. The configure() call sets up Koin internally; teardown
+     * reconfigures to a blank state so filters do not leak into subsequent tests.
+     */
+    private fun configureFilters(
+        permittedLanguageTags: Set<String>? = null,
+        permittedVersionIds: Set<Int>? = null,
+    ) {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        YouVersionPlatformConfiguration.configure(
+            context = context,
+            appKey = "test",
+            permittedLanguageTags = permittedLanguageTags,
+            permittedVersionIds = permittedVersionIds,
+        )
+    }
 
     @Test
     fun `loadVersion fires onVersionChange with loaded version when initialVersionId is provided`() =
@@ -128,6 +164,54 @@ class BibleVersionsViewModelTest {
             advanceUntilIdle()
 
             assertEquals(downloaded, received)
+        }
+
+    @Test
+    fun `selectFallbackVersion skips downloaded versions excluded by permittedVersionIds`() =
+        runTest(testDispatcher) {
+            configureFilters(permittedVersionIds = setOf(88))
+            val permitted = BibleVersion(id = 88, abbreviation = "P", languageTag = "en")
+            every { bibleVersionRepository.downloadedVersions } returns listOf(77, 88)
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(permitted)
+            coEvery { bibleVersionRepository.version(id = 88) } returns permitted
+
+            var received: BibleVersion? = null
+            createViewModel(initialVersionId = null, onVersionChange = { received = it })
+            advanceUntilIdle()
+
+            assertEquals(permitted, received)
+        }
+
+    @Test
+    fun `selectFallbackVersion skips downloaded versions excluded by permittedLanguageTags`() =
+        runTest(testDispatcher) {
+            configureFilters(permittedLanguageTags = setOf("en"))
+            val englishPermitted = BibleVersion(id = 99, abbreviation = "NIV", languageTag = "en")
+            every { bibleVersionRepository.downloadedVersions } returns listOf(30, 99)
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(englishPermitted)
+            coEvery { bibleVersionRepository.version(id = 99) } returns englishPermitted
+
+            var received: BibleVersion? = null
+            createViewModel(initialVersionId = null, onVersionChange = { received = it })
+            advanceUntilIdle()
+
+            assertEquals(englishPermitted, received)
+        }
+
+    @Test
+    fun `selectFallbackVersion falls back to permitted listing when no downloaded id is permitted`() =
+        runTest(testDispatcher) {
+            configureFilters(permittedVersionIds = setOf(99))
+            val permitted = BibleVersion(id = 99, abbreviation = "P", languageTag = "en")
+            every { bibleVersionRepository.downloadedVersions } returns listOf(77)
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(permitted)
+            coEvery { bibleVersionRepository.version(id = 99) } returns permitted
+
+            var received: BibleVersion? = null
+            createViewModel(initialVersionId = null, onVersionChange = { received = it })
+            advanceUntilIdle()
+
+            assertEquals(permitted, received)
         }
 
     @Test
@@ -707,6 +791,42 @@ class BibleVersionsViewModelTest {
                 activeLanguageTag = "en",
             )
         assertEquals(1, state.activeLanguageVersionsCount)
+    }
+
+    @Test
+    fun `State showLanguageSelector is true while initializing`() {
+        val state = BibleVersionsViewModel.State(initializing = true)
+        assertTrue(state.showLanguageSelector)
+    }
+
+    @Test
+    fun `State showLanguageSelector is true when multiple languages are permitted`() {
+        val state =
+            BibleVersionsViewModel.State(
+                initializing = false,
+                permittedMinimalVersions = listOf(permittedEn, spanishVersion),
+            )
+        assertTrue(state.showLanguageSelector)
+    }
+
+    @Test
+    fun `State showLanguageSelector is false when only one language is permitted`() {
+        val state =
+            BibleVersionsViewModel.State(
+                initializing = false,
+                permittedMinimalVersions = listOf(permittedEn),
+            )
+        assertFalse(state.showLanguageSelector)
+    }
+
+    @Test
+    fun `State showLanguageSelector is false when no languages are permitted post-load`() {
+        val state =
+            BibleVersionsViewModel.State(
+                initializing = false,
+                permittedMinimalVersions = emptyList(),
+            )
+        assertFalse(state.showLanguageSelector)
     }
 
     // ----- Search
