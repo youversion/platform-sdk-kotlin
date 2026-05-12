@@ -67,6 +67,7 @@ fun LanguagesScreen(
     val scope = rememberCoroutineScope()
 
     val handleBack = {
+        isSearchVisible = false
         viewModel.onLanguageSearchQueryChange("")
         onBackClick()
     }

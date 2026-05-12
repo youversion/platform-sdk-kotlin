@@ -269,6 +269,7 @@ class BibleVersionsViewModel(
         _state.update { it.copy(versionSearchQuery = query) }
     }
 
+    /** Updates the search query used to filter languages. */
     fun onLanguageSearchQueryChange(query: String) {
         _state.update { it.copy(languageSearchQuery = query) }
     }

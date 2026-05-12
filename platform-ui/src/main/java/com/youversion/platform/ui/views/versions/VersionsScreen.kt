@@ -51,6 +51,7 @@ fun VersionsScreen(
     var isSearchVisible by rememberSaveable { mutableStateOf(false) }
 
     val handleBack = {
+        isSearchVisible = false
         viewModel.onVersionSearchQueryChange("")
         onBackClick()
     }
