@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.4.1...1.5.0) (2026-05-12)
+
+
+### Features
+
+* **ui:** add search to language picker ([6e7580c](https://github.com/youversion/platform-sdk-kotlin/commit/6e7580c1f26ed5e42c5acfe31b8994064f56969f))
+
 ## [1.4.1](https://github.com/youversion/platform-sdk-kotlin/compare/1.4.0...1.4.1) (2026-05-11)
 
 
