@@ -81,11 +81,16 @@ class BibleVersionsViewModel(
     }
 
     private suspend fun acceptableFallbackVersionId(): Int? {
-        val permittedIds = YouVersionPlatformConfiguration.permittedVersionIds
         val downloads = bibleVersionRepository.downloadedVersions
-        downloads
-            .firstOrNull { permittedIds == null || it in permittedIds }
-            ?.let { return it }
+        val hasFilters =
+            YouVersionPlatformConfiguration.permittedLanguageTags != null ||
+                YouVersionPlatformConfiguration.permittedVersionIds != null
+
+        // Without filters configured, every downloaded version is permitted, so keep the offline-friendly
+        // fast path and avoid a network round trip.
+        if (!hasFilters) {
+            downloads.firstOrNull()?.let { return it }
+        }
 
         val versions =
             try {
@@ -96,6 +101,13 @@ class BibleVersionsViewModel(
                 Logger.e("Could not fetch the permitted versions.", e)
                 return null
             }
+
+        // With filters configured, intersect downloads with the already-filtered listing so a downloaded
+        // version excluded by either filter is not returned as the fallback.
+        if (hasFilters) {
+            val permittedIdSet = versions.mapTo(mutableSetOf()) { it.id }
+            downloads.firstOrNull { it in permittedIdSet }?.let { return it }
+        }
 
         versions.firstOrNull { it.languageTag == "en" }?.let { return it.id }
         return versions.firstOrNull()?.id

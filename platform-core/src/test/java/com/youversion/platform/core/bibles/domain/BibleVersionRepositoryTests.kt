@@ -821,6 +821,46 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
             val versions = repository.fullVersions("en")
             assertEquals(listOf(2), versions.map { it.id })
         }
+
+    @OptIn(ExperimentalAtomicApi::class)
+    @Test
+    fun `test clearVersionListings forces a refetch of permittedVersionsListing`() =
+        runTest {
+            val requestCount = AtomicInt(0)
+            MockEngine { _ ->
+                requestCount.incrementAndFetch()
+                respondJson(PERMITTED_VERSIONS_JSON)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.permittedVersionsListing()
+            repository.permittedVersionsListing()
+            assertEquals(1, requestCount.load())
+
+            repository.clearVersionListings()
+            repository.permittedVersionsListing()
+            assertEquals(2, requestCount.load())
+        }
+
+    @OptIn(ExperimentalAtomicApi::class)
+    @Test
+    fun `test clearVersionListings forces a refetch of fullVersions`() =
+        runTest {
+            val requestCount = AtomicInt(0)
+            MockEngine { _ ->
+                requestCount.incrementAndFetch()
+                respondJson(FULL_VERSIONS_JSON)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.fullVersions("en")
+            repository.fullVersions("en")
+            assertEquals(1, requestCount.load())
+
+            repository.clearVersionListings()
+            repository.fullVersions("en")
+            assertEquals(2, requestCount.load())
+        }
 }
 
 private const val PERMITTED_VERSIONS_JSON = """

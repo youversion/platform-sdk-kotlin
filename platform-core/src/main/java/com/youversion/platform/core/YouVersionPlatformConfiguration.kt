@@ -108,6 +108,7 @@ object YouVersionPlatformConfiguration {
         permittedVersionIds: Set<Int>? = null,
     ) {
         val sessionRepository = PlatformCoreKoinComponent.sessionRepository
+        val previousConfig = config
 
         _configState.value =
             Config(
@@ -123,6 +124,19 @@ object YouVersionPlatformConfiguration {
                 permittedLanguageTags = permittedLanguageTags,
                 permittedVersionIds = permittedVersionIds,
             )
+
+        // The Koin graph (and therefore the BibleVersionRepository singleton) survives reconfiguration
+        // through the internal overload, so the in-memory version listings — which were filtered using
+        // the previous configuration — must be invalidated when the filters change.
+        val filtersChanged =
+            previousConfig != null &&
+                (
+                    previousConfig.permittedLanguageTags != permittedLanguageTags ||
+                        previousConfig.permittedVersionIds != permittedVersionIds
+                )
+        if (filtersChanged) {
+            PlatformCoreKoinComponent.bibleVersionRepository.clearVersionListings()
+        }
     }
 
     /**

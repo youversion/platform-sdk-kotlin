@@ -1,5 +1,6 @@
 package com.youversion.platform.core.utilities.koin
 
+import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.users.domain.SessionRepository
 import io.ktor.client.HttpClient
@@ -14,5 +15,8 @@ internal object PlatformCoreKoinComponent : KoinComponent {
         get() = get()
 
     val sessionRepository: SessionRepository
+        get() = get()
+
+    val bibleVersionRepository: BibleVersionRepository
         get() = get()
 }

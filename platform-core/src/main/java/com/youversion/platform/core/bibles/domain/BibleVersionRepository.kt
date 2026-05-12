@@ -129,6 +129,21 @@ class BibleVersionRepository(
             permittedVersions ?: permittedVersions().also { permittedVersions = it }
         }
 
+    /**
+     * Clears the in-memory listings of versions returned by [permittedVersionsListing] and [fullVersions].
+     * Call this when the configured [YouVersionPlatformConfiguration.permittedLanguageTags] or
+     * [YouVersionPlatformConfiguration.permittedVersionIds] change so callers do not receive stale
+     * filtered results from a previous configuration.
+     *
+     * Reassigns rather than mutates the language-keyed map so a fetch already running under
+     * [fullVersionsMutex] keeps its own reference and only its post-fetch write becomes orphaned —
+     * the next call reads the fresh map and triggers a refetch.
+     */
+    fun clearVersionListings() {
+        permittedVersions = null
+        versionsInLanguage = mutableMapOf()
+    }
+
     suspend fun fullVersions(languageTag: String): List<BibleVersion> =
         fullVersionsMutex.withLock {
             versionsInLanguage[languageTag]?.let { return@withLock it }
