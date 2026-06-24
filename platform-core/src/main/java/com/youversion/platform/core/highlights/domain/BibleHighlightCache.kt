@@ -2,6 +2,10 @@ package com.youversion.platform.core.highlights.domain
 
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.models.BibleHighlight
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import java.util.Date
 import java.util.UUID
 import kotlin.time.Duration
@@ -24,25 +28,24 @@ object BibleHighlightCache {
     )
 
     // ----- Observable State
-    private val cachedHighlights = mutableListOf<CachedHighlight>()
-    val highlights: List<CachedHighlight>
-        get() = cachedHighlights.toList()
+    private val _highlights = MutableStateFlow<List<CachedHighlight>>(emptyList())
+    val highlights: StateFlow<List<CachedHighlight>> = _highlights.asStateFlow()
 
     // ----- Throttling and Loading
-    private var recentChapterFetches = mutableMapOf<BibleReference, Date>()
-    private var currentlyLoadingChapters = mutableSetOf<BibleReference>()
+    private val recentChapterFetches = mutableMapOf<BibleReference, Date>()
+    private val currentlyLoadingChapters = mutableSetOf<BibleReference>()
     private val throttlingInterval: Duration = 5.minutes
 
     // ----- Public API - State Management
     fun clear() {
-        cachedHighlights.clear()
+        _highlights.value = emptyList()
         recentChapterFetches.clear()
         currentlyLoadingChapters.clear()
     }
 
     // ----- Public API - Queries
     fun highlights(overlapping: BibleReference): List<BibleHighlight> =
-        cachedHighlights
+        _highlights.value
             .filter { it.highlight.bibleReference.overlaps(otherReference = overlapping) }
             .map { it.highlight }
 
@@ -77,65 +80,78 @@ object BibleHighlightCache {
 
     // ----- Public API - Mutations (write APIs preserved)
     fun addHighlights(highlights: List<BibleHighlight>) {
-        for (highlight in highlights) {
-            // Remove any existing for same exact reference; then append as pending create
-            cachedHighlights.removeAll { it.highlight.bibleReference == highlight.bibleReference }
-            cachedHighlights.add(
-                CachedHighlight(highlight = highlight, state = CachedHighlightState.LOCAL_PENDING_CREATE),
-            )
+        _highlights.update { current ->
+            current.toMutableList().apply {
+                for (highlight in highlights) {
+                    // Remove any existing for same exact reference; then append as pending create
+                    removeAll { it.highlight.bibleReference == highlight.bibleReference }
+                    add(
+                        CachedHighlight(highlight = highlight, state = CachedHighlightState.LOCAL_PENDING_CREATE),
+                    )
+                }
+            }
         }
     }
 
     fun removeHighlights(references: List<BibleReference>) {
-        for (reference in references) {
-            // If there is a pending create for this reference, just drop it; otherwise mark pending delete
-            val pendingCreateIdx =
-                cachedHighlights.indexOfFirst {
-                    it.highlight.bibleReference == reference && it.state == CachedHighlightState.LOCAL_PENDING_CREATE
+        _highlights.update { current ->
+            current.toMutableList().apply {
+                for (reference in references) {
+                    // If there is a pending create for this reference, just drop it; otherwise mark pending delete
+                    val pendingCreateIndex =
+                        indexOfFirst {
+                            it.highlight.bibleReference == reference &&
+                                it.state == CachedHighlightState.LOCAL_PENDING_CREATE
+                        }
+                    if (pendingCreateIndex != -1) {
+                        removeAt(pendingCreateIndex)
+                    } else {
+                        val index = indexOfFirst { it.highlight.bibleReference == reference }
+                        if (index != -1) {
+                            this[index] =
+                                this[index].copy(
+                                    state = CachedHighlightState.LOCAL_PENDING_DELETE,
+                                    lastModifiedAt = Date(),
+                                )
+                        }
+                    }
                 }
-            if (pendingCreateIdx != -1) {
-                cachedHighlights.removeAt(pendingCreateIdx)
-            } else {
-                val idx = cachedHighlights.indexOfFirst { it.highlight.bibleReference == reference }
-                if (idx != -1) {
-                    cachedHighlights[idx] =
-                        cachedHighlights[idx].copy(
-                            state = CachedHighlightState.LOCAL_PENDING_DELETE,
-                            lastModifiedAt = Date(),
-                        )
-                }
+                // Physically remove deletes so the visible list hides them
+                removeAll { it.state == CachedHighlightState.LOCAL_PENDING_DELETE }
             }
         }
-        // Optionally, physically remove localPendingDelete from visible list here if UI should hide deletes
-        cachedHighlights.removeAll { it.state == CachedHighlightState.LOCAL_PENDING_DELETE }
     }
 
     fun updateHighlightColors(
         references: List<BibleReference>,
         newColor: String,
     ) {
-        for (reference in references) {
-            val idx = cachedHighlights.indexOfFirst { it.highlight.bibleReference == reference }
-            if (idx != -1) {
-                cachedHighlights[idx] =
-                    cachedHighlights[idx].copy(
-                        highlight = BibleHighlight(bibleReference = reference, hexColor = newColor),
-                        state =
-                            if (cachedHighlights[idx].state != CachedHighlightState.LOCAL_PENDING_CREATE) {
-                                CachedHighlightState.LOCAL_PENDING_UPDATE
-                            } else {
-                                cachedHighlights[idx].state
-                            },
-                        lastModifiedAt = Date(),
-                    )
-            } else {
-                // Create if not exists, pending create
-                cachedHighlights.add(
-                    CachedHighlight(
-                        highlight = BibleHighlight(bibleReference = reference, hexColor = newColor),
-                        state = CachedHighlightState.LOCAL_PENDING_CREATE,
-                    ),
-                )
+        _highlights.update { current ->
+            current.toMutableList().apply {
+                for (reference in references) {
+                    val index = indexOfFirst { it.highlight.bibleReference == reference }
+                    if (index != -1) {
+                        this[index] =
+                            this[index].copy(
+                                highlight = BibleHighlight(bibleReference = reference, hexColor = newColor),
+                                state =
+                                    if (this[index].state != CachedHighlightState.LOCAL_PENDING_CREATE) {
+                                        CachedHighlightState.LOCAL_PENDING_UPDATE
+                                    } else {
+                                        this[index].state
+                                    },
+                                lastModifiedAt = Date(),
+                            )
+                    } else {
+                        // Create if not exists, pending create
+                        add(
+                            CachedHighlight(
+                                highlight = BibleHighlight(bibleReference = reference, hexColor = newColor),
+                                state = CachedHighlightState.LOCAL_PENDING_CREATE,
+                            ),
+                        )
+                    }
+                }
             }
         }
     }
@@ -147,22 +163,26 @@ object BibleHighlightCache {
     ) {
         val chapterRef = normalizeToChapter(chapter)
 
-        // Remove existing remote-synced highlights for this chapter
-        cachedHighlights.removeAll { ch ->
-            ch.state == CachedHighlightState.REMOTE_SYNCED &&
-                ch.highlight.bibleReference.bookUSFM == chapterRef.bookUSFM &&
-                ch.highlight.bibleReference.chapter == chapterRef.chapter &&
-                ch.highlight.bibleReference.versionId == chapterRef.versionId
-        }
+        _highlights.update { current ->
+            current.toMutableList().apply {
+                // Remove existing remote-synced highlights for this chapter
+                removeAll { cached ->
+                    cached.state == CachedHighlightState.REMOTE_SYNCED &&
+                        cached.highlight.bibleReference.bookUSFM == chapterRef.bookUSFM &&
+                        cached.highlight.bibleReference.chapter == chapterRef.chapter &&
+                        cached.highlight.bibleReference.versionId == chapterRef.versionId
+                }
 
-        // Append server highlights as remoteSynced
-        for (h in highlights) {
-            cachedHighlights.add(
-                CachedHighlight(
-                    highlight = h,
-                    state = CachedHighlightState.REMOTE_SYNCED,
-                ),
-            )
+                // Append server highlights as remoteSynced
+                for (highlight in highlights) {
+                    add(
+                        CachedHighlight(
+                            highlight = highlight,
+                            state = CachedHighlightState.REMOTE_SYNCED,
+                        ),
+                    )
+                }
+            }
         }
     }
 

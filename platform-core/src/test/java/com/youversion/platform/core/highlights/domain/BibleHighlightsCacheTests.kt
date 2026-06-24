@@ -158,6 +158,20 @@ class BibleHighlightsCacheTests {
         assertFalse(highlights.any { it.bibleReference.chapter == 2 && it.bibleReference.verseStart == 1 })
     }
 
+    // ----- Test Observable State
+    @Test
+    fun `test highlights state flow emits on mutation`() {
+        BibleHighlightCache.clear()
+        assertTrue(BibleHighlightCache.highlights.value.isEmpty())
+
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        BibleHighlightCache.addHighlights(listOf(BibleHighlight(bibleReference = ref, hexColor = "eefeef")))
+        assertEquals(1, BibleHighlightCache.highlights.value.size)
+
+        BibleHighlightCache.removeHighlights(listOf(ref))
+        assertTrue(BibleHighlightCache.highlights.value.isEmpty())
+    }
+
     // ----- Test Server Merge
     @Test
     fun `test apply server highlights`() {
