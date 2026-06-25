@@ -59,14 +59,8 @@ object BibleHighlightCache {
     fun isChapterLoading(chapter: BibleReference): Boolean =
         currentlyLoadingChapters.contains(normalizeToChapter(chapter))
 
-    fun markChapterAsLoading(chapter: BibleReference): Boolean {
-        val normalized = normalizeToChapter(chapter)
-        if (currentlyLoadingChapters.contains(normalized)) {
-            return false
-        }
-        currentlyLoadingChapters.add(normalized)
-        return true
-    }
+    fun markChapterAsLoading(chapter: BibleReference): Boolean =
+        currentlyLoadingChapters.add(normalizeToChapter(chapter))
 
     fun unmarkChapterAsLoading(chapter: BibleReference) {
         currentlyLoadingChapters.remove(normalizeToChapter(chapter))
