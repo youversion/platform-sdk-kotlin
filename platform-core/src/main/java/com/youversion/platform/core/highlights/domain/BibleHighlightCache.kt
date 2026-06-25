@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.util.Date
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -32,8 +33,8 @@ object BibleHighlightCache {
     val highlights: StateFlow<List<CachedHighlight>> = _highlights.asStateFlow()
 
     // ----- Throttling and Loading
-    private val recentChapterFetches = mutableMapOf<BibleReference, Date>()
-    private val currentlyLoadingChapters = mutableSetOf<BibleReference>()
+    private val recentChapterFetches = ConcurrentHashMap<BibleReference, Date>()
+    private val currentlyLoadingChapters = ConcurrentHashMap.newKeySet<BibleReference>()
     private val throttlingInterval: Duration = 5.minutes
 
     // ----- Public API - State Management

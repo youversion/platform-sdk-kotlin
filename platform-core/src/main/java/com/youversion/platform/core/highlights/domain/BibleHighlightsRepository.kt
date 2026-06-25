@@ -9,6 +9,7 @@ import com.youversion.platform.core.highlights.models.Highlight
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -71,7 +72,8 @@ class BibleHighlightsRepository(
      * Loads the chapter containing [reference] from the server if it has not been loaded recently.
      *
      * Loading is throttled per chapter and de-duplicated while a load is in flight. Pass [forceReload] to bypass the
-     * throttle.
+     * time-based throttle; it does not cancel or re-trigger a load that is already in progress, so if one is in flight
+     * this call returns without starting another.
      */
     fun ensureHighlightsForChapterLoaded(
         reference: BibleReference,
@@ -157,10 +159,18 @@ class BibleHighlightsRepository(
     }
 
     /**
-     * Clears all cached highlights and load state. Call this when the user signs out.
+     * Clears all cached highlights and load state, and discards any pending or in-flight sync operations. Call this
+     * when the user signs out so queued writes never land on the previous user's account.
      */
     fun reset() {
+        scope.coroutineContext.cancelChildren()
         cache.clear()
+        scope.launch {
+            queueMutex.withLock {
+                pendingOperations.clear()
+                isProcessingQueue = false
+            }
+        }
     }
 
     private fun queueOperation(operation: PendingHighlightOperation) {
@@ -195,15 +205,20 @@ class BibleHighlightsRepository(
 
                 val failed = mutableListOf<PendingHighlightOperation>()
                 for (operation in batch) {
-                    val succeeded =
+                    val failedReferences =
                         try {
                             processOperation(operation)
                         } catch (e: Exception) {
                             Logger.e(e) { "Highlight operation ${operation.id} threw" }
-                            false
+                            operation.references
                         }
-                    if (!succeeded) {
-                        failed.add(operation.copy(retryCount = operation.retryCount + 1))
+                    if (failedReferences.isNotEmpty()) {
+                        failed.add(
+                            operation.copy(
+                                references = failedReferences,
+                                retryCount = operation.retryCount + 1,
+                            ),
+                        )
                     }
                 }
 
@@ -229,11 +244,15 @@ class BibleHighlightsRepository(
         }
     }
 
-    private suspend fun processOperation(operation: PendingHighlightOperation): Boolean {
-        var succeeded = true
+    /**
+     * Sends each reference in [operation] to the server and returns the references that failed, so retries only touch
+     * the references that did not succeed.
+     */
+    private suspend fun processOperation(operation: PendingHighlightOperation): List<BibleReference> {
+        val failedReferences = mutableListOf<BibleReference>()
         for (reference in operation.references) {
             val passageId = "${reference.bookUSFM}.${reference.chapter}.${reference.verseStart ?: 1}"
-            val result =
+            val succeeded =
                 when (operation.operationType) {
                     HighlightOperationType.ADD ->
                         api.createHighlight(reference.versionId, passageId, hexWithoutHash(operation.color))
@@ -242,11 +261,11 @@ class BibleHighlightsRepository(
                     HighlightOperationType.REMOVE ->
                         api.deleteHighlight(reference.versionId, passageId)
                 }
-            if (!result) {
-                succeeded = false
+            if (!succeeded) {
+                failedReferences.add(reference)
             }
         }
-        return succeeded
+        return failedReferences
     }
 
     private suspend fun loadChapterFromServer(chapter: BibleReference) {
