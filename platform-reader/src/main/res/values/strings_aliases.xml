@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- AUTO-GENERATED from en.json — do not edit manually -->
 <resources>
     <string name="banner_dismiss_content_description">@string/yv_banner_dismiss_content_description</string>
     <string name="banner_offline_icon">@string/yv_banner_offline_icon</string>
@@ -6,8 +7,8 @@
     <string name="banner_version_unavailable_icon">@string/yv_banner_version_unavailable_icon</string>
     <string name="banner_version_unavailable_message">@string/yv_banner_version_unavailable_message</string>
     <string name="book_chapter_picker_title">@string/yv_book_chapter_picker_title</string>
-    <string name="font_settings_label">@string/yv_font_settings_label</string>
     <string name="font_selected_check">@string/yv_font_selected_check</string>
+    <string name="font_settings_label">@string/yv_font_settings_label</string>
     <string name="footnote_header_label">@string/yv_footnote_header_label</string>
     <string name="intro_chapter_label">@string/yv_intro_chapter_label</string>
     <string name="reader_menu_font_settings">@string/yv_reader_menu_font_settings</string>
