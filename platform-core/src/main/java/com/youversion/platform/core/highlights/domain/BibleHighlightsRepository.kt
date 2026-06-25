@@ -280,12 +280,6 @@ class BibleHighlightsRepository internal constructor(
         }
         loadScope.coroutineContext.cancelChildren()
         cache.clear()
-        scope.launch {
-            queueMutex.withLock {
-                pendingOperations.clear()
-                isProcessingQueue = false
-            }
-        }
     }
 
     /**
