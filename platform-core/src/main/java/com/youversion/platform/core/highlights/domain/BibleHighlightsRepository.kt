@@ -1,17 +1,28 @@
 package com.youversion.platform.core.highlights.domain
 
 import co.touchlab.kermit.Logger
+import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.api.HighlightsApi
 import com.youversion.platform.core.highlights.api.HighlightsEndpoints
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.highlights.models.Highlight
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -38,6 +49,7 @@ data class PendingHighlightOperation(
     val id: UUID = UUID.randomUUID(),
     val timestamp: Date = Date(),
     val retryCount: Int = 0,
+    val accountId: String? = null,
 )
 
 /**
@@ -46,22 +58,51 @@ data class PendingHighlightOperation(
  * Reads are served from the observable cache and refreshed per-chapter from the server (throttled). Writes update
  * the cache immediately (optimistically) and are queued for the server with retry/backoff so they survive transient
  * failures and offline periods.
+ *
+ * Each queued write is bound to the account that was signed in when it was made. If the signed-in account changes
+ * before the write syncs, the write is dropped rather than sent, so one user's highlights can never land on another
+ * user's account.
  */
 class BibleHighlightsRepository(
     private val api: HighlightsApi = HighlightsEndpoints,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    private val currentAccountId: () -> String? = { YouVersionApi.users.currentUserId },
 ) {
     private val cache = BibleHighlightCache
+
+    private val loadScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
+
+    private val enqueueJob = SupervisorJob(scope.coroutineContext[Job])
+    private val enqueueScope = CoroutineScope(scope.coroutineContext + enqueueJob)
 
     private val pendingOperations = mutableListOf<PendingHighlightOperation>()
     private val queueMutex = Mutex()
     private var isProcessingQueue = false
+    private var processingJob: Job? = null
+    private val queuedOperations = MutableStateFlow<List<PendingHighlightOperation>>(emptyList())
 
     /**
      * The observable list of cached highlights. UI layers should collect this and filter to the references they render.
      */
     val highlights: StateFlow<List<BibleHighlightCache.CachedHighlight>>
         get() = cache.highlights
+
+    /**
+     * The number of highlight changes queued for the server, including any awaiting a retry. Collect this to drive a
+     * sync indicator. The count drops to zero while a batch is in flight and rises again only if operations fail.
+     */
+    val pendingOperationCount: StateFlow<Int> =
+        queuedOperations
+            .map { operations -> operations.size }
+            .stateIn(scope, SharingStarted.Eagerly, 0)
+
+    /**
+     * The number of queued highlight changes that have failed at least once and are awaiting a retry.
+     */
+    val failedOperationCount: StateFlow<Int> =
+        queuedOperations
+            .map { operations -> operations.count { it.retryCount > 0 } }
+            .stateIn(scope, SharingStarted.Eagerly, 0)
 
     /**
      * Returns the cached highlights overlapping [overlapping] synchronously.
@@ -93,7 +134,7 @@ class BibleHighlightsRepository(
             return
         }
 
-        scope.launch { loadChapterFromServer(chapter) }
+        loadScope.launch { loadChapterFromServer(chapter) }
     }
 
     /**
@@ -159,44 +200,63 @@ class BibleHighlightsRepository(
     }
 
     /**
-     * Clears all cached highlights and load state, and discards any pending or in-flight sync operations. Call this
-     * when the user signs out so queued writes never land on the previous user's account.
+     * Clears all cached highlights and per-chapter load state, and cancels any in-flight chapter loads so a load that
+     * was already running cannot repopulate the cache after it is cleared. Call this when the user signs out.
+     *
+     * Pending sync operations are intentionally left in place so any writes already queued still reach the server; this
+     * mirrors the Swift SDK, where reset clears only the cache.
      */
     fun reset() {
-        scope.coroutineContext.cancelChildren()
+        loadScope.coroutineContext.cancelChildren()
         cache.clear()
-        scope.launch {
-            queueMutex.withLock {
-                pendingOperations.clear()
-                isProcessingQueue = false
-            }
-        }
+    }
+
+    /**
+     * Sends every queued highlight change to the server and suspends until the queue has drained (or its operations have
+     * exhausted their retries). Call this before signing out or switching accounts so queued writes are flushed while the
+     * current account is still authenticated. Wrap the call in [kotlinx.coroutines.withTimeout] to bound how long it may
+     * block. Note that it joins the in-progress processor rather than interrupting an active retry backoff.
+     */
+    suspend fun flushPendingWrites() {
+        do {
+            enqueueJob.children.toList().joinAll()
+            ensureProcessing()?.join()
+        } while (queueMutex.withLock { pendingOperations.isNotEmpty() })
     }
 
     private fun queueOperation(operation: PendingHighlightOperation) {
-        scope.launch {
+        val stamped = operation.copy(accountId = currentAccountId())
+        enqueueScope.launch {
             queueMutex.withLock {
-                pendingOperations.add(operation)
+                pendingOperations.add(stamped)
                 pendingOperations.sortBy { it.timestamp }
+                publishQueuedOperations()
             }
-            processQueue()
+            ensureProcessing()
         }
     }
 
-    private suspend fun processQueue() {
-        queueMutex.withLock {
-            if (isProcessingQueue) {
-                return
+    private suspend fun ensureProcessing(): Job? {
+        val job =
+            queueMutex.withLock {
+                if (isProcessingQueue) {
+                    return processingJob
+                }
+                isProcessingQueue = true
+                scope.launch(start = CoroutineStart.LAZY) { processQueue() }.also { processingJob = it }
             }
-            isProcessingQueue = true
-        }
+        job.start()
+        return job
+    }
 
+    private suspend fun processQueue() {
         try {
             while (true) {
                 val batch =
                     queueMutex.withLock {
                         val current = pendingOperations.toList()
                         pendingOperations.clear()
+                        publishQueuedOperations()
                         current
                     }
                 if (batch.isEmpty()) {
@@ -236,7 +296,10 @@ class BibleHighlightsRepository(
                     continue
                 }
 
-                queueMutex.withLock { pendingOperations.addAll(0, toRetry) }
+                queueMutex.withLock {
+                    pendingOperations.addAll(0, toRetry)
+                    publishQueuedOperations()
+                }
                 delay(backoffMillis(toRetry.maxOf { it.retryCount }))
             }
         } finally {
@@ -244,11 +307,23 @@ class BibleHighlightsRepository(
         }
     }
 
+    private fun publishQueuedOperations() {
+        queuedOperations.value = pendingOperations.toList()
+    }
+
     /**
      * Sends each reference in [operation] to the server and returns the references that failed, so retries only touch
      * the references that did not succeed.
+     *
+     * If the signed-in account has changed since [operation] was queued, it is dropped without sending so that one
+     * account's writes can never reach another account.
      */
     private suspend fun processOperation(operation: PendingHighlightOperation): List<BibleReference> {
+        if (operation.accountId != currentAccountId()) {
+            Logger.w { "Dropping highlight operation ${operation.id} queued under a different account" }
+            return emptyList()
+        }
+
         val failedReferences = mutableListOf<BibleReference>()
         for (reference in operation.references) {
             val passageId = "${reference.bookUSFM}.${reference.chapter}.${reference.verseStart ?: 1}"
@@ -275,8 +350,11 @@ class BibleHighlightsRepository(
                 api
                     .highlights(versionId = chapter.versionId, passageId = passageId)
                     .mapNotNull { it.bibleHighlight() }
+            currentCoroutineContext().ensureActive()
             cache.applyServerHighlights(chapter = chapter, highlights = serverHighlights)
             cache.recordChapterFetch(chapter)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Logger.e(e) { "Failed to load highlights for chapter $chapter" }
         } finally {

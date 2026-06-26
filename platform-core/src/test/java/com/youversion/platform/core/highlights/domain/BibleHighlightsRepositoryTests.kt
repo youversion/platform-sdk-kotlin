@@ -3,10 +3,12 @@ package com.youversion.platform.core.highlights.domain
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.api.HighlightsApi
 import com.youversion.platform.core.highlights.models.Highlight
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -103,11 +105,120 @@ class BibleHighlightsRepositoryTests {
 
             assertEquals(3, api.createCount)
         }
+
+    @Test
+    fun `operation counts track a write that fails and then drains`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 1)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            runCurrent()
+
+            assertEquals(1, repository.pendingOperationCount.value)
+            assertEquals(1, repository.failedOperationCount.value)
+
+            advanceUntilIdle()
+
+            assertEquals(0, repository.pendingOperationCount.value)
+            assertEquals(0, repository.failedOperationCount.value)
+            assertEquals(2, api.createCount)
+        }
+
+    @Test
+    fun `flushPendingWrites suspends until queued writes are sent`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 1)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            runCurrent()
+            assertEquals(1, api.createCount)
+
+            repository.flushPendingWrites()
+
+            assertEquals(2, api.createCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `a write is not sent when the account changes before it syncs`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi()
+            var accountId: String? = "account-a"
+            val repository =
+                BibleHighlightsRepository(
+                    api = api,
+                    scope = CoroutineScope(testDispatcher),
+                    currentAccountId = { accountId },
+                ).also { BibleHighlightCache.clear() }
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            accountId = "account-b"
+            advanceUntilIdle()
+
+            assertEquals(0, api.createCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `a write still syncs across a token refresh that keeps the same account`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi()
+            val repository =
+                BibleHighlightsRepository(
+                    api = api,
+                    scope = CoroutineScope(testDispatcher),
+                    currentAccountId = { "account-a" },
+                ).also { BibleHighlightCache.clear() }
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            advanceUntilIdle()
+
+            assertEquals(1, api.createCount)
+        }
+
+    @Test
+    fun `reset cancels an in-flight load so it cannot repopulate the cleared cache`() =
+        runTest(testDispatcher) {
+            val gate = CompletableDeferred<Unit>()
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    highlightsGate = gate,
+                )
+            val repository = repository(api)
+            val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+
+            repository.ensureHighlightsForChapterLoaded(chapter)
+            runCurrent()
+            assertEquals(1, api.highlightsCount)
+
+            repository.reset()
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(0, repository.highlights(overlapping = chapter).size)
+        }
 }
 
 private class FakeHighlightsApi(
     private val highlightsToReturn: List<Highlight> = emptyList(),
     failuresBeforeSuccess: Int = 0,
+    private val highlightsGate: CompletableDeferred<Unit>? = null,
 ) : HighlightsApi {
     var createCount = 0
     var updateCount = 0
@@ -138,6 +249,7 @@ private class FakeHighlightsApi(
         passageId: String,
     ): List<Highlight> {
         highlightsCount++
+        highlightsGate?.await()
         return highlightsToReturn
     }
 
