@@ -3,6 +3,8 @@
 <resources>
     <string name="yv_back_button">Back</string>
     <string name="yv_bible_card_unavailable_reference">This passage is unavailable in the selected Bible version.</string>
+    <string name="yv_bible_versions_heading">Bible Versions</string>
+    <string name="yv_books_heading">Books</string>
     <string name="yv_close_search_bar">Close the search input</string>
     <string name="yv_footnote_content_desc">footnote</string>
     <string name="yv_ok">OK</string>
