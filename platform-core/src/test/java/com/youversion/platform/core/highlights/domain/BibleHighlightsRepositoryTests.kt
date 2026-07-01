@@ -42,7 +42,7 @@ class BibleHighlightsRepositoryTests {
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
-                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
                 )
             val repository = repository(api)
 

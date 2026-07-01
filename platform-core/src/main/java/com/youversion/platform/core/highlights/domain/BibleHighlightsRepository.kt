@@ -548,7 +548,7 @@ class BibleHighlightsRepository internal constructor(
     }
 
     private fun Highlight.bibleHighlight(): BibleHighlight? {
-        val reference = BibleReference.unvalidatedReference(usfm = passageId, versionId = versionId)
+        val reference = BibleReference.unvalidatedReference(usfm = passageId, versionId = bibleId)
         if (reference == null) {
             Logger.w { "Ignoring highlight with unparseable passage id: $passageId" }
             return null

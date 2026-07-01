@@ -34,7 +34,7 @@ class HighlightsApiTests : YouVersionPlatformTest {
                 val jsonData = request.body.toByteArray().decodeToString()
                 val decoded: JsonObject = Json.Default.decodeFromString(jsonData)
 
-                assertEquals(1, decoded["version_id"]?.jsonPrimitive?.int)
+                assertEquals(1, decoded["bible_id"]?.jsonPrimitive?.int)
                 assertEquals("GEN.1.1", decoded["passage_id"]?.jsonPrimitive?.content)
                 assertEquals("ff00ff", decoded["color"]?.jsonPrimitive?.content)
 
@@ -56,7 +56,7 @@ class HighlightsApiTests : YouVersionPlatformTest {
                 val jsonData = request.body.toByteArray().decodeToString()
                 val decoded: JsonObject = Json.Default.decodeFromString(jsonData)
 
-                assertEquals(1, decoded["version_id"]?.jsonPrimitive?.int)
+                assertEquals(1, decoded["bible_id"]?.jsonPrimitive?.int)
                 assertEquals("GEN.1.1", decoded["passage_id"]?.jsonPrimitive?.content)
                 assertEquals("ff00ff", decoded["color"]?.jsonPrimitive?.content)
 
@@ -75,7 +75,7 @@ class HighlightsApiTests : YouVersionPlatformTest {
                 assertEquals(HttpMethod.Companion.Get, request.method)
 
                 val url = request.url
-                assertEquals("1", url.parameters["version_id"])
+                assertEquals("1", url.parameters["bible_id"])
                 assertEquals("GEN.9", url.parameters["passage_id"])
 
                 respondJson(
@@ -84,7 +84,7 @@ class HighlightsApiTests : YouVersionPlatformTest {
                        "data": [
                           {
                              "id": "1",
-                             "version_id": 1,
+                             "bible_id": 1,
                              "passage_id": "GEN.9.1",
                              "color": "ff00ff"
                           }
@@ -158,7 +158,7 @@ class HighlightsApiTests : YouVersionPlatformTest {
                 assertEquals("application/json", request.headers["content-type"])
 
                 val url = request.url
-                assertEquals("1", url.parameters["version_id"])
+                assertEquals("1", url.parameters["bible_id"])
                 assertTrue(url.encodedPath.contains("GEN.5.7"))
 
                 respond("", HttpStatusCode.Companion.NoContent)

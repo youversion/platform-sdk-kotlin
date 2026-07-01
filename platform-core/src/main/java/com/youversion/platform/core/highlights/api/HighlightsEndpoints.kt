@@ -33,7 +33,7 @@ object HighlightsEndpoints : HighlightsApi {
     ): String =
         buildYouVersionUrlString {
             path("/v1/highlights")
-            versionId?.let { parameter("version_id", versionId) }
+            versionId?.let { parameter("bible_id", versionId) }
             passageId?.let { parameter("passage_id", passageId) }
         }
 
@@ -43,7 +43,7 @@ object HighlightsEndpoints : HighlightsApi {
     ): String =
         buildYouVersionUrlString {
             path("/v1/highlights/$passageId")
-            parameter("version_id", versionId)
+            parameter("bible_id", versionId)
         }
 
     // ----- Highlights API
@@ -56,7 +56,7 @@ object HighlightsEndpoints : HighlightsApi {
             .post(highlightsUrl()) {
                 contentType(ContentType.Application.Json)
                 buildJsonObject {
-                    put("version_id", versionId)
+                    put("bible_id", versionId)
                     put("passage_id", passageId)
                     put("color", color.lowercase())
                 }.also { setBody(it) }
@@ -104,7 +104,7 @@ object HighlightsEndpoints : HighlightsApi {
             .put(highlightsUrl()) {
                 contentType(ContentType.Application.Json)
                 buildJsonObject {
-                    put("version_id", versionId)
+                    put("bible_id", versionId)
                     put("passage_id", passageId)
                     put("color", color.lowercase())
                 }.also { setBody(it) }
