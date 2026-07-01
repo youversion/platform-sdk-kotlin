@@ -52,10 +52,13 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.di.PlatformKoinGraph
+import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.UntitledSerif
@@ -146,7 +149,7 @@ fun BibleText(
     reference: BibleReference,
     textOptions: BibleTextOptions = BibleTextOptions(),
     selectedVerses: Set<BibleReference> = emptySet(),
-    highlights: Map<BibleReference, Color> = emptyMap(),
+    showsHighlights: Boolean = true,
     onVerseSelectedChange: (Set<BibleReference>) -> Unit = {},
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)? = null,
     onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)? = null,
@@ -158,8 +161,44 @@ fun BibleText(
     var isVersionRightToLeft by remember { mutableStateOf(false) }
     val versionRepository: BibleVersionRepository = PlatformKoinGraph.koinApplication.koin.get()
     val chapterRepository: BibleChapterRepository = PlatformKoinGraph.koinApplication.koin.get()
+    val highlightsRepository: BibleHighlightsRepository = PlatformKoinGraph.koinApplication.koin.get()
 
     val coroutineScope = rememberCoroutineScope()
+
+    val cachedHighlights by highlightsRepository.highlights.collectAsStateWithLifecycle()
+    val configState by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
+    val isSignedIn = configState?.isSignedIn == true
+
+    LaunchedEffect(reference, showsHighlights) {
+        if (showsHighlights) {
+            highlightsRepository.ensureHighlightsForChapterLoaded(reference)
+        }
+    }
+
+    // Highlights require sign-in, and nothing else re-triggers a load when the user signs in while
+    // already viewing a chapter. Force a refresh on that transition so their highlights appear without
+    // waiting for the per-chapter throttle to expire or for them to navigate elsewhere.
+    LaunchedEffect(isSignedIn, showsHighlights) {
+        if (showsHighlights && isSignedIn) {
+            highlightsRepository.ensureHighlightsForChapterLoaded(reference, forceReload = true)
+        }
+    }
+
+    val highlights =
+        remember(cachedHighlights, reference, showsHighlights) {
+            if (!showsHighlights) {
+                emptyMap()
+            } else {
+                cachedHighlights
+                    .asSequence()
+                    .filter { it.highlight.bibleReference.overlaps(reference) }
+                    .mapNotNull { cached ->
+                        cached.highlight.hexColor.toHighlightColorOrNull()?.let { color ->
+                            cached.highlight.bibleReference to color
+                        }
+                    }.toMap()
+            }
+        }
 
     LaunchedEffect(loadingPhase) {
         onStateChange(loadingPhase)
@@ -376,6 +415,18 @@ internal fun highlightLineSpan(
     val startEdge = if (isStartLine) startCaretX else leadingEdge
     val endEdge = if (isEndLine) endCaretX else trailingEdge
     return minOf(startEdge, endEdge) to maxOf(startEdge, endEdge)
+
+ * Parses a `#RRGGBB` or `#AARRGGBB` hex string (as stored on [com.youversion.platform.core.highlights.models.BibleHighlight.hexColor])
+ * into a Compose [Color], or returns null when the string is not valid hex. Six-digit values are treated as fully opaque.
+ */
+internal fun String.toHighlightColorOrNull(): Color? {
+    val hex = removePrefix("#")
+    val value = hex.toLongOrNull(radix = 16) ?: return null
+    return when (hex.length) {
+        6 -> Color(0xFF000000L or value)
+        8 -> Color(value)
+        else -> null
+    }
 }
 
 /**
