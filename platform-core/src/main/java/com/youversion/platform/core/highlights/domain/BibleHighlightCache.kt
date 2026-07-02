@@ -231,6 +231,21 @@ object BibleHighlightCache {
         }
     }
 
+    /**
+     * Drops any remote-synced cached highlight for each of [references] once their deletion has reached the server. A
+     * delete removes the local entry immediately, so this only matters when a concurrent chapter load re-added the
+     * highlight as remote-synced before the delete synced; without it that stale row would linger until the next
+     * reload. Local-pending entries are left in place so a re-add made after the delete is not lost.
+     */
+    fun removeSyncedHighlights(references: List<BibleReference>) {
+        val referenceSet = references.toSet()
+        _highlights.update { current ->
+            current.filterNot {
+                it.highlight.bibleReference in referenceSet && it.state == CachedHighlightState.REMOTE_SYNCED
+            }
+        }
+    }
+
     // ----- Utilities
     private fun normalizeToChapter(reference: BibleReference): BibleReference =
         BibleReference(

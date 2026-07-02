@@ -234,6 +234,33 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
+    fun `a synced delete removes a highlight a concurrent load re-added before the delete finished`() =
+        runTest(testDispatcher) {
+            val deleteGate = CompletableDeferred<Unit>()
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    deleteGate = deleteGate,
+                )
+            val repository = repository(api)
+
+            repository.removeHighlights(listOf(reference))
+            runCurrent()
+
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+            assertEquals(1, repository.highlights.value.size)
+
+            deleteGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals(0, repository.highlights.value.size)
+        }
+
+    @Test
     fun `queue retries a failing remove until it succeeds`() =
         runTest(testDispatcher) {
             val api = FakeHighlightsApi(failuresBeforeSuccess = 2)
@@ -398,6 +425,7 @@ private class FakeHighlightsApi(
     private val highlightsToReturn: List<Highlight> = emptyList(),
     failuresBeforeSuccess: Int = 0,
     private val highlightsGate: CompletableDeferred<Unit>? = null,
+    private val deleteGate: CompletableDeferred<Unit>? = null,
 ) : HighlightsApi {
     var createCount = 0
     var updateCount = 0
@@ -456,6 +484,7 @@ private class FakeHighlightsApi(
     ): Boolean {
         deleteCount++
         deletedPassages.add(passageId)
+        deleteGate?.await()
         return nextResult()
     }
 }

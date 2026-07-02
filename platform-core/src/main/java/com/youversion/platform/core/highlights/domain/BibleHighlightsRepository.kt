@@ -439,10 +439,13 @@ class BibleHighlightsRepository(
             }
         }
 
-        if (change !is HighlightChange.Remove) {
-            val syncedReferences = operation.references - failedReferences.toSet()
-            if (syncedReferences.isNotEmpty()) {
-                cache.markHighlightsAsSynced(syncedReferences, notModifiedAfter = operation.timestamp)
+        val syncedReferences = operation.references - failedReferences.toSet()
+        if (syncedReferences.isNotEmpty()) {
+            when (change) {
+                is HighlightChange.Add, is HighlightChange.UpdateColor ->
+                    cache.markHighlightsAsSynced(syncedReferences, notModifiedAfter = operation.timestamp)
+                HighlightChange.Remove ->
+                    cache.removeSyncedHighlights(syncedReferences)
             }
         }
         return failedReferences
