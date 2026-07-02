@@ -415,7 +415,8 @@ class BibleHighlightsRepository(
 
     /**
      * Sends each reference in [operation] to the server and returns the references that failed, so retries only touch
-     * the references that did not succeed.
+     * the references that did not succeed. References that sync successfully are promoted to remote-synced in the cache
+     * so a later server merge does not leave a stale pending row beside the server copy.
      *
      * If the signed-in account has changed since [operation] was queued, it is dropped without sending so that one
      * account's writes can never reach another account.
@@ -441,6 +442,13 @@ class BibleHighlightsRepository(
                 }
             if (!succeeded) {
                 failedReferences.add(reference)
+            }
+        }
+
+        if (change !is HighlightChange.Remove) {
+            val syncedReferences = operation.references - failedReferences.toSet()
+            if (syncedReferences.isNotEmpty()) {
+                cache.markHighlightsAsSynced(syncedReferences, notModifiedAfter = operation.timestamp)
             }
         }
         return failedReferences

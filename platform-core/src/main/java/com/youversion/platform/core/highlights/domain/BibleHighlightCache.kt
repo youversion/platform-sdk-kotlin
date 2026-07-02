@@ -189,6 +189,33 @@ object BibleHighlightCache {
         }
     }
 
+    /**
+     * Promotes the cached highlights for [references] to [CachedHighlightState.REMOTE_SYNCED] once their write has
+     * reached the server. Without this a synced highlight stays pending, and the next [applyServerHighlights] merge
+     * leaves the stale pending row alongside the fresh server copy, so the verse appears twice.
+     *
+     * A row is only promoted when it has not been modified after [notModifiedAfter]; a newer local edit (which carries
+     * its own pending write) is left untouched so its change is not overwritten by this older write's completion.
+     */
+    fun markHighlightsAsSynced(
+        references: List<BibleReference>,
+        notModifiedAfter: Date,
+    ) {
+        val referenceSet = references.toSet()
+        _highlights.update { current ->
+            current.map { cached ->
+                if (cached.highlight.bibleReference in referenceSet &&
+                    cached.state != CachedHighlightState.REMOTE_SYNCED &&
+                    !cached.lastModifiedAt.after(notModifiedAfter)
+                ) {
+                    cached.copy(state = CachedHighlightState.REMOTE_SYNCED)
+                } else {
+                    cached
+                }
+            }
+        }
+    }
+
     // ----- Utilities
     private fun normalizeToChapter(reference: BibleReference): BibleReference =
         BibleReference(

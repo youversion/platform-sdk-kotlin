@@ -60,6 +60,26 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
+    fun `a synced add is not duplicated when the chapter is later fetched from the server`() =
+        runTest(testDispatcher) {
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff00ff")),
+                )
+            val repository = repository(api)
+
+            repository.addHighlights(listOf(reference), color = "#ff00ff")
+            advanceUntilIdle()
+
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+
+            assertEquals(1, repository.highlights(overlapping = reference).size)
+        }
+
+    @Test
     fun `ensureHighlightsForChapterLoaded throttles repeated loads of the same chapter`() =
         runTest(testDispatcher) {
             val api = FakeHighlightsApi()
