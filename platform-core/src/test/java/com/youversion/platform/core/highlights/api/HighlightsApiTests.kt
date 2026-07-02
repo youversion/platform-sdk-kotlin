@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -34,9 +35,11 @@ class HighlightsApiTests : YouVersionPlatformTest {
                 val jsonData = request.body.toByteArray().decodeToString()
                 val decoded: JsonObject = Json.Default.decodeFromString(jsonData)
 
-                assertEquals(1, decoded["bible_id"]?.jsonPrimitive?.int)
-                assertEquals("GEN.1.1", decoded["passage_id"]?.jsonPrimitive?.content)
-                assertEquals("ff00ff", decoded["color"]?.jsonPrimitive?.content)
+                assertTrue(decoded["request_id"]?.jsonPrimitive?.content?.isNotEmpty() == true)
+                val highlight = decoded["highlight"]!!.jsonObject
+                assertEquals(1, highlight["bible_id"]?.jsonPrimitive?.int)
+                assertEquals("GEN.1.1", highlight["passage_id"]?.jsonPrimitive?.content)
+                assertEquals("ff00ff", highlight["color"]?.jsonPrimitive?.content)
 
                 respond("", HttpStatusCode.Companion.Created)
             }.also { engine -> startYouVersionPlatformTest(engine) }
@@ -56,9 +59,11 @@ class HighlightsApiTests : YouVersionPlatformTest {
                 val jsonData = request.body.toByteArray().decodeToString()
                 val decoded: JsonObject = Json.Default.decodeFromString(jsonData)
 
-                assertEquals(1, decoded["bible_id"]?.jsonPrimitive?.int)
-                assertEquals("GEN.1.1", decoded["passage_id"]?.jsonPrimitive?.content)
-                assertEquals("ff00ff", decoded["color"]?.jsonPrimitive?.content)
+                assertTrue(decoded["request_id"]?.jsonPrimitive?.content?.isNotEmpty() == true)
+                val highlight = decoded["highlight"]!!.jsonObject
+                assertEquals(1, highlight["bible_id"]?.jsonPrimitive?.int)
+                assertEquals("GEN.1.1", highlight["passage_id"]?.jsonPrimitive?.content)
+                assertEquals("ff00ff", highlight["color"]?.jsonPrimitive?.content)
 
                 respond("", HttpStatusCode.Companion.OK)
             }.also { engine -> startYouVersionPlatformTest(engine) }

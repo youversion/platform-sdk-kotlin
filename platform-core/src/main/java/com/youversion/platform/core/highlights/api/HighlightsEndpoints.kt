@@ -19,8 +19,11 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.path
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
+import java.util.UUID
 
 object HighlightsEndpoints : HighlightsApi {
     private val httpClient: HttpClient
@@ -55,11 +58,7 @@ object HighlightsEndpoints : HighlightsApi {
         httpClient
             .post(highlightsUrl()) {
                 contentType(ContentType.Application.Json)
-                buildJsonObject {
-                    put("bible_id", versionId)
-                    put("passage_id", passageId)
-                    put("color", color.lowercase())
-                }.also { setBody(it) }
+                setBody(highlightRequestBody(versionId, passageId, color))
             }.status
             .isSuccess()
 
@@ -103,13 +102,23 @@ object HighlightsEndpoints : HighlightsApi {
         httpClient
             .put(highlightsUrl()) {
                 contentType(ContentType.Application.Json)
-                buildJsonObject {
-                    put("bible_id", versionId)
-                    put("passage_id", passageId)
-                    put("color", color.lowercase())
-                }.also { setBody(it) }
+                setBody(highlightRequestBody(versionId, passageId, color))
             }.status
             .isSuccess()
+
+    private fun highlightRequestBody(
+        versionId: Int,
+        passageId: String,
+        color: String,
+    ): JsonObject =
+        buildJsonObject {
+            put("request_id", UUID.randomUUID().toString())
+            putJsonObject("highlight") {
+                put("bible_id", versionId)
+                put("passage_id", passageId)
+                put("color", color.lowercase())
+            }
+        }
 
     override suspend fun deleteHighlight(
         versionId: Int,
