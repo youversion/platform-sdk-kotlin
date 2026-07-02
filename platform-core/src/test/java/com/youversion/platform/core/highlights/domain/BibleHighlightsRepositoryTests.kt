@@ -107,6 +107,69 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
+    fun `updateHighlightColors syncs a recolor to the server with verse-level passage and bare hex`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi()
+            val repository = repository(api)
+
+            repository.updateHighlightColors(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                newColor = "#FF00FF",
+            )
+            advanceUntilIdle()
+
+            assertEquals(1, api.updateCount)
+            assertEquals("GEN.1.1", api.updatedPassages.first())
+            assertEquals("ff00ff", api.updatedColors.first())
+        }
+
+    @Test
+    fun `removeHighlights syncs a delete to the server with verse-level passage`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi()
+            val repository = repository(api)
+
+            repository.removeHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+            )
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals("GEN.1.1", api.deletedPassages.first())
+        }
+
+    @Test
+    fun `queue retries a failing update until it succeeds`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 2)
+            val repository = repository(api)
+
+            repository.updateHighlightColors(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                newColor = "#ff00ff",
+            )
+            advanceUntilIdle()
+
+            assertEquals(3, api.updateCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `queue retries a failing remove until it succeeds`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 2)
+            val repository = repository(api)
+
+            repository.removeHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+            )
+            advanceUntilIdle()
+
+            assertEquals(3, api.deleteCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
     fun `operation counts track a write that fails and then drains`() =
         runTest(testDispatcher) {
             val api = FakeHighlightsApi(failuresBeforeSuccess = 1)
@@ -263,8 +326,19 @@ private class FakeHighlightsApi(
     var highlightsCount = 0
     val createdPassages = mutableListOf<String>()
     val createdColors = mutableListOf<String>()
+    val updatedPassages = mutableListOf<String>()
+    val updatedColors = mutableListOf<String>()
+    val deletedPassages = mutableListOf<String>()
 
     private var remainingFailures = failuresBeforeSuccess
+
+    private fun nextResult(): Boolean {
+        if (remainingFailures > 0) {
+            remainingFailures--
+            return false
+        }
+        return true
+    }
 
     override suspend fun createHighlight(
         versionId: Int,
@@ -274,11 +348,7 @@ private class FakeHighlightsApi(
         createCount++
         createdPassages.add(passageId)
         createdColors.add(color)
-        if (remainingFailures > 0) {
-            remainingFailures--
-            return false
-        }
-        return true
+        return nextResult()
     }
 
     override suspend fun highlights(
@@ -296,7 +366,9 @@ private class FakeHighlightsApi(
         color: String,
     ): Boolean {
         updateCount++
-        return true
+        updatedPassages.add(passageId)
+        updatedColors.add(color)
+        return nextResult()
     }
 
     override suspend fun deleteHighlight(
@@ -304,6 +376,7 @@ private class FakeHighlightsApi(
         passageId: String,
     ): Boolean {
         deleteCount++
-        return true
+        deletedPassages.add(passageId)
+        return nextResult()
     }
 }

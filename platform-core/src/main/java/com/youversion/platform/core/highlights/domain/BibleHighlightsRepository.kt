@@ -32,12 +32,25 @@ import java.util.UUID
 import kotlin.math.pow
 
 /**
- * The type of change a [PendingHighlightOperation] represents.
+ * The change a [PendingHighlightOperation] applies to its references.
+ *
+ * Modeled as a sealed type so that adding or recoloring a highlight always carries a color while removing one never
+ * does: a colorless [Add] or [UpdateColor] cannot be constructed, so no queued write can ever send a blank color to
+ * the server.
  */
-enum class HighlightOperationType {
-    ADD,
-    REMOVE,
-    UPDATE,
+sealed interface HighlightChange {
+    /** Adds highlights of [color]. */
+    data class Add(
+        val color: String,
+    ) : HighlightChange
+
+    /** Recolors existing highlights to [color]. */
+    data class UpdateColor(
+        val color: String,
+    ) : HighlightChange
+
+    /** Removes existing highlights. */
+    data object Remove : HighlightChange
 }
 
 /**
@@ -45,8 +58,7 @@ enum class HighlightOperationType {
  */
 data class PendingHighlightOperation(
     val references: List<BibleReference>,
-    val color: String?,
-    val operationType: HighlightOperationType,
+    val change: HighlightChange,
     val id: UUID = UUID.randomUUID(),
     val timestamp: Date = Date(),
     val retryCount: Int = 0,
@@ -177,8 +189,7 @@ class BibleHighlightsRepository(
         queueOperation(
             PendingHighlightOperation(
                 references = references,
-                color = color,
-                operationType = HighlightOperationType.ADD,
+                change = HighlightChange.Add(color = color),
             ),
         )
     }
@@ -191,8 +202,7 @@ class BibleHighlightsRepository(
         queueOperation(
             PendingHighlightOperation(
                 references = references,
-                color = null,
-                operationType = HighlightOperationType.REMOVE,
+                change = HighlightChange.Remove,
             ),
         )
     }
@@ -209,8 +219,7 @@ class BibleHighlightsRepository(
         queueOperation(
             PendingHighlightOperation(
                 references = references,
-                color = newColor,
-                operationType = HighlightOperationType.UPDATE,
+                change = HighlightChange.UpdateColor(color = newColor),
             ),
         )
     }
@@ -401,16 +410,17 @@ class BibleHighlightsRepository(
             return emptyList()
         }
 
+        val change = operation.change
         val failedReferences = mutableListOf<BibleReference>()
         for (reference in operation.references) {
             val passageId = "${reference.bookUSFM}.${reference.chapter}.${reference.verseStart ?: 1}"
             val succeeded =
-                when (operation.operationType) {
-                    HighlightOperationType.ADD ->
-                        api.createHighlight(reference.versionId, passageId, hexWithoutHash(operation.color))
-                    HighlightOperationType.UPDATE ->
-                        api.updateHighlight(reference.versionId, passageId, hexWithoutHash(operation.color))
-                    HighlightOperationType.REMOVE ->
+                when (change) {
+                    is HighlightChange.Add ->
+                        api.createHighlight(reference.versionId, passageId, hexWithoutHash(change.color))
+                    is HighlightChange.UpdateColor ->
+                        api.updateHighlight(reference.versionId, passageId, hexWithoutHash(change.color))
+                    HighlightChange.Remove ->
                         api.deleteHighlight(reference.versionId, passageId)
                 }
             if (!succeeded) {
@@ -450,7 +460,7 @@ class BibleHighlightsRepository(
 
     private fun hexWithHash(color: String): String = if (color.startsWith("#")) color else "#$color"
 
-    private fun hexWithoutHash(color: String?): String = color?.removePrefix("#")?.lowercase() ?: ""
+    private fun hexWithoutHash(color: String): String = color.removePrefix("#").lowercase()
 
     private fun backoffMillis(retryCount: Int): Long {
         val seconds = 2.0.pow(minOf(retryCount, MAX_BACKOFF_EXPONENT)).toLong()
