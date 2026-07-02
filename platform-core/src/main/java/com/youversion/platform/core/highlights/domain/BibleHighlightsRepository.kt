@@ -211,33 +211,21 @@ class BibleHighlightsRepository(
      * Recolors the highlights on each of [references] to [newColor], updating the cache immediately and syncing to the
      * server.
      *
-     * References that already have a highlight sync as an update; references that do not yet have one are created (the
-     * cache treats a recolor of a missing highlight as a pending create), so they sync as a create rather than a PUT
-     * against a highlight the server has never seen. The split is computed before the cache is mutated, since the
-     * mutation itself adds the missing references as pending creates.
+     * Whether each reference syncs as an update (PUT) or a create (POST) is decided when the change reaches the server,
+     * from the highlight's cache state at that point, so a reference whose chapter is still loading is not classified
+     * from a stale snapshot.
      */
     fun updateHighlightColors(
         references: List<BibleReference>,
         newColor: String,
     ) {
-        val (referencesToUpdate, referencesToCreate) = references.partition { cache.containsHighlight(it) }
         cache.updateHighlightColors(references, newColor)
-        if (referencesToUpdate.isNotEmpty()) {
-            queueOperation(
-                PendingHighlightOperation(
-                    references = referencesToUpdate,
-                    change = HighlightChange.UpdateColor(color = newColor),
-                ),
-            )
-        }
-        if (referencesToCreate.isNotEmpty()) {
-            queueOperation(
-                PendingHighlightOperation(
-                    references = referencesToCreate,
-                    change = HighlightChange.Add(color = newColor),
-                ),
-            )
-        }
+        queueOperation(
+            PendingHighlightOperation(
+                references = references,
+                change = HighlightChange.UpdateColor(color = newColor),
+            ),
+        )
     }
 
     /**
@@ -436,7 +424,13 @@ class BibleHighlightsRepository(
                     is HighlightChange.Add ->
                         api.createHighlight(reference.versionId, passageId, hexWithoutHash(change.color))
                     is HighlightChange.UpdateColor ->
-                        api.updateHighlight(reference.versionId, passageId, hexWithoutHash(change.color))
+                        when {
+                            cache.isChapterLoading(reference) -> false
+                            cache.isHighlightServerBacked(reference) ->
+                                api.updateHighlight(reference.versionId, passageId, hexWithoutHash(change.color))
+                            else ->
+                                api.createHighlight(reference.versionId, passageId, hexWithoutHash(change.color))
+                        }
                     HighlightChange.Remove ->
                         api.deleteHighlight(reference.versionId, passageId)
                 }

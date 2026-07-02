@@ -51,12 +51,15 @@ object BibleHighlightCache {
             .map { it.highlight }
 
     /**
-     * Whether the cache currently holds a highlight for [reference], regardless of its sync state. Callers use this to
-     * tell a recolor of an existing highlight (which should sync as an update) apart from a recolor of a reference that
-     * has no highlight yet (which [updateHighlightColors] turns into a pending create and must sync as a create).
+     * Whether the server is known to hold a highlight for [reference], i.e. the cache has an entry for it in any state
+     * other than [CachedHighlightState.LOCAL_PENDING_CREATE]. Callers use this to tell a recolor of a server-backed
+     * highlight (which should sync as an update) apart from a recolor of one the server has never seen (which should
+     * sync as a create).
      */
-    fun containsHighlight(reference: BibleReference): Boolean =
-        _highlights.value.any { it.highlight.bibleReference == reference }
+    fun isHighlightServerBacked(reference: BibleReference): Boolean =
+        _highlights.value.any {
+            it.highlight.bibleReference == reference && it.state != CachedHighlightState.LOCAL_PENDING_CREATE
+        }
 
     fun hasRecentlyLoadedChapter(chapter: BibleReference): Boolean {
         val chapterKey = normalizeToChapter(chapter)

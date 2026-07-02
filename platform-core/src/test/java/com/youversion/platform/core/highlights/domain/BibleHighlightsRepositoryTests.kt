@@ -167,6 +167,35 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
+    fun `recolor during an in-flight chapter load syncs as an update once the server highlight arrives`() =
+        runTest(testDispatcher) {
+            val gate = CompletableDeferred<Unit>()
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    highlightsGate = gate,
+                )
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            runCurrent()
+
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            runCurrent()
+            assertEquals(0, api.createCount)
+            assertEquals(0, api.updateCount)
+
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(1, api.updateCount)
+            assertEquals(0, api.createCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
     fun `removeHighlights syncs a delete to the server with verse-level passage`() =
         runTest(testDispatcher) {
             val api = FakeHighlightsApi()
