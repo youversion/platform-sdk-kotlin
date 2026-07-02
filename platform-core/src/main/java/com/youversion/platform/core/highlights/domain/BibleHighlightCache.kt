@@ -179,14 +179,26 @@ object BibleHighlightCache {
                         cached.highlight.bibleReference.versionId == chapterRef.versionId
                 }
 
-                // Append server highlights as remoteSynced
+                // Append server highlights as remote-synced, but never alongside a still-pending local write for the
+                // same reference: keep the optimistic local entry so its edit is not lost, and if it was a pending
+                // create, mark it a pending update so the queued write now knows the server holds the highlight.
                 for (highlight in highlights) {
-                    add(
-                        CachedHighlight(
-                            highlight = highlight,
-                            state = CachedHighlightState.REMOTE_SYNCED,
-                        ),
-                    )
+                    val localIndex =
+                        indexOfFirst {
+                            it.highlight.bibleReference == highlight.bibleReference &&
+                                it.state != CachedHighlightState.REMOTE_SYNCED
+                        }
+                    when {
+                        localIndex == -1 ->
+                            add(
+                                CachedHighlight(
+                                    highlight = highlight,
+                                    state = CachedHighlightState.REMOTE_SYNCED,
+                                ),
+                            )
+                        this[localIndex].state == CachedHighlightState.LOCAL_PENDING_CREATE ->
+                            this[localIndex] = this[localIndex].copy(state = CachedHighlightState.LOCAL_PENDING_UPDATE)
+                    }
                 }
             }
         }

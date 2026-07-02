@@ -193,6 +193,8 @@ class BibleHighlightsRepositoryTests {
             assertEquals(1, api.updateCount)
             assertEquals(0, api.createCount)
             assertEquals(0, repository.pendingOperationCount.value)
+            assertEquals(1, repository.highlights(overlapping = reference).size)
+            assertEquals(1, repository.highlights.value.size)
         }
 
     @Test
