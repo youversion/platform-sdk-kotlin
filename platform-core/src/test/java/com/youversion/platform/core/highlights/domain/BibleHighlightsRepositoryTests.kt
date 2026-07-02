@@ -129,6 +129,43 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
+    fun `a write retries indefinitely until it succeeds, past the old retry cap`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 6)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            advanceUntilIdle()
+
+            assertEquals(7, api.createCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `clearOperationResults resets the failed operation count`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 1)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            runCurrent()
+            assertEquals(1, repository.failedOperationCount.value)
+
+            repository.clearOperationResults()
+            runCurrent()
+            assertEquals(0, repository.failedOperationCount.value)
+
+            advanceUntilIdle()
+            assertEquals(2, api.createCount)
+        }
+
+    @Test
     fun `flushPendingWrites suspends until queued writes are sent`() =
         runTest(testDispatcher) {
             val api = FakeHighlightsApi(failuresBeforeSuccess = 1)

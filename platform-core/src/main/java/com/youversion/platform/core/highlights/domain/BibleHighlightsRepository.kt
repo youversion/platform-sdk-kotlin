@@ -20,6 +20,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.joinAll
@@ -53,6 +54,19 @@ data class PendingHighlightOperation(
 )
 
 /**
+ * The outcome of the most recent attempt to sync a [PendingHighlightOperation] to the server.
+ *
+ * Mirrors the Swift SDK's `OperationResult`: it is keyed by [operationId] and refreshed each time the operation is
+ * processed, so callers can inspect whether a specific write succeeded, why it failed, and how many times it has retried.
+ */
+data class OperationResult(
+    val operationId: UUID,
+    val isSuccess: Boolean,
+    val error: Throwable? = null,
+    val retryCount: Int = 0,
+)
+
+/**
  * Coordinates Bible highlights between the local [BibleHighlightCache] and the YouVersion highlights API.
  *
  * Reads are served from the observable cache and refreshed per-chapter from the server (throttled). Writes update
@@ -80,6 +94,8 @@ class BibleHighlightsRepository(
     private var isProcessingQueue = false
     private var processingJob: Job? = null
     private val queuedOperations = MutableStateFlow<List<PendingHighlightOperation>>(emptyList())
+    private val operationResults = mutableMapOf<UUID, OperationResult>()
+    private val operationResultsState = MutableStateFlow<Map<UUID, OperationResult>>(emptyMap())
 
     /**
      * The observable list of cached highlights. UI layers should collect this and filter to the references they render.
@@ -100,9 +116,9 @@ class BibleHighlightsRepository(
      * The number of queued highlight changes that have failed at least once and are awaiting a retry.
      */
     val failedOperationCount: StateFlow<Int> =
-        queuedOperations
-            .map { operations -> operations.count { it.retryCount > 0 } }
-            .stateIn(scope, SharingStarted.Eagerly, 0)
+        combine(queuedOperations, operationResultsState) { operations, results ->
+            operations.count { results[it.id]?.isSuccess == false }
+        }.stateIn(scope, SharingStarted.Eagerly, 0)
 
     /**
      * Returns the cached highlights overlapping [overlapping] synchronously.
@@ -212,16 +228,49 @@ class BibleHighlightsRepository(
     }
 
     /**
-     * Sends every queued highlight change to the server and suspends until the queue has drained (or its operations have
-     * exhausted their retries). Call this before signing out or switching accounts so queued writes are flushed while the
-     * current account is still authenticated. Wrap the call in [kotlinx.coroutines.withTimeout] to bound how long it may
-     * block. Note that it joins the in-progress processor rather than interrupting an active retry backoff.
+     * Sends every queued highlight change to the server and suspends until the queue has drained. Call this before
+     * signing out or switching accounts so queued writes are flushed while the current account is still authenticated.
+     * Failed writes retry indefinitely, so a permanently failing write keeps this suspended; wrap the call in
+     * [kotlinx.coroutines.withTimeout] to bound how long it may block. Note that it joins the in-progress processor
+     * rather than interrupting an active retry backoff.
      */
     suspend fun flushPendingWrites() {
         do {
             enqueueJob.children.toList().joinAll()
             ensureProcessing()?.join()
         } while (queueMutex.withLock { pendingOperations.isNotEmpty() })
+    }
+
+    /**
+     * The result of the most recent attempt to sync the operation with [operationId], or null if it has not been
+     * processed yet or its results have been cleared via [clearOperationResults].
+     */
+    fun operationResult(operationId: UUID): OperationResult? = operationResultsState.value[operationId]
+
+    /**
+     * Forgets every recorded [OperationResult]. This does not affect operations still queued for the server; it only
+     * clears the history exposed by [operationResult].
+     */
+    suspend fun clearOperationResults() {
+        queueMutex.withLock {
+            operationResults.clear()
+            publishOperationResults()
+        }
+    }
+
+    /**
+     * Ensures the sync processor is running if any queued operation has previously failed. Operations already retry
+     * automatically with backoff, so this only has an effect when the processor has fully drained and stopped; it does
+     * not interrupt an in-progress retry backoff. Provided to mirror the Swift SDK's `retryFailedOperations`.
+     */
+    suspend fun retryFailedOperations() {
+        val hasFailedOperations =
+            queueMutex.withLock {
+                pendingOperations.any { operationResults[it.id]?.isSuccess == false }
+            }
+        if (hasFailedOperations) {
+            ensureProcessing()
+        }
     }
 
     private fun queueOperation(operation: PendingHighlightOperation) {
@@ -254,6 +303,13 @@ class BibleHighlightsRepository(
             while (true) {
                 val batch =
                     queueMutex.withLock {
+                        if (pendingOperations.isEmpty()) {
+                            // Observe "empty" and stop processing atomically: if a concurrent queueOperation adds an
+                            // item after this, it acquires the mutex next, sees isProcessingQueue == false, and starts
+                            // a fresh processor rather than deferring to this dying one.
+                            isProcessingQueue = false
+                            return@withLock emptyList()
+                        }
                         val current = pendingOperations.toList()
                         pendingOperations.clear()
                         publishQueuedOperations()
@@ -265,20 +321,40 @@ class BibleHighlightsRepository(
 
                 val failed = mutableListOf<PendingHighlightOperation>()
                 for (operation in batch) {
+                    var thrownError: Throwable? = null
                     val failedReferences =
                         try {
                             processOperation(operation)
+                        } catch (e: CancellationException) {
+                            throw e
                         } catch (e: Exception) {
                             Logger.e(e) { "Highlight operation ${operation.id} threw" }
+                            thrownError = e
                             operation.references
                         }
-                    if (failedReferences.isNotEmpty()) {
-                        failed.add(
+                    if (failedReferences.isEmpty()) {
+                        recordResult(
+                            OperationResult(
+                                operationId = operation.id,
+                                isSuccess = true,
+                                retryCount = operation.retryCount,
+                            ),
+                        )
+                    } else {
+                        val retried =
                             operation.copy(
                                 references = failedReferences,
                                 retryCount = operation.retryCount + 1,
+                            )
+                        recordResult(
+                            OperationResult(
+                                operationId = operation.id,
+                                isSuccess = false,
+                                error = thrownError ?: IllegalStateException(SERVER_OPERATION_FAILED_MESSAGE),
+                                retryCount = retried.retryCount,
                             ),
                         )
+                        failed.add(retried)
                     }
                 }
 
@@ -286,21 +362,11 @@ class BibleHighlightsRepository(
                     continue
                 }
 
-                val (toRetry, exhausted) = failed.partition { it.retryCount <= MAX_RETRY_COUNT }
-                if (exhausted.isNotEmpty()) {
-                    Logger.w {
-                        "Dropping ${exhausted.size} highlight operation(s) after $MAX_RETRY_COUNT failed retries"
-                    }
-                }
-                if (toRetry.isEmpty()) {
-                    continue
-                }
-
                 queueMutex.withLock {
-                    pendingOperations.addAll(0, toRetry)
+                    pendingOperations.addAll(0, failed)
                     publishQueuedOperations()
                 }
-                delay(backoffMillis(toRetry.maxOf { it.retryCount }))
+                delay(backoffMillis(failed.maxOf { it.retryCount }))
             }
         } finally {
             queueMutex.withLock { isProcessingQueue = false }
@@ -309,6 +375,17 @@ class BibleHighlightsRepository(
 
     private fun publishQueuedOperations() {
         queuedOperations.value = pendingOperations.toList()
+    }
+
+    private fun publishOperationResults() {
+        operationResultsState.value = operationResults.toMap()
+    }
+
+    private suspend fun recordResult(result: OperationResult) {
+        queueMutex.withLock {
+            operationResults[result.operationId] = result
+            publishOperationResults()
+        }
     }
 
     /**
@@ -381,7 +458,7 @@ class BibleHighlightsRepository(
     }
 
     private companion object {
-        const val MAX_RETRY_COUNT = 5
+        const val SERVER_OPERATION_FAILED_MESSAGE = "Highlight server operation failed"
         const val MAX_BACKOFF_EXPONENT = 5
         const val MILLIS_PER_SECOND = 1_000L
         const val MAX_BACKOFF_MILLIS = 30_000L
