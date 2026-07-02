@@ -210,18 +210,34 @@ class BibleHighlightsRepository(
     /**
      * Recolors the highlights on each of [references] to [newColor], updating the cache immediately and syncing to the
      * server.
+     *
+     * References that already have a highlight sync as an update; references that do not yet have one are created (the
+     * cache treats a recolor of a missing highlight as a pending create), so they sync as a create rather than a PUT
+     * against a highlight the server has never seen. The split is computed before the cache is mutated, since the
+     * mutation itself adds the missing references as pending creates.
      */
     fun updateHighlightColors(
         references: List<BibleReference>,
         newColor: String,
     ) {
+        val (referencesToUpdate, referencesToCreate) = references.partition { cache.containsHighlight(it) }
         cache.updateHighlightColors(references, newColor)
-        queueOperation(
-            PendingHighlightOperation(
-                references = references,
-                change = HighlightChange.UpdateColor(color = newColor),
-            ),
-        )
+        if (referencesToUpdate.isNotEmpty()) {
+            queueOperation(
+                PendingHighlightOperation(
+                    references = referencesToUpdate,
+                    change = HighlightChange.UpdateColor(color = newColor),
+                ),
+            )
+        }
+        if (referencesToCreate.isNotEmpty()) {
+            queueOperation(
+                PendingHighlightOperation(
+                    references = referencesToCreate,
+                    change = HighlightChange.Add(color = newColor),
+                ),
+            )
+        }
     }
 
     /**

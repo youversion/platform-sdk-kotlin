@@ -50,6 +50,14 @@ object BibleHighlightCache {
             .filter { it.highlight.bibleReference.overlaps(otherReference = overlapping) }
             .map { it.highlight }
 
+    /**
+     * Whether the cache currently holds a highlight for [reference], regardless of its sync state. Callers use this to
+     * tell a recolor of an existing highlight (which should sync as an update) apart from a recolor of a reference that
+     * has no highlight yet (which [updateHighlightColors] turns into a pending create and must sync as a create).
+     */
+    fun containsHighlight(reference: BibleReference): Boolean =
+        _highlights.value.any { it.highlight.bibleReference == reference }
+
     fun hasRecentlyLoadedChapter(chapter: BibleReference): Boolean {
         val chapterKey = normalizeToChapter(chapter)
         val lastFetch = recentChapterFetches[chapterKey] ?: return false

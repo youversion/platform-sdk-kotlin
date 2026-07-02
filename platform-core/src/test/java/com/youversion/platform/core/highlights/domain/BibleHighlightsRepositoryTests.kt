@@ -107,7 +107,29 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
-    fun `updateHighlightColors syncs a recolor to the server with verse-level passage and bare hex`() =
+    fun `updateHighlightColors syncs a recolor of an existing highlight with verse-level passage and bare hex`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                )
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+
+            repository.updateHighlightColors(listOf(reference), newColor = "#FF00FF")
+            advanceUntilIdle()
+
+            assertEquals(1, api.updateCount)
+            assertEquals(0, api.createCount)
+            assertEquals("GEN.1.1", api.updatedPassages.first())
+            assertEquals("ff00ff", api.updatedColors.first())
+        }
+
+    @Test
+    fun `updateHighlightColors syncs a create when no highlight exists for the reference yet`() =
         runTest(testDispatcher) {
             val api = FakeHighlightsApi()
             val repository = repository(api)
@@ -118,9 +140,10 @@ class BibleHighlightsRepositoryTests {
             )
             advanceUntilIdle()
 
-            assertEquals(1, api.updateCount)
-            assertEquals("GEN.1.1", api.updatedPassages.first())
-            assertEquals("ff00ff", api.updatedColors.first())
+            assertEquals(1, api.createCount)
+            assertEquals(0, api.updateCount)
+            assertEquals("GEN.1.1", api.createdPassages.first())
+            assertEquals("ff00ff", api.createdColors.first())
         }
 
     @Test
@@ -141,13 +164,18 @@ class BibleHighlightsRepositoryTests {
     @Test
     fun `queue retries a failing update until it succeeds`() =
         runTest(testDispatcher) {
-            val api = FakeHighlightsApi(failuresBeforeSuccess = 2)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    failuresBeforeSuccess = 2,
+                )
             val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
 
-            repository.updateHighlightColors(
-                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
-                newColor = "#ff00ff",
-            )
+            repository.updateHighlightColors(listOf(reference), newColor = "#ff00ff")
             advanceUntilIdle()
 
             assertEquals(3, api.updateCount)
