@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.currentCoroutineContext
@@ -23,10 +24,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.util.Date
 import java.util.UUID
 import kotlin.math.pow
@@ -173,23 +176,15 @@ class BibleHighlightsRepository(
         references: List<BibleReference>,
         color: String,
     ) {
+        val normalizedReferences = references.map { it.verseLevelReference() }
         val highlights =
-            references.map { reference ->
-                BibleHighlight(
-                    bibleReference =
-                        BibleReference(
-                            versionId = reference.versionId,
-                            bookUSFM = reference.bookUSFM,
-                            chapter = reference.chapter,
-                            verse = reference.verseStart ?: 1,
-                        ),
-                    hexColor = color,
-                )
+            normalizedReferences.map { reference ->
+                BibleHighlight(bibleReference = reference, hexColor = color)
             }
         cache.addHighlights(highlights)
         queueOperation(
             PendingHighlightOperation(
-                references = references,
+                references = normalizedReferences,
                 change = HighlightChange.Add(color = color),
             ),
         )
@@ -199,10 +194,11 @@ class BibleHighlightsRepository(
      * Removes the highlights on each of [references], updating the cache immediately and syncing to the server.
      */
     fun removeHighlights(references: List<BibleReference>) {
-        cache.removeHighlights(references)
+        val normalizedReferences = references.map { it.verseLevelReference() }
+        cache.removeHighlights(normalizedReferences)
         queueOperation(
             PendingHighlightOperation(
-                references = references,
+                references = normalizedReferences,
                 change = HighlightChange.Remove,
             ),
         )
@@ -220,10 +216,11 @@ class BibleHighlightsRepository(
         references: List<BibleReference>,
         newColor: String,
     ) {
-        cache.updateHighlightColors(references, newColor)
+        val normalizedReferences = references.map { it.verseLevelReference() }
+        cache.updateHighlightColors(normalizedReferences, newColor)
         queueOperation(
             PendingHighlightOperation(
-                references = references,
+                references = normalizedReferences,
                 change = HighlightChange.UpdateColor(color = newColor),
             ),
         )
@@ -249,12 +246,18 @@ class BibleHighlightsRepository(
      * Failed writes retry indefinitely, so a permanently failing write keeps this suspended; wrap the call in
      * [kotlinx.coroutines.withTimeout] to bound how long it may block. Note that it joins the in-progress processor
      * rather than interrupting an active retry backoff.
+     *
+     * Returns without draining if [scope] is no longer active: a cancelled scope can never run the processor, so
+     * waiting on it would spin forever. Any writes still queued at that point are lost with the process.
      */
     suspend fun flushPendingWrites() {
         do {
+            if (!scope.isActive) {
+                return
+            }
             enqueueJob.children.toList().joinAll()
             ensureProcessing()?.join()
-        } while (queueMutex.withLock { pendingOperations.isNotEmpty() })
+        } while (scope.isActive && queueMutex.withLock { pendingOperations.isNotEmpty() })
     }
 
     /**
@@ -385,7 +388,9 @@ class BibleHighlightsRepository(
                 delay(backoffMillis(failed.maxOf { it.retryCount }))
             }
         } finally {
-            queueMutex.withLock { isProcessingQueue = false }
+            withContext(NonCancellable) {
+                queueMutex.withLock { isProcessingQueue = false }
+            }
         }
     }
 
@@ -496,6 +501,20 @@ class BibleHighlightsRepository(
         }
         return BibleHighlight(bibleReference = reference, hexColor = hexWithHash(color))
     }
+
+    /**
+     * The verse-level identity a highlight is keyed by in the cache and when syncing: a single verse with
+     * [BibleReference.verseStart] defaulted to 1. The cache matches entries by exact [BibleReference] equality, so the
+     * reference stored in the cache and the one carried on the queued operation must be canonicalized the same way or
+     * later lookups (server-backed checks, sync promotion, deletes) silently miss.
+     */
+    private fun BibleReference.verseLevelReference(): BibleReference =
+        BibleReference(
+            versionId = versionId,
+            bookUSFM = bookUSFM,
+            chapter = chapter,
+            verse = verseStart ?: 1,
+        )
 
     private fun hexWithHash(color: String): String = if (color.startsWith("#")) color else "#$color"
 

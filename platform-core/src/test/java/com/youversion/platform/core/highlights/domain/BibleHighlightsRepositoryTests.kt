@@ -6,6 +6,7 @@ import com.youversion.platform.core.highlights.models.Highlight
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -109,6 +110,29 @@ class BibleHighlightsRepositoryTests {
             assertEquals(1, api.createCount)
             assertEquals("GEN.1.1", api.createdPassages.first())
             assertEquals("ff00ff", api.createdColors.first())
+        }
+
+    @Test
+    fun `an add with no verse start syncs once and a later recolor updates rather than firing a second create`() =
+        runTest(testDispatcher) {
+            // A caller-supplied reference with a null verseStart is normalized to verse 1 for the cache; the queued
+            // operation must be normalized the same way, or the sync-completion lookup misses and the entry stays a
+            // pending create, so the recolor fires a duplicate POST instead of a PUT.
+            val api = FakeHighlightsApi()
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+
+            repository.addHighlights(listOf(reference), color = "#ff0000")
+            advanceUntilIdle()
+            assertEquals(1, api.createCount)
+
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            advanceUntilIdle()
+
+            assertEquals(1, api.createCount)
+            assertEquals(1, api.updateCount)
+            assertEquals(1, repository.highlights.value.size)
+            assertEquals(0, repository.pendingOperationCount.value)
         }
 
     @Test
@@ -369,6 +393,31 @@ class BibleHighlightsRepositoryTests {
 
             assertEquals(2, api.createCount)
             assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `flushPendingWrites returns instead of hanging when the scope has been cancelled`() =
+        runTest(testDispatcher) {
+            val deleteGate = CompletableDeferred<Unit>()
+            val api = FakeHighlightsApi(deleteGate = deleteGate)
+            val repoScope = CoroutineScope(testDispatcher)
+            val repository = BibleHighlightsRepository(api = api, scope = repoScope).also { it.reset() }
+
+            // Park the processor on the first write (gated delete), then queue a second so an operation stays pending.
+            repository.removeHighlights(listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)))
+            runCurrent()
+            repository.removeHighlights(listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verse = 1)))
+            runCurrent()
+            assertEquals(1, repository.pendingOperationCount.value)
+
+            repoScope.cancel()
+            advanceUntilIdle()
+
+            // A cancelled scope can never run the processor, so without the inactive-scope guard this call would spin
+            // forever joining a dead job. Reaching the assertion at all proves it returned.
+            repository.flushPendingWrites()
+
+            assertEquals(1, repository.pendingOperationCount.value)
         }
 
     @Test
