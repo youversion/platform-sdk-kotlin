@@ -83,7 +83,8 @@ data class OperationResult(
  *
  * Reads are served from the observable cache and refreshed per-chapter from the server (throttled). Writes update
  * the cache immediately (optimistically) and are queued for the server with retry/backoff so they survive transient
- * failures and offline periods.
+ * failures within the session. The cache and the queue are held in memory only: they do not survive process death, so
+ * a write that has not yet reached the server is lost if the process is killed before it syncs.
  *
  * Each queued write is bound to the account that was signed in when it was made. If the signed-in account changes
  * before the write syncs, the write is dropped rather than sent, so one user's highlights can never land on another
@@ -243,6 +244,8 @@ class BibleHighlightsRepository(
     /**
      * Sends every queued highlight change to the server and suspends until the queue has drained. Call this before
      * signing out or switching accounts so queued writes are flushed while the current account is still authenticated.
+     * Because the queue is held in memory only, this is also how a caller avoids losing queued writes when the process
+     * is about to be torn down.
      * Failed writes retry indefinitely, so a permanently failing write keeps this suspended; wrap the call in
      * [kotlinx.coroutines.withTimeout] to bound how long it may block. Note that it joins the in-progress processor
      * rather than interrupting an active retry backoff.
@@ -421,16 +424,8 @@ class BibleHighlightsRepository(
             val passageId = "${reference.bookUSFM}.${reference.chapter}.${reference.verseStart ?: 1}"
             val succeeded =
                 when (change) {
-                    is HighlightChange.Add ->
-                        api.createHighlight(reference.versionId, passageId, hexWithoutHash(change.color))
-                    is HighlightChange.UpdateColor ->
-                        when {
-                            cache.isChapterLoading(reference) -> false
-                            cache.isHighlightServerBacked(reference) ->
-                                api.updateHighlight(reference.versionId, passageId, hexWithoutHash(change.color))
-                            else ->
-                                api.createHighlight(reference.versionId, passageId, hexWithoutHash(change.color))
-                        }
+                    is HighlightChange.Add -> syncHighlight(reference, passageId, change.color)
+                    is HighlightChange.UpdateColor -> syncHighlight(reference, passageId, change.color)
                     HighlightChange.Remove ->
                         api.deleteHighlight(reference.versionId, passageId)
                 }
@@ -450,6 +445,29 @@ class BibleHighlightsRepository(
         }
         return failedReferences
     }
+
+    /**
+     * Syncs a highlight of [color] for [reference] to the server, choosing create versus update from the highlight's
+     * cache state at send time rather than from the change type. Both an add and a recolor mean "ensure a highlight of
+     * this color exists for this reference", so they resolve identically: if the reference is already server-backed the
+     * change is a PUT, otherwise a POST. This keeps a retried add — or an add superseded by a recolor that reached the
+     * server first — from firing a second create for a reference the server already holds.
+     *
+     * Returns false while the reference's chapter is still loading so the change is deferred rather than classified from
+     * a snapshot that does not yet reflect what the server holds.
+     */
+    private suspend fun syncHighlight(
+        reference: BibleReference,
+        passageId: String,
+        color: String,
+    ): Boolean =
+        when {
+            cache.isChapterLoading(reference) -> false
+            cache.isHighlightServerBacked(reference) ->
+                api.updateHighlight(reference.versionId, passageId, hexWithoutHash(color))
+            else ->
+                api.createHighlight(reference.versionId, passageId, hexWithoutHash(color))
+        }
 
     private suspend fun loadChapterFromServer(chapter: BibleReference) {
         try {

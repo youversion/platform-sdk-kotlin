@@ -149,6 +149,24 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
+    fun `an add that fails while a recolor creates the highlight retries as an update`() =
+        runTest(testDispatcher) {
+            // The first server call (the add's create) fails; the recolor queued in the same batch then creates the
+            // highlight, so the add's retry must sync as an update rather than firing a second create.
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 1)
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.addHighlights(listOf(reference), color = "#ff0000")
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            advanceUntilIdle()
+
+            assertEquals(2, api.createCount)
+            assertEquals(1, api.updateCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
     fun `updateHighlightColors syncs a create when no highlight exists for the reference yet`() =
         runTest(testDispatcher) {
             val api = FakeHighlightsApi()

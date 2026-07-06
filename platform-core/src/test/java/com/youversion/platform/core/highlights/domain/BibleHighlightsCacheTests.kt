@@ -2,6 +2,7 @@ package com.youversion.platform.core.highlights.domain
 
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.models.BibleHighlight
+import java.util.Date
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -196,5 +197,40 @@ class BibleHighlightsCacheTests {
         val highlights = BibleHighlightCache.highlights(overlapping = chapter)
         assertEquals(1, highlights.size)
         assertEquals("#ff0000", highlights.first().hexColor)
+    }
+
+    // ----- Test Sync Promotion
+    @Test
+    fun `markHighlightsAsSynced converts a superseded pending create into a pending update`() {
+        BibleHighlightCache.clear()
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        BibleHighlightCache.addHighlights(listOf(BibleHighlight(bibleReference = reference, hexColor = "#ff0000")))
+
+        // notModifiedAfter predates the local edit, so the row counts as superseded by a newer pending write: the
+        // create reached the server, so its queued write becomes an update rather than a second create.
+        BibleHighlightCache.markHighlightsAsSynced(listOf(reference), notModifiedAfter = Date(0))
+
+        assertEquals(
+            BibleHighlightCache.CachedHighlightState.LOCAL_PENDING_UPDATE,
+            BibleHighlightCache.highlights.value
+                .single()
+                .state,
+        )
+    }
+
+    @Test
+    fun `markHighlightsAsSynced promotes an unsuperseded pending create to remote synced`() {
+        BibleHighlightCache.clear()
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        BibleHighlightCache.addHighlights(listOf(BibleHighlight(bibleReference = reference, hexColor = "#ff0000")))
+
+        BibleHighlightCache.markHighlightsAsSynced(listOf(reference), notModifiedAfter = Date(Long.MAX_VALUE))
+
+        assertEquals(
+            BibleHighlightCache.CachedHighlightState.REMOTE_SYNCED,
+            BibleHighlightCache.highlights.value
+                .single()
+                .state,
+        )
     }
 }

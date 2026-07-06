@@ -209,8 +209,11 @@ object BibleHighlightCache {
      * reached the server. Without this a synced highlight stays pending, and the next [applyServerHighlights] merge
      * leaves the stale pending row alongside the fresh server copy, so the verse appears twice.
      *
-     * A row is only promoted when it has not been modified after [notModifiedAfter]; a newer local edit (which carries
-     * its own pending write) is left untouched so its change is not overwritten by this older write's completion.
+     * A row is only promoted to [CachedHighlightState.REMOTE_SYNCED] when it has not been modified after
+     * [notModifiedAfter]; a newer local edit keeps its color so it is not overwritten by this older write's completion.
+     * A newer edit still sitting in [CachedHighlightState.LOCAL_PENDING_CREATE] is instead moved to
+     * [CachedHighlightState.LOCAL_PENDING_UPDATE]: this write reaching the server means the highlight now exists, so the
+     * newer edit's queued write must sync as an update rather than firing a second create.
      */
     fun markHighlightsAsSynced(
         references: List<BibleReference>,
@@ -219,13 +222,14 @@ object BibleHighlightCache {
         val referenceSet = references.toSet()
         _highlights.update { current ->
             current.map { cached ->
-                if (cached.highlight.bibleReference in referenceSet &&
-                    cached.state != CachedHighlightState.REMOTE_SYNCED &&
-                    !cached.lastModifiedAt.after(notModifiedAfter)
-                ) {
-                    cached.copy(state = CachedHighlightState.REMOTE_SYNCED)
-                } else {
-                    cached
+                when {
+                    cached.highlight.bibleReference !in referenceSet ||
+                        cached.state == CachedHighlightState.REMOTE_SYNCED -> cached
+                    !cached.lastModifiedAt.after(notModifiedAfter) ->
+                        cached.copy(state = CachedHighlightState.REMOTE_SYNCED)
+                    cached.state == CachedHighlightState.LOCAL_PENDING_CREATE ->
+                        cached.copy(state = CachedHighlightState.LOCAL_PENDING_UPDATE)
+                    else -> cached
                 }
             }
         }
