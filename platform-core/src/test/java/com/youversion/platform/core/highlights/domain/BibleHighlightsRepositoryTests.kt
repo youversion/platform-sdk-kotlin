@@ -103,7 +103,7 @@ class BibleHighlightsRepositoryTests {
 
             repository.addHighlights(
                 listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
-                color = "#FF00FF",
+                color = "#ff00ff",
             )
             advanceUntilIdle()
 
@@ -163,7 +163,7 @@ class BibleHighlightsRepositoryTests {
             repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
             advanceUntilIdle()
 
-            repository.updateHighlightColors(listOf(reference), newColor = "#FF00FF")
+            repository.updateHighlightColors(listOf(reference), newColor = "#ff00ff")
             advanceUntilIdle()
 
             assertEquals(1, api.updateCount)
@@ -198,7 +198,7 @@ class BibleHighlightsRepositoryTests {
 
             repository.updateHighlightColors(
                 listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
-                newColor = "#FF00FF",
+                newColor = "#ff00ff",
             )
             advanceUntilIdle()
 
@@ -303,6 +303,37 @@ class BibleHighlightsRepositoryTests {
 
             assertEquals(1, api.deleteCount)
             assertEquals(0, repository.highlights.value.size)
+        }
+
+    @Test
+    fun `a queued delete is not re-added by a concurrent chapter load`() =
+        runTest(testDispatcher) {
+            val blockingGate = CompletableDeferred<Unit>()
+            val target = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    deleteGate = blockingGate,
+                )
+            val repository = repository(api)
+
+            // Park the processor on a gated delete so the target's delete stays queued rather than in flight.
+            repository.removeHighlights(listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verse = 1)))
+            runCurrent()
+            repository.removeHighlights(listOf(target))
+            runCurrent()
+
+            // A load arrives while the target's delete is still queued; the server copy must not be re-added.
+            repository.ensureHighlightsForChapterLoaded(
+                BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1),
+                forceReload = true,
+            )
+            advanceUntilIdle()
+            assertEquals(0, repository.highlights(overlapping = target).size)
+
+            blockingGate.complete(Unit)
+            advanceUntilIdle()
         }
 
     @Test
@@ -444,6 +475,40 @@ class BibleHighlightsRepositoryTests {
 
             assertEquals(0, api.createCount)
             assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `a write is dropped when the account changes while its chapter load is in flight`() =
+        runTest(testDispatcher) {
+            val loadGate = CompletableDeferred<Unit>()
+            var accountId: String? = "account-a"
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    highlightsGate = loadGate,
+                )
+            val repository =
+                BibleHighlightsRepository(
+                    api = api,
+                    scope = CoroutineScope(testDispatcher),
+                    currentAccountId = { accountId },
+                ).also { BibleHighlightCache.clear() }
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            // Start a chapter load and park it, then queue a recolor that must wait for the load before it classifies.
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            runCurrent()
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            runCurrent()
+
+            // The account switches while the write is parked on the in-flight load; it must not be sent under account-b.
+            accountId = "account-b"
+            loadGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(0, api.createCount)
+            assertEquals(0, api.updateCount)
         }
 
     @Test

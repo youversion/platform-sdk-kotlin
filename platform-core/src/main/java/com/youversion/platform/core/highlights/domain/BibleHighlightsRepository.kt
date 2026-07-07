@@ -42,15 +42,23 @@ import kotlin.math.pow
  * the server.
  */
 sealed interface HighlightChange {
+    /**
+     * A change that sets a highlight to [color]. Adding and recoloring both mean "ensure a highlight of this color
+     * exists", so they share a type and sync identically.
+     */
+    sealed interface Colored : HighlightChange {
+        val color: String
+    }
+
     /** Adds highlights of [color]. */
     data class Add(
-        val color: String,
-    ) : HighlightChange
+        override val color: String,
+    ) : Colored
 
     /** Recolors existing highlights to [color]. */
     data class UpdateColor(
-        val color: String,
-    ) : HighlightChange
+        override val color: String,
+    ) : Colored
 
     /** Removes existing highlights. */
     data object Remove : HighlightChange
@@ -230,8 +238,10 @@ class BibleHighlightsRepository(
      * Clears all cached highlights and per-chapter load state, and cancels any in-flight chapter loads so a load that
      * was already running cannot repopulate the cache after it is cleared. Call this when the user signs out.
      *
-     * Pending sync operations are intentionally left in place so any writes already queued still reach the server; this
-     * mirrors the Swift SDK, where reset clears only the cache.
+     * Queued sync operations are left in the queue rather than cleared here, but each is bound to the account that made
+     * it: once the signed-in account changes, any write still queued under the previous account is dropped instead of
+     * sent, so one user's highlights can never land on another user's account. To flush queued writes before signing
+     * out, call [flushPendingWrites] while the current account is still authenticated.
      */
     fun reset() {
         loadScope.coroutineContext.cancelChildren()
@@ -411,40 +421,44 @@ class BibleHighlightsRepository(
 
     /**
      * Sends each reference in [operation] to the server and returns the references that failed, so retries only touch
-     * the references that did not succeed. Each reference first waits for its chapter's in-flight load to finish, so a
-     * reference whose chapter is still loading suspends here rather than being classified from a stale snapshot.
-     * References that sync successfully are promoted to remote-synced in the cache so a later server merge does not leave
-     * a stale pending row beside the server copy.
+     * the references that did not succeed. A create or recolor first waits for its chapter's in-flight load to finish so
+     * it is classified from server state rather than a stale snapshot; a delete targets the server by passage id and so
+     * does not wait. References that sync successfully are promoted to remote-synced in the cache so a later server merge
+     * does not leave a stale pending row beside the server copy.
      *
-     * If the signed-in account has changed since [operation] was queued, it is dropped without sending so that one
-     * account's writes can never reach another account.
+     * The signed-in account is re-checked before each send. If it has changed since [operation] was queued, the send
+     * loop stops so no write can reach a different account; references already sent under the original account are still
+     * promoted, and the rest are dropped without retrying.
      */
     private suspend fun processOperation(operation: PendingHighlightOperation): List<BibleReference> {
-        if (operation.accountId != currentAccountId()) {
-            Logger.w { "Dropping highlight operation ${operation.id} queued under a different account" }
-            return emptyList()
-        }
-
         val change = operation.change
+        val syncedReferences = mutableListOf<BibleReference>()
         val failedReferences = mutableListOf<BibleReference>()
         for (reference in operation.references) {
+            if (change is HighlightChange.Colored) {
+                cache.awaitChapterLoaded(reference)
+            }
+            if (operation.accountId != currentAccountId()) {
+                Logger.w { "Dropping highlight operation ${operation.id} queued under a different account" }
+                break
+            }
             val passageId = reference.asUSFM
             val succeeded =
                 when (change) {
-                    is HighlightChange.Add -> syncHighlight(reference, passageId, change.color)
-                    is HighlightChange.UpdateColor -> syncHighlight(reference, passageId, change.color)
+                    is HighlightChange.Colored -> syncHighlight(reference, passageId, change.color)
                     HighlightChange.Remove ->
                         api.deleteHighlight(reference.versionId, passageId)
                 }
-            if (!succeeded) {
+            if (succeeded) {
+                syncedReferences.add(reference)
+            } else {
                 failedReferences.add(reference)
             }
         }
 
-        val syncedReferences = operation.references - failedReferences.toSet()
         if (syncedReferences.isNotEmpty()) {
             when (change) {
-                is HighlightChange.Add, is HighlightChange.UpdateColor ->
+                is HighlightChange.Colored ->
                     cache.markHighlightsAsSynced(syncedReferences, notModifiedAfter = operation.timestamp)
                 HighlightChange.Remove ->
                     cache.removeSyncedHighlights(syncedReferences)
@@ -460,22 +474,20 @@ class BibleHighlightsRepository(
      * change is a PUT, otherwise a POST. This keeps a retried add — or an add superseded by a recolor that reached the
      * server first — from firing a second create for a reference the server already holds.
      *
-     * Suspends until the reference's chapter has finished loading before classifying the change, so create-versus-update
-     * is decided from server state the load has already merged rather than from a snapshot that does not yet reflect
-     * what the server holds. If no load is in flight this returns without waiting.
+     * The caller must await the reference's chapter load (via [BibleHighlightCache.awaitChapterLoaded]) before calling
+     * this, so create-versus-update is decided from server state the load has already merged rather than from a snapshot
+     * that does not yet reflect what the server holds.
      */
     private suspend fun syncHighlight(
         reference: BibleReference,
         passageId: String,
         color: String,
-    ): Boolean {
-        cache.awaitChapterLoaded(reference)
-        return if (cache.isHighlightServerBacked(reference)) {
+    ): Boolean =
+        if (cache.isHighlightServerBacked(reference)) {
             api.updateHighlight(reference.versionId, passageId, hexWithoutHash(color))
         } else {
             api.createHighlight(reference.versionId, passageId, hexWithoutHash(color))
         }
-    }
 
     private suspend fun loadChapterFromServer(chapter: BibleReference) {
         try {
@@ -485,7 +497,9 @@ class BibleHighlightsRepository(
                     .highlights(versionId = chapter.versionId, passageId = passageId)
                     .mapNotNull { it.bibleHighlight() }
             currentCoroutineContext().ensureActive()
-            cache.applyServerHighlights(chapter = chapter, highlights = serverHighlights)
+            val deletedReferences = referencesWithQueuedDelete()
+            val mergedHighlights = serverHighlights.filterNot { it.bibleReference in deletedReferences }
+            cache.applyServerHighlights(chapter = chapter, highlights = mergedHighlights)
             cache.recordChapterFetch(chapter)
         } catch (e: CancellationException) {
             throw e
@@ -519,9 +533,26 @@ class BibleHighlightsRepository(
             verse = verseStart ?: 1,
         )
 
+    /**
+     * The references with a delete still queued for the server. A chapter load must not re-add these: the highlight is
+     * already gone locally, but the server has not processed the delete yet, so merging the server's copy would
+     * resurrect a highlight the user removed until the delete finally syncs.
+     *
+     * This covers deletes waiting in the queue, including those re-queued for retry. A delete already pulled into the
+     * in-flight batch is briefly absent from the queue; a load racing that exact window is instead reconciled by
+     * [BibleHighlightCache.removeSyncedHighlights] once the delete completes.
+     */
+    private suspend fun referencesWithQueuedDelete(): Set<BibleReference> =
+        queueMutex.withLock {
+            pendingOperations
+                .filter { it.change is HighlightChange.Remove }
+                .flatMap { it.references }
+                .toSet()
+        }
+
     private fun hexWithHash(color: String): String = if (color.startsWith("#")) color else "#$color"
 
-    private fun hexWithoutHash(color: String): String = color.removePrefix("#").lowercase()
+    private fun hexWithoutHash(color: String): String = color.removePrefix("#")
 
     private fun backoffMillis(retryCount: Int): Long {
         val seconds = 2.0.pow(minOf(retryCount, MAX_BACKOFF_EXPONENT)).toLong()

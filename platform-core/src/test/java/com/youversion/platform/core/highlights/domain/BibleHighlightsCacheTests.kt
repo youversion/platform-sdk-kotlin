@@ -239,6 +239,27 @@ class BibleHighlightsCacheTests {
         )
     }
 
+    @Test
+    fun `removeSyncedHighlights demotes a pending update so its queued op re-posts instead of putting`() {
+        BibleHighlightCache.clear()
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        BibleHighlightCache.addHighlights(listOf(BibleHighlight(bibleReference = reference, hexColor = "#ff0000")))
+
+        // Mirror an add -> sync -> recolor -> delete sequence: the create synced and a later recolor left the row as a
+        // pending update, then the delete reached the server. The pending update must fall back to a pending create so
+        // the still-queued recolor POSTs a fresh highlight instead of PUTting the resource the server just deleted.
+        BibleHighlightCache.markHighlightsAsSynced(listOf(reference), notModifiedAfter = Date(0))
+        BibleHighlightCache.removeSyncedHighlights(listOf(reference))
+
+        assertEquals(
+            BibleHighlightCache.CachedHighlightState.LOCAL_PENDING_CREATE,
+            BibleHighlightCache.highlights.value
+                .single()
+                .state,
+        )
+        assertFalse(BibleHighlightCache.isHighlightServerBacked(reference))
+    }
+
     // ----- Test Chapter-Load Await
     @Test
     fun `awaitChapterLoaded returns immediately when no load is in flight`() =
