@@ -2,12 +2,17 @@ package com.youversion.platform.core.highlights.domain
 
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.models.BibleHighlight
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import java.util.Date
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class BibleHighlightsCacheTests {
     @Test
     fun `test highlights empty state`() {
@@ -233,4 +238,41 @@ class BibleHighlightsCacheTests {
                 .state,
         )
     }
+
+    // ----- Test Chapter-Load Await
+    @Test
+    fun `awaitChapterLoaded returns immediately when no load is in flight`() =
+        runTest {
+            BibleHighlightCache.clear()
+
+            // No load is marked for this chapter, so awaiting must not suspend; reaching the assertion proves it.
+            BibleHighlightCache.awaitChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+
+            assertFalse(
+                BibleHighlightCache.isChapterLoading(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)),
+            )
+        }
+
+    @Test
+    fun `awaitChapterLoaded suspends until the chapter load is unmarked`() =
+        runTest {
+            BibleHighlightCache.clear()
+            val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+            assertTrue(BibleHighlightCache.markChapterAsLoading(chapter))
+
+            var didResume = false
+            val waiter =
+                launch {
+                    BibleHighlightCache.awaitChapterLoaded(chapter)
+                    didResume = true
+                }
+
+            runCurrent()
+            assertFalse(didResume)
+
+            BibleHighlightCache.unmarkChapterAsLoading(chapter)
+            runCurrent()
+            assertTrue(didResume)
+            waiter.join()
+        }
 }

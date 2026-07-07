@@ -411,8 +411,10 @@ class BibleHighlightsRepository(
 
     /**
      * Sends each reference in [operation] to the server and returns the references that failed, so retries only touch
-     * the references that did not succeed. References that sync successfully are promoted to remote-synced in the cache
-     * so a later server merge does not leave a stale pending row beside the server copy.
+     * the references that did not succeed. Each reference first waits for its chapter's in-flight load to finish, so a
+     * reference whose chapter is still loading suspends here rather than being classified from a stale snapshot.
+     * References that sync successfully are promoted to remote-synced in the cache so a later server merge does not leave
+     * a stale pending row beside the server copy.
      *
      * If the signed-in account has changed since [operation] was queued, it is dropped without sending so that one
      * account's writes can never reach another account.
@@ -426,7 +428,7 @@ class BibleHighlightsRepository(
         val change = operation.change
         val failedReferences = mutableListOf<BibleReference>()
         for (reference in operation.references) {
-            val passageId = "${reference.bookUSFM}.${reference.chapter}.${reference.verseStart ?: 1}"
+            val passageId = reference.asUSFM
             val succeeded =
                 when (change) {
                     is HighlightChange.Add -> syncHighlight(reference, passageId, change.color)
@@ -458,25 +460,26 @@ class BibleHighlightsRepository(
      * change is a PUT, otherwise a POST. This keeps a retried add — or an add superseded by a recolor that reached the
      * server first — from firing a second create for a reference the server already holds.
      *
-     * Returns false while the reference's chapter is still loading so the change is deferred rather than classified from
-     * a snapshot that does not yet reflect what the server holds.
+     * Suspends until the reference's chapter has finished loading before classifying the change, so create-versus-update
+     * is decided from server state the load has already merged rather than from a snapshot that does not yet reflect
+     * what the server holds. If no load is in flight this returns without waiting.
      */
     private suspend fun syncHighlight(
         reference: BibleReference,
         passageId: String,
         color: String,
-    ): Boolean =
-        when {
-            cache.isChapterLoading(reference) -> false
-            cache.isHighlightServerBacked(reference) ->
-                api.updateHighlight(reference.versionId, passageId, hexWithoutHash(color))
-            else ->
-                api.createHighlight(reference.versionId, passageId, hexWithoutHash(color))
+    ): Boolean {
+        cache.awaitChapterLoaded(reference)
+        return if (cache.isHighlightServerBacked(reference)) {
+            api.updateHighlight(reference.versionId, passageId, hexWithoutHash(color))
+        } else {
+            api.createHighlight(reference.versionId, passageId, hexWithoutHash(color))
         }
+    }
 
     private suspend fun loadChapterFromServer(chapter: BibleReference) {
         try {
-            val passageId = "${chapter.bookUSFM}.${chapter.chapter}"
+            val passageId = chapter.chapterUSFM
             val serverHighlights =
                 api
                     .highlights(versionId = chapter.versionId, passageId = passageId)

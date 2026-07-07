@@ -2,6 +2,7 @@ package com.youversion.platform.core.highlights.domain
 
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.models.BibleHighlight
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,13 +35,16 @@ object BibleHighlightCache {
 
     // ----- Throttling and Loading
     private val recentChapterFetches = ConcurrentHashMap<BibleReference, Date>()
-    private val currentlyLoadingChapters = ConcurrentHashMap.newKeySet<BibleReference>()
+    private val currentlyLoadingChapters = ConcurrentHashMap<BibleReference, CompletableDeferred<Unit>>()
     private val throttlingInterval: Duration = 5.minutes
 
     // ----- Public API - State Management
     fun clear() {
         _highlights.value = emptyList()
         recentChapterFetches.clear()
+        // Wake anything awaiting a load before dropping the signals, so a write parked in awaitChapterLoaded does not
+        // hang forever after the cache is reset.
+        currentlyLoadingChapters.values.forEach { it.complete(Unit) }
         currentlyLoadingChapters.clear()
     }
 
@@ -68,13 +72,22 @@ object BibleHighlightCache {
     }
 
     fun isChapterLoading(chapter: BibleReference): Boolean =
-        currentlyLoadingChapters.contains(normalizeToChapter(chapter))
+        currentlyLoadingChapters.containsKey(normalizeToChapter(chapter))
 
     fun markChapterAsLoading(chapter: BibleReference): Boolean =
-        currentlyLoadingChapters.add(normalizeToChapter(chapter))
+        currentlyLoadingChapters.putIfAbsent(normalizeToChapter(chapter), CompletableDeferred()) == null
 
     fun unmarkChapterAsLoading(chapter: BibleReference) {
-        currentlyLoadingChapters.remove(normalizeToChapter(chapter))
+        currentlyLoadingChapters.remove(normalizeToChapter(chapter))?.complete(Unit)
+    }
+
+    /**
+     * Suspends until the in-flight load for [chapter] finishes, or returns immediately if no load is in flight. Lets a
+     * queued write wait for the chapter's server highlights to arrive before it classifies itself as a create or an
+     * update, without polling: the load completes the signal in [unmarkChapterAsLoading].
+     */
+    suspend fun awaitChapterLoaded(chapter: BibleReference) {
+        currentlyLoadingChapters[normalizeToChapter(chapter)]?.await()
     }
 
     fun recordChapterFetch(

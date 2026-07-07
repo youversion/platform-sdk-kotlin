@@ -228,6 +228,9 @@ class BibleHighlightsRepositoryTests {
             runCurrent()
             assertEquals(0, api.createCount)
             assertEquals(0, api.updateCount)
+            // The write is in flight, suspended awaiting the chapter load rather than being sent or retried. It must
+            // not be reported as failed: waiting on a load is not a failure and must not accrue retry backoff.
+            assertEquals(0, repository.failedOperationCount.value)
 
             gate.complete(Unit)
             advanceUntilIdle()
