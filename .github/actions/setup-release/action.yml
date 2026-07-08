@@ -1,0 +1,27 @@
+name: Setup release toolchain
+description: >-
+  Shared toolchain setup for jobs in the release workflow. Installs JDK,
+  Gradle, Node.js, and Node dependencies for semantic-release and commitlint.
+  Does not check out the repo — callers must run `actions/checkout` first
+  (the local action file must already be on disk to be referenced).
+
+runs:
+  using: composite
+  steps:
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: zulu
+        java-version: '17'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 'lts/*'
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci

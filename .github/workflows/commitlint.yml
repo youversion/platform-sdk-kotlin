@@ -21,5 +21,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Use the current tip of origin/main as the lower bound rather than the
+      # PR's recorded base SHA. The recorded base SHA goes stale as soon as
+      # main moves forward, which causes the lint range to include commits
+      # that have already been merged-and-linted. Anchoring at origin/main
+      # only ever lints new commits authored on this branch since the most
+      # recent merge from main.
+      - name: Resolve current main
+        id: main
+        run: |
+          set -euo pipefail
+          git fetch origin main:refs/remotes/origin/main --depth=1 || \
+            git fetch --unshallow origin main:refs/remotes/origin/main
+          main_sha=$(git rev-parse origin/main)
+          echo "sha=${main_sha}" >> "$GITHUB_OUTPUT"
+          echo "Linting against origin/main = ${main_sha}"
+
       - name: Lint commits
-        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+        run: npx commitlint --from ${{ steps.main.outputs.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose

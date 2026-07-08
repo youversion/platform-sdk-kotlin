@@ -351,6 +351,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to get started.
 - [API Documentation](https://developers.youversion.com/overview) - Complete API reference
 - [LLM Integration Guide](https://developers.youversion.com/for-llms) - AI/ML integration docs
 - [Release Process](./RELEASING.md) - Contribution and release guidelines
+- [Release Runbook](./docs/RELEASE-RUNBOOK.md) - Recovery procedures when a release fails partway
 - [Sample Code](./examples) - Working examples and best practices
 
 ## Support

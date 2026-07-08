@@ -7,6 +7,24 @@ on:
       - beta
       - alpha
       - '[0-9]+.x'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: >-
+          Version to publish. Required for break-glass / re-dispatch flows when
+          the automatic semantic-release path failed partway. Must already be
+          tagged in git or supplied as the version semantic-release would have
+          chosen.
+        required: true
+        type: string
+      modules:
+        description: >-
+          Comma-separated list of modules to consider for publishing. Defaults
+          to all three. Preflight will further narrow this to only the modules
+          that are not yet present on Maven Central.
+        required: false
+        type: string
+        default: platform-core,platform-ui,platform-reader
 
 permissions:
   contents: write
@@ -14,39 +32,155 @@ permissions:
   pull-requests: write
 
 jobs:
-  release:
-    name: Release
+  # Resolves the version we're about to (re)publish and whether it includes a
+  # BREAKING CHANGE. Downstream jobs use these outputs to choose the Gradle
+  # task list and the GitHub Environment to gate the publish behind.
+  compute-version:
+    name: Compute version
     runs-on: ubuntu-latest
-    environment: production
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      modules: ${{ steps.resolve.outputs.modules }}
+      breaking: ${{ steps.resolve.outputs.breaking }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - uses: ./.github/actions/setup-release
+      - name: Resolve version and breaking-change flag
+        id: resolve
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISPATCH_VERSION: ${{ inputs.version }}
+          DISPATCH_MODULES: ${{ inputs.modules }}
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            version="${DISPATCH_VERSION}"
+            modules="${DISPATCH_MODULES}"
+          else
+            # Push trigger: ask semantic-release what it would publish.
+            dry_output=$(npx semantic-release --dry-run 2>&1 || true)
+            version=$(printf '%s' "$dry_output" | sed -n 's/.*Published release \([^ ]*\).*/\1/p' | head -1)
+            if [[ -z "$version" ]]; then
+              version=$(printf '%s' "$dry_output" | sed -n 's/.*The next release version is \([^ ]*\).*/\1/p' | head -1)
+            fi
+            if [[ -z "$version" ]]; then
+              echo "::notice::semantic-release dry-run did not produce a version — likely no release-triggering commits."
+              echo "version=" >> "$GITHUB_OUTPUT"
+              echo "modules=platform-core,platform-ui,platform-reader" >> "$GITHUB_OUTPUT"
+              echo "breaking=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            modules="platform-core,platform-ui,platform-reader"
+          fi
+
+          # Detect BREAKING CHANGE in the commit window. For dispatches we look
+          # back from HEAD to the last tag; for push events the dry-run already
+          # logs whether the bump was a major.
+          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [[ -n "$last_tag" ]]; then
+            log=$(git log --format='%B' "${last_tag}..HEAD")
+          else
+            log=$(git log --format='%B')
+          fi
+          if printf '%s' "$log" | grep -E -q '^(feat|fix)(\([^)]*\))?!:|BREAKING CHANGE:'; then
+            breaking=true
+          else
+            breaking=false
+          fi
+
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "modules=${modules}" >> "$GITHUB_OUTPUT"
+          echo "breaking=${breaking}" >> "$GITHUB_OUTPUT"
+          echo "Resolved: version=${version} modules=${modules} breaking=${breaking}"
+
+  # Probes Maven Central for the target version of each module so the publish
+  # job can short-circuit when re-dispatched after a successful (or partially
+  # successful) prior run. This is the AC#2 / AC#3 idempotency guarantee.
+  preflight:
+    name: Preflight (Maven Central presence)
+    runs-on: ubuntu-latest
+    needs: compute-version
+    if: needs.compute-version.outputs.version != ''
+    outputs:
+      missing_modules: ${{ steps.probe.outputs.missing_modules }}
+      all_present: ${{ steps.probe.outputs.all_present }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe Maven Central
+        id: probe
+        run: |
+          set -euo pipefail
+          modules_csv="${{ needs.compute-version.outputs.modules }}"
+          IFS=',' read -ra modules <<< "$modules_csv"
+          bash scripts/check-central-presence.sh "${{ needs.compute-version.outputs.version }}" "${modules[@]}"
+      - name: Write summary
+        if: always()
+        run: |
+          {
+            echo "### Preflight — \`${{ needs.compute-version.outputs.version }}\`"
+            echo
+            if [[ "${{ steps.probe.outputs.all_present }}" == "true" ]]; then
+              echo "All modules already on Maven Central. Publish step will be skipped."
+            else
+              echo "Modules to publish: \`${{ steps.probe.outputs.missing_modules }}\`"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    needs: [compute-version, preflight]
+    if: needs.compute-version.outputs.version != '' && needs.preflight.outputs.all_present != 'true'
+    # AC#9: BREAKING CHANGE releases route through a dedicated environment
+    # whose required reviewers gate the publish step. The non-breaking path
+    # continues to use the existing `production` environment.
+    environment: ${{ needs.compute-version.outputs.breaking == 'true' && 'production-breaking' || 'production' }}
+    env:
+      ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
+      ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
+      ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNINGKEY }}
+      ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNINGKEY_PASSWORD }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: main
           ssh-key: ${{ secrets.DEPLOY_KEY }}
-
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Release
+      - uses: ./.github/actions/setup-release
+      - name: Publish via semantic-release (push trigger)
+        if: github.event_name == 'push'
         run: npx semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNINGKEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNINGKEY_PASSWORD }}
+      - name: Publish missing modules (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          missing="${{ needs.preflight.outputs.missing_modules }}"
+          IFS=',' read -ra modules <<< "$missing"
+          bash scripts/gradle-publish-wrapper.sh "${{ needs.compute-version.outputs.version }}" "${modules[@]}"
+
+  # Polls repo1.maven.org for each module until it is resolvable or the
+  # 30-minute deadline passes. Never fails the workflow — the runbook
+  # documents what to communicate during the indexing lag.
+  post-publish-verify:
+    name: Post-publish verification
+    runs-on: ubuntu-latest
+    needs: [compute-version, preflight, publish]
+    if: always() && needs.compute-version.outputs.version != '' && needs.preflight.outputs.all_present != 'true' && needs.publish.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for Maven Central propagation
+        run: |
+          set -euo pipefail
+          modules_csv="${{ needs.compute-version.outputs.modules }}"
+          IFS=',' read -ra modules <<< "$modules_csv"
+          bash scripts/poll-central-index.sh "${{ needs.compute-version.outputs.version }}" "${modules[@]}"
+      - name: Re-check presence
+        run: |
+          set -euo pipefail
+          modules_csv="${{ needs.compute-version.outputs.modules }}"
+          IFS=',' read -ra modules <<< "$modules_csv"
+          bash scripts/check-central-presence.sh "${{ needs.compute-version.outputs.version }}" "${modules[@]}"
