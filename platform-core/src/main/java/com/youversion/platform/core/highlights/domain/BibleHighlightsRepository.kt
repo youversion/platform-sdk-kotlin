@@ -339,6 +339,7 @@ class BibleHighlightsRepository(
     }
 
     private suspend fun processQueue() {
+        val thisJob = currentCoroutineContext()[Job]
         try {
             while (true) {
                 val batch =
@@ -410,7 +411,11 @@ class BibleHighlightsRepository(
             }
         } finally {
             withContext(NonCancellable) {
-                queueMutex.withLock { isProcessingQueue = false }
+                queueMutex.withLock {
+                    if (processingJob === thisJob) {
+                        isProcessingQueue = false
+                    }
+                }
             }
         }
     }
