@@ -38,28 +38,17 @@ import kotlin.math.pow
 /**
  * The change a [PendingHighlightOperation] applies to its references.
  *
- * Modeled as a sealed type so that adding or recoloring a highlight always carries a color while removing one never
- * does: a colorless [Add] or [UpdateColor] cannot be constructed, so no queued write can ever send a blank color to
- * the server.
+ * Modeled as a sealed type so that setting a highlight's color always carries a color while removing one never does: a
+ * colorless [SetColor] cannot be constructed, so no queued write can ever send a blank color to the server.
  */
 sealed interface HighlightChange {
     /**
-     * A change that sets a highlight to [color]. Adding and recoloring both mean "ensure a highlight of this color
-     * exists", so they share a type and sync identically.
+     * Sets highlights to [color]. Adding and recoloring both mean "ensure a highlight of this color exists", so they
+     * share this type and sync identically.
      */
-    sealed interface Colored : HighlightChange {
-        val color: String
-    }
-
-    /** Adds highlights of [color]. */
-    data class Add(
-        override val color: String,
-    ) : Colored
-
-    /** Recolors existing highlights to [color]. */
-    data class UpdateColor(
-        override val color: String,
-    ) : Colored
+    data class SetColor(
+        val color: String,
+    ) : HighlightChange
 
     /** Removes existing highlights. */
     data object Remove : HighlightChange
@@ -199,7 +188,7 @@ class BibleHighlightsRepository(
         queueOperation(
             PendingHighlightOperation(
                 references = normalizedReferences,
-                change = HighlightChange.Add(color = color),
+                change = HighlightChange.SetColor(color = color),
             ),
         )
     }
@@ -236,7 +225,7 @@ class BibleHighlightsRepository(
         queueOperation(
             PendingHighlightOperation(
                 references = normalizedReferences,
-                change = HighlightChange.UpdateColor(color = newColor),
+                change = HighlightChange.SetColor(color = newColor),
             ),
         )
     }
@@ -451,7 +440,7 @@ class BibleHighlightsRepository(
         val syncedReferences = mutableListOf<BibleReference>()
         val failedReferences = mutableListOf<BibleReference>()
         for (reference in operation.references) {
-            if (change is HighlightChange.Colored) {
+            if (change is HighlightChange.SetColor) {
                 cache.awaitChapterLoaded(reference)
             }
             if (operation.accountId != currentAccountId()) {
@@ -461,7 +450,7 @@ class BibleHighlightsRepository(
             val passageId = reference.asUSFM
             val succeeded =
                 when (change) {
-                    is HighlightChange.Colored -> syncHighlight(reference, passageId, change.color)
+                    is HighlightChange.SetColor -> syncHighlight(reference, passageId, change.color)
                     HighlightChange.Remove ->
                         api.deleteHighlight(reference.versionId, passageId)
                 }
@@ -474,7 +463,7 @@ class BibleHighlightsRepository(
 
         if (syncedReferences.isNotEmpty()) {
             when (change) {
-                is HighlightChange.Colored ->
+                is HighlightChange.SetColor ->
                     cache.markHighlightsAsSynced(syncedReferences, notModifiedAfter = operation.timestamp)
                 HighlightChange.Remove ->
                     cache.removeSyncedHighlights(syncedReferences)
