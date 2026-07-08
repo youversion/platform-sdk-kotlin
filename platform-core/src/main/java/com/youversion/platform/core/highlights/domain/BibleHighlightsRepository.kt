@@ -18,6 +18,7 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -117,10 +118,12 @@ class BibleHighlightsRepository(
     private val referencesAwaitingDeleteEnqueue = ConcurrentHashMap.newKeySet<BibleReference>()
 
     /**
-     * The observable list of cached highlights. UI layers should collect this and filter to the references they render.
+     * The observable list of highlights. UI layers should collect this and filter to the references they render. The
+     * cache's internal sync bookkeeping (pending vs. synced state) is intentionally not exposed here; consumers see only
+     * the highlights themselves.
      */
-    val highlights: StateFlow<List<BibleHighlightCache.CachedHighlight>>
-        get() = cache.highlights
+    val highlights: StateFlow<List<BibleHighlight>> =
+        MappedStateFlow(cache.highlights) { cached -> cached.map { it.highlight } }
 
     /**
      * The number of highlight changes queued for the server, including any awaiting a retry. Collect this to drive a
@@ -572,4 +575,24 @@ class BibleHighlightsRepository(
         const val MILLIS_PER_SECOND = 1_000L
         const val MAX_BACKOFF_MILLIS = 30_000L
     }
+}
+
+/**
+ * A read-only [StateFlow] that projects [source] through [transform]. Unlike `source.map { }.stateIn(...)`, its [value]
+ * is computed synchronously on read rather than by a collecting coroutine, so it reflects the source the instant the
+ * source changes. This lets the repository expose highlights as [BibleHighlight] without leaking the cache's internal
+ * [BibleHighlightCache.CachedHighlight] rows, while keeping the immediate-read semantics callers rely on.
+ */
+private class MappedStateFlow<T, R>(
+    private val source: StateFlow<T>,
+    private val transform: (T) -> R,
+) : StateFlow<R> {
+    override val value: R
+        get() = transform(source.value)
+
+    override val replayCache: List<R>
+        get() = listOf(value)
+
+    override suspend fun collect(collector: FlowCollector<R>): Nothing =
+        source.collect { collector.emit(transform(it)) }
 }

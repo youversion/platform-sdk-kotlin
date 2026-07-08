@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-object BibleHighlightCache {
+internal object BibleHighlightCache {
     // ----- Types
     enum class CachedHighlightState {
         REMOTE_SYNCED,
