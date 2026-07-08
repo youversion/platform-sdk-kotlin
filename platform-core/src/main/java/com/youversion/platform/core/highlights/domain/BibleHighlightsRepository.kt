@@ -32,6 +32,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.util.Date
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.pow
 
 /**
@@ -121,6 +122,11 @@ class BibleHighlightsRepository(
     private val operationResults = mutableMapOf<UUID, OperationResult>()
     private val operationResultsState = MutableStateFlow<Map<UUID, OperationResult>>(emptyMap())
 
+    // References whose delete has removed the local entry but whose delete operation has not yet reached
+    // [pendingOperations]. Because the entry is enqueued asynchronously, this bridges the window before
+    // [referencesWithQueuedDelete] can see it, so a concurrent chapter load cannot resurrect the highlight in between.
+    private val referencesAwaitingDeleteEnqueue = ConcurrentHashMap.newKeySet<BibleReference>()
+
     /**
      * The observable list of cached highlights. UI layers should collect this and filter to the references they render.
      */
@@ -203,6 +209,7 @@ class BibleHighlightsRepository(
      */
     fun removeHighlights(references: List<BibleReference>) {
         val normalizedReferences = references.map { it.verseLevelReference() }
+        referencesAwaitingDeleteEnqueue.addAll(normalizedReferences)
         cache.removeHighlights(normalizedReferences)
         queueOperation(
             PendingHighlightOperation(
@@ -245,6 +252,7 @@ class BibleHighlightsRepository(
      */
     fun reset() {
         loadScope.coroutineContext.cancelChildren()
+        referencesAwaitingDeleteEnqueue.clear()
         cache.clear()
     }
 
@@ -309,6 +317,9 @@ class BibleHighlightsRepository(
                 pendingOperations.add(stamped)
                 pendingOperations.sortBy { it.timestamp }
                 publishQueuedOperations()
+            }
+            if (stamped.change is HighlightChange.Remove) {
+                referencesAwaitingDeleteEnqueue.removeAll(stamped.references.toSet())
             }
             ensureProcessing()
         }
@@ -538,8 +549,10 @@ class BibleHighlightsRepository(
      * already gone locally, but the server has not processed the delete yet, so merging the server's copy would
      * resurrect a highlight the user removed until the delete finally syncs.
      *
-     * This covers deletes waiting in the queue, including those re-queued for retry. A delete already pulled into the
-     * in-flight batch is briefly absent from the queue; a load racing that exact window is instead reconciled by
+     * This covers deletes waiting in the queue, including those re-queued for retry, plus deletes whose local removal
+     * has happened but whose queue entry is still being enqueued (tracked in [referencesAwaitingDeleteEnqueue]), so the
+     * asynchronous enqueue cannot open a window where a load sees neither. A delete already pulled into the in-flight
+     * batch is briefly absent from the queue; a load racing that exact window is instead reconciled by
      * [BibleHighlightCache.removeSyncedHighlights] once the delete completes.
      */
     private suspend fun referencesWithQueuedDelete(): Set<BibleReference> =
@@ -547,7 +560,7 @@ class BibleHighlightsRepository(
             pendingOperations
                 .filter { it.change is HighlightChange.Remove }
                 .flatMap { it.references }
-                .toSet()
+                .toSet() + referencesAwaitingDeleteEnqueue
         }
 
     private fun hexWithHash(color: String): String = if (color.startsWith("#")) color else "#$color"

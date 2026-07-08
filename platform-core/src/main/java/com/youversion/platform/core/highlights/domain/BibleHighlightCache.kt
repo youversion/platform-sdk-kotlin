@@ -19,7 +19,6 @@ object BibleHighlightCache {
         REMOTE_SYNCED,
         LOCAL_PENDING_CREATE,
         LOCAL_PENDING_UPDATE,
-        LOCAL_PENDING_DELETE,
     }
 
     data class CachedHighlight(
@@ -116,27 +115,11 @@ object BibleHighlightCache {
         _highlights.update { current ->
             current.toMutableList().apply {
                 for (reference in references) {
-                    // If there is a pending create for this reference, just drop it; otherwise mark pending delete
-                    val pendingCreateIndex =
-                        indexOfFirst {
-                            it.highlight.bibleReference == reference &&
-                                it.state == CachedHighlightState.LOCAL_PENDING_CREATE
-                        }
-                    if (pendingCreateIndex != -1) {
-                        removeAt(pendingCreateIndex)
-                    } else {
-                        val index = indexOfFirst { it.highlight.bibleReference == reference }
-                        if (index != -1) {
-                            this[index] =
-                                this[index].copy(
-                                    state = CachedHighlightState.LOCAL_PENDING_DELETE,
-                                    lastModifiedAt = Date(),
-                                )
-                        }
+                    val index = indexOfFirst { it.highlight.bibleReference == reference }
+                    if (index != -1) {
+                        removeAt(index)
                     }
                 }
-                // Physically remove deletes so the visible list hides them
-                removeAll { it.state == CachedHighlightState.LOCAL_PENDING_DELETE }
             }
         }
     }

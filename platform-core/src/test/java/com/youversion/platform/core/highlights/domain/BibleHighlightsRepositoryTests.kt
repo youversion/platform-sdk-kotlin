@@ -337,6 +337,46 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
+    fun `a delete is not resurrected by a load whose guard check runs before the delete is enqueued`() =
+        runTest(testDispatcher) {
+            // Regression: removeHighlights removes the local entry synchronously but enqueues the delete operation
+            // asynchronously. A chapter load that consults the delete guard in that gap must still be told the delete
+            // is pending, or it re-adds the server copy the user just removed. The synchronous bridge is what covers
+            // this window; the queue-derived guard alone does not, because the operation is not on the queue yet.
+            val loadGate = CompletableDeferred<Unit>()
+            val deleteGate = CompletableDeferred<Unit>()
+            val target = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    highlightsGate = loadGate,
+                    deleteGate = deleteGate,
+                )
+            val repository = repository(api)
+
+            // Park a chapter load after it has fetched the server copy but before it consults the delete guard.
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            runCurrent()
+
+            // Release the load first, then delete synchronously: the load's guard check is now scheduled ahead of the
+            // delete's asynchronous enqueue, so only the synchronous bridge can keep the load from resurrecting target.
+            loadGate.complete(Unit)
+            repository.removeHighlights(listOf(target))
+            runCurrent()
+
+            // The delete is in flight (parked on its gate) and the load has merged, so it cannot self-heal yet: without
+            // the bridge the server copy would be present here.
+            assertEquals(0, repository.highlights(overlapping = target).size)
+
+            deleteGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals(0, repository.highlights(overlapping = target).size)
+        }
+
+    @Test
     fun `queue retries a failing remove until it succeeds`() =
         runTest(testDispatcher) {
             val api = FakeHighlightsApi(failuresBeforeSuccess = 2)
