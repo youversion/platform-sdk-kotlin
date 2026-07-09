@@ -105,6 +105,21 @@ class HardcodedUiStringsCheckerTest {
     }
 
     @Test
+    fun commentWithClosingBraceInsideEnum_stillFlagsEnumEntry() {
+        val violations =
+            violationsForContent(
+                """
+                enum class Status {
+                    // fix } bug
+                    SOME_ENTRY("Hardcoded"),
+                }
+                """.trimIndent(),
+            )
+
+        assertEquals(1, violations.size)
+    }
+
+    @Test
     fun camelCaseCallInsideEnumBody_doesNotFlag() {
         val violations =
             violationsForContent(
