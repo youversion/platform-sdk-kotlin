@@ -240,16 +240,28 @@ class BibleHighlightsCacheTests {
     }
 
     @Test
-    fun `removeSyncedHighlights demotes a pending update so its queued op re-posts instead of putting`() {
+    fun `removeHighlights tombstones a reference so it is hidden and not server-backed`() {
         BibleHighlightCache.clear()
         val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
         BibleHighlightCache.addHighlights(listOf(BibleHighlight(bibleReference = reference, hexColor = "#ff0000")))
 
-        // Mirror an add -> sync -> recolor -> delete sequence: the create synced and a later recolor left the row as a
-        // pending update, then the delete reached the server. The pending update must fall back to a pending create so
-        // the still-queued recolor POSTs a fresh highlight instead of PUTting the resource the server just deleted.
-        BibleHighlightCache.markHighlightsAsSynced(listOf(reference), notModifiedAfter = Date(0))
-        BibleHighlightCache.removeSyncedHighlights(listOf(reference))
+        BibleHighlightCache.removeHighlights(listOf(reference))
+
+        assertTrue(BibleHighlightCache.highlights(overlapping = reference).isEmpty())
+        assertTrue(BibleHighlightCache.highlights.value.isEmpty())
+        assertFalse(BibleHighlightCache.isHighlightServerBacked(reference))
+    }
+
+    @Test
+    fun `recoloring a tombstoned reference re-creates it as a pending create`() {
+        BibleHighlightCache.clear()
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        BibleHighlightCache.addHighlights(listOf(BibleHighlight(bibleReference = reference, hexColor = "#ff0000")))
+        BibleHighlightCache.removeHighlights(listOf(reference))
+
+        // A re-highlight after a delete must sync as a create, not an update: the server is about to delete the row, so
+        // a PUT would target a resource that no longer exists.
+        BibleHighlightCache.updateHighlightColors(listOf(reference), newColor = "#00ff00")
 
         assertEquals(
             BibleHighlightCache.CachedHighlightState.LOCAL_PENDING_CREATE,

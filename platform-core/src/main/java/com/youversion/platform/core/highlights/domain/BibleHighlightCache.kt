@@ -5,11 +5,11 @@ import com.youversion.platform.core.highlights.models.BibleHighlight
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.util.Date
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
@@ -19,6 +19,10 @@ internal object BibleHighlightCache {
         REMOTE_SYNCED,
         LOCAL_PENDING_CREATE,
         LOCAL_PENDING_UPDATE,
+
+        // Tombstone: removed locally, hidden from observers, and never resurrected by a server merge until a load that
+        // started after the delete synced confirms it (see CachedHighlight.clearsAfterLoadSequence).
+        LOCAL_PENDING_DELETE,
     }
 
     data class CachedHighlight(
@@ -26,15 +30,28 @@ internal object BibleHighlightCache {
         val highlight: BibleHighlight,
         val state: CachedHighlightState,
         val lastModifiedAt: Date = Date(),
+        // For a tombstone, the load sequence at which the delete reached the server (null until it has). A load with a
+        // strictly greater ChapterLoad.sequence began afterwards, so its response reflects the deletion.
+        val clearsAfterLoadSequence: Long? = null,
     )
+
+    private class ChapterLoad(
+        val sequence: Long,
+    ) {
+        val completion = CompletableDeferred<Unit>()
+    }
 
     // ----- Observable State
     private val _highlights = MutableStateFlow<List<CachedHighlight>>(emptyList())
-    val highlights: StateFlow<List<CachedHighlight>> = _highlights.asStateFlow()
+    val highlights: StateFlow<List<CachedHighlight>> =
+        MappedStateFlow(_highlights) { cached ->
+            cached.filterNot { it.state == CachedHighlightState.LOCAL_PENDING_DELETE }
+        }
 
     // ----- Throttling and Loading
     private val recentChapterFetches = ConcurrentHashMap<BibleReference, Date>()
-    private val currentlyLoadingChapters = ConcurrentHashMap<BibleReference, CompletableDeferred<Unit>>()
+    private val currentlyLoadingChapters = ConcurrentHashMap<BibleReference, ChapterLoad>()
+    private val loadSequence = AtomicLong(0)
     private val throttlingInterval: Duration = 5.minutes
 
     // ----- Public API - State Management
@@ -43,25 +60,28 @@ internal object BibleHighlightCache {
         recentChapterFetches.clear()
         // Wake anything awaiting a load before dropping the signals, so a write parked in awaitChapterLoaded does not
         // hang forever after the cache is reset.
-        currentlyLoadingChapters.values.forEach { it.complete(Unit) }
+        currentlyLoadingChapters.values.forEach { it.completion.complete(Unit) }
         currentlyLoadingChapters.clear()
     }
 
     // ----- Public API - Queries
     fun highlights(overlapping: BibleReference): List<BibleHighlight> =
         _highlights.value
+            .filter { it.state != CachedHighlightState.LOCAL_PENDING_DELETE }
             .filter { it.highlight.bibleReference.overlaps(otherReference = overlapping) }
             .map { it.highlight }
 
     /**
-     * Whether the server is known to hold a highlight for [reference], i.e. the cache has an entry for it in any state
-     * other than [CachedHighlightState.LOCAL_PENDING_CREATE]. Callers use this to tell a recolor of a server-backed
-     * highlight (which should sync as an update) apart from a recolor of one the server has never seen (which should
-     * sync as a create).
+     * Whether the server is known to hold a highlight for [reference], i.e. the cache has an entry for it that is neither
+     * a [CachedHighlightState.LOCAL_PENDING_CREATE] nor a [CachedHighlightState.LOCAL_PENDING_DELETE] tombstone. Callers
+     * use this to tell a recolor of a server-backed highlight (which should sync as an update) apart from a recolor of
+     * one the server has never seen or one the user has just removed (both of which should sync as a create).
      */
     fun isHighlightServerBacked(reference: BibleReference): Boolean =
         _highlights.value.any {
-            it.highlight.bibleReference == reference && it.state != CachedHighlightState.LOCAL_PENDING_CREATE
+            it.highlight.bibleReference == reference &&
+                it.state != CachedHighlightState.LOCAL_PENDING_CREATE &&
+                it.state != CachedHighlightState.LOCAL_PENDING_DELETE
         }
 
     fun hasRecentlyLoadedChapter(chapter: BibleReference): Boolean {
@@ -74,10 +94,13 @@ internal object BibleHighlightCache {
         currentlyLoadingChapters.containsKey(normalizeToChapter(chapter))
 
     fun markChapterAsLoading(chapter: BibleReference): Boolean =
-        currentlyLoadingChapters.putIfAbsent(normalizeToChapter(chapter), CompletableDeferred()) == null
+        currentlyLoadingChapters.putIfAbsent(
+            normalizeToChapter(chapter),
+            ChapterLoad(loadSequence.incrementAndGet()),
+        ) == null
 
     fun unmarkChapterAsLoading(chapter: BibleReference) {
-        currentlyLoadingChapters.remove(normalizeToChapter(chapter))?.complete(Unit)
+        currentlyLoadingChapters.remove(normalizeToChapter(chapter))?.completion?.complete(Unit)
     }
 
     /**
@@ -86,7 +109,7 @@ internal object BibleHighlightCache {
      * update, without polling: the load completes the signal in [unmarkChapterAsLoading].
      */
     suspend fun awaitChapterLoaded(chapter: BibleReference) {
-        currentlyLoadingChapters[normalizeToChapter(chapter)]?.await()
+        currentlyLoadingChapters[normalizeToChapter(chapter)]?.completion?.await()
     }
 
     fun recordChapterFetch(
@@ -115,10 +138,13 @@ internal object BibleHighlightCache {
         _highlights.update { current ->
             current.toMutableList().apply {
                 for (reference in references) {
-                    val index = indexOfFirst { it.highlight.bibleReference == reference }
-                    if (index != -1) {
-                        removeAt(index)
-                    }
+                    removeAll { it.highlight.bibleReference == reference }
+                    add(
+                        CachedHighlight(
+                            highlight = BibleHighlight(bibleReference = reference, hexColor = ""),
+                            state = CachedHighlightState.LOCAL_PENDING_DELETE,
+                        ),
+                    )
                 }
             }
         }
@@ -133,16 +159,20 @@ internal object BibleHighlightCache {
                 for (reference in references) {
                     val index = indexOfFirst { it.highlight.bibleReference == reference }
                     if (index != -1) {
+                        val existing = this[index]
+                        val newState =
+                            when (existing.state) {
+                                CachedHighlightState.LOCAL_PENDING_CREATE,
+                                CachedHighlightState.LOCAL_PENDING_DELETE,
+                                -> CachedHighlightState.LOCAL_PENDING_CREATE
+                                else -> CachedHighlightState.LOCAL_PENDING_UPDATE
+                            }
                         this[index] =
-                            this[index].copy(
+                            existing.copy(
                                 highlight = BibleHighlight(bibleReference = reference, hexColor = newColor),
-                                state =
-                                    if (this[index].state != CachedHighlightState.LOCAL_PENDING_CREATE) {
-                                        CachedHighlightState.LOCAL_PENDING_UPDATE
-                                    } else {
-                                        this[index].state
-                                    },
+                                state = newState,
                                 lastModifiedAt = Date(),
+                                clearsAfterLoadSequence = null,
                             )
                     } else {
                         // Create if not exists, pending create
@@ -164,20 +194,28 @@ internal object BibleHighlightCache {
         highlights: List<BibleHighlight>,
     ) {
         val chapterRef = normalizeToChapter(chapter)
+        val thisLoadSequence = currentlyLoadingChapters[chapterRef]?.sequence
 
         _highlights.update { current ->
             current.toMutableList().apply {
-                // Remove existing remote-synced highlights for this chapter
-                removeAll { cached ->
-                    cached.state == CachedHighlightState.REMOTE_SYNCED &&
-                        cached.highlight.bibleReference.bookUSFM == chapterRef.bookUSFM &&
-                        cached.highlight.bibleReference.chapter == chapterRef.chapter &&
-                        cached.highlight.bibleReference.versionId == chapterRef.versionId
+                // Drop tombstones this load is known to reflect: it started after the delete synced, so the server
+                // response already accounts for the removal and can no longer resurrect it.
+                if (thisLoadSequence != null) {
+                    removeAll { cached ->
+                        cached.state == CachedHighlightState.LOCAL_PENDING_DELETE &&
+                            isInChapter(cached, chapterRef) &&
+                            cached.clearsAfterLoadSequence?.let { thisLoadSequence > it } == true
+                    }
                 }
 
-                // Append server highlights as remote-synced, but never alongside a still-pending local write for the
-                // same reference: keep the optimistic local entry so its edit is not lost, and if it was a pending
-                // create, mark it a pending update so the queued write now knows the server holds the highlight.
+                // Remove existing remote-synced highlights for this chapter
+                removeAll { cached ->
+                    cached.state == CachedHighlightState.REMOTE_SYNCED && isInChapter(cached, chapterRef)
+                }
+
+                // Append server highlights as remote-synced, but never alongside a still-pending local write or a delete
+                // tombstone for the same reference: keep the local entry so its edit is not lost or resurrected, and if
+                // it was a pending create, mark it a pending update so the queued write now knows the server holds it.
                 for (highlight in highlights) {
                     val localIndex =
                         indexOfFirst {
@@ -220,7 +258,8 @@ internal object BibleHighlightCache {
             current.map { cached ->
                 when {
                     cached.highlight.bibleReference !in referenceSet ||
-                        cached.state == CachedHighlightState.REMOTE_SYNCED -> cached
+                        cached.state == CachedHighlightState.REMOTE_SYNCED ||
+                        cached.state == CachedHighlightState.LOCAL_PENDING_DELETE -> cached
                     !cached.lastModifiedAt.after(notModifiedAfter) ->
                         cached.copy(state = CachedHighlightState.REMOTE_SYNCED)
                     cached.state == CachedHighlightState.LOCAL_PENDING_CREATE ->
@@ -232,29 +271,37 @@ internal object BibleHighlightCache {
     }
 
     /**
-     * Drops any remote-synced cached highlight for each of [references] once their deletion has reached the server. A
-     * delete removes the local entry immediately, so this only matters when a concurrent chapter load re-added the
-     * highlight as remote-synced before the delete synced; without it that stale row would linger until the next
-     * reload. Local-pending entries are left in place so a re-add made after the delete is not lost, but a pending
-     * update is demoted to a pending create so its queued op POSTs a fresh highlight instead of PUTting the resource
-     * the server just deleted.
+     * Records that the delete for each of [references] has reached the server. Their tombstones are kept, not dropped,
+     * so a chapter load already in flight — whose response may predate the delete — cannot resurrect the highlight;
+     * each tombstone is stamped with the current load sequence so a load that starts afterwards can clear it once the
+     * server confirms the removal (see [applyServerHighlights]). References that were re-added since the delete are no
+     * longer tombstones and are left untouched.
      */
-    fun removeSyncedHighlights(references: List<BibleReference>) {
+    fun markDeletesSynced(references: List<BibleReference>) {
         val referenceSet = references.toSet()
+        val boundary = loadSequence.get()
         _highlights.update { current ->
-            current.mapNotNull { cached ->
-                when {
-                    cached.highlight.bibleReference !in referenceSet -> cached
-                    cached.state == CachedHighlightState.REMOTE_SYNCED -> null
-                    cached.state == CachedHighlightState.LOCAL_PENDING_UPDATE ->
-                        cached.copy(state = CachedHighlightState.LOCAL_PENDING_CREATE)
-                    else -> cached
+            current.map { cached ->
+                if (cached.highlight.bibleReference in referenceSet &&
+                    cached.state == CachedHighlightState.LOCAL_PENDING_DELETE
+                ) {
+                    cached.copy(clearsAfterLoadSequence = boundary)
+                } else {
+                    cached
                 }
             }
         }
     }
 
     // ----- Utilities
+    private fun isInChapter(
+        cached: CachedHighlight,
+        chapterRef: BibleReference,
+    ): Boolean =
+        cached.highlight.bibleReference.bookUSFM == chapterRef.bookUSFM &&
+            cached.highlight.bibleReference.chapter == chapterRef.chapter &&
+            cached.highlight.bibleReference.versionId == chapterRef.versionId
+
     private fun normalizeToChapter(reference: BibleReference): BibleReference =
         BibleReference(
             versionId = reference.versionId,
