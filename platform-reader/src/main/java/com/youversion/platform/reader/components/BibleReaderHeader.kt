@@ -20,8 +20,10 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.youversion.platform.reader.R
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
@@ -71,7 +73,7 @@ fun BibleReaderHeader(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Language,
-                        contentDescription = "Language",
+                        contentDescription = stringResource(R.string.language_content_desc),
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(

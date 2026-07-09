@@ -67,12 +67,17 @@ fun VersionsScreen(
                 title = {
                     Column {
                         Text(
-                            text = "Versions",
+                            text = stringResource(R.string.versions_screen_title),
                             style = BibleReaderTheme.typography.headerM,
                         )
                         if (state.versionsCount > 0) {
                             Text(
-                                text = "${state.versionsCount} Versions in ${state.languagesCount} Languages",
+                                text =
+                                    stringResource(
+                                        R.string.versions_statistics,
+                                        state.versionsCount,
+                                        state.languagesCount,
+                                    ),
                                 style = BibleReaderTheme.typography.captionXS,
                             )
                         }
@@ -131,7 +136,12 @@ fun VersionsScreen(
 
                     item {
                         BibleVersionsSectionHeader(
-                            title = "${state.activeLanguageName} Versions (${state.activeLanguageVersionsCount})",
+                            title =
+                                stringResource(
+                                    R.string.active_language_versions_header,
+                                    state.activeLanguageName,
+                                    state.activeLanguageVersionsCount,
+                                ),
                         )
                     }
 
@@ -159,7 +169,7 @@ fun VersionsScreen(
                                             .padding(horizontal = 16.dp),
                                 ) {
                                     Text(
-                                        text = "Couldn't load versions. Check your connection and try again.",
+                                        text = stringResource(R.string.versions_load_error),
                                     )
                                 }
                             }
@@ -173,7 +183,7 @@ fun VersionsScreen(
                                         Modifier
                                             .fillMaxWidth(),
                                 ) {
-                                    Text("No versions found for this language")
+                                    Text(stringResource(R.string.versions_empty_for_language))
                                 }
                             }
                         }

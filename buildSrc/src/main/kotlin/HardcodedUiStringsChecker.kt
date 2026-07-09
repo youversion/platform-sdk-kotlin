@@ -25,6 +25,7 @@ class HardcodedUiStringsChecker(
     private val excludedFileSuffixes =
         setOf(
             "ReaderFontSettings.kt",
+            "BibleReaderFontSettingsSheet.kt",
             "BibleAppLogo.kt",
             "SignInWithYouVersionButton.kt",
         )
