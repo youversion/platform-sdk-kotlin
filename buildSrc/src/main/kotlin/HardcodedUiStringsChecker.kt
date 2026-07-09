@@ -11,11 +11,12 @@ class HardcodedUiStringsChecker(
     private val projectRoot: File,
     private val moduleNames: List<String> = listOf("platform-ui", "platform-reader"),
 ) {
-    private val stringLiteralPattern = Regex(""""(?:[^"\\]|\\.)*"""")
+    private val tripleQuotedPattern = Regex("\"\"\"((?:[^\"]|\"(?![\"\"]))*)\"\"\"")
+    private val singleQuotedPattern = Regex(""""(?:[^"\\]|\\.)*"""")
 
-    private val textLiteralPattern = Regex("""Text\s*\(\s*"""")
+    private val textLiteralPattern = Regex("""Text\s*\(""")
     private val textPropertyPattern = Regex("""\btext\s*=\s*"""")
-    private val basicTextLiteralPattern = Regex("""BasicText\s*\(\s*"""")
+    private val basicTextLiteralPattern = Regex("""BasicText\s*\(""")
     private val titleLiteralPattern = Regex("""\btitle\s*=\s*"""")
     private val contentDescriptionLiteralPattern = Regex("""\bcontentDescription\s*=\s*"""")
     private val toastLiteralPattern = Regex("""Toast\.makeText\s*\([^,]+,\s*"""")
@@ -106,10 +107,6 @@ class HardcodedUiStringsChecker(
         line: String,
         insideEnumClass: Boolean,
     ): Boolean {
-        if (line.contains("stringResource") || line.contains("pluralStringResource")) {
-            return false
-        }
-
         if (textLiteralPattern.containsMatchIn(line) ||
             textPropertyPattern.containsMatchIn(line) ||
             basicTextLiteralPattern.containsMatchIn(line) ||
@@ -117,11 +114,11 @@ class HardcodedUiStringsChecker(
             contentDescriptionLiteralPattern.containsMatchIn(line) ||
             toastLiteralPattern.containsMatchIn(line)
         ) {
-            return stringLiteralPattern.containsMatchIn(line)
+            return hasStringLiteral(line)
         }
 
         if (insideEnumClass && enumEntryLiteralPattern.containsMatchIn(line)) {
-            return stringLiteralPattern.containsMatchIn(line)
+            return hasStringLiteral(line)
         }
 
         return false
@@ -197,9 +194,34 @@ class HardcodedUiStringsChecker(
             line.contains("SharedPreferences") ||
             line.contains("preferencesKey")
 
+    private fun hasStringLiteral(line: String): Boolean =
+        tripleQuotedPattern.containsMatchIn(line) || singleQuotedPattern.containsMatchIn(line)
+
     private fun extractPrimaryUiStringLiteral(line: String): String? {
-        val match = stringLiteralPattern.find(line) ?: return null
-        return match.value.removeSurrounding("\"")
+        if (tripleQuotedPattern.containsMatchIn(line)) {
+            val startIndex = line.indexOf("\"\"\"")
+            val contentStart = startIndex + 3
+            var index = contentStart
+            while (index < line.length) {
+                if (line[index] == '"') {
+                    var quoteRunEnd = index
+                    while (quoteRunEnd < line.length && line[quoteRunEnd] == '"') {
+                        quoteRunEnd++
+                    }
+                    val quoteRunLength = quoteRunEnd - index
+                    if (quoteRunLength >= 3) {
+                        return line.substring(contentStart, index + quoteRunLength - 3)
+                    }
+                    index = quoteRunEnd
+                } else {
+                    index++
+                }
+            }
+        }
+        singleQuotedPattern.find(line)?.let { match ->
+            return match.value.removeSurrounding("\"")
+        }
+        return null
     }
 }
 
