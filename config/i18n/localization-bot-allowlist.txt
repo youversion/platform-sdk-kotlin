@@ -2,7 +2,6 @@
 # One login per line. Lines starting with # are ignored.
 #
 # Update this list when the localization sync GitHub App identity is confirmed.
-# Observed sync commits have been authored by camrun91; replace with the app
 # bot login (e.g. localization-sync[bot]) once verified.
 
-camrun91
+platform-localization-pr-bot
