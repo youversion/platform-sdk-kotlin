@@ -137,6 +137,27 @@ class HardcodedUiStringsCheckerTest {
     }
 
     @Test
+    fun textWithContainsBranch_flagsHardcodedBranchLiterals() {
+        val violations =
+            violationsFor(
+                """Text(text = if (version.contains("NIV")) "Legacy Translation" else "Modern Translation")""",
+            )
+
+        assertEquals(1, violations.size)
+        assertEquals("Legacy Translation", violations.first().stringLiteral)
+    }
+
+    @Test
+    fun joinToStringLine_isExcludedFromChecking() {
+        val violations =
+            violationsFor(
+                """Text(text = chapters.joinToString(separator = ", ") { it.title })""",
+            )
+
+        assertTrue(violations.isEmpty())
+    }
+
+    @Test
     fun previewComposableWithHardcodedString_doesNotFlagButProductionComposableDoes() {
         val violations =
             violationsForContent(

@@ -21,6 +21,24 @@ class HardcodedUiStringsChecker(
     private val contentDescriptionLiteralPattern = Regex("""\bcontentDescription\s*=\s*"""")
     private val toastLiteralPattern = Regex("""Toast\.makeText\s*\([^,]+,\s*"""")
     private val enumEntryLiteralPattern = Regex("""^\s*[A-Z][A-Za-z0-9_]*\s*\(\s*"""")
+    private val branchingOperationLiteralPrefixPattern = Regex("""\.(?:contains|startsWith|split)\s*\(\s*$""")
+
+    private val fullLineMarkupPatterns =
+        listOf(
+            ".append(",
+            "joinToString(",
+            "AnnotatedString(",
+            "copyText(",
+            "onLanguageSearchQueryChange(",
+            "onVersionSearchQueryChange(",
+        )
+
+    private val branchingOperationPatterns =
+        listOf(
+            ".contains(",
+            ".startsWith(",
+            ".split(",
+        )
 
     private val excludedFileSuffixes =
         setOf(
@@ -171,16 +189,25 @@ class HardcodedUiStringsChecker(
         return false
     }
 
-    private fun isMarkupOrConstantLine(line: String): Boolean =
-        line.contains(".contains(") ||
-            line.contains(".startsWith(") ||
-            line.contains(".split(") ||
-            line.contains(".append(") ||
-            line.contains("joinToString(") ||
-            line.contains("AnnotatedString(") ||
-            line.contains("copyText(") ||
-            line.contains("onLanguageSearchQueryChange(") ||
-            line.contains("onVersionSearchQueryChange(")
+    private fun isMarkupOrConstantLine(line: String): Boolean {
+        if (fullLineMarkupPatterns.any { line.contains(it) }) {
+            return true
+        }
+
+        if (branchingOperationPatterns.any { line.contains(it) }) {
+            return !hasUiDisplaySite(line)
+        }
+
+        return false
+    }
+
+    private fun hasUiDisplaySite(line: String): Boolean =
+        textLiteralPattern.containsMatchIn(line) ||
+            textPropertyPattern.containsMatchIn(line) ||
+            basicTextLiteralPattern.containsMatchIn(line) ||
+            titleLiteralPattern.containsMatchIn(line) ||
+            contentDescriptionLiteralPattern.containsMatchIn(line) ||
+            toastLiteralPattern.containsMatchIn(line)
 
     private fun isRouteString(line: String): Boolean =
         line.contains("BibleReaderDestination(") ||
@@ -202,28 +229,42 @@ class HardcodedUiStringsChecker(
     private fun extractPrimaryUiStringLiteral(line: String): String? {
         if (tripleQuotedPattern.containsMatchIn(line)) {
             val startIndex = line.indexOf("\"\"\"")
-            val contentStart = startIndex + 3
-            var index = contentStart
-            while (index < line.length) {
-                if (line[index] == '"') {
-                    var quoteRunEnd = index
-                    while (quoteRunEnd < line.length && line[quoteRunEnd] == '"') {
-                        quoteRunEnd++
+            if (!isDirectBranchingArgument(startIndex, line)) {
+                val contentStart = startIndex + 3
+                var index = contentStart
+                while (index < line.length) {
+                    if (line[index] == '"') {
+                        var quoteRunEnd = index
+                        while (quoteRunEnd < line.length && line[quoteRunEnd] == '"') {
+                            quoteRunEnd++
+                        }
+                        val quoteRunLength = quoteRunEnd - index
+                        if (quoteRunLength >= 3) {
+                            return line.substring(contentStart, index + quoteRunLength - 3)
+                        }
+                        index = quoteRunEnd
+                    } else {
+                        index++
                     }
-                    val quoteRunLength = quoteRunEnd - index
-                    if (quoteRunLength >= 3) {
-                        return line.substring(contentStart, index + quoteRunLength - 3)
-                    }
-                    index = quoteRunEnd
-                } else {
-                    index++
                 }
             }
         }
-        singleQuotedPattern.find(line)?.let { match ->
-            return match.value.removeSurrounding("\"")
+
+        singleQuotedPattern.findAll(line).forEach { match ->
+            if (!isDirectBranchingArgument(match.range.first, line)) {
+                return match.value.removeSurrounding("\"")
+            }
         }
+
         return null
+    }
+
+    private fun isDirectBranchingArgument(
+        literalStartIndex: Int,
+        line: String,
+    ): Boolean {
+        val prefix = line.substring(0, literalStartIndex)
+        return branchingOperationLiteralPrefixPattern.containsMatchIn(prefix)
     }
 }
 
