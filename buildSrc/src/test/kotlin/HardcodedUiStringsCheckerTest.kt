@@ -89,10 +89,50 @@ class HardcodedUiStringsCheckerTest {
         assertEquals("Say \"hi\"", violations.first().stringLiteral)
     }
 
+    @Test
+    fun enumEntryWithHardcodedString_flagsViolation() {
+        val violations =
+            violationsForContent(
+                """
+                enum class Status {
+                    SOME_ENTRY("Hardcoded"),
+                }
+                """.trimIndent(),
+            )
+
+        assertEquals(1, violations.size)
+        assertEquals("Hardcoded", violations.first().stringLiteral)
+    }
+
+    @Test
+    fun camelCaseCallInsideEnumBody_doesNotFlag() {
+        val violations =
+            violationsForContent(
+                """
+                enum class Status {
+                    SOME_ENTRY(stringResource(R.string.localized)),
+                    ;
+
+                    fun display(): String = someHelper("Hardcoded")
+                }
+                """.trimIndent(),
+            )
+
+        assertTrue(violations.isEmpty())
+    }
+
     private fun violationsFor(line: String): List<HardcodedStringViolation> {
         val root =
             createTempProject(
                 "platform-ui/src/main/java/com/example/TestScreen.kt" to line,
+            )
+        return HardcodedUiStringsChecker(root, listOf("platform-ui")).violations()
+    }
+
+    private fun violationsForContent(content: String): List<HardcodedStringViolation> {
+        val root =
+            createTempProject(
+                "platform-ui/src/main/java/com/example/TestEnum.kt" to content,
             )
         return HardcodedUiStringsChecker(root, listOf("platform-ui")).violations()
     }

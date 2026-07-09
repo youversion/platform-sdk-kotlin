@@ -20,7 +20,7 @@ class HardcodedUiStringsChecker(
     private val titleLiteralPattern = Regex("""\btitle\s*=\s*"""")
     private val contentDescriptionLiteralPattern = Regex("""\bcontentDescription\s*=\s*"""")
     private val toastLiteralPattern = Regex("""Toast\.makeText\s*\([^,]+,\s*"""")
-    private val enumEntryLiteralPattern = Regex("""^\s*\w+\s*\(\s*"""")
+    private val enumEntryLiteralPattern = Regex("""^\s*[A-Z][A-Za-z0-9_]*\s*\(\s*"""")
 
     private val excludedFileSuffixes =
         setOf(
