@@ -161,11 +161,9 @@ class BibleHighlightsRepository(
         if (!forceReload && cache.hasRecentlyLoadedChapter(chapter)) {
             return
         }
-        if (!cache.markChapterAsLoading(chapter)) {
-            return
-        }
+        val load = cache.markChapterAsLoading(chapter) ?: return
 
-        loadScope.launch { loadChapterFromServer(chapter) }
+        loadScope.launch { loadChapterFromServer(chapter, load) }
     }
 
     /**
@@ -486,7 +484,10 @@ class BibleHighlightsRepository(
             api.createHighlight(reference.versionId, passageId, hexWithoutHash(color))
         }
 
-    private suspend fun loadChapterFromServer(chapter: BibleReference) {
+    private suspend fun loadChapterFromServer(
+        chapter: BibleReference,
+        load: BibleHighlightCache.ChapterLoad,
+    ) {
         try {
             val passageId = chapter.chapterUSFM
             val serverHighlights =
@@ -501,7 +502,7 @@ class BibleHighlightsRepository(
         } catch (e: Exception) {
             Logger.e(e) { "Failed to load highlights for chapter $chapter" }
         } finally {
-            cache.unmarkChapterAsLoading(chapter)
+            cache.unmarkChapterAsLoading(chapter, load)
         }
     }
 

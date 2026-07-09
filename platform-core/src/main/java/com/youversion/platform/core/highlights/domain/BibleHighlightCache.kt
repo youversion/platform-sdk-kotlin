@@ -35,7 +35,7 @@ internal object BibleHighlightCache {
         val clearsAfterLoadSequence: Long? = null,
     )
 
-    private class ChapterLoad(
+    internal class ChapterLoad(
         val sequence: Long,
     ) {
         val completion = CompletableDeferred<Unit>()
@@ -93,14 +93,24 @@ internal object BibleHighlightCache {
     fun isChapterLoading(chapter: BibleReference): Boolean =
         currentlyLoadingChapters.containsKey(normalizeToChapter(chapter))
 
-    fun markChapterAsLoading(chapter: BibleReference): Boolean =
-        currentlyLoadingChapters.putIfAbsent(
-            normalizeToChapter(chapter),
-            ChapterLoad(loadSequence.incrementAndGet()),
-        ) == null
+    fun markChapterAsLoading(chapter: BibleReference): ChapterLoad? {
+        val load = ChapterLoad(loadSequence.incrementAndGet())
+        return load.takeIf { currentlyLoadingChapters.putIfAbsent(normalizeToChapter(chapter), it) == null }
+    }
 
-    fun unmarkChapterAsLoading(chapter: BibleReference) {
-        currentlyLoadingChapters.remove(normalizeToChapter(chapter))?.completion?.complete(Unit)
+    /**
+     * Ends the load represented by [load], completing its waiters. Only clears the entry if [load] is still the
+     * registered load for [chapter]: a [clear] between this load's start and finish can drop the entry and let a newer
+     * load register under the same chapter, and completing that newer load's signal here would unpark its
+     * [awaitChapterLoaded] waiters before its data has merged.
+     */
+    fun unmarkChapterAsLoading(
+        chapter: BibleReference,
+        load: ChapterLoad,
+    ) {
+        if (currentlyLoadingChapters.remove(normalizeToChapter(chapter), load)) {
+            load.completion.complete(Unit)
+        }
     }
 
     /**

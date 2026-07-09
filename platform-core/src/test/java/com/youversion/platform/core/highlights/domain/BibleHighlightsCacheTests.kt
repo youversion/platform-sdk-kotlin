@@ -10,6 +10,7 @@ import java.util.Date
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -291,7 +292,7 @@ class BibleHighlightsCacheTests {
         runTest {
             BibleHighlightCache.clear()
             val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
-            assertTrue(BibleHighlightCache.markChapterAsLoading(chapter))
+            val load = assertNotNull(BibleHighlightCache.markChapterAsLoading(chapter))
 
             var didResume = false
             val waiter =
@@ -303,7 +304,7 @@ class BibleHighlightsCacheTests {
             runCurrent()
             assertFalse(didResume)
 
-            BibleHighlightCache.unmarkChapterAsLoading(chapter)
+            BibleHighlightCache.unmarkChapterAsLoading(chapter, load)
             runCurrent()
             assertTrue(didResume)
             waiter.join()
