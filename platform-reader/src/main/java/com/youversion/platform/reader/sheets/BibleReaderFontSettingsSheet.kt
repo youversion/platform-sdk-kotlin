@@ -38,6 +38,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -64,9 +66,11 @@ fun BibleReaderFontSettingsSheet(
     onDismissRequest: () -> Unit,
     onSmallerFontClick: () -> Unit,
     onBiggerFontClick: () -> Unit,
+    onLineSpacingClick: () -> Unit,
     onFontClick: () -> Unit,
     onThemeSelect: (ReaderTheme) -> Unit,
     fontDefinition: FontDefinition,
+    lineSpacing: Float,
 ) {
     val sheetState =
         rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -88,10 +92,21 @@ fun BibleReaderFontSettingsSheet(
                     Modifier
                         .padding(horizontal = 24.dp),
             ) {
-                FontSizeButtons(
-                    onSmallerFontClick = onSmallerFontClick,
-                    onBiggerFontClick = onBiggerFontClick,
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        FontSizeButtons(
+                            onSmallerFontClick = onSmallerFontClick,
+                            onBiggerFontClick = onBiggerFontClick,
+                        )
+                    }
+                    LineSpacingButton(
+                        lineSpacing = lineSpacing,
+                        onClick = onLineSpacingClick,
+                    )
+                }
                 FontDisplayButton(
                     fontDefinition = fontDefinition,
                     onFontClick = {
@@ -170,6 +185,52 @@ private fun FontSizeButtons(
                         fontSize = 28.sp,
                     ),
             )
+        }
+    }
+}
+
+@Composable
+private fun LineSpacingButton(
+    lineSpacing: Float,
+    onClick: () -> Unit,
+) {
+    // Preview: three horizontal bars whose vertical gap tracks the current spacing so
+    // cycling through 1.2 / 1.5 / 1.8 visibly redistributes them. `lineSpacing / 3` matches
+    // the Swift reader's control (ReaderFonts.nextLineSpacing preview) so the two platforms
+    // present the same relative spread of options.
+    val previewGap = (lineSpacing / 3f * 8).dp
+    val barColor = MaterialTheme.colorScheme.onSurface
+    val label = stringResource(R.string.line_spacing_label)
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier =
+            Modifier
+                .heightIn(min = 48.dp)
+                .width(56.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.readerColorScheme.buttonSecondaryColor)
+                .clickable(
+                    interactionSource = null,
+                    enabled = true,
+                    indication = ripple(),
+                    onClick = onClick,
+                ).semantics { contentDescription = label }
+                .testTag("line_spacing_button"),
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(previewGap),
+        ) {
+            repeat(3) {
+                Box(
+                    modifier =
+                        Modifier
+                            .width(32.dp)
+                            .height(2.dp)
+                            .background(barColor),
+                )
+            }
         }
     }
 }
@@ -318,9 +379,11 @@ private fun Preview_BibleReaderFontSettingsSheet() {
             onDismissRequest = {},
             onSmallerFontClick = {},
             onBiggerFontClick = {},
+            onLineSpacingClick = {},
             onFontClick = {},
             onThemeSelect = {},
             fontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
+            lineSpacing = ReaderFontSettings.DEFAULT_LINE_SPACING,
         )
     }
 }

@@ -11,6 +11,7 @@
     <string name="yv_font_settings_label">Police</string>
     <string name="yv_footnote_header_label">Note de bas de page</string>
     <string name="yv_intro_chapter_label">Introduction</string>
+    <string name="yv_line_spacing_label">Interligne</string>
     <string name="yv_reader_menu_font_settings">Police &amp; Paramètres</string>
     <string name="yv_reader_menu_sign_in">Se connecter</string>
     <string name="yv_reader_menu_sign_out">Se déconnecter</string>

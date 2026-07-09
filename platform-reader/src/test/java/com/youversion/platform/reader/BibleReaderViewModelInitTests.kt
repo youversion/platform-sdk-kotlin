@@ -55,6 +55,7 @@ class BibleReaderViewModelInitTests {
         every { userSettingsRepository.readerThemeId } returns null
         every { userSettingsRepository.readerFontFamilyName } returns null
         every { userSettingsRepository.readerFontSize } returns null
+        every { userSettingsRepository.readerLineSpacing } returns null
     }
 
     @AfterTest
@@ -179,12 +180,23 @@ class BibleReaderViewModelInitTests {
         }
 
     @Test
+    fun `init restores saved line spacing`() =
+        runTest(testDispatcher) {
+            every { userSettingsRepository.readerLineSpacing } returns 1.8f
+
+            val vm = createViewModel()
+
+            assertEquals(1.8f, vm.state.value.lineSpacing)
+        }
+
+    @Test
     fun `init uses defaults when all settings are null`() =
         runTest(testDispatcher) {
             val vm = createViewModel()
 
             assertEquals(ReaderFontSettings.DEFAULT_FONT_DEFINITION, vm.state.value.selectedFontDefinition)
             assertEquals(ReaderFontSettings.DEFAULT_FONT_SIZE, vm.state.value.fontSize)
+            assertEquals(ReaderFontSettings.DEFAULT_LINE_SPACING, vm.state.value.lineSpacing)
         }
 
     @Test

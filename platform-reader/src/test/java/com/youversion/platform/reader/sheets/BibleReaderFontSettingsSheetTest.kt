@@ -33,9 +33,11 @@ class BibleReaderFontSettingsSheetTest {
         onDismissRequest: () -> Unit = {},
         onSmallerFontClick: () -> Unit = {},
         onBiggerFontClick: () -> Unit = {},
+        onLineSpacingClick: () -> Unit = {},
         onFontClick: () -> Unit = {},
         onThemeSelect: (ReaderTheme) -> Unit = {},
         fontDefinition: FontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
+        lineSpacing: Float = ReaderFontSettings.DEFAULT_LINE_SPACING,
     ) {
         composeTestRule.setContent {
             BibleReaderMaterialTheme(readerColorScheme = Cream) {
@@ -43,9 +45,11 @@ class BibleReaderFontSettingsSheetTest {
                     onDismissRequest = onDismissRequest,
                     onSmallerFontClick = onSmallerFontClick,
                     onBiggerFontClick = onBiggerFontClick,
+                    onLineSpacingClick = onLineSpacingClick,
                     onFontClick = onFontClick,
                     onThemeSelect = onThemeSelect,
                     fontDefinition = fontDefinition,
+                    lineSpacing = lineSpacing,
                 )
             }
         }
@@ -78,6 +82,26 @@ class BibleReaderFontSettingsSheetTest {
         renderSheet(onBiggerFontClick = { isClicked = true })
 
         composeTestRule.onNodeWithTag("larger_font_button").performClick()
+
+        assertTrue(isClicked)
+    }
+
+    // ----- LineSpacingButton
+
+    @Test
+    fun `renders line spacing button`() {
+        renderSheet()
+
+        composeTestRule.onNodeWithTag("line_spacing_button").assertIsDisplayed()
+    }
+
+    @Test
+    fun `clicking line spacing button calls onLineSpacingClick`() {
+        var isClicked = false
+
+        renderSheet(onLineSpacingClick = { isClicked = true })
+
+        composeTestRule.onNodeWithTag("line_spacing_button").performClick()
 
         assertTrue(isClicked)
     }
