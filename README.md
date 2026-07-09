@@ -354,7 +354,7 @@ User-facing strings in `platform-ui` and `platform-reader` must come from synced
 ./gradlew check
 ```
 
-Greptile PR rules live in `.greptile/`. See `.omc/plans/YPE-3549-localization-guardrails.md` for the full policy.
+Greptile PR rules live in `.greptile/`. See [docs/localization-guardrails.md](./docs/localization-guardrails.md) for the full policy.
 
 ## Contributing (Starting Early 2026)
 

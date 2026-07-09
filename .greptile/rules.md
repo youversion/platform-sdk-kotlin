@@ -34,5 +34,5 @@ Add or change keys in **platform-localization**, then sync into this repo.
 
 ## References
 
-- Plan: `.omc/plans/YPE-3549-localization-guardrails.md`
+- Full policy: `docs/localization-guardrails.md`
 - Local check: `./gradlew verifyNoHardcodedUiStrings`
