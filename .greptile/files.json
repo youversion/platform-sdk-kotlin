@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": ".omc/plans/YPE-3549-localization-guardrails.md",
+      "description": "Localization guardrails architecture, exclusion policy, and migration inventory",
+      "scope": [
+        "platform-ui/**",
+        "platform-reader/**"
+      ]
+    }
+  ]
+}

@@ -17,6 +17,14 @@ plugins {
     alias(libs.plugins.spotless) apply false
 }
 
+tasks.register<VerifyNoHardcodedUiStringsTask>("verifyNoHardcodedUiStrings") {
+    moduleNames.set(listOf("platform-ui", "platform-reader"))
+}
+
+tasks.register("check") {
+    dependsOn("verifyNoHardcodedUiStrings")
+}
+
 subprojects {
     // opt-in to internal APIs
     tasks.withType<KotlinCompile> {
