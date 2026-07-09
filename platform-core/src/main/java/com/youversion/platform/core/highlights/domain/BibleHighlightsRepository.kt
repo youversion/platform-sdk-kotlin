@@ -1,6 +1,7 @@
 package com.youversion.platform.core.highlights.domain
 
 import co.touchlab.kermit.Logger
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.api.HighlightsApi
@@ -18,10 +19,13 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
@@ -89,11 +93,16 @@ data class OperationResult(
  * Each queued write is bound to the account that was signed in when it was made. If the signed-in account changes
  * before the write syncs, the write is dropped rather than sent, so one user's highlights can never land on another
  * user's account.
+ *
+ * The cache is cleared automatically whenever the signed-in account changes: [accountIdChanges] is observed and each
+ * change triggers [reset], so one user's cached highlights cannot be read after a sign-out, sign-in, or account switch.
  */
 class BibleHighlightsRepository(
     private val api: HighlightsApi = HighlightsEndpoints,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     private val currentAccountId: () -> String? = { YouVersionApi.users.currentUserId },
+    accountIdChanges: Flow<String?> =
+        YouVersionPlatformConfiguration.configState.map { currentAccountId() },
 ) {
     private val cache = BibleHighlightCache
 
@@ -134,6 +143,15 @@ class BibleHighlightsRepository(
         combine(queuedOperations, operationResultsState) { operations, results ->
             operations.count { results[it.id]?.isSuccess == false }
         }.stateIn(scope, SharingStarted.Eagerly, 0)
+
+    init {
+        scope.launch {
+            accountIdChanges
+                .distinctUntilChanged()
+                .drop(1)
+                .collect { reset() }
+        }
+    }
 
     /**
      * Returns the cached highlights overlapping [overlapping] synchronously.
@@ -225,7 +243,8 @@ class BibleHighlightsRepository(
 
     /**
      * Clears all cached highlights and per-chapter load state, and cancels any in-flight chapter loads so a load that
-     * was already running cannot repopulate the cache after it is cleared. Call this when the user signs out.
+     * was already running cannot repopulate the cache after it is cleared. This runs automatically whenever the
+     * signed-in account changes; it is also exposed for callers that need to clear the cache explicitly.
      *
      * Queued sync operations are left in the queue rather than cleared here, but each is bound to the account that made
      * it: once the signed-in account changes, any write still queued under the previous account is dropped instead of

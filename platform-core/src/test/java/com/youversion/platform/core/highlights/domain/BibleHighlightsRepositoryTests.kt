@@ -7,6 +7,8 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -603,6 +605,58 @@ class BibleHighlightsRepositoryTests {
             advanceUntilIdle()
 
             assertEquals(1, api.createCount)
+        }
+
+    @Test
+    fun `a change in the signed-in account clears the cached highlights`() =
+        runTest(testDispatcher) {
+            val accountIdChanges = MutableStateFlow<String?>("account-a")
+            val repository =
+                BibleHighlightsRepository(
+                    api = FakeHighlightsApi(),
+                    scope = CoroutineScope(testDispatcher),
+                    currentAccountId = { accountIdChanges.value },
+                    accountIdChanges = accountIdChanges,
+                ).also { BibleHighlightCache.clear() }
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            runCurrent()
+            assertEquals(1, repository.highlights.value.size)
+
+            accountIdChanges.value = "account-b"
+            advanceUntilIdle()
+
+            assertEquals(0, repository.highlights.value.size)
+        }
+
+    @Test
+    fun `a repeated signal for the same account leaves the cached highlights intact`() =
+        runTest(testDispatcher) {
+            val accountIdChanges = MutableSharedFlow<String?>(replay = 1)
+            accountIdChanges.tryEmit("account-a")
+            val repository =
+                BibleHighlightsRepository(
+                    api = FakeHighlightsApi(),
+                    scope = CoroutineScope(testDispatcher),
+                    currentAccountId = { "account-a" },
+                    accountIdChanges = accountIdChanges,
+                ).also { BibleHighlightCache.clear() }
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            runCurrent()
+            assertEquals(1, repository.highlights.value.size)
+
+            // A token refresh re-emits the same account; the cache must survive rather than being wiped each refresh.
+            accountIdChanges.tryEmit("account-a")
+            advanceUntilIdle()
+
+            assertEquals(1, repository.highlights.value.size)
         }
 
     @Test
