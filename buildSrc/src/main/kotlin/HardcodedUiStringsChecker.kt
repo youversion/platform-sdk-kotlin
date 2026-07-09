@@ -62,16 +62,16 @@ class HardcodedUiStringsChecker(
         return lines.mapIndexedNotNull { index, line ->
             val lineNumber = index + 1
 
-            if (previewTracker.isInsidePreviewBlock) {
-                return@mapIndexedNotNull null
-            }
-
             if (isCommentLine(line)) {
                 return@mapIndexedNotNull null
             }
 
             previewTracker.onLine(line)
             enumTracker.onLine(line)
+
+            if (previewTracker.isInsidePreviewBlock) {
+                return@mapIndexedNotNull null
+            }
 
             if (!isUiContext(line, enumTracker.isInsideEnumClass)) {
                 return@mapIndexedNotNull null

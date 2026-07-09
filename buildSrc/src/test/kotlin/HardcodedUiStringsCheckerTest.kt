@@ -136,6 +136,28 @@ class HardcodedUiStringsCheckerTest {
         assertTrue(violations.isEmpty())
     }
 
+    @Test
+    fun previewComposableWithHardcodedString_doesNotFlagButProductionComposableDoes() {
+        val violations =
+            violationsForContent(
+                """
+                @Preview
+                @Composable
+                fun PreviewScreen() {
+                    Text("Preview only")
+                }
+
+                @Composable
+                fun ProductionScreen() {
+                    Text("Hardcoded production")
+                }
+                """.trimIndent(),
+            )
+
+        assertEquals(1, violations.size)
+        assertEquals("Hardcoded production", violations.first().stringLiteral)
+    }
+
     private fun violationsFor(line: String): List<HardcodedStringViolation> {
         val root =
             createTempProject(
