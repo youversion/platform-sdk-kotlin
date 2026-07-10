@@ -487,8 +487,9 @@ class BibleHighlightsRepository internal constructor(
                     .highlights(versionId = chapter.versionId, passageId = passageId)
                     .mapNotNull { it.bibleHighlight() }
             currentCoroutineContext().ensureActive()
-            cache.applyServerHighlights(chapter = chapter, highlights = serverHighlights, load = load)
-            cache.recordChapterFetch(chapter)
+            if (cache.applyServerHighlights(chapter = chapter, highlights = serverHighlights, load = load)) {
+                cache.recordChapterFetch(chapter)
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

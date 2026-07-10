@@ -201,8 +201,9 @@ class BibleHighlightsCacheTests {
                 ),
             )
 
-        cache.applyServerHighlights(chapter = chapter, highlights = server, load = load)
+        val applied = cache.applyServerHighlights(chapter = chapter, highlights = server, load = load)
 
+        assertTrue(applied)
         val highlights = cache.highlights(overlapping = chapter)
         assertEquals(1, highlights.size)
         assertEquals("#ff0000", highlights.first().hexColor)
@@ -221,10 +222,12 @@ class BibleHighlightsCacheTests {
             )
 
         // A clear (e.g. an account change) deregisters the in-flight load. Its late server response must not repopulate
-        // the just-cleared cache, or one account's highlights could surface under the next.
+        // the just-cleared cache, or one account's highlights could surface under the next. The merge reports it did not
+        // apply so the caller also skips recording the fetch, which would otherwise throttle the next account's reload.
         cache.clear()
-        cache.applyServerHighlights(chapter = chapter, highlights = server, load = load)
+        val applied = cache.applyServerHighlights(chapter = chapter, highlights = server, load = load)
 
+        assertFalse(applied)
         assertTrue(cache.highlights(overlapping = chapter).isEmpty())
         assertTrue(cache.highlights.value.isEmpty())
     }

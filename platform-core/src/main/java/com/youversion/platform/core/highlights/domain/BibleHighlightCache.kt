@@ -58,14 +58,14 @@ internal class BibleHighlightCache {
 
     // ----- Public API - State Management
     fun clear() {
-        // Drop the load registrations before emptying the highlights: applyServerHighlights skips its merge when its
-        // load is no longer registered, so deregistering first guarantees an in-flight load that resumes after this
-        // clear sees itself superseded and cannot repopulate the cache. Wake anything awaiting a load before dropping
-        // the signals, so a write parked in awaitChapterLoaded does not hang forever after the cache is reset.
-        currentlyLoadingChapters.values.forEach { it.completion.complete(Unit) }
+        // Deregister loads, then empty the cache, then wake waiters. Deregister-before-empty lets an in-flight
+        // applyServerHighlights that resumes mid-clear see itself superseded and skip its stale merge; empty-before-wake
+        // lets a write parked in awaitChapterLoaded classify against the emptied cache rather than stale rows.
+        val loads = currentlyLoadingChapters.values.toList()
         currentlyLoadingChapters.clear()
         recentChapterFetches.clear()
         _highlights.value = emptyList()
+        loads.forEach { it.completion.complete(Unit) }
     }
 
     // ----- Public API - Queries
@@ -203,21 +203,32 @@ internal class BibleHighlightCache {
     }
 
     // ----- Server Merge Helpers
+
+    /**
+     * Merges [highlights] fetched by [load] into the cache, returning whether the merge was applied. Returns false
+     * without touching the cache when [load] is no longer the registered load for the chapter (a clear or a newer load
+     * has superseded it), so a stale response cannot repopulate the cache. Callers should skip [recordChapterFetch] when
+     * this returns false, so a merge that did nothing does not arm the reload throttle for the chapter.
+     */
     fun applyServerHighlights(
         chapter: BibleReference,
         highlights: List<BibleHighlight>,
         load: ChapterLoad,
-    ) {
+    ): Boolean {
         val chapterReference = normalizeToChapter(chapter)
         val thisLoadSequence = load.sequence
+        var applied = false
 
         _highlights.update { current ->
             // A superseded load (cleared, or replaced by a newer one) is no longer registered; skip its stale merge so
             // it cannot repopulate the cache — e.g. leak a previous account's rows after a switch. Checked in the update
-            // so the CAS retry re-evaluates it against a concurrent clear.
+            // so the CAS retry re-evaluates it against a concurrent clear; applied is reset each pass so a retry that
+            // now skips reports false.
+            applied = false
             if (currentlyLoadingChapters[chapterReference] !== load) {
                 return@update current
             }
+            applied = true
             current.toMutableList().apply {
                 // Drop tombstones this load is known to reflect: it started after the delete synced, so the server
                 // response already accounts for the removal and can no longer resurrect it. The sequence comes from the
@@ -257,6 +268,7 @@ internal class BibleHighlightCache {
                 }
             }
         }
+        return applied
     }
 
     /**
