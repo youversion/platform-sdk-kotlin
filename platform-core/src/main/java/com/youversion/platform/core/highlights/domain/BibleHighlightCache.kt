@@ -58,12 +58,14 @@ internal class BibleHighlightCache {
 
     // ----- Public API - State Management
     fun clear() {
-        _highlights.value = emptyList()
-        recentChapterFetches.clear()
-        // Wake anything awaiting a load before dropping the signals, so a write parked in awaitChapterLoaded does not
-        // hang forever after the cache is reset.
+        // Drop the load registrations before emptying the highlights: applyServerHighlights skips its merge when its
+        // load is no longer registered, so deregistering first guarantees an in-flight load that resumes after this
+        // clear sees itself superseded and cannot repopulate the cache. Wake anything awaiting a load before dropping
+        // the signals, so a write parked in awaitChapterLoaded does not hang forever after the cache is reset.
         currentlyLoadingChapters.values.forEach { it.completion.complete(Unit) }
         currentlyLoadingChapters.clear()
+        recentChapterFetches.clear()
+        _highlights.value = emptyList()
     }
 
     // ----- Public API - Queries
@@ -210,6 +212,12 @@ internal class BibleHighlightCache {
         val thisLoadSequence = load.sequence
 
         _highlights.update { current ->
+            // A superseded load (cleared, or replaced by a newer one) is no longer registered; skip its stale merge so
+            // it cannot repopulate the cache — e.g. leak a previous account's rows after a switch. Checked in the update
+            // so the CAS retry re-evaluates it against a concurrent clear.
+            if (currentlyLoadingChapters[chapterReference] !== load) {
+                return@update current
+            }
             current.toMutableList().apply {
                 // Drop tombstones this load is known to reflect: it started after the delete synced, so the server
                 // response already accounts for the removal and can no longer resurrect it. The sequence comes from the

@@ -208,6 +208,27 @@ class BibleHighlightsCacheTests {
         assertEquals("#ff0000", highlights.first().hexColor)
     }
 
+    @Test
+    fun `apply server highlights skips a load that a clear has deregistered`() {
+        val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val load = assertNotNull(cache.markChapterAsLoading(chapter))
+        val server =
+            listOf(
+                BibleHighlight(
+                    bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
+                    hexColor = "#ff0000",
+                ),
+            )
+
+        // A clear (e.g. an account change) deregisters the in-flight load. Its late server response must not repopulate
+        // the just-cleared cache, or one account's highlights could surface under the next.
+        cache.clear()
+        cache.applyServerHighlights(chapter = chapter, highlights = server, load = load)
+
+        assertTrue(cache.highlights(overlapping = chapter).isEmpty())
+        assertTrue(cache.highlights.value.isEmpty())
+    }
+
     // ----- Test Sync Promotion
     @Test
     fun `markHighlightsAsSynced converts a superseded pending create into a pending update`() {
