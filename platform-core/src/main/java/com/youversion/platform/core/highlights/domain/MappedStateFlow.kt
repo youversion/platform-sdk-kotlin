@@ -1,5 +1,6 @@
 package com.youversion.platform.core.highlights.domain
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.StateFlow
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.map
  * source changes. This lets a layer expose a derived view without leaking the underlying rows, while keeping the
  * immediate-read semantics callers rely on.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class MappedStateFlow<T, R>(
     private val source: StateFlow<T>,
     private val transform: (T) -> R,

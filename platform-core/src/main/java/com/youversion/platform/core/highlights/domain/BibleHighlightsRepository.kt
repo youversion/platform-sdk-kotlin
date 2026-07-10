@@ -104,12 +104,10 @@ class BibleHighlightsRepository internal constructor(
 ) {
     private val loadScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
 
-    private val pendingOperations = mutableListOf<PendingHighlightOperation>()
     private val queueLock = ReentrantLock()
     private var isProcessingQueue = false
     private var processingJob: Job? = null
     private val queuedOperations = MutableStateFlow<List<PendingHighlightOperation>>(emptyList())
-    private val operationResults = mutableMapOf<UUID, OperationResult>()
     private val operationResultsState = MutableStateFlow<Map<UUID, OperationResult>>(emptyMap())
 
     /**
@@ -267,7 +265,7 @@ class BibleHighlightsRepository internal constructor(
                 return
             }
             ensureProcessing()?.join()
-        } while (scope.isActive && queueLock.withLock { pendingOperations.isNotEmpty() })
+        } while (scope.isActive && queueLock.withLock { queuedOperations.value.isNotEmpty() })
     }
 
     /**
@@ -282,8 +280,7 @@ class BibleHighlightsRepository internal constructor(
      */
     fun clearOperationResults() {
         queueLock.withLock {
-            operationResults.clear()
-            publishOperationResults()
+            operationResultsState.value = emptyMap()
         }
     }
 
@@ -295,7 +292,8 @@ class BibleHighlightsRepository internal constructor(
     suspend fun retryFailedOperations() {
         val hasFailedOperations =
             queueLock.withLock {
-                pendingOperations.any { operationResults[it.id]?.isSuccess == false }
+                val results = operationResultsState.value
+                queuedOperations.value.any { results[it.id]?.isSuccess == false }
             }
         if (hasFailedOperations) {
             ensureProcessing()
@@ -305,8 +303,7 @@ class BibleHighlightsRepository internal constructor(
     private fun queueOperation(operation: PendingHighlightOperation) {
         val stamped = operation.copy(accountId = currentAccountId())
         queueLock.withLock {
-            pendingOperations.add(stamped)
-            publishQueuedOperations()
+            queuedOperations.value = queuedOperations.value + stamped
         }
         ensureProcessing()
     }
@@ -330,16 +327,15 @@ class BibleHighlightsRepository internal constructor(
             while (true) {
                 val batch =
                     queueLock.withLock {
-                        if (pendingOperations.isEmpty()) {
+                        val current = queuedOperations.value
+                        if (current.isEmpty()) {
                             // Observe "empty" and stop processing atomically: if a concurrent queueOperation adds an
                             // item after this, it acquires the mutex next, sees isProcessingQueue == false, and starts
                             // a fresh processor rather than deferring to this dying one.
                             isProcessingQueue = false
                             return@withLock emptyList()
                         }
-                        val current = pendingOperations.toList()
-                        pendingOperations.clear()
-                        publishQueuedOperations()
+                        queuedOperations.value = emptyList()
                         current
                     }
                 if (batch.isEmpty()) {
@@ -390,8 +386,7 @@ class BibleHighlightsRepository internal constructor(
                 }
 
                 queueLock.withLock {
-                    pendingOperations.addAll(0, failed)
-                    publishQueuedOperations()
+                    queuedOperations.value = failed + queuedOperations.value
                 }
                 delay(backoffMillis(failed.maxOf { it.retryCount }))
             }
@@ -404,18 +399,9 @@ class BibleHighlightsRepository internal constructor(
         }
     }
 
-    private fun publishQueuedOperations() {
-        queuedOperations.value = pendingOperations.toList()
-    }
-
-    private fun publishOperationResults() {
-        operationResultsState.value = operationResults.toMap()
-    }
-
     private fun recordResult(result: OperationResult) {
         queueLock.withLock {
-            operationResults[result.operationId] = result
-            publishOperationResults()
+            operationResultsState.value = operationResultsState.value + (result.operationId to result)
         }
     }
 
