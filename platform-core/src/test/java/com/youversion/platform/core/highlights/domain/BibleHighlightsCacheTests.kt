@@ -184,6 +184,7 @@ class BibleHighlightsCacheTests {
     fun `test apply server highlights`() {
         BibleHighlightCache.clear()
         val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val load = assertNotNull(BibleHighlightCache.markChapterAsLoading(chapter))
         val server =
             listOf(
                 BibleHighlight(
@@ -198,7 +199,7 @@ class BibleHighlightsCacheTests {
                 ),
             )
 
-        BibleHighlightCache.applyServerHighlights(chapter = chapter, highlights = server)
+        BibleHighlightCache.applyServerHighlights(chapter = chapter, highlights = server, load = load)
 
         val highlights = BibleHighlightCache.highlights(overlapping = chapter)
         assertEquals(1, highlights.size)
@@ -294,19 +295,19 @@ class BibleHighlightsCacheTests {
             val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
             val load = assertNotNull(BibleHighlightCache.markChapterAsLoading(chapter))
 
-            var didResume = false
+            var hasResumed = false
             val waiter =
                 launch {
                     BibleHighlightCache.awaitChapterLoaded(chapter)
-                    didResume = true
+                    hasResumed = true
                 }
 
             runCurrent()
-            assertFalse(didResume)
+            assertFalse(hasResumed)
 
             BibleHighlightCache.unmarkChapterAsLoading(chapter, load)
             runCurrent()
-            assertTrue(didResume)
+            assertTrue(hasResumed)
             waiter.join()
         }
 }

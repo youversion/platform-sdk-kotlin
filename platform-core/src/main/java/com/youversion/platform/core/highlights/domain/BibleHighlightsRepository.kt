@@ -13,7 +13,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.currentCoroutineContext
@@ -29,13 +28,11 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import java.util.Date
 import java.util.UUID
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.math.pow
 
 /**
@@ -108,11 +105,8 @@ class BibleHighlightsRepository(
 
     private val loadScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
 
-    private val enqueueJob = SupervisorJob(scope.coroutineContext[Job])
-    private val enqueueScope = CoroutineScope(scope.coroutineContext + enqueueJob)
-
     private val pendingOperations = mutableListOf<PendingHighlightOperation>()
-    private val queueMutex = Mutex()
+    private val queueLock = ReentrantLock()
     private var isProcessingQueue = false
     private var processingJob: Job? = null
     private val queuedOperations = MutableStateFlow<List<PendingHighlightOperation>>(emptyList())
@@ -273,9 +267,8 @@ class BibleHighlightsRepository(
             if (!scope.isActive) {
                 return
             }
-            enqueueJob.children.toList().joinAll()
             ensureProcessing()?.join()
-        } while (scope.isActive && queueMutex.withLock { pendingOperations.isNotEmpty() })
+        } while (scope.isActive && queueLock.withLock { pendingOperations.isNotEmpty() })
     }
 
     /**
@@ -288,8 +281,8 @@ class BibleHighlightsRepository(
      * Forgets every recorded [OperationResult]. This does not affect operations still queued for the server; it only
      * clears the history exposed by [operationResult].
      */
-    suspend fun clearOperationResults() {
-        queueMutex.withLock {
+    fun clearOperationResults() {
+        queueLock.withLock {
             operationResults.clear()
             publishOperationResults()
         }
@@ -302,7 +295,7 @@ class BibleHighlightsRepository(
      */
     suspend fun retryFailedOperations() {
         val hasFailedOperations =
-            queueMutex.withLock {
+            queueLock.withLock {
                 pendingOperations.any { operationResults[it.id]?.isSuccess == false }
             }
         if (hasFailedOperations) {
@@ -312,19 +305,16 @@ class BibleHighlightsRepository(
 
     private fun queueOperation(operation: PendingHighlightOperation) {
         val stamped = operation.copy(accountId = currentAccountId())
-        enqueueScope.launch {
-            queueMutex.withLock {
-                pendingOperations.add(stamped)
-                pendingOperations.sortBy { it.timestamp }
-                publishQueuedOperations()
-            }
-            ensureProcessing()
+        queueLock.withLock {
+            pendingOperations.add(stamped)
+            publishQueuedOperations()
         }
+        ensureProcessing()
     }
 
-    private suspend fun ensureProcessing(): Job? {
+    private fun ensureProcessing(): Job? {
         val job =
-            queueMutex.withLock {
+            queueLock.withLock {
                 if (isProcessingQueue) {
                     return processingJob
                 }
@@ -340,7 +330,7 @@ class BibleHighlightsRepository(
         try {
             while (true) {
                 val batch =
-                    queueMutex.withLock {
+                    queueLock.withLock {
                         if (pendingOperations.isEmpty()) {
                             // Observe "empty" and stop processing atomically: if a concurrent queueOperation adds an
                             // item after this, it acquires the mutex next, sees isProcessingQueue == false, and starts
@@ -400,18 +390,16 @@ class BibleHighlightsRepository(
                     continue
                 }
 
-                queueMutex.withLock {
+                queueLock.withLock {
                     pendingOperations.addAll(0, failed)
                     publishQueuedOperations()
                 }
                 delay(backoffMillis(failed.maxOf { it.retryCount }))
             }
         } finally {
-            withContext(NonCancellable) {
-                queueMutex.withLock {
-                    if (processingJob === thisJob) {
-                        isProcessingQueue = false
-                    }
+            queueLock.withLock {
+                if (processingJob === thisJob) {
+                    isProcessingQueue = false
                 }
             }
         }
@@ -425,8 +413,8 @@ class BibleHighlightsRepository(
         operationResultsState.value = operationResults.toMap()
     }
 
-    private suspend fun recordResult(result: OperationResult) {
-        queueMutex.withLock {
+    private fun recordResult(result: OperationResult) {
+        queueLock.withLock {
             operationResults[result.operationId] = result
             publishOperationResults()
         }
@@ -514,7 +502,7 @@ class BibleHighlightsRepository(
                     .highlights(versionId = chapter.versionId, passageId = passageId)
                     .mapNotNull { it.bibleHighlight() }
             currentCoroutineContext().ensureActive()
-            cache.applyServerHighlights(chapter = chapter, highlights = serverHighlights)
+            cache.applyServerHighlights(chapter = chapter, highlights = serverHighlights, load = load)
             cache.recordChapterFetch(chapter)
         } catch (e: CancellationException) {
             throw e

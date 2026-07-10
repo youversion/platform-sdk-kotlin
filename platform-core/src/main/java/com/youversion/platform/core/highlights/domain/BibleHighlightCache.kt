@@ -204,25 +204,26 @@ internal object BibleHighlightCache {
     fun applyServerHighlights(
         chapter: BibleReference,
         highlights: List<BibleHighlight>,
+        load: ChapterLoad,
     ) {
-        val chapterRef = normalizeToChapter(chapter)
-        val thisLoadSequence = currentlyLoadingChapters[chapterRef]?.sequence
+        val chapterReference = normalizeToChapter(chapter)
+        val thisLoadSequence = load.sequence
 
         _highlights.update { current ->
             current.toMutableList().apply {
                 // Drop tombstones this load is known to reflect: it started after the delete synced, so the server
-                // response already accounts for the removal and can no longer resurrect it.
-                if (thisLoadSequence != null) {
-                    removeAll { cached ->
-                        cached.state == CachedHighlightState.LOCAL_PENDING_DELETE &&
-                            isInChapter(cached, chapterRef) &&
-                            cached.clearsAfterLoadSequence?.let { thisLoadSequence > it } == true
-                    }
+                // response already accounts for the removal and can no longer resurrect it. The sequence comes from the
+                // load that fetched these highlights, not from whatever load is registered now, so a load superseded by
+                // a clear plus a newer load cannot borrow the newer load's sequence and clear a tombstone it predates.
+                removeAll { cached ->
+                    cached.state == CachedHighlightState.LOCAL_PENDING_DELETE &&
+                        isInChapter(cached, chapterReference) &&
+                        cached.clearsAfterLoadSequence?.let { thisLoadSequence > it } == true
                 }
 
                 // Remove existing remote-synced highlights for this chapter
                 removeAll { cached ->
-                    cached.state == CachedHighlightState.REMOTE_SYNCED && isInChapter(cached, chapterRef)
+                    cached.state == CachedHighlightState.REMOTE_SYNCED && isInChapter(cached, chapterReference)
                 }
 
                 // Append server highlights as remote-synced, but never alongside a still-pending local write or a delete
@@ -308,11 +309,11 @@ internal object BibleHighlightCache {
     // ----- Utilities
     private fun isInChapter(
         cached: CachedHighlight,
-        chapterRef: BibleReference,
+        chapterReference: BibleReference,
     ): Boolean =
-        cached.highlight.bibleReference.bookUSFM == chapterRef.bookUSFM &&
-            cached.highlight.bibleReference.chapter == chapterRef.chapter &&
-            cached.highlight.bibleReference.versionId == chapterRef.versionId
+        cached.highlight.bibleReference.bookUSFM == chapterReference.bookUSFM &&
+            cached.highlight.bibleReference.chapter == chapterReference.chapter &&
+            cached.highlight.bibleReference.versionId == chapterReference.versionId
 
     private fun normalizeToChapter(reference: BibleReference): BibleReference =
         BibleReference(

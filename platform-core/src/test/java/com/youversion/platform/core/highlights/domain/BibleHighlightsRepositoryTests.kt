@@ -343,9 +343,9 @@ class BibleHighlightsRepositoryTests {
     @Test
     fun `a delete tombstones synchronously so a load merging in the same turn cannot resurrect it`() =
         runTest(testDispatcher) {
-            // Regression: removeHighlights tombstones the reference synchronously, before it enqueues the delete
-            // operation. A chapter load that merges in that same turn must see the tombstone and skip the server copy;
-            // the synchronous tombstone is what covers this window, since the delete operation is not on the queue yet.
+            // Regression: removeHighlights writes the delete's tombstone into the cache synchronously, and a chapter
+            // load's merge consults that tombstone to skip the server copy. A load that merges in the same turn as the
+            // delete must see the tombstone; this pins that it is written synchronously rather than after a dispatch.
             val loadGate = CompletableDeferred<Unit>()
             val deleteGate = CompletableDeferred<Unit>()
             val target = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
@@ -362,8 +362,8 @@ class BibleHighlightsRepositoryTests {
             repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
             runCurrent()
 
-            // Release the load first, then delete synchronously: the load's merge is now scheduled ahead of the delete's
-            // asynchronous enqueue, so only the synchronous tombstone can keep the load from resurrecting target.
+            // Release the load first, then delete: the load's merge runs before the delete is confirmed by the server,
+            // so only the synchronous cache tombstone can keep the load from resurrecting target.
             loadGate.complete(Unit)
             repository.removeHighlights(listOf(target))
             runCurrent()
