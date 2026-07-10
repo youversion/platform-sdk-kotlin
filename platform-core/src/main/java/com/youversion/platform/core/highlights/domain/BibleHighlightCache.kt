@@ -42,6 +42,8 @@ internal object BibleHighlightCache {
     }
 
     // ----- Observable State
+    // Flat list scanned linearly per mutation and per chapter merge; N is a user's highlight count, small enough that
+    // O(N) copies stay negligible, so it is intentionally not chapter-indexed. Mirrors the Swift cache.
     private val _highlights = MutableStateFlow<List<CachedHighlight>>(emptyList())
     val highlights: StateFlow<List<CachedHighlight>> =
         MappedStateFlow(_highlights) { cached ->
