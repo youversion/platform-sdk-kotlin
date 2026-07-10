@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-internal object BibleHighlightCache {
+internal class BibleHighlightCache {
     // ----- Types
     enum class CachedHighlightState {
         REMOTE_SYNCED,
@@ -321,4 +321,12 @@ internal object BibleHighlightCache {
             bookUSFM = reference.bookUSFM,
             chapter = reference.chapter,
         )
+
+    companion object {
+        /**
+         * The process-wide cache shared by default across [BibleHighlightsRepository] instances, mirroring the Swift
+         * SDK's `BibleHighlightsCache.shared`. Inject a separate instance to isolate a repository, e.g. in tests.
+         */
+        val shared = BibleHighlightCache()
+    }
 }

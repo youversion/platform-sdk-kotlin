@@ -94,15 +94,14 @@ data class OperationResult(
  * The cache is cleared automatically whenever the signed-in account changes: [accountIdChanges] is observed and each
  * change triggers [reset], so one user's cached highlights cannot be read after a sign-out, sign-in, or account switch.
  */
-class BibleHighlightsRepository(
+class BibleHighlightsRepository internal constructor(
     private val api: HighlightsApi = HighlightsEndpoints,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    private val cache: BibleHighlightCache = BibleHighlightCache.shared,
     private val currentAccountId: () -> String? = { YouVersionApi.users.currentUserId },
     accountIdChanges: Flow<String?> =
         YouVersionPlatformConfiguration.configState.map { currentAccountId() },
 ) {
-    private val cache = BibleHighlightCache
-
     private val loadScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
 
     private val pendingOperations = mutableListOf<PendingHighlightOperation>()

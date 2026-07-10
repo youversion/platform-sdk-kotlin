@@ -13,19 +13,16 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BibleHighlightsRepositoryTests {
     private val testDispatcher = StandardTestDispatcher()
+    private val cache = BibleHighlightCache()
 
     private fun repository(api: HighlightsApi) =
-        BibleHighlightsRepository(api = api, scope = CoroutineScope(testDispatcher)).also { it.reset() }
-
-    @AfterTest
-    fun teardown() = BibleHighlightCache.clear()
+        BibleHighlightsRepository(api = api, scope = CoroutineScope(testDispatcher), cache = cache)
 
     @Test
     fun `optimistic add is reflected in the highlights state immediately`() =
@@ -511,7 +508,7 @@ class BibleHighlightsRepositoryTests {
             val deleteGate = CompletableDeferred<Unit>()
             val api = FakeHighlightsApi(deleteGate = deleteGate)
             val repoScope = CoroutineScope(testDispatcher)
-            val repository = BibleHighlightsRepository(api = api, scope = repoScope).also { it.reset() }
+            val repository = BibleHighlightsRepository(api = api, scope = repoScope, cache = cache).also { it.reset() }
 
             // Park the processor on the first write (gated delete), then queue a second so an operation stays pending.
             repository.removeHighlights(listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)))
@@ -539,8 +536,9 @@ class BibleHighlightsRepositoryTests {
                 BibleHighlightsRepository(
                     api = api,
                     scope = CoroutineScope(testDispatcher),
+                    cache = cache,
                     currentAccountId = { accountId },
-                ).also { BibleHighlightCache.clear() }
+                )
 
             repository.addHighlights(
                 listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
@@ -568,8 +566,9 @@ class BibleHighlightsRepositoryTests {
                 BibleHighlightsRepository(
                     api = api,
                     scope = CoroutineScope(testDispatcher),
+                    cache = cache,
                     currentAccountId = { accountId },
-                ).also { BibleHighlightCache.clear() }
+                )
             val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
 
             // Start a chapter load and park it, then queue a recolor that must wait for the load before it classifies.
@@ -595,8 +594,9 @@ class BibleHighlightsRepositoryTests {
                 BibleHighlightsRepository(
                     api = api,
                     scope = CoroutineScope(testDispatcher),
+                    cache = cache,
                     currentAccountId = { "account-a" },
-                ).also { BibleHighlightCache.clear() }
+                )
 
             repository.addHighlights(
                 listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
@@ -615,9 +615,10 @@ class BibleHighlightsRepositoryTests {
                 BibleHighlightsRepository(
                     api = FakeHighlightsApi(),
                     scope = CoroutineScope(testDispatcher),
+                    cache = cache,
                     currentAccountId = { accountIdChanges.value },
                     accountIdChanges = accountIdChanges,
-                ).also { BibleHighlightCache.clear() }
+                )
 
             repository.addHighlights(
                 listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
@@ -641,9 +642,10 @@ class BibleHighlightsRepositoryTests {
                 BibleHighlightsRepository(
                     api = FakeHighlightsApi(),
                     scope = CoroutineScope(testDispatcher),
+                    cache = cache,
                     currentAccountId = { "account-a" },
                     accountIdChanges = accountIdChanges,
-                ).also { BibleHighlightCache.clear() }
+                )
 
             repository.addHighlights(
                 listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
