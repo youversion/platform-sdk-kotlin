@@ -126,7 +126,7 @@ internal class BibleHighlightCache {
         currentlyLoadingChapters[normalizeToChapter(chapter)]?.completion?.await()
     }
 
-    fun recordChapterFetch(
+    private fun recordChapterFetch(
         chapter: BibleReference,
         at: Date = Date(),
     ) {
@@ -205,30 +205,26 @@ internal class BibleHighlightCache {
     // ----- Server Merge Helpers
 
     /**
-     * Merges [highlights] fetched by [load] into the cache, returning whether the merge was applied. Returns false
-     * without touching the cache when [load] is no longer the registered load for the chapter (a clear or a newer load
-     * has superseded it), so a stale response cannot repopulate the cache. Callers should skip [recordChapterFetch] when
-     * this returns false, so a merge that did nothing does not arm the reload throttle for the chapter.
+     * Merges [highlights] fetched by [load] into the cache and, on success, arms the chapter's reload throttle. Does
+     * nothing when [load] is no longer the registered load for the chapter (a clear or a newer load has superseded it),
+     * so a stale response cannot repopulate the cache or throttle the chapter — e.g. leak or suppress a previous
+     * account's highlights after a switch.
      */
     fun applyServerHighlights(
         chapter: BibleReference,
         highlights: List<BibleHighlight>,
         load: ChapterLoad,
-    ): Boolean {
+    ) {
         val chapterReference = normalizeToChapter(chapter)
         val thisLoadSequence = load.sequence
-        var applied = false
 
         _highlights.update { current ->
             // A superseded load (cleared, or replaced by a newer one) is no longer registered; skip its stale merge so
-            // it cannot repopulate the cache — e.g. leak a previous account's rows after a switch. Checked in the update
-            // so the CAS retry re-evaluates it against a concurrent clear; applied is reset each pass so a retry that
-            // now skips reports false.
-            applied = false
+            // it cannot repopulate the cache. Checked in the update so the CAS retry re-evaluates it against a
+            // concurrent clear.
             if (currentlyLoadingChapters[chapterReference] !== load) {
                 return@update current
             }
-            applied = true
             current.toMutableList().apply {
                 // Drop tombstones this load is known to reflect: it started after the delete synced, so the server
                 // response already accounts for the removal and can no longer resurrect it. The sequence comes from the
@@ -268,7 +264,11 @@ internal class BibleHighlightCache {
                 }
             }
         }
-        return applied
+        // Arm the reload throttle only while this load is still registered: a clear that superseded it between the merge
+        // and here (e.g. an account switch) leaves the check failing, so the emptied chapter is not throttled.
+        if (currentlyLoadingChapters[chapterReference] === load) {
+            recordChapterFetch(chapter)
+        }
     }
 
     /**

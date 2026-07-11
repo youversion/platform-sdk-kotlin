@@ -201,12 +201,13 @@ class BibleHighlightsCacheTests {
                 ),
             )
 
-        val applied = cache.applyServerHighlights(chapter = chapter, highlights = server, load = load)
+        cache.applyServerHighlights(chapter = chapter, highlights = server, load = load)
 
-        assertTrue(applied)
         val highlights = cache.highlights(overlapping = chapter)
         assertEquals(1, highlights.size)
         assertEquals("#ff0000", highlights.first().hexColor)
+        // A merge by the registered load arms the reload throttle for the chapter.
+        assertTrue(cache.hasRecentlyLoadedChapter(chapter))
     }
 
     @Test
@@ -222,14 +223,14 @@ class BibleHighlightsCacheTests {
             )
 
         // A clear (e.g. an account change) deregisters the in-flight load. Its late server response must not repopulate
-        // the just-cleared cache, or one account's highlights could surface under the next. The merge reports it did not
-        // apply so the caller also skips recording the fetch, which would otherwise throttle the next account's reload.
+        // the just-cleared cache, or one account's highlights could surface under the next.
         cache.clear()
-        val applied = cache.applyServerHighlights(chapter = chapter, highlights = server, load = load)
+        cache.applyServerHighlights(chapter = chapter, highlights = server, load = load)
 
-        assertFalse(applied)
         assertTrue(cache.highlights(overlapping = chapter).isEmpty())
         assertTrue(cache.highlights.value.isEmpty())
+        // The skipped merge must not arm the throttle, or the next account's reload of this chapter would be suppressed.
+        assertFalse(cache.hasRecentlyLoadedChapter(chapter))
     }
 
     // ----- Test Sync Promotion
