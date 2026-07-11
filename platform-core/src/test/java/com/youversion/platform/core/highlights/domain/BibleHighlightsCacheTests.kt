@@ -206,7 +206,6 @@ class BibleHighlightsCacheTests {
         val highlights = cache.highlights(overlapping = chapter)
         assertEquals(1, highlights.size)
         assertEquals("#ff0000", highlights.first().hexColor)
-        // A merge by the registered load arms the reload throttle for the chapter.
         assertTrue(cache.hasRecentlyLoadedChapter(chapter))
     }
 
@@ -229,7 +228,6 @@ class BibleHighlightsCacheTests {
 
         assertTrue(cache.highlights(overlapping = chapter).isEmpty())
         assertTrue(cache.highlights.value.isEmpty())
-        // The skipped merge must not arm the throttle, or the next account's reload of this chapter would be suppressed.
         assertFalse(cache.hasRecentlyLoadedChapter(chapter))
     }
 

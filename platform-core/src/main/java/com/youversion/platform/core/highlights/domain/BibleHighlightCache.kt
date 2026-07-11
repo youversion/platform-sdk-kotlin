@@ -205,10 +205,11 @@ internal class BibleHighlightCache {
     // ----- Server Merge Helpers
 
     /**
-     * Merges [highlights] fetched by [load] into the cache and, on success, arms the chapter's reload throttle. Does
-     * nothing when [load] is no longer the registered load for the chapter (a clear or a newer load has superseded it),
-     * so a stale response cannot repopulate the cache or throttle the chapter — e.g. leak or suppress a previous
-     * account's highlights after a switch.
+     * Merges [highlights] fetched by [load] into the cache and, on success, arms the chapter's reload throttle. Skips
+     * the merge when [load] is no longer the registered load for the chapter — a clear or a newer load has superseded
+     * it — so a stale response cannot repopulate the cache with a previous account's highlights after a switch. The
+     * throttle is likewise armed only while the load is still registered, which narrows but does not fully close the
+     * window in which a concurrent clear re-throttles the chapter.
      */
     fun applyServerHighlights(
         chapter: BibleReference,
@@ -264,8 +265,6 @@ internal class BibleHighlightCache {
                 }
             }
         }
-        // Arm the reload throttle only while this load is still registered: a clear that superseded it between the merge
-        // and here (e.g. an account switch) leaves the check failing, so the emptied chapter is not throttled.
         if (currentlyLoadingChapters[chapterReference] === load) {
             recordChapterFetch(chapter)
         }
