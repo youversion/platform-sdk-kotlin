@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_active_language_versions_header">%1$s Ụdị Nsụgharị Gasị (%2$s)</string>
+    <string name="yv_back_button">Azụ</string>
+    <string name="yv_bible_card_unavailable_reference">Akụkụ Akwụkwọ Nsọ a adịghị na ụdị-nsụgharị Akwụkwọ Nsọ ahọpụtarà.</string>
+    <string name="yv_bible_version_details_content_desc">Nkọwa-Gasị Ụdị-Nsụgharị Akwụkwọ Nsọ </string>
+    <string name="yv_bible_version_load_error">Mperi n\'ibugolite ụdị-nsụgharị Akwụkwọ Nsọ</string>
+    <string name="yv_bible_versions_heading">Ụdị-Nsụgharị-Gasị Akwụkwọ Nsọ</string>
+    <string name="yv_books_heading">Akwụkwọ Gasị</string>
+    <string name="yv_close_search_bar">Mèchié ihe-eji-etinye nchọ</string>
+    <string name="yv_footnote_content_desc">edide dị́ n\'ala ala</string>
+    <string name="yv_full_chapter">Isiakwụkwọ Zuru Ezu</string>
+    <string name="yv_language_label">Asụsụ</string>
+    <string name="yv_language_tab_all">Ihe Niile</string>
+    <string name="yv_language_tab_suggested">A tụrụ aro</string>
+    <string name="yv_ok">Ọ DỊ MMA</string>
+    <string name="yv_placeholder_offline">Njikọ ịntanetị gị adịghị ọzọ. Jikọọ ọzọ ma budata ụdị-nsụgharị Akwụkwọ Nsọ iji gaa n\'ihu na offlaịnụ.</string>
+    <string name="yv_placeholder_offline_icon_content_desc">Wi-Fi Adịghị</string>
+    <string name="yv_placeholder_version_unavailable">Ụdị nsụgharị Akwụkwọ Nsọ ị họrọlà na mbụ adịghị adị. Ahọpụtala ụdị nsụgharị Akwụkwọ Nsọ yiri ya maka gị.</string>
+    <string name="yv_placeholder_version_unavailable_icon_content_desc">Ụdị Nsụgharị Adịghị</string>
+    <string name="yv_search">Chọọ-Ihe</string>
+    <string name="yv_search_bible_versions">Chọọ ụdị nsụgharị Akwụkwọ Nsọ</string>
+    <string name="yv_search_languages">Chọọ asụsụ</string>
+    <string name="yv_select_language_title">Họrọ Asụsụ</string>
+    <string name="yv_share_content_desc">Kekọrịta</string>
+    <string name="yv_sign_in_button_compact">Bànyé</string>
+    <string name="yv_sign_in_button_content_desc">Jìrí YouVersion Bànyé</string>
+    <string name="yv_sign_in_button_full">Mee mbanye site na</string>
+    <string name="yv_sign_in_error_message">Anyị enweghị ike ime gị ka ịbanye n\'oge a. Biko nwaa ọzọ.</string>
+    <string name="yv_sign_in_error_title">Nbanye Agaghị Nke Ọma</string>
+    <string name="yv_sign_out_cancel_button_text">Kagbuo</string>
+    <string name="yv_sign_out_confirm_button_text">Pụọ</string>
+    <string name="yv_sign_out_confirmation_message">Ị̀ jì n\'aka na ị chọrọ isi na YouVersion pụọ? Ọ gà-àdị́ mkpa ka ị bànyé ọzọ iji nweta ihe gị ndị ị merè ka ha pụta ìhè.</string>
+    <string name="yv_sign_out_confirmation_title">Pụọ</string>
+    <string name="yv_tab_votd">Amaokwu Nke Ụbọchị Taa</string>
+    <string name="yv_version_info_agree_and_download">Kwenye ma Budata</string>
+    <string name="yv_version_info_maybe_later">Ikekwe Mgbe Emesịrị</string>
+    <string name="yv_version_info_offline_agreement">Nkwekọrịta anyị na onye bipụtara ụdị-nsụgharị Akwụkwọ Nsọ a chọrọ ka anyị kekọrịtara ha ụfọdụ ozi iji nye gị ụdị-nsụgharị a maka iji ya wee ihe na offlaịnụ. Site n\'ịga n\'ihu ị kwenyerè ịkekọrịtà ozi gị na ikwe ka onye mbipụta zitere gị ịmel.</string>
+    <string name="yv_version_info_offline_tagline">Gụọ ya oge ọbụla, ebe ọbụla—ọbụlagodi n\'enweghị ịntanetị</string>
+    <string name="yv_versions_empty_for_language">Ọ dịghị ụdị-nsụgharị ọbụla achọtarà maka asụsụ a</string>
+    <string name="yv_versions_load_error">Àpụghị ibugolite ụdị-nsụgharị-gasị. Lelee njikọ ịntanetị gị wee nwaa ọzọ.</string>
+    <string name="yv_versions_screen_title">Ụdị Nsụgharị Gasị</string>
+    <string name="yv_versions_statistics">%1$s Ụdị-Nsụgharị-Gasị na %2$s Asụsụ-Gasị</string>
+    <string name="yv_widget_bible_app">Ngwá Baịbụl</string>
+    <string name="yv_widget_copyright">Ikike</string>
+</resources>

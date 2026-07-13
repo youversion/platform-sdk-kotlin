@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_active_language_versions_header">%1$s Versiones (%2$s)</string>
+    <string name="yv_back_button">Atrás</string>
+    <string name="yv_bible_card_unavailable_reference">Este pasaje no está disponible en la versión de la Biblia seleccionada.</string>
+    <string name="yv_bible_version_details_content_desc">Detalles de la versión de la Biblia</string>
+    <string name="yv_bible_version_load_error">Error al cargar versión de la Biblia</string>
+    <string name="yv_bible_versions_heading">Versiones de la Biblia</string>
+    <string name="yv_books_heading">Libros</string>
+    <string name="yv_close_search_bar">Cerrar el campo de búsqueda</string>
+    <string name="yv_footnote_content_desc">nota al pie</string>
+    <string name="yv_full_chapter">Capítulo completo</string>
+    <string name="yv_language_label">Idioma</string>
+    <string name="yv_language_tab_all">Todos</string>
+    <string name="yv_language_tab_suggested">Sugeridos</string>
+    <string name="yv_ok">OK</string>
+    <string name="yv_placeholder_offline">Has perdido tu conexión a internet. Vuelve a conectarte y descarga una versión de la Biblia para continuar sin conexión.</string>
+    <string name="yv_placeholder_offline_icon_content_desc">Sin Wi-Fi</string>
+    <string name="yv_placeholder_version_unavailable">La versión de la Biblia que seleccionaste anteriormente no está disponible. Se ha seleccionado otra versión similar para ti.</string>
+    <string name="yv_placeholder_version_unavailable_icon_content_desc">Versión no disponible</string>
+    <string name="yv_search">Buscar</string>
+    <string name="yv_search_bible_versions">Buscar una versión de la Biblia</string>
+    <string name="yv_search_languages">Buscar un idioma</string>
+    <string name="yv_select_language_title">Seleccionar un idioma</string>
+    <string name="yv_share_content_desc">Compartir</string>
+    <string name="yv_sign_in_button_compact">Iniciar sesión</string>
+    <string name="yv_sign_in_button_content_desc">Iniciar sesión con YouVersion</string>
+    <string name="yv_sign_in_button_full">Iniciar sesión con</string>
+    <string name="yv_sign_in_error_message">No pudimos iniciar tu sesión en este momento. Por favor, inténtalo de nuevo.</string>
+    <string name="yv_sign_in_error_title">Error al iniciar sesión</string>
+    <string name="yv_sign_out_cancel_button_text">Cancelar</string>
+    <string name="yv_sign_out_confirm_button_text">Cerrar sesión</string>
+    <string name="yv_sign_out_confirmation_message">¿Estás seguro de que quieres cerrar sesión en YouVersion? Deberás iniciar sesión nuevamente para acceder a tus resaltados.</string>
+    <string name="yv_sign_out_confirmation_title">Cerrar sesión</string>
+    <string name="yv_tab_votd">Versículo del Día</string>
+    <string name="yv_version_info_agree_and_download">Aceptar y descargar</string>
+    <string name="yv_version_info_maybe_later">Quizás más tarde</string>
+    <string name="yv_version_info_offline_agreement">Nuestro acuerdo con el editor de esta versión de la Biblia nos exige compartir cierta información con ellos para poder ofrecer esta versión para uso sin conexión. Al continuar, aceptas compartir tu información y permitir que el editor te envíe correos electrónicos.</string>
+    <string name="yv_version_info_offline_tagline">Léela en cualquier momento y lugar, incluso sin conexión</string>
+    <string name="yv_versions_empty_for_language">No se encontraron versiones para este idioma</string>
+    <string name="yv_versions_load_error">No se han podido cargar las versiones. Verifica tu conexión e inténtalo de nuevo.</string>
+    <string name="yv_versions_screen_title">Versiones</string>
+    <string name="yv_versions_statistics">%1$s Versiones en %2$s Idiomas</string>
+    <string name="yv_widget_bible_app">Biblia App</string>
+    <string name="yv_widget_copyright">Derechos de autor</string>
+</resources>
