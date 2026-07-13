@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Wepụ</string>
+    <string name="yv_banner_offline_icon">Aikọn Offlaịnụ</string>
+    <string name="yv_banner_offline_message">Njikọ ịntanetị gị adịghị ọzọ. Jikọọ ọzọ ma budata ụdị-nsụgharị Akwụkwọ Nsọ iji gaa n\'ihu na offlaịnụ.</string>
+    <string name="yv_banner_version_unavailable_icon">Aikọn Ụdị Nsụgharị N\'adịghị Adị</string>
+    <string name="yv_banner_version_unavailable_message">Ụdị nsụgharị Akwụkwọ Nsọ ị họrọlà na mbụ adịghị adị. Ahọpụtala ụdị nsụgharị Akwụkwọ Nsọ yiri ya maka gị.</string>
+    <string name="yv_book_chapter_picker_title">Akwụkwọ Gasị</string>
+    <string name="yv_font_selected_check">Ihe-eji-àmá fọntù ahọrọlà</string>
+    <string name="yv_font_settings_label">Fọntù</string>
+    <string name="yv_footnote_header_label">Edide dị́ n\'ala ala</string>
+    <string name="yv_intro_chapter_label">Mmalite</string>
+    <string name="yv_language_content_desc">Asụsụ</string>
+    <string name="yv_next_chapter_content_desc">Isi Nke N\'esote</string>
+    <string name="yv_previous_chapter_content_desc">Isi Nke Gara Aga</string>
+    <string name="yv_reader_menu_font_settings">Mkpụrụedemede &amp; Ntọala-Gasị</string>
+    <string name="yv_reader_menu_sign_in">Bànyé</string>
+    <string name="yv_reader_menu_sign_out">Pụọ</string>
+    <string name="yv_theme_selected">Ahọpụtarà</string>
+    <string name="yv_verse_action_copy">Kọpịa</string>
+    <string name="yv_verse_action_share">Kekọrịta</string>
+</resources>
