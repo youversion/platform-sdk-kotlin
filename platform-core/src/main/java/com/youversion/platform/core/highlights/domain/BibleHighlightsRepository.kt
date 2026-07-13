@@ -107,6 +107,12 @@ class BibleHighlightsRepository internal constructor(
     private val queueLock = ReentrantLock()
     private var isProcessingQueue = false
     private var processingJob: Job? = null
+
+    // Bumped by [reset] to invalidate the batch a processor is mid-flight on: a batch captures this at its start and,
+    // if it no longer matches when the batch finishes, drops its failed operations instead of re-queuing them so a
+    // previous account's writes stop retrying after a sign-out rather than looping forever. Mirrors the Swift SDK's
+    // operationGeneration.
+    private var operationGeneration = 0
     private val queuedOperations = MutableStateFlow<List<PendingHighlightOperation>>(emptyList())
     private val operationResultsState = MutableStateFlow<Map<UUID, OperationResult>>(emptyMap())
 
@@ -153,8 +159,11 @@ class BibleHighlightsRepository internal constructor(
      * Loads the chapter containing [reference] from the server if it has not been loaded recently.
      *
      * Loading is throttled per chapter and de-duplicated while a load is in flight. Pass [forceReload] to bypass the
-     * time-based throttle; it does not cancel or re-trigger a load that is already in progress, so if one is in flight
-     * this call returns without starting another.
+     * time-based throttle. It does not interrupt a load already in progress; instead, when one is in flight it waits for
+     * that load to finish and then starts a single fresh load, so a forced reload always reflects server state fetched
+     * after this call rather than being silently dropped. It schedules at most one follow-up load: if another load has
+     * already registered by the time the in-flight one finishes, that newer load began after this call and so already
+     * reflects post-call state, and this defers to it instead of chaining more reloads.
      */
     fun ensureHighlightsForChapterLoaded(
         reference: BibleReference,
@@ -170,7 +179,18 @@ class BibleHighlightsRepository internal constructor(
         if (!forceReload && cache.hasRecentlyLoadedChapter(chapter)) {
             return
         }
-        val load = cache.markChapterAsLoading(chapter) ?: return
+        val load = cache.markChapterAsLoading(chapter)
+        if (load == null) {
+            if (forceReload) {
+                loadScope.launch {
+                    cache.awaitChapterLoaded(chapter)
+                    cache.markChapterAsLoading(chapter)?.let { freshLoad ->
+                        loadChapterFromServer(chapter, freshLoad)
+                    }
+                }
+            }
+            return
+        }
 
         loadScope.launch { loadChapterFromServer(chapter, load) }
     }
@@ -237,12 +257,18 @@ class BibleHighlightsRepository internal constructor(
      * was already running cannot repopulate the cache after it is cleared. This runs automatically whenever the
      * signed-in account changes; it is also exposed for callers that need to clear the cache explicitly.
      *
-     * Queued sync operations are left in the queue rather than cleared here, but each is bound to the account that made
-     * it: once the signed-in account changes, any write still queued under the previous account is dropped instead of
-     * sent, so one user's highlights can never land on another user's account. To flush queued writes before signing
-     * out, call [flushPendingWrites] while the current account is still authenticated.
+     * The queued sync operations are dropped and the operation generation is bumped so that a batch a processor is
+     * already mid-flight on drops its failed operations instead of re-queuing them: a previous account's writes stop
+     * retrying rather than looping forever after a sign-out. Any reference already sent before the account changed is
+     * additionally guarded at send time — each queued write is bound to the account that made it and is not dispatched
+     * once the signed-in account differs — so one user's highlights can never land on another user's account. To flush
+     * queued writes before signing out, call [flushPendingWrites] while the current account is still authenticated.
      */
     fun reset() {
+        queueLock.withLock {
+            queuedOperations.value = emptyList()
+            operationGeneration++
+        }
         loadScope.coroutineContext.cancelChildren()
         cache.clear()
     }
@@ -258,14 +284,23 @@ class BibleHighlightsRepository internal constructor(
      *
      * Returns without draining if [scope] is no longer active: a cancelled scope can never run the processor, so
      * waiting on it would spin forever. Any writes still queued at that point are lost with the process.
+     *
+     * Draining is judged complete only when the queue is empty *and* no processor is mid-batch, both read under
+     * [queueLock]. Checking the queue alone would let this return in the window where a batch has been taken from the
+     * queue but its writes are still in flight.
      */
     suspend fun flushPendingWrites() {
-        do {
-            if (!scope.isActive) {
-                return
-            }
-            ensureProcessing()?.join()
-        } while (scope.isActive && queueLock.withLock { queuedOperations.value.isNotEmpty() })
+        while (scope.isActive) {
+            val job =
+                queueLock.withLock {
+                    if (queuedOperations.value.isEmpty() && !isProcessingQueue) {
+                        return
+                    }
+                    processingJobLocked()
+                }
+            job.start()
+            job.join()
+        }
     }
 
     /**
@@ -302,30 +337,39 @@ class BibleHighlightsRepository internal constructor(
 
     private fun queueOperation(operation: PendingHighlightOperation) {
         val stamped = operation.copy(accountId = currentAccountId())
-        queueLock.withLock {
-            queuedOperations.value = queuedOperations.value + stamped
-        }
-        ensureProcessing()
-    }
-
-    private fun ensureProcessing(): Job? {
         val job =
             queueLock.withLock {
-                if (isProcessingQueue) {
-                    return processingJob
-                }
-                isProcessingQueue = true
-                scope.launch(start = CoroutineStart.LAZY) { processQueue() }.also { processingJob = it }
+                queuedOperations.value = queuedOperations.value + stamped
+                processingJobLocked()
             }
         job.start()
+    }
+
+    private fun ensureProcessing(): Job {
+        val job = queueLock.withLock { processingJobLocked() }
+        job.start()
         return job
+    }
+
+    /**
+     * Returns the queue-processing job, launching a fresh lazy one if none is active. Must be called while [queueLock]
+     * is held so a caller can append to [queuedOperations] and claim the processor atomically; the returned job is
+     * created lazily and must be started by the caller outside the lock.
+     */
+    private fun processingJobLocked(): Job {
+        val existing = processingJob
+        if (isProcessingQueue && existing != null) {
+            return existing
+        }
+        isProcessingQueue = true
+        return scope.launch(start = CoroutineStart.LAZY) { processQueue() }.also { processingJob = it }
     }
 
     private suspend fun processQueue() {
         val thisJob = currentCoroutineContext()[Job]
         try {
             while (true) {
-                val batch =
+                val batchState =
                     queueLock.withLock {
                         val current = queuedOperations.value
                         if (current.isEmpty()) {
@@ -333,14 +377,12 @@ class BibleHighlightsRepository internal constructor(
                             // item after this, it acquires the mutex next, sees isProcessingQueue == false, and starts
                             // a fresh processor rather than deferring to this dying one.
                             isProcessingQueue = false
-                            return@withLock emptyList()
+                            return@withLock null
                         }
                         queuedOperations.value = emptyList()
-                        current
-                    }
-                if (batch.isEmpty()) {
-                    break
-                }
+                        current to operationGeneration
+                    } ?: break
+                val (batch, generationAtStart) = batchState
 
                 val failed = mutableListOf<PendingHighlightOperation>()
                 for (operation in batch) {
@@ -385,10 +427,18 @@ class BibleHighlightsRepository internal constructor(
                     continue
                 }
 
-                queueLock.withLock {
-                    queuedOperations.value = failed + queuedOperations.value
+                val didRequeue =
+                    queueLock.withLock {
+                        if (operationGeneration != generationAtStart) {
+                            false
+                        } else {
+                            queuedOperations.value = failed + queuedOperations.value
+                            true
+                        }
+                    }
+                if (didRequeue) {
+                    delay(backoffMillis(failed.maxOf { it.retryCount }))
                 }
-                delay(backoffMillis(failed.maxOf { it.retryCount }))
             }
         } finally {
             queueLock.withLock {

@@ -704,6 +704,59 @@ class BibleHighlightsRepositoryTests {
 
             assertEquals(0, repository.highlights(overlapping = chapter).size)
         }
+
+    @Test
+    fun `reset drops an in-flight failing write instead of retrying it forever`() =
+        runTest(testDispatcher) {
+            val deleteGate = CompletableDeferred<Unit>()
+            // The delete fails on its first attempt; without the generation guard the processor would re-queue it and
+            // retry until it succeeds.
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 1, deleteGate = deleteGate)
+            val repository = repository(api)
+
+            // Park the processor mid-send on the gated delete.
+            repository.removeHighlights(listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)))
+            runCurrent()
+            assertEquals(1, api.deleteCount)
+
+            // Reset while the write is in flight bumps the operation generation, so when the send comes back a failure
+            // the batch is dropped rather than re-queued.
+            repository.reset()
+            deleteGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `forceReload starts a fresh load once the in-flight load finishes`() =
+        runTest(testDispatcher) {
+            val gate = CompletableDeferred<Unit>()
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    highlightsGate = gate,
+                )
+            val repository = repository(api)
+            val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+
+            // Start a load and park it, then ask for a forced reload while it is still in flight.
+            repository.ensureHighlightsForChapterLoaded(chapter)
+            runCurrent()
+            assertEquals(1, api.highlightsCount)
+            repository.ensureHighlightsForChapterLoaded(chapter, forceReload = true)
+            runCurrent()
+
+            // The forced reload must wait for the in-flight load rather than starting a second one concurrently.
+            assertEquals(1, api.highlightsCount)
+
+            // Once the first load finishes, the forced reload fetches again rather than being silently dropped.
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(2, api.highlightsCount)
+        }
 }
 
 private class FakeHighlightsApi(
