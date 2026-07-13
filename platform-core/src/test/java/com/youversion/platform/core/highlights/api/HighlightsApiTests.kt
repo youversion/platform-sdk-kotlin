@@ -47,6 +47,28 @@ class HighlightsApiTests : YouVersionPlatformTest {
         }
 
     @Test
+    fun `test update highlight success`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals(HttpMethod.Put, request.method)
+                assertEquals("/v1/highlights", request.url.encodedPath)
+
+                val jsonData = request.body.toByteArray().decodeToString()
+                val decoded: JsonObject = Json.Default.decodeFromString(jsonData)
+
+                assertEquals(1, decoded["version_id"]?.jsonPrimitive?.int)
+                assertEquals("GEN.1.1", decoded["passage_id"]?.jsonPrimitive?.content)
+                assertEquals("ff00ff", decoded["color"]?.jsonPrimitive?.content)
+
+                respond("", HttpStatusCode.Companion.OK)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            assertTrue {
+                YouVersionApi.highlights.updateHighlight(1, "GEN.1.1", "FF00FF")
+            }
+        }
+
+    @Test
     fun `test get highlights parses response`() =
         runTest {
             MockEngine { request ->
