@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_active_language_versions_header">%1$s Phiên bản (%2$s)</string>
+    <string name="yv_back_button">Quay lại</string>
+    <string name="yv_bible_card_unavailable_reference">Đoạn văn này không có trong phiên bản Kinh Thánh đã chọn.</string>
+    <string name="yv_bible_version_details_content_desc">Chi tiết phiên bản Kinh Thánh</string>
+    <string name="yv_bible_version_load_error">Lỗi khi tải phiên bản Kinh Thánh</string>
+    <string name="yv_bible_versions_heading">Các Phiên Bản Kinh Thánh</string>
+    <string name="yv_books_heading">Sách</string>
+    <string name="yv_close_search_bar">Đóng ô tìm kiếm</string>
+    <string name="yv_footnote_content_desc">chú thích</string>
+    <string name="yv_full_chapter">Toàn bộ chương</string>
+    <string name="yv_language_label">Ngôn ngữ</string>
+    <string name="yv_language_tab_all">Tất cả</string>
+    <string name="yv_language_tab_suggested">Đề xuất</string>
+    <string name="yv_ok">OK</string>
+    <string name="yv_placeholder_offline">Bạn đã mất kết nối internet. Hãy kết nối lại và tải xuống một phiên bản Kinh Thánh để tiếp tục sử dụng ngoại tuyến.</string>
+    <string name="yv_placeholder_offline_icon_content_desc">Không có Wi-Fi</string>
+    <string name="yv_placeholder_version_unavailable">Phiên bản Kinh Thánh bạn đã chọn trước đó không khả dụng. Một phiên bản Kinh Thánh tương tự khác đã được chọn cho bạn.</string>
+    <string name="yv_placeholder_version_unavailable_icon_content_desc">Phiên bản không khả dụng</string>
+    <string name="yv_search">Tìm kiếm</string>
+    <string name="yv_search_bible_versions">Tìm kiếm phiên bản Kinh Thánh</string>
+    <string name="yv_search_languages">Tìm kiếm ngôn ngữ</string>
+    <string name="yv_select_language_title">Chọn ngôn ngữ</string>
+    <string name="yv_share_content_desc">Chia sẻ</string>
+    <string name="yv_sign_in_button_compact">Đăng nhập</string>
+    <string name="yv_sign_in_button_content_desc">Đăng nhập bằng YouVersion</string>
+    <string name="yv_sign_in_button_full">Đăng nhập bằng</string>
+    <string name="yv_sign_in_error_message">Chúng tôi không thể đăng nhập cho bạn lúc này. Vui lòng thử lại.</string>
+    <string name="yv_sign_in_error_title">Đăng Nhập Thất Bại</string>
+    <string name="yv_sign_out_cancel_button_text">Hủy</string>
+    <string name="yv_sign_out_confirm_button_text">Đăng Xuất</string>
+    <string name="yv_sign_out_confirmation_message">Bạn có chắc muốn đăng xuất khỏi YouVersion không? Bạn sẽ cần đăng nhập lại để truy cập các phần đánh dấu của mình.</string>
+    <string name="yv_sign_out_confirmation_title">Đăng Xuất</string>
+    <string name="yv_tab_votd">Câu Kinh Thánh Hằng Ngày</string>
+    <string name="yv_version_info_agree_and_download">Đồng Ý và Tải Xuống</string>
+    <string name="yv_version_info_maybe_later">Để Sau</string>
+    <string name="yv_version_info_offline_agreement">Thỏa thuận của chúng tôi với nhà xuất bản phiên bản Kinh Thánh này yêu cầu chúng tôi chia sẻ một số thông tin nhất định với họ để cung cấp phiên bản này cho việc sử dụng ngoại tuyến. Bằng cách tiếp tục, bạn đồng ý chia sẻ thông tin của mình và cho phép nhà xuất bản gửi email cho bạn.</string>
+    <string name="yv_version_info_offline_tagline">Đọc mọi lúc, mọi nơi—kể cả ngoại tuyến</string>
+    <string name="yv_versions_empty_for_language">Không tìm thấy phiên bản nào cho ngôn ngữ này</string>
+    <string name="yv_versions_load_error">Không thể tải phiên bản. Hãy kiểm tra kết nối và thử lại.</string>
+    <string name="yv_versions_screen_title">Phiên bản</string>
+    <string name="yv_versions_statistics">%1$s Phiên bản trong %2$s Ngôn ngữ</string>
+    <string name="yv_widget_bible_app">Ứng Dụng Kinh Thánh</string>
+    <string name="yv_widget_copyright">Bản quyền</string>
+</resources>
