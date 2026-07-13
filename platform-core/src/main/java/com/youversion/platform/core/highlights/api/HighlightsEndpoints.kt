@@ -101,8 +101,7 @@ object HighlightsEndpoints : HighlightsApi {
         color: String,
     ): Boolean =
         httpClient
-            .put {
-                highlightsUrl()
+            .put(highlightsUrl()) {
                 contentType(ContentType.Application.Json)
                 buildJsonObject {
                     put("version_id", versionId)
