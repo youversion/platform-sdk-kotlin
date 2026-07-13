@@ -194,12 +194,16 @@ private fun LineSpacingButton(
     lineSpacing: Float,
     onClick: () -> Unit,
 ) {
-    // Preview: three horizontal bars whose vertical gap tracks the current spacing so
-    // cycling through 1.2 / 1.5 / 1.8 visibly redistributes them. `lineSpacing / 3` matches
-    // the Swift reader's control (ReaderFonts.nextLineSpacing preview) so the two platforms
-    // present the same relative spread of options.
-    val previewGap = (lineSpacing / 3f * 8).dp
-    val barColor = MaterialTheme.colorScheme.onSurface
+    // Preview: three horizontal bars whose vertical gap is derived from the option index
+    // (0 / 1 / 2 → 1 / 3 / 5 dp) rather than the raw multiplier — matches Swift's control
+    // and produces a visibly wider spread across 1.2 / 1.5 / 1.8 than a proportional gap
+    // would (which was only ~1.5× between smallest and largest).
+    val optionIndex =
+        ReaderFontSettings.availableLineSpacings.indices.minByOrNull {
+            kotlin.math.abs(ReaderFontSettings.availableLineSpacings[it] - lineSpacing)
+        } ?: 0
+    val previewGap = (optionIndex * 2 + 1).dp
+    val barColor = MaterialTheme.readerColorScheme.readerTextPrimaryColor
     val label = stringResource(R.string.line_spacing_label)
 
     Box(

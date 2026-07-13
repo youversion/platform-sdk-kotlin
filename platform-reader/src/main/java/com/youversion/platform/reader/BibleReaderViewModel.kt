@@ -97,7 +97,15 @@ class BibleReaderViewModel(
         }
 
         userSettingsRepository.readerLineSpacing?.let { savedLineSpacing ->
-            _state.update { it.copy(lineSpacing = savedLineSpacing) }
+            // Snap the stored value to the nearest supported step so a value written by an
+            // older app version (or otherwise nudged out of range) still renders correctly on
+            // first paint. The next cycle would clamp it back anyway, but the initial frame
+            // should not use an arbitrary multiplier.
+            val clampedSpacing =
+                ReaderFontSettings.availableLineSpacings
+                    .minByOrNull { kotlin.math.abs(it - savedLineSpacing) }
+                    ?: ReaderFontSettings.DEFAULT_LINE_SPACING
+            _state.update { it.copy(lineSpacing = clampedSpacing) }
         }
     }
 

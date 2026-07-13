@@ -190,6 +190,29 @@ class BibleReaderViewModelInitTests {
         }
 
     @Test
+    fun `init snaps out-of-range saved line spacing to the nearest supported step`() =
+        runTest(testDispatcher) {
+            // 2.5f is well above the largest supported step (1.8f); snap to that step
+            // rather than trust the raw value from storage.
+            every { userSettingsRepository.readerLineSpacing } returns 2.5f
+
+            val vm = createViewModel()
+
+            assertEquals(1.8f, vm.state.value.lineSpacing)
+        }
+
+    @Test
+    fun `init snaps between-step saved line spacing to the nearest supported step`() =
+        runTest(testDispatcher) {
+            // 1.7f is closest to 1.8f among [1.2, 1.5, 1.8] — closer than to 1.5f.
+            every { userSettingsRepository.readerLineSpacing } returns 1.7f
+
+            val vm = createViewModel()
+
+            assertEquals(1.8f, vm.state.value.lineSpacing)
+        }
+
+    @Test
     fun `init uses defaults when all settings are null`() =
         runTest(testDispatcher) {
             val vm = createViewModel()
