@@ -306,20 +306,25 @@ internal class BibleHighlightCache {
      * Records that the delete for each of [references] has reached the server. Their tombstones are kept, not dropped,
      * so a chapter load already in flight — whose response may predate the delete — cannot resurrect the highlight;
      * each tombstone is stamped with the current load sequence so a load that starts afterwards can clear it once the
-     * server confirms the removal (see [applyServerHighlights]). References that were re-added since the delete are no
-     * longer tombstones and are left untouched.
+     * server confirms the removal (see [applyServerHighlights]).
+     *
+     * A reference re-added since the delete is no longer a tombstone. If its re-add had been promoted to
+     * [CachedHighlightState.LOCAL_PENDING_UPDATE] or [CachedHighlightState.REMOTE_SYNCED] (by a synced create or a
+     * server merge), it is reset to [CachedHighlightState.LOCAL_PENDING_CREATE]: the server has now deleted the
+     * reference, so its pending write must post a new highlight rather than put one the server no longer holds — which
+     * would 404 and retry forever.
      */
     fun markDeletesSynced(references: List<BibleReference>) {
         val referenceSet = references.toSet()
         val boundary = loadSequence.get()
         _highlights.update { current ->
             current.map { cached ->
-                if (cached.highlight.bibleReference in referenceSet &&
-                    cached.state == CachedHighlightState.LOCAL_PENDING_DELETE
-                ) {
-                    cached.copy(clearsAfterLoadSequence = boundary)
-                } else {
-                    cached
+                when {
+                    cached.highlight.bibleReference !in referenceSet -> cached
+                    cached.state == CachedHighlightState.LOCAL_PENDING_DELETE ->
+                        cached.copy(clearsAfterLoadSequence = boundary)
+                    cached.state == CachedHighlightState.LOCAL_PENDING_CREATE -> cached
+                    else -> cached.copy(state = CachedHighlightState.LOCAL_PENDING_CREATE)
                 }
             }
         }

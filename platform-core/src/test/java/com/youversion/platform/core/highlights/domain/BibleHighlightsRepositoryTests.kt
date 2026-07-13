@@ -190,6 +190,26 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
+    fun `add then remove then recolor before sync re-creates rather than updating the deleted highlight`() =
+        runTest(testDispatcher) {
+            // The remove's delete lands before the recolor syncs; the recolor must post a fresh highlight, not put the
+            // one the server just deleted, which would 404 and retry forever.
+            val api = FakeHighlightsApi()
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.addHighlights(listOf(reference), color = "#ff0000")
+            repository.removeHighlights(listOf(reference))
+            repository.updateHighlightColors(listOf(reference), newColor = "#0000ff")
+            advanceUntilIdle()
+
+            assertEquals(2, api.createCount)
+            assertEquals(1, api.deleteCount)
+            assertEquals(0, api.updateCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
     fun `updateHighlightColors syncs a create when no highlight exists for the reference yet`() =
         runTest(testDispatcher) {
             val api = FakeHighlightsApi()
