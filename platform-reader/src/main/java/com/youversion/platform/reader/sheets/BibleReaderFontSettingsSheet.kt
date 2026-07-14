@@ -38,8 +38,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -204,8 +202,10 @@ private fun LineSpacingButton(
         } ?: 0
     val previewGap = (optionIndex * 2 + 1).dp
     val barColor = MaterialTheme.readerColorScheme.readerTextPrimaryColor
-    val label = stringResource(R.string.line_spacing_label)
 
+    // TODO(YPE-3760): wire contentDescription = stringResource(R.string.line_spacing_label)
+    //  once the platform-localization repo ships the `line_spacing_label` key and the sync
+    //  workflow lands it in strings_i18n.xml + the per-locale strings_i18n.xml files here.
     Box(
         contentAlignment = Alignment.Center,
         modifier =
@@ -219,8 +219,7 @@ private fun LineSpacingButton(
                     enabled = true,
                     indication = ripple(),
                     onClick = onClick,
-                ).semantics { contentDescription = label }
-                .testTag("line_spacing_button"),
+                ).testTag("line_spacing_button"),
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
