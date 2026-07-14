@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- AUTO-GENERATED from en.json — do not edit manually -->
+<!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_back_button">Retour</string>
     <string name="yv_bible_card_unavailable_reference">Ce passage n\'est pas disponible dans la version de la Bible sélectionnée.</string>
@@ -15,19 +15,19 @@
     <string name="yv_search_languages">Rechercher une langue</string>
     <string name="yv_share_content_desc">Partager</string>
     <string name="yv_sign_in_button_compact">Se connecter</string>
-    <string name="yv_sign_in_button_full">Se connecter avec</string>
     <string name="yv_sign_in_button_content_desc">Se connecter avec YouVersion</string>
-    <string name="yv_sign_in_error_title">Échec de la connexion</string>
+    <string name="yv_sign_in_button_full">Se connecter avec</string>
     <string name="yv_sign_in_error_message">Nous n\'avons pas pu vous connecter pour le moment. Veuillez réessayer.</string>
-    <string name="yv_sign_out_confirmation_title">Se déconnecter</string>
-    <string name="yv_sign_out_confirmation_message">Êtes-vous sûr de vouloir vous déconnecter de YouVersion ? Vous devrez vous reconnecter pour accéder à vos surlignages.</string>
-    <string name="yv_sign_out_confirm_button_text">Se déconnecter</string>
+    <string name="yv_sign_in_error_title">Échec de la connexion</string>
     <string name="yv_sign_out_cancel_button_text">Annuler</string>
+    <string name="yv_sign_out_confirm_button_text">Se déconnecter</string>
+    <string name="yv_sign_out_confirmation_message">Êtes-vous sûr de vouloir vous déconnecter de YouVersion ? Vous devrez vous reconnecter pour accéder à vos surlignages.</string>
+    <string name="yv_sign_out_confirmation_title">Se déconnecter</string>
     <string name="yv_tab_votd">Verset du jour</string>
-    <string name="yv_version_info_offline_agreement">Notre accord avec l\'éditeur de cette version de la Bible nous oblige à partager certaines informations avec eux afin de proposer cette version pour une utilisation hors ligne. En continuant, vous acceptez de partager vos informations et d\'autoriser l\'éditeur à vous envoyer des e-mails.</string>
-    <string name="yv_version_info_offline_tagline">Lisez-le n\'importe quand, n\'importe où—même hors ligne</string>
     <string name="yv_version_info_agree_and_download">Accepter et télécharger</string>
     <string name="yv_version_info_maybe_later">Peut-être plus tard</string>
+    <string name="yv_version_info_offline_agreement">Notre accord avec l\'éditeur de cette version de la Bible nous oblige à partager certaines informations avec eux afin de proposer cette version pour une utilisation hors ligne. En continuant, vous acceptez de partager vos informations et d\'autoriser l\'éditeur à vous envoyer des e-mails.</string>
+    <string name="yv_version_info_offline_tagline">Lisez-le n\'importe quand, n\'importe où—même hors ligne</string>
     <string name="yv_widget_bible_app">Application Bible</string>
     <string name="yv_widget_copyright">Droits d\'auteur</string>
 </resources>
