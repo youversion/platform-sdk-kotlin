@@ -410,7 +410,9 @@ internal fun highlightLineSpan(
     val startEdge = if (isStartLine) startCaretX else leadingEdge
     val endEdge = if (isEndLine) endCaretX else trailingEdge
     return minOf(startEdge, endEdge) to maxOf(startEdge, endEdge)
+}
 
+/**
  * Parses a `#RRGGBB` or `#AARRGGBB` hex string (as stored on [com.youversion.platform.core.highlights.models.BibleHighlight.hexColor])
  * into a Compose [Color], or returns null when the string is not valid hex. Six-digit values are treated as fully opaque.
  */
