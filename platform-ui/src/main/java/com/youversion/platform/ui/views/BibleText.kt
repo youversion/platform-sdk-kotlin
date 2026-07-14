@@ -149,7 +149,6 @@ fun BibleText(
     reference: BibleReference,
     textOptions: BibleTextOptions = BibleTextOptions(),
     selectedVerses: Set<BibleReference> = emptySet(),
-    showsHighlights: Boolean = true,
     onVerseSelectedChange: (Set<BibleReference>) -> Unit = {},
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)? = null,
     onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)? = null,
@@ -169,37 +168,31 @@ fun BibleText(
     val configState by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
     val isSignedIn = configState?.isSignedIn == true
 
-    LaunchedEffect(reference, showsHighlights) {
-        if (showsHighlights) {
-            highlightsRepository.ensureHighlightsForChapterLoaded(reference)
-        }
+    LaunchedEffect(reference) {
+        highlightsRepository.ensureHighlightsForChapterLoaded(reference)
     }
 
     // Highlights require sign-in, and nothing else re-triggers a load when the user signs in while
     // already viewing a chapter. Force a refresh only on the false -> true transition so their
     // highlights appear immediately, without bypassing the per-chapter throttle on every re-entry.
     var wasSignedIn by remember { mutableStateOf(isSignedIn) }
-    LaunchedEffect(isSignedIn, showsHighlights) {
-        if (showsHighlights && isSignedIn && !wasSignedIn) {
+    LaunchedEffect(isSignedIn) {
+        if (isSignedIn && !wasSignedIn) {
             highlightsRepository.ensureHighlightsForChapterLoaded(reference, forceReload = true)
         }
         wasSignedIn = isSignedIn
     }
 
     val highlights =
-        remember(cachedHighlights, reference, showsHighlights) {
-            if (!showsHighlights) {
-                emptyMap()
-            } else {
-                cachedHighlights
-                    .asSequence()
-                    .filter { it.highlight.bibleReference.overlaps(reference) }
-                    .mapNotNull { cached ->
-                        cached.highlight.hexColor.toHighlightColorOrNull()?.let { color ->
-                            cached.highlight.bibleReference to color
-                        }
-                    }.toMap()
-            }
+        remember(cachedHighlights, reference) {
+            cachedHighlights
+                .asSequence()
+                .filter { it.bibleReference.overlaps(reference) }
+                .mapNotNull { cached ->
+                    cached.hexColor.toHighlightColorOrNull()?.let { color ->
+                        cached.bibleReference to color
+                    }
+                }.toMap()
         }
 
     LaunchedEffect(loadingPhase) {
@@ -417,7 +410,9 @@ internal fun highlightLineSpan(
     val startEdge = if (isStartLine) startCaretX else leadingEdge
     val endEdge = if (isEndLine) endCaretX else trailingEdge
     return minOf(startEdge, endEdge) to maxOf(startEdge, endEdge)
+}
 
+/**
  * Parses a `#RRGGBB` or `#AARRGGBB` hex string (as stored on [com.youversion.platform.core.highlights.models.BibleHighlight.hexColor])
  * into a Compose [Color], or returns null when the string is not valid hex. Six-digit values are treated as fully opaque.
  */

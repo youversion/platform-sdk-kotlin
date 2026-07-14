@@ -31,7 +31,6 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.highlights.api.HighlightsApi
-import com.youversion.platform.core.highlights.domain.BibleHighlightCache
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
@@ -159,7 +158,7 @@ class BibleTextTests {
 
     @After
     fun tearDown() {
-        BibleHighlightCache.clear()
+        highlightsRepository.clearCachedHighlights()
         PlatformKoinGraph.stop()
         unmockkObject(BibleVersionRendering)
     }
@@ -1355,7 +1354,7 @@ class BibleTextTests {
             )
         } returns listOf(annotatedBlock("Genesis verse", referenceAnnotation = "1:GEN:1:1"))
 
-        BibleHighlightCache.addHighlights(
+        highlightsRepository.seedCachedHighlights(
             listOf(
                 BibleHighlight(
                     bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
@@ -1411,7 +1410,7 @@ class BibleTextTests {
                 ),
             )
 
-        BibleHighlightCache.addHighlights(
+        highlightsRepository.seedCachedHighlights(
             listOf(
                 BibleHighlight(
                     bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
