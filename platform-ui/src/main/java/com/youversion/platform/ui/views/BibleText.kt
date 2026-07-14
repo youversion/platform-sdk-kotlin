@@ -376,13 +376,13 @@ private fun DrawScope.drawHighlightBackgrounds(
                     if (line == startLine) {
                         layoutResult.getHorizontalPosition(range.first, true)
                     } else {
-                        layoutResult.getLineLeft(line)
+                        0f
                     }
                 val lineRight =
                     if (line == endLine) {
                         layoutResult.getHorizontalPosition(endOffset, true)
                     } else {
-                        layoutResult.getLineRight(line)
+                        size.width
                     }
                 drawRect(
                     color = color,
