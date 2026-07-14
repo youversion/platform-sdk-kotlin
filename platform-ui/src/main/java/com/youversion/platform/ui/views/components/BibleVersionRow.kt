@@ -15,8 +15,10 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
 @Composable
@@ -65,7 +67,7 @@ fun BibleVersionRow(
         ) {
             Icon(
                 imageVector = Icons.Outlined.Info,
-                contentDescription = "Bible Version Details",
+                contentDescription = stringResource(R.string.bible_version_details_content_desc),
             )
         }
     }

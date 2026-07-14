@@ -107,7 +107,12 @@ fun BibleCard(
         ObserveAsEvents(viewModel.events) { event ->
             when (event) {
                 is BibleCardViewModel.Event.OnErrorLoadingBibleVersion -> {
-                    Toast.makeText(context, "Error loading Bible version", Toast.LENGTH_LONG).show()
+                    Toast
+                        .makeText(
+                            context,
+                            context.getString(R.string.bible_version_load_error),
+                            Toast.LENGTH_LONG,
+                        ).show()
                 }
             }
         }

@@ -1,0 +1,7 @@
+# GitHub logins allowed to modify synced localization files in PRs.
+# One login per line. Lines starting with # are ignored.
+#
+# Update this list when the localization sync GitHub App identity is confirmed.
+# bot login (e.g. localization-sync[bot]) once verified.
+
+platform-localization-pr-bot

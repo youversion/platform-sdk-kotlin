@@ -44,7 +44,7 @@ internal fun FontsScreen(
             BibleReaderTopAppBar(
                 title = {
                     Text(
-                        text = "Font",
+                        text = stringResource(R.string.font_settings_label),
                         style = MaterialTheme.typography.titleMedium,
                     )
                 },

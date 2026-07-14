@@ -342,6 +342,20 @@ npm install
 
 This installs [husky](https://typicode.github.io/husky/) and [commitlint](https://commitlint.js.org/), which enforce [Conventional Commits](https://www.conventionalcommits.org/) on every commit. Without this step, commits with non-conforming messages will pass locally but fail in CI.
 
+### Localization guardrails
+
+User-facing strings in `platform-ui` and `platform-reader` must come from synced string resources (platform-localization), not hardcoded Kotlin literals.
+
+```bash
+# Fail on hardcoded UI strings in platform-ui and platform-reader
+./gradlew verifyNoHardcodedUiStrings
+
+# Root check also runs the guardrail task
+./gradlew check
+```
+
+Greptile PR rules live in `.greptile/`. See [docs/localization-guardrails.md](./docs/localization-guardrails.md) for the full policy.
+
 ## Contributing (Starting Early 2026)
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to get started.

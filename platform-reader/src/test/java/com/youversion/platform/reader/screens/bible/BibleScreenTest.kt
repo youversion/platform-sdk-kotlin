@@ -968,7 +968,7 @@ class BibleScreenTest {
             }
 
             composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithContentDescription("Fonts & Settings").performClick()
+            composeTestRule.onNodeWithContentDescription("Font & Settings").performClick()
             composeTestRule.waitForIdle()
             composeTestRule.onAllNodesWithText("Sign Out")[0].performClick()
             composeTestRule.waitForIdle()
@@ -1012,7 +1012,7 @@ class BibleScreenTest {
             }
 
             composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithContentDescription("Fonts & Settings").performClick()
+            composeTestRule.onNodeWithContentDescription("Font & Settings").performClick()
             composeTestRule.waitForIdle()
             composeTestRule.onAllNodesWithText("Sign Out")[0].performClick()
             composeTestRule.waitForIdle()

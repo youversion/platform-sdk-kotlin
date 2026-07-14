@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.ui.R
@@ -51,7 +52,7 @@ fun LanguageSelector(
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
-            text = "Language",
+            text = stringResource(R.string.language_label),
             style = BibleReaderTheme.typography.labelL,
             modifier = Modifier.weight(1f),
         )

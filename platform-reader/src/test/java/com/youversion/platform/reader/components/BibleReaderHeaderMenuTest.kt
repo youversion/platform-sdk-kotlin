@@ -36,7 +36,7 @@ class BibleReaderHeaderMenuTest {
         composeTestRule.onNodeWithText("Font & Settings").assertIsNotDisplayed()
         composeTestRule.onNodeWithText("Sign In").assertIsNotDisplayed()
 
-        composeTestRule.onNodeWithContentDescription("Fonts & Settings").performClick()
+        composeTestRule.onNodeWithContentDescription("Font & Settings").performClick()
         composeTestRule.onNodeWithText("Font & Settings").assertIsDisplayed()
         composeTestRule.onNodeWithText("Sign In").assertIsDisplayed()
     }
@@ -55,7 +55,7 @@ class BibleReaderHeaderMenuTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Fonts & Settings").performClick()
+        composeTestRule.onNodeWithContentDescription("Font & Settings").performClick()
         composeTestRule.onNodeWithText("Font & Settings").performClick()
         assertTrue(fontSettingsClicked)
 
@@ -77,12 +77,12 @@ class BibleReaderHeaderMenuTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Fonts & Settings").performClick()
+        composeTestRule.onNodeWithContentDescription("Font & Settings").performClick()
         composeTestRule.onNodeWithText("Sign In").performClick()
         assertTrue(signInClicked.value)
 
         composeTestRule.onNodeWithText("Font & Settings").assertIsNotDisplayed()
-        composeTestRule.onNodeWithContentDescription("Fonts & Settings").performClick()
+        composeTestRule.onNodeWithContentDescription("Font & Settings").performClick()
 
         composeTestRule.onNodeWithText("Font & Settings").assertIsDisplayed()
         composeTestRule.onNodeWithText("Sign Out").assertIsDisplayed()
@@ -102,12 +102,12 @@ class BibleReaderHeaderMenuTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Fonts & Settings").performClick()
+        composeTestRule.onNodeWithContentDescription("Font & Settings").performClick()
         composeTestRule.onNodeWithText("Sign Out").performClick()
         assertTrue(signOutClicked.value)
 
         composeTestRule.onNodeWithText("Font & Settings").assertIsNotDisplayed()
-        composeTestRule.onNodeWithContentDescription("Fonts & Settings").performClick()
+        composeTestRule.onNodeWithContentDescription("Font & Settings").performClick()
 
         composeTestRule.onNodeWithText("Font & Settings").assertIsDisplayed()
         composeTestRule.onNodeWithText("Sign In").assertIsDisplayed()
@@ -128,14 +128,14 @@ class BibleReaderHeaderMenuTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Fonts & Settings").performClick()
+        composeTestRule.onNodeWithContentDescription("Font & Settings").performClick()
         composeTestRule.onNodeWithText("Sign In").assertIsNotEnabled()
         loading.value = false
 
         composeTestRule.onNodeWithText("Sign In").performClick()
         loading.value = true
 
-        composeTestRule.onNodeWithContentDescription("Fonts & Settings").performClick()
+        composeTestRule.onNodeWithContentDescription("Font & Settings").performClick()
         composeTestRule.onNodeWithText("Sign Out").assertIsNotEnabled()
         loading.value = false
         composeTestRule.onNodeWithText("Sign Out").assertIsEnabled()
