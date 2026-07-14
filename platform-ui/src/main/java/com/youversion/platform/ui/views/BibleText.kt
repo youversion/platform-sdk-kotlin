@@ -176,12 +176,14 @@ fun BibleText(
     }
 
     // Highlights require sign-in, and nothing else re-triggers a load when the user signs in while
-    // already viewing a chapter. Force a refresh on that transition so their highlights appear without
-    // waiting for the per-chapter throttle to expire or for them to navigate elsewhere.
+    // already viewing a chapter. Force a refresh only on the false -> true transition so their
+    // highlights appear immediately, without bypassing the per-chapter throttle on every re-entry.
+    var wasSignedIn by remember { mutableStateOf(isSignedIn) }
     LaunchedEffect(isSignedIn, showsHighlights) {
-        if (showsHighlights && isSignedIn) {
+        if (showsHighlights && isSignedIn && !wasSignedIn) {
             highlightsRepository.ensureHighlightsForChapterLoaded(reference, forceReload = true)
         }
+        wasSignedIn = isSignedIn
     }
 
     val highlights =
