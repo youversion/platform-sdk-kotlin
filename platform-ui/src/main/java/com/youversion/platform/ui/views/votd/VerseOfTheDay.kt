@@ -193,7 +193,7 @@ private fun VerseOfTheDayContent(
                     ),
             ) {
                 Text(
-                    text = "Full Chapter",
+                    text = stringResource(R.string.full_chapter),
                 )
             }
             BibleAppLogo()

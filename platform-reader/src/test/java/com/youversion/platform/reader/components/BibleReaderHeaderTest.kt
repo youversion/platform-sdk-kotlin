@@ -38,7 +38,7 @@ class BibleReaderHeaderTest {
                 )
             }
         }
-        composeTestRule.onNodeWithContentDescription("Fonts & Settings").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Font & Settings").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Language").assertIsDisplayed()
         composeTestRule.onNodeWithText("NIV").assertIsDisplayed()
     }
