@@ -11,6 +11,7 @@ import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
@@ -35,6 +36,7 @@ class BibleReaderViewModel(
     private val userSettingsRepository: UserSettingsRepository,
     private val bibleChapterRepository: BibleChapterRepository,
     private val languageRepository: LanguageRepository,
+    private val bibleHighlightsRepository: BibleHighlightsRepository,
     bibleVersionsViewModel: BibleVersionsViewModel? = null,
     private val copyManager: CopyManager,
     private val shareManager: ShareManager,
@@ -240,6 +242,14 @@ class BibleReaderViewModel(
             is Action.ShareSelectedVerses -> {
                 shareSelectedVerses()
             }
+
+            is Action.AddHighlight -> {
+                addHighlight(action.hexColor)
+            }
+
+            is Action.RemoveHighlight -> {
+                removeHighlight(action.hexColor)
+            }
         }
     }
 
@@ -292,6 +302,51 @@ class BibleReaderViewModel(
             )
         }
     }
+
+    private fun addHighlight(hexColor: String) {
+        val references = _state.value.selectedVerses.toList()
+        if (references.isEmpty()) return
+        bibleHighlightsRepository.addHighlights(references, hexColor)
+        clearVerseSelection()
+    }
+
+    private fun removeHighlight(hexColor: String) {
+        val references =
+            _state.value.selectedVerses.filter { reference ->
+                bibleHighlightsRepository
+                    .highlights(overlapping = reference)
+                    .any { isSameHexColor(it.hexColor, hexColor) }
+            }
+        if (references.isNotEmpty()) bibleHighlightsRepository.removeHighlights(references)
+        clearVerseSelection()
+    }
+
+    /**
+     * Whether [hexColor] is already highlighted on at least one of the currently selected verses. The color picker uses
+     * this to decide whether to offer a remove affordance for the color.
+     */
+    fun isColorPresentOnAnySelectedVerses(hexColor: String): Boolean = selectedVersesWithColor(hexColor).isNotEmpty()
+
+    /**
+     * Whether [hexColor] is already highlighted on every currently selected verse. Returns false when nothing is
+     * selected. The color picker uses this to decide between an add and a remove affordance for the color.
+     */
+    fun isColorPresentOnAllSelectedVerses(hexColor: String): Boolean {
+        val selectedVerses = _state.value.selectedVerses
+        return selectedVerses.isNotEmpty() && selectedVersesWithColor(hexColor).size == selectedVerses.size
+    }
+
+    private fun selectedVersesWithColor(hexColor: String): Set<BibleReference> =
+        _state.value.selectedVerses.filterTo(mutableSetOf()) { reference ->
+            bibleHighlightsRepository
+                .highlights(overlapping = reference)
+                .any { isSameHexColor(it.hexColor, hexColor) }
+        }
+
+    private fun isSameHexColor(
+        first: String,
+        second: String,
+    ): Boolean = first.removePrefix("#").equals(second.removePrefix("#"), ignoreCase = true)
 
     private fun copySelectedVerses() {
         val version = bibleVersion ?: return
@@ -538,5 +593,13 @@ class BibleReaderViewModel(
         data object CopySelectedVerses : Action
 
         data object ShareSelectedVerses : Action
+
+        data class AddHighlight(
+            val hexColor: String,
+        ) : Action
+
+        data class RemoveHighlight(
+            val hexColor: String,
+        ) : Action
     }
 }

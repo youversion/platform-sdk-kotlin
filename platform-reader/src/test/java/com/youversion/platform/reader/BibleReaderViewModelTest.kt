@@ -80,6 +80,7 @@ class BibleReaderViewModelTest {
                 userSettingsRepository = userSettingsRepository,
                 bibleChapterRepository = bibleChapterRepository,
                 languageRepository = languageRepository,
+                bibleHighlightsRepository = mockk(relaxed = true),
                 copyManager = copyManager,
                 shareManager = shareManager,
             )
