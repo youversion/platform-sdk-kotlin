@@ -160,8 +160,6 @@ internal class BibleHighlightCache {
                         ),
                     )
                 }
-                // Physically remove deletes so the visible list hides them
-                removeAll { it.state == CachedHighlightState.LOCAL_PENDING_DELETE }
             }
         }
     }
