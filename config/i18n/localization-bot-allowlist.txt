@@ -1,7 +1,9 @@
 # GitHub logins allowed to modify synced localization files in PRs.
 # One login per line. Lines starting with # are ignored.
 #
-# Update this list when the localization sync GitHub App identity is confirmed.
-# bot login (e.g. localization-sync[bot]) once verified.
+# GitHub Apps show up as `<slug>[bot]` in `github.event.pull_request.user.login`,
+# so the bracketed form is the one the guardrail script actually matches. The bare
+# form is kept for compatibility with any tooling that reads this list directly.
 
 platform-localization-pr-bot
+platform-localization-pr-bot[bot]
