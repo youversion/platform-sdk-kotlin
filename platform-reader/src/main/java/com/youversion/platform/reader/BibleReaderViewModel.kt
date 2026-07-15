@@ -311,14 +311,10 @@ class BibleReaderViewModel(
     }
 
     private fun removeHighlight(hexColor: String) {
-        val references =
-            _state.value.selectedVerses.filter { reference ->
-                bibleHighlightsRepository
-                    .highlights(overlapping = reference)
-                    .any { isSameHexColor(it.hexColor, hexColor) }
-            }
-        if (references.isNotEmpty()) bibleHighlightsRepository.removeHighlights(references)
+        val references = _state.value.selectedVerses.toList()
         clearVerseSelection()
+        if (references.isEmpty()) return
+        bibleHighlightsRepository.removeHighlights(references, matchingColor = hexColor)
     }
 
     /**

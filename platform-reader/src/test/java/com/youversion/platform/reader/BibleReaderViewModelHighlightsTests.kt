@@ -109,31 +109,29 @@ class BibleReaderViewModelHighlightsTests {
     // ----- RemoveHighlight
 
     @Test
-    fun `RemoveHighlight removes only the verses carrying the color and clears the selection`() {
-        highlight(verseOne, yellow)
+    fun `RemoveHighlight forwards the selection and color to the repository and clears the selection`() {
         selectVerses(verseOne, verseTwo)
 
         viewModel.onAction(BibleReaderViewModel.Action.RemoveHighlight(yellow))
 
-        verify { bibleHighlightsRepository.removeHighlights(match { it.toSet() == setOf(verseOne) }) }
+        verify {
+            bibleHighlightsRepository.removeHighlights(
+                match { it.toSet() == setOf(verseOne, verseTwo) },
+                matchingColor = yellow,
+            )
+        }
         assertTrue(
             viewModel.state.value.selectedVerses
                 .isEmpty(),
         )
+        assertFalse(viewModel.state.value.showVerseActionSheet)
     }
 
     @Test
-    fun `RemoveHighlight with no matching color clears the selection without calling the repository`() {
-        highlight(verseOne, yellow)
-        selectVerses(verseOne)
+    fun `RemoveHighlight with no selection does not call the repository`() {
+        viewModel.onAction(BibleReaderViewModel.Action.RemoveHighlight(yellow))
 
-        viewModel.onAction(BibleReaderViewModel.Action.RemoveHighlight(blue))
-
-        verify(exactly = 0) { bibleHighlightsRepository.removeHighlights(any()) }
-        assertTrue(
-            viewModel.state.value.selectedVerses
-                .isEmpty(),
-        )
+        verify(exactly = 0) { bibleHighlightsRepository.removeHighlights(any(), any<String>()) }
     }
 
     // ----- Color presence helpers

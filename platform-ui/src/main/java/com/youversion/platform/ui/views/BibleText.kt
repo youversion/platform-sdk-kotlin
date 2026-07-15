@@ -427,20 +427,6 @@ internal fun String.toHighlightColorOrNull(): Color? {
 }
 
 /**
- * Parses a `#RRGGBB` or `#AARRGGBB` hex string (as stored on [com.youversion.platform.core.highlights.models.BibleHighlight.hexColor])
- * into a Compose [Color], or returns null when the string is not valid hex. Six-digit values are treated as fully opaque.
- */
-internal fun String.toHighlightColorOrNull(): Color? {
-    val hex = removePrefix("#")
-    val value = hex.toLongOrNull(radix = 16) ?: return null
-    return when (hex.length) {
-        6 -> Color(0xFF000000L or value)
-        8 -> Color(value)
-        else -> null
-    }
-}
-
-/**
  * Draws a continuous filled background rectangle behind every text line that contains characters in
  * [highlightedRanges]. Interior wrapped lines span their full width so the highlight appears as a
  * single unbroken color rather than per-character backgrounds that would look jagged at line breaks.

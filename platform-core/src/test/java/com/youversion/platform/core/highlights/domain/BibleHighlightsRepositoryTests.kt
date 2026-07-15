@@ -277,6 +277,45 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
+    fun `removeHighlights with a matching color loads the chapter then deletes only the matching references`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(
+                            Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000"),
+                            Highlight(bibleId = 1, passageId = "GEN.1.2", color = "0000ff"),
+                        ),
+                )
+            val repository = repository(api)
+            val redVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val blueVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
+
+            repository.removeHighlights(listOf(redVerse, blueVerse), matchingColor = "#ff0000")
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals("GEN.1.1", api.deletedPassages.first())
+        }
+
+    @Test
+    fun `removeHighlights with a non-matching color deletes nothing`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                )
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.removeHighlights(listOf(reference), matchingColor = "#0000ff")
+            advanceUntilIdle()
+
+            assertEquals(0, api.deleteCount)
+        }
+
+    @Test
     fun `queue retries a failing update until it succeeds`() =
         runTest(testDispatcher) {
             val api =

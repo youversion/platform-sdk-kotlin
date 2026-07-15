@@ -205,6 +205,18 @@ class BibleHighlightsRepository internal constructor(
     }
 
     /**
+     * Loads the chapter containing [reference] and suspends until that load finishes, so code that then reads a cached
+     * query such as [highlights] sees the chapter's server highlights instead of a cold cache. Triggers the same
+     * throttled, de-duplicated load as [ensureHighlightsForChapterLoaded] on the repository's own load scope — so
+     * [reset] still cancels it — then awaits it. It returns without waiting when the chapter was loaded recently or no
+     * load is in flight.
+     */
+    private suspend fun awaitHighlightsForChapterLoaded(reference: BibleReference) {
+        ensureHighlightsForChapterLoaded(reference)
+        cache.awaitChapterLoaded(reference)
+    }
+
+    /**
      * Adds highlights of [color] to each of [references], updating the cache immediately and syncing to the server.
      */
     fun addHighlights(
@@ -237,6 +249,28 @@ class BibleHighlightsRepository internal constructor(
                 change = HighlightChange.Remove,
             ),
         )
+    }
+
+    /**
+     * Removes the highlights on [references] that currently carry [matchingColor], after loading each reference's
+     * chapter so the match reflects the server's highlights rather than a cold cache. Runs on the repository's own load
+     * scope so the removal still completes if the caller (for example a ViewModel) is torn down while the load is in
+     * flight; it is cancelled with other loads when [reset] runs on an account change, which is intended since the
+     * removal should not outlive the account that requested it.
+     */
+    fun removeHighlights(
+        references: List<BibleReference>,
+        matchingColor: String,
+    ) {
+        if (references.isEmpty()) return
+        loadScope.launch {
+            references.forEach { awaitHighlightsForChapterLoaded(it) }
+            val matchingReferences =
+                references.filter { reference ->
+                    highlights(overlapping = reference).any { isSameHexColor(it.hexColor, matchingColor) }
+                }
+            if (matchingReferences.isNotEmpty()) removeHighlights(matchingReferences)
+        }
     }
 
     /**
@@ -601,6 +635,11 @@ class BibleHighlightsRepository internal constructor(
     private fun hexWithHash(color: String): String = if (color.startsWith("#")) color else "#$color"
 
     private fun hexWithoutHash(color: String): String = color.removePrefix("#")
+
+    private fun isSameHexColor(
+        first: String,
+        second: String,
+    ): Boolean = hexWithoutHash(first).equals(hexWithoutHash(second), ignoreCase = true)
 
     private fun backoffMillis(retryCount: Int): Long {
         val seconds = 2.0.pow(minOf(retryCount, MAX_BACKOFF_EXPONENT)).toLong()
