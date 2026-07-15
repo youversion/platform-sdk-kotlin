@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/youversion/platform-sdk-kotlin/compare/1.6.0...1.6.1) (2026-07-15)
+
+
+### Bug Fixes
+
+* **ci:** allow bracketed [bot] form of platform-localization-pr-bot in guardrail ([#160](https://github.com/youversion/platform-sdk-kotlin/issues/160)) ([43b04de](https://github.com/youversion/platform-sdk-kotlin/commit/43b04de0dcffb19c65eb55f53e95f4ab5605cb30))
+
 # [1.6.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.5.0...1.6.0) (2026-05-12)
 
 
