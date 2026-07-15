@@ -12,6 +12,7 @@
     <string name="yv_footnote_header_label">Footnote</string>
     <string name="yv_intro_chapter_label">Intro</string>
     <string name="yv_language_content_desc">Language</string>
+    <string name="yv_line_spacing_label">Line Spacing</string>
     <string name="yv_next_chapter_content_desc">Next Chapter</string>
     <string name="yv_previous_chapter_content_desc">Previous Chapter</string>
     <string name="yv_reader_menu_font_settings">Font &amp; Settings</string>
