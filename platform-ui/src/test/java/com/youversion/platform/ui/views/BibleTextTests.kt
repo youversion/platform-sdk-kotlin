@@ -1410,5 +1410,105 @@ class BibleTextTests {
         composeTestRule.onNodeWithText("Selah").assertIsDisplayed()
     }
 
+    @Test
+    fun `highlightLineSpan on a single ltr line spans between the two carets`() {
+        val span =
+            highlightLineSpan(
+                isRtl = false,
+                isStartLine = true,
+                isEndLine = true,
+                startCaretX = 50f,
+                endCaretX = 300f,
+                lineWidth = 400f,
+            )
+
+        assertEquals(50f to 300f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan on a single rtl line keeps left less than right despite inverted carets`() {
+        val span =
+            highlightLineSpan(
+                isRtl = true,
+                isStartLine = true,
+                isEndLine = true,
+                startCaretX = 300f,
+                endCaretX = 50f,
+                lineWidth = 400f,
+            )
+
+        assertEquals(50f to 300f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan fills from the start caret to the trailing edge on an ltr start line`() {
+        val span =
+            highlightLineSpan(
+                isRtl = false,
+                isStartLine = true,
+                isEndLine = false,
+                startCaretX = 50f,
+                endCaretX = 0f,
+                lineWidth = 400f,
+            )
+
+        assertEquals(50f to 400f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan fills from the leading edge to the start caret on an rtl start line`() {
+        val span =
+            highlightLineSpan(
+                isRtl = true,
+                isStartLine = true,
+                isEndLine = false,
+                startCaretX = 300f,
+                endCaretX = 0f,
+                lineWidth = 400f,
+            )
+
+        assertEquals(0f to 300f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan fills from the end caret to the trailing edge on an rtl end line`() {
+        val span =
+            highlightLineSpan(
+                isRtl = true,
+                isStartLine = false,
+                isEndLine = true,
+                startCaretX = 0f,
+                endCaretX = 50f,
+                lineWidth = 400f,
+            )
+
+        assertEquals(50f to 400f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan fills the full width on an interior wrapped line regardless of direction`() {
+        val ltr =
+            highlightLineSpan(
+                isRtl = false,
+                isStartLine = false,
+                isEndLine = false,
+                startCaretX = 0f,
+                endCaretX = 0f,
+                lineWidth = 400f,
+            )
+        val rtl =
+            highlightLineSpan(
+                isRtl = true,
+                isStartLine = false,
+                isEndLine = false,
+                startCaretX = 0f,
+                endCaretX = 0f,
+                lineWidth = 400f,
+            )
+
+        assertEquals(0f to 400f, ltr)
+        assertEquals(0f to 400f, rtl)
+    }
+
     // endregion
 }

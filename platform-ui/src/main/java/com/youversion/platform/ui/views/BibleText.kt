@@ -46,6 +46,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
@@ -353,6 +354,31 @@ internal fun AnnotatedString.highlightedCharacterRanges(
 }
 
 /**
+ * Computes the horizontal `[left, right]` span of a highlight band on a single line, honoring text
+ * direction.
+ *
+ * On the line where the highlight starts or ends, the corresponding boundary is the caret position
+ * ([startCaretX] / [endCaretX]); on lines the highlight only passes through, that boundary extends to
+ * the paragraph's leading or trailing edge so a wrapped highlight reads as one continuous band. Taking
+ * the min/max keeps the span valid for right-to-left text, where the start caret sits to the right of
+ * the end caret.
+ */
+internal fun highlightLineSpan(
+    isRtl: Boolean,
+    isStartLine: Boolean,
+    isEndLine: Boolean,
+    startCaretX: Float,
+    endCaretX: Float,
+    lineWidth: Float,
+): Pair<Float, Float> {
+    val leadingEdge = if (isRtl) lineWidth else 0f
+    val trailingEdge = if (isRtl) 0f else lineWidth
+    val startEdge = if (isStartLine) startCaretX else leadingEdge
+    val endEdge = if (isEndLine) endCaretX else trailingEdge
+    return minOf(startEdge, endEdge) to maxOf(startEdge, endEdge)
+}
+
+/**
  * Draws a continuous filled background rectangle behind every text line that contains characters in
  * [highlightedRanges]. Interior wrapped lines span their full width so the highlight appears as a
  * single unbroken color rather than per-character backgrounds that would look jagged at line breaks.
@@ -361,29 +387,29 @@ private fun DrawScope.drawHighlightBackgrounds(
     layoutResult: TextLayoutResult,
     highlightedRanges: List<Pair<IntRange, Color>>,
 ) {
-    val textLength = layoutResult.layoutInput.text.length
     highlightedRanges
         .filterNot { (range, _) -> range.isEmpty() }
         .forEach { (range, color) ->
-            val endOffset = (range.last + 1).coerceAtMost(textLength)
             val startLine = layoutResult.getLineForOffset(range.first)
-            val endLine = layoutResult.getLineForOffset(endOffset)
+            val endLine = layoutResult.getLineForOffset(range.last)
+            val startCaretX = layoutResult.getHorizontalPosition(range.first, true)
+            val lastCharBounds = layoutResult.getBoundingBox(range.last)
 
             (startLine..endLine).forEach { line ->
                 val lineTop = layoutResult.getLineTop(line)
                 val lineBottom = layoutResult.getLineBottom(line)
-                val lineLeft =
-                    if (line == startLine) {
-                        layoutResult.getHorizontalPosition(range.first, true)
-                    } else {
-                        0f
-                    }
-                val lineRight =
-                    if (line == endLine) {
-                        layoutResult.getHorizontalPosition(endOffset, true)
-                    } else {
-                        size.width
-                    }
+                val isRtl =
+                    layoutResult.getParagraphDirection(layoutResult.getLineStart(line)) ==
+                        ResolvedTextDirection.Rtl
+                val (lineLeft, lineRight) =
+                    highlightLineSpan(
+                        isRtl = isRtl,
+                        isStartLine = line == startLine,
+                        isEndLine = line == endLine,
+                        startCaretX = startCaretX,
+                        endCaretX = if (isRtl) lastCharBounds.left else lastCharBounds.right,
+                        lineWidth = size.width,
+                    )
                 drawRect(
                     color = color,
                     topLeft = Offset(lineLeft, lineTop),
