@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.6.1...1.7.0) (2026-07-16)
+
+
+### Features
+
+* **reader:** add line-spacing control to font settings sheet ([cd45d3e](https://github.com/youversion/platform-sdk-kotlin/commit/cd45d3ef4b52c8fd1fb6bdfeaf07fcadcad6f54f))
+
 ## [1.6.1](https://github.com/youversion/platform-sdk-kotlin/compare/1.6.0...1.6.1) (2026-07-15)
 
 
