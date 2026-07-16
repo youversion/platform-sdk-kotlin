@@ -267,10 +267,12 @@ class BibleHighlightsRepository internal constructor(
             references.forEach { awaitHighlightsForChapterLoaded(it) }
             val matchingReferences =
                 references
-                    .flatMap { reference -> highlights(overlapping = reference) }
-                    .filter { isSameHexColor(it.hexColor, matchingColor) }
-                    .map { it.bibleReference }
-                    .distinct()
+                    .flatMap { selection ->
+                        highlights(overlapping = selection)
+                            .filter { isSameHexColor(it.hexColor, matchingColor) }
+                            .map { it.bibleReference }
+                            .filter { selection.contains(it) }
+                    }.distinct()
             if (matchingReferences.isNotEmpty()) removeHighlights(matchingReferences)
         }
     }
