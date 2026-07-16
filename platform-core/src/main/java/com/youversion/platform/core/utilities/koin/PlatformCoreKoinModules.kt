@@ -27,6 +27,7 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.headers
 import io.ktor.http.HeadersBuilder
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMessageBuilder
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
@@ -114,7 +115,7 @@ private fun HttpMessageBuilder.defaultRequestHeaders(): HeadersBuilder =
         }
 
         YouVersionPlatformConfiguration.accessToken?.let {
-            append("X-YV-LAT", it)
+            append(HttpHeaders.Authorization, "Bearer $it")
         }
     }
 

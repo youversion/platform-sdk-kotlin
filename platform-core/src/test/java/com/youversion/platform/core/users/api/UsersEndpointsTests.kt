@@ -105,6 +105,55 @@ class UsersEndpointsTests : YouVersionPlatformTest {
     }
 
     @Test
+    fun `test authorizeUrl sends optional highlights permission via requested_permissions`() {
+        YouVersionPlatformConfiguration.configure(appKey = "app")
+        val pkceParams =
+            SignInWithYouVersionPKCEParameters(
+                codeChallenge = "c",
+                codeVerifier = "v",
+                nonce = "n",
+                state = "s",
+            )
+
+        val url =
+            UsersEndpoints.authorizeUrl(
+                appKey = "app",
+                permissions =
+                    setOf(
+                        SignInWithYouVersionPermission.PROFILE,
+                        SignInWithYouVersionPermission.HIGHLIGHTS,
+                    ),
+                redirectUri = "app://callback",
+                parameters = pkceParams,
+            )
+
+        assertTrue(url.contains("scope=openid+profile"))
+        assertTrue(url.contains("requested_permissions=highlights"))
+    }
+
+    @Test
+    fun `test authorizeUrl omits requested_permissions when no optional permission`() {
+        YouVersionPlatformConfiguration.configure(appKey = "app")
+        val pkceParams =
+            SignInWithYouVersionPKCEParameters(
+                codeChallenge = "c",
+                codeVerifier = "v",
+                nonce = "n",
+                state = "s",
+            )
+
+        val url =
+            UsersEndpoints.authorizeUrl(
+                appKey = "app",
+                permissions = setOf(SignInWithYouVersionPermission.PROFILE),
+                redirectUri = "app://callback",
+                parameters = pkceParams,
+            )
+
+        assertFalse(url.contains("requested_permissions"))
+    }
+
+    @Test
     fun `test authorizeUrl omits installation id when installId is null`() {
         val pkceParams =
             SignInWithYouVersionPKCEParameters(
@@ -253,6 +302,51 @@ class UsersEndpointsTests : YouVersionPlatformTest {
             assertEquals("Jane Doe", result.name)
             assertEquals("https://example.com/pic.jpg", result.profilePicture)
             assertEquals("jane@example.com", result.email)
+        }
+
+    @Test
+    fun `test getSignInResult unions granted_permissions from callback`() =
+        runTest {
+            val jwtClaims =
+                buildJsonObject {
+                    put("nonce", TEST_NONCE)
+                    put("sub", "user_42")
+                }
+            val idToken = buildTestJwt(jwtClaims)
+            val tokenResponseJson = buildTokenResponseJson(idToken = idToken, scope = "openid,profile")
+
+            val mockEngine =
+                MockEngine { request ->
+                    when {
+                        request.url.encodedPath.contains("/auth/callback") ->
+                            respond(
+                                "",
+                                HttpStatusCode.Found,
+                                headersOf("Location", "https://redirect.example.com?code=$TEST_AUTH_CODE"),
+                            )
+                        request.url.encodedPath.contains("/auth/token") ->
+                            respondJson(tokenResponseJson)
+                        else -> respond("", HttpStatusCode.OK)
+                    }
+                }
+            stopYouVersionPlatformTest()
+            startYouVersionPlatformTest(engine = mockEngine)
+            YouVersionPlatformConfiguration.configure(appKey = TEST_APP_KEY)
+
+            val callbackUri =
+                "${UsersEndpoints.callbackUrl()}?state=$TEST_STATE&granted_permissions=highlights"
+
+            val result =
+                YouVersionApi.users.getSignInResult(
+                    callbackUri = callbackUri,
+                    state = TEST_STATE,
+                    codeVerifier = TEST_CODE_VERIFIER,
+                    redirectUri = TEST_REDIRECT_URI,
+                    nonce = TEST_NONCE,
+                )
+
+            assertTrue(result.permissions.contains(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertTrue(result.permissions.contains(SignInWithYouVersionPermission.PROFILE))
         }
 
     @Test
