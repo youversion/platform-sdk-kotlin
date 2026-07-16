@@ -16,6 +16,7 @@ import com.youversion.platform.core.bibles.models.BibleChapter
 import com.youversion.platform.core.bibles.models.BibleVerse
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
+import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.ui.views.BibleTextFonts
 import com.youversion.platform.ui.views.BibleTextOptions
@@ -104,6 +105,7 @@ class BibleCardTests {
                     single { mockVersionRepository }
                     single { mockChapterRepository }
                     single { mockLanguageRepository }
+                    single { BibleHighlightsRepository(api = mockk(relaxed = true)) }
                 },
             ),
         )

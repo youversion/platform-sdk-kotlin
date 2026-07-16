@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Highlight(
     @SerialName(CodingKey.ID) val id: String? = null,
-    @SerialName(CodingKey.VERSION_ID) val versionId: Int,
+    @SerialName(CodingKey.BIBLE_ID) val bibleId: Int,
     @SerialName(CodingKey.PASSAGE_ID) val passageId: String,
     @SerialName(CodingKey.COLOR) val color: String,
     @SerialName(CodingKey.USER_ID) val userId: String? = null,
@@ -15,7 +15,7 @@ data class Highlight(
 ) {
     private object CodingKey {
         const val ID = "id"
-        const val VERSION_ID = "version_id"
+        const val BIBLE_ID = "bible_id"
         const val PASSAGE_ID = "passage_id"
         const val COLOR = "color"
         const val USER_ID = "user_id"
