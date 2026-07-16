@@ -59,6 +59,7 @@ class BibleReaderViewModelActionTests {
                 userSettingsRepository = userSettingsRepository,
                 bibleChapterRepository = mockk(relaxed = true),
                 languageRepository = mockk(relaxed = true),
+                bibleHighlightsRepository = mockk(relaxed = true),
                 copyManager = mockk(relaxed = true),
                 shareManager = mockk(relaxed = true),
             )
