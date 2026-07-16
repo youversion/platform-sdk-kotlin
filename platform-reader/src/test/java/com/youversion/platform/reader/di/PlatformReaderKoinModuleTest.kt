@@ -6,6 +6,7 @@ import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.domain.Storage
+import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.domain.BibleReaderRepository
@@ -50,6 +51,7 @@ class PlatformReaderKoinModuleTest {
             single<BibleVersionRepository> { mockk(relaxed = true) }
             single<BibleChapterRepository> { mockk(relaxed = true) }
             single<LanguageRepository> { mockk(relaxed = true) }
+            single<BibleHighlightsRepository> { mockk(relaxed = true) }
             single<Context> { mockContext }
         }
 
