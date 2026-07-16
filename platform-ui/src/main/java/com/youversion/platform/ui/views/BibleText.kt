@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
@@ -144,6 +146,7 @@ fun BibleText(
     reference: BibleReference,
     textOptions: BibleTextOptions = BibleTextOptions(),
     selectedVerses: Set<BibleReference> = emptySet(),
+    highlights: Map<BibleReference, Color> = emptyMap(),
     onVerseSelectedChange: (Set<BibleReference>) -> Unit = {},
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)? = null,
     onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)? = null,
@@ -220,6 +223,7 @@ fun BibleText(
                         textOptions = textOptions,
                         isFirstBlock = index == 0,
                         selectedVerses = selectedVerses,
+                        highlights = highlights,
                         onClick = { localPosition, textLayoutResult ->
                             coroutineScope.launch {
                                 val characterIndex = textLayoutResult.getOffsetForPosition(localPosition)
@@ -283,6 +287,7 @@ fun BibleText(
                         block = block,
                         textOptions = textOptions,
                         selectedVerses = selectedVerses,
+                        highlights = highlights,
                         onVerseTap = onVerseTap,
                     )
                 }
@@ -318,6 +323,99 @@ internal fun AnnotatedString.selectedCharacterRanges(selectedVerses: Set<BibleRe
     }.groupBy { it.item }
         .map { (_, annotations) ->
             annotations.first().start until annotations.last().end
+        }
+}
+
+/**
+ * Returns one merged character range per highlighted verse, paired with its highlight color,
+ * spanning from the first annotation start to the last annotation end for that verse.
+ *
+ * When a verse matches more than one highlight, the first overlapping entry in [highlights] wins.
+ */
+internal fun AnnotatedString.highlightedCharacterRanges(
+    highlights: Map<BibleReference, Color>,
+): List<Pair<IntRange, Color>> {
+    if (highlights.isEmpty()) return emptyList()
+
+    return getStringAnnotations(
+        tag = BibleReferenceAttribute.NAME,
+        start = 0,
+        end = length,
+    ).mapNotNull { annotation ->
+        val reference = BibleReference.fromAnnotation(annotation.item)
+        val color = highlights.entries.firstOrNull { it.key.overlaps(reference) }?.value
+        color?.let { annotation to it }
+    }.groupBy { (annotation, _) -> annotation.item }
+        .map { (_, entries) ->
+            val annotations = entries.map { it.first }
+            val range = annotations.first().start until annotations.last().end
+            range to entries.first().second
+        }
+}
+
+/**
+ * Computes the horizontal `[left, right]` span of a highlight band on a single line, honoring text
+ * direction.
+ *
+ * On the line where the highlight starts or ends, the corresponding boundary is the caret position
+ * ([startCaretX] / [endCaretX]); on lines the highlight only passes through, that boundary extends to
+ * the paragraph's leading or trailing edge so a wrapped highlight reads as one continuous band. Taking
+ * the min/max keeps the span valid for right-to-left text, where the start caret sits to the right of
+ * the end caret.
+ */
+internal fun highlightLineSpan(
+    isRtl: Boolean,
+    isStartLine: Boolean,
+    isEndLine: Boolean,
+    startCaretX: Float,
+    endCaretX: Float,
+    lineWidth: Float,
+): Pair<Float, Float> {
+    val leadingEdge = if (isRtl) lineWidth else 0f
+    val trailingEdge = if (isRtl) 0f else lineWidth
+    val startEdge = if (isStartLine) startCaretX else leadingEdge
+    val endEdge = if (isEndLine) endCaretX else trailingEdge
+    return minOf(startEdge, endEdge) to maxOf(startEdge, endEdge)
+}
+
+/**
+ * Draws a continuous filled background rectangle behind every text line that contains characters in
+ * [highlightedRanges]. Interior wrapped lines span their full width so the highlight appears as a
+ * single unbroken color rather than per-character backgrounds that would look jagged at line breaks.
+ */
+private fun DrawScope.drawHighlightBackgrounds(
+    layoutResult: TextLayoutResult,
+    highlightedRanges: List<Pair<IntRange, Color>>,
+) {
+    highlightedRanges
+        .filterNot { (range, _) -> range.isEmpty() }
+        .forEach { (range, color) ->
+            val startLine = layoutResult.getLineForOffset(range.first)
+            val endLine = layoutResult.getLineForOffset(range.last)
+            val startCaretX = layoutResult.getHorizontalPosition(range.first, true)
+            val lastCharBounds = layoutResult.getBoundingBox(range.last)
+
+            (startLine..endLine).forEach { line ->
+                val lineTop = layoutResult.getLineTop(line)
+                val lineBottom = layoutResult.getLineBottom(line)
+                val isRtl =
+                    layoutResult.getParagraphDirection(layoutResult.getLineStart(line)) ==
+                        ResolvedTextDirection.Rtl
+                val (lineLeft, lineRight) =
+                    highlightLineSpan(
+                        isRtl = isRtl,
+                        isStartLine = line == startLine,
+                        isEndLine = line == endLine,
+                        startCaretX = startCaretX,
+                        endCaretX = if (isRtl) lastCharBounds.left else lastCharBounds.right,
+                        lineWidth = size.width,
+                    )
+                drawRect(
+                    color = color,
+                    topLeft = Offset(lineLeft, lineTop),
+                    size = Size(lineRight - lineLeft, lineBottom - lineTop),
+                )
+            }
         }
 }
 
@@ -368,6 +466,7 @@ private fun BibleTextBlock(
     textOptions: BibleTextOptions,
     isFirstBlock: Boolean,
     selectedVerses: Set<BibleReference>,
+    highlights: Map<BibleReference, Color>,
     onClick: (position: Offset, layoutResult: TextLayoutResult) -> Unit,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -381,6 +480,11 @@ private fun BibleTextBlock(
             block.text.selectedCharacterRanges(selectedVerses)
         }
 
+    val highlightedRanges =
+        remember(block.text, highlights) {
+            block.text.highlightedCharacterRanges(highlights)
+        }
+
     Text(
         text = block.text,
         textAlign = block.alignment,
@@ -391,6 +495,7 @@ private fun BibleTextBlock(
                 .padding(top = marginTop, bottom = paragraphSpacing)
                 .fillMaxWidth()
                 .drawWithContent {
+                    textLayoutResult?.let { drawHighlightBackgrounds(it, highlightedRanges) }
                     drawContent()
                     textLayoutResult?.let { drawSelectionUnderlines(it, selectedRanges, selectionColor, 1.dp) }
                 }.pointerInput(Unit) {
@@ -414,6 +519,7 @@ private fun BibleTableBlock(
     block: BibleTextBlock,
     textOptions: BibleTextOptions,
     selectedVerses: Set<BibleReference>,
+    highlights: Map<BibleReference, Color>,
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)?,
 ) {
     val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
@@ -447,6 +553,7 @@ private fun BibleTableBlock(
                                 cellText = cellText,
                                 textOptions = textOptions,
                                 selectedVerses = selectedVerses,
+                                highlights = highlights,
                                 onVerseTap = onVerseTap,
                             )
                         }
@@ -456,6 +563,7 @@ private fun BibleTableBlock(
                                 cellText = cellText,
                                 textOptions = textOptions,
                                 selectedVerses = selectedVerses,
+                                highlights = highlights,
                                 onVerseTap = onVerseTap,
                             )
                         }
@@ -471,6 +579,7 @@ private fun BibleTableCell(
     cellText: AnnotatedString,
     textOptions: BibleTextOptions,
     selectedVerses: Set<BibleReference>,
+    highlights: Map<BibleReference, Color>,
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)?,
 ) {
     var cellLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -478,6 +587,10 @@ private fun BibleTableCell(
     val selectedRanges =
         remember(cellText, selectedVerses) {
             cellText.selectedCharacterRanges(selectedVerses)
+        }
+    val highlightedRanges =
+        remember(cellText, highlights) {
+            cellText.highlightedCharacterRanges(highlights)
         }
 
     Text(
@@ -487,6 +600,7 @@ private fun BibleTableCell(
         modifier =
             Modifier
                 .drawWithContent {
+                    cellLayoutResult?.let { drawHighlightBackgrounds(it, highlightedRanges) }
                     drawContent()
                     cellLayoutResult?.let { drawSelectionUnderlines(it, selectedRanges, selectionColor, 1.dp) }
                 }.pointerInput(Unit) {
