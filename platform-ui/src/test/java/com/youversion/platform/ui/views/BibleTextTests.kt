@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
@@ -1235,6 +1236,278 @@ class BibleTextTests {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Selah").assertIsDisplayed()
+    }
+
+    // endregion
+
+    // region Highlight Backgrounds
+
+    private fun referenceAnnotatedString(
+        text: String,
+        annotations: List<Triple<String, Int, Int>>,
+    ): AnnotatedString =
+        buildAnnotatedString {
+            append(text)
+            annotations.forEach { (annotation, start, end) ->
+                addStringAnnotation(
+                    tag = BibleReferenceAttribute.NAME,
+                    annotation = annotation,
+                    start = start,
+                    end = end,
+                )
+            }
+        }
+
+    @Test
+    fun `highlightedCharacterRanges returns empty when no highlights provided`() {
+        val text = referenceAnnotatedString("Genesis", listOf(Triple("1:GEN:1:1", 0, 7)))
+
+        assertTrue(text.highlightedCharacterRanges(emptyMap()).isEmpty())
+    }
+
+    @Test
+    fun `highlightedCharacterRanges pairs a matching verse with its color`() {
+        val text = referenceAnnotatedString("Genesis", listOf(Triple("1:GEN:1:1", 0, 7)))
+        val color = Color.Yellow
+
+        val ranges =
+            text.highlightedCharacterRanges(
+                mapOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1) to color),
+            )
+
+        assertEquals(1, ranges.size)
+        assertEquals(0 until 7, ranges.first().first)
+        assertEquals(color, ranges.first().second)
+    }
+
+    @Test
+    fun `highlightedCharacterRanges ignores verses without a matching highlight`() {
+        val text = referenceAnnotatedString("Genesis", listOf(Triple("1:GEN:1:1", 0, 7)))
+
+        val ranges =
+            text.highlightedCharacterRanges(
+                mapOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2) to Color.Yellow),
+            )
+
+        assertTrue(ranges.isEmpty())
+    }
+
+    @Test
+    fun `highlightedCharacterRanges merges adjacent annotations of the same verse into one range`() {
+        val text =
+            referenceAnnotatedString(
+                "Genesis verse",
+                listOf(Triple("1:GEN:1:1", 0, 7), Triple("1:GEN:1:1", 8, 13)),
+            )
+
+        val ranges =
+            text.highlightedCharacterRanges(
+                mapOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1) to Color.Green),
+            )
+
+        assertEquals(1, ranges.size)
+        assertEquals(0 until 13, ranges.first().first)
+    }
+
+    @Test
+    fun `highlightedCharacterRanges keeps a distinct color per verse`() {
+        val text =
+            referenceAnnotatedString(
+                "OneTwo",
+                listOf(Triple("1:GEN:1:1", 0, 3), Triple("1:GEN:1:2", 3, 6)),
+            )
+
+        val ranges =
+            text.highlightedCharacterRanges(
+                mapOf(
+                    BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1) to Color.Red,
+                    BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2) to Color.Blue,
+                ),
+            )
+
+        assertEquals(2, ranges.size)
+        assertEquals(Color.Red, ranges.first { it.first == 0 until 3 }.second)
+        assertEquals(Color.Blue, ranges.first { it.first == 3 until 6 }.second)
+    }
+
+    @Test
+    fun `highlighted verses render on text blocks`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } returns listOf(annotatedBlock("Genesis verse", referenceAnnotation = "1:GEN:1:1"))
+
+        composeTestRule.setContent {
+            BibleText(
+                reference = testReference,
+                highlights =
+                    mapOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1) to Color.Yellow),
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Genesis verse").assertIsDisplayed()
+    }
+
+    @Test
+    fun `highlighted verses render on table cells`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+
+        val cellText =
+            buildAnnotatedString {
+                append("Selah")
+                addStringAnnotation(
+                    tag = BibleReferenceAttribute.NAME,
+                    annotation = "1:GEN:1:1",
+                    start = 0,
+                    end = 5,
+                )
+            }
+        coEvery {
+            BibleVersionRendering.textBlocks(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } returns
+            listOf(
+                BibleTextBlock(
+                    text = AnnotatedString(""),
+                    chapter = 1,
+                    rows = listOf(listOf(cellText)),
+                    headIndent = 0.sp,
+                    marginTop = 8.dp,
+                    alignment = TextAlign.Start,
+                    footnotes = emptyList(),
+                ),
+            )
+
+        composeTestRule.setContent {
+            BibleText(
+                reference = testReference,
+                highlights =
+                    mapOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1) to Color.Yellow),
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Selah").assertIsDisplayed()
+    }
+
+    @Test
+    fun `highlightLineSpan on a single ltr line spans between the two carets`() {
+        val span =
+            highlightLineSpan(
+                isRtl = false,
+                isStartLine = true,
+                isEndLine = true,
+                startCaretX = 50f,
+                endCaretX = 300f,
+                lineWidth = 400f,
+            )
+
+        assertEquals(50f to 300f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan on a single rtl line keeps left less than right despite inverted carets`() {
+        val span =
+            highlightLineSpan(
+                isRtl = true,
+                isStartLine = true,
+                isEndLine = true,
+                startCaretX = 300f,
+                endCaretX = 50f,
+                lineWidth = 400f,
+            )
+
+        assertEquals(50f to 300f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan fills from the start caret to the trailing edge on an ltr start line`() {
+        val span =
+            highlightLineSpan(
+                isRtl = false,
+                isStartLine = true,
+                isEndLine = false,
+                startCaretX = 50f,
+                endCaretX = 0f,
+                lineWidth = 400f,
+            )
+
+        assertEquals(50f to 400f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan fills from the leading edge to the start caret on an rtl start line`() {
+        val span =
+            highlightLineSpan(
+                isRtl = true,
+                isStartLine = true,
+                isEndLine = false,
+                startCaretX = 300f,
+                endCaretX = 0f,
+                lineWidth = 400f,
+            )
+
+        assertEquals(0f to 300f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan fills from the end caret to the trailing edge on an rtl end line`() {
+        val span =
+            highlightLineSpan(
+                isRtl = true,
+                isStartLine = false,
+                isEndLine = true,
+                startCaretX = 0f,
+                endCaretX = 50f,
+                lineWidth = 400f,
+            )
+
+        assertEquals(50f to 400f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan fills the full width on an interior wrapped line regardless of direction`() {
+        val ltr =
+            highlightLineSpan(
+                isRtl = false,
+                isStartLine = false,
+                isEndLine = false,
+                startCaretX = 0f,
+                endCaretX = 0f,
+                lineWidth = 400f,
+            )
+        val rtl =
+            highlightLineSpan(
+                isRtl = true,
+                isStartLine = false,
+                isEndLine = false,
+                startCaretX = 0f,
+                endCaretX = 0f,
+                lineWidth = 400f,
+            )
+
+        assertEquals(0f to 400f, ltr)
+        assertEquals(0f to 400f, rtl)
     }
 
     // endregion
