@@ -316,6 +316,32 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
+    fun `removeHighlights with a matching color deletes only the color-matched highlight overlapping the reference`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(
+                            Highlight(bibleId = 1, passageId = "GEN.1.1", color = "0000ff"),
+                            Highlight(bibleId = 1, passageId = "GEN.1.2", color = "ff0000"),
+                        ),
+                )
+            val repository = repository(api)
+            val range =
+                BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 1, verseEnd = 2)
+
+            repository.removeHighlights(listOf(range), matchingColor = "#ff0000")
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals("GEN.1.2", api.deletedPassages.first())
+            val survivingHighlights = repository.highlights(overlapping = range)
+            assertEquals(1, survivingHighlights.size)
+            assertEquals(1, survivingHighlights.first().bibleReference.verseStart)
+            assertEquals("#0000ff", survivingHighlights.first().hexColor)
+        }
+
+    @Test
     fun `queue retries a failing update until it succeeds`() =
         runTest(testDispatcher) {
             val api =
