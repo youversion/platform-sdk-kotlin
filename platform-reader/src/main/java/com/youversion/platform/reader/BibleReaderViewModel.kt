@@ -95,6 +95,18 @@ class BibleReaderViewModel(
         userSettingsRepository.readerFontSize?.let { savedFontSize ->
             _state.update { it.copy(fontSize = savedFontSize.sp) }
         }
+
+        userSettingsRepository.readerLineSpacing?.let { savedLineSpacing ->
+            // Snap the stored value to the nearest supported step so a value written by an
+            // older app version (or otherwise nudged out of range) still renders correctly on
+            // first paint. The next cycle would clamp it back anyway, but the initial frame
+            // should not use an arbitrary multiplier.
+            val clampedSpacing =
+                ReaderFontSettings.availableLineSpacings
+                    .minByOrNull { kotlin.math.abs(it - savedLineSpacing) }
+                    ?: ReaderFontSettings.DEFAULT_LINE_SPACING
+            _state.update { it.copy(lineSpacing = clampedSpacing) }
+        }
     }
 
     fun onAction(action: Action) {
@@ -113,6 +125,10 @@ class BibleReaderViewModel(
 
             is Action.IncreaseFontSize -> {
                 increaseFontSize()
+            }
+
+            is Action.CycleLineSpacing -> {
+                cycleLineSpacing()
             }
 
             is Action.SetFontDefinition -> {
@@ -352,6 +368,13 @@ class BibleReaderViewModel(
         _state.update { it.copy(fontSize = size) }
     }
 
+    private fun cycleLineSpacing() {
+        val current = _state.value.lineSpacing
+        val next = ReaderFontSettings.nextLineSpacing(current)
+        userSettingsRepository.readerLineSpacing = next
+        _state.update { it.copy(lineSpacing = next) }
+    }
+
     private fun setFontFamily(action: Action.SetFontDefinition) {
         userSettingsRepository.readerFontFamilyName = action.fontDefinition.fontName
         _state.update { it.copy(selectedFontDefinition = action.fontDefinition) }
@@ -421,6 +444,7 @@ class BibleReaderViewModel(
         val providedFontDefinitions: List<FontDefinition> = listOf(),
         val selectedFontDefinition: FontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
         val fontSize: TextUnit = ReaderFontSettings.DEFAULT_FONT_SIZE,
+        val lineSpacing: Float = ReaderFontSettings.DEFAULT_LINE_SPACING,
         val suggestedLanguages: List<LanguageRowItem> = emptyList(),
         val showingFootnotes: Boolean = false,
         val footnotesReference: BibleReference? = null,
@@ -477,6 +501,8 @@ class BibleReaderViewModel(
         data object DecreaseFontSize : Action
 
         data object IncreaseFontSize : Action
+
+        data object CycleLineSpacing : Action
 
         data class SetFontDefinition(
             val fontDefinition: FontDefinition,

@@ -44,6 +44,10 @@ class BibleReaderViewModelActionTests {
         val bibleReaderRepository = mockk<BibleReaderRepository>(relaxed = true)
         userSettingsRepository = mockk(relaxed = true)
 
+        // Explicit null stubs — relaxed mockk otherwise returns 0f for `Float?` getters, which
+        // would poison the ViewModel's default state when it restores from storage on init.
+        every { userSettingsRepository.readerLineSpacing } returns null
+
         every { bibleReaderRepository.produceBibleReference(any()) } returns defaultReference
 
         viewModel =
@@ -107,6 +111,26 @@ class BibleReaderViewModelActionTests {
 
         assertEquals(expectedSize, viewModel.state.value.fontSize)
         verify { userSettingsRepository.readerFontSize = expectedSize.value }
+    }
+
+    // ----- Line Spacing
+
+    @Test
+    fun `CycleLineSpacing advances through the available multipliers and wraps`() {
+        // Default seeded state is 1.5f. Cycling should walk 1.5 -> 1.8 -> 1.2 -> 1.5.
+        assertEquals(ReaderFontSettings.DEFAULT_LINE_SPACING, viewModel.state.value.lineSpacing)
+
+        viewModel.onAction(BibleReaderViewModel.Action.CycleLineSpacing)
+        assertEquals(1.8f, viewModel.state.value.lineSpacing)
+        verify { userSettingsRepository.readerLineSpacing = 1.8f }
+
+        viewModel.onAction(BibleReaderViewModel.Action.CycleLineSpacing)
+        assertEquals(1.2f, viewModel.state.value.lineSpacing)
+        verify { userSettingsRepository.readerLineSpacing = 1.2f }
+
+        viewModel.onAction(BibleReaderViewModel.Action.CycleLineSpacing)
+        assertEquals(1.5f, viewModel.state.value.lineSpacing)
+        verify { userSettingsRepository.readerLineSpacing = 1.5f }
     }
 
     // ----- SetFontDefinition

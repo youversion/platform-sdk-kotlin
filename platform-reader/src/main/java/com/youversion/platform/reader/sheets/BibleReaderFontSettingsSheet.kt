@@ -64,9 +64,11 @@ fun BibleReaderFontSettingsSheet(
     onDismissRequest: () -> Unit,
     onSmallerFontClick: () -> Unit,
     onBiggerFontClick: () -> Unit,
+    onLineSpacingClick: () -> Unit,
     onFontClick: () -> Unit,
     onThemeSelect: (ReaderTheme) -> Unit,
     fontDefinition: FontDefinition,
+    lineSpacing: Float,
 ) {
     val sheetState =
         rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -88,10 +90,21 @@ fun BibleReaderFontSettingsSheet(
                     Modifier
                         .padding(horizontal = 24.dp),
             ) {
-                FontSizeButtons(
-                    onSmallerFontClick = onSmallerFontClick,
-                    onBiggerFontClick = onBiggerFontClick,
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        FontSizeButtons(
+                            onSmallerFontClick = onSmallerFontClick,
+                            onBiggerFontClick = onBiggerFontClick,
+                        )
+                    }
+                    LineSpacingButton(
+                        lineSpacing = lineSpacing,
+                        onClick = onLineSpacingClick,
+                    )
+                }
                 FontDisplayButton(
                     fontDefinition = fontDefinition,
                     onFontClick = {
@@ -170,6 +183,57 @@ private fun FontSizeButtons(
                         fontSize = 28.sp,
                     ),
             )
+        }
+    }
+}
+
+@Composable
+private fun LineSpacingButton(
+    lineSpacing: Float,
+    onClick: () -> Unit,
+) {
+    // Preview: three horizontal bars whose vertical gap is derived from the option index
+    // (0 / 1 / 2 → 1 / 3 / 5 dp) rather than the raw multiplier — matches Swift's control
+    // and produces a visibly wider spread across 1.2 / 1.5 / 1.8 than a proportional gap
+    // would (which was only ~1.5× between smallest and largest).
+    val optionIndex =
+        ReaderFontSettings.availableLineSpacings.indices.minByOrNull {
+            kotlin.math.abs(ReaderFontSettings.availableLineSpacings[it] - lineSpacing)
+        } ?: 0
+    val previewGap = (optionIndex * 2 + 1).dp
+    val barColor = MaterialTheme.readerColorScheme.readerTextPrimaryColor
+
+    // TODO(YPE-3760): wire contentDescription = stringResource(R.string.line_spacing_label)
+    //  once the platform-localization repo ships the `line_spacing_label` key and the sync
+    //  workflow lands it in strings_i18n.xml + the per-locale strings_i18n.xml files here.
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier =
+            Modifier
+                .heightIn(min = 48.dp)
+                .width(56.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.readerColorScheme.buttonSecondaryColor)
+                .clickable(
+                    interactionSource = null,
+                    enabled = true,
+                    indication = ripple(),
+                    onClick = onClick,
+                ).testTag("line_spacing_button"),
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(previewGap),
+        ) {
+            repeat(3) {
+                Box(
+                    modifier =
+                        Modifier
+                            .width(32.dp)
+                            .height(2.dp)
+                            .background(barColor),
+                )
+            }
         }
     }
 }
@@ -318,9 +382,11 @@ private fun Preview_BibleReaderFontSettingsSheet() {
             onDismissRequest = {},
             onSmallerFontClick = {},
             onBiggerFontClick = {},
+            onLineSpacingClick = {},
             onFontClick = {},
             onThemeSelect = {},
             fontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
+            lineSpacing = ReaderFontSettings.DEFAULT_LINE_SPACING,
         )
     }
 }
