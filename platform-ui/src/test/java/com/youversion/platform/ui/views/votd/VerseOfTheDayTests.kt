@@ -11,6 +11,7 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
+import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.votd.api.VotdApi
 import com.youversion.platform.core.votd.models.YouVersionVerseOfTheDay
 import io.mockk.coEvery
@@ -71,6 +72,7 @@ class VerseOfTheDayTests {
                             coEvery { removeVersionChapters(any()) } returns Unit
                         }
                     }
+                    single { BibleHighlightsRepository(api = mockk(relaxed = true)) }
                 },
             ),
         )

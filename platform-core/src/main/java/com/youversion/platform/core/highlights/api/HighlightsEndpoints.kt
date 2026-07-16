@@ -3,6 +3,7 @@ package com.youversion.platform.core.highlights.api
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.ApiResponse
 import com.youversion.platform.core.api.buildYouVersionUrlString
+import com.youversion.platform.core.api.cannotDownload
 import com.youversion.platform.core.api.invalidResponse
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.highlights.models.Highlight
@@ -19,8 +20,11 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.path
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
+import java.util.UUID
 
 object HighlightsEndpoints : HighlightsApi {
     private val httpClient: HttpClient
@@ -33,7 +37,7 @@ object HighlightsEndpoints : HighlightsApi {
     ): String =
         buildYouVersionUrlString {
             path("/v1/highlights")
-            versionId?.let { parameter("version_id", versionId) }
+            versionId?.let { parameter("bible_id", versionId) }
             passageId?.let { parameter("passage_id", passageId) }
         }
 
@@ -43,7 +47,7 @@ object HighlightsEndpoints : HighlightsApi {
     ): String =
         buildYouVersionUrlString {
             path("/v1/highlights/$passageId")
-            parameter("version_id", versionId)
+            parameter("bible_id", versionId)
         }
 
     // ----- Highlights API
@@ -55,11 +59,7 @@ object HighlightsEndpoints : HighlightsApi {
         httpClient
             .post(highlightsUrl()) {
                 contentType(ContentType.Application.Json)
-                buildJsonObject {
-                    put("version_id", versionId)
-                    put("passage_id", passageId)
-                    put("color", color.lowercase())
-                }.also { setBody(it) }
+                setBody(highlightRequestBody(versionId, passageId, color))
             }.status
             .isSuccess()
 
@@ -81,7 +81,7 @@ object HighlightsEndpoints : HighlightsApi {
 
         if (!response.status.isSuccess()) {
             Logger.w { "Request failed with status code ${response.status.value} " }
-            return emptyList()
+            throw cannotDownload()
         }
 
         if (response.status == HttpStatusCode.NoContent) {
@@ -103,13 +103,23 @@ object HighlightsEndpoints : HighlightsApi {
         httpClient
             .put(highlightsUrl()) {
                 contentType(ContentType.Application.Json)
-                buildJsonObject {
-                    put("version_id", versionId)
-                    put("passage_id", passageId)
-                    put("color", color.lowercase())
-                }.also { setBody(it) }
+                setBody(highlightRequestBody(versionId, passageId, color))
             }.status
             .isSuccess()
+
+    private fun highlightRequestBody(
+        versionId: Int,
+        passageId: String,
+        color: String,
+    ): JsonObject =
+        buildJsonObject {
+            put("request_id", UUID.randomUUID().toString())
+            putJsonObject("highlight") {
+                put("bible_id", versionId)
+                put("passage_id", passageId)
+                put("color", color.lowercase())
+            }
+        }
 
     override suspend fun deleteHighlight(
         versionId: Int,

@@ -30,6 +30,9 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
+import com.youversion.platform.core.highlights.api.HighlightsApi
+import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
+import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
@@ -63,6 +66,8 @@ class BibleTextTests {
 
     private val mockVersionRepository = mockk<BibleVersionRepository>()
     private val mockChapterRepository = mockk<BibleChapterRepository>()
+    private val mockHighlightsApi = mockk<HighlightsApi>(relaxed = true)
+    private val highlightsRepository = BibleHighlightsRepository(api = mockHighlightsApi)
 
     private val testReference =
         BibleReference(
@@ -145,6 +150,7 @@ class BibleTextTests {
                 module {
                     single { mockVersionRepository }
                     single { mockChapterRepository }
+                    single { highlightsRepository }
                 },
             ),
         )
@@ -152,6 +158,7 @@ class BibleTextTests {
 
     @After
     fun tearDown() {
+        highlightsRepository.clearCachedHighlights()
         PlatformKoinGraph.stop()
         unmockkObject(BibleVersionRendering)
     }
@@ -1347,12 +1354,17 @@ class BibleTextTests {
             )
         } returns listOf(annotatedBlock("Genesis verse", referenceAnnotation = "1:GEN:1:1"))
 
+        highlightsRepository.seedCachedHighlights(
+            listOf(
+                BibleHighlight(
+                    bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
+                    hexColor = "#FFFF00",
+                ),
+            ),
+        )
+
         composeTestRule.setContent {
-            BibleText(
-                reference = testReference,
-                highlights =
-                    mapOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1) to Color.Yellow),
-            )
+            BibleText(reference = testReference)
         }
         composeTestRule.waitForIdle()
 
@@ -1398,12 +1410,17 @@ class BibleTextTests {
                 ),
             )
 
+        highlightsRepository.seedCachedHighlights(
+            listOf(
+                BibleHighlight(
+                    bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
+                    hexColor = "#FFFF00",
+                ),
+            ),
+        )
+
         composeTestRule.setContent {
-            BibleText(
-                reference = testReference,
-                highlights =
-                    mapOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1) to Color.Yellow),
-            )
+            BibleText(reference = testReference)
         }
         composeTestRule.waitForIdle()
 
@@ -1508,6 +1525,32 @@ class BibleTextTests {
 
         assertEquals(0f to 400f, ltr)
         assertEquals(0f to 400f, rtl)
+    }
+
+    // endregion
+
+    // region Hex Color Parsing
+
+    @Test
+    fun `toHighlightColorOrNull parses six digit hex as opaque`() {
+        assertEquals(Color(0xFFFFFF00L), "#FFFF00".toHighlightColorOrNull())
+    }
+
+    @Test
+    fun `toHighlightColorOrNull parses eight digit hex with alpha`() {
+        assertEquals(Color(0x80FF0000L), "#80FF0000".toHighlightColorOrNull())
+    }
+
+    @Test
+    fun `toHighlightColorOrNull parses a value without a leading hash`() {
+        assertEquals(Color(0xFF00FF00L), "00FF00".toHighlightColorOrNull())
+    }
+
+    @Test
+    fun `toHighlightColorOrNull returns null for invalid or wrong-length hex`() {
+        assertNull("#ZZZZZZ".toHighlightColorOrNull())
+        assertNull("#FFF".toHighlightColorOrNull())
+        assertNull("".toHighlightColorOrNull())
     }
 
     // endregion
