@@ -2,6 +2,7 @@ package com.youversion.platform.core.highlights.api
 
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
@@ -15,10 +16,12 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class HighlightsApiTests : YouVersionPlatformTest {
@@ -34,9 +37,11 @@ class HighlightsApiTests : YouVersionPlatformTest {
                 val jsonData = request.body.toByteArray().decodeToString()
                 val decoded: JsonObject = Json.Default.decodeFromString(jsonData)
 
-                assertEquals(1, decoded["version_id"]?.jsonPrimitive?.int)
-                assertEquals("GEN.1.1", decoded["passage_id"]?.jsonPrimitive?.content)
-                assertEquals("ff00ff", decoded["color"]?.jsonPrimitive?.content)
+                assertTrue(decoded["request_id"]?.jsonPrimitive?.content?.isNotEmpty() == true)
+                val highlight = decoded["highlight"]!!.jsonObject
+                assertEquals(1, highlight["bible_id"]?.jsonPrimitive?.int)
+                assertEquals("GEN.1.1", highlight["passage_id"]?.jsonPrimitive?.content)
+                assertEquals("ff00ff", highlight["color"]?.jsonPrimitive?.content)
 
                 respond("", HttpStatusCode.Companion.Created)
             }.also { engine -> startYouVersionPlatformTest(engine) }
@@ -56,9 +61,11 @@ class HighlightsApiTests : YouVersionPlatformTest {
                 val jsonData = request.body.toByteArray().decodeToString()
                 val decoded: JsonObject = Json.Default.decodeFromString(jsonData)
 
-                assertEquals(1, decoded["version_id"]?.jsonPrimitive?.int)
-                assertEquals("GEN.1.1", decoded["passage_id"]?.jsonPrimitive?.content)
-                assertEquals("ff00ff", decoded["color"]?.jsonPrimitive?.content)
+                assertTrue(decoded["request_id"]?.jsonPrimitive?.content?.isNotEmpty() == true)
+                val highlight = decoded["highlight"]!!.jsonObject
+                assertEquals(1, highlight["bible_id"]?.jsonPrimitive?.int)
+                assertEquals("GEN.1.1", highlight["passage_id"]?.jsonPrimitive?.content)
+                assertEquals("ff00ff", highlight["color"]?.jsonPrimitive?.content)
 
                 respond("", HttpStatusCode.Companion.OK)
             }.also { engine -> startYouVersionPlatformTest(engine) }
@@ -75,7 +82,7 @@ class HighlightsApiTests : YouVersionPlatformTest {
                 assertEquals(HttpMethod.Companion.Get, request.method)
 
                 val url = request.url
-                assertEquals("1", url.parameters["version_id"])
+                assertEquals("1", url.parameters["bible_id"])
                 assertEquals("GEN.9", url.parameters["passage_id"])
 
                 respondJson(
@@ -84,7 +91,7 @@ class HighlightsApiTests : YouVersionPlatformTest {
                        "data": [
                           {
                              "id": "1",
-                             "version_id": 1,
+                             "bible_id": 1,
                              "passage_id": "GEN.9.1",
                              "color": "ff00ff"
                           }
@@ -129,14 +136,33 @@ class HighlightsApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test get highlights failure returns empty`() =
+    fun `test get highlights server error throws`() =
         runTest {
             MockEngine { request ->
                 respond("", HttpStatusCode.InternalServerError)
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
-            assertTrue { YouVersionApi.highlights.highlights(1, "GEN.1").isEmpty() }
+            val exception =
+                assertFailsWith<YouVersionNetworkException> {
+                    YouVersionApi.highlights.highlights(1, "GEN.1")
+                }
+            assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, exception.reason)
+        }
+
+    @Test
+    fun `test get highlights rate limited throws`() =
+        runTest {
+            MockEngine { request ->
+                respond("", HttpStatusCode.TooManyRequests)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
+            val exception =
+                assertFailsWith<YouVersionNetworkException> {
+                    YouVersionApi.highlights.highlights(1, "GEN.1")
+                }
+            assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, exception.reason)
         }
 
     @Test
@@ -158,7 +184,7 @@ class HighlightsApiTests : YouVersionPlatformTest {
                 assertEquals("application/json", request.headers["content-type"])
 
                 val url = request.url
-                assertEquals("1", url.parameters["version_id"])
+                assertEquals("1", url.parameters["bible_id"])
                 assertTrue(url.encodedPath.contains("GEN.5.7"))
 
                 respond("", HttpStatusCode.Companion.NoContent)
