@@ -30,6 +30,7 @@ internal val PlatformReaderKoinModule =
                 userSettingsRepository = get(),
                 bibleChapterRepository = get(),
                 languageRepository = get(),
+                bibleHighlightsRepository = get(),
                 copyManager = get(),
                 shareManager = get(),
             )
