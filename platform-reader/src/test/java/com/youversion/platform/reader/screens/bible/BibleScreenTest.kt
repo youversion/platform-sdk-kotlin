@@ -27,6 +27,7 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
+import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.users.api.UsersApi
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.reader.BibleReaderViewModel
@@ -105,6 +106,7 @@ class BibleScreenTest {
                     single { mockVersionRepository }
                     single { mockChapterRepository }
                     single { mockIntroRepository }
+                    single { BibleHighlightsRepository(api = mockk(relaxed = true)) }
                 },
             ),
         )

@@ -1,5 +1,6 @@
 package com.youversion.platform.core.highlights.domain
 
+import androidx.annotation.VisibleForTesting
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
@@ -102,6 +103,14 @@ class BibleHighlightsRepository internal constructor(
     accountIdChanges: Flow<String?> =
         YouVersionPlatformConfiguration.configState.map { currentAccountId() },
 ) {
+    /**
+     * Test-only constructor exposing just the [api] dependency so consumer-module tests can supply a mock while the
+     * cache, scope, and account wiring keep their production defaults. The primary constructor stays internal because
+     * it exposes the internal [BibleHighlightCache] type.
+     */
+    @VisibleForTesting
+    constructor(api: HighlightsApi) : this(api = api, cache = BibleHighlightCache.shared)
+
     private val loadScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
 
     private val queueLock = ReentrantLock()
@@ -270,6 +279,25 @@ class BibleHighlightsRepository internal constructor(
             operationGeneration++
         }
         loadScope.coroutineContext.cancelChildren()
+        cache.clear()
+    }
+
+    /**
+     * Seeds the cache with [highlights] directly, bypassing the server sync queue so they surface in [highlights] as if
+     * already loaded. Test-only: it lets a consumer-module test place highlights in the read path without exercising the
+     * network.
+     */
+    @VisibleForTesting
+    fun seedCachedHighlights(highlights: List<BibleHighlight>) {
+        cache.addHighlights(highlights)
+    }
+
+    /**
+     * Clears the cache and its in-flight load bookkeeping without touching the sync queue. Test-only: it resets the
+     * shared cache between tests.
+     */
+    @VisibleForTesting
+    fun clearCachedHighlights() {
         cache.clear()
     }
 
@@ -548,7 +576,7 @@ class BibleHighlightsRepository internal constructor(
     }
 
     private fun Highlight.bibleHighlight(): BibleHighlight? {
-        val reference = BibleReference.unvalidatedReference(usfm = passageId, versionId = versionId)
+        val reference = BibleReference.unvalidatedReference(usfm = passageId, versionId = bibleId)
         if (reference == null) {
             Logger.w { "Ignoring highlight with unparseable passage id: $passageId" }
             return null

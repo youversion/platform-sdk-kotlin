@@ -42,7 +42,7 @@ class BibleHighlightsRepositoryTests {
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
-                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
                 )
             val repository = repository(api)
 
@@ -66,7 +66,7 @@ class BibleHighlightsRepositoryTests {
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
-                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff00ff")),
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff00ff")),
                 )
             val repository = repository(api)
 
@@ -155,7 +155,7 @@ class BibleHighlightsRepositoryTests {
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
-                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
                 )
             val repository = repository(api)
             val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
@@ -234,7 +234,7 @@ class BibleHighlightsRepositoryTests {
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
-                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
                     highlightsGate = gate,
                 )
             val repository = repository(api)
@@ -282,7 +282,7 @@ class BibleHighlightsRepositoryTests {
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
-                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
                     failuresBeforeSuccess = 2,
                 )
             val repository = repository(api)
@@ -305,7 +305,7 @@ class BibleHighlightsRepositoryTests {
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
-                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
                     deleteGate = deleteGate,
                 )
             val repository = repository(api)
@@ -334,7 +334,7 @@ class BibleHighlightsRepositoryTests {
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
-                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
                     deleteGate = blockingGate,
                 )
             val repository = repository(api)
@@ -369,7 +369,7 @@ class BibleHighlightsRepositoryTests {
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
-                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
                     highlightsGate = loadGate,
                     deleteGate = deleteGate,
                 )
@@ -406,7 +406,7 @@ class BibleHighlightsRepositoryTests {
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
-                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
                     highlightsGate = loadGate,
                 )
             val repository = repository(api)
@@ -579,7 +579,7 @@ class BibleHighlightsRepositoryTests {
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
-                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
                     highlightsGate = loadGate,
                 )
             val repository =
@@ -688,7 +688,7 @@ class BibleHighlightsRepositoryTests {
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
-                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
                     highlightsGate = gate,
                 )
             val repository = repository(api)
@@ -736,7 +736,7 @@ class BibleHighlightsRepositoryTests {
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
-                        listOf(Highlight(versionId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
                     highlightsGate = gate,
                 )
             val repository = repository(api)

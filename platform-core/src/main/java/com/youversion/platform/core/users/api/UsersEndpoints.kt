@@ -32,6 +32,13 @@ object UsersEndpoints : UsersApi {
     private val httpClient: HttpClient
         get() = PlatformCoreKoinComponent.httpClient
 
+    /**
+     * Permissions the authorization server treats as optional: they are requested separately via the
+     * `requested_permissions` query parameter rather than the standard OAuth `scope`, and may be declined
+     * without failing sign-in.
+     */
+    private val optionalPermissions = setOf(SignInWithYouVersionPermission.HIGHLIGHTS)
+
     // ----- User URLs
     fun authorizeUrl(
         appKey: String,
@@ -50,6 +57,9 @@ object UsersEndpoints : UsersApi {
             parameter("code_challenge", parameters.codeChallenge)
             parameter("code_challenge_method", "S256")
             parameter("scope", scopeValue(permissions))
+            requestedPermissionsValue(permissions)
+                .takeIf { it.isNotEmpty() }
+                ?.let { parameter("requested_permissions", it) }
             parameter("require_user_interaction", true)
 
             YouVersionPlatformConfiguration.installId?.let {
@@ -95,7 +105,12 @@ object UsersEndpoints : UsersApi {
                 codeVerifier = codeVerifier,
                 redirectUri = redirectUri,
             )
-        val result = extractSignInWithYouVersionResult(tokens = tokens, nonce = nonce)
+        val result =
+            extractSignInWithYouVersionResult(
+                tokens = tokens,
+                nonce = nonce,
+                callbackUri = callbackUri,
+            )
         return result
     }
 
@@ -216,6 +231,7 @@ object UsersEndpoints : UsersApi {
     private fun extractSignInWithYouVersionResult(
         tokens: TokenResponse,
         nonce: String,
+        callbackUri: String,
     ): SignInWithYouVersionResult {
         val idClaims = decodeJWT(tokens.idToken)
 
@@ -223,19 +239,30 @@ object UsersEndpoints : UsersApi {
             throw IllegalStateException("Nonce mismatch. Potential replay attack.")
         }
 
-        val permissions =
+        val scopePermissions =
             tokens.scope
                 .split(",")
                 .mapNotNull { rawValue ->
                     SignInWithYouVersionPermission.entries.find { it.rawValue == rawValue }
                 }.toSet()
 
+        val grantedPermissions =
+            Url(callbackUri)
+                .parameters["granted_permissions"]
+                ?.split(",")
+                ?.mapNotNull { rawValue ->
+                    SignInWithYouVersionPermission.entries.find { it.rawValue == rawValue }
+                }?.toSet()
+                .orEmpty()
+
+        val permissions = scopePermissions.union(grantedPermissions).sortedBy { it.rawValue }
+
         return SignInWithYouVersionResult.create(
             accessToken = tokens.accessToken,
             expiresIn = tokens.expiresIn.toString(),
             refreshToken = tokens.refreshToken,
             idToken = tokens.idToken,
-            permissions = permissions.toList(),
+            permissions = permissions,
             yvpUserId = idClaims["sub"] as? String,
             name = idClaims["name"] as? String,
             profilePicture = idClaims["picture"] as? String,
@@ -244,10 +271,23 @@ object UsersEndpoints : UsersApi {
     }
 
     /**
-     * Combines a set of permissions into a single, space-delimited scope string, ensuring "openid" is included.
+     * Combines the required permissions into a single, space-delimited scope string, ensuring "openid" is
+     * included and excluding any optional permissions (which are sent via [requestedPermissionsValue]).
      */
     private fun scopeValue(permissions: Set<SignInWithYouVersionPermission>): String {
-        val fullScopes = permissions.union(setOf(SignInWithYouVersionPermission.OPENID))
+        val fullScopes =
+            permissions
+                .union(setOf(SignInWithYouVersionPermission.OPENID))
+                .subtract(optionalPermissions)
         return fullScopes.map { it.rawValue }.sorted().joinToString(" ")
+    }
+
+    /**
+     * Combines the requested optional permissions into a single, comma-delimited string, or an empty string
+     * when none are requested.
+     */
+    private fun requestedPermissionsValue(permissions: Set<SignInWithYouVersionPermission>): String {
+        val requestedPermissions = permissions.intersect(optionalPermissions)
+        return requestedPermissions.map { it.rawValue }.sorted().joinToString(",")
     }
 }

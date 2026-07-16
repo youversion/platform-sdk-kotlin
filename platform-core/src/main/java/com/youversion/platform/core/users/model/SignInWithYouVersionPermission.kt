@@ -6,4 +6,5 @@ enum class SignInWithYouVersionPermission(
     OPENID("openid"),
     PROFILE("profile"),
     EMAIL("email"),
+    HIGHLIGHTS("highlights"),
 }
