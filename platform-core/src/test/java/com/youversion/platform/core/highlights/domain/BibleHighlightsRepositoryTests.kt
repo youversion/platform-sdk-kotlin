@@ -316,7 +316,7 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
-    fun `removeHighlights with a matching color deletes only the color-matched highlight overlapping the reference`() =
+    fun `removeHighlights with a matching color deletes only the verses carrying that color`() =
         runTest(testDispatcher) {
             val api =
                 FakeHighlightsApi(
@@ -327,18 +327,44 @@ class BibleHighlightsRepositoryTests {
                         ),
                 )
             val repository = repository(api)
-            val range =
-                BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 1, verseEnd = 2)
+            val blueVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val redVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
 
-            repository.removeHighlights(listOf(range), matchingColor = "#ff0000")
+            repository.removeHighlights(listOf(blueVerse, redVerse), matchingColor = "#ff0000")
             advanceUntilIdle()
 
             assertEquals(1, api.deleteCount)
             assertEquals("GEN.1.2", api.deletedPassages.first())
-            val survivingHighlights = repository.highlights(overlapping = range)
+            val survivingHighlights = repository.highlights(overlapping = blueVerse)
             assertEquals(1, survivingHighlights.size)
             assertEquals(1, survivingHighlights.first().bibleReference.verseStart)
             assertEquals("#0000ff", survivingHighlights.first().hexColor)
+        }
+
+    @Test
+    fun `a server range highlight is cached per verse so one verse can be cleared independently`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1-GEN.1.3", color = "ff0000")),
+                )
+            val repository = repository(api)
+            val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+            val middleVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
+
+            repository.ensureHighlightsForChapterLoaded(chapter)
+            advanceUntilIdle()
+            assertEquals(3, repository.highlights(overlapping = chapter).size)
+
+            repository.removeHighlights(listOf(middleVerse), matchingColor = "#ff0000")
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals("GEN.1.2", api.deletedPassages.first())
+            val survivingVerses =
+                repository.highlights(overlapping = chapter).mapNotNull { it.bibleReference.verseStart }.sorted()
+            assertEquals(listOf(1, 3), survivingVerses)
         }
 
     @Test

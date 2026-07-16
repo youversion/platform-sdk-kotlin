@@ -266,13 +266,9 @@ class BibleHighlightsRepository internal constructor(
         loadScope.launch {
             references.forEach { awaitHighlightsForChapterLoaded(it) }
             val matchingReferences =
-                references
-                    .flatMap { selection ->
-                        highlights(overlapping = selection)
-                            .filter { isSameHexColor(it.hexColor, matchingColor) }
-                            .map { it.bibleReference }
-                            .filter { selection.contains(it) }
-                    }.distinct()
+                references.filter { selection ->
+                    highlights(overlapping = selection).any { isSameHexColor(it.hexColor, matchingColor) }
+                }
             if (matchingReferences.isNotEmpty()) removeHighlights(matchingReferences)
         }
     }
@@ -601,7 +597,7 @@ class BibleHighlightsRepository internal constructor(
             val serverHighlights =
                 api
                     .highlights(versionId = chapter.versionId, passageId = passageId)
-                    .mapNotNull { it.bibleHighlight() }
+                    .flatMap { it.bibleHighlights() }
             currentCoroutineContext().ensureActive()
             cache.applyServerHighlights(chapter = chapter, highlights = serverHighlights, load = load)
         } catch (e: CancellationException) {
@@ -613,13 +609,35 @@ class BibleHighlightsRepository internal constructor(
         }
     }
 
-    private fun Highlight.bibleHighlight(): BibleHighlight? {
+    /**
+     * Expands a server highlight into one [BibleHighlight] per verse so the cache holds only verse-level entries. A
+     * multi-verse range passage is stored as its individual verses rather than a single range entry, keeping every
+     * highlight independently removable by its own verse reference under the cache's exact-reference matching.
+     */
+    private fun Highlight.bibleHighlights(): List<BibleHighlight> {
         val reference = BibleReference.unvalidatedReference(usfm = passageId, versionId = bibleId)
         if (reference == null) {
             Logger.w { "Ignoring highlight with unparseable passage id: $passageId" }
-            return null
+            return emptyList()
         }
-        return BibleHighlight(bibleReference = reference, hexColor = hexWithHash(color))
+        val hexColor = hexWithHash(color)
+        val verseStart = reference.verseStart
+        val verseEnd = reference.verseEnd
+        if (verseStart == null || verseEnd == null || verseStart == verseEnd) {
+            return listOf(BibleHighlight(bibleReference = reference, hexColor = hexColor))
+        }
+        return (verseStart..verseEnd).map { verse ->
+            BibleHighlight(
+                bibleReference =
+                    BibleReference(
+                        versionId = reference.versionId,
+                        bookUSFM = reference.bookUSFM,
+                        chapter = reference.chapter,
+                        verse = verse,
+                    ),
+                hexColor = hexColor,
+            )
+        }
     }
 
     /**
