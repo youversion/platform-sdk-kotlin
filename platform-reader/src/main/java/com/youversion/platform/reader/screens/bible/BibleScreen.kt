@@ -98,7 +98,7 @@ internal fun BibleScreen(
     val permissions =
         setOf(
             SignInWithYouVersionPermission.PROFILE,
-            SignInWithYouVersionPermission.EMAIL,
+            SignInWithYouVersionPermission.HIGHLIGHTS,
         )
     val launchSignIn: () -> Unit = {
         scope.launch {

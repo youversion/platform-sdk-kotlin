@@ -12,6 +12,7 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
+import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
@@ -83,6 +84,7 @@ class BibleReaderFootnotesSheetTest {
                 module {
                     single<BibleVersionRepository> { mockVersionRepository }
                     single<BibleChapterRepository> { mockk(relaxed = true) }
+                    single { BibleHighlightsRepository(api = mockk(relaxed = true)) }
                 },
             ),
         )
