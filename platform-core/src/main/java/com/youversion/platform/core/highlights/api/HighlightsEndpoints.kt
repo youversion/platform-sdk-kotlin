@@ -3,6 +3,7 @@ package com.youversion.platform.core.highlights.api
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.ApiResponse
 import com.youversion.platform.core.api.buildYouVersionUrlString
+import com.youversion.platform.core.api.cannotDownload
 import com.youversion.platform.core.api.invalidResponse
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.highlights.models.Highlight
@@ -80,7 +81,7 @@ object HighlightsEndpoints : HighlightsApi {
 
         if (!response.status.isSuccess()) {
             Logger.w { "Request failed with status code ${response.status.value} " }
-            return emptyList()
+            throw cannotDownload()
         }
 
         if (response.status == HttpStatusCode.NoContent) {

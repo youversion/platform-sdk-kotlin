@@ -2,6 +2,7 @@ package com.youversion.platform.core.highlights.api
 
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
@@ -20,6 +21,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class HighlightsApiTests : YouVersionPlatformTest {
@@ -134,14 +136,33 @@ class HighlightsApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test get highlights failure returns empty`() =
+    fun `test get highlights server error throws`() =
         runTest {
             MockEngine { request ->
                 respond("", HttpStatusCode.InternalServerError)
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
-            assertTrue { YouVersionApi.highlights.highlights(1, "GEN.1").isEmpty() }
+            val exception =
+                assertFailsWith<YouVersionNetworkException> {
+                    YouVersionApi.highlights.highlights(1, "GEN.1")
+                }
+            assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, exception.reason)
+        }
+
+    @Test
+    fun `test get highlights rate limited throws`() =
+        runTest {
+            MockEngine { request ->
+                respond("", HttpStatusCode.TooManyRequests)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
+            val exception =
+                assertFailsWith<YouVersionNetworkException> {
+                    YouVersionApi.highlights.highlights(1, "GEN.1")
+                }
+            assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, exception.reason)
         }
 
     @Test
