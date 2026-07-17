@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">關閉</string>
+    <string name="yv_banner_offline_icon">離線圖示</string>
+    <string name="yv_banner_offline_message">你已失去網路連線。重新連線並下載聖經譯本以繼續離線使用。</string>
+    <string name="yv_banner_version_unavailable_icon">此譯本不可用圖示</string>
+    <string name="yv_banner_version_unavailable_message">你之前選擇的聖經譯本不可使用。已為你選擇另一個類似的聖經譯本。</string>
+    <string name="yv_book_chapter_picker_title">書卷</string>
+    <string name="yv_font_selected_check">已選擇字體的勾選標記</string>
+    <string name="yv_font_settings_label">字體</string>
+    <string name="yv_footnote_header_label">註腳</string>
+    <string name="yv_intro_chapter_label">簡介</string>
+    <string name="yv_language_content_desc">語言</string>
+    <string name="yv_line_spacing_label">行距</string>
+    <string name="yv_next_chapter_content_desc">下一章</string>
+    <string name="yv_previous_chapter_content_desc">上一章</string>
+    <string name="yv_reader_menu_font_settings">字體 &amp; 設定</string>
+    <string name="yv_reader_menu_sign_in">登入</string>
+    <string name="yv_reader_menu_sign_out">登出</string>
+    <string name="yv_theme_selected">已選擇</string>
+    <string name="yv_verse_action_copy">複製</string>
+    <string name="yv_verse_action_share">分享</string>
+</resources>
