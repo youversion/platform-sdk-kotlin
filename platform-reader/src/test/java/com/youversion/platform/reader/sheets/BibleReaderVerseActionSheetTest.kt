@@ -98,14 +98,14 @@ class BibleReaderVerseActionSheetTest {
     fun `displays an add affordance for a color to add`() {
         renderSheet(colorsToAdd = listOf(HighlightColor.Yellow))
 
-        composeTestRule.onNodeWithContentDescription("Add highlight").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Add yellow highlight").assertIsDisplayed()
     }
 
     @Test
     fun `displays a remove affordance for a color to remove`() {
         renderSheet(colorsToRemove = listOf(HighlightColor.Yellow))
 
-        composeTestRule.onNodeWithContentDescription("Remove highlight").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Remove yellow highlight").assertIsDisplayed()
     }
 
     @Test
@@ -117,7 +117,7 @@ class BibleReaderVerseActionSheetTest {
             onAddHighlight = { addedHex = it },
         )
 
-        composeTestRule.onNodeWithContentDescription("Add highlight").performClick()
+        composeTestRule.onNodeWithContentDescription("Add green highlight").performClick()
 
         assertEquals(HighlightColor.Green.hexColor, addedHex)
     }
@@ -131,7 +131,7 @@ class BibleReaderVerseActionSheetTest {
             onRemoveHighlight = { removedHex = it },
         )
 
-        composeTestRule.onNodeWithContentDescription("Remove highlight").performClick()
+        composeTestRule.onNodeWithContentDescription("Remove cyan highlight").performClick()
 
         assertEquals(HighlightColor.Cyan.hexColor, removedHex)
     }
@@ -143,7 +143,7 @@ class BibleReaderVerseActionSheetTest {
             colorsToAdd = listOf(HighlightColor.Yellow),
         )
 
-        composeTestRule.onNodeWithContentDescription("Remove highlight").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Add highlight").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Remove yellow highlight").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Add yellow highlight").assertIsDisplayed()
     }
 }

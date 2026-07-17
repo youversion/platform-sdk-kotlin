@@ -120,6 +120,7 @@ private fun HighlightColorButton(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
+    val colorName = stringResource(highlightColor.nameResId)
     val contentDescription =
         stringResource(
             if (isSelected) {
@@ -127,6 +128,7 @@ private fun HighlightColorButton(
             } else {
                 R.string.verse_action_add_highlight
             },
+            colorName,
         )
     Box(
         contentAlignment = Alignment.Center,
