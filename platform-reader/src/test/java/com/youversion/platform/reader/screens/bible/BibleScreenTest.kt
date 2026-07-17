@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.text.AnnotatedString
@@ -28,9 +29,11 @@ import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
+import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.users.api.UsersApi
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.reader.BibleReaderViewModel
+import com.youversion.platform.reader.sheets.HighlightColor
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
@@ -92,9 +95,12 @@ class BibleScreenTest {
             BibleReaderViewModel.State(bibleReference = defaultReference),
         )
 
+    private val highlightsFlow = MutableStateFlow(emptyList<BibleHighlight>())
+
     private val mockViewModel =
         mockk<BibleReaderViewModel>(relaxed = true) {
             every { state } returns stateFlow
+            every { highlights } returns highlightsFlow
         }
 
     @Before
@@ -1065,7 +1071,59 @@ class BibleScreenTest {
                 .isNotEmpty()
         }
         composeTestRule.onNodeWithContentDescription("Copy").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Share").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Share").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun `highlight picker gains a remove affordance when highlights change without reselecting`() {
+        val selectedVerse = defaultReference.copy(verseStart = 1, verseEnd = 1)
+        var presentColors = emptySet<String>()
+        every { mockViewModel.isColorPresentOnAnySelectedVerses(any()) } answers {
+            presentColors.contains(firstArg<String>())
+        }
+        every { mockViewModel.isColorPresentOnAllSelectedVerses(any()) } answers {
+            presentColors.contains(firstArg<String>())
+        }
+
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(selectedVerse),
+            )
+        stubSuccessfulTextLoad()
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                appName = "Test App",
+                appSignInMessage = "Sign in",
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitUntil {
+            composeTestRule
+                .onAllNodesWithContentDescription("Copy")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        composeTestRule.onNodeWithContentDescription("Remove highlight").assertDoesNotExist()
+
+        presentColors = setOf(HighlightColor.Yellow.hexColor)
+        highlightsFlow.value =
+            listOf(BibleHighlight(bibleReference = selectedVerse, hexColor = HighlightColor.Yellow.hexColor))
+
+        composeTestRule.waitUntil {
+            composeTestRule
+                .onAllNodesWithContentDescription("Remove highlight")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        composeTestRule.onNodeWithContentDescription("Remove highlight").assertIsDisplayed()
     }
 
     @Test
