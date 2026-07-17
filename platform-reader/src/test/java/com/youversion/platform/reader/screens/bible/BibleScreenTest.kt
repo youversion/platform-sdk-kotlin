@@ -1111,7 +1111,7 @@ class BibleScreenTest {
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
-        composeTestRule.onNodeWithContentDescription("Remove highlight").assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("Remove yellow highlight").assertDoesNotExist()
 
         presentColors = setOf(HighlightColor.Yellow.hexColor)
         highlightsFlow.value =
@@ -1119,11 +1119,11 @@ class BibleScreenTest {
 
         composeTestRule.waitUntil {
             composeTestRule
-                .onAllNodesWithContentDescription("Remove highlight")
+                .onAllNodesWithContentDescription("Remove yellow highlight")
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
-        composeTestRule.onNodeWithContentDescription("Remove highlight").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Remove yellow highlight").assertIsDisplayed()
     }
 
     @Test
