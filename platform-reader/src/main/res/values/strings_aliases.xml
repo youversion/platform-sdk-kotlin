@@ -19,6 +19,8 @@
     <string name="reader_menu_sign_in">@string/yv_reader_menu_sign_in</string>
     <string name="reader_menu_sign_out">@string/yv_reader_menu_sign_out</string>
     <string name="theme_selected">@string/yv_theme_selected</string>
+    <string name="verse_action_add_highlight">@string/yv_verse_action_add_highlight</string>
     <string name="verse_action_copy">@string/yv_verse_action_copy</string>
+    <string name="verse_action_remove_highlight">@string/yv_verse_action_remove_highlight</string>
     <string name="verse_action_share">@string/yv_verse_action_share</string>
 </resources>
