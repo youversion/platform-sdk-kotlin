@@ -59,9 +59,11 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
+import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.UntitledSerif
+import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleTextCategory
@@ -183,16 +185,10 @@ fun BibleText(
         wasSignedIn = isSignedIn
     }
 
+    val highlightAlpha = MaterialTheme.readerColorScheme.highlightAlpha
     val highlights =
-        remember(cachedHighlights, reference) {
-            cachedHighlights
-                .asSequence()
-                .filter { it.bibleReference.overlaps(reference) }
-                .mapNotNull { cached ->
-                    cached.hexColor.toHighlightColorOrNull()?.let { color ->
-                        cached.bibleReference to color
-                    }
-                }.toMap()
+        remember(cachedHighlights, reference, highlightAlpha) {
+            highlightColorsForReference(cachedHighlights, reference, highlightAlpha)
         }
 
     LaunchedEffect(loadingPhase) {
@@ -359,6 +355,27 @@ internal fun AnnotatedString.selectedCharacterRanges(selectedVerses: Set<BibleRe
             annotations.first().start until annotations.last().end
         }
 }
+
+/**
+ * Resolves the cached highlights overlapping [reference] into the colors to draw behind the text,
+ * applying [highlightAlpha] so that a dark reader theme dims them instead of letting them overwhelm
+ * the text they sit behind.
+ *
+ * Highlights whose stored color is not valid hex are dropped.
+ */
+internal fun highlightColorsForReference(
+    cachedHighlights: List<BibleHighlight>,
+    reference: BibleReference,
+    highlightAlpha: Float,
+): Map<BibleReference, Color> =
+    cachedHighlights
+        .asSequence()
+        .filter { it.bibleReference.overlaps(reference) }
+        .mapNotNull { cached ->
+            cached.hexColor.toHighlightColorOrNull()?.let { color ->
+                cached.bibleReference to color.copy(alpha = highlightAlpha)
+            }
+        }.toMap()
 
 /**
  * Returns one merged character range per highlighted verse, paired with its highlight color,

@@ -26,7 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youversion.platform.reader.R
+import com.youversion.platform.ui.theme.readerColorScheme
 
 @Composable
 internal fun BibleReaderVerseActionSheet(
@@ -114,6 +115,13 @@ private fun HighlightColorPicker(
     }
 }
 
+/**
+ * A single swatch in the highlight color picker.
+ *
+ * The swatch is composited over the reader background so it shows the color the highlight will
+ * actually be on the page; the dimmed color on its own would read differently against the sheet
+ * behind it.
+ */
 @Composable
 private fun HighlightColorButton(
     highlightColor: HighlightColor,
@@ -130,16 +138,21 @@ private fun HighlightColorButton(
             },
             colorName,
         )
+    val readerColorScheme = MaterialTheme.readerColorScheme
+    val swatchColor =
+        highlightColor.color
+            .copy(alpha = readerColorScheme.highlightAlpha)
+            .compositeOver(readerColorScheme.background)
     Box(
         contentAlignment = Alignment.Center,
         modifier =
             Modifier
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(highlightColor.color)
+                .background(swatchColor)
                 .border(
                     width = 1.dp,
-                    color = Color(0xFF121212).copy(alpha = 0.2f),
+                    color = readerColorScheme.foreground.copy(alpha = 0.2f),
                     shape = CircleShape,
                 ).clickable(
                     interactionSource = null,
@@ -151,7 +164,7 @@ private fun HighlightColorButton(
             Icon(
                 imageVector = Icons.Filled.Check,
                 contentDescription = null,
-                tint = Color(0xFF121212),
+                tint = readerColorScheme.foreground,
                 modifier = Modifier.size(20.dp),
             )
         }

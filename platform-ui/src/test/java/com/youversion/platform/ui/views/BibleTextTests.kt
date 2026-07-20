@@ -34,6 +34,8 @@ import com.youversion.platform.core.highlights.api.HighlightsApi
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
+import com.youversion.platform.ui.theme.Charcoal
+import com.youversion.platform.ui.theme.PureWhite
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleTextCategory
@@ -55,6 +57,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
+import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -68,6 +71,8 @@ class BibleTextTests {
     private val mockChapterRepository = mockk<BibleChapterRepository>()
     private val mockHighlightsApi = mockk<HighlightsApi>(relaxed = true)
     private val highlightsRepository = BibleHighlightsRepository(api = mockHighlightsApi)
+
+    private val chapterReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
 
     private val testReference =
         BibleReference(
@@ -1335,6 +1340,66 @@ class BibleTextTests {
         assertEquals(2, ranges.size)
         assertEquals(Color.Red, ranges.first { it.first == 0 until 3 }.second)
         assertEquals(Color.Blue, ranges.first { it.first == 3 until 6 }.second)
+    }
+
+    private fun cachedHighlight(
+        verse: Int,
+        hexColor: String,
+    ) = BibleHighlight(
+        bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = verse),
+        hexColor = hexColor,
+    )
+
+    @Test
+    fun `highlightColorsForReference keeps highlights at full strength on a light theme`() {
+        val colors =
+            highlightColorsForReference(
+                cachedHighlights = listOf(cachedHighlight(verse = 1, hexColor = "#fffe00")),
+                reference = chapterReference,
+                highlightAlpha = PureWhite.highlightAlpha,
+            )
+
+        assertEquals(Color(0xFFFFFE00), colors.values.single())
+    }
+
+    @Test
+    fun `highlightColorsForReference dims highlights on a dark theme without shifting their hue`() {
+        val colors =
+            highlightColorsForReference(
+                cachedHighlights = listOf(cachedHighlight(verse = 1, hexColor = "#fffe00")),
+                reference = chapterReference,
+                highlightAlpha = Charcoal.highlightAlpha,
+            )
+
+        val dimmed = colors.values.single()
+        val palette = Color(0xFFFFFE00)
+        assertEquals(
+            0.3f,
+            dimmed.alpha,
+            absoluteTolerance = 0.01f,
+            message = "Compose quantizes the stored alpha to 8 bits, so 0.3f round-trips as 77/255",
+        )
+        assertEquals(palette.red, dimmed.red)
+        assertEquals(palette.green, dimmed.green)
+        assertEquals(palette.blue, dimmed.blue)
+    }
+
+    @Test
+    fun `highlightColorsForReference dims each verse independently and keeps them distinguishable`() {
+        val colors =
+            highlightColorsForReference(
+                cachedHighlights =
+                    listOf(
+                        cachedHighlight(verse = 1, hexColor = "#fffe00"),
+                        cachedHighlight(verse = 2, hexColor = "#5dff79"),
+                    ),
+                reference = chapterReference,
+                highlightAlpha = Charcoal.highlightAlpha,
+            )
+
+        assertEquals(2, colors.size)
+        assertTrue(colors.values.all { abs(it.alpha - 0.3f) < 0.01f })
+        assertEquals(2, colors.values.toSet().size)
     }
 
     @Test
