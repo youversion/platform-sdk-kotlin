@@ -10,6 +10,11 @@
     <string name="font_selected_check">@string/yv_font_selected_check</string>
     <string name="font_settings_label">@string/yv_font_settings_label</string>
     <string name="footnote_header_label">@string/yv_footnote_header_label</string>
+    <string name="highlight_color_cyan">@string/yv_highlight_color_cyan</string>
+    <string name="highlight_color_green">@string/yv_highlight_color_green</string>
+    <string name="highlight_color_orange">@string/yv_highlight_color_orange</string>
+    <string name="highlight_color_pink">@string/yv_highlight_color_pink</string>
+    <string name="highlight_color_yellow">@string/yv_highlight_color_yellow</string>
     <string name="intro_chapter_label">@string/yv_intro_chapter_label</string>
     <string name="language_content_desc">@string/yv_language_content_desc</string>
     <string name="line_spacing_label">@string/yv_line_spacing_label</string>
