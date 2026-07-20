@@ -25,6 +25,16 @@ data class ReaderColorScheme(
         get() = foreground
     val readerTextMutedColor: Color
         get() = borderSecondaryColor
+
+    /**
+     * The opacity that highlight colors are drawn at under this scheme.
+     *
+     * The highlight palette is chosen to sit behind dark text on a light page, so at full strength it
+     * overwhelms the light text of a dark scheme. Dimming keeps the highlight behind the words while
+     * still showing which verses are highlighted and in which color.
+     */
+    val highlightAlpha: Float
+        get() = if (isDark) 0.3f else 1f
 }
 
 fun lightReaderColorScheme(
