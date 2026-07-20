@@ -63,6 +63,7 @@ import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
 import com.youversion.platform.reader.sheets.BibleReaderIntroFootnotesSheet
 import com.youversion.platform.reader.sheets.BibleReaderVerseActionSheet
+import com.youversion.platform.reader.sheets.HighlightColor
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.signin.SignOutConfirmationAlert
@@ -87,6 +88,16 @@ internal fun BibleScreen(
     onFontsClick: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val highlights by viewModel.highlights.collectAsStateWithLifecycle()
+
+    val colorsToRemove =
+        remember(state.selectedVerses, highlights) {
+            HighlightColor.entries.filter { viewModel.isColorPresentOnAnySelectedVerses(it.hexColor) }
+        }
+    val colorsToAdd =
+        remember(state.selectedVerses, highlights) {
+            HighlightColor.entries.filter { !viewModel.isColorPresentOnAllSelectedVerses(it.hexColor) }
+        }
 
     val signInViewModel = viewModel<SignInViewModel>()
     val signInState by signInViewModel.state.collectAsStateWithLifecycle()
@@ -188,7 +199,10 @@ internal fun BibleScreen(
                                 ),
                     )
                     BibleReaderVerseActionSheet(
-                        selectedVerses = state.selectedVerses,
+                        colorsToRemove = colorsToRemove,
+                        colorsToAdd = colorsToAdd,
+                        onAddHighlight = { viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(it)) },
+                        onRemoveHighlight = { viewModel.onAction(BibleReaderViewModel.Action.RemoveHighlight(it)) },
                         onCopy = { viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses) },
                         onShare = { viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses) },
                     )
