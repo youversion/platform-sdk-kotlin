@@ -4,6 +4,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.reader.domain.BibleReaderRepository
+import com.youversion.platform.reader.sheets.HighlightColor
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -168,5 +169,20 @@ class BibleReaderViewModelHighlightsTests {
 
         assertTrue(viewModel.isColorPresentOnAnySelectedVerses("ffff00"))
         assertTrue(viewModel.isColorPresentOnAllSelectedVerses("ffff00"))
+    }
+
+    @Test
+    fun `different colors across selected verses are each removable and all remain recolorable`() {
+        highlight(verseOne, HighlightColor.Yellow.hexColor)
+        highlight(verseTwo, HighlightColor.Cyan.hexColor)
+        selectVerses(verseOne, verseTwo)
+
+        assertTrue(viewModel.isColorPresentOnAnySelectedVerses(HighlightColor.Yellow.hexColor))
+        assertTrue(viewModel.isColorPresentOnAnySelectedVerses(HighlightColor.Cyan.hexColor))
+
+        assertFalse(viewModel.isColorPresentOnAllSelectedVerses(HighlightColor.Yellow.hexColor))
+        assertFalse(viewModel.isColorPresentOnAllSelectedVerses(HighlightColor.Cyan.hexColor))
+
+        assertFalse(viewModel.isColorPresentOnAnySelectedVerses(HighlightColor.Pink.hexColor))
     }
 }

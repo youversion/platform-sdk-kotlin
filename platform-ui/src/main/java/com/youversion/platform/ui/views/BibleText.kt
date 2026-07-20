@@ -393,9 +393,10 @@ internal fun AnnotatedString.highlightedCharacterRanges(
  *
  * On the line where the highlight starts or ends, the corresponding boundary is the caret position
  * ([startCaretX] / [endCaretX]); on lines the highlight only passes through, that boundary extends to
- * the paragraph's leading or trailing edge so a wrapped highlight reads as one continuous band. Taking
- * the min/max keeps the span valid for right-to-left text, where the start caret sits to the right of
- * the end caret.
+ * the line's leading or trailing text edge ([lineLeft] / [lineRight]) so a wrapped highlight reads as
+ * one continuous band that stops at the text rather than filling the container width. Taking the
+ * min/max keeps the span valid for right-to-left text, where the start caret sits to the right of the
+ * end caret.
  */
 internal fun highlightLineSpan(
     isRtl: Boolean,
@@ -403,10 +404,11 @@ internal fun highlightLineSpan(
     isEndLine: Boolean,
     startCaretX: Float,
     endCaretX: Float,
-    lineWidth: Float,
+    lineLeft: Float,
+    lineRight: Float,
 ): Pair<Float, Float> {
-    val leadingEdge = if (isRtl) lineWidth else 0f
-    val trailingEdge = if (isRtl) 0f else lineWidth
+    val leadingEdge = if (isRtl) lineRight else lineLeft
+    val trailingEdge = if (isRtl) lineLeft else lineRight
     val startEdge = if (isStartLine) startCaretX else leadingEdge
     val endEdge = if (isEndLine) endCaretX else trailingEdge
     return minOf(startEdge, endEdge) to maxOf(startEdge, endEdge)
@@ -428,8 +430,8 @@ internal fun String.toHighlightColorOrNull(): Color? {
 
 /**
  * Draws a continuous filled background rectangle behind every text line that contains characters in
- * [highlightedRanges]. Interior wrapped lines span their full width so the highlight appears as a
- * single unbroken color rather than per-character backgrounds that would look jagged at line breaks.
+ * [highlightedRanges]. Interior wrapped lines span the full width of their text so the highlight appears
+ * as a single unbroken color rather than per-character backgrounds that would look jagged at line breaks.
  */
 private fun DrawScope.drawHighlightBackgrounds(
     layoutResult: TextLayoutResult,
@@ -456,7 +458,8 @@ private fun DrawScope.drawHighlightBackgrounds(
                         isEndLine = line == endLine,
                         startCaretX = startCaretX,
                         endCaretX = if (isRtl) lastCharBounds.left else lastCharBounds.right,
-                        lineWidth = size.width,
+                        lineLeft = layoutResult.getLineLeft(line),
+                        lineRight = layoutResult.getLineRight(line),
                     )
                 drawRect(
                     color = color,
