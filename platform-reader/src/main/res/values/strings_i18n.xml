@@ -10,6 +10,11 @@
     <string name="yv_font_selected_check">Font selected check</string>
     <string name="yv_font_settings_label">Font</string>
     <string name="yv_footnote_header_label">Footnote</string>
+    <string name="yv_highlight_color_cyan">cyan</string>
+    <string name="yv_highlight_color_green">green</string>
+    <string name="yv_highlight_color_orange">orange</string>
+    <string name="yv_highlight_color_pink">pink</string>
+    <string name="yv_highlight_color_yellow">yellow</string>
     <string name="yv_intro_chapter_label">Intro</string>
     <string name="yv_language_content_desc">Language</string>
     <string name="yv_line_spacing_label">Line Spacing</string>
@@ -19,8 +24,8 @@
     <string name="yv_reader_menu_sign_in">Sign In</string>
     <string name="yv_reader_menu_sign_out">Sign Out</string>
     <string name="yv_theme_selected">Selected</string>
-    <string name="yv_verse_action_add_highlight">Add highlight</string>
+    <string name="yv_verse_action_add_highlight">Add %1$s highlight</string>
     <string name="yv_verse_action_copy">Copy</string>
-    <string name="yv_verse_action_remove_highlight">Remove highlight</string>
+    <string name="yv_verse_action_remove_highlight">Remove %1$s highlight</string>
     <string name="yv_verse_action_share">Share</string>
 </resources>
