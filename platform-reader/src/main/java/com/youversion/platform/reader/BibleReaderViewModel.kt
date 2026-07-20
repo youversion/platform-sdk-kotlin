@@ -12,6 +12,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
+import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
@@ -43,6 +44,13 @@ class BibleReaderViewModel(
 ) : ViewModel() {
     private val _state: MutableStateFlow<State>
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
+
+    /**
+     * The signed-in user's cached highlights. Exposed so the verse action sheet recomposes when highlights change and
+     * re-evaluates [isColorPresentOnAnySelectedVerses] / [isColorPresentOnAllSelectedVerses].
+     */
+    internal val highlights: StateFlow<List<BibleHighlight>>
+        get() = bibleHighlightsRepository.highlights
 
     internal var bibleReference: BibleReference
         get() = _state.value.bibleReference
