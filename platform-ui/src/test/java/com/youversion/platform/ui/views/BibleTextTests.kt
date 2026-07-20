@@ -1436,7 +1436,8 @@ class BibleTextTests {
                 isEndLine = true,
                 startCaretX = 50f,
                 endCaretX = 300f,
-                lineWidth = 400f,
+                lineLeft = 0f,
+                lineRight = 400f,
             )
 
         assertEquals(50f to 300f, span)
@@ -1451,14 +1452,15 @@ class BibleTextTests {
                 isEndLine = true,
                 startCaretX = 300f,
                 endCaretX = 50f,
-                lineWidth = 400f,
+                lineLeft = 0f,
+                lineRight = 400f,
             )
 
         assertEquals(50f to 300f, span)
     }
 
     @Test
-    fun `highlightLineSpan fills from the start caret to the trailing edge on an ltr start line`() {
+    fun `highlightLineSpan fills from the start caret to the trailing text edge on an ltr start line`() {
         val span =
             highlightLineSpan(
                 isRtl = false,
@@ -1466,14 +1468,15 @@ class BibleTextTests {
                 isEndLine = false,
                 startCaretX = 50f,
                 endCaretX = 0f,
-                lineWidth = 400f,
+                lineLeft = 0f,
+                lineRight = 350f,
             )
 
-        assertEquals(50f to 400f, span)
+        assertEquals(50f to 350f, span)
     }
 
     @Test
-    fun `highlightLineSpan fills from the leading edge to the start caret on an rtl start line`() {
+    fun `highlightLineSpan fills from the leading text edge to the start caret on an rtl start line`() {
         val span =
             highlightLineSpan(
                 isRtl = true,
@@ -1481,14 +1484,15 @@ class BibleTextTests {
                 isEndLine = false,
                 startCaretX = 300f,
                 endCaretX = 0f,
-                lineWidth = 400f,
+                lineLeft = 50f,
+                lineRight = 400f,
             )
 
-        assertEquals(0f to 300f, span)
+        assertEquals(50f to 300f, span)
     }
 
     @Test
-    fun `highlightLineSpan fills from the end caret to the trailing edge on an rtl end line`() {
+    fun `highlightLineSpan fills from the end caret to the trailing text edge on an rtl end line`() {
         val span =
             highlightLineSpan(
                 isRtl = true,
@@ -1496,14 +1500,15 @@ class BibleTextTests {
                 isEndLine = true,
                 startCaretX = 0f,
                 endCaretX = 50f,
-                lineWidth = 400f,
+                lineLeft = 50f,
+                lineRight = 350f,
             )
 
-        assertEquals(50f to 400f, span)
+        assertEquals(50f to 350f, span)
     }
 
     @Test
-    fun `highlightLineSpan fills the full width on an interior wrapped line regardless of direction`() {
+    fun `highlightLineSpan fills the text width on an interior wrapped line regardless of direction`() {
         val ltr =
             highlightLineSpan(
                 isRtl = false,
@@ -1511,7 +1516,8 @@ class BibleTextTests {
                 isEndLine = false,
                 startCaretX = 0f,
                 endCaretX = 0f,
-                lineWidth = 400f,
+                lineLeft = 20f,
+                lineRight = 380f,
             )
         val rtl =
             highlightLineSpan(
@@ -1520,11 +1526,12 @@ class BibleTextTests {
                 isEndLine = false,
                 startCaretX = 0f,
                 endCaretX = 0f,
-                lineWidth = 400f,
+                lineLeft = 20f,
+                lineRight = 380f,
             )
 
-        assertEquals(0f to 400f, ltr)
-        assertEquals(0f to 400f, rtl)
+        assertEquals(20f to 380f, ltr)
+        assertEquals(20f to 380f, rtl)
     }
 
     // endregion
