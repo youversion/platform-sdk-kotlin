@@ -29,6 +29,10 @@
     <string name="yv_sign_in_button_full">Sign in with</string>
     <string name="yv_sign_in_error_message">We were unable to sign you in at this time. Please try again.</string>
     <string name="yv_sign_in_error_title">Sign-In Failed</string>
+    <string name="yv_sign_in_prompt_introducing">INTRODUCING</string>
+    <string name="yv_sign_in_prompt_no_button">No Thanks</string>
+    <string name="yv_sign_in_prompt_paragraph">%1$s wants to connect to your YouVersion Bible App account. This will allow them to see and interact with your Bible App activity. Would you like to proceed?</string>
+    <string name="yv_sign_in_prompt_yes_button">Yes Please</string>
     <string name="yv_sign_out_cancel_button_text">Cancel</string>
     <string name="yv_sign_out_confirm_button_text">Sign Out</string>
     <string name="yv_sign_out_confirmation_message">Are you sure you want to sign out from YouVersion? You will need to sign in again to access your highlights.</string>
