@@ -74,6 +74,7 @@ import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
 import com.youversion.platform.ui.views.BibleTextOptions
+import com.youversion.platform.ui.views.SignInWithYouVersionPromptSheet
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,13 +126,15 @@ internal fun BibleScreen(
         }
     }
 
+    var showsSignInPrompt by rememberSaveable { mutableStateOf(false) }
+
     // Highlighting needs an account, so a signed-out reader is asked to sign in instead. Where the host app has
     // disabled sign-in there is nothing to ask for, so the tap does nothing rather than opening a flow that app
     // has turned off — though the colors are hidden in that case, so this is a guard rather than a live path.
     val highlightOrSignIn: (BibleReaderViewModel.Action) -> Unit = { action ->
         when {
             signInState.isSignedIn -> viewModel.onAction(action)
-            signInState.isSignInEnabled -> launchSignIn()
+            signInState.isSignInEnabled -> showsSignInPrompt = true
             else -> Unit
         }
     }
@@ -388,6 +391,18 @@ internal fun BibleScreen(
                             },
                             fontDefinition = state.selectedFontDefinition,
                             lineSpacing = state.lineSpacing,
+                        )
+                    }
+
+                    if (showsSignInPrompt) {
+                        SignInWithYouVersionPromptSheet(
+                            appName = appName,
+                            onSignIn = {
+                                showsSignInPrompt = false
+                                launchSignIn()
+                            },
+                            onDismissRequest = { showsSignInPrompt = false },
+                            appSignInMessage = appSignInMessage,
                         )
                     }
 
