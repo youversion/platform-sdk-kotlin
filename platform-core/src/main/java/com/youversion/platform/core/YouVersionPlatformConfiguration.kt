@@ -57,6 +57,16 @@ object YouVersionPlatformConfiguration {
         get() = config?.permittedVersionIds
 
     /**
+     * Whether the SDK may offer to sign the user in to YouVersion.
+     *
+     * When `false`, the reader hides the highlight colors from a signed-out reader rather than offering a control
+     * that could never work, and a highlight action cannot start a sign-in flow. A reader who is already signed in
+     * keeps their highlight colors, since they need nothing further. Defaults to `true`.
+     */
+    val isSignInEnabled: Boolean
+        get() = config?.isSignInEnabled ?: true
+
+    /**
      * The permissions the signed-in user has granted to this app. Empty when signed out, or when
      * the user has granted nothing.
      */
@@ -78,6 +88,7 @@ object YouVersionPlatformConfiguration {
         hostEnv: String? = null,
         permittedLanguageTags: Set<String>? = null,
         permittedVersionIds: Set<Int>? = null,
+        isSignInEnabled: Boolean = true,
     ) {
         if (config != null) {
             Logger.w("YouVersionPlatform SDK has already been configured. Reconfiguring.")
@@ -100,6 +111,7 @@ object YouVersionPlatformConfiguration {
             hostEnv = hostEnv,
             permittedLanguageTags = permittedLanguageTags,
             permittedVersionIds = permittedVersionIds,
+            isSignInEnabled = isSignInEnabled,
         )
     }
 
@@ -114,6 +126,7 @@ object YouVersionPlatformConfiguration {
         hostEnv: String? = null,
         permittedLanguageTags: Set<String>? = null,
         permittedVersionIds: Set<Int>? = null,
+        isSignInEnabled: Boolean = true,
     ) {
         val sessionRepository = PlatformCoreKoinComponent.sessionRepository
         val previousConfig = config
@@ -132,6 +145,7 @@ object YouVersionPlatformConfiguration {
                 permittedLanguageTags = permittedLanguageTags,
                 permittedVersionIds = permittedVersionIds,
                 grantedPermissions = sessionRepository.grantedPermissionValues.toGrantedPermissions(),
+                isSignInEnabled = isSignInEnabled,
             )
 
         // The Koin graph (and therefore the BibleVersionRepository singleton) survives reconfiguration
@@ -298,6 +312,7 @@ data class Config(
     val permittedLanguageTags: Set<String>? = null,
     val permittedVersionIds: Set<Int>? = null,
     val grantedPermissions: Set<SignInWithYouVersionPermission> = emptySet(),
+    val isSignInEnabled: Boolean = true,
 ) {
     val isSignedIn = accessToken != null
 }

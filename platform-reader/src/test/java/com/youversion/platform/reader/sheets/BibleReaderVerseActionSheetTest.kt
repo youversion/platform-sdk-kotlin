@@ -24,6 +24,7 @@ class BibleReaderVerseActionSheetTest {
     private fun renderSheet(
         colorsToRemove: List<HighlightColor> = emptyList(),
         colorsToAdd: List<HighlightColor> = emptyList(),
+        showsHighlightColors: Boolean = true,
         onAddHighlight: (String) -> Unit = {},
         onRemoveHighlight: (String) -> Unit = {},
         onCopy: () -> Unit = {},
@@ -34,6 +35,7 @@ class BibleReaderVerseActionSheetTest {
                 BibleReaderVerseActionSheet(
                     colorsToRemove = colorsToRemove,
                     colorsToAdd = colorsToAdd,
+                    showsHighlightColors = showsHighlightColors,
                     onAddHighlight = onAddHighlight,
                     onRemoveHighlight = onRemoveHighlight,
                     onCopy = onCopy,
@@ -41,6 +43,29 @@ class BibleReaderVerseActionSheetTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun `hides the highlight colors when sign-in is unavailable`() {
+        renderSheet(
+            colorsToRemove = listOf(HighlightColor.Yellow),
+            colorsToAdd = listOf(HighlightColor.Green),
+            showsHighlightColors = false,
+        )
+
+        composeTestRule.onNodeWithContentDescription("Remove yellow highlight").assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("Add green highlight").assertDoesNotExist()
+    }
+
+    @Test
+    fun `keeps copy and share available when the highlight colors are hidden`() {
+        renderSheet(
+            colorsToAdd = listOf(HighlightColor.Green),
+            showsHighlightColors = false,
+        )
+
+        composeTestRule.onNodeWithContentDescription("Copy").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Share").assertIsDisplayed()
     }
 
     // ----- Action Buttons

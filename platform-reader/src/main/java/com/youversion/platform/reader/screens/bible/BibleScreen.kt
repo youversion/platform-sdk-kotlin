@@ -102,6 +102,10 @@ internal fun BibleScreen(
     val signInViewModel = viewModel<SignInViewModel>()
     val signInState by signInViewModel.state.collectAsStateWithLifecycle()
 
+    // A signed-in reader keeps the colors even where sign-in is disabled: they already have the account the
+    // highlight needs, so there is nothing left to prompt for.
+    val showsHighlightColors = signInState.isSignedIn || signInState.isSignInEnabled
+
     var showSignInError by rememberSaveable { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
@@ -118,6 +122,17 @@ internal fun BibleScreen(
             } catch (_: Exception) {
                 showSignInError = true
             }
+        }
+    }
+
+    // Highlighting needs an account, so a signed-out reader is asked to sign in instead. Where the host app has
+    // disabled sign-in there is nothing to ask for, so the tap does nothing rather than opening a flow that app
+    // has turned off — though the colors are hidden in that case, so this is a guard rather than a live path.
+    val highlightOrSignIn: (BibleReaderViewModel.Action) -> Unit = { action ->
+        when {
+            signInState.isSignedIn -> viewModel.onAction(action)
+            signInState.isSignInEnabled -> launchSignIn()
+            else -> Unit
         }
     }
 
@@ -201,8 +216,13 @@ internal fun BibleScreen(
                     BibleReaderVerseActionSheet(
                         colorsToRemove = colorsToRemove,
                         colorsToAdd = colorsToAdd,
-                        onAddHighlight = { viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(it)) },
-                        onRemoveHighlight = { viewModel.onAction(BibleReaderViewModel.Action.RemoveHighlight(it)) },
+                        showsHighlightColors = showsHighlightColors,
+                        onAddHighlight = {
+                            highlightOrSignIn(BibleReaderViewModel.Action.AddHighlight(it))
+                        },
+                        onRemoveHighlight = {
+                            highlightOrSignIn(BibleReaderViewModel.Action.RemoveHighlight(it))
+                        },
                         onCopy = { viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses) },
                         onShare = { viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses) },
                     )
@@ -324,11 +344,7 @@ internal fun BibleScreen(
                                     reference = state.bibleReference,
                                     selectedVerses = state.selectedVerses,
                                     onVerseTap = { reference, _ ->
-                                        if (signInState.isSignedIn) {
-                                            viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(reference))
-                                        } else {
-                                            launchSignIn()
-                                        }
+                                        viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(reference))
                                     },
                                     onStateChange = { loadingPhase = it },
                                     onFootnoteTap = { reference, footnotes ->
