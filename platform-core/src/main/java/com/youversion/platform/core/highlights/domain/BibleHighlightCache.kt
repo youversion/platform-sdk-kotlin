@@ -164,6 +164,29 @@ internal class BibleHighlightCache {
         }
     }
 
+    /**
+     * The rows currently held for [references], for use as a rollback snapshot taken before an optimistic change.
+     * A reference with no row contributes nothing, which is what makes restoring a snapshot undo a create.
+     */
+    fun rowsFor(references: List<BibleReference>): List<CachedHighlight> =
+        _highlights.value.filter { it.highlight.bibleReference in references }
+
+    /**
+     * Restores [rows] as the cache's state for [references], replacing whatever those references currently hold.
+     *
+     * Used to undo an optimistic change the server refused. Because the snapshot is positional rather than additive,
+     * it undoes all three changes correctly: a create leaves no row behind, a recolor returns to its previous color,
+     * and a removal's tombstone is replaced by the highlight it hid.
+     */
+    fun restoreHighlights(
+        references: List<BibleReference>,
+        rows: List<CachedHighlight>,
+    ) {
+        _highlights.update { current ->
+            current.filterNot { it.highlight.bibleReference in references } + rows
+        }
+    }
+
     fun updateHighlightColors(
         references: List<BibleReference>,
         newColor: String,

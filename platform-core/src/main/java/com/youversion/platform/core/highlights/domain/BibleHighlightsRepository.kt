@@ -4,6 +4,8 @@ import androidx.annotation.VisibleForTesting
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.api.YouVersionNetworkException
+import com.youversion.platform.core.api.notPermitted
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.api.HighlightsApi
 import com.youversion.platform.core.highlights.api.HighlightsEndpoints
@@ -81,6 +83,18 @@ data class OperationResult(
 )
 
 /**
+ * How each reference in an operation fared, splitting failures the server may yet accept from ones it never will.
+ *
+ * [failedReferences] are retryable — a transient error, so they are requeued with backoff. [rejectedReferences] were
+ * refused because the user is not permitted to write highlights, which no amount of retrying changes, so they are
+ * dropped from the queue and their optimistic cache rows discarded.
+ */
+private data class OperationOutcome(
+    val failedReferences: List<BibleReference> = emptyList(),
+    val rejectedReferences: List<BibleReference> = emptyList(),
+)
+
+/**
  * Coordinates Bible highlights between the local [BibleHighlightCache] and the YouVersion highlights API.
  *
  * Reads are served from the observable cache and refreshed per-chapter from the server (throttled). Writes update
@@ -124,6 +138,10 @@ class BibleHighlightsRepository internal constructor(
     private var operationGeneration = 0
     private val queuedOperations = MutableStateFlow<List<PendingHighlightOperation>>(emptyList())
     private val operationResultsState = MutableStateFlow<Map<UUID, OperationResult>>(emptyMap())
+
+    // The cache rows each queued operation replaced, captured before its optimistic change, so a write the server
+    // refuses can be undone. Guarded by queueLock and dropped once the operation can no longer be retried.
+    private val rollbackSnapshots = mutableMapOf<UUID, List<BibleHighlightCache.CachedHighlight>>()
 
     /**
      * The observable list of highlights. UI layers should collect this and filter to the references they render. The
@@ -224,6 +242,7 @@ class BibleHighlightsRepository internal constructor(
         color: String,
     ) {
         val normalizedReferences = references.map { it.verseLevelReference() }
+        val rollbackSnapshot = cache.rowsFor(normalizedReferences)
         val highlights =
             normalizedReferences.map { reference ->
                 BibleHighlight(bibleReference = reference, hexColor = color)
@@ -234,6 +253,7 @@ class BibleHighlightsRepository internal constructor(
                 references = normalizedReferences,
                 change = HighlightChange.SetColor(color = color),
             ),
+            rollbackSnapshot = rollbackSnapshot,
         )
     }
 
@@ -242,12 +262,14 @@ class BibleHighlightsRepository internal constructor(
      */
     fun removeHighlights(references: List<BibleReference>) {
         val normalizedReferences = references.map { it.verseLevelReference() }
+        val rollbackSnapshot = cache.rowsFor(normalizedReferences)
         cache.removeHighlights(normalizedReferences)
         queueOperation(
             PendingHighlightOperation(
                 references = normalizedReferences,
                 change = HighlightChange.Remove,
             ),
+            rollbackSnapshot = rollbackSnapshot,
         )
     }
 
@@ -286,12 +308,14 @@ class BibleHighlightsRepository internal constructor(
         newColor: String,
     ) {
         val normalizedReferences = references.map { it.verseLevelReference() }
+        val rollbackSnapshot = cache.rowsFor(normalizedReferences)
         cache.updateHighlightColors(normalizedReferences, newColor)
         queueOperation(
             PendingHighlightOperation(
                 references = normalizedReferences,
                 change = HighlightChange.SetColor(color = newColor),
             ),
+            rollbackSnapshot = rollbackSnapshot,
         )
     }
 
@@ -310,6 +334,7 @@ class BibleHighlightsRepository internal constructor(
     fun reset() {
         queueLock.withLock {
             queuedOperations.value = emptyList()
+            rollbackSnapshots.clear()
             operationGeneration++
         }
         loadScope.coroutineContext.cancelChildren()
@@ -397,14 +422,44 @@ class BibleHighlightsRepository internal constructor(
         }
     }
 
-    private fun queueOperation(operation: PendingHighlightOperation) {
+    private fun queueOperation(
+        operation: PendingHighlightOperation,
+        rollbackSnapshot: List<BibleHighlightCache.CachedHighlight>,
+    ) {
         val stamped = operation.copy(accountId = currentAccountId())
         val job =
             queueLock.withLock {
+                rollbackSnapshots[stamped.id] = rollbackSnapshot
                 queuedOperations.value = queuedOperations.value + stamped
                 processingJobLocked()
             }
         job.start()
+    }
+
+    /**
+     * Undoes the optimistic change [operationId] made to [references], restoring the rows the cache held before it.
+     *
+     * Called when the server refuses a write because the user is not permitted to change highlights. Restoring the
+     * snapshot rather than dropping the rows is what keeps a refused recolor showing its previous color and a refused
+     * removal showing the highlight it hid, instead of erasing highlights the server still holds.
+     */
+    private fun rollBackRejected(
+        operationId: UUID,
+        references: List<BibleReference>,
+    ) {
+        val snapshot = queueLock.withLock { rollbackSnapshots[operationId] } ?: return
+        cache.restoreHighlights(
+            references = references,
+            rows = snapshot.filter { it.highlight.bibleReference in references },
+        )
+    }
+
+    /**
+     * Drops [operationId]'s rollback snapshot, once the operation has either succeeded or been refused outright and so
+     * can no longer be retried.
+     */
+    private fun forgetRollback(operationId: UUID) {
+        queueLock.withLock { rollbackSnapshots.remove(operationId) }
     }
 
     private fun ensureProcessing(): Job {
@@ -449,7 +504,7 @@ class BibleHighlightsRepository internal constructor(
                 val failed = mutableListOf<PendingHighlightOperation>()
                 for (operation in batch) {
                     var thrownError: Throwable? = null
-                    val failedReferences =
+                    val outcome =
                         try {
                             processOperation(operation)
                         } catch (e: CancellationException) {
@@ -457,31 +512,53 @@ class BibleHighlightsRepository internal constructor(
                         } catch (e: Exception) {
                             Logger.e(e) { "Highlight operation ${operation.id} threw" }
                             thrownError = e
-                            operation.references
+                            OperationOutcome(failedReferences = operation.references)
                         }
-                    if (failedReferences.isEmpty()) {
-                        recordResult(
-                            OperationResult(
-                                operationId = operation.id,
-                                isSuccess = true,
-                                retryCount = operation.retryCount,
-                            ),
-                        )
-                    } else {
-                        val retried =
-                            operation.copy(
-                                references = failedReferences,
-                                retryCount = operation.retryCount + 1,
+
+                    if (outcome.rejectedReferences.isNotEmpty()) {
+                        rollBackRejected(operation.id, outcome.rejectedReferences)
+                    }
+
+                    when {
+                        outcome.failedReferences.isEmpty() && outcome.rejectedReferences.isEmpty() -> {
+                            recordResult(
+                                OperationResult(
+                                    operationId = operation.id,
+                                    isSuccess = true,
+                                    retryCount = operation.retryCount,
+                                ),
                             )
-                        recordResult(
-                            OperationResult(
-                                operationId = operation.id,
-                                isSuccess = false,
-                                error = thrownError ?: IllegalStateException(SERVER_OPERATION_FAILED_MESSAGE),
-                                retryCount = retried.retryCount,
-                            ),
-                        )
-                        failed.add(retried)
+                            forgetRollback(operation.id)
+                        }
+
+                        outcome.failedReferences.isEmpty() -> {
+                            recordResult(
+                                OperationResult(
+                                    operationId = operation.id,
+                                    isSuccess = false,
+                                    error = notPermitted(),
+                                    retryCount = operation.retryCount,
+                                ),
+                            )
+                            forgetRollback(operation.id)
+                        }
+
+                        else -> {
+                            val retried =
+                                operation.copy(
+                                    references = outcome.failedReferences,
+                                    retryCount = operation.retryCount + 1,
+                                )
+                            recordResult(
+                                OperationResult(
+                                    operationId = operation.id,
+                                    isSuccess = false,
+                                    error = thrownError ?: IllegalStateException(SERVER_OPERATION_FAILED_MESSAGE),
+                                    retryCount = retried.retryCount,
+                                ),
+                            )
+                            failed.add(retried)
+                        }
                     }
                 }
 
@@ -528,12 +605,17 @@ class BibleHighlightsRepository internal constructor(
      * The signed-in account is re-checked before each send. If it has changed since [operation] was queued, the send
      * loop stops so no write can reach a different account; references already sent under the original account are still
      * promoted, and the rest are dropped without retrying.
+     *
+     * A reference the server refuses for lack of permission is reported as rejected rather than failed, and the send
+     * loop stops: the remaining references would be refused for the same reason, so they are reported as rejected too
+     * rather than each firing its own doomed request.
      */
-    private suspend fun processOperation(operation: PendingHighlightOperation): List<BibleReference> {
+    private suspend fun processOperation(operation: PendingHighlightOperation): OperationOutcome {
         val change = operation.change
         val syncedReferences = mutableListOf<BibleReference>()
         val failedReferences = mutableListOf<BibleReference>()
-        for (reference in operation.references) {
+        val rejectedReferences = mutableListOf<BibleReference>()
+        for ((index, reference) in operation.references.withIndex()) {
             if (change is HighlightChange.SetColor) {
                 cache.awaitChapterLoaded(reference)
             }
@@ -543,10 +625,17 @@ class BibleHighlightsRepository internal constructor(
             }
             val passageId = reference.asUSFM
             val succeeded =
-                when (change) {
-                    is HighlightChange.SetColor -> syncHighlight(reference, passageId, change.color)
-                    HighlightChange.Remove ->
-                        api.deleteHighlight(reference.versionId, passageId)
+                try {
+                    when (change) {
+                        is HighlightChange.SetColor -> syncHighlight(reference, passageId, change.color)
+                        HighlightChange.Remove ->
+                            api.deleteHighlight(reference.versionId, passageId)
+                    }
+                } catch (e: YouVersionNetworkException) {
+                    if (e.reason != YouVersionNetworkException.Reason.NOT_PERMITTED) throw e
+                    Logger.w { "Dropping highlight operation ${operation.id}: not permitted to change highlights" }
+                    rejectedReferences.addAll(operation.references.drop(index))
+                    break
                 }
             if (succeeded) {
                 syncedReferences.add(reference)
@@ -563,7 +652,7 @@ class BibleHighlightsRepository internal constructor(
                     cache.markDeletesSynced(syncedReferences)
             }
         }
-        return failedReferences
+        return OperationOutcome(failedReferences = failedReferences, rejectedReferences = rejectedReferences)
     }
 
     /**

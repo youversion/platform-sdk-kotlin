@@ -7,6 +7,7 @@ import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
+import com.youversion.platform.helpers.testForbiddenNotPermitted
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.engine.mock.toByteArray
@@ -197,5 +198,80 @@ class HighlightsApiTests : YouVersionPlatformTest {
                     passageId = "GEN.5.7",
                 )
             }
+        }
+
+    @Test
+    fun `createHighlight reports an unauthorized response as a plain failure so a token refresh can retry it`() =
+        runTest {
+            MockEngine { _ ->
+                respond("", HttpStatusCode.Unauthorized)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
+
+            assertEquals(
+                false,
+                YouVersionApi.highlights.createHighlight(versionId = 1, passageId = "GEN.5.7", color = "ff0000"),
+            )
+        }
+
+    @Test
+    fun `createHighlight reports a permission failure when forbidden`() =
+        testForbiddenNotPermitted {
+            YouVersionApi.highlights.createHighlight(versionId = 1, passageId = "GEN.5.7", color = "ff0000")
+        }
+
+    @Test
+    fun `updateHighlight reports an unauthorized response as a plain failure so a token refresh can retry it`() =
+        runTest {
+            MockEngine { _ ->
+                respond("", HttpStatusCode.Unauthorized)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
+
+            assertEquals(
+                false,
+                YouVersionApi.highlights.updateHighlight(versionId = 1, passageId = "GEN.5.7", color = "ff0000"),
+            )
+        }
+
+    @Test
+    fun `updateHighlight reports a permission failure when forbidden`() =
+        testForbiddenNotPermitted {
+            YouVersionApi.highlights.updateHighlight(versionId = 1, passageId = "GEN.5.7", color = "ff0000")
+        }
+
+    @Test
+    fun `deleteHighlight reports an unauthorized response as a plain failure so a token refresh can retry it`() =
+        runTest {
+            MockEngine { _ ->
+                respond("", HttpStatusCode.Unauthorized)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
+
+            assertEquals(false, YouVersionApi.highlights.deleteHighlight(versionId = 1, passageId = "GEN.5.7"))
+        }
+
+    @Test
+    fun `deleteHighlight reports a permission failure when forbidden`() =
+        testForbiddenNotPermitted {
+            YouVersionApi.highlights.deleteHighlight(versionId = 1, passageId = "GEN.5.7")
+        }
+
+    @Test
+    fun `createHighlight reports a server error as a plain failure so it stays retryable`() =
+        runTest {
+            MockEngine { _ ->
+                respond("", HttpStatusCode.InternalServerError)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
+
+            assertEquals(
+                false,
+                YouVersionApi.highlights.createHighlight(versionId = 1, passageId = "GEN.5.7", color = "ff0000"),
+            )
         }
 }

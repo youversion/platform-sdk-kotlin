@@ -5,6 +5,7 @@ import com.youversion.platform.core.api.ApiResponse
 import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.cannotDownload
 import com.youversion.platform.core.api.invalidResponse
+import com.youversion.platform.core.api.notPermitted
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.highlights.models.Highlight
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
@@ -15,6 +16,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -56,12 +58,12 @@ object HighlightsEndpoints : HighlightsApi {
         passageId: String,
         color: String,
     ): Boolean =
-        httpClient
-            .post(highlightsUrl()) {
+        sendHighlightChange {
+            httpClient.post(highlightsUrl()) {
                 contentType(ContentType.Application.Json)
                 setBody(highlightRequestBody(versionId, passageId, color))
-            }.status
-            .isSuccess()
+            }
+        }
 
     override suspend fun highlights(
         versionId: Int,
@@ -100,12 +102,29 @@ object HighlightsEndpoints : HighlightsApi {
         passageId: String,
         color: String,
     ): Boolean =
-        httpClient
-            .put(highlightsUrl()) {
+        sendHighlightChange {
+            httpClient.put(highlightsUrl()) {
                 contentType(ContentType.Application.Json)
                 setBody(highlightRequestBody(versionId, passageId, color))
-            }.status
-            .isSuccess()
+            }
+        }
+
+    /**
+     * Sends a change to a highlight — creating, recoloring, or removing one — and reports whether it succeeded,
+     * throwing instead when the server refused it because the user has not granted permission to change highlights.
+     *
+     * Only `403 Forbidden` is treated that way. A `401 Unauthorized` means the request was not authenticated, which a
+     * token refresh may resolve, so it is reported as an ordinary failure and stays on the retry path — otherwise an
+     * access token that expired mid-request would discard the user's highlight.
+     */
+    private suspend fun sendHighlightChange(request: suspend () -> HttpResponse): Boolean {
+        val response = request()
+        if (response.status == HttpStatusCode.Forbidden) {
+            Logger.w { "Highlight write forbidden: the user has not granted permission to change highlights" }
+            throw notPermitted()
+        }
+        return response.status.isSuccess()
+    }
 
     private fun highlightRequestBody(
         versionId: Int,
@@ -125,9 +144,9 @@ object HighlightsEndpoints : HighlightsApi {
         versionId: Int,
         passageId: String,
     ): Boolean =
-        httpClient
-            .delete(highlightsDeleteUrl(versionId, passageId)) {
+        sendHighlightChange {
+            httpClient.delete(highlightsDeleteUrl(versionId, passageId)) {
                 contentType(ContentType.Application.Json)
-            }.status
-            .isSuccess()
+            }
+        }
 }

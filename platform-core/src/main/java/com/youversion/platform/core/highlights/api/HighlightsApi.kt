@@ -12,6 +12,9 @@ interface HighlightsApi {
      * @param passageId: The passage identifier (e.g., "JHN.5.1").
      * @param color: The hex color code for the highlight (e.g., "eeeeff").
      * @return: A boolean indicating whether the highlight was successfully created.
+     * @throws [com.youversion.platform.core.api.YouVersionNetworkException] with reason
+     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.NOT_PERMITTED] when the user
+     *         is not permitted to write highlights. Such a request will not succeed on retry.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
     suspend fun createHighlight(
@@ -46,7 +49,10 @@ interface HighlightsApi {
      * @param versionId: The ID of the Bible version.
      * @param passageId: The passage identifier (e.g., "JHN.5.1").
      * @param color: The new hex color code for the highlight (e.g., "eeeeff").
-     * @returns: A boolean indicating whether the highlight was successfully updated.
+     * @return: A boolean indicating whether the highlight was successfully updated.
+     * @throws [com.youversion.platform.core.api.YouVersionNetworkException] with reason
+     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.NOT_PERMITTED] when the user
+     *         is not permitted to write highlights. Such a request will not succeed on retry.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
     suspend fun updateHighlight(
@@ -63,7 +69,10 @@ interface HighlightsApi {
      *
      * @param versionId: The ID of the Bible version.
      * @param passageId: The passage identifier (e.g., "JHN.5.1").
-     * @returns: A boolean indicating whether the highlight was successfully deleted.
+     * @return: A boolean indicating whether the highlight was successfully deleted.
+     * @throws [com.youversion.platform.core.api.YouVersionNetworkException] with reason
+     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.NOT_PERMITTED] when the user
+     *         is not permitted to write highlights. Such a request will not succeed on retry.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
     suspend fun deleteHighlight(
