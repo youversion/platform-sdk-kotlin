@@ -11,6 +11,7 @@ import com.youversion.platform.core.organizations.api.OrganizationsApi
 import com.youversion.platform.core.organizations.api.OrganizationsEndpoints
 import com.youversion.platform.core.users.api.UsersApi
 import com.youversion.platform.core.users.api.UsersEndpoints
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.votd.api.VotdApi
 import com.youversion.platform.core.votd.api.VotdEndpoints
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +28,15 @@ object YouVersionApi {
 
     val isSignedIn: Boolean
         get() = YouVersionPlatformConfiguration.isSignedIn
+
+    /**
+     * Whether the signed-in user has granted the given permission to this app.
+     *
+     * @param permission The permission to check.
+     * @return `true` if the user has granted the permission, `false` otherwise.
+     */
+    fun hasPermission(permission: SignInWithYouVersionPermission): Boolean =
+        YouVersionPlatformConfiguration.grantedPermissions.contains(permission)
 
     /**
      * Checks if the current access token is valid. If the token is expired or close to

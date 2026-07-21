@@ -1,7 +1,9 @@
 package com.youversion.platform.core
 
+import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.domain.Storage
 import com.youversion.platform.core.users.domain.SessionRepository
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfiguredException
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.startYouVersionPlatformTest
@@ -319,6 +321,89 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             assertNull(idToken)
             assertNull(expiryDate)
             assertFalse(isSignedIn)
+        }
+    }
+
+    @Test
+    fun `grantedPermissions is empty when nothing has been granted`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+
+            assertEquals(emptySet(), grantedPermissions)
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `granted permissions survive a relaunch`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            configure(appKey = "appKey")
+
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `saveGrantedPermissions unions with previously granted permissions`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.PROFILE))
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.PROFILE))
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `saveAuthData preserves granted permissions`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            saveAuthData(
+                accessToken = "refreshedToken",
+                refreshToken = "refreshedRefreshToken",
+                idToken = "refreshedIdToken",
+                expiryDate = Date(),
+            )
+
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            configure(appKey = "appKey")
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `clearAuthData clears granted permissions`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            clearAuthData()
+
+            assertEquals(emptySet(), grantedPermissions)
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            configure(appKey = "appKey")
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `an unrecognized stored permission is reported as not granted`() {
+        storage.putString(SessionRepository.KEY_GRANTED_PERMISSIONS, "highlights,notes")
+
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+
+            assertEquals(setOf(SignInWithYouVersionPermission.HIGHLIGHTS), grantedPermissions)
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
         }
     }
 

@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
@@ -29,6 +30,9 @@ import com.youversion.platform.ui.views.SignInWithYouVersionButton
 fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
     val signInViewModel = viewModel<SignInViewModel>()
     val state by signInViewModel.state.collectAsStateWithLifecycle()
+    val config by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
+    val hasHighlightsPermission =
+        config?.grantedPermissions?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
 
     LaunchedEffect(Unit) {
         signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState)
@@ -56,6 +60,14 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(state.userName ?: "user name")
                     Text(state.userEmail ?: "user email")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        if (hasHighlightsPermission) {
+                            "Highlights permission: granted"
+                        } else {
+                            "Highlights permission: not granted"
+                        },
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(onClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut()) }) {
                         Text("Sign Out")
