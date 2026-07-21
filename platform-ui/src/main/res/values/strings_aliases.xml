@@ -29,6 +29,10 @@
     <string name="sign_in_button_full">@string/yv_sign_in_button_full</string>
     <string name="sign_in_error_message">@string/yv_sign_in_error_message</string>
     <string name="sign_in_error_title">@string/yv_sign_in_error_title</string>
+    <string name="sign_in_prompt_introducing">@string/yv_sign_in_prompt_introducing</string>
+    <string name="sign_in_prompt_no_button">@string/yv_sign_in_prompt_no_button</string>
+    <string name="sign_in_prompt_paragraph">@string/yv_sign_in_prompt_paragraph</string>
+    <string name="sign_in_prompt_yes_button">@string/yv_sign_in_prompt_yes_button</string>
     <string name="sign_out_cancel_button_text">@string/yv_sign_out_cancel_button_text</string>
     <string name="sign_out_confirm_button_text">@string/yv_sign_out_confirm_button_text</string>
     <string name="sign_out_confirmation_message">@string/yv_sign_out_confirmation_message</string>
