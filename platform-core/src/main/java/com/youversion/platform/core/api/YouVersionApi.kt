@@ -3,6 +3,8 @@ package com.youversion.platform.core.api
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.api.BiblesApi
 import com.youversion.platform.core.bibles.api.BiblesEndpoints
+import com.youversion.platform.core.dataexchange.api.DataExchangeApi
+import com.youversion.platform.core.dataexchange.api.DataExchangeEndpoints
 import com.youversion.platform.core.highlights.api.HighlightsApi
 import com.youversion.platform.core.highlights.api.HighlightsEndpoints
 import com.youversion.platform.core.languages.api.LanguagesApi
@@ -20,6 +22,7 @@ import java.util.Date
 
 object YouVersionApi {
     val bible: BiblesApi = BiblesEndpoints
+    val dataExchange: DataExchangeApi = DataExchangeEndpoints
     val highlights: HighlightsApi = HighlightsEndpoints
     val languages: LanguagesApi = LanguagesEndpoints
     val organizations: OrganizationsApi = OrganizationsEndpoints
