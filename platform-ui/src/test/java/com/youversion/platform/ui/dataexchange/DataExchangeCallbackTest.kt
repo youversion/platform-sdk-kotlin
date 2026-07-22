@@ -89,4 +89,23 @@ class DataExchangeCallbackTest {
         assertTrue(result.isGranted)
         assertFalse(result.grantedPermissions.contains(SignInWithYouVersionPermission.HIGHLIGHTS))
     }
+
+    @Test
+    fun `only a highlights grant reports grants of highlights`() {
+        fun grantsHighlights(callback: String) =
+            dataExchangeResult(callback.toUri()).grants(SignInWithYouVersionPermission.HIGHLIGHTS)
+
+        // The one outcome the reader acts on.
+        assertTrue(
+            grantsHighlights("youversionauth://callback?data_exchange_status=granted&granted_permissions=highlights"),
+        )
+
+        // Every non-grant outcome converges on false.
+        assertFalse(grantsHighlights("youversionauth://callback?data_exchange_status=cancel"))
+        assertFalse(grantsHighlights("youversionauth://callback"))
+        assertFalse(grantsHighlights("youversionauth://callback?data_exchange_status=needs_review"))
+        assertFalse(
+            grantsHighlights("youversionauth://callback?data_exchange_status=granted&granted_permissions=profile"),
+        )
+    }
 }

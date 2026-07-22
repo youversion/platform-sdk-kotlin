@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
@@ -14,6 +15,7 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.languages.domain.LanguageRepository
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.ShareManager
@@ -41,7 +43,16 @@ class BibleReaderViewModel(
     bibleVersionsViewModel: BibleVersionsViewModel? = null,
     private val copyManager: CopyManager,
     private val shareManager: ShareManager,
+    private val hasHighlightsPermission: () -> Boolean = {
+        YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS)
+    },
 ) : ViewModel() {
+    /**
+     * A highlight change the reader asked for but that is waiting on the highlights permission. Captured when the
+     * change is requested and applied once the user grants access, so the change the reader intended survives the
+     * grant round-trip without them having to ask again.
+     */
+    private var pendingHighlight: PendingHighlight? = null
     private val _state: MutableStateFlow<State>
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
 
@@ -258,6 +269,18 @@ class BibleReaderViewModel(
             is Action.RemoveHighlight -> {
                 removeHighlight(action.hexColor)
             }
+
+            is Action.ConfirmDataExchange -> {
+                confirmDataExchange()
+            }
+
+            is Action.CancelDataExchange -> {
+                cancelDataExchange()
+            }
+
+            is Action.DataExchangeCompleted -> {
+                completeDataExchange(action.isHighlightsGranted)
+            }
         }
     }
 
@@ -314,15 +337,62 @@ class BibleReaderViewModel(
     private fun addHighlight(hexColor: String) {
         val references = _state.value.selectedVerses.toList()
         if (references.isEmpty()) return
-        bibleHighlightsRepository.addHighlights(references, hexColor)
-        clearVerseSelection()
+        highlightOrRequestPermission(
+            PendingHighlight(references = references, hexColor = hexColor, isRemoval = false),
+        )
     }
 
     private fun removeHighlight(hexColor: String) {
         val references = _state.value.selectedVerses.toList()
-        clearVerseSelection()
         if (references.isEmpty()) return
-        bibleHighlightsRepository.removeHighlights(references, matchingColor = hexColor)
+        highlightOrRequestPermission(
+            PendingHighlight(references = references, hexColor = hexColor, isRemoval = true),
+        )
+    }
+
+    /**
+     * Applies [pending] immediately when the user has granted the highlights permission, otherwise holds it and asks
+     * for the permission first. Add, remove, and recolor all pass through here, so each is gated the same way: a
+     * reader who revoked access after highlighting is asked again before an existing highlight can be changed.
+     */
+    private fun highlightOrRequestPermission(pending: PendingHighlight) {
+        if (hasHighlightsPermission()) {
+            applyHighlight(pending)
+        } else {
+            pendingHighlight = pending
+            _state.update { it.copy(showDataExchangeConfirmation = true) }
+        }
+    }
+
+    private fun applyHighlight(pending: PendingHighlight) {
+        if (pending.isRemoval) {
+            bibleHighlightsRepository.removeHighlights(pending.references, matchingColor = pending.hexColor)
+        } else {
+            bibleHighlightsRepository.addHighlights(pending.references, pending.hexColor)
+        }
+        clearVerseSelection()
+    }
+
+    private fun confirmDataExchange() {
+        _state.update { it.copy(showDataExchangeConfirmation = false, shouldStartDataExchangeFlow = true) }
+    }
+
+    private fun cancelDataExchange() {
+        pendingHighlight = null
+        _state.update { it.copy(showDataExchangeConfirmation = false) }
+    }
+
+    /**
+     * Finishes the permission flow. Applies the held highlight when highlights access was granted; otherwise drops
+     * it. Either way the verse selection is left intact on a non-grant, so the reader can still copy or share.
+     */
+    private fun completeDataExchange(isHighlightsGranted: Boolean) {
+        val pending = pendingHighlight
+        pendingHighlight = null
+        _state.update { it.copy(shouldStartDataExchangeFlow = false) }
+        if (isHighlightsGranted && pending != null) {
+            applyHighlight(pending)
+        }
     }
 
     /**
@@ -510,6 +580,8 @@ class BibleReaderViewModel(
         val footnotes: List<AnnotatedString> = emptyList(),
         val selectedVerses: Set<BibleReference> = emptySet(),
         val showVerseActionSheet: Boolean = false,
+        val showDataExchangeConfirmation: Boolean = false,
+        val shouldStartDataExchangeFlow: Boolean = false,
         val showingIntroFootnotes: Boolean = false,
         val introFootnotes: List<AnnotatedString> = emptyList(),
         val introBookUSFM: String? = null,
@@ -605,5 +677,26 @@ class BibleReaderViewModel(
         data class RemoveHighlight(
             val hexColor: String,
         ) : Action
+
+        /** The reader agreed to grant highlights access; proceed to the grant flow. */
+        data object ConfirmDataExchange : Action
+
+        /** The reader declined the highlights permission prompt. */
+        data object CancelDataExchange : Action
+
+        /**
+         * The grant flow finished.
+         *
+         * @property isHighlightsGranted Whether the user granted highlights access.
+         */
+        data class DataExchangeCompleted(
+            val isHighlightsGranted: Boolean,
+        ) : Action
     }
+
+    private data class PendingHighlight(
+        val references: List<BibleReference>,
+        val hexColor: String,
+        val isRemoval: Boolean,
+    )
 }

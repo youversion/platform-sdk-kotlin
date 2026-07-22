@@ -1071,6 +1071,75 @@ class BibleScreenTest {
     }
 
     @Test
+    fun `the data exchange confirmation renders and Continue dispatches ConfirmDataExchange`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference),
+                showDataExchangeConfirmation = true,
+            )
+        stubSuccessfulTextLoad()
+        stubConfig(isSignedIn = true, isSignInEnabled = true)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    appName = "Test App",
+                    appSignInMessage = "Sign in",
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithText("Allow this app to save highlights with YouVersion?").assertExists()
+            composeTestRule.onNodeWithText("Continue").performClick()
+
+            verify { mockViewModel.onAction(BibleReaderViewModel.Action.ConfirmDataExchange) }
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
+    fun `the data exchange confirmation Cancel dispatches CancelDataExchange`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference),
+                showDataExchangeConfirmation = true,
+            )
+        stubSuccessfulTextLoad()
+        stubConfig(isSignedIn = true, isSignInEnabled = true)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    appName = "Test App",
+                    appSignInMessage = "Sign in",
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithText("Cancel").performClick()
+
+            verify { mockViewModel.onAction(BibleReaderViewModel.Action.CancelDataExchange) }
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
     fun `sign out shows confirmation alert and cancel dismisses it`() {
         stateFlow.value =
             BibleReaderViewModel.State(

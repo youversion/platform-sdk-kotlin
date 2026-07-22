@@ -40,6 +40,15 @@ data class DataExchangeResult(
      */
     val isGranted: Boolean
         get() = status == DataExchangeStatus.Granted
+
+    /**
+     * Whether the user granted [permission]. This is the single question the reader flow acts on: a cancellation, a
+     * missing or unrecognized status, and a completed flow that withheld [permission] all answer false, so every
+     * non-grant outcome converges here.
+     *
+     * @param permission The permission to check.
+     */
+    fun grants(permission: SignInWithYouVersionPermission): Boolean = grantedPermissions.contains(permission)
 }
 
 private const val STATUS_PARAMETER = "data_exchange_status"

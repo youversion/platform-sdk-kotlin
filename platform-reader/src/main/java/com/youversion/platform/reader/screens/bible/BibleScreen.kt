@@ -63,7 +63,9 @@ import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
 import com.youversion.platform.reader.sheets.BibleReaderIntroFootnotesSheet
 import com.youversion.platform.reader.sheets.BibleReaderVerseActionSheet
+import com.youversion.platform.reader.sheets.DataExchangeConfirmationDialog
 import com.youversion.platform.reader.sheets.HighlightColor
+import com.youversion.platform.ui.dataexchange.rememberDataExchange
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.signin.SignOutConfirmationAlert
@@ -127,6 +129,14 @@ internal fun BibleScreen(
     }
 
     var showsSignInPrompt by rememberSaveable { mutableStateOf(false) }
+
+    val requestDataExchange = rememberDataExchange()
+    LaunchedEffect(state.shouldStartDataExchangeFlow) {
+        if (!state.shouldStartDataExchangeFlow) return@LaunchedEffect
+        val result = requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+        val isHighlightsGranted = result?.grants(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+        viewModel.onAction(BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted))
+    }
 
     // Highlighting needs an account, so a signed-out reader is asked to sign in instead. Where the host app has
     // disabled sign-in there is nothing to ask for, so the tap does nothing rather than opening a flow that app
@@ -403,6 +413,13 @@ internal fun BibleScreen(
                             },
                             onDismissRequest = { showsSignInPrompt = false },
                             appSignInMessage = appSignInMessage,
+                        )
+                    }
+
+                    if (state.showDataExchangeConfirmation) {
+                        DataExchangeConfirmationDialog(
+                            onConfirm = { viewModel.onAction(BibleReaderViewModel.Action.ConfirmDataExchange) },
+                            onDismiss = { viewModel.onAction(BibleReaderViewModel.Action.CancelDataExchange) },
                         )
                     }
 

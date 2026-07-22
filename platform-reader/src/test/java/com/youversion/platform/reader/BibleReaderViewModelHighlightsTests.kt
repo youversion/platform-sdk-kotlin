@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -39,6 +40,10 @@ class BibleReaderViewModelHighlightsTests {
     private val blue = "#0000ff"
 
     private val highlightsByReference = mutableMapOf<BibleReference, List<BibleHighlight>>()
+
+    // Whether the injected permission check reports the highlights permission as granted. Defaults to granted so the
+    // add/remove tests exercise the immediate-apply path; the permission-flow tests flip it before acting.
+    private var isHighlightsPermissionGranted = true
 
     @BeforeTest
     fun setup() {
@@ -64,6 +69,7 @@ class BibleReaderViewModelHighlightsTests {
                 bibleHighlightsRepository = bibleHighlightsRepository,
                 copyManager = mockk(relaxed = true),
                 shareManager = mockk(relaxed = true),
+                hasHighlightsPermission = { isHighlightsPermissionGranted },
             )
     }
 
@@ -133,6 +139,142 @@ class BibleReaderViewModelHighlightsTests {
         viewModel.onAction(BibleReaderViewModel.Action.RemoveHighlight(yellow))
 
         verify(exactly = 0) { bibleHighlightsRepository.removeHighlights(any(), any<String>()) }
+    }
+
+    // ----- Highlights permission flow
+
+    @Test
+    fun `AddHighlight applies immediately and shows no prompt when permission is granted`() {
+        isHighlightsPermissionGranted = true
+        selectVerses(verseOne)
+
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        verify { bibleHighlightsRepository.addHighlights(any(), yellow) }
+        assertFalse(viewModel.state.value.showDataExchangeConfirmation)
+    }
+
+    @Test
+    fun `AddHighlight without permission shows the confirmation and applies nothing`() {
+        isHighlightsPermissionGranted = false
+        selectVerses(verseOne, verseTwo)
+
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        assertTrue(viewModel.state.value.showDataExchangeConfirmation)
+        verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
+    }
+
+    @Test
+    fun `AddHighlight without permission keeps the verse selection`() {
+        isHighlightsPermissionGranted = false
+        selectVerses(verseOne, verseTwo)
+
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        assertEquals(setOf(verseOne, verseTwo), viewModel.state.value.selectedVerses)
+    }
+
+    @Test
+    fun `RemoveHighlight without permission shows the confirmation and applies nothing`() {
+        isHighlightsPermissionGranted = false
+        selectVerses(verseOne)
+
+        viewModel.onAction(BibleReaderViewModel.Action.RemoveHighlight(yellow))
+
+        assertTrue(viewModel.state.value.showDataExchangeConfirmation)
+        verify(exactly = 0) { bibleHighlightsRepository.removeHighlights(any(), any<String>()) }
+    }
+
+    @Test
+    fun `confirming the prompt dismisses it and starts the grant flow`() {
+        isHighlightsPermissionGranted = false
+        selectVerses(verseOne)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        viewModel.onAction(BibleReaderViewModel.Action.ConfirmDataExchange)
+
+        assertFalse(viewModel.state.value.showDataExchangeConfirmation)
+        assertTrue(viewModel.state.value.shouldStartDataExchangeFlow)
+    }
+
+    @Test
+    fun `a granted flow applies the pending highlight and clears the selection`() {
+        isHighlightsPermissionGranted = false
+        selectVerses(verseOne, verseTwo)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+        viewModel.onAction(BibleReaderViewModel.Action.ConfirmDataExchange)
+
+        viewModel.onAction(BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted = true))
+
+        verify { bibleHighlightsRepository.addHighlights(match { it.toSet() == setOf(verseOne, verseTwo) }, yellow) }
+        assertTrue(
+            viewModel.state.value.selectedVerses
+                .isEmpty(),
+        )
+        assertFalse(viewModel.state.value.shouldStartDataExchangeFlow)
+    }
+
+    @Test
+    fun `a non-granted flow applies nothing and keeps the selection`() {
+        isHighlightsPermissionGranted = false
+        selectVerses(verseOne)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+        viewModel.onAction(BibleReaderViewModel.Action.ConfirmDataExchange)
+
+        viewModel.onAction(BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted = false))
+
+        verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
+        assertEquals(setOf(verseOne), viewModel.state.value.selectedVerses)
+        assertFalse(viewModel.state.value.shouldStartDataExchangeFlow)
+    }
+
+    @Test
+    fun `cancelling the prompt clears the pending highlight so a later grant applies nothing`() {
+        isHighlightsPermissionGranted = false
+        selectVerses(verseOne)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        viewModel.onAction(BibleReaderViewModel.Action.CancelDataExchange)
+        viewModel.onAction(BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted = true))
+
+        assertFalse(viewModel.state.value.showDataExchangeConfirmation)
+        verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
+    }
+
+    @Test
+    fun `cancelling the prompt keeps the verse selection`() {
+        isHighlightsPermissionGranted = false
+        selectVerses(verseOne, verseTwo)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        viewModel.onAction(BibleReaderViewModel.Action.CancelDataExchange)
+
+        assertEquals(setOf(verseOne, verseTwo), viewModel.state.value.selectedVerses)
+    }
+
+    @Test
+    fun `tapping a color again after declining prompts again`() {
+        isHighlightsPermissionGranted = false
+        selectVerses(verseOne)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+        viewModel.onAction(BibleReaderViewModel.Action.CancelDataExchange)
+
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(blue))
+
+        assertTrue(viewModel.state.value.showDataExchangeConfirmation)
+    }
+
+    @Test
+    fun `recoloring an existing highlight without permission is gated too`() {
+        isHighlightsPermissionGranted = false
+        highlight(verseOne, yellow)
+        selectVerses(verseOne)
+
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(blue))
+
+        assertTrue(viewModel.state.value.showDataExchangeConfirmation)
+        verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
     }
 
     // ----- Color presence helpers
