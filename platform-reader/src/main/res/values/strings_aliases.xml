@@ -7,6 +7,10 @@
     <string name="banner_version_unavailable_icon">@string/yv_banner_version_unavailable_icon</string>
     <string name="banner_version_unavailable_message">@string/yv_banner_version_unavailable_message</string>
     <string name="book_chapter_picker_title">@string/yv_book_chapter_picker_title</string>
+    <string name="cancel">@string/yv_cancel</string>
+    <string name="data_exchange_continue">@string/yv_data_exchange_continue</string>
+    <string name="data_exchange_highlights_explanation">@string/yv_data_exchange_highlights_explanation</string>
+    <string name="data_exchange_highlights_question">@string/yv_data_exchange_highlights_question</string>
     <string name="font_selected_check">@string/yv_font_selected_check</string>
     <string name="font_settings_label">@string/yv_font_settings_label</string>
     <string name="footnote_header_label">@string/yv_footnote_header_label</string>
