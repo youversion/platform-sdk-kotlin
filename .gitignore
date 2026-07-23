@@ -2,6 +2,9 @@
 .gradle/
 build
 
+# Coverage badge scratch dir (badge JSON lives on the `badges` branch, not main)
+coverage-output/
+
 # Local configuration file (sdk path, etc)
 local.properties
 
