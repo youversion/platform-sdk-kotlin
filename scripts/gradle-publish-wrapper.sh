@@ -40,9 +40,9 @@ done
 log_file=$(mktemp -t gradle-publish.XXXXXX.log)
 trap 'rm -f "$log_file"' EXIT
 
-echo "==> ./gradlew ${tasks[*]} -PsdkVersion=${VERSION}"
+echo "==> ./gradlew ${tasks[*]} -PsdkVersion=${VERSION} --continue"
 set +e
-./gradlew "${tasks[@]}" -PsdkVersion="${VERSION}" 2>&1 | tee "$log_file"
+./gradlew "${tasks[@]}" -PsdkVersion="${VERSION}" --continue 2>&1 | tee "$log_file"
 status=${PIPESTATUS[0]}
 set -e
 

@@ -61,12 +61,21 @@ jobs:
             modules="${DISPATCH_MODULES}"
           else
             # Push trigger: ask semantic-release what it would publish.
-            dry_output=$(npx semantic-release --dry-run 2>&1 || true)
-            version=$(printf '%s' "$dry_output" | sed -n 's/.*Published release \([^ ]*\).*/\1/p' | head -1)
+            dry_status=0
+            dry_output=$(npx semantic-release --dry-run 2>&1) || dry_status=$?
+            printf '%s\n' "$dry_output"
+            version=$(printf '%s' "$dry_output" | sed -n 's/.*The next release version is \([^ ]*\).*/\1/p' | head -1)
             if [[ -z "$version" ]]; then
-              version=$(printf '%s' "$dry_output" | sed -n 's/.*The next release version is \([^ ]*\).*/\1/p' | head -1)
+              version=$(printf '%s' "$dry_output" | sed -n 's/.*Published release \([^ ]*\).*/\1/p' | head -1)
             fi
             if [[ -z "$version" ]]; then
+              # No version parsed. Only treat this as "no release needed" when the
+              # dry-run itself succeeded; a non-zero exit means a config error or
+              # plugin crash, which must fail loudly rather than silently skip.
+              if (( dry_status != 0 )); then
+                echo "::error::semantic-release --dry-run exited ${dry_status} without producing a version — treating as a failure, not 'no release needed'."
+                exit "$dry_status"
+              fi
               echo "::notice::semantic-release dry-run did not produce a version — likely no release-triggering commits."
               echo "version=" >> "$GITHUB_OUTPUT"
               echo "modules=platform-core,platform-ui,platform-reader" >> "$GITHUB_OUTPUT"
