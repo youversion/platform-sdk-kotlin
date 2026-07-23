@@ -50,6 +50,7 @@ object DataExchangeEndpoints : DataExchangeApi {
             path("/data-exchange")
             parameter("token", token)
             parameter("app_key", appKey)
+            parameter("x-yvp-app-key", appKey)
         }
 
     // ----- Data Exchange API
@@ -82,7 +83,7 @@ object DataExchangeEndpoints : DataExchangeApi {
 
     private fun tokenRequestBody(permissions: Set<SignInWithYouVersionPermission>): JsonObject =
         buildJsonObject {
-            putJsonArray("permissions") {
+            putJsonArray("requested_permissions") {
                 permissions.map { it.rawValue }.sorted().forEach { add(it) }
             }
         }

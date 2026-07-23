@@ -41,7 +41,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
                     Json.decodeFromString(request.body.toByteArray().decodeToString())
                 assertEquals(
                     listOf("highlights"),
-                    decoded["permissions"]!!.jsonArray.map { it.jsonPrimitive.content },
+                    decoded["requested_permissions"]!!.jsonArray.map { it.jsonPrimitive.content },
                 )
 
                 respondJson("""{"token":"short-lived"}""", HttpStatusCode.Created)
@@ -118,5 +118,6 @@ class DataExchangeApiTests : YouVersionPlatformTest {
         assertEquals(true, url.contains("/data-exchange"))
         assertEquals(true, url.contains("token=short-lived"))
         assertEquals(true, url.contains("app_key=app"))
+        assertEquals(true, url.contains("x-yvp-app-key=app"))
     }
 }
