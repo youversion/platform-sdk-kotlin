@@ -22,7 +22,7 @@ fun BibleReaderViewTab(onDestinationClick: (SampleDestination) -> Unit) {
 
     BibleReader(
         appName = "Sample App",
-        appSignInMessage = "Sign in to YouVersion to access your saved versions.",
+        appSignInMessage = "See all of your **YouVersion** highlights alongside your **Sample App** highlights",
         fontDefinitionProvider = fontDefinitionProvider,
         bottomBar = {
             SampleBottomBar(

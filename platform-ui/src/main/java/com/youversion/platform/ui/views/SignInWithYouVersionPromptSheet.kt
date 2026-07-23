@@ -22,11 +22,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.theme.fonts.AktivGrotesk
 import com.youversion.platform.ui.theme.readerColorScheme
 
 /**
@@ -58,17 +62,19 @@ fun SignInWithYouVersionPromptSheet(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(32.dp),
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 32.dp)
+                    .padding(horizontal = 72.dp)
                     .padding(bottom = 32.dp),
         ) {
             Text(
                 text = stringResource(R.string.sign_in_prompt_introducing),
-                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = AktivGrotesk,
+                fontSize = 10.sp,
+                letterSpacing = 0.16.em,
             )
 
             Image(
@@ -86,29 +92,34 @@ fun SignInWithYouVersionPromptSheet(
 
             if (!appSignInMessage.isNullOrBlank()) {
                 Text(
-                    text = appSignInMessage,
-                    style = MaterialTheme.typography.titleMedium,
+                    text = boldMarkdownAnnotatedString(appSignInMessage),
+                    fontFamily = AktivGrotesk,
+                    fontSize = 22.sp,
+                    lineHeight = 28.sp,
                     textAlign = TextAlign.Center,
                 )
             }
 
             Text(
-                text = stringResource(R.string.sign_in_prompt_paragraph, appName),
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
+                text = boldMarkdownAnnotatedString(stringResource(R.string.sign_in_prompt_paragraph, appName)),
+                fontFamily = AktivGrotesk,
+                fontSize = 16.sp,
+                lineHeight = 22.sp,
             )
 
-            SignInPromptButton(
-                text = stringResource(R.string.sign_in_prompt_yes_button),
-                isPrimary = true,
-                onClick = onSignIn,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                SignInPromptButton(
+                    text = stringResource(R.string.sign_in_prompt_yes_button),
+                    isPrimary = true,
+                    onClick = onSignIn,
+                )
 
-            SignInPromptButton(
-                text = stringResource(R.string.sign_in_prompt_no_button),
-                isPrimary = false,
-                onClick = onDismissRequest,
-            )
+                SignInPromptButton(
+                    text = stringResource(R.string.sign_in_prompt_no_button),
+                    isPrimary = false,
+                    onClick = onDismissRequest,
+                )
+            }
         }
     }
 }
@@ -125,13 +136,17 @@ private fun SignInPromptButton(
         onClick = onClick,
         shape = SignInWithYouVersionButtonDefaults.capsuleShape,
         border =
-            BorderStroke(
-                width = 1.dp,
-                color = if (isPrimary) contentColor else MaterialTheme.colorScheme.outline,
-            ),
+            if (!isPrimary) {
+                BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            } else {
+                null
+            },
         colors =
             ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
+                containerColor = if (!isPrimary) Color.Transparent else MaterialTheme.colorScheme.onSurfaceVariant,
                 contentColor = contentColor,
             ),
         contentPadding = PaddingValues(vertical = 14.dp),
@@ -139,7 +154,10 @@ private fun SignInPromptButton(
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.titleSmall,
+            fontFamily = AktivGrotesk,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            color = if (!isPrimary) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.surface,
         )
     }
 }
