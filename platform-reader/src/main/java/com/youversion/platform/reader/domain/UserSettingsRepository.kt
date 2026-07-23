@@ -9,6 +9,7 @@ class UserSettingsRepository(
         private const val KEY_BIBLE_READER_THEME = "bible-reader-view--theme"
         private const val KEY_BIBLE_READER_FONT_SIZE = "bible-reader-view--font-size"
         private const val KEY_BIBLE_READER_FONT_FAMILY_NAME = "bible-reader-view--font-family-name"
+        private const val KEY_BIBLE_READER_LINE_SPACING = "bible-reader-view--line-spacing"
     }
 
     var readerThemeId: Int?
@@ -22,4 +23,8 @@ class UserSettingsRepository(
     var readerFontFamilyName: String?
         get() = storage.getStringOrNull(KEY_BIBLE_READER_FONT_FAMILY_NAME)
         set(value) = storage.putString(KEY_BIBLE_READER_FONT_FAMILY_NAME, value)
+
+    var readerLineSpacing: Float?
+        get() = storage.getFloatOrNull(KEY_BIBLE_READER_LINE_SPACING)
+        set(value) = storage.putFloat(KEY_BIBLE_READER_LINE_SPACING, value)
 }

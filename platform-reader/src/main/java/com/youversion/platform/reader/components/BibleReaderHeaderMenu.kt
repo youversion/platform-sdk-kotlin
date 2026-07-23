@@ -35,7 +35,7 @@ fun BibleReaderHeaderDropdownMenu(
         }) {
             Icon(
                 imageVector = ImageVector.vectorResource(R.drawable.ic_pending),
-                contentDescription = "Fonts & Settings",
+                contentDescription = stringResource(R.string.reader_menu_font_settings),
             )
         }
         DropdownMenu(

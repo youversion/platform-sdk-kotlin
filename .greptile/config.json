@@ -1,0 +1,29 @@
+{
+  "rules": [
+    {
+      "id": "localization-no-hardcoded-ui-strings",
+      "rule": "Flag hardcoded user-facing string literals in platform-ui and platform-reader Kotlin source under src/main. User-facing copy must use stringResource() or pluralStringResource() with keys synced from platform-localization. Authors should wire existing keys or add keys in platform-localization and sync strings_i18n.xml.",
+      "scope": [
+        "platform-ui/src/main/**/*.kt",
+        "platform-reader/src/main/**/*.kt"
+      ],
+      "severity": "high",
+      "enabled": true
+    },
+    {
+      "id": "localization-protected-string-files",
+      "rule": "Reject direct edits to synced localization catalogs. User-facing strings are owned by platform-localization and synced into **/strings_i18n.xml and locale overlays (**/values-*/strings.xml). Feature PRs must not hand-edit these files; add keys in platform-localization and run the sync workflow instead.",
+      "scope": [
+        "platform-ui/src/**/strings_i18n.xml",
+        "platform-ui/src/**/values-*/strings.xml",
+        "platform-reader/src/**/strings_i18n.xml",
+        "platform-reader/src/**/values-*/strings.xml"
+      ],
+      "severity": "high",
+      "enabled": true
+    }
+  ],
+  "ignorePatterns": [
+    "examples/sample-android/**"
+  ]
+}

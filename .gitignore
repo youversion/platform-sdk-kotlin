@@ -7,6 +7,7 @@ local.properties
 
 # Log/OS Files
 *.log
+.DS_Store
 
 # Android Studio generated files and folders
 captures/
@@ -25,6 +26,8 @@ render.experimental.xml
 
 # Claude Code local settings
 .claude/settings.local.json
+
+.omc
 
 # Keystore files
 *.jks

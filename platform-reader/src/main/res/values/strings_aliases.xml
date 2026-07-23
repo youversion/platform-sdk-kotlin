@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AUTO-GENERATED from en.json — do not edit manually -->
+<resources>
+    <string name="banner_dismiss_content_description">@string/yv_banner_dismiss_content_description</string>
+    <string name="banner_offline_icon">@string/yv_banner_offline_icon</string>
+    <string name="banner_offline_message">@string/yv_banner_offline_message</string>
+    <string name="banner_version_unavailable_icon">@string/yv_banner_version_unavailable_icon</string>
+    <string name="banner_version_unavailable_message">@string/yv_banner_version_unavailable_message</string>
+    <string name="book_chapter_picker_title">@string/yv_book_chapter_picker_title</string>
+    <string name="cancel">@string/yv_cancel</string>
+    <string name="data_exchange_continue">@string/yv_data_exchange_continue</string>
+    <string name="data_exchange_highlights_explanation">@string/yv_data_exchange_highlights_explanation</string>
+    <string name="data_exchange_highlights_question">@string/yv_data_exchange_highlights_question</string>
+    <string name="font_selected_check">@string/yv_font_selected_check</string>
+    <string name="font_settings_label">@string/yv_font_settings_label</string>
+    <string name="footnote_header_label">@string/yv_footnote_header_label</string>
+    <string name="highlight_color_cyan">@string/yv_highlight_color_cyan</string>
+    <string name="highlight_color_green">@string/yv_highlight_color_green</string>
+    <string name="highlight_color_orange">@string/yv_highlight_color_orange</string>
+    <string name="highlight_color_pink">@string/yv_highlight_color_pink</string>
+    <string name="highlight_color_yellow">@string/yv_highlight_color_yellow</string>
+    <string name="intro_chapter_label">@string/yv_intro_chapter_label</string>
+    <string name="language_content_desc">@string/yv_language_content_desc</string>
+    <string name="line_spacing_label">@string/yv_line_spacing_label</string>
+    <string name="next_chapter_content_desc">@string/yv_next_chapter_content_desc</string>
+    <string name="previous_chapter_content_desc">@string/yv_previous_chapter_content_desc</string>
+    <string name="reader_menu_font_settings">@string/yv_reader_menu_font_settings</string>
+    <string name="reader_menu_sign_in">@string/yv_reader_menu_sign_in</string>
+    <string name="reader_menu_sign_out">@string/yv_reader_menu_sign_out</string>
+    <string name="theme_selected">@string/yv_theme_selected</string>
+    <string name="verse_action_add_highlight">@string/yv_verse_action_add_highlight</string>
+    <string name="verse_action_copy">@string/yv_verse_action_copy</string>
+    <string name="verse_action_remove_highlight">@string/yv_verse_action_remove_highlight</string>
+    <string name="verse_action_share">@string/yv_verse_action_share</string>
+</resources>

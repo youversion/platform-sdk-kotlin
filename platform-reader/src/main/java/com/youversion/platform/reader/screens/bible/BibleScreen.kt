@@ -276,6 +276,7 @@ internal fun BibleScreen(
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
                             val introPassageId = state.introPassageId
+                            val effectiveLineHeight = state.fontSize * state.lineSpacing
                             if (state.isViewingIntro && introPassageId != null) {
                                 BibleIntroText(
                                     versionId = state.bibleReference.versionId,
@@ -285,6 +286,7 @@ internal fun BibleScreen(
                                         BibleTextOptions(
                                             fontFamily = state.fontFamily,
                                             fontSize = state.fontSize,
+                                            lineSpacing = effectiveLineHeight,
                                             footnoteMode = BibleTextFootnoteMode.IMAGE,
                                         ),
                                     onFootnoteTap = { footnotes ->
@@ -302,6 +304,7 @@ internal fun BibleScreen(
                                         BibleTextOptions(
                                             fontFamily = state.fontFamily,
                                             fontSize = state.fontSize,
+                                            lineSpacing = effectiveLineHeight,
                                             footnoteMode = BibleTextFootnoteMode.IMAGE,
                                         ),
                                     reference = state.bibleReference,
@@ -345,6 +348,7 @@ internal fun BibleScreen(
                             onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings) },
                             onSmallerFontClick = { viewModel.onAction(BibleReaderViewModel.Action.DecreaseFontSize) },
                             onBiggerFontClick = { viewModel.onAction(BibleReaderViewModel.Action.IncreaseFontSize) },
+                            onLineSpacingClick = { viewModel.onAction(BibleReaderViewModel.Action.CycleLineSpacing) },
                             onFontClick = {
                                 viewModel.onAction(BibleReaderViewModel.Action.CloseFontSettings)
                                 onFontsClick()
@@ -353,6 +357,7 @@ internal fun BibleScreen(
                                 viewModel.onAction(BibleReaderViewModel.Action.SetReaderTheme(newReaderTheme))
                             },
                             fontDefinition = state.selectedFontDefinition,
+                            lineSpacing = state.lineSpacing,
                         )
                     }
 

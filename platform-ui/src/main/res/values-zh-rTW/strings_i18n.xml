@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_active_language_versions_header">%1$s 譯本 (%2$s)</string>
+    <string name="yv_back_button">返回</string>
+    <string name="yv_bible_card_unavailable_reference">此段落在所選的聖經譯本中無法使用。</string>
+    <string name="yv_bible_version_details_content_desc">聖經譯本詳情</string>
+    <string name="yv_bible_version_load_error">載入聖經譯本時發生錯誤</string>
+    <string name="yv_bible_versions_heading">聖經譯本</string>
+    <string name="yv_books_heading">書卷</string>
+    <string name="yv_close_search_bar">關閉搜尋輸入框</string>
+    <string name="yv_footnote_content_desc">備註</string>
+    <string name="yv_full_chapter">完整章節</string>
+    <string name="yv_language_label">語言</string>
+    <string name="yv_language_tab_all">全部</string>
+    <string name="yv_language_tab_suggested">建議</string>
+    <string name="yv_ok">確定</string>
+    <string name="yv_placeholder_offline">你已失去網路連線。請重新連線並下載聖經譯本以繼續離線使用。</string>
+    <string name="yv_placeholder_offline_icon_content_desc">無 Wi-Fi</string>
+    <string name="yv_placeholder_version_unavailable">你先前選擇的聖經譯本無法使用。已為你選擇另一個類似的譯本。</string>
+    <string name="yv_placeholder_version_unavailable_icon_content_desc">譯本無法使用</string>
+    <string name="yv_search">搜尋</string>
+    <string name="yv_search_bible_versions">搜尋聖經譯本</string>
+    <string name="yv_search_languages">搜尋語言</string>
+    <string name="yv_select_language_title">選擇語言</string>
+    <string name="yv_share_content_desc">分享</string>
+    <string name="yv_sign_in_button_compact">登入</string>
+    <string name="yv_sign_in_button_content_desc">以 YouVersion 登入</string>
+    <string name="yv_sign_in_button_full">登入方式</string>
+    <string name="yv_sign_in_error_message">我們目前無法為你登入。請再試一次。</string>
+    <string name="yv_sign_in_error_title">登入失敗</string>
+    <string name="yv_sign_out_cancel_button_text">取消</string>
+    <string name="yv_sign_out_confirm_button_text">登出</string>
+    <string name="yv_sign_out_confirmation_message">你確定要登出 YouVersion 嗎？你需要再次登入才能查看你的醒目標示。</string>
+    <string name="yv_sign_out_confirmation_title">登出</string>
+    <string name="yv_tab_votd">今日經文</string>
+    <string name="yv_version_info_agree_and_download">同意並下載</string>
+    <string name="yv_version_info_maybe_later">稍後再說</string>
+    <string name="yv_version_info_offline_agreement">我們與此聖經譯本出版機構的協議要求我們與其分享某些資訊，以便提供此譯本的離線使用。繼續操作即表示你同意分享你的資訊，並允許出版機構向你發送電子郵件。</string>
+    <string name="yv_version_info_offline_tagline">隨時隨地閱讀——即使離線也可以</string>
+    <string name="yv_versions_empty_for_language">找不到此語言的譯本</string>
+    <string name="yv_versions_load_error">無法載入版本。請檢查您的連線並重試。</string>
+    <string name="yv_versions_screen_title">譯本</string>
+    <string name="yv_versions_statistics">%1$s 個譯本，共 %2$s 種語言</string>
+    <string name="yv_widget_bible_app">聖經軟體</string>
+    <string name="yv_widget_copyright">版權</string>
+</resources>

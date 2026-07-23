@@ -1,0 +1,12 @@
+{
+  "files": [
+    {
+      "path": "docs/localization-guardrails.md",
+      "description": "Localization guardrails: string flow, exclusions, protected files, CI checks, and migration status",
+      "scope": [
+        "platform-ui/**",
+        "platform-reader/**"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Descartar</string>
+    <string name="yv_banner_offline_icon">Ícono sin conexión</string>
+    <string name="yv_banner_offline_message">Has perdido tu conexión a internet. Vuelve a conectarte y descarga una versión de la Biblia para continuar sin conexión.</string>
+    <string name="yv_banner_version_unavailable_icon">Ícono de versión no disponible</string>
+    <string name="yv_banner_version_unavailable_message">La versión de la Biblia que seleccionaste anteriormente no está disponible. Se ha seleccionado otra versión similar de la Biblia para ti.</string>
+    <string name="yv_book_chapter_picker_title">Libros</string>
+    <string name="yv_font_selected_check">Verificación de fuente seleccionada</string>
+    <string name="yv_font_settings_label">Fuente</string>
+    <string name="yv_footnote_header_label">Nota al pie</string>
+    <string name="yv_intro_chapter_label">Introducción</string>
+    <string name="yv_language_content_desc">Idioma</string>
+    <string name="yv_next_chapter_content_desc">Capítulo siguiente</string>
+    <string name="yv_previous_chapter_content_desc">Capítulo anterior</string>
+    <string name="yv_reader_menu_font_settings">Fuente &amp; Configuración</string>
+    <string name="yv_reader_menu_sign_in">Iniciar sesión</string>
+    <string name="yv_reader_menu_sign_out">Cerrar sesión</string>
+    <string name="yv_theme_selected">Seleccionado</string>
+    <string name="yv_verse_action_copy">Copiar</string>
+    <string name="yv_verse_action_share">Compartir</string>
+</resources>

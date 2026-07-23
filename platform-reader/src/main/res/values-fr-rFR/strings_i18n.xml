@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Ignorer</string>
+    <string name="yv_banner_offline_icon">Icône hors ligne</string>
+    <string name="yv_banner_offline_message">Vous avez perdu votre connexion Internet. Reconnectez-vous et téléchargez une version de la Bible pour continuer hors ligne.</string>
+    <string name="yv_banner_version_unavailable_icon">Icône de version non disponible</string>
+    <string name="yv_banner_version_unavailable_message">La version de la Bible précédemment sélectionnée n\'est pas disponible. Une autre version similaire de la Bible a été sélectionnée pour vous.</string>
+    <string name="yv_book_chapter_picker_title">Livres</string>
+    <string name="yv_font_selected_check">Coche de police sélectionnée</string>
+    <string name="yv_font_settings_label">Police</string>
+    <string name="yv_footnote_header_label">Note de bas de page</string>
+    <string name="yv_intro_chapter_label">Introduction</string>
+    <string name="yv_reader_menu_font_settings">Police &amp; Paramètres</string>
+    <string name="yv_reader_menu_sign_in">Se connecter</string>
+    <string name="yv_reader_menu_sign_out">Se déconnecter</string>
+    <string name="yv_theme_selected">Sélectionné</string>
+    <string name="yv_verse_action_copy">Copier</string>
+    <string name="yv_verse_action_share">Partager</string>
+</resources>
