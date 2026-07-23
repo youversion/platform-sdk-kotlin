@@ -2,6 +2,8 @@
 
 Releases are fully automated via [semantic-release](https://github.com/semantic-release/semantic-release). When a pull request is merged to `main`, the release workflow analyzes commits, determines the next version, publishes to Maven Central, and creates a GitHub Release.
 
+For recovery procedures when a release fails partway, see [docs/RELEASE-RUNBOOK.md](docs/RELEASE-RUNBOOK.md). For the design rationale behind the current pipeline, see [docs/release-hardening-plan.md](docs/release-hardening-plan.md).
+
 ## How It Works
 
 1. **Merge to `main`** triggers the [Release workflow](.github/workflows/release.yml).
@@ -10,11 +12,14 @@ Releases are fully automated via [semantic-release](https://github.com/semantic-
    - `fix:` commits bump the **patch** version (e.g., `0.5.0` -> `0.5.1`)
    - `feat:` commits bump the **minor** version (e.g., `0.5.0` -> `0.6.0`)
    - `BREAKING CHANGE:` or `feat!:` / `fix!:` bumps the **major** version (e.g., `0.5.0` -> `1.0.0`)
-4. The version in `gradle/libs.versions.toml` is updated.
-5. `CHANGELOG.md` is generated/updated.
-6. All three modules (`platform-core`, `platform-ui`, `platform-reader`) are published to Maven Central. The workflow passes the resolved version to Gradle via `-PsdkVersion=${nextRelease.version}`, which bakes it into `platform-core`'s `BuildConfig.SDK_VERSION`. At runtime, every SDK request sends an `x-yvp-sdk: KotlinSDK={version}` header so the data team can attribute traffic accurately. Non-release builds use the default value `Dev`.
-7. A git tag and GitHub Release are created.
-8. The version bump and changelog are committed back to the branch.
+4. A **preflight** step probes `repo1.maven.org` for each module/version. If all three coordinates are already present (e.g. the workflow is being re-dispatched after a successful prior run), publishing is skipped.
+5. A **breaking-change gate** routes the publish job through the `production-breaking` GitHub Environment when the commit window contains `feat!:`, `fix!:`, or `BREAKING CHANGE:`. Non-breaking releases continue through the existing `production` environment. Required reviewers on `production-breaking` must approve the run before the publish step starts.
+6. The version in `gradle/libs.versions.toml` is updated.
+7. `CHANGELOG.md` is generated/updated.
+8. All three modules (`platform-core`, `platform-ui`, `platform-reader`) are published to Maven Central. The workflow passes the resolved version to Gradle via `-PsdkVersion=${nextRelease.version}`, which bakes it into `platform-core`'s `BuildConfig.SDK_VERSION`. At runtime, every SDK request sends an `x-yvp-sdk: KotlinSDK={version}` header so the data team can attribute traffic accurately. Non-release builds use the default value `Dev`.
+9. A git tag and GitHub Release are created.
+10. The version bump and changelog are committed back to the branch.
+11. A **post-publish verification** step polls `repo1.maven.org` for up to 30 minutes and writes a status table to the workflow summary so consumers can see when the release becomes resolvable.
 
 ## Conventional Commits
 
@@ -65,6 +70,19 @@ Push to `beta` or `alpha` branches to publish pre-release versions:
 ## Maintenance Releases
 
 For patching older major versions, create a branch named `N.x` (e.g., `1.x`). Commits merged to that branch will produce patch releases for that major version line.
+
+## Manually Re-Dispatching a Release
+
+When a release fails partway (e.g. the network drops mid-upload, one module's signing errored, the workflow timed out before all three coordinates published), you do not need to merge another commit to recover. The Release workflow accepts a manual dispatch:
+
+1. **Actions → Release → Run workflow.**
+2. Enter the `version` that was in flight. This must match the version semantic-release attempted to publish. Look at the failed run's `compute-version` job output or check `gradle/libs.versions.toml` on `main`.
+3. Optionally narrow the `modules` input (default: all three).
+4. Run.
+
+The **preflight** step probes `repo1.maven.org` for each requested module and emits a `missing_modules` list. The **publish** step then runs `./gradlew :<missing>:publishToMavenCentral -PsdkVersion=<version>` for only those coordinates via [`scripts/gradle-publish-wrapper.sh`](scripts/gradle-publish-wrapper.sh). If everything is already on Central, the publish step is skipped and the workflow exits successfully.
+
+The wrapper classifies failures: **exit 42 = GPG signing failure (re-dispatch will not help, fix the secret first)**, exit 1 = transient (re-dispatch is reasonable). The runbook covers each case in detail.
 
 ## Verifying a Release Locally
 
@@ -119,6 +137,7 @@ Sample successful output:
 
 ### Release workflow failed
 
+- See [docs/RELEASE-RUNBOOK.md](docs/RELEASE-RUNBOOK.md) for the per-failure-mode recovery procedure.
 - Check the [Actions tab](https://github.com/youversion/platform-sdk-kotlin/actions/workflows/release.yml) for logs.
 - Verify that Maven Central and signing secrets are configured as repo-level secrets.
 
@@ -130,3 +149,10 @@ Sample successful output:
 | `ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD` | Maven Central (Sonatype) password |
 | `SIGNINGKEY` | GPG signing key (armored, base64-encoded) |
 | `SIGNINGKEY_PASSWORD` | GPG signing key passphrase |
+
+### Required GitHub Environments
+
+| Environment | Purpose |
+|---|---|
+| `production` | Gates every non-breaking release. |
+| `production-breaking` | Gates releases whose commit window contains `feat!:`, `fix!:`, or `BREAKING CHANGE:`. Configure required reviewers in **Settings → Environments → production-breaking**. |
