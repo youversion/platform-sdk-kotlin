@@ -42,9 +42,8 @@ jobs:
           # Find the Kover XML report
           REPORT_FILE=$(find . -path "*/build/reports/kover/report.xml" | head -1)
           if [ -z "$REPORT_FILE" ]; then
-            echo "No Kover report found"
-            echo "percentage=0" >> $GITHUB_OUTPUT
-            exit 0
+            echo "No Kover report found" >&2
+            exit 1
           fi
 
           # Parse JaCoCo XML format: sum INSTRUCTION covered/missed across all counters
