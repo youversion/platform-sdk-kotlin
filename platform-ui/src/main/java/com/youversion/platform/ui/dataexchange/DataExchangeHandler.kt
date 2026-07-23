@@ -1,6 +1,7 @@
 package com.youversion.platform.ui.dataexchange
 
 import android.content.Intent
+import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.contract.ActivityResultContracts
@@ -11,6 +12,7 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.dataexchange.api.DataExchangeEndpoints
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -33,12 +35,28 @@ class DataExchangeHandler(
      * [YouVersionApi.hasPermission] reflects them without the caller doing anything.
      *
      * @param permissions The permissions to ask for.
-     * @return How the flow ended, and which permissions were granted.
-     * @throws [YouVersionNetworkException] if no user is signed in, or the token request fails.
+     * @return How the flow ended, and which permissions were granted. A failed token request or browser session is
+     *         reported as a cancellation rather than thrown, so the flow has a single, non-crashing failure shape.
      */
     suspend fun requestDataExchange(permissions: Set<SignInWithYouVersionPermission>): DataExchangeResult {
-        // dataExchangeToken throws MISSING_AUTHENTICATION when signed out or unconfigured, so the app key it
-        // returns alongside is safe to read here.
+        val result =
+            try {
+                exchange(permissions)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (error: Exception) {
+                Log.w("YouVersionDataExchange", "Data exchange flow failed; treating as cancelled", error)
+                DataExchangeResult(status = DataExchangeStatus.Cancelled, grantedPermissions = emptyList())
+            }
+
+        if (result.isGranted && result.grantedPermissions.isNotEmpty()) {
+            YouVersionPlatformConfiguration.saveGrantedPermissions(result.grantedPermissions)
+        }
+
+        return result
+    }
+
+    private suspend fun exchange(permissions: Set<SignInWithYouVersionPermission>): DataExchangeResult {
         val token = YouVersionApi.dataExchange.dataExchangeToken(permissions)
         val appKey =
             YouVersionPlatformConfiguration.appKey
@@ -67,14 +85,7 @@ class DataExchangeHandler(
                 launcher?.unregister()
             }
 
-        val result =
-            callbackIntent?.data?.let { dataExchangeResult(it) }
-                ?: DataExchangeResult(status = DataExchangeStatus.Cancelled, grantedPermissions = emptyList())
-
-        if (result.isGranted && result.grantedPermissions.isNotEmpty()) {
-            YouVersionPlatformConfiguration.saveGrantedPermissions(result.grantedPermissions)
-        }
-
-        return result
+        return callbackIntent?.data?.let { dataExchangeResult(it) }
+            ?: DataExchangeResult(status = DataExchangeStatus.Cancelled, grantedPermissions = emptyList())
     }
 }
