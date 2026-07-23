@@ -31,8 +31,11 @@ jobs:
         id: main
         run: |
           set -euo pipefail
-          git fetch origin main:refs/remotes/origin/main --depth=1 || \
-            git fetch --unshallow origin main:refs/remotes/origin/main
+          # Fetch main with full history (no --depth): a shallow origin/main has
+          # no ancestors, so git cannot compute the merge-base and the lint range
+          # re-walks every commit merged in from main instead of only this
+          # branch's new commits.
+          git fetch origin main:refs/remotes/origin/main
           main_sha=$(git rev-parse origin/main)
           echo "sha=${main_sha}" >> "$GITHUB_OUTPUT"
           echo "Linting against origin/main = ${main_sha}"
