@@ -43,6 +43,7 @@ class BibleReaderViewModel(
     bibleVersionsViewModel: BibleVersionsViewModel? = null,
     private val copyManager: CopyManager,
     private val shareManager: ShareManager,
+    private val isSignedIn: () -> Boolean = { YouVersionApi.isSignedIn },
     private val hasHighlightsPermission: () -> Boolean = {
         YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS)
     },
@@ -270,6 +271,14 @@ class BibleReaderViewModel(
                 removeHighlight(action.hexColor)
             }
 
+            is Action.SignInCompleted -> {
+                continueAfterSignIn()
+            }
+
+            is Action.CancelSignIn -> {
+                cancelSignIn()
+            }
+
             is Action.ConfirmDataExchange -> {
                 confirmDataExchange()
             }
@@ -351,17 +360,53 @@ class BibleReaderViewModel(
     }
 
     /**
-     * Applies [pending] immediately when the user has granted the highlights permission, otherwise holds it and asks
-     * for the permission first. Add, remove, and recolor all pass through here, so each is gated the same way: a
-     * reader who revoked access after highlighting is asked again before an existing highlight can be changed.
+     * Resolves a highlight change against the reader's state, holding it as [pendingHighlight] whenever it cannot be
+     * applied yet. A signed-out reader is sent to sign in first; a signed-in reader without highlights access is asked
+     * to grant it; otherwise the change applies at once. Add, remove, and recolor all pass through here, so each is
+     * gated the same way — a reader who revoked access after highlighting is asked again before an existing highlight
+     * can be changed.
+     *
+     * Sign-in and the permission prompt are never raised together: a signed-out reader only reaches the permission
+     * check after signing in, via [continueAfterSignIn].
      */
     private fun highlightOrRequestPermission(pending: PendingHighlight) {
+        when {
+            !isSignedIn() -> {
+                pendingHighlight = pending
+                _state.update { it.copy(shouldStartSignIn = true) }
+            }
+            !hasHighlightsPermission() -> {
+                pendingHighlight = pending
+                _state.update { it.copy(showDataExchangeConfirmation = true) }
+            }
+            else -> applyHighlight(pending)
+        }
+    }
+
+    /**
+     * Continues a held highlight after a sign-in attempt. When the reader is now signed in, it resolves exactly as a
+     * fresh request would — applying immediately if they already hold highlights access, or asking for it otherwise —
+     * so a reader who granted highlights during sign-in never sees a second prompt. When sign-in did not complete, the
+     * held change is dropped and the verse selection left intact.
+     */
+    private fun continueAfterSignIn() {
+        _state.update { it.copy(shouldStartSignIn = false) }
+        val pending = pendingHighlight ?: return
+        if (!isSignedIn()) {
+            pendingHighlight = null
+            return
+        }
         if (hasHighlightsPermission()) {
+            pendingHighlight = null
             applyHighlight(pending)
         } else {
-            pendingHighlight = pending
             _state.update { it.copy(showDataExchangeConfirmation = true) }
         }
+    }
+
+    private fun cancelSignIn() {
+        pendingHighlight = null
+        _state.update { it.copy(shouldStartSignIn = false) }
     }
 
     private fun applyHighlight(pending: PendingHighlight) {
@@ -580,6 +625,7 @@ class BibleReaderViewModel(
         val footnotes: List<AnnotatedString> = emptyList(),
         val selectedVerses: Set<BibleReference> = emptySet(),
         val showVerseActionSheet: Boolean = false,
+        val shouldStartSignIn: Boolean = false,
         val showDataExchangeConfirmation: Boolean = false,
         val shouldStartDataExchangeFlow: Boolean = false,
         val showingIntroFootnotes: Boolean = false,
@@ -677,6 +723,12 @@ class BibleReaderViewModel(
         data class RemoveHighlight(
             val hexColor: String,
         ) : Action
+
+        /** A sign-in attempt finished; continue any highlight the reader asked for before signing in. */
+        data object SignInCompleted : Action
+
+        /** The reader dismissed the sign-in prompt without signing in. */
+        data object CancelSignIn : Action
 
         /** The reader agreed to grant highlights access; proceed to the grant flow. */
         data object ConfirmDataExchange : Action

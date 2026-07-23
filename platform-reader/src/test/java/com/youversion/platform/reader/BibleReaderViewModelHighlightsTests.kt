@@ -41,8 +41,9 @@ class BibleReaderViewModelHighlightsTests {
 
     private val highlightsByReference = mutableMapOf<BibleReference, List<BibleHighlight>>()
 
-    // Whether the injected permission check reports the highlights permission as granted. Defaults to granted so the
-    // add/remove tests exercise the immediate-apply path; the permission-flow tests flip it before acting.
+    // Injected sign-in and permission state. Both default to the signed-in-and-granted case so the add/remove tests
+    // exercise the immediate-apply path; the permission-flow and sign-in tests flip them before acting.
+    private var isUserSignedIn = true
     private var isHighlightsPermissionGranted = true
 
     @BeforeTest
@@ -69,6 +70,7 @@ class BibleReaderViewModelHighlightsTests {
                 bibleHighlightsRepository = bibleHighlightsRepository,
                 copyManager = mockk(relaxed = true),
                 shareManager = mockk(relaxed = true),
+                isSignedIn = { isUserSignedIn },
                 hasHighlightsPermission = { isHighlightsPermissionGranted },
             )
     }
@@ -274,6 +276,100 @@ class BibleReaderViewModelHighlightsTests {
         viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(blue))
 
         assertTrue(viewModel.state.value.showDataExchangeConfirmation)
+        verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
+    }
+
+    // ----- Signed-out continuation
+
+    @Test
+    fun `a signed-out tap starts sign-in and shows no confirmation yet`() {
+        isUserSignedIn = false
+        selectVerses(verseOne)
+
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        assertTrue(viewModel.state.value.shouldStartSignIn)
+        assertFalse(viewModel.state.value.showDataExchangeConfirmation)
+        verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
+    }
+
+    @Test
+    fun `signing in without permission continues into the confirmation`() {
+        isUserSignedIn = false
+        selectVerses(verseOne)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        isUserSignedIn = true
+        isHighlightsPermissionGranted = false
+        viewModel.onAction(BibleReaderViewModel.Action.SignInCompleted)
+
+        assertFalse(viewModel.state.value.shouldStartSignIn)
+        assertTrue(viewModel.state.value.showDataExchangeConfirmation)
+        verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
+    }
+
+    @Test
+    fun `signing in with permission applies the highlight immediately`() {
+        isUserSignedIn = false
+        selectVerses(verseOne, verseTwo)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        isUserSignedIn = true
+        isHighlightsPermissionGranted = true
+        viewModel.onAction(BibleReaderViewModel.Action.SignInCompleted)
+
+        verify { bibleHighlightsRepository.addHighlights(match { it.toSet() == setOf(verseOne, verseTwo) }, yellow) }
+        assertFalse(viewModel.state.value.showDataExchangeConfirmation)
+        assertTrue(
+            viewModel.state.value.selectedVerses
+                .isEmpty(),
+        )
+    }
+
+    @Test
+    fun `the highlight requested before sign-in carries its original verses and color through the grant`() {
+        isUserSignedIn = false
+        selectVerses(verseOne, verseTwo)
+        viewModel.onAction(BibleReaderViewModel.Action.RemoveHighlight(yellow))
+
+        isUserSignedIn = true
+        isHighlightsPermissionGranted = false
+        viewModel.onAction(BibleReaderViewModel.Action.SignInCompleted)
+        viewModel.onAction(BibleReaderViewModel.Action.ConfirmDataExchange)
+        viewModel.onAction(BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted = true))
+
+        verify {
+            bibleHighlightsRepository.removeHighlights(
+                match { it.toSet() == setOf(verseOne, verseTwo) },
+                matchingColor = yellow,
+            )
+        }
+    }
+
+    @Test
+    fun `abandoning sign-in applies nothing and keeps the verse selection`() {
+        isUserSignedIn = false
+        selectVerses(verseOne, verseTwo)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        viewModel.onAction(BibleReaderViewModel.Action.CancelSignIn)
+
+        assertFalse(viewModel.state.value.shouldStartSignIn)
+        assertEquals(setOf(verseOne, verseTwo), viewModel.state.value.selectedVerses)
+        verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
+    }
+
+    @Test
+    fun `a sign-in attempt that did not complete drops the pending highlight`() {
+        isUserSignedIn = false
+        selectVerses(verseOne)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        // Sign-in resolved but the reader is still not signed in (cancelled or failed).
+        viewModel.onAction(BibleReaderViewModel.Action.SignInCompleted)
+
+        assertFalse(viewModel.state.value.shouldStartSignIn)
+        assertFalse(viewModel.state.value.showDataExchangeConfirmation)
         verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
     }
 

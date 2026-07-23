@@ -1016,7 +1016,7 @@ class BibleScreenTest {
     }
 
     @Test
-    fun `tapping a highlight color while signed out presents the sign-in prompt`() {
+    fun `tapping a highlight color while signed out dispatches it so the view model can defer it`() {
         showVerseActionSheet()
         stubConfig(isSignedIn = false, isSignInEnabled = true)
 
@@ -1036,10 +1036,39 @@ class BibleScreenTest {
             composeTestRule.onNodeWithContentDescription("Add yellow highlight").performClick()
             composeTestRule.waitForIdle()
 
-            composeTestRule.onNodeWithText("Keep your highlights").assertExists()
-            verify(exactly = 0) {
-                mockViewModel.onAction(match { it is BibleReaderViewModel.Action.AddHighlight })
+            verify { mockViewModel.onAction(match { it is BibleReaderViewModel.Action.AddHighlight }) }
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
+    fun `the sign-in prompt is shown when the view model requests sign-in`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference),
+                shouldStartSignIn = true,
+            )
+        stubSuccessfulTextLoad()
+        stubConfig(isSignedIn = false, isSignInEnabled = true)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    appName = "Test App",
+                    appSignInMessage = "Keep your highlights",
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
             }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithText("Keep your highlights").assertExists()
         } finally {
             cleanUpSignedInConfig()
         }

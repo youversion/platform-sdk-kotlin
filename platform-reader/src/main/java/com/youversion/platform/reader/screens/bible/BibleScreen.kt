@@ -118,17 +118,17 @@ internal fun BibleScreen(
             SignInWithYouVersionPermission.PROFILE,
             SignInWithYouVersionPermission.HIGHLIGHTS,
         )
-    val launchSignIn: () -> Unit = {
+
+    fun launchSignIn(onComplete: () -> Unit = {}) {
         scope.launch {
             try {
                 signIn(permissions)
             } catch (_: Exception) {
                 showSignInError = true
             }
+            onComplete()
         }
     }
-
-    var showsSignInPrompt by rememberSaveable { mutableStateOf(false) }
 
     val requestDataExchange = rememberDataExchange()
     LaunchedEffect(state.shouldStartDataExchangeFlow) {
@@ -138,14 +138,12 @@ internal fun BibleScreen(
         viewModel.onAction(BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted))
     }
 
-    // Highlighting needs an account, so a signed-out reader is asked to sign in instead. Where the host app has
-    // disabled sign-in there is nothing to ask for, so the tap does nothing rather than opening a flow that app
-    // has turned off — though the colors are hidden in that case, so this is a guard rather than a live path.
-    val highlightOrSignIn: (BibleReaderViewModel.Action) -> Unit = { action ->
-        when {
-            signInState.isSignedIn -> viewModel.onAction(action)
-            signInState.isSignInEnabled -> showsSignInPrompt = true
-            else -> Unit
+    // A highlight change needs an account, so the view model holds it and raises shouldStartSignIn for a signed-out
+    // reader; the change is dispatched regardless of sign-in state so the view model can capture it. Where the host
+    // app has disabled sign-in the colors are hidden, so the guard here only stops a tap that should not be possible.
+    val requestHighlight: (BibleReaderViewModel.Action) -> Unit = { action ->
+        if (signInState.isSignedIn || signInState.isSignInEnabled) {
+            viewModel.onAction(action)
         }
     }
 
@@ -231,10 +229,10 @@ internal fun BibleScreen(
                         colorsToAdd = colorsToAdd,
                         showsHighlightColors = showsHighlightColors,
                         onAddHighlight = {
-                            highlightOrSignIn(BibleReaderViewModel.Action.AddHighlight(it))
+                            requestHighlight(BibleReaderViewModel.Action.AddHighlight(it))
                         },
                         onRemoveHighlight = {
-                            highlightOrSignIn(BibleReaderViewModel.Action.RemoveHighlight(it))
+                            requestHighlight(BibleReaderViewModel.Action.RemoveHighlight(it))
                         },
                         onCopy = { viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses) },
                         onShare = { viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses) },
@@ -264,7 +262,7 @@ internal fun BibleScreen(
                         onVersionClick = onVersionsClick,
                         onOpenHeaderMenu = { signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState) },
                         onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
-                        onSignInClick = launchSignIn,
+                        onSignInClick = { launchSignIn() },
                         onSignOutClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut(true)) },
                     )
                 },
@@ -404,14 +402,13 @@ internal fun BibleScreen(
                         )
                     }
 
-                    if (showsSignInPrompt) {
+                    if (state.shouldStartSignIn) {
                         SignInWithYouVersionPromptSheet(
                             appName = appName,
                             onSignIn = {
-                                showsSignInPrompt = false
-                                launchSignIn()
+                                launchSignIn { viewModel.onAction(BibleReaderViewModel.Action.SignInCompleted) }
                             },
-                            onDismissRequest = { showsSignInPrompt = false },
+                            onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CancelSignIn) },
                             appSignInMessage = appSignInMessage,
                         )
                     }
