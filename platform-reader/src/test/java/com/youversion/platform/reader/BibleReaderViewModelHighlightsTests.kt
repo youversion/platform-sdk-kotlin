@@ -52,6 +52,7 @@ class BibleReaderViewModelHighlightsTests {
 
         val bibleReaderRepository = mockk<BibleReaderRepository>(relaxed = true)
         every { bibleReaderRepository.produceBibleReference(any()) } returns defaultReference
+        every { bibleReaderRepository.pendingHighlight } returns null
 
         bibleHighlightsRepository = mockk(relaxed = true)
         every { bibleHighlightsRepository.highlights(overlapping = any()) } answers {
@@ -256,6 +257,42 @@ class BibleReaderViewModelHighlightsTests {
     }
 
     @Test
+    fun `changing the verse selection clears a pending highlight so a later grant applies nothing`() {
+        isHighlightsPermissionGranted = false
+        selectVerses(verseOne)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        selectVerses(verseTwo)
+        viewModel.onAction(BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted = true))
+
+        verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
+    }
+
+    @Test
+    fun `a held highlight applies once permission is granted`() {
+        isHighlightsPermissionGranted = false
+        selectVerses(verseOne)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        isHighlightsPermissionGranted = true
+        viewModel.applyPendingHighlightIfPermitted()
+
+        verify { bibleHighlightsRepository.addHighlights(match { it.toSet() == setOf(verseOne) }, yellow) }
+    }
+
+    @Test
+    fun `a held highlight is kept while permission is still absent`() {
+        isHighlightsPermissionGranted = false
+        selectVerses(verseOne)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        viewModel.applyPendingHighlightIfPermitted()
+
+        verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
+        assertTrue(viewModel.state.value.hasPendingHighlight)
+    }
+
+    @Test
     fun `tapping a color again after declining prompts again`() {
         isHighlightsPermissionGranted = false
         selectVerses(verseOne)
@@ -360,17 +397,44 @@ class BibleReaderViewModelHighlightsTests {
     }
 
     @Test
-    fun `a sign-in attempt that did not complete drops the pending highlight`() {
+    fun `sign-in completing before it settles keeps the held highlight for a later grant`() {
         isUserSignedIn = false
         selectVerses(verseOne)
         viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
 
-        // Sign-in resolved but the reader is still not signed in (cancelled or failed).
+        // Sign-in settles asynchronously, so the reader can still read as signed out when the prompt closes. The
+        // held highlight must not be dropped here — the grant may still be in flight.
         viewModel.onAction(BibleReaderViewModel.Action.SignInCompleted)
 
         assertFalse(viewModel.state.value.shouldStartSignIn)
         assertFalse(viewModel.state.value.showDataExchangeConfirmation)
+        assertTrue(viewModel.state.value.hasPendingHighlight)
         verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
+
+        // Once the grant lands the held highlight applies, as the reader originally asked.
+        isUserSignedIn = true
+        isHighlightsPermissionGranted = true
+        viewModel.applyPendingHighlightIfPermitted()
+
+        verify { bibleHighlightsRepository.addHighlights(match { it.toSet() == setOf(verseOne) }, yellow) }
+    }
+
+    @Test
+    fun `clearing the verse selection keeps a held highlight so the grant still applies it`() {
+        isHighlightsPermissionGranted = false
+        selectVerses(verseOne)
+        viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
+
+        // The selection is cleared for reasons other than the reader changing their mind — a reader recreated during
+        // the browser grant restores its version and clears the selection. That must not discard the held highlight.
+        viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection)
+
+        assertTrue(viewModel.state.value.hasPendingHighlight)
+
+        isHighlightsPermissionGranted = true
+        viewModel.applyPendingHighlightIfPermitted()
+
+        verify { bibleHighlightsRepository.addHighlights(match { it.toSet() == setOf(verseOne) }, yellow) }
     }
 
     // ----- Color presence helpers

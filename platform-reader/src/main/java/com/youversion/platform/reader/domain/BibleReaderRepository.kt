@@ -5,7 +5,19 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.domain.Storage
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+
+/**
+ * A highlight change the reader asked for but that is waiting on the highlights permission. Persisted so it survives
+ * the reader being recreated while the permission grant happens in the browser, and applied once the grant lands.
+ */
+@Serializable
+internal data class PendingHighlight(
+    val references: List<BibleReference>,
+    val hexColor: String,
+    val isRemoval: Boolean,
+)
 
 /**
  * Responsible for fetching and managing data related to the Bible
@@ -18,6 +30,7 @@ class BibleReaderRepository(
 ) {
     companion object {
         private const val KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
+        private const val KEY_PENDING_HIGHLIGHT = "bible-reader-view--pending-highlight"
     }
 
     /**
@@ -31,6 +44,19 @@ class BibleReaderRepository(
         set(value) =
             storage
                 .putString(KEY_BIBLE_READER_REFERENCE, value?.let { Json.encodeToString(it) })
+
+    /**
+     * A highlight change the reader requested that is waiting on the highlights permission, persisted so it outlives
+     * the reader being recreated during the browser grant flow.
+     */
+    internal var pendingHighlight: PendingHighlight?
+        get() =
+            storage
+                .getStringOrNull(KEY_PENDING_HIGHLIGHT)
+                ?.let { Json.decodeFromString(it) }
+        set(value) =
+            storage
+                .putString(KEY_PENDING_HIGHLIGHT, value?.let { Json.encodeToString(it) })
 
     /**
      * Always produces a valid BibleReference based on what is available.

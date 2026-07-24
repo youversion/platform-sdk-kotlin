@@ -41,7 +41,12 @@ object DataExchangeEndpoints : DataExchangeApi {
             parameter("app-key", appKey)
         }
 
-    /** The permission page the user is sent to, authorized by [token]. */
+    /**
+     * The permission page the user is sent to, authorized by [token].
+     *
+     * The page redirects back to the app's callback URL configured in the YouVersion developer console when the
+     * flow ends; the redirect target is not passed here.
+     */
     fun dataExchangeUrl(
         token: String,
         appKey: String,

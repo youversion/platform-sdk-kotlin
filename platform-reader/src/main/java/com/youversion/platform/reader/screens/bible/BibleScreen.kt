@@ -26,6 +26,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,8 +49,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.BibleReaderViewModel
@@ -130,12 +135,52 @@ internal fun BibleScreen(
         }
     }
 
+    // The grant is persisted through the deep link only once the reader has resumed, so the launcher returning tells
+    // us nothing about the outcome yet. Wait for the resume — which Android delivers after the deep link — and read
+    // the persisted permission then: a grant applies the pending highlight; a dismissal or cancellation reads no
+    // grant and clears it. This resume read is the only place the flow completes, so no earlier read can drop the
+    // pending highlight before the grant lands.
     val requestDataExchange = rememberDataExchange()
+    val isDataExchangeInProgress = rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(state.shouldStartDataExchangeFlow) {
         if (!state.shouldStartDataExchangeFlow) return@LaunchedEffect
-        val result = requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
-        val isHighlightsGranted = result?.grants(SignInWithYouVersionPermission.HIGHLIGHTS) == true
-        viewModel.onAction(BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted))
+        isDataExchangeInProgress.value = true
+        requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME &&
+                    viewModel.state.value.shouldStartDataExchangeFlow &&
+                    isDataExchangeInProgress.value
+                ) {
+                    isDataExchangeInProgress.value = false
+                    val isHighlightsGranted =
+                        YouVersionPlatformConfiguration.configState.value
+                            ?.grantedPermissions
+                            ?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+                    viewModel.onAction(
+                        BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted = isHighlightsGranted),
+                    )
+                }
+            }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // A highlight requested before a grant is held by the view model and reapplied once highlights access lands. The
+    // grant arrives synchronously through data exchange but asynchronously through sign-in, so observe the persisted
+    // permission and apply when it becomes available — this also covers a request that outlived the reader being
+    // recreated during either browser flow.
+    val config by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
+    val isHighlightsGranted =
+        config?.grantedPermissions?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+    LaunchedEffect(isHighlightsGranted, state.hasPendingHighlight) {
+        if (isHighlightsGranted && state.hasPendingHighlight) {
+            viewModel.applyPendingHighlightIfPermitted()
+        }
     }
 
     // A highlight change needs an account, so the view model holds it and raises shouldStartSignIn for a signed-out
