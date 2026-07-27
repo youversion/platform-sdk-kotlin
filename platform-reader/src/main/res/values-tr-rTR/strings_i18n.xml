@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Kapat</string>
+    <string name="yv_banner_offline_icon">Çevrimdışı Simgesi</string>
+    <string name="yv_banner_offline_message">İnternet bağlantınızı kaybettiniz. Çevrimdışı devam etmek için yeniden bağlanın ve bir Kutsal Kitap sürümü indirin.</string>
+    <string name="yv_banner_version_unavailable_icon">Sürüm Kullanılamıyor Simgesi</string>
+    <string name="yv_banner_version_unavailable_message">Daha önce seçtiğiniz Kutsal Kitap sürümü kullanılamıyor. Sizin için benzer başka bir Kutsal Kitap sürümü seçildi.</string>
+    <string name="yv_book_chapter_picker_title">Kitapçıklar</string>
+    <string name="yv_cancel">İptal</string>
+    <string name="yv_data_exchange_continue">Devam Et</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion, vurgular kaydedilmeden önce erişim izni vermenizi isteyecektir.</string>
+    <string name="yv_data_exchange_highlights_question">Bu uygulamanın vurguları YouVersion ile kaydetmesine izin verilsin mi?</string>
+    <string name="yv_font_selected_check">Yazı Tipi seçildi</string>
+    <string name="yv_font_settings_label">Yazı Tipi</string>
+    <string name="yv_footnote_header_label">Dipnot</string>
+    <string name="yv_highlight_color_cyan">camgöbeği</string>
+    <string name="yv_highlight_color_green">yeşil</string>
+    <string name="yv_highlight_color_orange">turuncu</string>
+    <string name="yv_highlight_color_pink">pembe</string>
+    <string name="yv_highlight_color_yellow">sarı</string>
+    <string name="yv_intro_chapter_label">Giriş</string>
+    <string name="yv_language_content_desc">Dil</string>
+    <string name="yv_line_spacing_label">Satır Aralığı</string>
+    <string name="yv_next_chapter_content_desc">Sonraki Bölüm</string>
+    <string name="yv_previous_chapter_content_desc">Önceki Bölüm</string>
+    <string name="yv_reader_menu_font_settings">Yazı Tipi ve Ayarlar</string>
+    <string name="yv_reader_menu_sign_in">Oturum Aç</string>
+    <string name="yv_reader_menu_sign_out">Oturumu Kapat</string>
+    <string name="yv_theme_selected">Seçildi</string>
+    <string name="yv_verse_action_add_highlight">%1$s vurgusu ekle</string>
+    <string name="yv_verse_action_copy">Kopyala</string>
+    <string name="yv_verse_action_remove_highlight">%1$s vurgusunu kaldır</string>
+    <string name="yv_verse_action_share">Paylaş</string>
+</resources>

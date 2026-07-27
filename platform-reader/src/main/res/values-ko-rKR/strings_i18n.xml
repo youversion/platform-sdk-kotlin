@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">닫기</string>
+    <string name="yv_banner_offline_icon">오프라인 아이콘</string>
+    <string name="yv_banner_offline_message">인터넷 연결이 끊겼습니다. 다시 연결하고 성경 번역본을 다운로드하여 오프라인으로 진행하세요.</string>
+    <string name="yv_banner_version_unavailable_icon">번역본 사용 불가 아이콘</string>
+    <string name="yv_banner_version_unavailable_message">이전에 선택한 성경 번역본을 사용할 수 없습니다. 유사한 다른 성경 번역본이 선택되었습니다.</string>
+    <string name="yv_book_chapter_picker_title">책</string>
+    <string name="yv_cancel">취소</string>
+    <string name="yv_data_exchange_continue">계속</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion는 하이라이트를 저장하기 전에 접근 권한을 요청할 것입니다.</string>
+    <string name="yv_data_exchange_highlights_question">이 앱이 YouVersion에 하이라이트를 저장하도록 허용하시겠습니까?</string>
+    <string name="yv_font_selected_check">글꼴 선택 체크</string>
+    <string name="yv_font_settings_label">글꼴</string>
+    <string name="yv_footnote_header_label">각주</string>
+    <string name="yv_highlight_color_cyan">청록</string>
+    <string name="yv_highlight_color_green">초록</string>
+    <string name="yv_highlight_color_orange">주황</string>
+    <string name="yv_highlight_color_pink">분홍</string>
+    <string name="yv_highlight_color_yellow">노랑</string>
+    <string name="yv_intro_chapter_label">소개</string>
+    <string name="yv_language_content_desc">언어</string>
+    <string name="yv_line_spacing_label">줄 간격</string>
+    <string name="yv_next_chapter_content_desc">다음 장</string>
+    <string name="yv_previous_chapter_content_desc">이전 장</string>
+    <string name="yv_reader_menu_font_settings">글꼴 &amp; 설정</string>
+    <string name="yv_reader_menu_sign_in">로그인</string>
+    <string name="yv_reader_menu_sign_out">로그아웃</string>
+    <string name="yv_theme_selected">선택됨</string>
+    <string name="yv_verse_action_add_highlight">%1$s 하이라이트 추가</string>
+    <string name="yv_verse_action_copy">복사</string>
+    <string name="yv_verse_action_remove_highlight">%1$s 하이라이트 삭제</string>
+    <string name="yv_verse_action_share">공유</string>
+</resources>
