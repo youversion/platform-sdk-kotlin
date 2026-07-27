@@ -3,7 +3,7 @@
 
 ![Platform](https://img.shields.io/badge/Platform-Android-green)
 [![License](https://img.shields.io/badge/license-Apache-blue.svg)](LICENSE)
-[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/youversion/platform-sdk-kotlin/main/.github/badges/coverage.json)](./RELEASING.md)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/youversion/platform-sdk-kotlin/badges/coverage.json)](./RELEASING.md)
 
 # YouVersion Platform SDK for Kotlin
 
