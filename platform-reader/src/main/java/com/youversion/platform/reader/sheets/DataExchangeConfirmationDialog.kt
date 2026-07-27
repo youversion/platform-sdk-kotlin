@@ -1,6 +1,7 @@
 package com.youversion.platform.reader.sheets
 
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -23,7 +24,12 @@ internal fun DataExchangeConfirmationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.data_exchange_highlights_question)) },
+        title = {
+            Text(
+                text = stringResource(R.string.data_exchange_highlights_question),
+                style = MaterialTheme.typography.titleLarge,
+            )
+        },
         text = { Text(stringResource(R.string.data_exchange_highlights_explanation)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
