@@ -135,17 +135,26 @@ internal fun BibleScreen(
         }
     }
 
-    // The grant is persisted through the deep link only once the reader has resumed, so the launcher returning tells
-    // us nothing about the outcome yet. Wait for the resume — which Android delivers after the deep link — and read
-    // the persisted permission then: a grant applies the pending highlight; a dismissal or cancellation reads no
-    // grant and clears it. This resume read is the only place the flow completes, so no earlier read can drop the
-    // pending highlight before the grant lands.
+    // The flow can end on two routes, so it is completed by whichever reports first. The launcher returning a grant is
+    // the direct signal, and is acted on alone; a launcher cancellation is not, because the browser tab reports one
+    // when it is dismissed after a deep link the reader has yet to process. Everything else settles on the resume,
+    // which reads the permission both routes persist before the reader can resume: a grant applies the pending
+    // highlight, a dismissal or cancellation reads no grant and clears it.
     val requestDataExchange = rememberDataExchange()
     val isDataExchangeInProgress = rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(state.shouldStartDataExchangeFlow) {
         if (!state.shouldStartDataExchangeFlow) return@LaunchedEffect
         isDataExchangeInProgress.value = true
-        requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+        val result = requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+        val isHighlightsGranted = result?.grants(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+        // A null result means there was no launcher to open the browser with, so nothing was asked and no resume will
+        // follow; end the flow here rather than leaving the reader waiting on a prompt it never saw.
+        if ((isHighlightsGranted || result == null) && viewModel.state.value.shouldStartDataExchangeFlow) {
+            isDataExchangeInProgress.value = false
+            viewModel.onAction(
+                BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted = isHighlightsGranted),
+            )
+        }
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current

@@ -31,30 +31,23 @@ class DataExchangeHandler(
     /**
      * Asks the signed-in user to grant [permissions] and suspends until they finish or back out.
      *
-     * Permissions the user grants are persisted before this returns, so a later
-     * [YouVersionApi.hasPermission] reflects them without the caller doing anything.
+     * Permissions the user grants are persisted as soon as the callback carrying them arrives — before the host
+     * activity resumes, and so before this returns — meaning a later [YouVersionApi.hasPermission] reflects them
+     * without the caller doing anything.
      *
      * @param permissions The permissions to ask for.
      * @return How the flow ended, and which permissions were granted. A failed token request or browser session is
      *         reported as a cancellation rather than thrown, so the flow has a single, non-crashing failure shape.
      */
-    suspend fun requestDataExchange(permissions: Set<SignInWithYouVersionPermission>): DataExchangeResult {
-        val result =
-            try {
-                exchange(permissions)
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (error: Exception) {
-                Log.w("YouVersionDataExchange", "Data exchange flow failed; treating as cancelled", error)
-                DataExchangeResult(status = DataExchangeStatus.Cancelled, grantedPermissions = emptyList())
-            }
-
-        if (result.isGranted && result.grantedPermissions.isNotEmpty()) {
-            YouVersionPlatformConfiguration.saveGrantedPermissions(result.grantedPermissions)
+    suspend fun requestDataExchange(permissions: Set<SignInWithYouVersionPermission>): DataExchangeResult =
+        try {
+            exchange(permissions)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (error: Exception) {
+            Log.w("YouVersionDataExchange", "Data exchange flow failed; treating as cancelled", error)
+            cancelledResult()
         }
-
-        return result
-    }
 
     private suspend fun exchange(permissions: Set<SignInWithYouVersionPermission>): DataExchangeResult {
         val token = YouVersionApi.dataExchange.dataExchangeToken(permissions)
@@ -64,28 +57,47 @@ class DataExchangeHandler(
         val permissionPageUrl = DataExchangeEndpoints.dataExchangeUrl(token = token.token, appKey = appKey)
 
         var launcher: ActivityResultLauncher<Intent>? = null
-        val callbackIntent =
-            try {
-                suspendCancellableCoroutine { continuation ->
-                    launcher =
-                        activityResultRegistry.register(
-                            "youversion-data-exchange",
-                            ActivityResultContracts.StartActivityForResult(),
-                        ) { result ->
-                            continuation.resume(result.data)
-                        }
+        return try {
+            suspendCancellableCoroutine { continuation ->
+                launcher =
+                    activityResultRegistry.register(
+                        "youversion-data-exchange",
+                        ActivityResultContracts.StartActivityForResult(),
+                    ) { activityResult ->
+                        val result = activityResult.data?.data?.let { dataExchangeResult(it) } ?: cancelledResult()
+                        persistGrantedPermissions(result)
+                        continuation.resume(result)
+                    }
 
-                    AuthTabIntent.Builder().build().launch(
-                        launcher,
-                        permissionPageUrl.toUri(),
-                        YouVersionPlatformConfiguration.authCallback,
-                    )
-                }
-            } finally {
-                launcher?.unregister()
+                AuthTabIntent.Builder().build().launch(
+                    launcher,
+                    permissionPageUrl.toUri(),
+                    YouVersionPlatformConfiguration.authCallback,
+                )
             }
-
-        return callbackIntent?.data?.let { dataExchangeResult(it) }
-            ?: DataExchangeResult(status = DataExchangeStatus.Cancelled, grantedPermissions = emptyList())
+        } finally {
+            launcher?.unregister()
+        }
     }
+
+    /**
+     * Persists whatever [result] granted, while the activity result carrying it is still being dispatched.
+     *
+     * Android delivers an activity result before the host activity resumes, but resuming this flow's continuation is
+     * dispatched rather than immediate, so persisting after the continuation resumes would land *after* a caller
+     * reading the permission on resume. Writing here keeps the permission settled by the time anything can observe
+     * it, matching the deep link route, which persists from onNewIntent. Failure is logged rather than thrown, since
+     * throwing during an activity result dispatch would crash the host app.
+     */
+    private fun persistGrantedPermissions(result: DataExchangeResult) {
+        if (!result.isGranted || result.grantedPermissions.isEmpty()) return
+        try {
+            YouVersionPlatformConfiguration.saveGrantedPermissions(result.grantedPermissions)
+        } catch (error: Exception) {
+            Log.w("YouVersionDataExchange", "Could not persist the granted permissions", error)
+        }
+    }
+
+    private fun cancelledResult() =
+        DataExchangeResult(status = DataExchangeStatus.Cancelled, grantedPermissions = emptyList())
 }
