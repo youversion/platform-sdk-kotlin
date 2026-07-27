@@ -131,6 +131,12 @@ private fun SignInPromptButton(
     onClick: () -> Unit,
 ) {
     val contentColor = MaterialTheme.colorScheme.onSurface
+    val buttonColor =
+        if (MaterialTheme.readerColorScheme.isDark) {
+            MaterialTheme.readerColorScheme.readerWhiteColor
+        } else {
+            MaterialTheme.readerColorScheme.buttonSecondaryColor
+        }
 
     Button(
         onClick = onClick,
@@ -146,7 +152,7 @@ private fun SignInPromptButton(
             },
         colors =
             ButtonDefaults.buttonColors(
-                containerColor = if (!isPrimary) Color.Transparent else MaterialTheme.colorScheme.onSurfaceVariant,
+                containerColor = if (!isPrimary) Color.Transparent else buttonColor,
                 contentColor = contentColor,
             ),
         contentPadding = PaddingValues(vertical = 14.dp),
@@ -157,7 +163,12 @@ private fun SignInPromptButton(
             fontFamily = AktivGrotesk,
             fontWeight = FontWeight.Bold,
             fontSize = 16.sp,
-            color = if (!isPrimary) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.surface,
+            color =
+                if (!isPrimary) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.readerColorScheme.readerBlackColor
+                },
         )
     }
 }
