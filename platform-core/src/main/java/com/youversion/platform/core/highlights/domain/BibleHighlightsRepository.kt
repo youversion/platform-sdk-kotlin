@@ -85,9 +85,10 @@ data class OperationResult(
 /**
  * How each reference in an operation fared, splitting failures the server may yet accept from ones it never will.
  *
+ * References that reached the server are promoted in the cache as they are sent, so they are not reported here.
  * [failedReferences] are retryable — a transient error, so they are requeued with backoff. [rejectedReferences] were
  * refused because the user is not permitted to write highlights, which no amount of retrying changes, so they are
- * dropped from the queue and their optimistic cache rows discarded.
+ * dropped from the queue and reconciled from the server.
  */
 private data class OperationOutcome(
     val failedReferences: List<BibleReference> = emptyList(),
@@ -101,6 +102,12 @@ private data class OperationOutcome(
  * the cache immediately (optimistically) and are queued for the server with retry/backoff so they survive transient
  * failures within the session. The cache and the queue are held in memory only: they do not survive process death, so
  * a write that has not yet reached the server is lost if the process is killed before it syncs.
+ *
+ * A write the server refuses for lack of permission is not retried, since no retry would change the answer. The
+ * refusal applies to the whole account, so every other queued write is dropped along with it, and the references they
+ * touched are reconciled from the server: their chapters are reloaded and the server's rows replace the optimistic
+ * ones. Nothing is discarded until that reload lands, so a refusal followed by a failed reload leaves the optimistic
+ * highlight on screen rather than erasing it, and a later load reconciles it instead.
  *
  * Each queued write is bound to the account that was signed in when it was made. If the signed-in account changes
  * before the write syncs, the write is dropped rather than sent, so one user's highlights can never land on another
@@ -138,10 +145,6 @@ class BibleHighlightsRepository internal constructor(
     private var operationGeneration = 0
     private val queuedOperations = MutableStateFlow<List<PendingHighlightOperation>>(emptyList())
     private val operationResultsState = MutableStateFlow<Map<UUID, OperationResult>>(emptyMap())
-
-    // The cache rows each queued operation replaced, captured before its optimistic change, so a write the server
-    // refuses can be undone. Guarded by queueLock and dropped once the operation can no longer be retried.
-    private val rollbackSnapshots = mutableMapOf<UUID, List<BibleHighlightCache.CachedHighlight>>()
 
     /**
      * The observable list of highlights. UI layers should collect this and filter to the references they render. The
@@ -242,7 +245,6 @@ class BibleHighlightsRepository internal constructor(
         color: String,
     ) {
         val normalizedReferences = references.map { it.verseLevelReference() }
-        val rollbackSnapshot = cache.rowsFor(normalizedReferences)
         val highlights =
             normalizedReferences.map { reference ->
                 BibleHighlight(bibleReference = reference, hexColor = color)
@@ -253,7 +255,6 @@ class BibleHighlightsRepository internal constructor(
                 references = normalizedReferences,
                 change = HighlightChange.SetColor(color = color),
             ),
-            rollbackSnapshot = rollbackSnapshot,
         )
     }
 
@@ -262,14 +263,12 @@ class BibleHighlightsRepository internal constructor(
      */
     fun removeHighlights(references: List<BibleReference>) {
         val normalizedReferences = references.map { it.verseLevelReference() }
-        val rollbackSnapshot = cache.rowsFor(normalizedReferences)
         cache.removeHighlights(normalizedReferences)
         queueOperation(
             PendingHighlightOperation(
                 references = normalizedReferences,
                 change = HighlightChange.Remove,
             ),
-            rollbackSnapshot = rollbackSnapshot,
         )
     }
 
@@ -308,14 +307,12 @@ class BibleHighlightsRepository internal constructor(
         newColor: String,
     ) {
         val normalizedReferences = references.map { it.verseLevelReference() }
-        val rollbackSnapshot = cache.rowsFor(normalizedReferences)
         cache.updateHighlightColors(normalizedReferences, newColor)
         queueOperation(
             PendingHighlightOperation(
                 references = normalizedReferences,
                 change = HighlightChange.SetColor(color = newColor),
             ),
-            rollbackSnapshot = rollbackSnapshot,
         )
     }
 
@@ -334,7 +331,6 @@ class BibleHighlightsRepository internal constructor(
     fun reset() {
         queueLock.withLock {
             queuedOperations.value = emptyList()
-            rollbackSnapshots.clear()
             operationGeneration++
         }
         loadScope.coroutineContext.cancelChildren()
@@ -422,14 +418,10 @@ class BibleHighlightsRepository internal constructor(
         }
     }
 
-    private fun queueOperation(
-        operation: PendingHighlightOperation,
-        rollbackSnapshot: List<BibleHighlightCache.CachedHighlight>,
-    ) {
+    private fun queueOperation(operation: PendingHighlightOperation) {
         val stamped = operation.copy(accountId = currentAccountId())
         val job =
             queueLock.withLock {
-                rollbackSnapshots[stamped.id] = rollbackSnapshot
                 queuedOperations.value = queuedOperations.value + stamped
                 processingJobLocked()
             }
@@ -437,29 +429,43 @@ class BibleHighlightsRepository internal constructor(
     }
 
     /**
-     * Undoes the optimistic change [operationId] made to [references], restoring the rows the cache held before it.
+     * Abandons every write left doomed by a server refusal and reconciles the references they touched.
      *
-     * Called when the server refuses a write because the user is not permitted to change highlights. Restoring the
-     * snapshot rather than dropping the rows is what keeps a refused recolor showing its previous color and a refused
-     * removal showing the highlight it hid, instead of erasing highlights the server still holds.
+     * A refusal is account-wide and permanent, so nothing still queued can succeed: [alreadyAbandonedOperations] and
+     * everything still queued are dropped rather than sent, each recorded as refused, and every reference involved is
+     * marked for reconciliation before its chapter is reloaded.
+     *
+     * The refused writes are undone by taking the server's state rather than by restoring the rows the cache held
+     * before each change. A snapshot is only correct while nothing has touched the reference since it was captured, so
+     * restoring one could erase a later change or resurrect a row the server never accepted — and because the cache
+     * only ever drops remote-synced rows on a merge, such a row would survive every reload. The server never applied a
+     * refused write, so its own state is what the cache should hold, whatever order the writes were made in.
      */
-    private fun rollBackRejected(
-        operationId: UUID,
+    private fun abandonRefusedWrites(
         references: List<BibleReference>,
+        alreadyAbandonedOperations: List<PendingHighlightOperation>,
     ) {
-        val snapshot = queueLock.withLock { rollbackSnapshots[operationId] } ?: return
-        cache.restoreHighlights(
-            references = references,
-            rows = snapshot.filter { it.highlight.bibleReference in references },
-        )
-    }
+        val queued =
+            queueLock.withLock {
+                queuedOperations.value.also { queuedOperations.value = emptyList() }
+            }
+        val abandoned = alreadyAbandonedOperations + queued
+        abandoned.forEach { operation ->
+            recordResult(
+                OperationResult(
+                    operationId = operation.id,
+                    isSuccess = false,
+                    error = notPermitted(),
+                    retryCount = operation.retryCount,
+                ),
+            )
+        }
 
-    /**
-     * Drops [operationId]'s rollback snapshot, once the operation has either succeeded or been refused outright and so
-     * can no longer be retried.
-     */
-    private fun forgetRollback(operationId: UUID) {
-        queueLock.withLock { rollbackSnapshots.remove(operationId) }
+        val affectedReferences = (references + abandoned.flatMap { it.references }).distinct()
+        cache.markAwaitingReconcile(affectedReferences)
+        affectedReferences
+            .distinctBy { Triple(it.versionId, it.bookUSFM, it.chapter) }
+            .forEach { ensureHighlightsForChapterLoaded(it, forceReload = true) }
     }
 
     private fun ensureProcessing(): Job {
@@ -502,7 +508,8 @@ class BibleHighlightsRepository internal constructor(
                 val (batch, generationAtStart) = batchState
 
                 val failed = mutableListOf<PendingHighlightOperation>()
-                for (operation in batch) {
+                var wasRefused = false
+                for ((index, operation) in batch.withIndex()) {
                     var thrownError: Throwable? = null
                     val outcome =
                         try {
@@ -516,53 +523,51 @@ class BibleHighlightsRepository internal constructor(
                         }
 
                     if (outcome.rejectedReferences.isNotEmpty()) {
-                        rollBackRejected(operation.id, outcome.rejectedReferences)
+                        recordResult(
+                            OperationResult(
+                                operationId = operation.id,
+                                isSuccess = false,
+                                error = notPermitted(),
+                                retryCount = operation.retryCount,
+                            ),
+                        )
+                        // The refusal is account-wide, so every write still waiting is doomed too — including ones that
+                        // merely failed transiently earlier in this batch, which would now be refused rather than retried.
+                        abandonRefusedWrites(
+                            references = outcome.rejectedReferences + outcome.failedReferences,
+                            alreadyAbandonedOperations = failed + batch.drop(index + 1),
+                        )
+                        wasRefused = true
+                        break
                     }
 
-                    when {
-                        outcome.failedReferences.isEmpty() && outcome.rejectedReferences.isEmpty() -> {
-                            recordResult(
-                                OperationResult(
-                                    operationId = operation.id,
-                                    isSuccess = true,
-                                    retryCount = operation.retryCount,
-                                ),
+                    if (outcome.failedReferences.isEmpty()) {
+                        recordResult(
+                            OperationResult(
+                                operationId = operation.id,
+                                isSuccess = true,
+                                retryCount = operation.retryCount,
+                            ),
+                        )
+                    } else {
+                        val retried =
+                            operation.copy(
+                                references = outcome.failedReferences,
+                                retryCount = operation.retryCount + 1,
                             )
-                            forgetRollback(operation.id)
-                        }
-
-                        outcome.failedReferences.isEmpty() -> {
-                            recordResult(
-                                OperationResult(
-                                    operationId = operation.id,
-                                    isSuccess = false,
-                                    error = notPermitted(),
-                                    retryCount = operation.retryCount,
-                                ),
-                            )
-                            forgetRollback(operation.id)
-                        }
-
-                        else -> {
-                            val retried =
-                                operation.copy(
-                                    references = outcome.failedReferences,
-                                    retryCount = operation.retryCount + 1,
-                                )
-                            recordResult(
-                                OperationResult(
-                                    operationId = operation.id,
-                                    isSuccess = false,
-                                    error = thrownError ?: IllegalStateException(SERVER_OPERATION_FAILED_MESSAGE),
-                                    retryCount = retried.retryCount,
-                                ),
-                            )
-                            failed.add(retried)
-                        }
+                        recordResult(
+                            OperationResult(
+                                operationId = operation.id,
+                                isSuccess = false,
+                                error = thrownError ?: IllegalStateException(SERVER_OPERATION_FAILED_MESSAGE),
+                                retryCount = retried.retryCount,
+                            ),
+                        )
+                        failed.add(retried)
                     }
                 }
 
-                if (failed.isEmpty()) {
+                if (wasRefused || failed.isEmpty()) {
                     continue
                 }
 

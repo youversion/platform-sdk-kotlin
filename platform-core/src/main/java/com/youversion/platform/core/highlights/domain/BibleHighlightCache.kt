@@ -50,6 +50,10 @@ internal class BibleHighlightCache {
             cached.filterNot { it.state == CachedHighlightState.LOCAL_PENDING_DELETE }
         }
 
+    // References whose local write the server refused. The next server merge covering one is authoritative for it: it
+    // drops the refused row and takes the server's, then forgets the reference. See [markAwaitingReconcile].
+    private val referencesAwaitingReconcile = ConcurrentHashMap.newKeySet<BibleReference>()
+
     // ----- Throttling and Loading
     private val recentChapterFetches = ConcurrentHashMap<BibleReference, Date>()
     private val currentlyLoadingChapters = ConcurrentHashMap<BibleReference, ChapterLoad>()
@@ -64,8 +68,33 @@ internal class BibleHighlightCache {
         val loads = currentlyLoadingChapters.values.toList()
         currentlyLoadingChapters.clear()
         recentChapterFetches.clear()
+        referencesAwaitingReconcile.clear()
         _highlights.value = emptyList()
         loads.forEach { it.completion.complete(Unit) }
+    }
+
+    /**
+     * Marks [references] as no longer locally owned, because the server refused the write that produced their current
+     * rows. The next [applyServerHighlights] merge covering a marked reference discards its local row and takes the
+     * server's, then forgets the mark.
+     *
+     * Reconciling from the server rather than restoring a pre-change snapshot is what keeps a refused write from
+     * clobbering a newer one: the merge writes the server's state, which is by definition unaffected by the refused
+     * write, instead of replaying a snapshot that may be several changes stale. Nothing is discarded until a merge
+     * actually lands, so a reload that never arrives leaves the local row in place rather than erasing it.
+     *
+     * A mark lasts only as long as the row it describes. Writing the reference again replaces that row with fresh
+     * intent — a reader who was granted permission and highlighted the verse a second time — so the write clears the
+     * mark, and a merge that lands afterwards treats the new row as a normal local write rather than discarding it.
+     */
+    fun markAwaitingReconcile(references: List<BibleReference>) {
+        referencesAwaitingReconcile.addAll(references)
+    }
+
+    private fun forgetReconcileMarks(references: List<BibleReference>) {
+        if (referencesAwaitingReconcile.isNotEmpty()) {
+            referencesAwaitingReconcile.removeAll(references.toSet())
+        }
     }
 
     // ----- Public API - Queries
@@ -135,6 +164,7 @@ internal class BibleHighlightCache {
 
     // ----- Public API - Mutations (write APIs preserved)
     fun addHighlights(highlights: List<BibleHighlight>) {
+        forgetReconcileMarks(highlights.map { it.bibleReference })
         _highlights.update { current ->
             current.toMutableList().apply {
                 for (highlight in highlights) {
@@ -149,6 +179,7 @@ internal class BibleHighlightCache {
     }
 
     fun removeHighlights(references: List<BibleReference>) {
+        forgetReconcileMarks(references)
         _highlights.update { current ->
             current.toMutableList().apply {
                 for (reference in references) {
@@ -164,33 +195,11 @@ internal class BibleHighlightCache {
         }
     }
 
-    /**
-     * The rows currently held for [references], for use as a rollback snapshot taken before an optimistic change.
-     * A reference with no row contributes nothing, which is what makes restoring a snapshot undo a create.
-     */
-    fun rowsFor(references: List<BibleReference>): List<CachedHighlight> =
-        _highlights.value.filter { it.highlight.bibleReference in references }
-
-    /**
-     * Restores [rows] as the cache's state for [references], replacing whatever those references currently hold.
-     *
-     * Used to undo an optimistic change the server refused. Because the snapshot is positional rather than additive,
-     * it undoes all three changes correctly: a create leaves no row behind, a recolor returns to its previous color,
-     * and a removal's tombstone is replaced by the highlight it hid.
-     */
-    fun restoreHighlights(
-        references: List<BibleReference>,
-        rows: List<CachedHighlight>,
-    ) {
-        _highlights.update { current ->
-            current.filterNot { it.highlight.bibleReference in references } + rows
-        }
-    }
-
     fun updateHighlightColors(
         references: List<BibleReference>,
         newColor: String,
     ) {
+        forgetReconcileMarks(references)
         _highlights.update { current ->
             current.toMutableList().apply {
                 for (reference in references) {
@@ -233,6 +242,11 @@ internal class BibleHighlightCache {
      * it — so a stale response cannot repopulate the cache with a previous account's highlights after a switch. The
      * throttle is likewise armed only while the load is still registered, which narrows but does not fully close the
      * window in which a concurrent clear re-throttles the chapter.
+     *
+     * References marked by [markAwaitingReconcile] are treated as server-owned for this merge: their local rows are
+     * dropped so the server's rows stand, and the marks are cleared only once the merge has landed. The marks are read
+     * before the update rather than inside it because the update block re-runs on contention; a mark left behind by a
+     * skipped merge is harmless, since reconciling an already-reconciled reference does nothing.
      */
     fun applyServerHighlights(
         chapter: BibleReference,
@@ -241,6 +255,8 @@ internal class BibleHighlightCache {
     ) {
         val chapterReference = normalizeToChapter(chapter)
         val thisLoadSequence = load.sequence
+        val reconcilingReferences =
+            referencesAwaitingReconcile.filterTo(mutableSetOf()) { isInChapter(it, chapterReference) }
 
         _highlights.update { current ->
             // A superseded load (cleared, or replaced by a newer one) is no longer registered; skip its stale merge so
@@ -250,6 +266,12 @@ internal class BibleHighlightCache {
                 return@update current
             }
             current.toMutableList().apply {
+                // Drop every row for a reference whose write the server refused: it is no longer locally owned, so this
+                // response decides what it holds. Removing it before the append below lets the server's row land as
+                // remote-synced instead of being kept out by the refused local row, and leaves nothing behind when the
+                // server holds no highlight for it at all.
+                removeAll { it.highlight.bibleReference in reconcilingReferences }
+
                 // Drop tombstones this load is known to reflect: it started after the delete synced, so the server
                 // response already accounts for the removal and can no longer resurrect it. The sequence comes from the
                 // load that fetched these highlights, not from whatever load is registered now, so a load superseded by
@@ -289,6 +311,7 @@ internal class BibleHighlightCache {
             }
         }
         if (currentlyLoadingChapters[chapterReference] === load) {
+            referencesAwaitingReconcile.removeAll(reconcilingReferences)
             recordChapterFetch(chapter)
         }
     }
@@ -357,10 +380,15 @@ internal class BibleHighlightCache {
     private fun isInChapter(
         cached: CachedHighlight,
         chapterReference: BibleReference,
+    ): Boolean = isInChapter(cached.highlight.bibleReference, chapterReference)
+
+    private fun isInChapter(
+        reference: BibleReference,
+        chapterReference: BibleReference,
     ): Boolean =
-        cached.highlight.bibleReference.bookUSFM == chapterReference.bookUSFM &&
-            cached.highlight.bibleReference.chapter == chapterReference.chapter &&
-            cached.highlight.bibleReference.versionId == chapterReference.versionId
+        reference.bookUSFM == chapterReference.bookUSFM &&
+            reference.chapter == chapterReference.chapter &&
+            reference.versionId == chapterReference.versionId
 
     private fun normalizeToChapter(reference: BibleReference): BibleReference =
         BibleReference(
