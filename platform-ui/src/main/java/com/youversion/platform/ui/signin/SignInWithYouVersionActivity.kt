@@ -45,7 +45,11 @@ abstract class SignInWithYouVersionActivity : ComponentActivity() {
         if (dataExchangeStatus != null) {
             val result = dataExchangeResult(callback)
             if (result.isGranted && result.grantedPermissions.isNotEmpty()) {
-                YouVersionPlatformConfiguration.saveGrantedPermissions(result.grantedPermissions)
+                try {
+                    YouVersionPlatformConfiguration.saveGrantedPermissions(result.grantedPermissions)
+                } catch (error: Exception) {
+                    Log.w("YouVersionDataExchange", "Could not persist the granted permissions", error)
+                }
             }
         } else {
             signInViewModel.onAction(SignInViewModel.Action.ProcessAuthCallback(intent))

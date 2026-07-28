@@ -244,9 +244,11 @@ internal class BibleHighlightCache {
      * window in which a concurrent clear re-throttles the chapter.
      *
      * References marked by [markAwaitingReconcile] are treated as server-owned for this merge: their local rows are
-     * dropped so the server's rows stand, and the marks are cleared only once the merge has landed. The marks are read
-     * before the update rather than inside it because the update block re-runs on contention; a mark left behind by a
-     * skipped merge is harmless, since reconciling an already-reconciled reference does nothing.
+     * dropped so the server's rows stand, and the marks are cleared once the merge has landed. Like the load check,
+     * the marks are read inside the update so a CAS retry re-evaluates them: a local write clears a reference's mark
+     * before it writes the row, so re-reading is what stops this merge from deleting a row written after it began.
+     * A mark left behind by a skipped merge is harmless, since reconciling an already-reconciled reference does
+     * nothing.
      */
     fun applyServerHighlights(
         chapter: BibleReference,
@@ -255,8 +257,7 @@ internal class BibleHighlightCache {
     ) {
         val chapterReference = normalizeToChapter(chapter)
         val thisLoadSequence = load.sequence
-        val reconcilingReferences =
-            referencesAwaitingReconcile.filterTo(mutableSetOf()) { isInChapter(it, chapterReference) }
+        var reconciledReferences = emptySet<BibleReference>()
 
         _highlights.update { current ->
             // A superseded load (cleared, or replaced by a newer one) is no longer registered; skip its stale merge so
@@ -265,6 +266,9 @@ internal class BibleHighlightCache {
             if (currentlyLoadingChapters[chapterReference] !== load) {
                 return@update current
             }
+            val reconcilingReferences =
+                referencesAwaitingReconcile.filterTo(mutableSetOf()) { isInChapter(it, chapterReference) }
+            reconciledReferences = reconcilingReferences
             current.toMutableList().apply {
                 // Drop every row for a reference whose write the server refused: it is no longer locally owned, so this
                 // response decides what it holds. Removing it before the append below lets the server's row land as
@@ -311,7 +315,7 @@ internal class BibleHighlightCache {
             }
         }
         if (currentlyLoadingChapters[chapterReference] === load) {
-            referencesAwaitingReconcile.removeAll(reconcilingReferences)
+            referencesAwaitingReconcile.removeAll(reconciledReferences)
             recordChapterFetch(chapter)
         }
     }
