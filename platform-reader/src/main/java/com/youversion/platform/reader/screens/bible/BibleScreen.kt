@@ -70,6 +70,7 @@ import com.youversion.platform.reader.sheets.BibleReaderIntroFootnotesSheet
 import com.youversion.platform.reader.sheets.BibleReaderVerseActionSheet
 import com.youversion.platform.reader.sheets.DataExchangeConfirmationDialog
 import com.youversion.platform.reader.sheets.HighlightColor
+import com.youversion.platform.ui.dataexchange.DataExchangeStatus
 import com.youversion.platform.ui.dataexchange.rememberDataExchange
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInViewModel
@@ -147,9 +148,11 @@ internal fun BibleScreen(
         isDataExchangeInProgress.value = true
         val result = requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
         val isHighlightsGranted = result?.grants(SignInWithYouVersionPermission.HIGHLIGHTS) == true
-        // A null result means there was no launcher to open the browser with, so nothing was asked and no resume will
-        // follow; end the flow here rather than leaving the reader waiting on a prompt it never saw.
-        if ((isHighlightsGranted || result == null) && viewModel.state.value.shouldStartDataExchangeFlow) {
+        // A null result means there was no launcher to open the browser with, and NotStarted means the flow could not
+        // be started; either way nothing was asked and no resume will follow, so end the flow here rather than leaving
+        // the reader waiting on a prompt it never saw.
+        val wasBrowserNeverOpened = result == null || result.status == DataExchangeStatus.NotStarted
+        if ((isHighlightsGranted || wasBrowserNeverOpened) && viewModel.state.value.shouldStartDataExchangeFlow) {
             isDataExchangeInProgress.value = false
             viewModel.onAction(
                 BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted = isHighlightsGranted),

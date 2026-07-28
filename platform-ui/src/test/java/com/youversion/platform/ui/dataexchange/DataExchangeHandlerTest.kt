@@ -31,7 +31,7 @@ import kotlin.test.assertTrue
 @RunWith(RobolectricTestRunner::class)
 class DataExchangeHandlerTest {
     @Test
-    fun `a failed token request is reported as cancelled rather than thrown`() =
+    fun `a failed token request is reported as not started rather than thrown`() =
         runTest {
             mockkObject(YouVersionApi)
             try {
@@ -43,10 +43,38 @@ class DataExchangeHandlerTest {
                 val handler = DataExchangeHandler(mockk(relaxed = true))
                 val result = handler.requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
 
-                assertEquals(DataExchangeStatus.Cancelled, result.status)
+                assertEquals(DataExchangeStatus.NotStarted, result.status)
                 assertFalse(result.isGranted)
             } finally {
                 unmockkObject(YouVersionApi)
+            }
+        }
+
+    @Test
+    fun `an unreadable callback is reported as cancelled rather than crashing the dispatch`() =
+        runTest {
+            mockkObject(YouVersionApi)
+            try {
+                YouVersionPlatformConfiguration.configure(
+                    context = ApplicationProvider.getApplicationContext<Context>(),
+                    appKey = "test",
+                )
+                val api = mockk<DataExchangeApi>()
+                coEvery { api.dataExchangeToken(any()) } returns DataExchangeToken(token = "exchange-token")
+                every { YouVersionApi.dataExchange } returns api
+
+                val registry = ImmediateCallbackRegistry("youversionauth:callback?data_exchange_status=granted")
+                val result =
+                    DataExchangeHandler(registry).requestDataExchange(
+                        setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                    )
+
+                assertEquals(DataExchangeStatus.Cancelled, result.status)
+                assertFalse(result.grants(SignInWithYouVersionPermission.HIGHLIGHTS))
+            } finally {
+                unmockkObject(YouVersionApi)
+                YouVersionPlatformConfiguration.clearAuthData()
+                PlatformKoinGraph.stop()
             }
         }
 

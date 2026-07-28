@@ -15,6 +15,12 @@ sealed interface DataExchangeStatus {
     data object Missing : DataExchangeStatus
 
     /**
+     * The flow could not be started, so the browser never opened and no callback or resume will follow. Unlike
+     * [Cancelled], the user never saw the prompt.
+     */
+    data object NotStarted : DataExchangeStatus
+
+    /**
      * A status this version of the SDK does not recognize, kept as sent so it can be logged or handled by a caller
      * that does understand it.
      */

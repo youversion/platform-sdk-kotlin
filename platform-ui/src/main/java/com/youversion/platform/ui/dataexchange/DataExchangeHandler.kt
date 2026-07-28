@@ -1,6 +1,7 @@
 package com.youversion.platform.ui.dataexchange
 
 import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.ActivityResultRegistry
@@ -36,8 +37,10 @@ class DataExchangeHandler(
      * without the caller doing anything.
      *
      * @param permissions The permissions to ask for.
-     * @return How the flow ended, and which permissions were granted. A failed token request or browser session is
-     *         reported as a cancellation rather than thrown, so the flow has a single, non-crashing failure shape.
+     * @return How the flow ended, and which permissions were granted. A failure is reported rather than thrown, and
+     *         everything that can fail here happens before the browser opens, so it is reported as
+     *         [DataExchangeStatus.NotStarted] — telling a caller that settles the flow on a resume that no resume is
+     *         coming.
      */
     suspend fun requestDataExchange(permissions: Set<SignInWithYouVersionPermission>): DataExchangeResult =
         try {
@@ -45,8 +48,8 @@ class DataExchangeHandler(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Exception) {
-            Log.w("YouVersionDataExchange", "Data exchange flow failed; treating as cancelled", error)
-            cancelledResult()
+            Log.w("YouVersionDataExchange", "Data exchange flow could not be started", error)
+            DataExchangeResult(status = DataExchangeStatus.NotStarted, grantedPermissions = emptyList())
         }
 
     private suspend fun exchange(permissions: Set<SignInWithYouVersionPermission>): DataExchangeResult {
@@ -64,7 +67,7 @@ class DataExchangeHandler(
                         "youversion-data-exchange",
                         ActivityResultContracts.StartActivityForResult(),
                     ) { activityResult ->
-                        val result = activityResult.data?.data?.let { dataExchangeResult(it) } ?: cancelledResult()
+                        val result = callbackResult(activityResult.data?.data)
                         persistGrantedPermissions(result)
                         continuation.resume(result)
                     }
@@ -77,6 +80,21 @@ class DataExchangeHandler(
             }
         } finally {
             launcher?.unregister()
+        }
+    }
+
+    /**
+     * Reads [callbackUri] as a result, treating one that cannot be read as a cancellation. Runs during the activity
+     * result dispatch, so it must not throw: reading query parameters fails on a URI that is not hierarchical, and
+     * letting that escape would crash the host app and leave this flow suspended forever.
+     */
+    private fun callbackResult(callbackUri: Uri?): DataExchangeResult {
+        if (callbackUri == null) return cancelledResult()
+        return try {
+            dataExchangeResult(callbackUri)
+        } catch (error: Exception) {
+            Log.w("YouVersionDataExchange", "Could not read the data exchange callback", error)
+            cancelledResult()
         }
     }
 
