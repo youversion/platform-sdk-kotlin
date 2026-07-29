@@ -60,6 +60,7 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.UntitledSerif
@@ -170,19 +171,27 @@ fun BibleText(
     val configState by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
     val isSignedIn = configState?.isSignedIn == true
 
+    // Reading highlights needs both an account and that account's consent. Without either there is nothing on the
+    // server to fetch and the request would only come back unauthorized or refused, so it is not made at all.
+    val hasHighlightsAccess =
+        isSignedIn &&
+            configState?.grantedPermissions?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+
     LaunchedEffect(reference) {
-        highlightsRepository.ensureHighlightsForChapterLoaded(reference)
+        if (hasHighlightsAccess) {
+            highlightsRepository.ensureHighlightsForChapterLoaded(reference)
+        }
     }
 
-    // Highlights require sign-in, and nothing else re-triggers a load when the user signs in while
-    // already viewing a chapter. Force a refresh only on the false -> true transition so their
-    // highlights appear immediately, without bypassing the per-chapter throttle on every re-entry.
-    var wasSignedIn by remember { mutableStateOf(isSignedIn) }
-    LaunchedEffect(isSignedIn) {
-        if (isSignedIn && !wasSignedIn) {
+    // Nothing else re-triggers a load when access is gained while the reader is already viewing a chapter, whether
+    // that was by signing in or by granting the highlights permission. Force a refresh only on the false -> true
+    // transition so their highlights appear immediately, without bypassing the per-chapter throttle on every re-entry.
+    var hadHighlightsAccess by remember { mutableStateOf(hasHighlightsAccess) }
+    LaunchedEffect(hasHighlightsAccess) {
+        if (hasHighlightsAccess && !hadHighlightsAccess) {
             highlightsRepository.ensureHighlightsForChapterLoaded(reference, forceReload = true)
         }
-        wasSignedIn = isSignedIn
+        hadHighlightsAccess = hasHighlightsAccess
     }
 
     val highlightAlpha = MaterialTheme.readerColorScheme.highlightAlpha

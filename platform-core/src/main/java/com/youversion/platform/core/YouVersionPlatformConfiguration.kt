@@ -4,6 +4,7 @@ import android.content.Context
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.YouVersionPlatformConfiguration.configure
 import com.youversion.platform.core.di.PlatformKoinGraph
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfiguredException
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import com.youversion.platform.core.utilities.koin.startCore
@@ -55,6 +56,23 @@ object YouVersionPlatformConfiguration {
     val permittedVersionIds: Set<Int>?
         get() = config?.permittedVersionIds
 
+    /**
+     * Whether the SDK may offer to sign the user in to YouVersion.
+     *
+     * When `false`, the reader hides the highlight colors from a signed-out reader rather than offering a control
+     * that could never work, and a highlight action cannot start a sign-in flow. A reader who is already signed in
+     * keeps their highlight colors, since they need nothing further. Defaults to `true`.
+     */
+    val isSignInEnabled: Boolean
+        get() = config?.isSignInEnabled ?: true
+
+    /**
+     * The permissions the signed-in user has granted to this app. Empty when signed out, or when
+     * the user has granted nothing.
+     */
+    val grantedPermissions: Set<SignInWithYouVersionPermission>
+        get() = config?.grantedPermissions.orEmpty()
+
     val isSignedIn: Boolean
         get() = accessToken != null
 
@@ -70,6 +88,7 @@ object YouVersionPlatformConfiguration {
         hostEnv: String? = null,
         permittedLanguageTags: Set<String>? = null,
         permittedVersionIds: Set<Int>? = null,
+        isSignInEnabled: Boolean = true,
     ) {
         if (config != null) {
             Logger.w("YouVersionPlatform SDK has already been configured. Reconfiguring.")
@@ -92,6 +111,7 @@ object YouVersionPlatformConfiguration {
             hostEnv = hostEnv,
             permittedLanguageTags = permittedLanguageTags,
             permittedVersionIds = permittedVersionIds,
+            isSignInEnabled = isSignInEnabled,
         )
     }
 
@@ -106,6 +126,7 @@ object YouVersionPlatformConfiguration {
         hostEnv: String? = null,
         permittedLanguageTags: Set<String>? = null,
         permittedVersionIds: Set<Int>? = null,
+        isSignInEnabled: Boolean = true,
     ) {
         val sessionRepository = PlatformCoreKoinComponent.sessionRepository
         val previousConfig = config
@@ -123,6 +144,8 @@ object YouVersionPlatformConfiguration {
                 expiryDate = expiryDate ?: sessionRepository.expiryDate,
                 permittedLanguageTags = permittedLanguageTags,
                 permittedVersionIds = permittedVersionIds,
+                grantedPermissions = sessionRepository.grantedPermissionValues.toGrantedPermissions(),
+                isSignInEnabled = isSignInEnabled,
             )
 
         // The Koin graph (and therefore the BibleVersionRepository singleton) survives reconfiguration
@@ -165,6 +188,31 @@ object YouVersionPlatformConfiguration {
         expiryDate: Date?,
         persist: Boolean = true,
     ) {
+        writeAuthData(
+            accessToken = accessToken,
+            refreshToken = refreshToken,
+            idToken = idToken,
+            expiryDate = expiryDate,
+            grantedPermissionValues = PlatformCoreKoinComponent.sessionRepository.grantedPermissionValues,
+            persist = persist,
+        )
+    }
+
+    /**
+     * Writes auth data and granted permissions in a single configuration emission, so that
+     * observers never see the two disagree.
+     *
+     * Permissions are carried as raw values rather than parsed ones so that a stored value this
+     * SDK version does not recognize is preserved rather than dropped on every write.
+     */
+    private fun writeAuthData(
+        accessToken: String?,
+        refreshToken: String?,
+        idToken: String?,
+        expiryDate: Date?,
+        grantedPermissionValues: Set<String>,
+        persist: Boolean,
+    ) {
         val currentConfig = config ?: throw YouVersionNotConfiguredException()
 
         _configState.value =
@@ -173,6 +221,7 @@ object YouVersionPlatformConfiguration {
                 refreshToken = refreshToken,
                 idToken = idToken,
                 expiryDate = expiryDate,
+                grantedPermissions = grantedPermissionValues.toGrantedPermissions(),
             )
 
         if (persist) {
@@ -181,6 +230,7 @@ object YouVersionPlatformConfiguration {
             sessionRepository.refreshToken = refreshToken
             sessionRepository.idToken = idToken
             sessionRepository.expiryDate = expiryDate
+            sessionRepository.grantedPermissionValues = grantedPermissionValues
         }
     }
 
@@ -188,16 +238,45 @@ object YouVersionPlatformConfiguration {
      * Clears all persisted user authentication data from the device.
      *
      * This function effectively signs the user out of the application. It removes the
-     * access token, refresh token, and expiry date from both the in-memory cache and
-     * the secure, persistent storage.
+     * access token, refresh token, expiry date, and granted permissions from both the
+     * in-memory cache and the secure, persistent storage.
      *
      * Call this function when the user explicitly chooses to sign out. After this is
      * called, the user will need to go through the `signIn` flow again to
      * re-authenticate.
      */
     fun clearAuthData() {
-        saveAuthData(accessToken = null, refreshToken = null, idToken = null, expiryDate = null)
+        writeAuthData(
+            accessToken = null,
+            refreshToken = null,
+            idToken = null,
+            expiryDate = null,
+            grantedPermissionValues = emptySet(),
+            persist = true,
+        )
     }
+
+    /**
+     * Records permissions the user has granted, merging them with any already held.
+     *
+     * Granted permissions are persisted separately from the auth tokens so that refreshing a token
+     * does not revoke them, and are cleared by [clearAuthData] when the user signs out.
+     *
+     * @param permissions The permissions the user granted.
+     * @throws YouVersionNotConfiguredException If [configure] has not been called first.
+     */
+    fun saveGrantedPermissions(permissions: Collection<SignInWithYouVersionPermission>) {
+        val currentConfig = config ?: throw YouVersionNotConfiguredException()
+        val sessionRepository = PlatformCoreKoinComponent.sessionRepository
+
+        val mergedValues = sessionRepository.grantedPermissionValues + permissions.map { it.rawValue }
+        sessionRepository.grantedPermissionValues = mergedValues
+
+        _configState.value = currentConfig.copy(grantedPermissions = mergedValues.toGrantedPermissions())
+    }
+
+    private fun Set<String>.toGrantedPermissions(): Set<SignInWithYouVersionPermission> =
+        mapNotNull { SignInWithYouVersionPermission.fromRawValue(it) }.toSet()
 
     /**
      * Resets the configuration state to its initial uninitialized state.
@@ -232,6 +311,8 @@ data class Config(
     val expiryDate: Date?,
     val permittedLanguageTags: Set<String>? = null,
     val permittedVersionIds: Set<Int>? = null,
+    val grantedPermissions: Set<SignInWithYouVersionPermission> = emptySet(),
+    val isSignInEnabled: Boolean = true,
 ) {
     val isSignedIn = accessToken != null
 }

@@ -242,17 +242,15 @@ object UsersEndpoints : UsersApi {
         val scopePermissions =
             tokens.scope
                 .split(",")
-                .mapNotNull { rawValue ->
-                    SignInWithYouVersionPermission.entries.find { it.rawValue == rawValue }
-                }.toSet()
+                .mapNotNull { SignInWithYouVersionPermission.fromRawValue(it) }
+                .toSet()
 
         val grantedPermissions =
             Url(callbackUri)
                 .parameters["granted_permissions"]
                 ?.split(",")
-                ?.mapNotNull { rawValue ->
-                    SignInWithYouVersionPermission.entries.find { it.rawValue == rawValue }
-                }?.toSet()
+                ?.mapNotNull { SignInWithYouVersionPermission.fromRawValue(it) }
+                ?.toSet()
                 .orEmpty()
 
         val permissions = scopePermissions.union(grantedPermissions).sortedBy { it.rawValue }

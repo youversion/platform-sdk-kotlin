@@ -865,7 +865,7 @@ class BibleScreenTest {
     }
 
     @Test
-    fun `verse tap does not dispatch OnVerseTap when not signed in`() {
+    fun `verse tap dispatches OnVerseTap when not signed in so copy and share stay available`() {
         stateFlow.value =
             BibleReaderViewModel.State(
                 bibleReference = defaultReference,
@@ -909,7 +909,7 @@ class BibleScreenTest {
             composeTestRule.onNodeWithText("In the beginning").performClick()
             composeTestRule.waitForIdle()
 
-            verify(exactly = 0) {
+            verify {
                 mockViewModel.onAction(match { it is BibleReaderViewModel.Action.OnVerseTap })
             }
         } finally {
@@ -951,6 +951,221 @@ class BibleScreenTest {
     private fun cleanUpSignedInConfig() {
         unmockkObject(YouVersionPlatformConfiguration)
         unmockkObject(YouVersionApi)
+    }
+
+    private fun stubConfig(
+        isSignedIn: Boolean,
+        isSignInEnabled: Boolean,
+    ) {
+        mockkObject(YouVersionPlatformConfiguration)
+        mockkObject(YouVersionApi)
+        val configStateFlow =
+            MutableStateFlow(
+                Config(
+                    appKey = "test",
+                    authCallback = "",
+                    apiHost = "",
+                    hostEnv = null,
+                    installId = null,
+                    accessToken = if (isSignedIn) "token" else null,
+                    refreshToken = null,
+                    idToken = null,
+                    expiryDate = null,
+                    isSignInEnabled = isSignInEnabled,
+                ),
+            )
+        every { YouVersionPlatformConfiguration.configState } returns configStateFlow
+        coEvery { YouVersionApi.hasValidToken() } returns true
+        mockUsersApi = mockk(relaxed = true)
+        every { YouVersionApi.users } returns mockUsersApi
+    }
+
+    private fun showVerseActionSheet() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference),
+            )
+        stubSuccessfulTextLoad()
+    }
+
+    @Test
+    fun `highlight colors are offered to a signed-out reader when sign-in is available`() {
+        showVerseActionSheet()
+        stubConfig(isSignedIn = false, isSignInEnabled = true)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    appName = "Test App",
+                    appSignInMessage = "Sign in",
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithContentDescription("Add yellow highlight").assertExists()
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
+    fun `tapping a highlight color while signed out dispatches it so the view model can defer it`() {
+        showVerseActionSheet()
+        stubConfig(isSignedIn = false, isSignInEnabled = true)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    appName = "Test App",
+                    appSignInMessage = "Keep your highlights",
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithContentDescription("Add yellow highlight").performClick()
+            composeTestRule.waitForIdle()
+
+            verify { mockViewModel.onAction(match { it is BibleReaderViewModel.Action.AddHighlight }) }
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
+    fun `the sign-in prompt is shown when the view model requests sign-in`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference),
+                shouldStartSignIn = true,
+            )
+        stubSuccessfulTextLoad()
+        stubConfig(isSignedIn = false, isSignInEnabled = true)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    appName = "Test App",
+                    appSignInMessage = "Keep your highlights",
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithText("Keep your highlights").assertExists()
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
+    fun `highlight colors are withheld from a signed-out reader when sign-in is disabled`() {
+        showVerseActionSheet()
+        stubConfig(isSignedIn = false, isSignInEnabled = false)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    appName = "Test App",
+                    appSignInMessage = "Sign in",
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithContentDescription("Add yellow highlight").assertDoesNotExist()
+            composeTestRule.onNodeWithContentDescription("Copy").assertExists()
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
+    fun `the data exchange confirmation renders and Continue dispatches ConfirmDataExchange`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference),
+                showDataExchangeConfirmation = true,
+            )
+        stubSuccessfulTextLoad()
+        stubConfig(isSignedIn = true, isSignInEnabled = true)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    appName = "Test App",
+                    appSignInMessage = "Sign in",
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithText("Allow this app to save highlights with YouVersion?").assertExists()
+            composeTestRule.onNodeWithText("Continue").performClick()
+
+            verify { mockViewModel.onAction(BibleReaderViewModel.Action.ConfirmDataExchange) }
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
+    fun `the data exchange confirmation Cancel dispatches CancelDataExchange`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference),
+                showDataExchangeConfirmation = true,
+            )
+        stubSuccessfulTextLoad()
+        stubConfig(isSignedIn = true, isSignInEnabled = true)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    appName = "Test App",
+                    appSignInMessage = "Sign in",
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithText("Cancel").performClick()
+
+            verify { mockViewModel.onAction(BibleReaderViewModel.Action.CancelDataExchange) }
+        } finally {
+            cleanUpSignedInConfig()
+        }
     }
 
     @Test

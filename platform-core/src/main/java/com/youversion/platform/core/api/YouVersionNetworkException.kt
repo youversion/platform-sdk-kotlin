@@ -17,7 +17,8 @@ class YouVersionNetworkException(
         INVALID_DOWNLOAD,
 
         /**
-         * The App Key is invalid or lacks permission
+         * The App Key is invalid or lacks permission, or the signed-in user has not granted the
+         * permission the request requires. Retrying does not change either outcome.
          */
         NOT_PERMITTED,
 

@@ -4,6 +4,8 @@ import androidx.annotation.VisibleForTesting
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.api.YouVersionNetworkException
+import com.youversion.platform.core.api.notPermitted
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.api.HighlightsApi
 import com.youversion.platform.core.highlights.api.HighlightsEndpoints
@@ -81,12 +83,32 @@ data class OperationResult(
 )
 
 /**
+ * How each reference in an operation fared, splitting failures the server may yet accept from ones it never will.
+ *
+ * References that reached the server are promoted in the cache as they are sent, so they are not reported here.
+ * [failedReferences] are retryable — a transient error, so they are requeued with backoff. [rejectedReferences] were
+ * refused because the user is not permitted to write highlights, which no amount of retrying changes, so they are
+ * dropped from the queue and reconciled from the server.
+ */
+private data class OperationOutcome(
+    val failedReferences: List<BibleReference> = emptyList(),
+    val rejectedReferences: List<BibleReference> = emptyList(),
+)
+
+/**
  * Coordinates Bible highlights between the local [BibleHighlightCache] and the YouVersion highlights API.
  *
  * Reads are served from the observable cache and refreshed per-chapter from the server (throttled). Writes update
  * the cache immediately (optimistically) and are queued for the server with retry/backoff so they survive transient
  * failures within the session. The cache and the queue are held in memory only: they do not survive process death, so
  * a write that has not yet reached the server is lost if the process is killed before it syncs.
+ *
+ * A write the server refuses for lack of permission is not retried, since no retry would change the answer. The
+ * refusal applies to the whole account, so every other queued write is dropped along with it, and the references they
+ * touched are reconciled from the server: their chapters are reloaded and the server's rows replace the optimistic
+ * ones. Nothing is discarded until that reload resolves. A reload that merely fails leaves the optimistic highlight on
+ * screen rather than erasing it, for a later load to reconcile; a reload the server refuses in turn clears every
+ * cached highlight, since that refusal means the user has not granted this app access to their highlights at all.
  *
  * Each queued write is bound to the account that was signed in when it was made. If the signed-in account changes
  * before the write syncs, the write is dropped rather than sent, so one user's highlights can never land on another
@@ -407,6 +429,46 @@ class BibleHighlightsRepository internal constructor(
         job.start()
     }
 
+    /**
+     * Abandons every write left doomed by a server refusal and reconciles the references they touched.
+     *
+     * A refusal is account-wide and permanent, so nothing still queued can succeed: [alreadyAbandonedOperations] and
+     * everything still queued are dropped rather than sent, each recorded as refused, and every reference involved is
+     * marked for reconciliation before its chapter is reloaded.
+     *
+     * The refused writes are undone by taking the server's state rather than by restoring the rows the cache held
+     * before each change. A snapshot is only correct while nothing has touched the reference since it was captured, so
+     * restoring one could erase a later change or resurrect a row the server never accepted — and because the cache
+     * only ever drops remote-synced rows on a merge, such a row would survive every reload. The server never applied a
+     * refused write, so its own state is what the cache should hold, whatever order the writes were made in.
+     */
+    private fun abandonRefusedWrites(
+        references: List<BibleReference>,
+        alreadyAbandonedOperations: List<PendingHighlightOperation>,
+    ) {
+        val queued =
+            queueLock.withLock {
+                queuedOperations.value.also { queuedOperations.value = emptyList() }
+            }
+        val abandoned = alreadyAbandonedOperations + queued
+        abandoned.forEach { operation ->
+            recordResult(
+                OperationResult(
+                    operationId = operation.id,
+                    isSuccess = false,
+                    error = notPermitted(),
+                    retryCount = operation.retryCount,
+                ),
+            )
+        }
+
+        val affectedReferences = (references + abandoned.flatMap { it.references }).distinct()
+        cache.markAwaitingReconcile(affectedReferences)
+        affectedReferences
+            .distinctBy { Triple(it.versionId, it.bookUSFM, it.chapter) }
+            .forEach { ensureHighlightsForChapterLoaded(it, forceReload = true) }
+    }
+
     private fun ensureProcessing(): Job {
         val job = queueLock.withLock { processingJobLocked() }
         job.start()
@@ -447,9 +509,10 @@ class BibleHighlightsRepository internal constructor(
                 val (batch, generationAtStart) = batchState
 
                 val failed = mutableListOf<PendingHighlightOperation>()
-                for (operation in batch) {
+                var wasRefused = false
+                for ((index, operation) in batch.withIndex()) {
                     var thrownError: Throwable? = null
-                    val failedReferences =
+                    val outcome =
                         try {
                             processOperation(operation)
                         } catch (e: CancellationException) {
@@ -457,9 +520,29 @@ class BibleHighlightsRepository internal constructor(
                         } catch (e: Exception) {
                             Logger.e(e) { "Highlight operation ${operation.id} threw" }
                             thrownError = e
-                            operation.references
+                            OperationOutcome(failedReferences = operation.references)
                         }
-                    if (failedReferences.isEmpty()) {
+
+                    if (outcome.rejectedReferences.isNotEmpty()) {
+                        recordResult(
+                            OperationResult(
+                                operationId = operation.id,
+                                isSuccess = false,
+                                error = notPermitted(),
+                                retryCount = operation.retryCount,
+                            ),
+                        )
+                        // The refusal is account-wide, so every write still waiting is doomed too — including ones that
+                        // merely failed transiently earlier in this batch, which would now be refused rather than retried.
+                        abandonRefusedWrites(
+                            references = outcome.rejectedReferences + outcome.failedReferences,
+                            alreadyAbandonedOperations = failed + batch.drop(index + 1),
+                        )
+                        wasRefused = true
+                        break
+                    }
+
+                    if (outcome.failedReferences.isEmpty()) {
                         recordResult(
                             OperationResult(
                                 operationId = operation.id,
@@ -470,7 +553,7 @@ class BibleHighlightsRepository internal constructor(
                     } else {
                         val retried =
                             operation.copy(
-                                references = failedReferences,
+                                references = outcome.failedReferences,
                                 retryCount = operation.retryCount + 1,
                             )
                         recordResult(
@@ -485,7 +568,7 @@ class BibleHighlightsRepository internal constructor(
                     }
                 }
 
-                if (failed.isEmpty()) {
+                if (wasRefused || failed.isEmpty()) {
                     continue
                 }
 
@@ -528,12 +611,17 @@ class BibleHighlightsRepository internal constructor(
      * The signed-in account is re-checked before each send. If it has changed since [operation] was queued, the send
      * loop stops so no write can reach a different account; references already sent under the original account are still
      * promoted, and the rest are dropped without retrying.
+     *
+     * A reference the server refuses for lack of permission is reported as rejected rather than failed, and the send
+     * loop stops: the remaining references would be refused for the same reason, so they are reported as rejected too
+     * rather than each firing its own doomed request.
      */
-    private suspend fun processOperation(operation: PendingHighlightOperation): List<BibleReference> {
+    private suspend fun processOperation(operation: PendingHighlightOperation): OperationOutcome {
         val change = operation.change
         val syncedReferences = mutableListOf<BibleReference>()
         val failedReferences = mutableListOf<BibleReference>()
-        for (reference in operation.references) {
+        val rejectedReferences = mutableListOf<BibleReference>()
+        for ((index, reference) in operation.references.withIndex()) {
             if (change is HighlightChange.SetColor) {
                 cache.awaitChapterLoaded(reference)
             }
@@ -543,10 +631,17 @@ class BibleHighlightsRepository internal constructor(
             }
             val passageId = reference.asUSFM
             val succeeded =
-                when (change) {
-                    is HighlightChange.SetColor -> syncHighlight(reference, passageId, change.color)
-                    HighlightChange.Remove ->
-                        api.deleteHighlight(reference.versionId, passageId)
+                try {
+                    when (change) {
+                        is HighlightChange.SetColor -> syncHighlight(reference, passageId, change.color)
+                        HighlightChange.Remove ->
+                            api.deleteHighlight(reference.versionId, passageId)
+                    }
+                } catch (e: YouVersionNetworkException) {
+                    if (e.reason != YouVersionNetworkException.Reason.NOT_PERMITTED) throw e
+                    Logger.w { "Dropping highlight operation ${operation.id}: not permitted to change highlights" }
+                    rejectedReferences.addAll(operation.references.drop(index))
+                    break
                 }
             if (succeeded) {
                 syncedReferences.add(reference)
@@ -563,7 +658,7 @@ class BibleHighlightsRepository internal constructor(
                     cache.markDeletesSynced(syncedReferences)
             }
         }
-        return failedReferences
+        return OperationOutcome(failedReferences = failedReferences, rejectedReferences = rejectedReferences)
     }
 
     /**
@@ -588,6 +683,18 @@ class BibleHighlightsRepository internal constructor(
             api.createHighlight(reference.versionId, passageId, hexWithoutHash(color))
         }
 
+    /**
+     * Loads [chapter]'s highlights from the server and merges them into the cache.
+     *
+     * A read the server refuses for lack of permission clears every cached highlight, not just this chapter's: the
+     * refusal says the user has not granted this app access to their highlights at all, so no chapter's cached copy is
+     * still theirs to show. Nothing else clears on that — an account change triggers [reset], but a user who stays
+     * signed in and simply lacks the grant produces no account change — so this is where it is caught.
+     *
+     * Every other failure leaves the cache untouched: the response never arrived, so it decides nothing. That includes
+     * a 401, which means the user is signed out or their token expired rather than that they revoked access. Skipping
+     * the merge also leaves the reload throttle unarmed, so the next load retries immediately instead of waiting it out.
+     */
     private suspend fun loadChapterFromServer(
         chapter: BibleReference,
         load: BibleHighlightCache.ChapterLoad,
@@ -602,6 +709,13 @@ class BibleHighlightsRepository internal constructor(
             cache.applyServerHighlights(chapter = chapter, highlights = serverHighlights, load = load)
         } catch (e: CancellationException) {
             throw e
+        } catch (e: YouVersionNetworkException) {
+            if (e.reason == YouVersionNetworkException.Reason.NOT_PERMITTED) {
+                Logger.w { "Not permitted to read highlights; clearing every cached highlight" }
+                cache.clear()
+            } else {
+                Logger.e(e) { "Failed to load highlights for chapter $chapter" }
+            }
         } catch (e: Exception) {
             Logger.e(e) { "Failed to load highlights for chapter $chapter" }
         } finally {

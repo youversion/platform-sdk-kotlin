@@ -13,6 +13,9 @@ class SessionRepository(
         internal const val KEY_ID_TOKEN = "YouVersionPlatformIDToken"
         internal const val KEY_EXPIRY_DATE = "YouVersionPlatformExpiryDate"
         internal const val KEY_INSTALL_ID = "YouVersionPlatformInstallID"
+        internal const val KEY_GRANTED_PERMISSIONS = "YouVersionPlatformGrantedPermissions"
+
+        private const val PERMISSION_SEPARATOR = ","
     }
 
     /**
@@ -49,4 +52,24 @@ class SessionRepository(
                 ?.toLongOrNull()
                 ?.let { Date(it) }
         set(value) = storage.putString(KEY_EXPIRY_DATE, value?.time?.toString())
+
+    /**
+     * The raw values of the permissions the signed-in user has granted.
+     *
+     * Stored as raw strings so that a stored value this SDK version does not recognize is ignored
+     * when read back rather than failing to parse.
+     */
+    internal var grantedPermissionValues: Set<String>
+        get() =
+            storage
+                .getStringOrNull(KEY_GRANTED_PERMISSIONS)
+                ?.split(PERMISSION_SEPARATOR)
+                ?.filter { it.isNotBlank() }
+                ?.toSet()
+                .orEmpty()
+        set(value) =
+            storage.putString(
+                KEY_GRANTED_PERMISSIONS,
+                value.sorted().joinToString(PERMISSION_SEPARATOR).takeIf { it.isNotEmpty() },
+            )
 }

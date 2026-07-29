@@ -40,10 +40,19 @@ import com.youversion.platform.reader.R
 import com.youversion.platform.ui.theme.ReaderColorScheme
 import com.youversion.platform.ui.theme.readerColorScheme
 
+/**
+ * The actions offered for the current verse selection.
+ *
+ * Copy and share need no account and are always offered. Highlighting does, so [showsHighlightColors] hides the
+ * color picker entirely when the reader has no account and no way to get one — a control that could never work is
+ * not shown. When the reader is signed out but sign-in is available, the colors are shown and tapping one asks them
+ * to sign in.
+ */
 @Composable
 internal fun BibleReaderVerseActionSheet(
     colorsToRemove: List<HighlightColor>,
     colorsToAdd: List<HighlightColor>,
+    showsHighlightColors: Boolean,
     onAddHighlight: (String) -> Unit,
     onRemoveHighlight: (String) -> Unit,
     onCopy: () -> Unit,
@@ -59,7 +68,7 @@ internal fun BibleReaderVerseActionSheet(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (colorsToRemove.isNotEmpty() || colorsToAdd.isNotEmpty()) {
+            if (showsHighlightColors && (colorsToRemove.isNotEmpty() || colorsToAdd.isNotEmpty())) {
                 HighlightColorPicker(
                     colorsToRemove = colorsToRemove,
                     colorsToAdd = colorsToAdd,

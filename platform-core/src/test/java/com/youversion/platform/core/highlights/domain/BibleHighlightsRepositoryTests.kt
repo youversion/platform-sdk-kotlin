@@ -1,7 +1,9 @@
 package com.youversion.platform.core.highlights.domain
 
+import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.api.HighlightsApi
+import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.highlights.models.Highlight
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -132,6 +134,270 @@ class BibleHighlightsRepositoryTests {
             assertEquals(1, api.updateCount)
             assertEquals(1, repository.highlights.value.size)
             assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `an add rejected for permission is not retried`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(rejectsChanges = true)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            advanceUntilIdle()
+
+            assertEquals(1, api.createCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `a remove rejected for permission is not retried`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(rejectsChanges = true)
+            val repository = repository(api)
+
+            repository.removeHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+            )
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `an add rejected for permission stops being shown`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(rejectsChanges = true)
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.addHighlights(listOf(reference), color = "#ff00ff")
+            assertEquals(1, repository.highlights(overlapping = reference).size)
+
+            advanceUntilIdle()
+
+            assertEquals(emptyList(), repository.highlights(overlapping = reference))
+        }
+
+    @Test
+    fun `a remove rejected for permission reconciles back to the highlight it hid`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn = listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    rejectsChanges = true,
+                )
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+
+            repository.removeHighlights(listOf(reference))
+            assertEquals(emptyList(), repository.highlights(overlapping = reference))
+
+            advanceUntilIdle()
+
+            assertEquals("#ff0000", repository.highlights(overlapping = reference).single().hexColor)
+        }
+
+    @Test
+    fun `a recolor rejected for permission reconciles back to the server color`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn = listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    rejectsChanges = true,
+                )
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            assertEquals("#00ff00", repository.highlights(overlapping = reference).single().hexColor)
+
+            advanceUntilIdle()
+
+            assertEquals("#ff0000", repository.highlights(overlapping = reference).single().hexColor)
+        }
+
+    @Test
+    fun `a rejected write does not leave flushPendingWrites hanging`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(rejectsChanges = true)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            runCurrent()
+
+            repository.flushPendingWrites()
+
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `a rejected write does not stop a later write from saving`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi()
+            val repository = repository(api)
+            val rejected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val accepted = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
+
+            api.rejectsChanges = true
+            repository.addHighlights(listOf(rejected), color = "#ff00ff")
+            advanceUntilIdle()
+
+            api.rejectsChanges = false
+            repository.addHighlights(listOf(accepted), color = "#00ff00")
+            advanceUntilIdle()
+
+            assertEquals(2, api.createCount)
+            assertEquals("#00ff00", repository.highlights(overlapping = accepted).first().hexColor)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `a recolor made while a rejected add is in flight is reconciled, not left behind as a phantom`() =
+        runTest(testDispatcher) {
+            val createGate = CompletableDeferred<Unit>()
+            val api = FakeHighlightsApi(rejectsChanges = true, createGate = createGate)
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.addHighlights(listOf(reference), color = "#ff00ff")
+            runCurrent()
+
+            // The recolor lands while the add is still in flight, so its row is the one the cache now holds. Undoing
+            // the add by restoring the rows it replaced would erase this recolor and then resurrect the add's own row,
+            // leaving a highlight the server never accepted and no reload can clear.
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            createGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(emptyList(), repository.highlights(overlapping = reference))
+            assertEquals(1, api.createCount)
+            assertEquals(0, api.updateCount)
+        }
+
+    @Test
+    fun `a removal queued behind a rejected recolor is dropped and the server highlight stands`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn = listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    rejectsChanges = true,
+                )
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            repository.removeHighlights(listOf(reference))
+            advanceUntilIdle()
+
+            // The refusal is account-wide, so the removal is never attempted: it cannot succeed against the server and
+            // then be undone by the recolor's rollback.
+            assertEquals(0, api.deleteCount)
+            assertEquals("#ff0000", repository.highlights(overlapping = reference).single().hexColor)
+        }
+
+    @Test
+    fun `a refusal drops the rest of the queue instead of sending each doomed write`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(rejectsChanges = true)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)),
+                color = "#00ff00",
+            )
+            advanceUntilIdle()
+
+            assertEquals(1, api.createCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+            assertEquals(0, repository.failedOperationCount.value)
+        }
+
+    @Test
+    fun `a reload that fails after a refusal keeps the highlight until a later load reconciles it`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(rejectsChanges = true, highlightsFailures = 1)
+            val repository = repository(api)
+            val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.addHighlights(listOf(reference), color = "#ff00ff")
+            advanceUntilIdle()
+
+            // The reconciling reload never returned, so nothing was discarded: the reader still sees the highlight they
+            // made rather than watching it disappear on a connection that dropped.
+            assertEquals("#ff00ff", repository.highlights(overlapping = reference).single().hexColor)
+
+            repository.ensureHighlightsForChapterLoaded(chapter)
+            advanceUntilIdle()
+
+            assertEquals(emptyList(), repository.highlights(overlapping = reference))
+        }
+
+    @Test
+    fun `a read the server refuses clears every cached highlight, not only the chapter being loaded`() =
+        runTest(testDispatcher) {
+            val genesis = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+            val exodus = BibleReference(versionId = 1, bookUSFM = "EXO", chapter = 1, verse = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn = listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                )
+            val repository = repository(api)
+
+            repository.ensureHighlightsForChapterLoaded(genesis)
+            advanceUntilIdle()
+            repository.seedCachedHighlights(listOf(BibleHighlight(bibleReference = exodus, hexColor = "#00ff00")))
+            assertEquals(1, repository.highlights(overlapping = genesis).size)
+            assertEquals(1, repository.highlights(overlapping = exodus).size)
+
+            api.rejectsReads = true
+            repository.ensureHighlightsForChapterLoaded(genesis, forceReload = true)
+            advanceUntilIdle()
+
+            // The refusal says the user has not granted access to their highlights at all, so a chapter this load never
+            // touched is no longer theirs to show either.
+            assertEquals(emptyList(), repository.highlights(overlapping = genesis))
+            assertEquals(emptyList(), repository.highlights(overlapping = exodus))
+        }
+
+    @Test
+    fun `a read that fails without being refused leaves the cached highlights untouched`() =
+        runTest(testDispatcher) {
+            val genesis = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn = listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                )
+            val repository = repository(api)
+
+            repository.ensureHighlightsForChapterLoaded(genesis)
+            advanceUntilIdle()
+            assertEquals(1, repository.highlights(overlapping = genesis).size)
+
+            // A signed-out reader, an expired token or a server error carries no answer about what the user holds, so
+            // it must not be mistaken for the server reporting an empty chapter.
+            api.highlightsFailures = 1
+            repository.ensureHighlightsForChapterLoaded(genesis, forceReload = true)
+            advanceUntilIdle()
+
+            assertEquals("#ff0000", repository.highlights(overlapping = genesis).single().hexColor)
         }
 
     @Test
@@ -855,6 +1121,10 @@ private class FakeHighlightsApi(
     failuresBeforeSuccess: Int = 0,
     private val highlightsGate: CompletableDeferred<Unit>? = null,
     private val deleteGate: CompletableDeferred<Unit>? = null,
+    private val createGate: CompletableDeferred<Unit>? = null,
+    var highlightsFailures: Int = 0,
+    var rejectsChanges: Boolean = false,
+    var rejectsReads: Boolean = false,
 ) : HighlightsApi {
     var createCount = 0
     var updateCount = 0
@@ -869,6 +1139,9 @@ private class FakeHighlightsApi(
     private var remainingFailures = failuresBeforeSuccess
 
     private fun nextResult(): Boolean {
+        if (rejectsChanges) {
+            throw YouVersionNetworkException(YouVersionNetworkException.Reason.NOT_PERMITTED)
+        }
         if (remainingFailures > 0) {
             remainingFailures--
             return false
@@ -884,6 +1157,7 @@ private class FakeHighlightsApi(
         createCount++
         createdPassages.add(passageId)
         createdColors.add(color)
+        createGate?.await()
         return nextResult()
     }
 
@@ -893,6 +1167,13 @@ private class FakeHighlightsApi(
     ): List<Highlight> {
         highlightsCount++
         highlightsGate?.await()
+        if (rejectsReads) {
+            throw YouVersionNetworkException(YouVersionNetworkException.Reason.NOT_PERMITTED)
+        }
+        if (highlightsFailures > 0) {
+            highlightsFailures--
+            throw YouVersionNetworkException(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD)
+        }
         return highlightsToReturn
     }
 
