@@ -1,11 +1,14 @@
 package com.youversion.platform.reader.sheets
 
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.theme.Charcoal
+import com.youversion.platform.ui.theme.PureWhite
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -145,5 +148,21 @@ class BibleReaderVerseActionSheetTest {
 
         composeTestRule.onNodeWithContentDescription("Remove yellow highlight").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Add yellow highlight").assertIsDisplayed()
+    }
+
+    // ----- Swatch Color
+
+    @Test
+    fun `swatchColor keeps the palette color on a light theme`() {
+        assertEquals(HighlightColor.Yellow.color, HighlightColor.Yellow.swatchColor(PureWhite))
+    }
+
+    @Test
+    fun `swatchColor composites the dimmed color over the reader background on a dark theme`() {
+        val swatchColor = HighlightColor.Yellow.swatchColor(Charcoal)
+        val dimmed = HighlightColor.Yellow.color.copy(alpha = Charcoal.highlightAlpha)
+
+        assertEquals(1f, swatchColor.alpha)
+        assertEquals(dimmed.compositeOver(Charcoal.background), swatchColor)
     }
 }
