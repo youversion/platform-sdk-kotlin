@@ -114,26 +114,28 @@ class HighlightsApiTests : YouVersionPlatformTest {
             assertEquals("GEN.9.1", highlights.first().passageId)
         }
 
+    // A failed read must not look like an empty chapter: callers merge the result as the server's own answer, so
+    // returning empty would discard cached highlights on a response that never arrived. The two statuses are reported
+    // differently because only 403 means the user withheld access; 401 means they are signed out or their token lapsed.
     @Test
-    fun `test get highlights unauthorized returns empty`() =
+    fun `test get highlights unauthorized throws missing authentication`() =
         runTest {
             MockEngine { request ->
                 respond("", HttpStatusCode.Unauthorized)
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
-            assertTrue { YouVersionApi.highlights.highlights(1, "GEN.1").isEmpty() }
+            val exception =
+                assertFailsWith<YouVersionNetworkException> {
+                    YouVersionApi.highlights.highlights(1, "GEN.1")
+                }
+            assertEquals(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION, exception.reason)
         }
 
     @Test
-    fun `test get highlights forbidden returns empty`() =
-        runTest {
-            MockEngine { request ->
-                respond("", HttpStatusCode.Forbidden)
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
-            assertTrue { YouVersionApi.highlights.highlights(1, "GEN.1").isEmpty() }
+    fun `test get highlights forbidden throws not permitted`() =
+        testForbiddenNotPermitted {
+            YouVersionApi.highlights.highlights(1, "GEN.1")
         }
 
     @Test

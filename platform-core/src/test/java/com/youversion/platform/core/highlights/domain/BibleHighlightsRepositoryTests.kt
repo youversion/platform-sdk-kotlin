@@ -3,6 +3,7 @@ package com.youversion.platform.core.highlights.domain
 import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.api.HighlightsApi
+import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.highlights.models.Highlight
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -347,6 +348,56 @@ class BibleHighlightsRepositoryTests {
             advanceUntilIdle()
 
             assertEquals(emptyList(), repository.highlights(overlapping = reference))
+        }
+
+    @Test
+    fun `a read the server refuses clears every cached highlight, not only the chapter being loaded`() =
+        runTest(testDispatcher) {
+            val genesis = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+            val exodus = BibleReference(versionId = 1, bookUSFM = "EXO", chapter = 1, verse = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn = listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                )
+            val repository = repository(api)
+
+            repository.ensureHighlightsForChapterLoaded(genesis)
+            advanceUntilIdle()
+            repository.seedCachedHighlights(listOf(BibleHighlight(bibleReference = exodus, hexColor = "#00ff00")))
+            assertEquals(1, repository.highlights(overlapping = genesis).size)
+            assertEquals(1, repository.highlights(overlapping = exodus).size)
+
+            api.rejectsReads = true
+            repository.ensureHighlightsForChapterLoaded(genesis, forceReload = true)
+            advanceUntilIdle()
+
+            // The refusal says the user has not granted access to their highlights at all, so a chapter this load never
+            // touched is no longer theirs to show either.
+            assertEquals(emptyList(), repository.highlights(overlapping = genesis))
+            assertEquals(emptyList(), repository.highlights(overlapping = exodus))
+        }
+
+    @Test
+    fun `a read that fails without being refused leaves the cached highlights untouched`() =
+        runTest(testDispatcher) {
+            val genesis = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn = listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                )
+            val repository = repository(api)
+
+            repository.ensureHighlightsForChapterLoaded(genesis)
+            advanceUntilIdle()
+            assertEquals(1, repository.highlights(overlapping = genesis).size)
+
+            // A signed-out reader, an expired token or a server error carries no answer about what the user holds, so
+            // it must not be mistaken for the server reporting an empty chapter.
+            api.highlightsFailures = 1
+            repository.ensureHighlightsForChapterLoaded(genesis, forceReload = true)
+            advanceUntilIdle()
+
+            assertEquals("#ff0000", repository.highlights(overlapping = genesis).single().hexColor)
         }
 
     @Test
@@ -1071,8 +1122,9 @@ private class FakeHighlightsApi(
     private val highlightsGate: CompletableDeferred<Unit>? = null,
     private val deleteGate: CompletableDeferred<Unit>? = null,
     private val createGate: CompletableDeferred<Unit>? = null,
-    private var highlightsFailures: Int = 0,
+    var highlightsFailures: Int = 0,
     var rejectsChanges: Boolean = false,
+    var rejectsReads: Boolean = false,
 ) : HighlightsApi {
     var createCount = 0
     var updateCount = 0
@@ -1115,6 +1167,9 @@ private class FakeHighlightsApi(
     ): List<Highlight> {
         highlightsCount++
         highlightsGate?.await()
+        if (rejectsReads) {
+            throw YouVersionNetworkException(YouVersionNetworkException.Reason.NOT_PERMITTED)
+        }
         if (highlightsFailures > 0) {
             highlightsFailures--
             throw YouVersionNetworkException(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD)

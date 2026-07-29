@@ -106,8 +106,9 @@ private data class OperationOutcome(
  * A write the server refuses for lack of permission is not retried, since no retry would change the answer. The
  * refusal applies to the whole account, so every other queued write is dropped along with it, and the references they
  * touched are reconciled from the server: their chapters are reloaded and the server's rows replace the optimistic
- * ones. Nothing is discarded until that reload lands, so a refusal followed by a failed reload leaves the optimistic
- * highlight on screen rather than erasing it, and a later load reconciles it instead.
+ * ones. Nothing is discarded until that reload resolves. A reload that merely fails leaves the optimistic highlight on
+ * screen rather than erasing it, for a later load to reconcile; a reload the server refuses in turn clears every
+ * cached highlight, since that refusal means the user has not granted this app access to their highlights at all.
  *
  * Each queued write is bound to the account that was signed in when it was made. If the signed-in account changes
  * before the write syncs, the write is dropped rather than sent, so one user's highlights can never land on another
@@ -682,6 +683,18 @@ class BibleHighlightsRepository internal constructor(
             api.createHighlight(reference.versionId, passageId, hexWithoutHash(color))
         }
 
+    /**
+     * Loads [chapter]'s highlights from the server and merges them into the cache.
+     *
+     * A read the server refuses for lack of permission clears every cached highlight, not just this chapter's: the
+     * refusal says the user has not granted this app access to their highlights at all, so no chapter's cached copy is
+     * still theirs to show. Nothing else clears on that — an account change triggers [reset], but a user who stays
+     * signed in and simply lacks the grant produces no account change — so this is where it is caught.
+     *
+     * Every other failure leaves the cache untouched: the response never arrived, so it decides nothing. That includes
+     * a 401, which means the user is signed out or their token expired rather than that they revoked access. Skipping
+     * the merge also leaves the reload throttle unarmed, so the next load retries immediately instead of waiting it out.
+     */
     private suspend fun loadChapterFromServer(
         chapter: BibleReference,
         load: BibleHighlightCache.ChapterLoad,
@@ -696,6 +709,13 @@ class BibleHighlightsRepository internal constructor(
             cache.applyServerHighlights(chapter = chapter, highlights = serverHighlights, load = load)
         } catch (e: CancellationException) {
             throw e
+        } catch (e: YouVersionNetworkException) {
+            if (e.reason == YouVersionNetworkException.Reason.NOT_PERMITTED) {
+                Logger.w { "Not permitted to read highlights; clearing every cached highlight" }
+                cache.clear()
+            } else {
+                Logger.e(e) { "Failed to load highlights for chapter $chapter" }
+            }
         } catch (e: Exception) {
             Logger.e(e) { "Failed to load highlights for chapter $chapter" }
         } finally {

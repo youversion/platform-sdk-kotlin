@@ -402,8 +402,7 @@ class BibleReaderViewModel(
      * Resolves a highlight change against the reader's state, holding it as [pendingHighlight] whenever it cannot be
      * applied yet. A signed-out reader is sent to sign in first; a signed-in reader without highlights access is asked
      * to grant it; otherwise the change applies at once. Add, remove, and recolor all pass through here, so each is
-     * gated the same way — a reader who revoked access after highlighting is asked again before an existing highlight
-     * can be changed.
+     * gated the same way.
      *
      * Sign-in and the permission prompt are never raised together: a signed-out reader only reaches the permission
      * check after signing in, via [continueAfterSignIn].

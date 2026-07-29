@@ -34,6 +34,15 @@ interface HighlightsApi {
      * @param versionId: The ID of the Bible version to fetch highlights for.
      * @param passageId: The passage identifier (e.g., "JHN.5").
      * @returns: An array of highlight data representing the user's highlights in the specified chapter.
+     * @throws [com.youversion.platform.core.api.YouVersionNetworkException] with reason
+     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.NOT_PERMITTED] when the user has not
+     *         granted this app access to their highlights. This applies to the whole account rather than to the
+     *         requested chapter, and will not succeed on retry.
+     * @throws [com.youversion.platform.core.api.YouVersionNetworkException] with reason
+     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.MISSING_AUTHENTICATION] when the
+     *         request was not authenticated, which a sign-in or token refresh may resolve. A failure is reported rather
+     *         than an empty chapter so that callers caching the result do not mistake it for the server reporting that
+     *         the chapter holds no highlights.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
     suspend fun highlights(
