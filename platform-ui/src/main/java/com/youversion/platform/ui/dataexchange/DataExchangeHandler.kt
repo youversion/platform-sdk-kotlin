@@ -37,14 +37,20 @@ class DataExchangeHandler(
      * without the caller doing anything.
      *
      * @param permissions The permissions to ask for.
+     * @param onBrowserOpened Called once the browser is open, and never called when it could not be opened. A caller
+     *        that settles the flow on a resume needs this to tell a resume that follows the browser from one that
+     *        arrives while the exchange token is still being requested, since only the first means the user answered.
      * @return How the flow ended, and which permissions were granted. A failure is reported rather than thrown, and
      *         everything that can fail here happens before the browser opens, so it is reported as
      *         [DataExchangeStatus.NotStarted] — telling a caller that settles the flow on a resume that no resume is
      *         coming.
      */
-    suspend fun requestDataExchange(permissions: Set<SignInWithYouVersionPermission>): DataExchangeResult =
+    suspend fun requestDataExchange(
+        permissions: Set<SignInWithYouVersionPermission>,
+        onBrowserOpened: () -> Unit = {},
+    ): DataExchangeResult =
         try {
-            exchange(permissions)
+            exchange(permissions, onBrowserOpened)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Exception) {
@@ -52,7 +58,10 @@ class DataExchangeHandler(
             DataExchangeResult(status = DataExchangeStatus.NotStarted, grantedPermissions = emptyList())
         }
 
-    private suspend fun exchange(permissions: Set<SignInWithYouVersionPermission>): DataExchangeResult {
+    private suspend fun exchange(
+        permissions: Set<SignInWithYouVersionPermission>,
+        onBrowserOpened: () -> Unit,
+    ): DataExchangeResult {
         val token = YouVersionApi.dataExchange.dataExchangeToken(permissions)
         val appKey =
             YouVersionPlatformConfiguration.appKey
@@ -77,6 +86,7 @@ class DataExchangeHandler(
                     permissionPageUrl.toUri(),
                     YouVersionPlatformConfiguration.authCallback,
                 )
+                onBrowserOpened()
             }
         } finally {
             launcher?.unregister()

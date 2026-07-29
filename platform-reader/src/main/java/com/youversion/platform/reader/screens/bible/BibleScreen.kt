@@ -141,11 +141,10 @@ internal fun BibleScreen(
     // when it is dismissed after a deep link the reader has yet to process. Everything else settles on the resume,
     // which reads the permission both routes persist before the reader can resume: a grant applies the pending
     // highlight, a dismissal or cancellation reads no grant and clears it.
-    val requestDataExchange = rememberDataExchange()
     val isDataExchangeInProgress = rememberSaveable { mutableStateOf(false) }
+    val requestDataExchange = rememberDataExchange(onBrowserOpened = { isDataExchangeInProgress.value = true })
     LaunchedEffect(state.shouldStartDataExchangeFlow) {
         if (!state.shouldStartDataExchangeFlow) return@LaunchedEffect
-        isDataExchangeInProgress.value = true
         val result = requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
         val isHighlightsGranted = result?.grants(SignInWithYouVersionPermission.HIGHLIGHTS) == true
         // A null result means there was no launcher to open the browser with, and NotStarted means the flow could not

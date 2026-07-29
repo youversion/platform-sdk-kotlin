@@ -108,6 +108,59 @@ class DataExchangeHandlerTest {
                 PlatformKoinGraph.stop()
             }
         }
+
+    @Test
+    fun `a flow that could not be started never reports the browser as opened`() =
+        runTest {
+            mockkObject(YouVersionApi)
+            try {
+                val api = mockk<DataExchangeApi>()
+                coEvery { api.dataExchangeToken(any()) } throws
+                    YouVersionNetworkException(YouVersionNetworkException.Reason.NOT_PERMITTED)
+                every { YouVersionApi.dataExchange } returns api
+
+                var isBrowserOpened = false
+                val result =
+                    DataExchangeHandler(mockk(relaxed = true)).requestDataExchange(
+                        permissions = setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                        onBrowserOpened = { isBrowserOpened = true },
+                    )
+
+                assertEquals(DataExchangeStatus.NotStarted, result.status)
+                assertFalse(isBrowserOpened)
+            } finally {
+                unmockkObject(YouVersionApi)
+            }
+        }
+
+    @Test
+    fun `a launched flow reports the browser as opened`() =
+        runTest {
+            mockkObject(YouVersionApi)
+            try {
+                YouVersionPlatformConfiguration.configure(
+                    context = ApplicationProvider.getApplicationContext<Context>(),
+                    appKey = "test",
+                )
+                val api = mockk<DataExchangeApi>()
+                coEvery { api.dataExchangeToken(any()) } returns DataExchangeToken(token = "exchange-token")
+                every { YouVersionApi.dataExchange } returns api
+
+                var isBrowserOpened = false
+                DataExchangeHandler(
+                    ImmediateCallbackRegistry("youversionauth://callback?data_exchange_status=cancel"),
+                ).requestDataExchange(
+                    permissions = setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                    onBrowserOpened = { isBrowserOpened = true },
+                )
+
+                assertTrue(isBrowserOpened)
+            } finally {
+                unmockkObject(YouVersionApi)
+                YouVersionPlatformConfiguration.clearAuthData()
+                PlatformKoinGraph.stop()
+            }
+        }
 }
 
 /**
