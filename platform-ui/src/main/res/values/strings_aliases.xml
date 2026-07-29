@@ -37,6 +37,9 @@
     <string name="sign_out_confirm_button_text">@string/yv_sign_out_confirm_button_text</string>
     <string name="sign_out_confirmation_message">@string/yv_sign_out_confirmation_message</string>
     <string name="sign_out_confirmation_title">@string/yv_sign_out_confirmation_title</string>
+    <string name="sign_out_pending_highlights_confirm_button_text">@string/yv_sign_out_pending_highlights_confirm_button_text</string>
+    <string name="sign_out_pending_highlights_message">@string/yv_sign_out_pending_highlights_message</string>
+    <string name="sign_out_pending_highlights_title">@string/yv_sign_out_pending_highlights_title</string>
     <string name="tab_votd">@string/yv_tab_votd</string>
     <string name="version_info_agree_and_download">@string/yv_version_info_agree_and_download</string>
     <string name="version_info_maybe_later">@string/yv_version_info_maybe_later</string>
