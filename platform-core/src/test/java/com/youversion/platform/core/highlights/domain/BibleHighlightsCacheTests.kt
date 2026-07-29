@@ -231,6 +231,130 @@ class BibleHighlightsCacheTests {
         assertFalse(cache.hasRecentlyLoadedChapter(chapter))
     }
 
+    // ----- Test Reconciling References the Server Refused
+    @Test
+    fun `a reconciled create leaves no row when the server holds no highlight for it`() {
+        cache.clear()
+        val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        cache.addHighlights(listOf(BibleHighlight(bibleReference = reference, hexColor = "#ff00ff")))
+        cache.markAwaitingReconcile(listOf(reference))
+
+        val load = assertNotNull(cache.markChapterAsLoading(chapter))
+        cache.applyServerHighlights(chapter = chapter, highlights = emptyList(), load = load)
+
+        assertTrue(cache.highlights(overlapping = reference).isEmpty())
+    }
+
+    @Test
+    fun `a reconciled recolor takes the server color rather than the refused one`() {
+        cache.clear()
+        val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        cache.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+        cache.markAwaitingReconcile(listOf(reference))
+
+        val load = assertNotNull(cache.markChapterAsLoading(chapter))
+        cache.applyServerHighlights(
+            chapter = chapter,
+            highlights = listOf(BibleHighlight(bibleReference = reference, hexColor = "#ff0000")),
+            load = load,
+        )
+
+        assertEquals("#ff0000", cache.highlights(overlapping = reference).single().hexColor)
+        assertTrue(cache.isHighlightServerBacked(reference))
+    }
+
+    @Test
+    fun `a reconciled removal shows the highlight its tombstone hid`() {
+        cache.clear()
+        val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        cache.removeHighlights(listOf(reference))
+        cache.markAwaitingReconcile(listOf(reference))
+
+        val load = assertNotNull(cache.markChapterAsLoading(chapter))
+        cache.applyServerHighlights(
+            chapter = chapter,
+            highlights = listOf(BibleHighlight(bibleReference = reference, hexColor = "#ff0000")),
+            load = load,
+        )
+
+        assertEquals("#ff0000", cache.highlights(overlapping = reference).single().hexColor)
+    }
+
+    @Test
+    fun `a load that fails before merging leaves the refused row for a later load to reconcile`() {
+        cache.clear()
+        val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        cache.addHighlights(listOf(BibleHighlight(bibleReference = reference, hexColor = "#ff00ff")))
+        cache.markAwaitingReconcile(listOf(reference))
+
+        // A load whose fetch fails unmarks itself without merging. Nothing is discarded until a merge lands, so the
+        // reader keeps seeing their unsaved highlight rather than watching it vanish, and the mark survives.
+        val failedLoad = assertNotNull(cache.markChapterAsLoading(chapter))
+        cache.unmarkChapterAsLoading(chapter, failedLoad)
+        assertEquals("#ff00ff", cache.highlights(overlapping = reference).single().hexColor)
+
+        val laterLoad = assertNotNull(cache.markChapterAsLoading(chapter))
+        cache.applyServerHighlights(chapter = chapter, highlights = emptyList(), load = laterLoad)
+
+        assertTrue(cache.highlights(overlapping = reference).isEmpty())
+    }
+
+    @Test
+    fun `writing a reference again clears its reconcile mark so the new highlight survives the next merge`() {
+        cache.clear()
+        val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        cache.addHighlights(listOf(BibleHighlight(bibleReference = reference, hexColor = "#ff00ff")))
+        cache.markAwaitingReconcile(listOf(reference))
+
+        // The reconciling load never landed, so the mark is still set when the reader — now permitted — highlights the
+        // verse again. That write is fresh intent, not the refused one, so the merge must leave it alone.
+        cache.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+
+        val load = assertNotNull(cache.markChapterAsLoading(chapter))
+        cache.applyServerHighlights(chapter = chapter, highlights = emptyList(), load = load)
+
+        assertEquals("#00ff00", cache.highlights(overlapping = reference).single().hexColor)
+    }
+
+    @Test
+    fun `removing a reference again clears its reconcile mark so the removal is not undone`() {
+        cache.clear()
+        val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        cache.markAwaitingReconcile(listOf(reference))
+
+        cache.removeHighlights(listOf(reference))
+
+        val load = assertNotNull(cache.markChapterAsLoading(chapter))
+        cache.applyServerHighlights(
+            chapter = chapter,
+            highlights = listOf(BibleHighlight(bibleReference = reference, hexColor = "#ff0000")),
+            load = load,
+        )
+
+        assertTrue(cache.highlights(overlapping = reference).isEmpty())
+    }
+
+    @Test
+    fun `clear forgets references awaiting reconciliation`() {
+        cache.clear()
+        val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        cache.markAwaitingReconcile(listOf(reference))
+
+        cache.clear()
+        cache.addHighlights(listOf(BibleHighlight(bibleReference = reference, hexColor = "#ff00ff")))
+        val load = assertNotNull(cache.markChapterAsLoading(chapter))
+        cache.applyServerHighlights(chapter = chapter, highlights = emptyList(), load = load)
+
+        assertEquals("#ff00ff", cache.highlights(overlapping = reference).single().hexColor)
+    }
+
     // ----- Test Sync Promotion
     @Test
     fun `markHighlightsAsSynced converts a superseded pending create into a pending update`() {

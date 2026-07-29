@@ -35,6 +35,7 @@ class SignInViewModel(
                 _state.update {
                     it.copy(
                         isSignedIn = config?.isSignedIn == true,
+                        isSignInEnabled = config?.isSignInEnabled != false,
                         userName = YouVersionApi.users.currentUserName,
                         userEmail = YouVersionApi.users.currentUserEmail,
                     )
@@ -94,6 +95,7 @@ class SignInViewModel(
     data class SignInViewState(
         val isProcessing: Boolean = false,
         val isSignedIn: Boolean = false,
+        val isSignInEnabled: Boolean = true,
         val userName: String? = null,
         val userEmail: String? = null,
         val showSignOutConfirmation: Boolean = false,

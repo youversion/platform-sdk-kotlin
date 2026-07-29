@@ -3,6 +3,8 @@ package com.youversion.platform.core.api
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.api.BiblesApi
 import com.youversion.platform.core.bibles.api.BiblesEndpoints
+import com.youversion.platform.core.dataexchange.api.DataExchangeApi
+import com.youversion.platform.core.dataexchange.api.DataExchangeEndpoints
 import com.youversion.platform.core.highlights.api.HighlightsApi
 import com.youversion.platform.core.highlights.api.HighlightsEndpoints
 import com.youversion.platform.core.languages.api.LanguagesApi
@@ -11,6 +13,7 @@ import com.youversion.platform.core.organizations.api.OrganizationsApi
 import com.youversion.platform.core.organizations.api.OrganizationsEndpoints
 import com.youversion.platform.core.users.api.UsersApi
 import com.youversion.platform.core.users.api.UsersEndpoints
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.votd.api.VotdApi
 import com.youversion.platform.core.votd.api.VotdEndpoints
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +22,7 @@ import java.util.Date
 
 object YouVersionApi {
     val bible: BiblesApi = BiblesEndpoints
+    val dataExchange: DataExchangeApi = DataExchangeEndpoints
     val highlights: HighlightsApi = HighlightsEndpoints
     val languages: LanguagesApi = LanguagesEndpoints
     val organizations: OrganizationsApi = OrganizationsEndpoints
@@ -27,6 +31,15 @@ object YouVersionApi {
 
     val isSignedIn: Boolean
         get() = YouVersionPlatformConfiguration.isSignedIn
+
+    /**
+     * Whether the signed-in user has granted the given permission to this app.
+     *
+     * @param permission The permission to check.
+     * @return `true` if the user has granted the permission, `false` otherwise.
+     */
+    fun hasPermission(permission: SignInWithYouVersionPermission): Boolean =
+        YouVersionPlatformConfiguration.grantedPermissions.contains(permission)
 
     /**
      * Checks if the current access token is valid. If the token is expired or close to
