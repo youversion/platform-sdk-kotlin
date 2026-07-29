@@ -37,6 +37,9 @@
     <string name="yv_sign_out_confirm_button_text">Sign Out</string>
     <string name="yv_sign_out_confirmation_message">Are you sure you want to sign out from YouVersion? You will need to sign in again to access your highlights.</string>
     <string name="yv_sign_out_confirmation_title">Sign Out</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">Sign out anyway</string>
+    <string name="yv_sign_out_pending_highlights_message">Some of your highlights haven\'t been saved yet, and they will be lost if you sign out. Do you want to sign out anyway?</string>
+    <string name="yv_sign_out_pending_highlights_title">Save your highlights?</string>
     <string name="yv_tab_votd">Verse of the Day</string>
     <string name="yv_version_info_agree_and_download">Agree and Download</string>
     <string name="yv_version_info_maybe_later">Maybe Later</string>
