@@ -7,9 +7,18 @@
     <string name="yv_banner_version_unavailable_icon">此譯本不可用圖示</string>
     <string name="yv_banner_version_unavailable_message">你之前選擇的聖經譯本不可使用。已為你選擇另一個類似的聖經譯本。</string>
     <string name="yv_book_chapter_picker_title">書卷</string>
+    <string name="yv_cancel">取消</string>
+    <string name="yv_data_exchange_continue">繼續</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion 將在儲存重點標記前要求你授予存取權限。</string>
+    <string name="yv_data_exchange_highlights_question">允許此應用程式將重點標記儲存至 YouVersion ？</string>
     <string name="yv_font_selected_check">已選擇字體的勾選標記</string>
     <string name="yv_font_settings_label">字體</string>
     <string name="yv_footnote_header_label">註腳</string>
+    <string name="yv_highlight_color_cyan">青色</string>
+    <string name="yv_highlight_color_green">綠色</string>
+    <string name="yv_highlight_color_orange">橙色</string>
+    <string name="yv_highlight_color_pink">粉紅色</string>
+    <string name="yv_highlight_color_yellow">黃色</string>
     <string name="yv_intro_chapter_label">簡介</string>
     <string name="yv_language_content_desc">語言</string>
     <string name="yv_line_spacing_label">行距</string>
@@ -19,6 +28,8 @@
     <string name="yv_reader_menu_sign_in">登入</string>
     <string name="yv_reader_menu_sign_out">登出</string>
     <string name="yv_theme_selected">已選擇</string>
+    <string name="yv_verse_action_add_highlight">新增 %1$s 螢光標示</string>
     <string name="yv_verse_action_copy">複製</string>
+    <string name="yv_verse_action_remove_highlight">移除 %1$s 螢光標示</string>
     <string name="yv_verse_action_share">分享</string>
 </resources>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_active_language_versions_header">%1$s Versiyonlar (%2$s)</string>
+    <string name="yv_back_button">Geri</string>
+    <string name="yv_bible_card_unavailable_reference">Bu pasaj seçilen Kutsal Kitap çeviri sürümünde mevcut değildir.</string>
+    <string name="yv_bible_version_details_content_desc">Kutsal Kitap Sürümü Ayrıntıları</string>
+    <string name="yv_bible_version_load_error">Kutsal Kitap sürümü yüklenirken hata oluştu</string>
+    <string name="yv_bible_versions_heading">Kutsal Kitap Çeviri Versiyonları</string>
+    <string name="yv_books_heading">Kitapçıklar</string>
+    <string name="yv_close_search_bar">Arama girişini kapat</string>
+    <string name="yv_footnote_content_desc">dipnot</string>
+    <string name="yv_full_chapter">Tam Bölüm</string>
+    <string name="yv_language_label">Dil</string>
+    <string name="yv_language_tab_all">Tümü</string>
+    <string name="yv_language_tab_suggested">Önerilen</string>
+    <string name="yv_ok">Tamam</string>
+    <string name="yv_placeholder_offline">İnternet bağlantınızı kaybettiniz. Çevrimdışı devam etmek için yeniden bağlanın ve bir Kutsal Kitap sürümü indirin.</string>
+    <string name="yv_placeholder_offline_icon_content_desc">Wi-Fi Yok</string>
+    <string name="yv_placeholder_version_unavailable">Daha önce seçtiğiniz Kutsal Kitap sürümü kullanılamıyor. Sizin için benzer başka bir Kutsal Kitap sürümü seçildi.</string>
+    <string name="yv_placeholder_version_unavailable_icon_content_desc">Sürüm kullanılamıyor</string>
+    <string name="yv_search">Ara</string>
+    <string name="yv_search_bible_versions">Bir Kutsal Kitap çeviri versiyonu arayın</string>
+    <string name="yv_search_languages">Bir dil arayın</string>
+    <string name="yv_select_language_title">Bir Dil Seçin</string>
+    <string name="yv_share_content_desc">Paylaş</string>
+    <string name="yv_sign_in_button_compact">Oturum aç</string>
+    <string name="yv_sign_in_button_content_desc">YouVersion ile oturum aç</string>
+    <string name="yv_sign_in_button_full">Şununla oturum aç:</string>
+    <string name="yv_sign_in_error_message">Şu anda oturumunuzu açamadık. Lütfen tekrar deneyin.</string>
+    <string name="yv_sign_in_error_title">Oturum Açma Başarısız</string>
+    <string name="yv_sign_in_prompt_introducing">TANITIM</string>
+    <string name="yv_sign_in_prompt_no_button">Hayır Teşekkürler</string>
+    <string name="yv_sign_in_prompt_paragraph">**%1$s** YouVersion **Kutsal Kitap uygulaması** hesabınıza bağlanmak istiyor. Bu, uygulamadaki etkinliğinizi görmesine ve etkileşime girmesine olanak tanıyacak. Devam etmek ister misiniz?</string>
+    <string name="yv_sign_in_prompt_yes_button">Evet, Lütfen</string>
+    <string name="yv_sign_out_cancel_button_text">İptal</string>
+    <string name="yv_sign_out_confirm_button_text">Oturumu Kapat</string>
+    <string name="yv_sign_out_confirmation_message">YouVersion\'dan çıkış yapmak istediğinizden emin misiniz? Vurgularınıza erişmek için tekrar oturum açmanız gerekecek.</string>
+    <string name="yv_sign_out_confirmation_title">Oturumu Kapat</string>
+    <string name="yv_tab_votd">Günün Ayeti</string>
+    <string name="yv_version_info_agree_and_download">Kabul Et ve İndir</string>
+    <string name="yv_version_info_maybe_later">Belki Daha Sonra</string>
+    <string name="yv_version_info_offline_agreement">Bu Kutsal Kitap çeviri versiyonunun yayıncısıyla yaptığımız anlaşma, bu sürümü çevrimdışı kullanım için sunabilmemiz amacıyla belirli bilgileri onlarla paylaşmamızı gerektirmektedir. Devam ederek bilgilerinizi paylaşmayı ve yayıncının size e-posta göndermesine izin vermeyi kabul etmiş olursunuz.</string>
+    <string name="yv_version_info_offline_tagline">İstediğiniz zaman, istediğiniz yerde —çevrimdışı bile olsa— okuyun</string>
+    <string name="yv_versions_empty_for_language">Bu dil için sürüm bulunamadı</string>
+    <string name="yv_versions_load_error">Sürümler yüklenemedi. Bağlantınızı kontrol edin ve tekrar deneyin.</string>
+    <string name="yv_versions_screen_title">Sürümler</string>
+    <string name="yv_versions_statistics">%2$s Dilde %1$s Versiyon</string>
+    <string name="yv_widget_bible_app">Kutsal Kitap uygulaması</string>
+    <string name="yv_widget_copyright">Telif Hakkı</string>
+</resources>
