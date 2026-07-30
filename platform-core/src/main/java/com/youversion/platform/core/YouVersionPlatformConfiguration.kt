@@ -3,6 +3,7 @@ package com.youversion.platform.core
 import android.content.Context
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.YouVersionPlatformConfiguration.configure
+import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfiguredException
@@ -180,6 +181,10 @@ object YouVersionPlatformConfiguration {
      *                stored ID token.
      * @param expiryDate The future date and time at which the access token becomes invalid.
      *                   Passing null will clear the stored expiry date.
+     *
+     * Granted permissions are kept when the tokens belong to the session already signed in, so that refreshing a
+     * token does not revoke them. Tokens identifying a different session — a second user signing in without an
+     * intervening [clearAuthData] — drop them instead, since one user's consent cannot stand in for another's.
      */
     fun saveAuthData(
         accessToken: String?,
@@ -188,12 +193,21 @@ object YouVersionPlatformConfiguration {
         expiryDate: Date?,
         persist: Boolean = true,
     ) {
+        val currentConfig = config ?: throw YouVersionNotConfiguredException()
+        val isSameSession =
+            YouVersionApi.sessionId(
+                accessToken = currentConfig.accessToken,
+                refreshToken = currentConfig.refreshToken,
+                idToken = currentConfig.idToken,
+            ) == YouVersionApi.sessionId(accessToken, refreshToken, idToken)
+
         writeAuthData(
             accessToken = accessToken,
             refreshToken = refreshToken,
             idToken = idToken,
             expiryDate = expiryDate,
-            grantedPermissionValues = PlatformCoreKoinComponent.sessionRepository.grantedPermissionValues,
+            grantedPermissionValues =
+                if (isSameSession) PlatformCoreKoinComponent.sessionRepository.grantedPermissionValues else emptySet(),
             persist = persist,
         )
     }
@@ -260,7 +274,8 @@ object YouVersionPlatformConfiguration {
      * Records permissions the user has granted, merging them with any already held.
      *
      * Granted permissions are persisted separately from the auth tokens so that refreshing a token
-     * does not revoke them, and are cleared by [clearAuthData] when the user signs out.
+     * does not revoke them, and are cleared by [clearAuthData] when the user signs out or by
+     * [saveAuthData] when the tokens it is given identify a different user.
      *
      * @param permissions The permissions the user granted.
      * @throws YouVersionNotConfiguredException If [configure] has not been called first.

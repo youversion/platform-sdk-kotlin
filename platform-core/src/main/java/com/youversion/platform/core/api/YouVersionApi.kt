@@ -43,15 +43,27 @@ object YouVersionApi {
      * refreshing an access token does not read as a new user.
      */
     val currentSessionId: String?
-        get() {
-            if (!isSignedIn) return null
-            users.currentUserId?.let { return "user:$it" }
-            val token =
-                YouVersionPlatformConfiguration.refreshToken
-                    ?: YouVersionPlatformConfiguration.accessToken
-                    ?: return null
-            return "token:${token.sha256()}"
-        }
+        get() =
+            sessionId(
+                accessToken = YouVersionPlatformConfiguration.accessToken,
+                refreshToken = YouVersionPlatformConfiguration.refreshToken,
+                idToken = YouVersionPlatformConfiguration.idToken,
+            )
+
+    /**
+     * Identifies the session the given tokens belong to, by the same rules as [currentSessionId], without requiring
+     * them to be the ones the SDK is configured with. This allows incoming tokens to be compared against the current
+     * ones before they are stored.
+     */
+    internal fun sessionId(
+        accessToken: String?,
+        refreshToken: String?,
+        idToken: String?,
+    ): String? {
+        if (accessToken == null) return null
+        idToken?.let { users.decodeJWT(it)["sub"] as? String }?.let { return "user:$it" }
+        return "token:${(refreshToken ?: accessToken).sha256()}"
+    }
 
     /**
      * Whether the signed-in user has granted the given permission to this app.

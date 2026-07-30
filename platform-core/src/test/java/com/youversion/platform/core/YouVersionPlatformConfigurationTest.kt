@@ -9,6 +9,7 @@ import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
 import org.koin.test.inject
+import java.util.Base64
 import java.util.Date
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -360,21 +361,98 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     }
 
     @Test
-    fun `saveAuthData preserves granted permissions`() {
+    fun `saveAuthData preserves granted permissions across a token refresh`() {
         with(YouVersionPlatformConfiguration) {
-            configure(appKey = "appKey")
+            configure(
+                appKey = "appKey",
+                accessToken = "accessToken",
+                refreshToken = "refreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
             saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
 
             saveAuthData(
                 accessToken = "refreshedToken",
                 refreshToken = "refreshedRefreshToken",
-                idToken = "refreshedIdToken",
+                idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
 
             assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
 
             configure(appKey = "appKey")
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `saveAuthData drops granted permissions when the tokens name a different user`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(
+                appKey = "appKey",
+                accessToken = "accessToken",
+                refreshToken = "refreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            saveAuthData(
+                accessToken = "userBAccessToken",
+                refreshToken = "userBRefreshToken",
+                idToken = idTokenFor("userB"),
+                expiryDate = Date(),
+            )
+
+            assertEquals(emptySet(), grantedPermissions)
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            configure(appKey = "appKey")
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `saveAuthData drops granted permissions when an unnamed user is replaced`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(
+                appKey = "appKey",
+                accessToken = "accessToken",
+                refreshToken = "refreshToken",
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            saveAuthData(
+                accessToken = "userBAccessToken",
+                refreshToken = "userBRefreshToken",
+                idToken = null,
+                expiryDate = Date(),
+            )
+
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `saveAuthData preserves granted permissions when an unnamed user refreshes`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(
+                appKey = "appKey",
+                accessToken = "accessToken",
+                refreshToken = "refreshToken",
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            saveAuthData(
+                accessToken = "refreshedAccessToken",
+                refreshToken = "refreshToken",
+                idToken = null,
+                expiryDate = Date(),
+            )
+
             assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
         }
     }
@@ -428,5 +506,14 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             assertEquals("newRefresh", configState.value?.refreshToken)
             assertEquals("newId", configState.value?.idToken)
         }
+    }
+
+    private fun idTokenFor(subject: String): String {
+        val payload =
+            Base64
+                .getUrlEncoder()
+                .withoutPadding()
+                .encodeToString("""{"sub":"$subject"}""".toByteArray())
+        return "header.$payload.signature"
     }
 }
