@@ -26,8 +26,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
@@ -66,7 +64,7 @@ data class PendingHighlightOperation(
     val id: UUID = UUID.randomUUID(),
     val timestamp: Date = Date(),
     val retryCount: Int = 0,
-    val accountId: String? = null,
+    val sessionId: String? = null,
 )
 
 /**
@@ -110,24 +108,25 @@ private data class OperationOutcome(
  * screen rather than erasing it, for a later load to reconcile; a reload the server refuses in turn clears every
  * cached highlight, since that refusal means the user has not granted this app access to their highlights at all.
  *
- * Each queued write is bound to the account that was signed in when it was made. If the signed-in account changes
- * before the write syncs, the write is dropped rather than sent, so one user's highlights can never land on another
- * user's account.
+ * Each queued write is bound to the session that made it via [YouVersionApi.currentSessionId], and is dropped rather
+ * than sent if the session changes before it syncs. The auth token is read from the global configuration at
+ * request-build time, so an unbound write would reach whichever account is signed in when it finally sends.
  *
- * The cache is cleared automatically whenever the signed-in account changes: [accountIdChanges] is observed and each
- * change triggers [reset], so one user's cached highlights cannot be read after a sign-out, sign-in, or account switch.
+ * The cache is cleared on every session change: [sessionIdChanges] is observed and each change triggers [reset], so
+ * one user's cached highlights cannot be read after a sign-out, sign-in, or account switch. Emissions are compared
+ * against the session read at construction rather than the first emission, which can already be the new session.
  */
 class BibleHighlightsRepository internal constructor(
     private val api: HighlightsApi = HighlightsEndpoints,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     private val cache: BibleHighlightCache = BibleHighlightCache.shared,
-    private val currentAccountId: () -> String? = { YouVersionApi.users.currentUserId },
-    accountIdChanges: Flow<String?> =
-        YouVersionPlatformConfiguration.configState.map { currentAccountId() },
+    private val currentSessionId: () -> String? = { YouVersionApi.currentSessionId },
+    sessionIdChanges: Flow<String?> =
+        YouVersionPlatformConfiguration.configState.map { currentSessionId() },
 ) {
     /**
      * Test-only constructor exposing just the [api] dependency so consumer-module tests can supply a mock while the
-     * cache, scope, and account wiring keep their production defaults. The primary constructor stays internal because
+     * cache, scope, and session wiring keep their production defaults. The primary constructor stays internal because
      * it exposes the internal [BibleHighlightCache] type.
      */
     @VisibleForTesting
@@ -141,7 +140,7 @@ class BibleHighlightsRepository internal constructor(
 
     // Bumped by [reset] to invalidate the batch a processor is mid-flight on: a batch captures this at its start and,
     // if it no longer matches when the batch finishes, drops its failed operations instead of re-queuing them so a
-    // previous account's writes stop retrying after a sign-out rather than looping forever. Mirrors the Swift SDK's
+    // previous session's writes stop retrying after a sign-out rather than looping forever. Mirrors the Swift SDK's
     // operationGeneration.
     private var operationGeneration = 0
     private val queuedOperations = MutableStateFlow<List<PendingHighlightOperation>>(emptyList())
@@ -173,11 +172,14 @@ class BibleHighlightsRepository internal constructor(
         }.stateIn(scope, SharingStarted.Eagerly, 0)
 
     init {
+        var previousSessionId = currentSessionId()
         scope.launch {
-            accountIdChanges
-                .distinctUntilChanged()
-                .drop(1)
-                .collect { reset() }
+            sessionIdChanges.collect { sessionId ->
+                if (previousSessionId != sessionId) {
+                    previousSessionId = sessionId
+                    reset()
+                }
+            }
         }
     }
 
@@ -277,8 +279,8 @@ class BibleHighlightsRepository internal constructor(
      * Removes the highlights on [references] that currently carry [matchingColor], after loading each reference's
      * chapter so the match reflects the server's highlights rather than a cold cache. Runs on the repository's own load
      * scope so the removal still completes if the caller (for example a ViewModel) is torn down while the load is in
-     * flight; it is cancelled with other loads when [reset] runs on an account change, which is intended since the
-     * removal should not outlive the account that requested it.
+     * flight; it is cancelled with other loads when [reset] runs on a session change, which is intended since the
+     * removal should not outlive the session that requested it.
      */
     fun removeHighlights(
         references: List<BibleReference>,
@@ -320,14 +322,12 @@ class BibleHighlightsRepository internal constructor(
     /**
      * Clears all cached highlights and per-chapter load state, and cancels any in-flight chapter loads so a load that
      * was already running cannot repopulate the cache after it is cleared. This runs automatically whenever the
-     * signed-in account changes; it is also exposed for callers that need to clear the cache explicitly.
+     * session changes; it is also exposed for callers that need to clear the cache explicitly.
      *
      * The queued sync operations are dropped and the operation generation is bumped so that a batch a processor is
-     * already mid-flight on drops its failed operations instead of re-queuing them: a previous account's writes stop
-     * retrying rather than looping forever after a sign-out. Any reference already sent before the account changed is
-     * additionally guarded at send time — each queued write is bound to the account that made it and is not dispatched
-     * once the signed-in account differs — so one user's highlights can never land on another user's account. To flush
-     * queued writes before signing out, call [flushPendingWrites] while the current account is still authenticated.
+     * already mid-flight on drops its failed operations instead of re-queuing them: a previous session's writes stop
+     * retrying rather than looping forever after a sign-out. A write already in flight is additionally guarded at send
+     * time, so one user's highlights can never land on another user's account.
      */
     fun reset() {
         queueLock.withLock {
@@ -339,9 +339,21 @@ class BibleHighlightsRepository internal constructor(
     }
 
     /**
+     * Whether any highlight change has yet to reach the server, whether it is still queued or already in flight. Read
+     * this before signing out or switching accounts to warn that the changes would be lost, since the queue is held in
+     * memory only.
+     *
+     * A processor takes the whole queue when it claims a batch, so [pendingOperationCount] reads zero for as long as
+     * that batch is in flight. This reports the in-progress processor too, and so stays true across that window.
+     */
+    fun hasPendingOperations(): Boolean {
+        queueLock.withLock { return isProcessingQueue || queuedOperations.value.isNotEmpty() }
+    }
+
+    /**
      * Seeds the cache with [highlights] directly, bypassing the server sync queue so they surface in [highlights] as if
      * already loaded. Test-only: it lets a consumer-module test place highlights in the read path without exercising the
-     * network.
+     * network. Public because [BibleHighlightCache] is internal to this module and so out of reach of those tests.
      */
     @VisibleForTesting
     fun seedCachedHighlights(highlights: List<BibleHighlight>) {
@@ -349,42 +361,12 @@ class BibleHighlightsRepository internal constructor(
     }
 
     /**
-     * Clears the cache and its in-flight load bookkeeping without touching the sync queue. Test-only: it resets the
-     * shared cache between tests.
+     * Clears the cache and its in-flight load bookkeeping without touching the sync queue. Test-only: the cache is a
+     * process-wide singleton, so a consumer-module test resets it here between cases.
      */
     @VisibleForTesting
     fun clearCachedHighlights() {
         cache.clear()
-    }
-
-    /**
-     * Sends every queued highlight change to the server and suspends until the queue has drained. Call this before
-     * signing out or switching accounts so queued writes are flushed while the current account is still authenticated.
-     * Because the queue is held in memory only, this is also how a caller avoids losing queued writes when the process
-     * is about to be torn down.
-     * Failed writes retry indefinitely, so a permanently failing write keeps this suspended; wrap the call in
-     * [kotlinx.coroutines.withTimeout] to bound how long it may block. Note that it joins the in-progress processor
-     * rather than interrupting an active retry backoff.
-     *
-     * Returns without draining if [scope] is no longer active: a cancelled scope can never run the processor, so
-     * waiting on it would spin forever. Any writes still queued at that point are lost with the process.
-     *
-     * Draining is judged complete only when the queue is empty *and* no processor is mid-batch, both read under
-     * [queueLock]. Checking the queue alone would let this return in the window where a batch has been taken from the
-     * queue but its writes are still in flight.
-     */
-    suspend fun flushPendingWrites() {
-        while (scope.isActive) {
-            val job =
-                queueLock.withLock {
-                    if (queuedOperations.value.isEmpty() && !isProcessingQueue) {
-                        return
-                    }
-                    processingJobLocked()
-                }
-            job.start()
-            job.join()
-        }
     }
 
     /**
@@ -420,7 +402,7 @@ class BibleHighlightsRepository internal constructor(
     }
 
     private fun queueOperation(operation: PendingHighlightOperation) {
-        val stamped = operation.copy(accountId = currentAccountId())
+        val stamped = operation.copy(sessionId = currentSessionId())
         val job =
             queueLock.withLock {
                 queuedOperations.value = queuedOperations.value + stamped
@@ -608,9 +590,9 @@ class BibleHighlightsRepository internal constructor(
      * leave a stale pending row beside the server copy; a delete that syncs stamps its tombstone so a later load can
      * clear it once the server confirms the removal.
      *
-     * The signed-in account is re-checked before each send. If it has changed since [operation] was queued, the send
-     * loop stops so no write can reach a different account; references already sent under the original account are still
-     * promoted, and the rest are dropped without retrying.
+     * The session is re-checked before each send. If it has changed since [operation] was queued, the send loop stops
+     * so no write can reach a different account; references already sent are still promoted, and the rest are dropped
+     * without retrying.
      *
      * A reference the server refuses for lack of permission is reported as rejected rather than failed, and the send
      * loop stops: the remaining references would be refused for the same reason, so they are reported as rejected too
@@ -625,8 +607,8 @@ class BibleHighlightsRepository internal constructor(
             if (change is HighlightChange.SetColor) {
                 cache.awaitChapterLoaded(reference)
             }
-            if (operation.accountId != currentAccountId()) {
-                Logger.w { "Dropping highlight operation ${operation.id} queued under a different account" }
+            if (operation.sessionId != currentSessionId()) {
+                Logger.w { "Dropping highlight operation ${operation.id} queued under a different session" }
                 break
             }
             val passageId = reference.asUSFM
@@ -688,8 +670,8 @@ class BibleHighlightsRepository internal constructor(
      *
      * A read the server refuses for lack of permission clears every cached highlight, not just this chapter's: the
      * refusal says the user has not granted this app access to their highlights at all, so no chapter's cached copy is
-     * still theirs to show. Nothing else clears on that — an account change triggers [reset], but a user who stays
-     * signed in and simply lacks the grant produces no account change — so this is where it is caught.
+     * still theirs to show. Nothing else clears on that — a session change triggers [reset], but a user who stays
+     * signed in and simply lacks the grant produces no session change — so this is where it is caught.
      *
      * Every other failure leaves the cache untouched: the response never arrived, so it decides nothing. That includes
      * a 401, which means the user is signed out or their token expired rather than that they revoked access. Skipping

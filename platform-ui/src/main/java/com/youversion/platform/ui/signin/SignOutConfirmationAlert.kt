@@ -9,18 +9,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.error
 import com.youversion.platform.ui.R
 
+/**
+ * Asks the user to confirm signing out. Pass [confirmation] to choose between the standard prompt and the one warning
+ * that unsynced highlight changes will be lost.
+ */
 @Composable
 fun SignOutConfirmationAlert(
     onDismissRequest: () -> Unit,
     onConfirm: () -> Unit,
+    confirmation: SignInViewModel.SignOutConfirmation = SignInViewModel.SignOutConfirmation.STANDARD,
 ) {
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = {
-            Text(text = stringResource(R.string.sign_out_confirmation_title))
+            Text(text = stringResource(confirmation.titleResourceId))
         },
         text = {
-            Text(text = stringResource(R.string.sign_out_confirmation_message))
+            Text(text = stringResource(confirmation.messageResourceId))
         },
         dismissButton = {
             TextButton(onClick = onDismissRequest) {
@@ -32,7 +37,7 @@ fun SignOutConfirmationAlert(
                 onClick = onConfirm,
             ) {
                 Text(
-                    text = stringResource(R.string.sign_out_confirm_button_text),
+                    text = stringResource(confirmation.confirmButtonResourceId),
                     color = MaterialTheme.colorScheme.error,
                 )
             }
