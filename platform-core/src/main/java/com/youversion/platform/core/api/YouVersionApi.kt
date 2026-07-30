@@ -18,6 +18,7 @@ import com.youversion.platform.core.votd.api.VotdApi
 import com.youversion.platform.core.votd.api.VotdEndpoints
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.security.MessageDigest
 import java.util.Date
 
 object YouVersionApi {
@@ -31,6 +32,26 @@ object YouVersionApi {
 
     val isSignedIn: Boolean
         get() = YouVersionPlatformConfiguration.isSignedIn
+
+    /**
+     * Identifies the session the SDK is signed in to, or `null` when signed out. The value is opaque and only
+     * meaningful compared against another read of this property.
+     *
+     * Bind stored state to this rather than to [UsersApi.currentUserId] when it must not carry across a change of
+     * user: an account is nameable only when an ID token is present, so two sessions for different users can both
+     * report no account. Those fall back to a token digest, taken over the refresh token where one exists so that
+     * refreshing an access token does not read as a new user.
+     */
+    val currentSessionId: String?
+        get() {
+            if (!isSignedIn) return null
+            users.currentUserId?.let { return "user:$it" }
+            val token =
+                YouVersionPlatformConfiguration.refreshToken
+                    ?: YouVersionPlatformConfiguration.accessToken
+                    ?: return null
+            return "token:${token.sha256()}"
+        }
 
     /**
      * Whether the signed-in user has granted the given permission to this app.
@@ -70,3 +91,9 @@ object YouVersionApi {
         }
     }
 }
+
+private fun String.sha256(): String =
+    MessageDigest
+        .getInstance("SHA-256")
+        .digest(toByteArray())
+        .joinToString("") { "%02x".format(it) }

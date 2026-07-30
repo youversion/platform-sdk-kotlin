@@ -31,8 +31,7 @@ internal data class HighlightRequest(
     val references: List<BibleReference>,
     val hexColor: String,
     val isRemoval: Boolean,
-    val accountId: String? = null,
-    val isRequestedWhileSignedIn: Boolean = true,
+    val sessionId: String? = null,
 )
 
 /**
@@ -40,41 +39,22 @@ internal data class HighlightRequest(
  * Reader. Note that versions are used by the Bible Reader, but those
  * are managed by the BibleVersionRepository.
  *
- * Which session the reader is in is the pair [isSignedIn] and [currentAccountId], not the account alone: a host app
- * that supplies its own tokens can leave the reader signed in on an access token with no ID token to name the account,
- * so a missing account means either signed out or signed in as someone this SDK cannot name. Those two are treated
- * differently everywhere below, and reading only the account would collapse them into the permissive one.
+ * A highlight request is bound to the session that made it via [YouVersionApi.currentSessionId], so it can never be
+ * applied under another user. One made while signed out carries no stamp and is applied by whoever signs in next,
+ * which is what it exists for.
  *
- * The highlight request is cleared automatically when the reader leaves the session that made it, so a highlight one
- * user asked for cannot be applied to the account that signs in next. [accountIdChanges] is observed for that, and only
- * a departure from a session clears it — signing out, or switching to another user. The session those emissions are
- * compared against starts as the one in place when this repository is constructed, read there rather than from the
- * first emission: it can change between construction and the collector starting, and taking the first emission as the
- * baseline would adopt the new session instead of noticing the departure from the old one.
- *
- * Two kinds of emission deliberately leave it alone. Signing in, because a request held while signed out exists
- * precisely to be applied once sign-in completes. And a repeat of the same session, which the config state emits
- * whenever a permission grant lands — the very moment a highlight request is waiting for.
- *
- * Observing changes only covers the account switches that happen while this repository exists, and the request outlives
- * it. So each stored request is also stamped with the account that asked for it, and one whose stamp does not match the
- * signed-in account is never handed out: it is discarded when loaded from storage, and reads as absent until the clear
- * catches up. The account can change across process death, or before the reader is ever opened, and neither is a
- * transition anything here saw.
- *
- * So a request records the whole session that made it, and is handed back only to that session. One made while signed
- * out is applied by whoever signs in next, which is what it exists for. One made while signed in under an account this
- * SDK cannot name stays applicable only while that same nameless session lasts: it is refused once anyone nameable
- * signs in, and refused once the reader signs out.
+ * Both a stamp and an observer are needed. [sessionIdChanges] clears the request when the reader leaves a session, but
+ * only covers switches happening while this repository exists; the stamp also covers a switch across process death.
+ * Emissions are compared against the session read at construction rather than the first emission, which can already be
+ * the new session.
  */
 class BibleReaderRepository internal constructor(
     private val storage: Storage,
     private val bibleVersionRepository: BibleVersionRepository,
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
-    private val currentAccountId: () -> String? = { YouVersionApi.users.currentUserId },
-    private val isSignedIn: () -> Boolean = { YouVersionApi.isSignedIn },
-    accountIdChanges: Flow<String?> =
-        YouVersionPlatformConfiguration.configState.map { currentAccountId() },
+    private val currentSessionId: () -> String? = { YouVersionApi.currentSessionId },
+    sessionIdChanges: Flow<String?> =
+        YouVersionPlatformConfiguration.configState.map { currentSessionId() },
 ) {
     companion object {
         private const val KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
@@ -84,25 +64,24 @@ class BibleReaderRepository internal constructor(
     private val highlightRequestState = MutableStateFlow(storedHighlightRequest())
 
     init {
-        var previousAccountId = currentAccountId()
-        var wasSignedIn = isSignedIn()
+        var previousSessionId = currentSessionId()
         scope.launch {
-            accountIdChanges.collect { accountId ->
-                val isSignedInNow = isSignedIn()
-                when {
-                    wasSignedIn && (previousAccountId != accountId || !isSignedInNow) -> highlightRequest = null
-                    !wasSignedIn && isSignedInNow -> bindHeldRequestToCurrentSession()
+            sessionIdChanges.collect { sessionId ->
+                if (sessionId != previousSessionId) {
+                    if (previousSessionId == null) {
+                        bindHeldRequestToCurrentSession()
+                    } else {
+                        highlightRequest = null
+                    }
+                    previousSessionId = sessionId
                 }
-                previousAccountId = accountId
-                wasSignedIn = isSignedInNow
             }
         }
     }
 
     /**
      * Re-stamps a held request with the session that just signed in, so "applied by whoever signs in next" means that
-     * one sign-in and not every later one. Without this a request made while signed out stays unstamped after being
-     * answered, and the account that signs in after *that* could claim it too.
+     * one sign-in and not every later one.
      */
     private fun bindHeldRequestToCurrentSession() {
         highlightRequest?.let { highlightRequest = it }
@@ -122,29 +101,20 @@ class BibleReaderRepository internal constructor(
 
     /**
      * A highlight change the reader requested that is waiting on the highlights permission, persisted so it outlives
-     * the reader being recreated during the browser grant flow. Stamped on the way in with the account that is signed
-     * in when it is set, which is the account that asked for it.
-     *
-     * A request another account asked for reads as absent, so a reader constructed between the account changing and
-     * the clear that change triggers cannot restore it. Correctness does not depend on that clear having run.
+     * the reader being recreated during the browser grant flow. Stamped on the way in with the session that asked for
+     * it, and reads as absent under any other, so correctness does not depend on the clear having run.
      */
     internal var highlightRequest: HighlightRequest?
         get() = highlightRequestState.value?.takeIf { it.belongsToCurrentSession() }
         set(value) {
-            val isRequestedWhileSignedIn = isSignedIn()
-            val stamped =
-                value?.copy(
-                    accountId = if (isRequestedWhileSignedIn) currentAccountId() else null,
-                    isRequestedWhileSignedIn = isRequestedWhileSignedIn,
-                )
+            val stamped = value?.copy(sessionId = currentSessionId())
             storage.putString(KEY_HIGHLIGHT_REQUEST, stamped?.let { Json.encodeToString(it) })
             highlightRequestState.value = stamped
         }
 
     /**
      * Emits the current [highlightRequest] and every later change to it. Collect this instead of holding a copy: it is
-     * cleared when the signed-in account changes, and a separately held copy would go stale and could be applied under
-     * the account that signed in next.
+     * cleared when the session changes, and a separately held copy would go stale.
      */
     internal val highlightRequestChanges: StateFlow<HighlightRequest?> = highlightRequestState.asStateFlow()
 
@@ -162,11 +132,7 @@ class BibleReaderRepository internal constructor(
     }
 
     private fun HighlightRequest.belongsToCurrentSession(): Boolean =
-        if (isRequestedWhileSignedIn) {
-            isSignedIn() && accountId == currentAccountId()
-        } else {
-            accountId == null
-        }
+        sessionId == null || sessionId == currentSessionId()
 
     /**
      * Always produces a valid BibleReference based on what is available.

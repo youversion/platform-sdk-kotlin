@@ -860,23 +860,23 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
-    fun `a write is not sent when the account changes before it syncs`() =
+    fun `a write is not sent when the session changes before it syncs`() =
         runTest(testDispatcher) {
             val api = FakeHighlightsApi()
-            var accountId: String? = "account-a"
+            var sessionId: String? = "session-a"
             val repository =
                 BibleHighlightsRepository(
                     api = api,
                     scope = CoroutineScope(testDispatcher),
                     cache = cache,
-                    currentAccountId = { accountId },
+                    currentSessionId = { sessionId },
                 )
 
             repository.addHighlights(
                 listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
                 color = "#ff00ff",
             )
-            accountId = "account-b"
+            sessionId = "session-b"
             advanceUntilIdle()
 
             assertEquals(0, api.createCount)
@@ -884,10 +884,10 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
-    fun `a write is dropped when the account changes while its chapter load is in flight`() =
+    fun `a write is dropped when the session changes while its chapter load is in flight`() =
         runTest(testDispatcher) {
             val loadGate = CompletableDeferred<Unit>()
-            var accountId: String? = "account-a"
+            var sessionId: String? = "session-a"
             val api =
                 FakeHighlightsApi(
                     highlightsToReturn =
@@ -899,7 +899,7 @@ class BibleHighlightsRepositoryTests {
                     api = api,
                     scope = CoroutineScope(testDispatcher),
                     cache = cache,
-                    currentAccountId = { accountId },
+                    currentSessionId = { sessionId },
                 )
             val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
 
@@ -909,8 +909,8 @@ class BibleHighlightsRepositoryTests {
             repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
             runCurrent()
 
-            // The account switches while the write is parked on the in-flight load; it must not be sent under account-b.
-            accountId = "account-b"
+            // The session switches while the write is parked on the in-flight load; it must not be sent under session-b.
+            sessionId = "session-b"
             loadGate.complete(Unit)
             advanceUntilIdle()
 
@@ -919,7 +919,7 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
-    fun `a write still syncs across a token refresh that keeps the same account`() =
+    fun `a write still syncs across a token refresh that keeps the same session`() =
         runTest(testDispatcher) {
             val api = FakeHighlightsApi()
             val repository =
@@ -927,7 +927,7 @@ class BibleHighlightsRepositoryTests {
                     api = api,
                     scope = CoroutineScope(testDispatcher),
                     cache = cache,
-                    currentAccountId = { "account-a" },
+                    currentSessionId = { "session-a" },
                 )
 
             repository.addHighlights(
@@ -940,16 +940,16 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
-    fun `a change in the signed-in account clears the cached highlights`() =
+    fun `a session change clears the cached highlights`() =
         runTest(testDispatcher) {
-            val accountIdChanges = MutableStateFlow<String?>("account-a")
+            val sessionIdChanges = MutableStateFlow<String?>("session-a")
             val repository =
                 BibleHighlightsRepository(
                     api = FakeHighlightsApi(),
                     scope = CoroutineScope(testDispatcher),
                     cache = cache,
-                    currentAccountId = { accountIdChanges.value },
-                    accountIdChanges = accountIdChanges,
+                    currentSessionId = { sessionIdChanges.value },
+                    sessionIdChanges = sessionIdChanges,
                 )
 
             repository.addHighlights(
@@ -959,22 +959,22 @@ class BibleHighlightsRepositoryTests {
             runCurrent()
             assertEquals(1, repository.highlights.value.size)
 
-            accountIdChanges.value = "account-b"
+            sessionIdChanges.value = "session-b"
             advanceUntilIdle()
 
             assertEquals(0, repository.highlights.value.size)
         }
 
     @Test
-    fun `an account change that lands before the first emission clears the cached highlights`() =
+    fun `a session change that lands before the first emission clears the cached highlights`() =
         runTest(testDispatcher) {
             val repository =
                 BibleHighlightsRepository(
                     api = FakeHighlightsApi(),
                     scope = CoroutineScope(testDispatcher),
                     cache = cache,
-                    currentAccountId = { "account-a" },
-                    accountIdChanges = MutableStateFlow("account-b"),
+                    currentSessionId = { "session-a" },
+                    sessionIdChanges = MutableStateFlow("session-b"),
                 )
 
             repository.addHighlights(
@@ -989,17 +989,17 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
-    fun `a repeated signal for the same account leaves the cached highlights intact`() =
+    fun `a repeated signal for the same session leaves the cached highlights intact`() =
         runTest(testDispatcher) {
-            val accountIdChanges = MutableSharedFlow<String?>(replay = 1)
-            accountIdChanges.tryEmit("account-a")
+            val sessionIdChanges = MutableSharedFlow<String?>(replay = 1)
+            sessionIdChanges.tryEmit("session-a")
             val repository =
                 BibleHighlightsRepository(
                     api = FakeHighlightsApi(),
                     scope = CoroutineScope(testDispatcher),
                     cache = cache,
-                    currentAccountId = { "account-a" },
-                    accountIdChanges = accountIdChanges,
+                    currentSessionId = { "session-a" },
+                    sessionIdChanges = sessionIdChanges,
                 )
 
             repository.addHighlights(
@@ -1009,8 +1009,8 @@ class BibleHighlightsRepositoryTests {
             runCurrent()
             assertEquals(1, repository.highlights.value.size)
 
-            // A token refresh re-emits the same account; the cache must survive rather than being wiped each refresh.
-            accountIdChanges.tryEmit("account-a")
+            // A token refresh re-emits the same session; the cache must survive rather than being wiped each refresh.
+            sessionIdChanges.tryEmit("session-a")
             advanceUntilIdle()
 
             assertEquals(1, repository.highlights.value.size)
