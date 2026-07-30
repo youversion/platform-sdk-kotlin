@@ -1013,6 +1013,29 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
+    fun `an account change that lands before the first emission clears the cached highlights`() =
+        runTest(testDispatcher) {
+            val repository =
+                BibleHighlightsRepository(
+                    api = FakeHighlightsApi(),
+                    scope = CoroutineScope(testDispatcher),
+                    cache = cache,
+                    currentAccountId = { "account-a" },
+                    accountIdChanges = MutableStateFlow("account-b"),
+                )
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            assertEquals(1, repository.highlights.value.size)
+
+            advanceUntilIdle()
+
+            assertEquals(0, repository.highlights.value.size)
+        }
+
+    @Test
     fun `a repeated signal for the same account leaves the cached highlights intact`() =
         runTest(testDispatcher) {
             val accountIdChanges = MutableSharedFlow<String?>(replay = 1)

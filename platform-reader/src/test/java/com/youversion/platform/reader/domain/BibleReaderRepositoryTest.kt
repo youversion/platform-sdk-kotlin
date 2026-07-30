@@ -278,6 +278,40 @@ class BibleReaderRepositoryTest {
     }
 
     @Test
+    fun `an account change that lands before the first emission clears the pending highlight`() {
+        val repository =
+            createRepository(
+                currentAccountId = "account-a",
+                accountIdChanges = MutableStateFlow("account-b"),
+                storedPendingHighlight = pendingHighlight(accountId = "account-a"),
+            )
+
+        assertNull(repository.pendingHighlight)
+        assertNull(repository.pendingHighlightChanges.value)
+    }
+
+    @Test
+    fun `a pending highlight reads as absent under another account before the clear runs`() {
+        val storage = mockk<Storage>(relaxed = true)
+        every { storage.getStringOrNull(STORAGE_KEY_PENDING_HIGHLIGHT) } returns
+            Json.encodeToString(pendingHighlight(accountId = "account-a"))
+        var signedInAccountId: String? = "account-a"
+        val repository =
+            BibleReaderRepository(
+                storage = storage,
+                bibleVersionRepository = mockk(relaxed = true),
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                currentAccountId = { signedInAccountId },
+                accountIdChanges = MutableSharedFlow(),
+            )
+        assertNotNull(repository.pendingHighlight)
+
+        signedInAccountId = "account-b"
+
+        assertNull(repository.pendingHighlight)
+    }
+
+    @Test
     fun `signing in does not clear a pending highlight held while signed out`() {
         val accountIdChanges = MutableStateFlow<String?>(null)
         val repository = createRepository(accountIdChanges = accountIdChanges)

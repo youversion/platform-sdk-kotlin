@@ -38,18 +38,21 @@ internal data class PendingHighlight(
  *
  * The pending highlight is cleared automatically when the reader leaves a signed-in account, so a highlight one user
  * asked for cannot be applied to the account that signs in next. [accountIdChanges] is observed for that, and only a
- * departure from an account clears it — signing out, or switching to another user.
+ * departure from an account clears it — signing out, or switching to another user. The account those emissions are
+ * compared against starts as the one signed in when this repository is constructed, read there rather than from the
+ * first emission: the account can change between construction and the collector starting, and taking the first
+ * emission as the baseline would adopt the new account instead of noticing the departure from the old one.
  *
- * Three kinds of emission deliberately leave it alone. Signing in, because a request held while signed out exists
- * precisely to be applied once sign-in completes. The first value observed, which reports who is already signed in
- * rather than any change. And a repeat of the same account, which the config state emits whenever a permission grant
- * lands — the very moment a pending highlight is waiting for.
+ * Two kinds of emission deliberately leave it alone. Signing in, because a request held while signed out exists
+ * precisely to be applied once sign-in completes. And a repeat of the same account, which the config state emits
+ * whenever a permission grant lands — the very moment a pending highlight is waiting for.
  *
  * Observing changes only covers the account switches that happen while this repository exists, and the request outlives
  * it. So each stored request is also stamped with the account that asked for it, and one whose stamp does not match the
- * signed-in account is discarded when it is loaded: the account can change across process death, or before the reader
- * is ever opened, and neither is a transition anything here saw. A request stamped with no account was made while
- * signed out, and exists to be applied by whoever signs in next.
+ * signed-in account is never handed out: it is discarded when loaded from storage, and reads as absent until the clear
+ * catches up. The account can change across process death, or before the reader is ever opened, and neither is a
+ * transition anything here saw. A request stamped with no account was made while signed out, and exists to be applied
+ * by whoever signs in next.
  */
 class BibleReaderRepository internal constructor(
     private val storage: Storage,
@@ -67,8 +70,8 @@ class BibleReaderRepository internal constructor(
     private val pendingHighlightState = MutableStateFlow(storedPendingHighlight())
 
     init {
+        var previousAccountId = currentAccountId()
         scope.launch {
-            var previousAccountId: String? = null
             accountIdChanges.collect { accountId ->
                 if (previousAccountId != null && previousAccountId != accountId) {
                     pendingHighlight = null
@@ -94,9 +97,12 @@ class BibleReaderRepository internal constructor(
      * A highlight change the reader requested that is waiting on the highlights permission, persisted so it outlives
      * the reader being recreated during the browser grant flow. Stamped on the way in with the account that is signed
      * in when it is set, which is the account that asked for it.
+     *
+     * A request another account asked for reads as absent, so a reader constructed between the account changing and
+     * the clear that change triggers cannot restore it. Correctness does not depend on that clear having run.
      */
     internal var pendingHighlight: PendingHighlight?
-        get() = pendingHighlightState.value
+        get() = pendingHighlightState.value?.takeIf { it.belongsToCurrentAccount() }
         set(value) {
             val stamped = value?.copy(accountId = currentAccountId())
             storage.putString(KEY_PENDING_HIGHLIGHT, stamped?.let { Json.encodeToString(it) })
@@ -116,12 +122,15 @@ class BibleReaderRepository internal constructor(
                 .getStringOrNull(KEY_PENDING_HIGHLIGHT)
                 ?.let { Json.decodeFromString<PendingHighlight>(it) }
                 ?: return null
-        if (stored.accountId != null && stored.accountId != currentAccountId()) {
+        if (!stored.belongsToCurrentAccount()) {
             storage.putString(KEY_PENDING_HIGHLIGHT, null)
             return null
         }
         return stored
     }
+
+    private fun PendingHighlight.belongsToCurrentAccount(): Boolean =
+        accountId == null || accountId == currentAccountId()
 
     /**
      * Always produces a valid BibleReference based on what is available.

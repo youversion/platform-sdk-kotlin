@@ -26,8 +26,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
@@ -116,6 +114,9 @@ private data class OperationOutcome(
  *
  * The cache is cleared automatically whenever the signed-in account changes: [accountIdChanges] is observed and each
  * change triggers [reset], so one user's cached highlights cannot be read after a sign-out, sign-in, or account switch.
+ * Emissions are compared against the account signed in when this repository is constructed, read there rather than
+ * taken from the first emission: the account can change between construction and the collector starting, and treating
+ * the first emission as the starting point would adopt the new account rather than clear the previous one's cache.
  */
 class BibleHighlightsRepository internal constructor(
     private val api: HighlightsApi = HighlightsEndpoints,
@@ -173,11 +174,14 @@ class BibleHighlightsRepository internal constructor(
         }.stateIn(scope, SharingStarted.Eagerly, 0)
 
     init {
+        var previousAccountId = currentAccountId()
         scope.launch {
-            accountIdChanges
-                .distinctUntilChanged()
-                .drop(1)
-                .collect { reset() }
+            accountIdChanges.collect { accountId ->
+                if (previousAccountId != accountId) {
+                    previousAccountId = accountId
+                    reset()
+                }
+            }
         }
     }
 
