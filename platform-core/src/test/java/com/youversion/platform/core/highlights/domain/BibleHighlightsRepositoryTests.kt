@@ -17,6 +17,8 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BibleHighlightsRepositoryTests {
@@ -1113,6 +1115,28 @@ class BibleHighlightsRepositoryTests {
             gate.complete(Unit)
             advanceUntilIdle()
             assertEquals(2, api.highlightsCount)
+        }
+
+    @Test
+    fun `hasPendingOperations stays true while a claimed batch is still in flight`() =
+        runTest(testDispatcher) {
+            val createGate = CompletableDeferred<Unit>()
+            val api = FakeHighlightsApi(createGate = createGate)
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            assertFalse(repository.hasPendingOperations())
+
+            repository.addHighlights(listOf(reference), color = "#ff00ff")
+            runCurrent()
+
+            assertEquals(0, repository.pendingOperationCount.value)
+            assertTrue(repository.hasPendingOperations())
+
+            createGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertFalse(repository.hasPendingOperations())
         }
 }
 

@@ -14,12 +14,19 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import io.mockk.verify
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import java.util.Locale
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class BibleReaderRepositoryTest {
@@ -255,10 +262,81 @@ class BibleReaderRepositoryTest {
         )
     }
 
+    @Test
+    fun `an account change clears the persisted pending highlight`() {
+        val storage = mockk<Storage>(relaxed = true)
+        val accountIdChanges = MutableStateFlow<String?>("account-a")
+        val repository = createRepository(storage = storage, accountIdChanges = accountIdChanges)
+        repository.pendingHighlight = pendingHighlight()
+        assertNotNull(repository.pendingHighlight)
+
+        accountIdChanges.value = "account-b"
+
+        assertNull(repository.pendingHighlight)
+        assertNull(repository.pendingHighlightChanges.value)
+        verify { storage.putString(STORAGE_KEY_PENDING_HIGHLIGHT, null) }
+    }
+
+    @Test
+    fun `signing in does not clear a pending highlight held while signed out`() {
+        val accountIdChanges = MutableStateFlow<String?>(null)
+        val repository = createRepository(accountIdChanges = accountIdChanges)
+        repository.pendingHighlight = pendingHighlight()
+
+        accountIdChanges.value = "account-a"
+
+        assertNotNull(repository.pendingHighlight)
+    }
+
+    @Test
+    fun `the pending highlight survives a config change that keeps the same account`() =
+        runTest {
+            val accountIdChanges = MutableSharedFlow<String?>(replay = 1)
+            accountIdChanges.emit("account-a")
+            val repository = createRepository(accountIdChanges = accountIdChanges)
+            repository.pendingHighlight = pendingHighlight()
+
+            accountIdChanges.emit("account-a")
+
+            assertNotNull(repository.pendingHighlight)
+        }
+
+    @Test
+    fun `a pending highlight already in storage survives construction`() {
+        val stored = pendingHighlight()
+
+        val repository =
+            createRepository(
+                accountIdChanges = MutableStateFlow("account-a"),
+                storedPendingHighlight = stored,
+            )
+
+        assertEquals(stored, repository.pendingHighlight)
+    }
+
+    private fun pendingHighlight(): PendingHighlight =
+        PendingHighlight(
+            references = listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+            hexColor = "#ff00ff",
+            isRemoval = false,
+        )
+
     private fun createRepository(
         storage: Storage = mockk(relaxed = true),
         bibleVersionRepository: BibleVersionRepository = mockk(relaxed = true),
-    ): BibleReaderRepository = BibleReaderRepository(storage, bibleVersionRepository)
+        scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
+        accountIdChanges: Flow<String?> = MutableStateFlow(null),
+        storedPendingHighlight: PendingHighlight? = null,
+    ): BibleReaderRepository {
+        every { storage.getStringOrNull(STORAGE_KEY_PENDING_HIGHLIGHT) } returns
+            storedPendingHighlight?.let { Json.encodeToString(it) }
+        return BibleReaderRepository(
+            storage = storage,
+            bibleVersionRepository = bibleVersionRepository,
+            scope = scope,
+            accountIdChanges = accountIdChanges,
+        )
+    }
 
     private fun book(
         id: String,
@@ -291,5 +369,6 @@ class BibleReaderRepositoryTest {
 
     private companion object {
         private const val STORAGE_KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
+        private const val STORAGE_KEY_PENDING_HIGHLIGHT = "bible-reader-view--pending-highlight"
     }
 }

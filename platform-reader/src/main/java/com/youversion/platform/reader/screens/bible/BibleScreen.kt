@@ -483,13 +483,14 @@ internal fun BibleScreen(
                         )
                     }
 
-                    if (signInState.showSignOutConfirmation) {
+                    signInState.signOutConfirmation?.let { signOutConfirmation ->
                         SignOutConfirmationAlert(
                             onDismissRequest = { signInViewModel.onAction(SignInViewModel.Action.CancelSignOut) },
                             onConfirm =
                                 {
                                     signInViewModel.onAction(SignInViewModel.Action.SignOut(false))
                                 },
+                            confirmation = signOutConfirmation,
                         )
                     }
 

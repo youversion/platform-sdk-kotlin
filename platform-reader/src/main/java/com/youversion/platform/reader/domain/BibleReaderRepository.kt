@@ -1,10 +1,21 @@
 package com.youversion.platform.reader.domain
 
 import com.youversion.platform.core.BibleDefaults
+import com.youversion.platform.core.YouVersionPlatformConfiguration
+import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.domain.Storage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -23,14 +34,40 @@ internal data class PendingHighlight(
  * Responsible for fetching and managing data related to the Bible
  * Reader. Note that versions are used by the Bible Reader, but those
  * are managed by the BibleVersionRepository.
+ *
+ * The pending highlight is cleared automatically when the reader leaves a signed-in account, so a highlight one user
+ * asked for cannot be applied to the account that signs in next. [accountIdChanges] is observed for that, and only a
+ * departure from an account clears it — signing out, or switching to another user.
+ *
+ * Three kinds of emission deliberately leave it alone. Signing in, because a request held while signed out exists
+ * precisely to be applied once sign-in completes. The first value observed, which reports who is already signed in
+ * rather than any change. And a repeat of the same account, which the config state emits whenever a permission grant
+ * lands — the very moment a pending highlight is waiting for.
  */
-class BibleReaderRepository(
+class BibleReaderRepository internal constructor(
     private val storage: Storage,
     private val bibleVersionRepository: BibleVersionRepository,
+    scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    accountIdChanges: Flow<String?> =
+        YouVersionPlatformConfiguration.configState.map { YouVersionApi.users.currentUserId },
 ) {
     companion object {
         private const val KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
         private const val KEY_PENDING_HIGHLIGHT = "bible-reader-view--pending-highlight"
+    }
+
+    private val pendingHighlightState = MutableStateFlow(storedPendingHighlight())
+
+    init {
+        scope.launch {
+            var previousAccountId: String? = null
+            accountIdChanges.collect { accountId ->
+                if (previousAccountId != null && previousAccountId != accountId) {
+                    pendingHighlight = null
+                }
+                previousAccountId = accountId
+            }
+        }
     }
 
     /**
@@ -50,13 +87,23 @@ class BibleReaderRepository(
      * the reader being recreated during the browser grant flow.
      */
     internal var pendingHighlight: PendingHighlight?
-        get() =
-            storage
-                .getStringOrNull(KEY_PENDING_HIGHLIGHT)
-                ?.let { Json.decodeFromString(it) }
-        set(value) =
-            storage
-                .putString(KEY_PENDING_HIGHLIGHT, value?.let { Json.encodeToString(it) })
+        get() = pendingHighlightState.value
+        set(value) {
+            storage.putString(KEY_PENDING_HIGHLIGHT, value?.let { Json.encodeToString(it) })
+            pendingHighlightState.value = value
+        }
+
+    /**
+     * Emits the current [pendingHighlight] and every later change to it. Collect this instead of holding a copy: it is
+     * cleared when the signed-in account changes, and a separately held copy would go stale and could be applied under
+     * the account that signed in next.
+     */
+    internal val pendingHighlightChanges: StateFlow<PendingHighlight?> = pendingHighlightState.asStateFlow()
+
+    private fun storedPendingHighlight(): PendingHighlight? =
+        storage
+            .getStringOrNull(KEY_PENDING_HIGHLIGHT)
+            ?.let { Json.decodeFromString(it) }
 
     /**
      * Always produces a valid BibleReference based on what is available.

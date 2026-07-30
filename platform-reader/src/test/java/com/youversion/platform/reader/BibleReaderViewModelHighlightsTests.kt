@@ -4,12 +4,14 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.reader.domain.BibleReaderRepository
+import com.youversion.platform.reader.domain.PendingHighlight
 import com.youversion.platform.reader.sheets.HighlightColor
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -41,6 +43,8 @@ class BibleReaderViewModelHighlightsTests {
 
     private val highlightsByReference = mutableMapOf<BibleReference, List<BibleHighlight>>()
 
+    private val pendingHighlightState = MutableStateFlow<PendingHighlight?>(null)
+
     // Injected sign-in and permission state. Both default to the signed-in-and-granted case so the add/remove tests
     // exercise the immediate-apply path; the permission-flow and sign-in tests flip them before acting.
     private var isUserSignedIn = true
@@ -52,7 +56,11 @@ class BibleReaderViewModelHighlightsTests {
 
         val bibleReaderRepository = mockk<BibleReaderRepository>(relaxed = true)
         every { bibleReaderRepository.produceBibleReference(any()) } returns defaultReference
-        every { bibleReaderRepository.pendingHighlight } returns null
+        every { bibleReaderRepository.pendingHighlightChanges } returns pendingHighlightState
+        every { bibleReaderRepository.pendingHighlight } answers { pendingHighlightState.value }
+        every { bibleReaderRepository.pendingHighlight = any() } answers {
+            pendingHighlightState.value = firstArg()
+        }
 
         bibleHighlightsRepository = mockk(relaxed = true)
         every { bibleHighlightsRepository.highlights(overlapping = any()) } answers {

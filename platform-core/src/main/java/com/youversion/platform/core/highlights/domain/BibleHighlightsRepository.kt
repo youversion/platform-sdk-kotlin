@@ -339,6 +339,18 @@ class BibleHighlightsRepository internal constructor(
     }
 
     /**
+     * Whether any highlight change has yet to reach the server, whether it is still queued or already in flight. Read
+     * this before signing out or switching accounts to warn that the changes would be lost, since the queue is held in
+     * memory only.
+     *
+     * A processor takes the whole queue when it claims a batch, so [pendingOperationCount] reads zero for as long as
+     * that batch is in flight. This reports the in-progress processor too, and so stays true across that window.
+     */
+    fun hasPendingOperations(): Boolean {
+        queueLock.withLock { return isProcessingQueue || queuedOperations.value.isNotEmpty() }
+    }
+
+    /**
      * Seeds the cache with [highlights] directly, bypassing the server sync queue so they surface in [highlights] as if
      * already loaded. Test-only: it lets a consumer-module test place highlights in the read path without exercising the
      * network.

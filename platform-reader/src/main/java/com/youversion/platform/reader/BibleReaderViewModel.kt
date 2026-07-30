@@ -29,6 +29,8 @@ import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -52,14 +54,17 @@ class BibleReaderViewModel(
     /**
      * A highlight change the reader asked for but that is waiting on the highlights permission. Captured when the
      * change is requested and applied once the user grants access, so the change the reader intended survives the
-     * grant round-trip without them having to ask again. Written through to [BibleReaderRepository] so it also
-     * survives the reader being recreated while the grant happens in the browser.
+     * grant round-trip without them having to ask again.
+     *
+     * [BibleReaderRepository] holds it rather than this view model, so it also survives the reader being recreated
+     * while the grant happens in the browser. Keeping no copy here matters: the repository clears it when the signed-in
+     * account changes, and a copy held here would outlive that clear and be applied under the account that signed in
+     * next.
      */
-    private var pendingHighlight: PendingHighlight? = null
+    private var pendingHighlight: PendingHighlight?
+        get() = bibleReaderRepository.pendingHighlight
         set(value) {
-            field = value
             bibleReaderRepository.pendingHighlight = value
-            _state.update { it.copy(hasPendingHighlight = value != null) }
         }
     private val _state: MutableStateFlow<State>
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
@@ -106,7 +111,20 @@ class BibleReaderViewModel(
             )
         loadUserSettingsFromStorage()
         loadLanguages()
+        observePendingHighlight()
         restorePendingHighlight()
+    }
+
+    /**
+     * Mirrors the repository's pending highlight into [State.hasPendingHighlight]. Observed rather than written
+     * alongside each change so a clear the reader did not make — the signed-in account changing — reaches the state
+     * too, and the reader stops offering to apply a request that is no longer held.
+     */
+    private fun observePendingHighlight() {
+        bibleReaderRepository
+            .pendingHighlightChanges
+            .onEach { pending -> _state.update { it.copy(hasPendingHighlight = pending != null) } }
+            .launchIn(viewModelScope)
     }
 
     /**
