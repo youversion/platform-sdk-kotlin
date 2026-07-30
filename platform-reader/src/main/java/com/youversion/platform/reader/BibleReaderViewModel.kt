@@ -18,7 +18,7 @@ import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
-import com.youversion.platform.reader.domain.PendingHighlight
+import com.youversion.platform.reader.domain.HighlightRequest
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.ui.theme.ReaderTheme
@@ -29,6 +29,8 @@ import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -52,14 +54,17 @@ class BibleReaderViewModel(
     /**
      * A highlight change the reader asked for but that is waiting on the highlights permission. Captured when the
      * change is requested and applied once the user grants access, so the change the reader intended survives the
-     * grant round-trip without them having to ask again. Written through to [BibleReaderRepository] so it also
-     * survives the reader being recreated while the grant happens in the browser.
+     * grant round-trip without them having to ask again.
+     *
+     * [BibleReaderRepository] holds it rather than this view model, so it also survives the reader being recreated
+     * while the grant happens in the browser. Keeping no copy here matters: the repository clears it when the signed-in
+     * account changes, and a copy held here would outlive that clear and be applied under the account that signed in
+     * next.
      */
-    private var pendingHighlight: PendingHighlight? = null
+    private var highlightRequest: HighlightRequest?
+        get() = bibleReaderRepository.highlightRequest
         set(value) {
-            field = value
-            bibleReaderRepository.pendingHighlight = value
-            _state.update { it.copy(hasPendingHighlight = value != null) }
+            bibleReaderRepository.highlightRequest = value
         }
     private val _state: MutableStateFlow<State>
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
@@ -106,7 +111,20 @@ class BibleReaderViewModel(
             )
         loadUserSettingsFromStorage()
         loadLanguages()
-        restorePendingHighlight()
+        observeHighlightRequest()
+        restoreHighlightRequest()
+    }
+
+    /**
+     * Mirrors the repository's highlight request into [State.hasHighlightRequest]. Observed rather than written
+     * alongside each change so a clear the reader did not make — the signed-in account changing — reaches the state
+     * too, and the reader stops offering to apply a request that is no longer held.
+     */
+    private fun observeHighlightRequest() {
+        bibleReaderRepository
+            .highlightRequestChanges
+            .onEach { request -> _state.update { it.copy(hasHighlightRequest = request != null) } }
+            .launchIn(viewModelScope)
     }
 
     /**
@@ -114,14 +132,14 @@ class BibleReaderViewModel(
      * by [BibleReaderRepository], so a reader recreated while the browser grant flow ran still completes it. Anything
      * that did not end in a grant is dropped rather than reprompted.
      */
-    private fun restorePendingHighlight() {
-        val restored = bibleReaderRepository.pendingHighlight ?: return
+    private fun restoreHighlightRequest() {
+        val restored = bibleReaderRepository.highlightRequest ?: return
         if (hasHighlightsPermission()) {
             applyHighlight(restored)
         } else {
             // The grant may still be settling — sign-in persists it asynchronously. Keep the request so the reader
-            // can apply it once the permission lands, via [applyPendingHighlightIfPermitted].
-            pendingHighlight = restored
+            // can apply it once the permission lands, via [applyHighlightRequestIfPermitted].
+            highlightRequest = restored
         }
     }
 
@@ -130,13 +148,13 @@ class BibleReaderViewModel(
      * lands — whether granted synchronously through data exchange or asynchronously through sign-in — so a request
      * that outlived the reader's recreation still completes. A no-op when nothing is held or access is still absent.
      */
-    fun applyPendingHighlightIfPermitted() {
-        val pending = pendingHighlight ?: return
+    fun applyHighlightRequestIfPermitted() {
+        val request = highlightRequest ?: return
         if (!hasHighlightsPermission()) {
             return
         }
-        pendingHighlight = null
-        applyHighlight(pending)
+        highlightRequest = null
+        applyHighlight(request)
     }
 
     private fun loadUserSettingsFromStorage() {
@@ -358,7 +376,7 @@ class BibleReaderViewModel(
     }
 
     private fun toggleVerseSelection(reference: BibleReference) {
-        pendingHighlight = null
+        highlightRequest = null
         _state.update { currentState ->
             val newSelection =
                 if (currentState.selectedVerses.contains(reference)) {
@@ -386,7 +404,7 @@ class BibleReaderViewModel(
         val references = _state.value.selectedVerses.toList()
         if (references.isEmpty()) return
         highlightOrRequestPermission(
-            PendingHighlight(references = references, hexColor = hexColor, isRemoval = false),
+            HighlightRequest(references = references, hexColor = hexColor, isRemoval = false),
         )
     }
 
@@ -394,12 +412,12 @@ class BibleReaderViewModel(
         val references = _state.value.selectedVerses.toList()
         if (references.isEmpty()) return
         highlightOrRequestPermission(
-            PendingHighlight(references = references, hexColor = hexColor, isRemoval = true),
+            HighlightRequest(references = references, hexColor = hexColor, isRemoval = true),
         )
     }
 
     /**
-     * Resolves a highlight change against the reader's state, holding it as [pendingHighlight] whenever it cannot be
+     * Resolves a highlight change against the reader's state, holding it as [highlightRequest] whenever it cannot be
      * applied yet. A signed-out reader is sent to sign in first; a signed-in reader without highlights access is asked
      * to grant it; otherwise the change applies at once. Add, remove, and recolor all pass through here, so each is
      * gated the same way.
@@ -407,17 +425,17 @@ class BibleReaderViewModel(
      * Sign-in and the permission prompt are never raised together: a signed-out reader only reaches the permission
      * check after signing in, via [continueAfterSignIn].
      */
-    private fun highlightOrRequestPermission(pending: PendingHighlight) {
+    private fun highlightOrRequestPermission(request: HighlightRequest) {
         when {
             !isSignedIn() -> {
-                pendingHighlight = pending
+                highlightRequest = request
                 _state.update { it.copy(shouldStartSignIn = true) }
             }
             !hasHighlightsPermission() -> {
-                pendingHighlight = pending
+                highlightRequest = request
                 _state.update { it.copy(showDataExchangeConfirmation = true) }
             }
-            else -> applyHighlight(pending)
+            else -> applyHighlight(request)
         }
     }
 
@@ -429,30 +447,30 @@ class BibleReaderViewModel(
      */
     private fun continueAfterSignIn() {
         _state.update { it.copy(shouldStartSignIn = false) }
-        val pending = pendingHighlight ?: return
+        val request = highlightRequest ?: return
         if (!isSignedIn()) {
             return
         }
         if (hasHighlightsPermission()) {
-            pendingHighlight = null
-            applyHighlight(pending)
+            highlightRequest = null
+            applyHighlight(request)
         } else {
             _state.update { it.copy(showDataExchangeConfirmation = true) }
         }
     }
 
     private fun cancelSignIn() {
-        pendingHighlight = null
+        highlightRequest = null
         _state.update { it.copy(shouldStartSignIn = false) }
     }
 
-    private fun applyHighlight(pending: PendingHighlight) {
-        if (pending.isRemoval) {
-            bibleHighlightsRepository.removeHighlights(pending.references, matchingColor = pending.hexColor)
+    private fun applyHighlight(request: HighlightRequest) {
+        if (request.isRemoval) {
+            bibleHighlightsRepository.removeHighlights(request.references, matchingColor = request.hexColor)
         } else {
-            bibleHighlightsRepository.addHighlights(pending.references, pending.hexColor)
+            bibleHighlightsRepository.addHighlights(request.references, request.hexColor)
         }
-        pendingHighlight = null
+        highlightRequest = null
         clearVerseSelection()
     }
 
@@ -461,7 +479,7 @@ class BibleReaderViewModel(
     }
 
     private fun cancelDataExchange() {
-        pendingHighlight = null
+        highlightRequest = null
         _state.update { it.copy(showDataExchangeConfirmation = false) }
     }
 
@@ -470,11 +488,11 @@ class BibleReaderViewModel(
      * it. Either way the verse selection is left intact on a non-grant, so the reader can still copy or share.
      */
     private fun completeDataExchange(isHighlightsGranted: Boolean) {
-        val pending = pendingHighlight
-        pendingHighlight = null
+        val request = highlightRequest
+        highlightRequest = null
         _state.update { it.copy(shouldStartDataExchangeFlow = false) }
-        if (isHighlightsGranted && pending != null) {
-            applyHighlight(pending)
+        if (isHighlightsGranted && request != null) {
+            applyHighlight(request)
         }
     }
 
@@ -666,7 +684,7 @@ class BibleReaderViewModel(
         val shouldStartSignIn: Boolean = false,
         val showDataExchangeConfirmation: Boolean = false,
         val shouldStartDataExchangeFlow: Boolean = false,
-        val hasPendingHighlight: Boolean = false,
+        val hasHighlightRequest: Boolean = false,
         val showingIntroFootnotes: Boolean = false,
         val introFootnotes: List<AnnotatedString> = emptyList(),
         val introBookUSFM: String? = null,

@@ -188,9 +188,9 @@ internal fun BibleScreen(
     val config by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
     val isHighlightsGranted =
         config?.grantedPermissions?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
-    LaunchedEffect(isHighlightsGranted, state.hasPendingHighlight) {
-        if (isHighlightsGranted && state.hasPendingHighlight) {
-            viewModel.applyPendingHighlightIfPermitted()
+    LaunchedEffect(isHighlightsGranted, state.hasHighlightRequest) {
+        if (isHighlightsGranted && state.hasHighlightRequest) {
+            viewModel.applyHighlightRequestIfPermitted()
         }
     }
 
@@ -483,13 +483,14 @@ internal fun BibleScreen(
                         )
                     }
 
-                    if (signInState.showSignOutConfirmation) {
+                    signInState.signOutConfirmation?.let { signOutConfirmation ->
                         SignOutConfirmationAlert(
                             onDismissRequest = { signInViewModel.onAction(SignInViewModel.Action.CancelSignOut) },
                             onConfirm =
                                 {
                                     signInViewModel.onAction(SignInViewModel.Action.SignOut(false))
                                 },
+                            confirmation = signOutConfirmation,
                         )
                     }
 
