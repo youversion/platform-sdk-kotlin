@@ -26,6 +26,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
@@ -263,38 +264,43 @@ class BibleReaderRepositoryTest {
     }
 
     @Test
-    fun `an account change clears the persisted pending highlight`() {
+    fun `an account change clears the persisted highlight request`() {
         val storage = mockk<Storage>(relaxed = true)
         val accountIdChanges = MutableStateFlow<String?>("account-a")
-        val repository = createRepository(storage = storage, accountIdChanges = accountIdChanges)
-        repository.pendingHighlight = pendingHighlight()
-        assertNotNull(repository.pendingHighlight)
+        val repository =
+            createRepository(
+                storage = storage,
+                currentAccountId = "account-a",
+                accountIdChanges = accountIdChanges,
+            )
+        repository.highlightRequest = highlightRequest()
+        assertNotNull(repository.highlightRequest)
 
         accountIdChanges.value = "account-b"
 
-        assertNull(repository.pendingHighlight)
-        assertNull(repository.pendingHighlightChanges.value)
-        verify { storage.putString(STORAGE_KEY_PENDING_HIGHLIGHT, null) }
+        assertNull(repository.highlightRequest)
+        assertNull(repository.highlightRequestChanges.value)
+        verify { storage.putString(STORAGE_KEY_HIGHLIGHT_REQUEST, null) }
     }
 
     @Test
-    fun `an account change that lands before the first emission clears the pending highlight`() {
+    fun `an account change that lands before the first emission clears the highlight request`() {
         val repository =
             createRepository(
                 currentAccountId = "account-a",
                 accountIdChanges = MutableStateFlow("account-b"),
-                storedPendingHighlight = pendingHighlight(accountId = "account-a"),
+                storedHighlightRequest = highlightRequest(accountId = "account-a"),
             )
 
-        assertNull(repository.pendingHighlight)
-        assertNull(repository.pendingHighlightChanges.value)
+        assertNull(repository.highlightRequest)
+        assertNull(repository.highlightRequestChanges.value)
     }
 
     @Test
-    fun `a pending highlight reads as absent under another account before the clear runs`() {
+    fun `a highlight request reads as absent under another account before the clear runs`() {
         val storage = mockk<Storage>(relaxed = true)
-        every { storage.getStringOrNull(STORAGE_KEY_PENDING_HIGHLIGHT) } returns
-            Json.encodeToString(pendingHighlight(accountId = "account-a"))
+        every { storage.getStringOrNull(STORAGE_KEY_HIGHLIGHT_REQUEST) } returns
+            Json.encodeToString(highlightRequest(accountId = "account-a"))
         var signedInAccountId: String? = "account-a"
         val repository =
             BibleReaderRepository(
@@ -302,55 +308,121 @@ class BibleReaderRepositoryTest {
                 bibleVersionRepository = mockk(relaxed = true),
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 currentAccountId = { signedInAccountId },
+                isSignedIn = { signedInAccountId != null },
                 accountIdChanges = MutableSharedFlow(),
             )
-        assertNotNull(repository.pendingHighlight)
+        assertNotNull(repository.highlightRequest)
 
         signedInAccountId = "account-b"
 
-        assertNull(repository.pendingHighlight)
+        assertNull(repository.highlightRequest)
     }
 
     @Test
-    fun `signing in does not clear a pending highlight held while signed out`() {
+    fun `signing in does not clear a highlight request held while signed out`() {
         val accountIdChanges = MutableStateFlow<String?>(null)
         val repository = createRepository(accountIdChanges = accountIdChanges)
-        repository.pendingHighlight = pendingHighlight()
+        repository.highlightRequest = highlightRequest()
 
         accountIdChanges.value = "account-a"
 
-        assertNotNull(repository.pendingHighlight)
+        assertNotNull(repository.highlightRequest)
     }
 
     @Test
-    fun `the pending highlight survives a config change that keeps the same account`() =
+    fun `signing in binds a highlight request held while signed out to that account`() {
+        var signedInAccountId: String? = null
+        val accountIdChanges = MutableStateFlow<String?>(null)
+        val repository =
+            BibleReaderRepository(
+                storage = storageWithNoStoredRequest(),
+                bibleVersionRepository = mockk(relaxed = true),
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                currentAccountId = { signedInAccountId },
+                isSignedIn = { signedInAccountId != null },
+                accountIdChanges = accountIdChanges,
+            )
+        repository.highlightRequest = highlightRequest()
+
+        signedInAccountId = "account-a"
+        accountIdChanges.value = "account-a"
+
+        assertEquals("account-a", repository.highlightRequest?.accountId)
+    }
+
+    @Test
+    fun `a highlight request answered by one sign-in is refused by the account that signs in after it`() {
+        var signedInAccountId: String? = null
+        val accountIdChanges = MutableStateFlow<String?>(null)
+        val repository =
+            BibleReaderRepository(
+                storage = storageWithNoStoredRequest(),
+                bibleVersionRepository = mockk(relaxed = true),
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                currentAccountId = { signedInAccountId },
+                isSignedIn = { signedInAccountId != null },
+                accountIdChanges = accountIdChanges,
+            )
+        repository.highlightRequest = highlightRequest()
+
+        signedInAccountId = "account-a"
+        accountIdChanges.value = "account-a"
+        signedInAccountId = "account-b"
+        accountIdChanges.value = "account-b"
+
+        assertNull(repository.highlightRequest)
+    }
+
+    @Test
+    fun `signing out of a session with no account id clears the highlight request`() {
+        var isSignedIn = true
+        val accountIdChanges = MutableSharedFlow<String?>(extraBufferCapacity = 1)
+        val repository =
+            BibleReaderRepository(
+                storage = storageWithNoStoredRequest(),
+                bibleVersionRepository = mockk(relaxed = true),
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                currentAccountId = { null },
+                isSignedIn = { isSignedIn },
+                accountIdChanges = accountIdChanges,
+            )
+        repository.highlightRequest = highlightRequest()
+
+        isSignedIn = false
+        accountIdChanges.tryEmit(null)
+
+        assertNull(repository.highlightRequestChanges.value)
+    }
+
+    @Test
+    fun `the highlight request survives a config change that keeps the same account`() =
         runTest {
             val accountIdChanges = MutableSharedFlow<String?>(replay = 1)
             accountIdChanges.emit("account-a")
             val repository = createRepository(accountIdChanges = accountIdChanges)
-            repository.pendingHighlight = pendingHighlight()
+            repository.highlightRequest = highlightRequest()
 
             accountIdChanges.emit("account-a")
 
-            assertNotNull(repository.pendingHighlight)
+            assertNotNull(repository.highlightRequest)
         }
 
     @Test
-    fun `a pending highlight already in storage survives construction`() {
-        val stored = pendingHighlight(accountId = "account-a")
+    fun `a highlight request already in storage survives construction`() {
+        val stored = highlightRequest(accountId = "account-a")
 
         val repository =
             createRepository(
                 currentAccountId = "account-a",
                 accountIdChanges = MutableStateFlow("account-a"),
-                storedPendingHighlight = stored,
+                storedHighlightRequest = stored,
             )
 
-        assertEquals(stored, repository.pendingHighlight)
+        assertEquals(stored, repository.highlightRequest)
     }
 
     @Test
-    fun `a pending highlight stored by another account is dropped at construction`() {
+    fun `a highlight request stored by another account is dropped at construction`() {
         val storage = mockk<Storage>(relaxed = true)
 
         val repository =
@@ -358,54 +430,166 @@ class BibleReaderRepositoryTest {
                 storage = storage,
                 currentAccountId = "account-b",
                 accountIdChanges = MutableStateFlow("account-b"),
-                storedPendingHighlight = pendingHighlight(accountId = "account-a"),
+                storedHighlightRequest = highlightRequest(accountId = "account-a"),
             )
 
-        assertNull(repository.pendingHighlight)
-        assertNull(repository.pendingHighlightChanges.value)
-        verify { storage.putString(STORAGE_KEY_PENDING_HIGHLIGHT, null) }
+        assertNull(repository.highlightRequest)
+        assertNull(repository.highlightRequestChanges.value)
+        verify { storage.putString(STORAGE_KEY_HIGHLIGHT_REQUEST, null) }
     }
 
     @Test
-    fun `a pending highlight stored by an account is dropped at construction when signed out`() {
+    fun `a highlight request stored by an account is dropped at construction when signed out`() {
         val repository =
             createRepository(
                 currentAccountId = null,
-                storedPendingHighlight = pendingHighlight(accountId = "account-a"),
+                storedHighlightRequest = highlightRequest(accountId = "account-a"),
             )
 
-        assertNull(repository.pendingHighlight)
+        assertNull(repository.highlightRequest)
     }
 
     @Test
-    fun `a pending highlight stored while signed out survives construction under a signed-in account`() {
-        val stored = pendingHighlight()
+    fun `a highlight request stored while signed out survives construction under a signed-in account`() {
+        val stored = highlightRequest()
 
         val repository =
             createRepository(
                 currentAccountId = "account-a",
                 accountIdChanges = MutableStateFlow("account-a"),
-                storedPendingHighlight = stored,
+                storedHighlightRequest = stored,
             )
 
-        assertEquals(stored, repository.pendingHighlight)
+        assertEquals(stored, repository.highlightRequest)
     }
 
     @Test
-    fun `setting a pending highlight stamps it with the signed-in account`() {
+    fun `setting a highlight request stamps it with the signed-in account`() {
         val repository = createRepository(currentAccountId = "account-a")
 
-        repository.pendingHighlight = pendingHighlight()
+        repository.highlightRequest = highlightRequest()
 
-        assertEquals("account-a", repository.pendingHighlight?.accountId)
+        assertEquals("account-a", repository.highlightRequest?.accountId)
     }
 
-    private fun pendingHighlight(accountId: String? = null): PendingHighlight =
-        PendingHighlight(
+    @Test
+    fun `setting a highlight request while signed out records that no session made it`() {
+        val repository = createRepository(currentAccountId = null, isSignedIn = false)
+
+        repository.highlightRequest = highlightRequest()
+
+        assertNull(repository.highlightRequest?.accountId)
+        assertFalse(repository.highlightRequest?.isRequestedWhileSignedIn == true)
+    }
+
+    @Test
+    fun `a highlight request made by a session with no account id is not handed to a named account`() {
+        val storage = storageWithNoStoredRequest()
+        var signedInAccountId: String? = null
+        val repository =
+            BibleReaderRepository(
+                storage = storage,
+                bibleVersionRepository = mockk(relaxed = true),
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                currentAccountId = { signedInAccountId },
+                isSignedIn = { true },
+                accountIdChanges = MutableSharedFlow(),
+            )
+        repository.highlightRequest = highlightRequest()
+        assertNotNull(repository.highlightRequest)
+
+        signedInAccountId = "account-b"
+
+        assertNull(repository.highlightRequest)
+    }
+
+    @Test
+    fun `a highlight request made by a session with no account id is not handed to a signed-out reader`() {
+        val storage = storageWithNoStoredRequest()
+        var isSignedIn = true
+        val repository =
+            BibleReaderRepository(
+                storage = storage,
+                bibleVersionRepository = mockk(relaxed = true),
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                currentAccountId = { null },
+                isSignedIn = { isSignedIn },
+                accountIdChanges = MutableSharedFlow(),
+            )
+        repository.highlightRequest = highlightRequest()
+        assertNotNull(repository.highlightRequest)
+
+        isSignedIn = false
+
+        assertNull(repository.highlightRequest)
+    }
+
+    @Test
+    fun `a highlight request made by a session with no account id survives while that session lasts`() {
+        val repository = createRepository(currentAccountId = null, isSignedIn = true)
+
+        repository.highlightRequest = highlightRequest()
+
+        assertNotNull(repository.highlightRequest)
+    }
+
+    @Test
+    fun `leaving a session with no account id clears the highlight request`() {
+        val storage = mockk<Storage>(relaxed = true)
+        val accountIdChanges = MutableStateFlow<String?>(null)
+        val repository =
+            createRepository(
+                storage = storage,
+                currentAccountId = null,
+                isSignedIn = true,
+                accountIdChanges = accountIdChanges,
+            )
+        repository.highlightRequest = highlightRequest()
+
+        accountIdChanges.value = "account-b"
+
+        assertNull(repository.highlightRequestChanges.value)
+        verify { storage.putString(STORAGE_KEY_HIGHLIGHT_REQUEST, null) }
+    }
+
+    @Test
+    fun `a stored highlight request that names no session is not applied to a signed-in account`() {
+        val legacyJson =
+            Json.encodeToString(highlightRequest(accountId = null, isRequestedWhileSignedIn = true))
+        assertFalse(legacyJson.contains("accountId"))
+        assertFalse(legacyJson.contains("isRequestedWhileSignedIn"))
+        val storage = mockk<Storage>(relaxed = true)
+        every { storage.getStringOrNull(STORAGE_KEY_HIGHLIGHT_REQUEST) } returns legacyJson
+
+        val repository =
+            BibleReaderRepository(
+                storage = storage,
+                bibleVersionRepository = mockk(relaxed = true),
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                currentAccountId = { "account-a" },
+                isSignedIn = { true },
+                accountIdChanges = MutableStateFlow("account-a"),
+            )
+
+        assertNull(repository.highlightRequest)
+        verify { storage.putString(STORAGE_KEY_HIGHLIGHT_REQUEST, null) }
+    }
+
+    private fun storageWithNoStoredRequest(): Storage =
+        mockk<Storage>(relaxed = true).also {
+            every { it.getStringOrNull(STORAGE_KEY_HIGHLIGHT_REQUEST) } returns null
+        }
+
+    private fun highlightRequest(
+        accountId: String? = null,
+        isRequestedWhileSignedIn: Boolean = accountId != null,
+    ): HighlightRequest =
+        HighlightRequest(
             references = listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
             hexColor = "#ff00ff",
             isRemoval = false,
             accountId = accountId,
+            isRequestedWhileSignedIn = isRequestedWhileSignedIn,
         )
 
     private fun createRepository(
@@ -413,16 +597,18 @@ class BibleReaderRepositoryTest {
         bibleVersionRepository: BibleVersionRepository = mockk(relaxed = true),
         scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
         currentAccountId: String? = null,
+        isSignedIn: Boolean = currentAccountId != null,
         accountIdChanges: Flow<String?> = MutableStateFlow(null),
-        storedPendingHighlight: PendingHighlight? = null,
+        storedHighlightRequest: HighlightRequest? = null,
     ): BibleReaderRepository {
-        every { storage.getStringOrNull(STORAGE_KEY_PENDING_HIGHLIGHT) } returns
-            storedPendingHighlight?.let { Json.encodeToString(it) }
+        every { storage.getStringOrNull(STORAGE_KEY_HIGHLIGHT_REQUEST) } returns
+            storedHighlightRequest?.let { Json.encodeToString(it) }
         return BibleReaderRepository(
             storage = storage,
             bibleVersionRepository = bibleVersionRepository,
             scope = scope,
             currentAccountId = { currentAccountId },
+            isSignedIn = { isSignedIn },
             accountIdChanges = accountIdChanges,
         )
     }
@@ -458,6 +644,6 @@ class BibleReaderRepositoryTest {
 
     private companion object {
         private const val STORAGE_KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
-        private const val STORAGE_KEY_PENDING_HIGHLIGHT = "bible-reader-view--pending-highlight"
+        private const val STORAGE_KEY_HIGHLIGHT_REQUEST = "bible-reader-view--highlight-request"
     }
 }

@@ -188,9 +188,9 @@ internal fun BibleScreen(
     val config by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
     val isHighlightsGranted =
         config?.grantedPermissions?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
-    LaunchedEffect(isHighlightsGranted, state.hasPendingHighlight) {
-        if (isHighlightsGranted && state.hasPendingHighlight) {
-            viewModel.applyPendingHighlightIfPermitted()
+    LaunchedEffect(isHighlightsGranted, state.hasHighlightRequest) {
+        if (isHighlightsGranted && state.hasHighlightRequest) {
+            viewModel.applyHighlightRequestIfPermitted()
         }
     }
 

@@ -330,8 +330,7 @@ class BibleHighlightsRepository internal constructor(
      * already mid-flight on drops its failed operations instead of re-queuing them: a previous account's writes stop
      * retrying rather than looping forever after a sign-out. Any reference already sent before the account changed is
      * additionally guarded at send time — each queued write is bound to the account that made it and is not dispatched
-     * once the signed-in account differs — so one user's highlights can never land on another user's account. To flush
-     * queued writes before signing out, call [flushPendingWrites] while the current account is still authenticated.
+     * once the signed-in account differs — so one user's highlights can never land on another user's account.
      */
     fun reset() {
         queueLock.withLock {
@@ -357,7 +356,7 @@ class BibleHighlightsRepository internal constructor(
     /**
      * Seeds the cache with [highlights] directly, bypassing the server sync queue so they surface in [highlights] as if
      * already loaded. Test-only: it lets a consumer-module test place highlights in the read path without exercising the
-     * network.
+     * network. Public because [BibleHighlightCache] is internal to this module and so out of reach of those tests.
      */
     @VisibleForTesting
     fun seedCachedHighlights(highlights: List<BibleHighlight>) {
@@ -365,42 +364,12 @@ class BibleHighlightsRepository internal constructor(
     }
 
     /**
-     * Clears the cache and its in-flight load bookkeeping without touching the sync queue. Test-only: it resets the
-     * shared cache between tests.
+     * Clears the cache and its in-flight load bookkeeping without touching the sync queue. Test-only: the cache is a
+     * process-wide singleton, so a consumer-module test resets it here between cases.
      */
     @VisibleForTesting
     fun clearCachedHighlights() {
         cache.clear()
-    }
-
-    /**
-     * Sends every queued highlight change to the server and suspends until the queue has drained. Call this before
-     * signing out or switching accounts so queued writes are flushed while the current account is still authenticated.
-     * Because the queue is held in memory only, this is also how a caller avoids losing queued writes when the process
-     * is about to be torn down.
-     * Failed writes retry indefinitely, so a permanently failing write keeps this suspended; wrap the call in
-     * [kotlinx.coroutines.withTimeout] to bound how long it may block. Note that it joins the in-progress processor
-     * rather than interrupting an active retry backoff.
-     *
-     * Returns without draining if [scope] is no longer active: a cancelled scope can never run the processor, so
-     * waiting on it would spin forever. Any writes still queued at that point are lost with the process.
-     *
-     * Draining is judged complete only when the queue is empty *and* no processor is mid-batch, both read under
-     * [queueLock]. Checking the queue alone would let this return in the window where a batch has been taken from the
-     * queue but its writes are still in flight.
-     */
-    suspend fun flushPendingWrites() {
-        while (scope.isActive) {
-            val job =
-                queueLock.withLock {
-                    if (queuedOperations.value.isEmpty() && !isProcessingQueue) {
-                        return
-                    }
-                    processingJobLocked()
-                }
-            job.start()
-            job.join()
-        }
     }
 
     /**

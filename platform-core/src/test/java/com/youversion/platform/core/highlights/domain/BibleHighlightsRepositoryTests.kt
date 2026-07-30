@@ -8,7 +8,6 @@ import com.youversion.platform.core.highlights.models.Highlight
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -227,7 +226,7 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
-    fun `a rejected write does not leave flushPendingWrites hanging`() =
+    fun `a rejected write drains from the queue instead of retrying forever`() =
         runTest(testDispatcher) {
             val api = FakeHighlightsApi(rejectsChanges = true)
             val repository = repository(api)
@@ -236,9 +235,7 @@ class BibleHighlightsRepositoryTests {
                 listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
                 color = "#ff00ff",
             )
-            runCurrent()
-
-            repository.flushPendingWrites()
+            advanceUntilIdle()
 
             assertEquals(0, repository.pendingOperationCount.value)
         }
@@ -860,50 +857,6 @@ class BibleHighlightsRepositoryTests {
 
             advanceUntilIdle()
             assertEquals(2, api.createCount)
-        }
-
-    @Test
-    fun `flushPendingWrites suspends until queued writes are sent`() =
-        runTest(testDispatcher) {
-            val api = FakeHighlightsApi(failuresBeforeSuccess = 1)
-            val repository = repository(api)
-
-            repository.addHighlights(
-                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
-                color = "#ff00ff",
-            )
-            runCurrent()
-            assertEquals(1, api.createCount)
-
-            repository.flushPendingWrites()
-
-            assertEquals(2, api.createCount)
-            assertEquals(0, repository.pendingOperationCount.value)
-        }
-
-    @Test
-    fun `flushPendingWrites returns instead of hanging when the scope has been cancelled`() =
-        runTest(testDispatcher) {
-            val deleteGate = CompletableDeferred<Unit>()
-            val api = FakeHighlightsApi(deleteGate = deleteGate)
-            val repoScope = CoroutineScope(testDispatcher)
-            val repository = BibleHighlightsRepository(api = api, scope = repoScope, cache = cache).also { it.reset() }
-
-            // Park the processor on the first write (gated delete), then queue a second so an operation stays pending.
-            repository.removeHighlights(listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)))
-            runCurrent()
-            repository.removeHighlights(listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verse = 1)))
-            runCurrent()
-            assertEquals(1, repository.pendingOperationCount.value)
-
-            repoScope.cancel()
-            advanceUntilIdle()
-
-            // A cancelled scope can never run the processor, so without the inactive-scope guard this call would spin
-            // forever joining a dead job. Reaching the assertion at all proves it returned.
-            repository.flushPendingWrites()
-
-            assertEquals(1, repository.pendingOperationCount.value)
         }
 
     @Test

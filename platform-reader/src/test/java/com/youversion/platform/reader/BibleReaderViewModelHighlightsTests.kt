@@ -4,7 +4,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.reader.domain.BibleReaderRepository
-import com.youversion.platform.reader.domain.PendingHighlight
+import com.youversion.platform.reader.domain.HighlightRequest
 import com.youversion.platform.reader.sheets.HighlightColor
 import io.mockk.every
 import io.mockk.mockk
@@ -43,7 +43,7 @@ class BibleReaderViewModelHighlightsTests {
 
     private val highlightsByReference = mutableMapOf<BibleReference, List<BibleHighlight>>()
 
-    private val pendingHighlightState = MutableStateFlow<PendingHighlight?>(null)
+    private val highlightRequestState = MutableStateFlow<HighlightRequest?>(null)
 
     // Injected sign-in and permission state. Both default to the signed-in-and-granted case so the add/remove tests
     // exercise the immediate-apply path; the permission-flow and sign-in tests flip them before acting.
@@ -56,10 +56,10 @@ class BibleReaderViewModelHighlightsTests {
 
         val bibleReaderRepository = mockk<BibleReaderRepository>(relaxed = true)
         every { bibleReaderRepository.produceBibleReference(any()) } returns defaultReference
-        every { bibleReaderRepository.pendingHighlightChanges } returns pendingHighlightState
-        every { bibleReaderRepository.pendingHighlight } answers { pendingHighlightState.value }
-        every { bibleReaderRepository.pendingHighlight = any() } answers {
-            pendingHighlightState.value = firstArg()
+        every { bibleReaderRepository.highlightRequestChanges } returns highlightRequestState
+        every { bibleReaderRepository.highlightRequest } answers { highlightRequestState.value }
+        every { bibleReaderRepository.highlightRequest = any() } answers {
+            highlightRequestState.value = firstArg()
         }
 
         bibleHighlightsRepository = mockk(relaxed = true)
@@ -210,7 +210,7 @@ class BibleReaderViewModelHighlightsTests {
     }
 
     @Test
-    fun `a granted flow applies the pending highlight and clears the selection`() {
+    fun `a granted flow applies the highlight request and clears the selection`() {
         isHighlightsPermissionGranted = false
         selectVerses(verseOne, verseTwo)
         viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
@@ -241,7 +241,7 @@ class BibleReaderViewModelHighlightsTests {
     }
 
     @Test
-    fun `cancelling the prompt clears the pending highlight so a later grant applies nothing`() {
+    fun `cancelling the prompt clears the highlight request so a later grant applies nothing`() {
         isHighlightsPermissionGranted = false
         selectVerses(verseOne)
         viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
@@ -265,7 +265,7 @@ class BibleReaderViewModelHighlightsTests {
     }
 
     @Test
-    fun `changing the verse selection clears a pending highlight so a later grant applies nothing`() {
+    fun `changing the verse selection clears a highlight request so a later grant applies nothing`() {
         isHighlightsPermissionGranted = false
         selectVerses(verseOne)
         viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
@@ -283,7 +283,7 @@ class BibleReaderViewModelHighlightsTests {
         viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
 
         isHighlightsPermissionGranted = true
-        viewModel.applyPendingHighlightIfPermitted()
+        viewModel.applyHighlightRequestIfPermitted()
 
         verify { bibleHighlightsRepository.addHighlights(match { it.toSet() == setOf(verseOne) }, yellow) }
     }
@@ -294,10 +294,10 @@ class BibleReaderViewModelHighlightsTests {
         selectVerses(verseOne)
         viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
 
-        viewModel.applyPendingHighlightIfPermitted()
+        viewModel.applyHighlightRequestIfPermitted()
 
         verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
-        assertTrue(viewModel.state.value.hasPendingHighlight)
+        assertTrue(viewModel.state.value.hasHighlightRequest)
     }
 
     @Test
@@ -416,13 +416,13 @@ class BibleReaderViewModelHighlightsTests {
 
         assertFalse(viewModel.state.value.shouldStartSignIn)
         assertFalse(viewModel.state.value.showDataExchangeConfirmation)
-        assertTrue(viewModel.state.value.hasPendingHighlight)
+        assertTrue(viewModel.state.value.hasHighlightRequest)
         verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
 
         // Once the grant lands the held highlight applies, as the reader originally asked.
         isUserSignedIn = true
         isHighlightsPermissionGranted = true
-        viewModel.applyPendingHighlightIfPermitted()
+        viewModel.applyHighlightRequestIfPermitted()
 
         verify { bibleHighlightsRepository.addHighlights(match { it.toSet() == setOf(verseOne) }, yellow) }
     }
@@ -437,10 +437,10 @@ class BibleReaderViewModelHighlightsTests {
         // the browser grant restores its version and clears the selection. That must not discard the held highlight.
         viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection)
 
-        assertTrue(viewModel.state.value.hasPendingHighlight)
+        assertTrue(viewModel.state.value.hasHighlightRequest)
 
         isHighlightsPermissionGranted = true
-        viewModel.applyPendingHighlightIfPermitted()
+        viewModel.applyHighlightRequestIfPermitted()
 
         verify { bibleHighlightsRepository.addHighlights(match { it.toSet() == setOf(verseOne) }, yellow) }
     }
