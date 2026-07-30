@@ -41,7 +41,8 @@ internal data class HighlightRequest(
  *
  * A highlight request is bound to the session that made it via [YouVersionApi.currentSessionId], so it can never be
  * applied under another user. One made while signed out carries no stamp and is applied by whoever signs in next,
- * which is what it exists for.
+ * which is what it exists for; it is stamped with that session as soon as one is seen, so it stops there rather than
+ * staying open to every session after it.
  *
  * Both a stamp and an observer are needed. [sessionIdChanges] clears the request when the reader leaves a session, but
  * only covers switches happening while this repository exists; the stamp also covers a switch across process death.
@@ -64,6 +65,7 @@ class BibleReaderRepository internal constructor(
     private val highlightRequestState = MutableStateFlow(storedHighlightRequest())
 
     init {
+        bindHeldRequestToCurrentSession()
         var previousSessionId = currentSessionId()
         scope.launch {
             sessionIdChanges.collect { sessionId ->
@@ -80,11 +82,15 @@ class BibleReaderRepository internal constructor(
     }
 
     /**
-     * Re-stamps a held request with the session that just signed in, so "applied by whoever signs in next" means that
-     * one sign-in and not every later one.
+     * Stamps a held request with the session signed in now, so "applied by whoever signs in next" means that one
+     * sign-in and not every later one. Run when a sign-in is observed, and again at construction because the sign-in
+     * that should have stamped a request can land while nothing is collecting — including after the process that held
+     * it is gone.
      */
     private fun bindHeldRequestToCurrentSession() {
-        highlightRequest?.let { highlightRequest = it }
+        highlightRequest
+            ?.takeIf { it.sessionId != currentSessionId() }
+            ?.let { highlightRequest = it }
     }
 
     /**

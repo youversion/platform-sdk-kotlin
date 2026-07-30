@@ -434,17 +434,40 @@ class BibleReaderRepositoryTest {
     }
 
     @Test
-    fun `a highlight request stored while signed out survives construction in a signed-in session`() {
-        val stored = highlightRequest()
+    fun `a highlight request stored while signed out is bound to the session that restores it`() {
+        val storage = mockk<Storage>(relaxed = true)
 
         val repository =
             createRepository(
+                storage = storage,
                 currentSessionId = { "session-a" },
                 sessionIdChanges = MutableStateFlow("session-a"),
-                storedHighlightRequest = stored,
+                storedHighlightRequest = highlightRequest(),
             )
 
-        assertEquals(stored, repository.highlightRequest)
+        assertEquals(highlightRequest(sessionId = "session-a"), repository.highlightRequest)
+        verify {
+            storage.putString(
+                STORAGE_KEY_HIGHLIGHT_REQUEST,
+                Json.encodeToString(highlightRequest(sessionId = "session-a")),
+            )
+        }
+    }
+
+    @Test
+    fun `a highlight request stored while signed out is refused by a session after the one that restored it`() {
+        var sessionId: String? = "session-a"
+        val repository =
+            createRepository(
+                currentSessionId = { sessionId },
+                sessionIdChanges = MutableSharedFlow(),
+                storedHighlightRequest = highlightRequest(),
+            )
+        assertNotNull(repository.highlightRequest)
+
+        sessionId = "session-b"
+
+        assertNull(repository.highlightRequest)
     }
 
     @Test
