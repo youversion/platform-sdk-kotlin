@@ -303,10 +303,11 @@ class BibleReaderRepositoryTest {
 
     @Test
     fun `a pending highlight already in storage survives construction`() {
-        val stored = pendingHighlight()
+        val stored = pendingHighlight(accountId = "account-a")
 
         val repository =
             createRepository(
+                currentAccountId = "account-a",
                 accountIdChanges = MutableStateFlow("account-a"),
                 storedPendingHighlight = stored,
             )
@@ -314,17 +315,70 @@ class BibleReaderRepositoryTest {
         assertEquals(stored, repository.pendingHighlight)
     }
 
-    private fun pendingHighlight(): PendingHighlight =
+    @Test
+    fun `a pending highlight stored by another account is dropped at construction`() {
+        val storage = mockk<Storage>(relaxed = true)
+
+        val repository =
+            createRepository(
+                storage = storage,
+                currentAccountId = "account-b",
+                accountIdChanges = MutableStateFlow("account-b"),
+                storedPendingHighlight = pendingHighlight(accountId = "account-a"),
+            )
+
+        assertNull(repository.pendingHighlight)
+        assertNull(repository.pendingHighlightChanges.value)
+        verify { storage.putString(STORAGE_KEY_PENDING_HIGHLIGHT, null) }
+    }
+
+    @Test
+    fun `a pending highlight stored by an account is dropped at construction when signed out`() {
+        val repository =
+            createRepository(
+                currentAccountId = null,
+                storedPendingHighlight = pendingHighlight(accountId = "account-a"),
+            )
+
+        assertNull(repository.pendingHighlight)
+    }
+
+    @Test
+    fun `a pending highlight stored while signed out survives construction under a signed-in account`() {
+        val stored = pendingHighlight()
+
+        val repository =
+            createRepository(
+                currentAccountId = "account-a",
+                accountIdChanges = MutableStateFlow("account-a"),
+                storedPendingHighlight = stored,
+            )
+
+        assertEquals(stored, repository.pendingHighlight)
+    }
+
+    @Test
+    fun `setting a pending highlight stamps it with the signed-in account`() {
+        val repository = createRepository(currentAccountId = "account-a")
+
+        repository.pendingHighlight = pendingHighlight()
+
+        assertEquals("account-a", repository.pendingHighlight?.accountId)
+    }
+
+    private fun pendingHighlight(accountId: String? = null): PendingHighlight =
         PendingHighlight(
             references = listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
             hexColor = "#ff00ff",
             isRemoval = false,
+            accountId = accountId,
         )
 
     private fun createRepository(
         storage: Storage = mockk(relaxed = true),
         bibleVersionRepository: BibleVersionRepository = mockk(relaxed = true),
         scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
+        currentAccountId: String? = null,
         accountIdChanges: Flow<String?> = MutableStateFlow(null),
         storedPendingHighlight: PendingHighlight? = null,
     ): BibleReaderRepository {
@@ -334,6 +388,7 @@ class BibleReaderRepositoryTest {
             storage = storage,
             bibleVersionRepository = bibleVersionRepository,
             scope = scope,
+            currentAccountId = { currentAccountId },
             accountIdChanges = accountIdChanges,
         )
     }

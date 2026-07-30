@@ -28,6 +28,7 @@ internal data class PendingHighlight(
     val references: List<BibleReference>,
     val hexColor: String,
     val isRemoval: Boolean,
+    val accountId: String? = null,
 )
 
 /**
@@ -43,13 +44,20 @@ internal data class PendingHighlight(
  * precisely to be applied once sign-in completes. The first value observed, which reports who is already signed in
  * rather than any change. And a repeat of the same account, which the config state emits whenever a permission grant
  * lands — the very moment a pending highlight is waiting for.
+ *
+ * Observing changes only covers the account switches that happen while this repository exists, and the request outlives
+ * it. So each stored request is also stamped with the account that asked for it, and one whose stamp does not match the
+ * signed-in account is discarded when it is loaded: the account can change across process death, or before the reader
+ * is ever opened, and neither is a transition anything here saw. A request stamped with no account was made while
+ * signed out, and exists to be applied by whoever signs in next.
  */
 class BibleReaderRepository internal constructor(
     private val storage: Storage,
     private val bibleVersionRepository: BibleVersionRepository,
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    private val currentAccountId: () -> String? = { YouVersionApi.users.currentUserId },
     accountIdChanges: Flow<String?> =
-        YouVersionPlatformConfiguration.configState.map { YouVersionApi.users.currentUserId },
+        YouVersionPlatformConfiguration.configState.map { currentAccountId() },
 ) {
     companion object {
         private const val KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
@@ -84,13 +92,15 @@ class BibleReaderRepository internal constructor(
 
     /**
      * A highlight change the reader requested that is waiting on the highlights permission, persisted so it outlives
-     * the reader being recreated during the browser grant flow.
+     * the reader being recreated during the browser grant flow. Stamped on the way in with the account that is signed
+     * in when it is set, which is the account that asked for it.
      */
     internal var pendingHighlight: PendingHighlight?
         get() = pendingHighlightState.value
         set(value) {
-            storage.putString(KEY_PENDING_HIGHLIGHT, value?.let { Json.encodeToString(it) })
-            pendingHighlightState.value = value
+            val stamped = value?.copy(accountId = currentAccountId())
+            storage.putString(KEY_PENDING_HIGHLIGHT, stamped?.let { Json.encodeToString(it) })
+            pendingHighlightState.value = stamped
         }
 
     /**
@@ -100,10 +110,18 @@ class BibleReaderRepository internal constructor(
      */
     internal val pendingHighlightChanges: StateFlow<PendingHighlight?> = pendingHighlightState.asStateFlow()
 
-    private fun storedPendingHighlight(): PendingHighlight? =
-        storage
-            .getStringOrNull(KEY_PENDING_HIGHLIGHT)
-            ?.let { Json.decodeFromString(it) }
+    private fun storedPendingHighlight(): PendingHighlight? {
+        val stored =
+            storage
+                .getStringOrNull(KEY_PENDING_HIGHLIGHT)
+                ?.let { Json.decodeFromString<PendingHighlight>(it) }
+                ?: return null
+        if (stored.accountId != null && stored.accountId != currentAccountId()) {
+            storage.putString(KEY_PENDING_HIGHLIGHT, null)
+            return null
+        }
+        return stored
+    }
 
     /**
      * Always produces a valid BibleReference based on what is available.
