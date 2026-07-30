@@ -65,12 +65,12 @@ If a key is not provided, the sample app will crash on launch.
 
 The project is structured into several modules:
 
-- **yvp-core**
+- **platform-core**
    - Core SDK logic which contains the API clients, configuration, caching, and data models.
-- **yvp-ui**
+- **platform-ui**
    - UI components library (Jetpack Compose) which provide the building blocks for rendering Bible content.
-- **yvp-reader**
-   - High-level reader functionality which uses `yvp-core` and `yvp-ui` to provide a complete `BibleReader` experience.
+- **platform-reader**
+   - High-level reader functionality which uses `platform-core` and `platform-ui` to provide a complete `BibleReader` experience.
 - **examples/sample-android**
    - Sample Android app which demos using all of the components together.
 

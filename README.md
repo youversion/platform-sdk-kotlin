@@ -21,8 +21,10 @@ currently not available.
 - [Getting Started](#getting-started)
 - [Usage](#usage)
   - [Displaying Scripture](#displaying-scripture)
+  - [Bible Reader](#bible-reader)
   - [Displaying Verse of the Day](#displaying-verse-of-the-day)
   - [Authentication](#authentication)
+  - [Highlights](#highlights)
 - [Sample App](#sample-app)
 - [For Different Use Cases](#-for-different-use-cases)
 - [Development Setup](#development-setup)
@@ -35,7 +37,9 @@ currently not available.
 
 ## Features
 - 📖 **Scripture Display** - Easy-to-use Jetpack Compose components for displaying Bible verses, chapters, and passages with `BibleText`
-- 🔐 **User Authentication** - Seamless "Sign In with YouVersion" integration using `SignInWithYouVersionButton`
+- 📕 **Bible Reader** - A complete Bible reading experience inside your app with `BibleReader`
+- 🖍️ **Highlights** - The signed-in user's YouVersion highlights are rendered in `BibleText` and can be created, recolored, and removed from the reader
+- 🔐 **User Authentication** - Seamless "Sign In with YouVersion" integration using `SignInWithYouVersionButton`, with a top-level toggle to disable all sign-in UI
 - 🌅 **Verse of the Day** - Built-in `VerseOfTheDay` component and API access to VOTD data
 - 🚀 **Modern Kotlin** - Built with coroutines, Jetpack Compose, and Material Theming
 - 💾 **Smart Caching** - Automatic local caching for improved performance
@@ -165,6 +169,50 @@ fun Demo() {
 
 > **Note**: For longer passages, wrap `BibleText` in a `verticalScroll`. The SDK automatically fetches Scripture from YouVersion servers and maintains a local cache for improved performance.
 
+When the user is signed in and has granted the `highlights` permission, `BibleText` also renders their YouVersion highlights behind the verse text. See [Highlights](#highlights).
+
+### Bible Reader
+
+Displays a full Bible reading experience, very similar to the YouVersion Bible app, ready to be added as a tab in your app.
+
+```kotlin
+@Composable
+fun ReaderTab() {
+    BibleReader(
+        appName = "Your App Name",
+        appSignInMessage = "See all of your **YouVersion** highlights alongside your **Your App Name** highlights",
+    )
+}
+```
+
+`appName` and `appSignInMessage` are shown in the sign-in prompt the reader presents to a signed-out user. `appSignInMessage` is your app's own reason for asking, and supports `**bold**` markdown.
+
+To open to a specific passage:
+
+```kotlin
+BibleReader(
+    appName = "Your App Name",
+    appSignInMessage = "Keep your highlights across devices",
+    bibleReference = BibleReference(versionId = 3034, bookUSFM = "PSA", chapter = 23),
+)
+```
+
+To offer your own fonts in the reader's font settings sheet, or to render a bottom bar beneath the reader, pass `fontDefinitionProvider` and `bottomBar`.
+
+#### Disabling Sign-In
+
+By default, a signed-out user who taps a verse is prompted to sign in with YouVersion. To suppress all sign-in UI, including that prompt and the header menu's sign-in option, set `isSignInEnabled` to `false` during configuration:
+
+```kotlin
+YouVersionPlatformConfiguration.configure(
+    context = this,
+    appKey = "YOUR_APP_KEY_HERE",
+    isSignInEnabled = false,
+)
+```
+
+When sign-in is disabled, the reader hides the highlight colors from a signed-out user rather than offering a control that could never work. A user who is already signed in keeps their highlight colors, since they need nothing further.
+
 #### Filtering Available Languages
 
 By default, the version picker offers Bible versions in every available language. To restrict it to a specific set of languages, pass `permittedLanguageTags` during configuration. For example, to make only English versions available:
@@ -262,6 +310,7 @@ Use the `SignInWithYouVersionButton` composable in your UI. You can use the `Sig
 
 - `SignInWithYouVersionPermission.PROFILE`: To access the user's name and profile picture.
 - `SignInWithYouVersionPermission.EMAIL`: To access the user's email address.
+- `SignInWithYouVersionPermission.HIGHLIGHTS`: To read and write the user's Bible highlights. See [Highlights](#highlights).
 
 ```kotlin
 // ProfileScreen.kt
@@ -302,6 +351,77 @@ fun ProfileScreen() {
 
 The `SignInViewModel` automatically updates its state when authentication completes, and your UI will recompose to reflect the user's authentication status.
 
+### Highlights
+
+Highlights belong to the user's YouVersion account, so a highlight created in your app appears in the YouVersion Bible app and in any other app the user has granted access to.
+
+`BibleReader` provides the full experience with no extra work: tapping a verse opens the verse action sheet with a color picker, choosing a color highlights the selected verses, and choosing the color a verse already has removes the highlight. On dark reader themes the colors are dimmed automatically so the verse text stays readable. `BibleText` renders the same highlights, so a custom reading UI built on `platform-ui` stays in sync with the reader.
+
+#### Highlight Permissions
+
+Reading and writing highlights requires the user to be signed in **and** to have granted `SignInWithYouVersionPermission.HIGHLIGHTS`. `BibleReader` asks for it at the moment it is needed, taking one of two routes:
+
+- A **signed-out** user is offered sign-in, with the highlights permission included in the requested permissions. The grant rides along with the sign-in.
+- A **signed-in** user who has not granted it yet is shown a confirmation dialog and then the YouVersion permission page. This is the data exchange flow, and it exists so the user does not have to sign in again just to grant one more permission.
+
+Both routes return through the same `youversionauth://callback` deep link used by sign-in, so highlights only work end to end once your app has completed the [Authentication](#authentication) setup — the manifest intent filter *and* a main activity extending `SignInWithYouVersionActivity`. Without that setup the grant never reaches the SDK and highlights stay unavailable.
+
+To check whether the permission has been granted:
+
+```kotlin
+val hasHighlightsPermission = YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS)
+```
+
+#### Requesting the Permission Yourself
+
+Apps that need to start the same permission flow themselves can do it from Compose with `rememberDataExchange`:
+
+```kotlin
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.ui.dataexchange.rememberDataExchange
+
+@Composable
+fun AllowHighlightsButton() {
+    val requestDataExchange = rememberDataExchange()
+    val coroutineScope = rememberCoroutineScope()
+
+    Button(
+        onClick = {
+            coroutineScope.launch {
+                val result = requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+                if (result?.grants(SignInWithYouVersionPermission.HIGHLIGHTS) == true) {
+                    // The grant is already persisted; highlights load on the next read.
+                }
+            }
+        }
+    ) {
+        Text("Allow highlights")
+    }
+}
+```
+
+Outside Compose, use `DataExchangeHandler(activityResultRegistry).requestDataExchange(...)` directly. Either way the granted permission is persisted for you before the call returns, so a later `YouVersionApi.hasPermission(...)` reflects it without any extra work.
+
+> **Note**: Data exchange only works for a user who is **already signed in** — it mints its token from the existing access token. For a signed-out user nothing is presented at all (the result is `DataExchangeStatus.NotStarted`); request `SignInWithYouVersionPermission.HIGHLIGHTS` as part of sign-in instead. `rememberDataExchange` and `DataExchangeHandler` live in `platform-ui`.
+
+#### Highlights API
+
+Apps using only `platform-core` can read and write highlights directly through `YouVersionApi.highlights`. All four calls are suspend functions and require the signed-in user to have granted the highlights permission.
+
+```kotlin
+// Read a chapter's highlights
+val highlights = YouVersionApi.highlights.highlights(versionId = 111, passageId = "JHN.3")
+
+// Create, recolor, and remove a highlight on a single verse
+YouVersionApi.highlights.createHighlight(versionId = 111, passageId = "JHN.3.16", color = "fffe00")
+YouVersionApi.highlights.updateHighlight(versionId = 111, passageId = "JHN.3.16", color = "5dff79")
+YouVersionApi.highlights.deleteHighlight(versionId = 111, passageId = "JHN.3.16")
+```
+
+Colors are hex strings without a leading `#`. The palette the reader offers is `fffe00` (yellow), `5dff79` (green), `00d6ff` (cyan), `ffc66f` (orange), and `ff95ef` (pink), matching the Swift SDK.
+
+All four calls throw `YouVersionNetworkException` with reason `NOT_PERMITTED` when the user has not granted highlights access; that request will not succeed on retry. The read call also throws `MISSING_AUTHENTICATION` when the request was unauthenticated, which a sign-in or token refresh may resolve. The create, update, and delete calls report an unauthenticated request as a `false` return instead of throwing, so check their `Boolean` result too — `false` means the write did not happen.
+
 ## Sample App
 
 Explore the [examples directory](./examples) for a complete sample app demonstrating:
@@ -322,7 +442,7 @@ To run the sample app:
 
 ### 📱 Kotlin SDK
 
-Building an Android application? This Kotlin SDK provides native Jetpack Compose components including `BibleText`, `VerseOfTheDay`, and `SignInWithYouVersionButton` using modern language features.
+Building an Android application? This Kotlin SDK provides native Jetpack Compose components including `BibleText`, `BibleReader`, `VerseOfTheDay`, and `SignInWithYouVersionButton` using modern language features.
 
 ### 🔧 API Integration
 
