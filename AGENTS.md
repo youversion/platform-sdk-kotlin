@@ -54,10 +54,12 @@ The SDK uses a singleton configuration pattern with Koin DI:
 
 ## Permissions
 
-Permissions are `SignInWithYouVersionPermission` values (`OPENID`, `PROFILE`, `EMAIL`, `HIGHLIGHTS`). Two things to know before changing permission-related code:
+Permissions are `SignInWithYouVersionPermission` values (`OPENID`, `PROFILE`, `EMAIL`, `HIGHLIGHTS`). Four things to know before changing permission-related code:
 
 - **Granted permissions are irrevocable from the app's side.** There is no revoke API; don't design flows around losing a permission.
 - **There are two grant routes, and both matter.** A signed-out user grants during sign-in (`rememberSignIn` with the permission in the requested set). A signed-in user grants incrementally via the data exchange flow (`rememberDataExchange`), which requires an existing access token — `dataExchangeToken()` throws `MISSING_AUTHENTICATION` without one. Both return through the same `youversionauth://callback` deep link, handled by `SignInWithYouVersionActivity`.
+- **Granted permissions follow the session, not storage.** `configure()` and `saveAuthData()` both drop the stored grants when the tokens they are given name a different session than the one stored, so one user cannot inherit another's. `configure()` likewise stops filling in tokens the caller left out from storage in that case — mixing them would report one user while requests carried another's token.
+- **A data exchange grant belongs to the session that asked for it.** `DataExchangeHandler` records the session before opening the browser, and both callback routes persist through `DataExchangeHandler.persistGrantedPermissions`, which drops the grant when a different user is signed in by the time it returns — a host app driving its own account switching can replace the session while the permission page is open. A grant returning after process death has no recorded session to compare against and is kept.
 
 Reading highlights requires both a signed-in user and `HIGHLIGHTS`; `BibleText` skips the fetch entirely when either is missing rather than issuing a request that would be refused.
 

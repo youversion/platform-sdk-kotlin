@@ -132,6 +132,26 @@ object YouVersionPlatformConfiguration {
         val sessionRepository = PlatformCoreKoinComponent.sessionRepository
         val previousConfig = config
 
+        // The tokens a caller passes describe one session. Filling in the ones they left out from storage is safe
+        // only when storage holds that same session, which is the case when they passed none at all, passed the
+        // stored access token, or named the stored session. Otherwise the SDK would report one user while its
+        // requests carried another's token, and that user would inherit the other's granted permissions.
+        val keepsStoredSession =
+            (accessToken == null && refreshToken == null && idToken == null) ||
+                accessToken == sessionRepository.accessToken ||
+                YouVersionApi.sessionId(accessToken, refreshToken, idToken) ==
+                YouVersionApi.sessionId(
+                    accessToken = sessionRepository.accessToken,
+                    refreshToken = sessionRepository.refreshToken,
+                    idToken = sessionRepository.idToken,
+                )
+
+        // Cleared rather than left in storage for a later saveAuthData to restore, since that compares the tokens it
+        // is given against the configuration rather than against storage.
+        if (!keepsStoredSession) {
+            sessionRepository.grantedPermissionValues = emptySet()
+        }
+
         _configState.value =
             Config(
                 appKey = appKey,
@@ -139,10 +159,10 @@ object YouVersionPlatformConfiguration {
                 apiHost = apiHost,
                 hostEnv = hostEnv,
                 installId = sessionRepository.installId,
-                accessToken = accessToken ?: sessionRepository.accessToken,
-                refreshToken = refreshToken ?: sessionRepository.refreshToken,
-                idToken = idToken ?: sessionRepository.idToken,
-                expiryDate = expiryDate ?: sessionRepository.expiryDate,
+                accessToken = accessToken ?: sessionRepository.accessToken.takeIf { keepsStoredSession },
+                refreshToken = refreshToken ?: sessionRepository.refreshToken.takeIf { keepsStoredSession },
+                idToken = idToken ?: sessionRepository.idToken.takeIf { keepsStoredSession },
+                expiryDate = expiryDate ?: sessionRepository.expiryDate.takeIf { keepsStoredSession },
                 permittedLanguageTags = permittedLanguageTags,
                 permittedVersionIds = permittedVersionIds,
                 grantedPermissions = sessionRepository.grantedPermissionValues.toGrantedPermissions(),

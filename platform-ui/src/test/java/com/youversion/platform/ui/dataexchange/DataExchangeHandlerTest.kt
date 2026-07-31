@@ -24,6 +24,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.util.Date
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -110,6 +111,50 @@ class DataExchangeHandlerTest {
         }
 
     @Test
+    fun `a grant is not persisted when a different user signed in while the browser was open`() =
+        runTest {
+            mockkObject(YouVersionApi)
+            try {
+                YouVersionPlatformConfiguration.configure(
+                    context = ApplicationProvider.getApplicationContext<Context>(),
+                    appKey = "test",
+                    accessToken = "userAAccessToken",
+                    refreshToken = "userARefreshToken",
+                    expiryDate = Date(),
+                )
+                val api = mockk<DataExchangeApi>()
+                coEvery { api.dataExchangeToken(any()) } returns DataExchangeToken(token = "exchange-token")
+                every { YouVersionApi.dataExchange } returns api
+
+                val registry =
+                    ImmediateCallbackRegistry(
+                        callbackUrl =
+                            "youversionauth://callback?data_exchange_status=granted&granted_permissions=highlights",
+                        beforeDispatch = {
+                            YouVersionPlatformConfiguration.saveAuthData(
+                                accessToken = "userBAccessToken",
+                                refreshToken = "userBRefreshToken",
+                                idToken = null,
+                                expiryDate = Date(),
+                            )
+                        },
+                    )
+                val result =
+                    DataExchangeHandler(registry).requestDataExchange(
+                        setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                    )
+
+                // The user who answered the prompt granted it; the user now signed in never did.
+                assertTrue(result.grants(SignInWithYouVersionPermission.HIGHLIGHTS))
+                assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            } finally {
+                unmockkObject(YouVersionApi)
+                YouVersionPlatformConfiguration.clearAuthData()
+                PlatformKoinGraph.stop()
+            }
+        }
+
+    @Test
     fun `a flow that could not be started never reports the browser as opened`() =
         runTest {
             mockkObject(YouVersionApi)
@@ -172,6 +217,7 @@ class DataExchangeHandlerTest {
  */
 private class ImmediateCallbackRegistry(
     private val callbackUrl: String,
+    private val beforeDispatch: () -> Unit = {},
 ) : ActivityResultRegistry() {
     var isHighlightsPersistedDuringDispatch = false
         private set
@@ -182,6 +228,7 @@ private class ImmediateCallbackRegistry(
         input: I,
         options: ActivityOptionsCompat?,
     ) {
+        beforeDispatch()
         dispatchResult(requestCode, Activity.RESULT_OK, Intent(Intent.ACTION_VIEW, callbackUrl.toUri()))
         isHighlightsPersistedDuringDispatch =
             YouVersionPlatformConfiguration.configState.value

@@ -81,6 +81,7 @@ class DataExchangeHandler(
                         continuation.resume(result)
                     }
 
+                recordStartingSession()
                 AuthTabIntent.Builder().build().launch(
                     launcher,
                     permissionPageUrl.toUri(),
@@ -108,24 +109,38 @@ class DataExchangeHandler(
         }
     }
 
-    /**
-     * Persists whatever [result] granted, while the activity result carrying it is still being dispatched.
-     *
-     * Android delivers an activity result before the host activity resumes, but resuming this flow's continuation is
-     * dispatched rather than immediate, so persisting after the continuation resumes would land *after* a caller
-     * reading the permission on resume. Writing here keeps the permission settled by the time anything can observe
-     * it, matching the deep link route, which persists from onNewIntent. Failure is logged rather than thrown, since
-     * throwing during an activity result dispatch would crash the host app.
-     */
-    private fun persistGrantedPermissions(result: DataExchangeResult) {
-        if (!result.isGranted || result.grantedPermissions.isEmpty()) return
-        try {
-            YouVersionPlatformConfiguration.saveGrantedPermissions(result.grantedPermissions)
-        } catch (error: Exception) {
-            Log.w("YouVersionDataExchange", "Could not persist the granted permissions", error)
-        }
-    }
-
     private fun cancelledResult() =
         DataExchangeResult(status = DataExchangeStatus.Cancelled, grantedPermissions = emptyList())
+
+    internal companion object {
+        private var startedSessionId: String? = null
+        private var isSessionRecorded = false
+
+        private fun recordStartingSession() {
+            startedSessionId = YouVersionApi.currentSessionId
+            isSessionRecorded = true
+        }
+
+        /**
+         * Persists whatever [result] granted, unless a different user signed in while the browser was open — their
+         * consent was never asked for. A flow started before the process was recreated has no session to compare
+         * against, so its grant is kept rather than dropped.
+         *
+         * Both callback routes persist from here, while the callback is still being handled, so that a caller reading
+         * the permission on resume sees it settled. Failure is logged rather than thrown, since throwing during an
+         * activity result dispatch or from onNewIntent would crash the host app.
+         */
+        fun persistGrantedPermissions(result: DataExchangeResult) {
+            if (!result.isGranted || result.grantedPermissions.isEmpty()) return
+            if (isSessionRecorded && startedSessionId != YouVersionApi.currentSessionId) {
+                Log.w("YouVersionDataExchange", "Ignoring permissions granted by a user who is no longer signed in")
+                return
+            }
+            try {
+                YouVersionPlatformConfiguration.saveGrantedPermissions(result.grantedPermissions)
+            } catch (error: Exception) {
+                Log.w("YouVersionDataExchange", "Could not persist the granted permissions", error)
+            }
+        }
+    }
 }

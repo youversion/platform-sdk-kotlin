@@ -361,6 +361,73 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     }
 
     @Test
+    fun `configure with tokens naming a different user drops the stored session`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveAuthData(
+                accessToken = "userAAccessToken",
+                refreshToken = "userARefreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            // A host managing its own tokens reconfigures as another user.
+            configure(appKey = "appKey", accessToken = "userBAccessToken")
+
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            // Mixing in user A's tokens would report user A while requests carried user B's.
+            assertEquals("userBAccessToken", accessToken)
+            assertNull(refreshToken)
+            assertNull(idToken)
+        }
+    }
+
+    @Test
+    fun `configure with the stored access token keeps the rest of the stored session`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveAuthData(
+                accessToken = "userAAccessToken",
+                refreshToken = "userARefreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            configure(appKey = "appKey", accessToken = "userAAccessToken")
+
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertEquals("userARefreshToken", refreshToken)
+        }
+    }
+
+    @Test
+    fun `granted permissions dropped by a reconfiguration are not restored by a later saveAuthData`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveAuthData(
+                accessToken = "userAAccessToken",
+                refreshToken = "userARefreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            configure(appKey = "appKey", accessToken = "userBAccessToken")
+            // The same session the reconfiguration established, so this keeps whatever permissions storage holds.
+            saveAuthData(
+                accessToken = "userBAccessToken",
+                refreshToken = null,
+                idToken = null,
+                expiryDate = Date(),
+            )
+
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
     fun `saveAuthData preserves granted permissions across a token refresh`() {
         with(YouVersionPlatformConfiguration) {
             configure(

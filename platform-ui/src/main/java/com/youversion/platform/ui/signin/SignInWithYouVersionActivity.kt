@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
-import com.youversion.platform.core.YouVersionPlatformConfiguration
+import com.youversion.platform.ui.dataexchange.DataExchangeHandler
 import com.youversion.platform.ui.dataexchange.dataExchangeResult
 import kotlin.getValue
 
@@ -43,14 +43,7 @@ abstract class SignInWithYouVersionActivity : ComponentActivity() {
                 return
             }
         if (dataExchangeStatus != null) {
-            val result = dataExchangeResult(callback)
-            if (result.isGranted && result.grantedPermissions.isNotEmpty()) {
-                try {
-                    YouVersionPlatformConfiguration.saveGrantedPermissions(result.grantedPermissions)
-                } catch (error: Exception) {
-                    Log.w("YouVersionDataExchange", "Could not persist the granted permissions", error)
-                }
-            }
+            DataExchangeHandler.persistGrantedPermissions(dataExchangeResult(callback))
         } else {
             signInViewModel.onAction(SignInViewModel.Action.ProcessAuthCallback(intent))
         }
