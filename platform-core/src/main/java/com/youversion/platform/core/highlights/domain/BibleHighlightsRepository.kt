@@ -108,9 +108,10 @@ private data class OperationOutcome(
  * screen rather than erasing it, for a later load to reconcile; a reload the server refuses in turn clears every
  * cached highlight, since that refusal means the user has not granted this app access to their highlights at all.
  *
- * Each queued write is bound to the session that made it via [YouVersionApi.currentSessionId], and is dropped rather
- * than sent if the session changes before it syncs. The auth token is read from the global configuration at
- * request-build time, so an unbound write would reach whichever account is signed in when it finally sends.
+ * Each queued write is bound to the session that made it via [YouVersionApi.currentSessionId], read before the write
+ * touches the cache, and is dropped rather than sent if the session changes before it syncs. The auth token is read
+ * from the global configuration at request-build time, so an unbound write would reach whichever account is signed in
+ * when it finally sends.
  *
  * The cache is cleared on every session change: [sessionIdChanges] is observed and each change triggers [reset], so
  * one user's cached highlights cannot be read after a sign-out, sign-in, or account switch. Emissions are compared
@@ -247,6 +248,7 @@ class BibleHighlightsRepository internal constructor(
         references: List<BibleReference>,
         color: String,
     ) {
+        val sessionId = currentSessionId()
         val normalizedReferences = references.map { it.verseLevelReference() }
         val highlights =
             normalizedReferences.map { reference ->
@@ -257,6 +259,7 @@ class BibleHighlightsRepository internal constructor(
             PendingHighlightOperation(
                 references = normalizedReferences,
                 change = HighlightChange.SetColor(color = color),
+                sessionId = sessionId,
             ),
         )
     }
@@ -265,12 +268,14 @@ class BibleHighlightsRepository internal constructor(
      * Removes the highlights on each of [references], updating the cache immediately and syncing to the server.
      */
     fun removeHighlights(references: List<BibleReference>) {
+        val sessionId = currentSessionId()
         val normalizedReferences = references.map { it.verseLevelReference() }
         cache.removeHighlights(normalizedReferences)
         queueOperation(
             PendingHighlightOperation(
                 references = normalizedReferences,
                 change = HighlightChange.Remove,
+                sessionId = sessionId,
             ),
         )
     }
@@ -309,12 +314,14 @@ class BibleHighlightsRepository internal constructor(
         references: List<BibleReference>,
         newColor: String,
     ) {
+        val sessionId = currentSessionId()
         val normalizedReferences = references.map { it.verseLevelReference() }
         cache.updateHighlightColors(normalizedReferences, newColor)
         queueOperation(
             PendingHighlightOperation(
                 references = normalizedReferences,
                 change = HighlightChange.SetColor(color = newColor),
+                sessionId = sessionId,
             ),
         )
     }
@@ -401,11 +408,19 @@ class BibleHighlightsRepository internal constructor(
         }
     }
 
+    /**
+     * Appends [operation] to the queue and makes sure a processor is running.
+     *
+     * [operation] must already carry the session read *before* its cache mutation was applied, not one read here: a
+     * session change landing between the two runs [reset], and stamping afterwards would label the write with the
+     * replacement session, so the send-time guard would compare that session against itself and let one user's
+     * highlight reach another's account. Reading it first means any such interleaving leaves a stale stamp, which
+     * that guard drops.
+     */
     private fun queueOperation(operation: PendingHighlightOperation) {
-        val stamped = operation.copy(sessionId = currentSessionId())
         val job =
             queueLock.withLock {
-                queuedOperations.value = queuedOperations.value + stamped
+                queuedOperations.value = queuedOperations.value + operation
                 processingJobLocked()
             }
         job.start()

@@ -14,6 +14,7 @@ class SessionRepository(
         internal const val KEY_EXPIRY_DATE = "YouVersionPlatformExpiryDate"
         internal const val KEY_INSTALL_ID = "YouVersionPlatformInstallID"
         internal const val KEY_GRANTED_PERMISSIONS = "YouVersionPlatformGrantedPermissions"
+        internal const val KEY_PERMISSION_GRANT_SESSION = "YouVersionPlatformPermissionGrantSession"
 
         private const val PERMISSION_SEPARATOR = ","
     }
@@ -52,6 +53,17 @@ class SessionRepository(
                 ?.toLongOrNull()
                 ?.let { Date(it) }
         set(value) = storage.putString(KEY_EXPIRY_DATE, value?.time?.toString())
+
+    /**
+     * The session that started the permission-granting flow now in progress, or null when none has been started.
+     *
+     * Stored rather than held in memory because the flow leaves the app for a browser: the process can be recreated
+     * before the callback returns, and an in-memory record would be gone by the time the grant needs checking
+     * against the session that earned it.
+     */
+    internal var permissionGrantSessionId: String?
+        get() = storage.getStringOrNull(KEY_PERMISSION_GRANT_SESSION)
+        set(value) = storage.putString(KEY_PERMISSION_GRANT_SESSION, value)
 
     /**
      * The raw values of the permissions the signed-in user has granted.

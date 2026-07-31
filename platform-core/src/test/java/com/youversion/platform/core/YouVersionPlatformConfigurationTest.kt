@@ -541,6 +541,114 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     }
 
     @Test
+    fun `a permission grant persists when the session that started it is still signed in`() {
+        with(YouVersionPlatformConfiguration) {
+            configureAsUser("userA")
+            beginPermissionGrant()
+
+            assertTrue(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `a permission grant is dropped when a different user signed in while the browser was open`() {
+        with(YouVersionPlatformConfiguration) {
+            configureAsUser("userA")
+            beginPermissionGrant()
+
+            saveAuthData(
+                accessToken = "userBAccessToken",
+                refreshToken = "userBRefreshToken",
+                idToken = idTokenFor("userB"),
+                expiryDate = Date(),
+            )
+
+            assertFalse(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `a permission grant persists when the process was recreated while the browser was open`() {
+        with(YouVersionPlatformConfiguration) {
+            configureAsUser("userA")
+            beginPermissionGrant()
+
+            // The process dies while the user answers the prompt; the callback arrives after a relaunch rebuilds the
+            // configuration from storage, still signed in as the user who was asked.
+            reset()
+            configure(appKey = "appKey")
+
+            assertTrue(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `a permission grant is dropped when the process was recreated and a different user signed in`() {
+        with(YouVersionPlatformConfiguration) {
+            configureAsUser("userA")
+            beginPermissionGrant()
+
+            reset()
+            configureAsUser("userB")
+
+            assertFalse(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `a permission grant with no flow behind it is dropped`() {
+        with(YouVersionPlatformConfiguration) {
+            configureAsUser("userA")
+
+            assertFalse(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `a permission grant is dropped when nobody is signed in`() {
+        with(YouVersionPlatformConfiguration) {
+            // Both the recorded and the current session read null here, so a bare equality check would let this
+            // through and attribute the grant to a signed-out SDK.
+            configure(appKey = "appKey")
+            beginPermissionGrant()
+
+            assertFalse(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `clearAuthData forgets a permission grant in progress`() {
+        with(YouVersionPlatformConfiguration) {
+            configureAsUser("userA")
+            beginPermissionGrant()
+
+            clearAuthData()
+
+            assertNull(sessionRepository.permissionGrantSessionId)
+        }
+    }
+
+    /**
+     * Signs in as [user] the way the sign-in flow does, so the tokens reach storage and a later [configure] restores
+     * them the way a relaunched process would.
+     */
+    private fun configureAsUser(user: String) {
+        YouVersionPlatformConfiguration.configure(appKey = "appKey")
+        YouVersionPlatformConfiguration.saveAuthData(
+            accessToken = "${user}AccessToken",
+            refreshToken = "${user}RefreshToken",
+            idToken = idTokenFor(user),
+            expiryDate = Date(),
+        )
+    }
+
+    @Test
     fun `an unrecognized stored permission is reported as not granted`() {
         storage.putString(SessionRepository.KEY_GRANTED_PERMISSIONS, "highlights,notes")
 

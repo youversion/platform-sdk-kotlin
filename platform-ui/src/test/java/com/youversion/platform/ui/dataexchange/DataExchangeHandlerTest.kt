@@ -87,6 +87,9 @@ class DataExchangeHandlerTest {
                 YouVersionPlatformConfiguration.configure(
                     context = ApplicationProvider.getApplicationContext<Context>(),
                     appKey = "test",
+                    accessToken = "userAAccessToken",
+                    refreshToken = "userARefreshToken",
+                    expiryDate = Date(),
                 )
                 val api = mockk<DataExchangeApi>()
                 coEvery { api.dataExchangeToken(any()) } returns DataExchangeToken(token = "exchange-token")

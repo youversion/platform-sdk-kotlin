@@ -6,6 +6,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import java.util.Collections
 import java.util.Date
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -52,7 +53,9 @@ internal class BibleHighlightCache {
 
     // References whose local write the server refused. The next server merge covering one is authoritative for it: it
     // drops the refused row and takes the server's, then forgets the reference. See [markAwaitingReconcile].
-    private val referencesAwaitingReconcile = ConcurrentHashMap.newKeySet<BibleReference>()
+    // Backed by a map rather than ConcurrentHashMap.newKeySet, which needs API 24 and would throw on our minSdk of 23.
+    private val referencesAwaitingReconcile: MutableSet<BibleReference> =
+        Collections.newSetFromMap(ConcurrentHashMap<BibleReference, Boolean>())
 
     // ----- Throttling and Loading
     private val recentChapterFetches = ConcurrentHashMap<BibleReference, Date>()

@@ -1,6 +1,7 @@
 package com.youversion.platform.core
 
 import android.content.Context
+import androidx.annotation.RestrictTo
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.YouVersionPlatformConfiguration.configure
 import com.youversion.platform.core.api.YouVersionApi
@@ -278,6 +279,10 @@ object YouVersionPlatformConfiguration {
      * Call this function when the user explicitly chooses to sign out. After this is
      * called, the user will need to go through the `signIn` flow again to
      * re-authenticate.
+     *
+     * Any permission-granting flow still in progress is forgotten along with the tokens, so signing out leaves no
+     * trace of who was signed in. A grant whose callback arrives afterwards is dropped by [completePermissionGrant]
+     * rather than landing on the next user.
      */
     fun clearAuthData() {
         writeAuthData(
@@ -288,6 +293,7 @@ object YouVersionPlatformConfiguration {
             grantedPermissionValues = emptySet(),
             persist = true,
         )
+        PlatformCoreKoinComponent.sessionRepository.permissionGrantSessionId = null
     }
 
     /**
@@ -308,6 +314,47 @@ object YouVersionPlatformConfiguration {
         sessionRepository.grantedPermissionValues = mergedValues
 
         _configState.value = currentConfig.copy(grantedPermissions = mergedValues.toGrantedPermissions())
+    }
+
+    /**
+     * Records that a permission-granting flow is starting for the session signed in now, so the grant it produces can
+     * be checked against the session that earned it. Call this immediately before sending the user off to grant.
+     *
+     * Paired with [completePermissionGrant] and meant only for the SDK's own permission flows, which live in
+     * platform-ui and so cannot reach an `internal` declaration here.
+     *
+     * @throws YouVersionNotConfiguredException If [configure] has not been called first.
+     */
+    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
+    fun beginPermissionGrant() {
+        config ?: throw YouVersionNotConfiguredException()
+        PlatformCoreKoinComponent.sessionRepository.permissionGrantSessionId = YouVersionApi.currentSessionId
+    }
+
+    /**
+     * Persists [permissions] only when the session that called [beginPermissionGrant] is still the one signed in, so
+     * that a user cannot inherit consent another user gave.
+     *
+     * The comparison survives process death, since [beginPermissionGrant] records to storage — the granting flow
+     * leaves the app for a browser, and the callback can arrive in a freshly created process. A grant with no
+     * recorded flow behind it, or one arriving with nobody signed in, is dropped rather than attributed to whoever
+     * happens to be signed in: the record is only absent when it was never written or a sign-out cleared it, and
+     * neither says the granting user is still here.
+     *
+     * Paired with [beginPermissionGrant] and meant only for the SDK's own permission flows, which live in
+     * platform-ui and so cannot reach an `internal` declaration here.
+     *
+     * @param permissions The permissions the user granted.
+     * @return Whether they were persisted.
+     * @throws YouVersionNotConfiguredException If [configure] has not been called first.
+     */
+    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
+    fun completePermissionGrant(permissions: Collection<SignInWithYouVersionPermission>): Boolean {
+        config ?: throw YouVersionNotConfiguredException()
+        val startingSessionId = PlatformCoreKoinComponent.sessionRepository.permissionGrantSessionId
+        if (startingSessionId == null || startingSessionId != YouVersionApi.currentSessionId) return false
+        saveGrantedPermissions(permissions)
+        return true
     }
 
     private fun Set<String>.toGrantedPermissions(): Set<SignInWithYouVersionPermission> =
