@@ -46,7 +46,7 @@ currently not available.
 
 ## Requirements
 
-- Android 5.0+
+- Android 6.0+ (API 23)
 - Android Studio Narwhal+
 - Kotlin 2.2.0+
 - A YouVersion Platform API key ([Register here](https://platform.youversion.com/))
@@ -92,12 +92,12 @@ Great! Now that you know which modules you need, you can proceed with installati
 ```toml
 # gradle/libs.versions.toml
 [versions]
-youVersionPlatform = "1.0.1"
+youVersionPlatform = "1.8.0"
 
 [libraries]
-youversion-platform-core = { module = "com.youversion.platform:platform-sdk-core", version.ref = "youVersionPlatform" }
-youversion-platform-ui = { module = "com.youversion.platform:platform-sdk-ui", version.ref = "youVersionPlatform" }
-youversion-platform-reader = { module = "com.youversion.platform:platform-sdk-reader", version.ref = "youVersionPlatform" }
+youversion-platform-core = { module = "com.youversion.platform:platform-core", version.ref = "youVersionPlatform" }
+youversion-platform-ui = { module = "com.youversion.platform:platform-ui", version.ref = "youVersionPlatform" }
+youversion-platform-reader = { module = "com.youversion.platform:platform-reader", version.ref = "youVersionPlatform" }
 ```
 
 ```kotlin
@@ -110,7 +110,7 @@ implementation(libs.youversion.platform.reader)
 ### Without Version Catalog
 
 ```kotlin
-val youVersionPlatform = "1.0.1"
+val youVersionPlatform = "1.8.0"
 implementation("com.youversion.platform:platform-core:$youVersionPlatform")
 implementation("com.youversion.platform:platform-ui:$youVersionPlatform")
 implementation("com.youversion.platform:platform-reader:$youVersionPlatform")
@@ -180,7 +180,7 @@ Displays a full Bible reading experience, very similar to the YouVersion Bible a
 fun ReaderTab() {
     BibleReader(
         appName = "Your App Name",
-        appSignInMessage = "See all of your **YouVersion** highlights alongside your **Your App Name** highlights",
+        appSignInMessage = "Sign in to see your **YouVersion** highlights in **Your App Name**.",
     )
 }
 ```
@@ -192,7 +192,7 @@ To open to a specific passage:
 ```kotlin
 BibleReader(
     appName = "Your App Name",
-    appSignInMessage = "Keep your highlights across devices",
+    appSignInMessage = "Sign in to see your **YouVersion** highlights in **Your App Name**.",
     bibleReference = BibleReference(versionId = 3034, bookUSFM = "PSA", chapter = 23),
 )
 ```
@@ -426,6 +426,7 @@ All four calls throw `YouVersionNetworkException` with reason `NOT_PERMITTED` wh
 
 Explore the [examples directory](./examples) for a complete sample app demonstrating:
 - Scripture display with various reference types
+- The full `BibleReader` experience, including highlights
 - User authentication flows
 - VOTD integration
 - Best practices for token storage
