@@ -177,8 +177,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -200,8 +198,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -223,8 +219,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -263,8 +257,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -286,8 +278,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -313,8 +303,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -358,8 +346,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -382,8 +368,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -410,8 +394,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -439,8 +421,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -468,8 +448,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -501,8 +479,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -537,8 +513,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -563,8 +537,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = { fontsClicked = true },
@@ -592,8 +564,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -669,8 +639,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -746,8 +714,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -843,8 +809,6 @@ class BibleScreenTest {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Sign in",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -897,8 +861,6 @@ class BibleScreenTest {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Sign in",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -956,25 +918,26 @@ class BibleScreenTest {
     private fun stubConfig(
         isSignedIn: Boolean,
         isSignInEnabled: Boolean,
+        signInPromptMessage: String? = null,
     ) {
         mockkObject(YouVersionPlatformConfiguration)
         mockkObject(YouVersionApi)
-        val configStateFlow =
-            MutableStateFlow(
-                Config(
-                    appKey = "test",
-                    authCallback = "",
-                    apiHost = "",
-                    hostEnv = null,
-                    installId = null,
-                    accessToken = if (isSignedIn) "token" else null,
-                    refreshToken = null,
-                    idToken = null,
-                    expiryDate = null,
-                    isSignInEnabled = isSignInEnabled,
-                ),
+        val config =
+            Config(
+                appKey = "test",
+                authCallback = "",
+                apiHost = "",
+                hostEnv = null,
+                installId = null,
+                accessToken = if (isSignedIn) "token" else null,
+                refreshToken = null,
+                idToken = null,
+                expiryDate = null,
+                isSignInEnabled = isSignInEnabled,
+                appName = "Test App",
+                signInPromptMessage = signInPromptMessage,
             )
-        every { YouVersionPlatformConfiguration.configState } returns configStateFlow
+        every { YouVersionPlatformConfiguration.configState } returns MutableStateFlow(config)
         coEvery { YouVersionApi.hasValidToken() } returns true
         mockUsersApi = mockk(relaxed = true)
         every { YouVersionApi.users } returns mockUsersApi
@@ -1000,8 +963,6 @@ class BibleScreenTest {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Sign in",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -1024,8 +985,6 @@ class BibleScreenTest {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Keep your highlights",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -1053,14 +1012,12 @@ class BibleScreenTest {
                 shouldStartSignIn = true,
             )
         stubSuccessfulTextLoad()
-        stubConfig(isSignedIn = false, isSignInEnabled = true)
+        stubConfig(isSignedIn = false, isSignInEnabled = true, signInPromptMessage = "Keep your highlights")
 
         try {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Keep your highlights",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -1083,8 +1040,6 @@ class BibleScreenTest {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Sign in",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -1116,8 +1071,6 @@ class BibleScreenTest {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Sign in",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -1151,8 +1104,6 @@ class BibleScreenTest {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Sign in",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -1182,8 +1133,6 @@ class BibleScreenTest {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Sign in",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -1226,8 +1175,6 @@ class BibleScreenTest {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Sign in",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -1271,8 +1218,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -1312,8 +1257,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -1355,8 +1298,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -1381,8 +1322,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -1423,8 +1362,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 bottomBar = { Text("Bottom Bar Content") },
                 onReferencesClick = {},
                 onVersionsClick = {},
@@ -1447,8 +1384,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 bottomBar = null,
                 onReferencesClick = {},
                 onVersionsClick = {},
@@ -1475,8 +1410,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -1500,8 +1433,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},

@@ -24,6 +24,20 @@ object YouVersionPlatformConfiguration {
         get() = _configState.value
     val appKey: String?
         get() = config?.appKey
+
+    /**
+     * The name of the host app, shown in the sign-in prompt so the reader knows who is asking.
+     */
+    val appName: String?
+        get() = config?.appName
+
+    /**
+     * The host app's own reason for asking the reader to sign in, shown above the standard explanation in the
+     * sign-in prompt. Omitted from the prompt when `null` or blank. Supports `**bold**` markdown.
+     */
+    val signInPromptMessage: String?
+        get() = config?.signInPromptMessage
+
     val authCallback: String
         get() = config?.authCallback ?: DEFAULT_AUTH_CALLBACK
     val apiHost: String
@@ -91,6 +105,8 @@ object YouVersionPlatformConfiguration {
         permittedLanguageTags: Set<String>? = null,
         permittedVersionIds: Set<Int>? = null,
         isSignInEnabled: Boolean = true,
+        appName: String? = null,
+        signInPromptMessage: String? = null,
     ) {
         if (config != null) {
             Logger.w("YouVersionPlatform SDK has already been configured. Reconfiguring.")
@@ -114,6 +130,8 @@ object YouVersionPlatformConfiguration {
             permittedLanguageTags = permittedLanguageTags,
             permittedVersionIds = permittedVersionIds,
             isSignInEnabled = isSignInEnabled,
+            appName = appName,
+            signInPromptMessage = signInPromptMessage,
         )
     }
 
@@ -129,6 +147,8 @@ object YouVersionPlatformConfiguration {
         permittedLanguageTags: Set<String>? = null,
         permittedVersionIds: Set<Int>? = null,
         isSignInEnabled: Boolean = true,
+        appName: String? = null,
+        signInPromptMessage: String? = null,
     ) {
         val sessionRepository = PlatformCoreKoinComponent.sessionRepository
         val previousConfig = config
@@ -168,6 +188,8 @@ object YouVersionPlatformConfiguration {
                 permittedVersionIds = permittedVersionIds,
                 grantedPermissions = sessionRepository.grantedPermissionValues.toGrantedPermissions(),
                 isSignInEnabled = isSignInEnabled,
+                appName = appName,
+                signInPromptMessage = signInPromptMessage,
             )
 
         // The Koin graph (and therefore the BibleVersionRepository singleton) survives reconfiguration
@@ -182,6 +204,25 @@ object YouVersionPlatformConfiguration {
         if (filtersChanged) {
             PlatformCoreKoinComponent.bibleVersionRepository.clearVersionListings()
         }
+    }
+
+    /**
+     * Sets the copy the sign-in prompt shows, leaving the rest of the configuration alone.
+     *
+     * Meant only for the deprecated reader parameters that used to carry these values, so that a host app passing
+     * them still gets the prompt it expects. New code should pass [appName] and [signInPromptMessage] to [configure].
+     *
+     * @param appName The name of the host app, shown in the sign-in prompt.
+     * @param signInPromptMessage The host app's own reason for asking, replacing any already configured.
+     * @throws YouVersionNotConfiguredException If [configure] has not been called first.
+     */
+    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
+    fun configureSignIn(
+        appName: String,
+        signInPromptMessage: String?,
+    ) {
+        val currentConfig = config ?: throw YouVersionNotConfiguredException()
+        _configState.value = currentConfig.copy(appName = appName, signInPromptMessage = signInPromptMessage)
     }
 
     /**
@@ -395,6 +436,8 @@ data class Config(
     val permittedVersionIds: Set<Int>? = null,
     val grantedPermissions: Set<SignInWithYouVersionPermission> = emptySet(),
     val isSignInEnabled: Boolean = true,
+    val appName: String? = null,
+    val signInPromptMessage: String? = null,
 ) {
     val isSignedIn = accessToken != null
 }

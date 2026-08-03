@@ -111,6 +111,51 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     }
 
     @Test
+    fun `appName and signInPromptMessage default to null`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+
+            assertNull(appName)
+            assertNull(signInPromptMessage)
+        }
+    }
+
+    @Test
+    fun `configure sets appName and signInPromptMessage when provided`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(
+                appKey = "appKey",
+                appName = "Sample App",
+                signInPromptMessage = "Keep your highlights",
+            )
+
+            assertEquals("Sample App", appName)
+            assertEquals("Keep your highlights", signInPromptMessage)
+        }
+    }
+
+    @Test
+    fun `configureSignIn sets appName and signInPromptMessage without disturbing the rest`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey", accessToken = "token")
+
+            configureSignIn(appName = "Sample App", signInPromptMessage = "Keep your highlights")
+
+            assertEquals("Sample App", appName)
+            assertEquals("Keep your highlights", signInPromptMessage)
+            assertEquals("appKey", appKey)
+            assertEquals("token", accessToken)
+        }
+    }
+
+    @Test
+    fun `configureSignIn before configure fails`() {
+        assertFailsWith<YouVersionNotConfiguredException> {
+            YouVersionPlatformConfiguration.configureSignIn(appName = "Sample App", signInPromptMessage = null)
+        }
+    }
+
+    @Test
     fun `configure with saved values`() {
         sessionRepository.accessToken = "stored_token"
         sessionRepository.setInstallId("existing_id")
