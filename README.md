@@ -193,7 +193,7 @@ YouVersionPlatformConfiguration.configure(
 )
 ```
 
-`signInPromptMessage` is optional and supports `**bold**` markdown.
+`signInPromptMessage` is optional and supports `**bold**` markdown. `appName` is optional too — leave it out and the prompt names your app by its launcher label — but set it when that label is not the name you want a reader to see before granting account access.
 
 To open to a specific passage:
 

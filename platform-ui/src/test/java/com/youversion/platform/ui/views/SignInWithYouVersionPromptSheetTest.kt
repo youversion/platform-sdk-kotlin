@@ -1,9 +1,11 @@
 package com.youversion.platform.ui.views
 
+import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.core.app.ApplicationProvider
 import com.youversion.platform.core.Config
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
@@ -12,6 +14,7 @@ import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,6 +25,11 @@ import kotlin.test.assertTrue
 class SignInWithYouVersionPromptSheetTest {
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    @Before
+    fun setUp() {
+        ApplicationProvider.getApplicationContext<Context>().applicationInfo.nonLocalizedLabel = HOST_APP_LABEL
+    }
 
     @After
     fun tearDown() {
@@ -80,11 +88,20 @@ class SignInWithYouVersionPromptSheetTest {
     }
 
     @Test
-    fun `still explains itself when no app name is configured`() {
+    fun `names the host app by its launcher label when no app name is configured`() {
         renderSheet(appName = null)
 
         composeTestRule
-            .onNodeWithText("wants to connect", substring = true)
+            .onNodeWithText("$HOST_APP_LABEL wants to connect", substring = true)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `names the host app by its launcher label when the configured app name is blank`() {
+        renderSheet(appName = "   ")
+
+        composeTestRule
+            .onNodeWithText("$HOST_APP_LABEL wants to connect", substring = true)
             .assertIsDisplayed()
     }
 
@@ -159,5 +176,9 @@ class SignInWithYouVersionPromptSheetTest {
         composeTestRule.onNodeWithText("No Thanks").performClick()
 
         assertTrue(isDismissed)
+    }
+
+    private companion object {
+        const val HOST_APP_LABEL = "Sample App"
     }
 }

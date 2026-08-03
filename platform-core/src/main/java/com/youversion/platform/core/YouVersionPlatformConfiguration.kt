@@ -26,7 +26,8 @@ object YouVersionPlatformConfiguration {
         get() = config?.appKey
 
     /**
-     * The name of the host app, shown in the sign-in prompt so the reader knows who is asking.
+     * The name of the host app, shown in the sign-in prompt so the reader knows who is asking. When `null` or
+     * blank, the prompt names the host app by its launcher label.
      */
     val appName: String?
         get() = config?.appName

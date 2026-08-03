@@ -17,10 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -44,7 +46,9 @@ import com.youversion.platform.ui.theme.readerColorScheme
  * never interrupted.
  *
  * The app the sheet names and the host app's own reason for asking come from
- * [YouVersionPlatformConfiguration.appName] and [YouVersionPlatformConfiguration.signInPromptMessage].
+ * [YouVersionPlatformConfiguration.appName] and [YouVersionPlatformConfiguration.signInPromptMessage]. A host that
+ * configures no app name is named by its launcher label instead, so the reader is never asked to grant account
+ * access to an app the sheet leaves unnamed.
  *
  * @param onSignIn Called when the reader agrees to sign in.
  * @param onDismissRequest Called when the reader declines, or dismisses the sheet.
@@ -57,7 +61,10 @@ fun SignInWithYouVersionPromptSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val config by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
-    val appName = config?.appName.orEmpty()
+    val context = LocalContext.current
+    val hostAppLabel =
+        remember(context) { context.applicationInfo.loadLabel(context.packageManager).toString() }
+    val appName = config?.appName?.takeIf { it.isNotBlank() } ?: hostAppLabel
     val signInPromptMessage = config?.signInPromptMessage
 
     ModalBottomSheet(
