@@ -29,10 +29,17 @@
     <string name="yv_sign_in_button_full">Iniciar sesión con</string>
     <string name="yv_sign_in_error_message">No pudimos iniciar tu sesión en este momento. Por favor, inténtalo de nuevo.</string>
     <string name="yv_sign_in_error_title">Error al iniciar sesión</string>
+    <string name="yv_sign_in_prompt_introducing">PRESENTANDO</string>
+    <string name="yv_sign_in_prompt_no_button">No, gracias</string>
+    <string name="yv_sign_in_prompt_paragraph">**%1$s** quiere conectarse a tu cuenta de **Bible App** de YouVersion. Esto les permitirá ver e interactuar con tu actividad en Bible App. ¿Te gustaría continuar?</string>
+    <string name="yv_sign_in_prompt_yes_button">Sí, por favor</string>
     <string name="yv_sign_out_cancel_button_text">Cancelar</string>
     <string name="yv_sign_out_confirm_button_text">Cerrar sesión</string>
     <string name="yv_sign_out_confirmation_message">¿Estás seguro de que quieres cerrar sesión en YouVersion? Deberás iniciar sesión nuevamente para acceder a tus resaltados.</string>
     <string name="yv_sign_out_confirmation_title">Cerrar sesión</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">Cerrar sesión de todas formas</string>
+    <string name="yv_sign_out_pending_highlights_message">Algunos de tus resaltados no se han guardado aún y se perderán si cierras sesión. ¿Deseas cerrar sesión de todas formas?</string>
+    <string name="yv_sign_out_pending_highlights_title">¿Guardar tus resaltados?</string>
     <string name="yv_tab_votd">Versículo del Día</string>
     <string name="yv_version_info_agree_and_download">Aceptar y descargar</string>
     <string name="yv_version_info_maybe_later">Quizás más tarde</string>

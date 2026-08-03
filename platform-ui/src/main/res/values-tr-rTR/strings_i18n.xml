@@ -37,6 +37,9 @@
     <string name="yv_sign_out_confirm_button_text">Oturumu Kapat</string>
     <string name="yv_sign_out_confirmation_message">YouVersion\'dan çıkış yapmak istediğinizden emin misiniz? Vurgularınıza erişmek için tekrar oturum açmanız gerekecek.</string>
     <string name="yv_sign_out_confirmation_title">Oturumu Kapat</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">Yine de çıkış yap</string>
+    <string name="yv_sign_out_pending_highlights_message">Bazı vurgulamalarınız henüz kaydedilmedi ve oturumu kapatırsanız kaybolacaklardır. Yine de oturumu kapatmak istiyor musunuz?</string>
+    <string name="yv_sign_out_pending_highlights_title">Vurgularınız kaydedilsin mi?</string>
     <string name="yv_tab_votd">Günün Ayeti</string>
     <string name="yv_version_info_agree_and_download">Kabul Et ve İndir</string>
     <string name="yv_version_info_maybe_later">Belki Daha Sonra</string>
