@@ -116,6 +116,10 @@ private data class OperationOutcome(
  * The cache is cleared on every session change: [sessionIdChanges] is observed and each change triggers [reset], so
  * one user's cached highlights cannot be read after a sign-out, sign-in, or account switch. Emissions are compared
  * against the session read at construction rather than the first emission, which can already be the new session.
+ *
+ * That collection is unconfined, so [reset] runs inline on the thread that published the change rather than on a
+ * later dispatch. The clear is therefore part of the session change rather than something that trails it: no reader
+ * can observe the new session while the cache still holds the previous one's highlights.
  */
 class BibleHighlightsRepository internal constructor(
     private val api: HighlightsApi = HighlightsEndpoints,
@@ -174,7 +178,7 @@ class BibleHighlightsRepository internal constructor(
 
     init {
         var previousSessionId = currentSessionId()
-        scope.launch {
+        scope.launch(Dispatchers.Unconfined) {
             sessionIdChanges.collect { sessionId ->
                 if (previousSessionId != sessionId) {
                     previousSessionId = sessionId

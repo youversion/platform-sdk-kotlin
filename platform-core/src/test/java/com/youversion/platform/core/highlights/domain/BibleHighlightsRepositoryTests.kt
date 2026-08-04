@@ -968,6 +968,15 @@ class BibleHighlightsRepositoryTests {
     @Test
     fun `a session change that lands before the first emission clears the cached highlights`() =
         runTest(testDispatcher) {
+            cache.addHighlights(
+                listOf(
+                    BibleHighlight(
+                        bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
+                        hexColor = "#ff00ff",
+                    ),
+                ),
+            )
+
             val repository =
                 BibleHighlightsRepository(
                     api = FakeHighlightsApi(),
@@ -976,15 +985,35 @@ class BibleHighlightsRepositoryTests {
                     currentSessionId = { "session-a" },
                     sessionIdChanges = MutableStateFlow("session-b"),
                 )
+            advanceUntilIdle()
+
+            assertEquals(0, repository.highlights.value.size)
+        }
+
+    @Test
+    fun `a session change clears the cached highlights before the change is observable`() =
+        runTest(testDispatcher) {
+            val sessionIdChanges = MutableStateFlow<String?>("session-a")
+            val repository =
+                BibleHighlightsRepository(
+                    api = FakeHighlightsApi(),
+                    scope = CoroutineScope(testDispatcher),
+                    cache = cache,
+                    currentSessionId = { sessionIdChanges.value },
+                    sessionIdChanges = sessionIdChanges,
+                )
 
             repository.addHighlights(
                 listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
                 color = "#ff00ff",
             )
+            runCurrent()
             assertEquals(1, repository.highlights.value.size)
 
-            advanceUntilIdle()
+            sessionIdChanges.value = "session-b"
 
+            // Deliberately not advanced: publishing the change must itself have cleared the cache, so that nothing can
+            // read the new session's state while the previous session's highlights are still cached.
             assertEquals(0, repository.highlights.value.size)
         }
 

@@ -196,8 +196,12 @@ fun BibleText(
 
     val highlightAlpha = MaterialTheme.readerColorScheme.highlightAlpha
     val highlights =
-        remember(cachedHighlights, reference, highlightAlpha) {
-            highlightColorsForReference(cachedHighlights, reference, highlightAlpha)
+        remember(cachedHighlights, reference, highlightAlpha, hasHighlightsAccess) {
+            if (hasHighlightsAccess) {
+                highlightColorsForReference(cachedHighlights, reference, highlightAlpha)
+            } else {
+                emptyMap()
+            }
         }
 
     LaunchedEffect(loadingPhase) {
