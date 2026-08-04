@@ -248,36 +248,26 @@ class BibleHighlightsRepository internal constructor(
         references: List<BibleReference>,
         color: String,
     ) {
-        val sessionId = currentSessionId()
         val normalizedReferences = references.map { it.verseLevelReference() }
         val highlights =
             normalizedReferences.map { reference ->
                 BibleHighlight(bibleReference = reference, hexColor = color)
             }
-        cache.addHighlights(highlights)
-        queueOperation(
-            PendingHighlightOperation(
-                references = normalizedReferences,
-                change = HighlightChange.SetColor(color = color),
-                sessionId = sessionId,
-            ),
-        )
+        applyAndQueue(
+            references = normalizedReferences,
+            change = HighlightChange.SetColor(color = color),
+        ) { cache.addHighlights(highlights) }
     }
 
     /**
      * Removes the highlights on each of [references], updating the cache immediately and syncing to the server.
      */
     fun removeHighlights(references: List<BibleReference>) {
-        val sessionId = currentSessionId()
         val normalizedReferences = references.map { it.verseLevelReference() }
-        cache.removeHighlights(normalizedReferences)
-        queueOperation(
-            PendingHighlightOperation(
-                references = normalizedReferences,
-                change = HighlightChange.Remove,
-                sessionId = sessionId,
-            ),
-        )
+        applyAndQueue(
+            references = normalizedReferences,
+            change = HighlightChange.Remove,
+        ) { cache.removeHighlights(normalizedReferences) }
     }
 
     /**
@@ -294,6 +284,7 @@ class BibleHighlightsRepository internal constructor(
         if (references.isEmpty()) return
         loadScope.launch {
             references.forEach { awaitHighlightsForChapterLoaded(it) }
+            currentCoroutineContext().ensureActive()
             val matchingReferences =
                 references.filter { selection ->
                     highlights(overlapping = selection).any { isSameHexColor(it.hexColor, matchingColor) }
@@ -314,16 +305,11 @@ class BibleHighlightsRepository internal constructor(
         references: List<BibleReference>,
         newColor: String,
     ) {
-        val sessionId = currentSessionId()
         val normalizedReferences = references.map { it.verseLevelReference() }
-        cache.updateHighlightColors(normalizedReferences, newColor)
-        queueOperation(
-            PendingHighlightOperation(
-                references = normalizedReferences,
-                change = HighlightChange.SetColor(color = newColor),
-                sessionId = sessionId,
-            ),
-        )
+        applyAndQueue(
+            references = normalizedReferences,
+            change = HighlightChange.SetColor(color = newColor),
+        ) { cache.updateHighlightColors(normalizedReferences, newColor) }
     }
 
     /**
@@ -340,9 +326,9 @@ class BibleHighlightsRepository internal constructor(
         queueLock.withLock {
             queuedOperations.value = emptyList()
             operationGeneration++
+            loadScope.coroutineContext.cancelChildren()
+            cache.clear()
         }
-        loadScope.coroutineContext.cancelChildren()
-        cache.clear()
     }
 
     /**
@@ -409,17 +395,27 @@ class BibleHighlightsRepository internal constructor(
     }
 
     /**
-     * Appends [operation] to the queue and makes sure a processor is running.
+     * Stamps the current session, applies [mutateCache], queues the matching operation for [references], and makes sure
+     * a processor is running.
      *
-     * [operation] must already carry the session read *before* its cache mutation was applied, not one read here: a
-     * session change landing between the two runs [reset], and stamping afterwards would label the write with the
-     * replacement session, so the send-time guard would compare that session against itself and let one user's
-     * highlight reach another's account. Reading it first means any such interleaving leaves a stale stamp, which
-     * that guard drops.
+     * The three steps run under [queueLock], which [reset] also holds, so a session change takes effect either wholly
+     * before or wholly after the change rather than partway through it: the stamp, the cached rows, and the queued
+     * operation always describe the same session. The processing job is created inside the lock and started outside it.
      */
-    private fun queueOperation(operation: PendingHighlightOperation) {
+    private fun applyAndQueue(
+        references: List<BibleReference>,
+        change: HighlightChange,
+        mutateCache: () -> Unit,
+    ) {
         val job =
             queueLock.withLock {
+                val operation =
+                    PendingHighlightOperation(
+                        references = references,
+                        change = change,
+                        sessionId = currentSessionId(),
+                    )
+                mutateCache()
                 queuedOperations.value = queuedOperations.value + operation
                 processingJobLocked()
             }
@@ -494,7 +490,7 @@ class BibleHighlightsRepository internal constructor(
                     queueLock.withLock {
                         val current = queuedOperations.value
                         if (current.isEmpty()) {
-                            // Observe "empty" and stop processing atomically: if a concurrent queueOperation adds an
+                            // Observe "empty" and stop processing atomically: if a concurrent applyAndQueue adds an
                             // item after this, it acquires the mutex next, sees isProcessingQueue == false, and starts
                             // a fresh processor rather than deferring to this dying one.
                             isProcessingQueue = false
