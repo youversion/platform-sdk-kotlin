@@ -405,26 +405,25 @@ class BibleReaderViewModelHighlightsTests {
     }
 
     @Test
-    fun `sign-in completing before it settles keeps the held highlight for a later grant`() {
+    fun `a sign-in that did not complete drops the held highlight`() {
         isUserSignedIn = false
         selectVerses(verseOne)
         viewModel.onAction(BibleReaderViewModel.Action.AddHighlight(yellow))
 
-        // Sign-in settles asynchronously, so the reader can still read as signed out when the prompt closes. The
-        // held highlight must not be dropped here — the grant may still be in flight.
+        // Sign-in is awaited before this action is dispatched, so a reader still signed out here cancelled it or it
+        // failed. Holding the highlight on would apply it to a verse they never re-selected, on whichever sign-in
+        // happens next.
         viewModel.onAction(BibleReaderViewModel.Action.SignInCompleted)
 
         assertFalse(viewModel.state.value.shouldStartSignIn)
         assertFalse(viewModel.state.value.showDataExchangeConfirmation)
-        assertTrue(viewModel.state.value.hasHighlightRequest)
-        verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
+        assertFalse(viewModel.state.value.hasHighlightRequest)
 
-        // Once the grant lands the held highlight applies, as the reader originally asked.
         isUserSignedIn = true
         isHighlightsPermissionGranted = true
         viewModel.applyHighlightRequestIfPermitted()
 
-        verify { bibleHighlightsRepository.addHighlights(match { it.toSet() == setOf(verseOne) }, yellow) }
+        verify(exactly = 0) { bibleHighlightsRepository.addHighlights(any(), any()) }
     }
 
     @Test

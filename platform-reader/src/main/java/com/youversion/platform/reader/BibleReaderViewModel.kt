@@ -449,6 +449,7 @@ class BibleReaderViewModel(
         _state.update { it.copy(shouldStartSignIn = false) }
         val request = highlightRequest ?: return
         if (!isSignedIn()) {
+            highlightRequest = null
             return
         }
         if (hasHighlightsPermission()) {

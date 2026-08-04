@@ -124,13 +124,16 @@ class BibleReaderRepository internal constructor(
      */
     internal val highlightRequestChanges: StateFlow<HighlightRequest?> = highlightRequestState.asStateFlow()
 
+    /**
+     * Reads the held request, discarding anything that cannot be applied: a request belonging to another session, and
+     * one that no longer decodes because the stored shape changed or the value was truncated. This runs while the
+     * repository is being constructed, so letting a decode failure propagate would take the reader down on every
+     * launch with nothing the reader could do about it.
+     */
     private fun storedHighlightRequest(): HighlightRequest? {
-        val stored =
-            storage
-                .getStringOrNull(KEY_HIGHLIGHT_REQUEST)
-                ?.let { Json.decodeFromString<HighlightRequest>(it) }
-                ?: return null
-        if (!stored.belongsToCurrentSession()) {
+        val raw = storage.getStringOrNull(KEY_HIGHLIGHT_REQUEST) ?: return null
+        val stored = runCatching { Json.decodeFromString<HighlightRequest>(raw) }.getOrNull()
+        if (stored == null || !stored.belongsToCurrentSession()) {
             storage.putString(KEY_HIGHLIGHT_REQUEST, null)
             return null
         }

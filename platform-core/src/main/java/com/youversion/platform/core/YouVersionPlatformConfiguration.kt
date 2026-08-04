@@ -154,19 +154,16 @@ object YouVersionPlatformConfiguration {
         val sessionRepository = PlatformCoreKoinComponent.sessionRepository
         val previousConfig = config
 
-        // The tokens a caller passes describe one session. Filling in the ones they left out from storage is safe
-        // only when storage holds that same session, which is the case when they passed none at all, passed the
-        // stored access token, or named the stored session. Otherwise the SDK would report one user while its
-        // requests carried another's token, and that user would inherit the other's granted permissions.
+        // The tokens a caller passes describe one session, so the ones they left out are filled in from storage only
+        // when storage holds that same session. Each is compared against its own stored counterpart rather than
+        // through a single session id, which names a whole set and so cannot match a partial one. An access token
+        // passed alone names no session, and stays the caller's to prove with the refresh or ID token beside it.
+        val passedAccountId = YouVersionApi.accountId(idToken)
         val keepsStoredSession =
             (accessToken == null && refreshToken == null && idToken == null) ||
-                accessToken == sessionRepository.accessToken ||
-                YouVersionApi.sessionId(accessToken, refreshToken, idToken) ==
-                YouVersionApi.sessionId(
-                    accessToken = sessionRepository.accessToken,
-                    refreshToken = sessionRepository.refreshToken,
-                    idToken = sessionRepository.idToken,
-                )
+                (accessToken != null && accessToken == sessionRepository.accessToken) ||
+                (refreshToken != null && refreshToken == sessionRepository.refreshToken) ||
+                (passedAccountId != null && passedAccountId == YouVersionApi.accountId(sessionRepository.idToken))
 
         // Cleared rather than left in storage for a later saveAuthData to restore, since that compares the tokens it
         // is given against the configuration rather than against storage.

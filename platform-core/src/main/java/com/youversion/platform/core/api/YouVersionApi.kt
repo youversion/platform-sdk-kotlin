@@ -67,9 +67,15 @@ object YouVersionApi {
         idToken: String?,
     ): String? {
         if (accessToken == null) return null
-        idToken?.let { users.decodeJWT(it)["sub"] as? String }?.let { return "user:$it" }
+        accountId(idToken)?.let { return "user:$it" }
         return "token:${(refreshToken ?: accessToken).sha256()}"
     }
+
+    /**
+     * Reads the account an ID token was issued for from its `sub` claim. Returns `null` when there is no account to
+     * read: no token was given, or the one given cannot be decoded.
+     */
+    internal fun accountId(idToken: String?): String? = idToken?.let { users.decodeJWT(it)["sub"] as? String }
 
     /**
      * Whether the signed-in user has granted the given permission to this app.

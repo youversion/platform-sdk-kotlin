@@ -424,6 +424,36 @@ class BibleReaderRepositoryTest {
     }
 
     @Test
+    fun `a highlight request that no longer decodes is dropped at construction`() {
+        val storage = mockk<Storage>(relaxed = true)
+
+        val repository =
+            createRepository(
+                storage = storage,
+                storedHighlightRequestValue = """{"references":[{"versionId":1,"bookUSFM":""",
+            )
+
+        assertNull(repository.highlightRequest)
+        verify { storage.putString(STORAGE_KEY_HIGHLIGHT_REQUEST, null) }
+    }
+
+    @Test
+    fun `a highlight request whose reference is no longer valid is dropped at construction`() {
+        val storage = mockk<Storage>(relaxed = true)
+
+        val repository =
+            createRepository(
+                storage = storage,
+                storedHighlightRequestValue =
+                    """{"references":[{"versionId":1,"bookUSFM":"GEN","chapter":0,""" +
+                        """"verseStart":null,"verseEnd":null}],"hexColor":"#ff00ff","isRemoval":false}""",
+            )
+
+        assertNull(repository.highlightRequest)
+        verify { storage.putString(STORAGE_KEY_HIGHLIGHT_REQUEST, null) }
+    }
+
+    @Test
     fun `a highlight request stored by a session is dropped at construction when signed out`() {
         val repository =
             createRepository(
@@ -504,9 +534,9 @@ class BibleReaderRepositoryTest {
         currentSessionId: () -> String? = { null },
         sessionIdChanges: Flow<String?> = MutableStateFlow(null),
         storedHighlightRequest: HighlightRequest? = null,
+        storedHighlightRequestValue: String? = storedHighlightRequest?.let { Json.encodeToString(it) },
     ): BibleReaderRepository {
-        every { storage.getStringOrNull(STORAGE_KEY_HIGHLIGHT_REQUEST) } returns
-            storedHighlightRequest?.let { Json.encodeToString(it) }
+        every { storage.getStringOrNull(STORAGE_KEY_HIGHLIGHT_REQUEST) } returns storedHighlightRequestValue
         return BibleReaderRepository(
             storage = storage,
             bibleVersionRepository = bibleVersionRepository,

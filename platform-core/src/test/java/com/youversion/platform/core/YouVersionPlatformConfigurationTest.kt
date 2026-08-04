@@ -448,6 +448,57 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     }
 
     @Test
+    fun `configure with the stored refresh token keeps the stored session`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveAuthData(
+                accessToken = "userAAccessToken",
+                refreshToken = "userARefreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            // A host managing its own tokens refreshed out of band. Its refresh token names the stored session even
+            // though it passes no ID token to name the account with.
+            configure(
+                appKey = "appKey",
+                accessToken = "userARefreshedAccessToken",
+                refreshToken = "userARefreshToken",
+            )
+
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertEquals("userARefreshedAccessToken", accessToken)
+            assertEquals(idTokenFor("userA"), idToken)
+        }
+    }
+
+    @Test
+    fun `configure with a reissued ID token for the stored account keeps the stored session`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveAuthData(
+                accessToken = "userAAccessToken",
+                refreshToken = "userARefreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            // The account the ID token names is what has to match, not the token itself, so a reissued one for the
+            // same account is still that account.
+            configure(
+                appKey = "appKey",
+                accessToken = "userARefreshedAccessToken",
+                idToken = idTokenFor("userA", nonce = "reissued"),
+            )
+
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertEquals("userARefreshToken", refreshToken)
+        }
+    }
+
+    @Test
     fun `granted permissions dropped by a reconfiguration are not restored by a later saveAuthData`() {
         with(YouVersionPlatformConfiguration) {
             configure(appKey = "appKey")
@@ -728,12 +779,16 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
         }
     }
 
-    private fun idTokenFor(subject: String): String {
+    private fun idTokenFor(
+        subject: String,
+        nonce: String? = null,
+    ): String {
+        val claims = """{"sub":"$subject"""" + nonce?.let { ""","nonce":"$it"""" }.orEmpty() + "}"
         val payload =
             Base64
                 .getUrlEncoder()
                 .withoutPadding()
-                .encodeToString("""{"sub":"$subject"}""".toByteArray())
+                .encodeToString(claims.toByteArray())
         return "header.$payload.signature"
     }
 }
