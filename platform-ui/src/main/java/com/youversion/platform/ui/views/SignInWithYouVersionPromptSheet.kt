@@ -16,10 +16,13 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +31,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.fonts.AktivGrotesk
@@ -40,20 +45,27 @@ import com.youversion.platform.ui.theme.readerColorScheme
  * Shown at the moment an action needs an account rather than on entry, so a reader who only wanted to read is
  * never interrupted.
  *
- * @param appName The name of the host app, shown in the explanation.
+ * The app the sheet names and the host app's own reason for asking come from
+ * [YouVersionPlatformConfiguration.appName] and [YouVersionPlatformConfiguration.signInPromptMessage]. A host that
+ * configures no app name is named by its launcher label instead, so the reader is never asked to grant account
+ * access to an app the sheet leaves unnamed.
+ *
  * @param onSignIn Called when the reader agrees to sign in.
  * @param onDismissRequest Called when the reader declines, or dismisses the sheet.
- * @param appSignInMessage The host app's own reason for asking. Omitted when null or blank.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignInWithYouVersionPromptSheet(
-    appName: String,
     onSignIn: () -> Unit,
     onDismissRequest: () -> Unit,
-    appSignInMessage: String? = null,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val config by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val hostAppLabel =
+        remember(context) { context.applicationInfo.loadLabel(context.packageManager).toString() }
+    val appName = config?.appName?.takeIf { it.isNotBlank() } ?: hostAppLabel
+    val signInPromptMessage = config?.signInPromptMessage
 
     ModalBottomSheet(
         sheetState = sheetState,
@@ -90,9 +102,9 @@ fun SignInWithYouVersionPromptSheet(
                 modifier = Modifier.height(20.dp),
             )
 
-            if (!appSignInMessage.isNullOrBlank()) {
+            if (!signInPromptMessage.isNullOrBlank()) {
                 Text(
-                    text = boldMarkdownAnnotatedString(appSignInMessage),
+                    text = boldMarkdownAnnotatedString(signInPromptMessage),
                     fontFamily = AktivGrotesk,
                     fontSize = 22.sp,
                     lineHeight = 28.sp,
@@ -178,10 +190,8 @@ private fun SignInPromptButton(
 private fun SignInWithYouVersionPromptSheetPreview() {
     BibleReaderMaterialTheme {
         SignInWithYouVersionPromptSheet(
-            appName = "Sample App",
             onSignIn = {},
             onDismissRequest = {},
-            appSignInMessage = "Keep your highlights across devices",
         )
     }
 }

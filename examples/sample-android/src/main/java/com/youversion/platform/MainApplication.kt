@@ -9,6 +9,8 @@ class MainApplication : Application() {
         YouVersionPlatformConfiguration.configure(
             context = this,
             appKey = TODO("Provide your app key"),
+            appName = "Sample App",
+            signInPromptMessage = "Sign in to see your **YouVersion** highlights in **Sample App**",
         )
     }
 }

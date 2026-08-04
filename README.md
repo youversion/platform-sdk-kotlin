@@ -178,21 +178,27 @@ Displays a full Bible reading experience, very similar to the YouVersion Bible a
 ```kotlin
 @Composable
 fun ReaderTab() {
-    BibleReader(
-        appName = "Your App Name",
-        appSignInMessage = "Sign in to see your **YouVersion** highlights in **Your App Name**.",
-    )
+    BibleReader()
 }
 ```
 
-`appName` and `appSignInMessage` are shown in the sign-in prompt the reader presents to a signed-out user. `appSignInMessage` is your app's own reason for asking, and supports `**bold**` markdown.
+The sign-in prompt the reader presents to a signed-out user names your app and shows your own reason for asking. Both come from configuration:
+
+```kotlin
+YouVersionPlatformConfiguration.configure(
+    context = this,
+    appKey = "YOUR_APP_KEY_HERE",
+    appName = "Your App Name",
+    signInPromptMessage = "Sign in to see your **YouVersion** highlights in **Your App Name**",
+)
+```
+
+`signInPromptMessage` is optional and supports `**bold**` markdown. `appName` is optional too — leave it out and the prompt names your app by its launcher label — but set it when that label is not the name you want a reader to see before granting account access.
 
 To open to a specific passage:
 
 ```kotlin
 BibleReader(
-    appName = "Your App Name",
-    appSignInMessage = "Sign in to see your **YouVersion** highlights in **Your App Name**.",
     bibleReference = BibleReference(versionId = 3034, bookUSFM = "PSA", chapter = 23),
 )
 ```

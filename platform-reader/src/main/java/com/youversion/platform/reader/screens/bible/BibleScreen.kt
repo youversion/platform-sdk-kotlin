@@ -89,8 +89,6 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun BibleScreen(
     viewModel: BibleReaderViewModel,
-    appName: String,
-    appSignInMessage: String,
     bottomBar: @Composable (() -> Unit)? = null,
     onReferencesClick: () -> Unit,
     onVersionsClick: () -> Unit,
@@ -460,12 +458,10 @@ internal fun BibleScreen(
 
                     if (state.shouldStartSignIn) {
                         SignInWithYouVersionPromptSheet(
-                            appName = appName,
                             onSignIn = {
                                 launchSignIn { viewModel.onAction(BibleReaderViewModel.Action.SignInCompleted) }
                             },
                             onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CancelSignIn) },
-                            appSignInMessage = appSignInMessage,
                         )
                     }
 
