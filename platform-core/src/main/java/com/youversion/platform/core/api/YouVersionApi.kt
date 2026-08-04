@@ -41,14 +41,20 @@ object YouVersionApi {
      * user: an account is nameable only when an ID token is present, so two sessions for different users can both
      * report no account. Those fall back to a token digest, taken over the refresh token where one exists so that
      * refreshing an access token does not read as a new user.
+     *
+     * The three tokens are read from one configuration snapshot rather than one property at a time, so a sign-in
+     * landing mid-read cannot produce an id built from two sessions' tokens — which could name the outgoing user
+     * while the digest covers the incoming one, and so read as unchanged to a caller checking for a change.
      */
     val currentSessionId: String?
         get() =
-            sessionId(
-                accessToken = YouVersionPlatformConfiguration.accessToken,
-                refreshToken = YouVersionPlatformConfiguration.refreshToken,
-                idToken = YouVersionPlatformConfiguration.idToken,
-            )
+            YouVersionPlatformConfiguration.configState.value?.let {
+                sessionId(
+                    accessToken = it.accessToken,
+                    refreshToken = it.refreshToken,
+                    idToken = it.idToken,
+                )
+            }
 
     /**
      * Identifies the session the given tokens belong to, by the same rules as [currentSessionId], without requiring
