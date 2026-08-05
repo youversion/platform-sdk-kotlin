@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.text.AnnotatedString
@@ -27,9 +28,12 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
+import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
+import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.users.api.UsersApi
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.reader.BibleReaderViewModel
+import com.youversion.platform.reader.sheets.HighlightColor
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
@@ -91,9 +95,12 @@ class BibleScreenTest {
             BibleReaderViewModel.State(bibleReference = defaultReference),
         )
 
+    private val highlightsFlow = MutableStateFlow(emptyList<BibleHighlight>())
+
     private val mockViewModel =
         mockk<BibleReaderViewModel>(relaxed = true) {
             every { state } returns stateFlow
+            every { highlights } returns highlightsFlow
         }
 
     @Before
@@ -105,6 +112,7 @@ class BibleScreenTest {
                     single { mockVersionRepository }
                     single { mockChapterRepository }
                     single { mockIntroRepository }
+                    single { BibleHighlightsRepository(api = mockk(relaxed = true)) }
                 },
             ),
         )
@@ -169,8 +177,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -192,8 +198,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -215,8 +219,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -255,8 +257,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -278,8 +278,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -305,8 +303,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -350,8 +346,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -374,8 +368,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -402,8 +394,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -431,8 +421,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -460,8 +448,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -493,8 +479,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -529,8 +513,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -555,8 +537,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = { fontsClicked = true },
@@ -584,8 +564,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -661,8 +639,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -738,8 +714,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -835,8 +809,6 @@ class BibleScreenTest {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Sign in",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -857,7 +829,7 @@ class BibleScreenTest {
     }
 
     @Test
-    fun `verse tap does not dispatch OnVerseTap when not signed in`() {
+    fun `verse tap dispatches OnVerseTap when not signed in so copy and share stay available`() {
         stateFlow.value =
             BibleReaderViewModel.State(
                 bibleReference = defaultReference,
@@ -889,8 +861,6 @@ class BibleScreenTest {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Sign in",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -901,7 +871,7 @@ class BibleScreenTest {
             composeTestRule.onNodeWithText("In the beginning").performClick()
             composeTestRule.waitForIdle()
 
-            verify(exactly = 0) {
+            verify {
                 mockViewModel.onAction(match { it is BibleReaderViewModel.Action.OnVerseTap })
             }
         } finally {
@@ -945,6 +915,210 @@ class BibleScreenTest {
         unmockkObject(YouVersionApi)
     }
 
+    private fun stubConfig(
+        isSignedIn: Boolean,
+        isSignInEnabled: Boolean,
+        signInPromptMessage: String? = null,
+    ) {
+        mockkObject(YouVersionPlatformConfiguration)
+        mockkObject(YouVersionApi)
+        val config =
+            Config(
+                appKey = "test",
+                authCallback = "",
+                apiHost = "",
+                hostEnv = null,
+                installId = null,
+                accessToken = if (isSignedIn) "token" else null,
+                refreshToken = null,
+                idToken = null,
+                expiryDate = null,
+                isSignInEnabled = isSignInEnabled,
+                appName = "Test App",
+                signInPromptMessage = signInPromptMessage,
+            )
+        every { YouVersionPlatformConfiguration.configState } returns MutableStateFlow(config)
+        coEvery { YouVersionApi.hasValidToken() } returns true
+        mockUsersApi = mockk(relaxed = true)
+        every { YouVersionApi.users } returns mockUsersApi
+    }
+
+    private fun showVerseActionSheet() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference),
+            )
+        stubSuccessfulTextLoad()
+    }
+
+    @Test
+    fun `highlight colors are offered to a signed-out reader when sign-in is available`() {
+        showVerseActionSheet()
+        stubConfig(isSignedIn = false, isSignInEnabled = true)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithContentDescription("Add yellow highlight").assertExists()
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
+    fun `tapping a highlight color while signed out dispatches it so the view model can defer it`() {
+        showVerseActionSheet()
+        stubConfig(isSignedIn = false, isSignInEnabled = true)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithContentDescription("Add yellow highlight").performClick()
+            composeTestRule.waitForIdle()
+
+            verify { mockViewModel.onAction(match { it is BibleReaderViewModel.Action.AddHighlight }) }
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
+    fun `the sign-in prompt is shown when the view model requests sign-in`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference),
+                shouldStartSignIn = true,
+            )
+        stubSuccessfulTextLoad()
+        stubConfig(isSignedIn = false, isSignInEnabled = true, signInPromptMessage = "Keep your highlights")
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithText("Keep your highlights").assertExists()
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
+    fun `highlight colors are withheld from a signed-out reader when sign-in is disabled`() {
+        showVerseActionSheet()
+        stubConfig(isSignedIn = false, isSignInEnabled = false)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithContentDescription("Add yellow highlight").assertDoesNotExist()
+            composeTestRule.onNodeWithContentDescription("Copy").assertExists()
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
+    fun `the data exchange confirmation renders and Continue dispatches ConfirmDataExchange`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference),
+                showDataExchangeConfirmation = true,
+            )
+        stubSuccessfulTextLoad()
+        stubConfig(isSignedIn = true, isSignInEnabled = true)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithText("Allow this app to save highlights with YouVersion?").assertExists()
+            composeTestRule.onNodeWithText("Continue").performClick()
+
+            verify { mockViewModel.onAction(BibleReaderViewModel.Action.ConfirmDataExchange) }
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
+    fun `the data exchange confirmation Cancel dispatches CancelDataExchange`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference),
+                showDataExchangeConfirmation = true,
+            )
+        stubSuccessfulTextLoad()
+        stubConfig(isSignedIn = true, isSignInEnabled = true)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithText("Cancel").performClick()
+
+            verify { mockViewModel.onAction(BibleReaderViewModel.Action.CancelDataExchange) }
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
     @Test
     fun `sign out shows confirmation alert and cancel dismisses it`() {
         stateFlow.value =
@@ -959,8 +1133,6 @@ class BibleScreenTest {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Sign in",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -1003,8 +1175,6 @@ class BibleScreenTest {
             composeTestRule.setContent {
                 BibleScreen(
                     viewModel = mockViewModel,
-                    appName = "Test App",
-                    appSignInMessage = "Sign in",
                     onReferencesClick = {},
                     onVersionsClick = {},
                     onFontsClick = {},
@@ -1048,8 +1218,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -1063,7 +1231,57 @@ class BibleScreenTest {
                 .isNotEmpty()
         }
         composeTestRule.onNodeWithContentDescription("Copy").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Share").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Share").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun `highlight picker gains a remove affordance when highlights change without reselecting`() {
+        val selectedVerse = defaultReference.copy(verseStart = 1, verseEnd = 1)
+        var presentColors = emptySet<String>()
+        every { mockViewModel.isColorPresentOnAnySelectedVerses(any()) } answers {
+            presentColors.contains(firstArg<String>())
+        }
+        every { mockViewModel.isColorPresentOnAllSelectedVerses(any()) } answers {
+            presentColors.contains(firstArg<String>())
+        }
+
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(selectedVerse),
+            )
+        stubSuccessfulTextLoad()
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitUntil {
+            composeTestRule
+                .onAllNodesWithContentDescription("Copy")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        composeTestRule.onNodeWithContentDescription("Remove yellow highlight").assertDoesNotExist()
+
+        presentColors = setOf(HighlightColor.Yellow.hexColor)
+        highlightsFlow.value =
+            listOf(BibleHighlight(bibleReference = selectedVerse, hexColor = HighlightColor.Yellow.hexColor))
+
+        composeTestRule.waitUntil {
+            composeTestRule
+                .onAllNodesWithContentDescription("Remove yellow highlight")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        composeTestRule.onNodeWithContentDescription("Remove yellow highlight").assertIsDisplayed()
     }
 
     @Test
@@ -1080,8 +1298,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -1106,8 +1322,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -1148,8 +1362,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 bottomBar = { Text("Bottom Bar Content") },
                 onReferencesClick = {},
                 onVersionsClick = {},
@@ -1172,8 +1384,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 bottomBar = null,
                 onReferencesClick = {},
                 onVersionsClick = {},
@@ -1200,8 +1410,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},
@@ -1225,8 +1433,6 @@ class BibleScreenTest {
         composeTestRule.setContent {
             BibleScreen(
                 viewModel = mockViewModel,
-                appName = "Test App",
-                appSignInMessage = "Sign in",
                 onReferencesClick = {},
                 onVersionsClick = {},
                 onFontsClick = {},

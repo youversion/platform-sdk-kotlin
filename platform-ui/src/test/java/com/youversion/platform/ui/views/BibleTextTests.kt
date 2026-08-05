@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
@@ -29,7 +30,12 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
+import com.youversion.platform.core.highlights.api.HighlightsApi
+import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
+import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
+import com.youversion.platform.ui.theme.Charcoal
+import com.youversion.platform.ui.theme.PureWhite
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleTextCategory
@@ -51,6 +57,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
+import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -62,6 +69,10 @@ class BibleTextTests {
 
     private val mockVersionRepository = mockk<BibleVersionRepository>()
     private val mockChapterRepository = mockk<BibleChapterRepository>()
+    private val mockHighlightsApi = mockk<HighlightsApi>(relaxed = true)
+    private val highlightsRepository = BibleHighlightsRepository(api = mockHighlightsApi)
+
+    private val chapterReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
 
     private val testReference =
         BibleReference(
@@ -144,6 +155,7 @@ class BibleTextTests {
                 module {
                     single { mockVersionRepository }
                     single { mockChapterRepository }
+                    single { highlightsRepository }
                 },
             ),
         )
@@ -151,6 +163,7 @@ class BibleTextTests {
 
     @After
     fun tearDown() {
+        highlightsRepository.clearCachedHighlights()
         PlatformKoinGraph.stop()
         unmockkObject(BibleVersionRendering)
     }
@@ -1235,6 +1248,381 @@ class BibleTextTests {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Selah").assertIsDisplayed()
+    }
+
+    // endregion
+
+    // region Highlight Backgrounds
+
+    private fun referenceAnnotatedString(
+        text: String,
+        annotations: List<Triple<String, Int, Int>>,
+    ): AnnotatedString =
+        buildAnnotatedString {
+            append(text)
+            annotations.forEach { (annotation, start, end) ->
+                addStringAnnotation(
+                    tag = BibleReferenceAttribute.NAME,
+                    annotation = annotation,
+                    start = start,
+                    end = end,
+                )
+            }
+        }
+
+    @Test
+    fun `highlightedCharacterRanges returns empty when no highlights provided`() {
+        val text = referenceAnnotatedString("Genesis", listOf(Triple("1:GEN:1:1", 0, 7)))
+
+        assertTrue(text.highlightedCharacterRanges(emptyMap()).isEmpty())
+    }
+
+    @Test
+    fun `highlightedCharacterRanges pairs a matching verse with its color`() {
+        val text = referenceAnnotatedString("Genesis", listOf(Triple("1:GEN:1:1", 0, 7)))
+        val color = Color.Yellow
+
+        val ranges =
+            text.highlightedCharacterRanges(
+                mapOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1) to color),
+            )
+
+        assertEquals(1, ranges.size)
+        assertEquals(0 until 7, ranges.first().first)
+        assertEquals(color, ranges.first().second)
+    }
+
+    @Test
+    fun `highlightedCharacterRanges ignores verses without a matching highlight`() {
+        val text = referenceAnnotatedString("Genesis", listOf(Triple("1:GEN:1:1", 0, 7)))
+
+        val ranges =
+            text.highlightedCharacterRanges(
+                mapOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2) to Color.Yellow),
+            )
+
+        assertTrue(ranges.isEmpty())
+    }
+
+    @Test
+    fun `highlightedCharacterRanges merges adjacent annotations of the same verse into one range`() {
+        val text =
+            referenceAnnotatedString(
+                "Genesis verse",
+                listOf(Triple("1:GEN:1:1", 0, 7), Triple("1:GEN:1:1", 8, 13)),
+            )
+
+        val ranges =
+            text.highlightedCharacterRanges(
+                mapOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1) to Color.Green),
+            )
+
+        assertEquals(1, ranges.size)
+        assertEquals(0 until 13, ranges.first().first)
+    }
+
+    @Test
+    fun `highlightedCharacterRanges keeps a distinct color per verse`() {
+        val text =
+            referenceAnnotatedString(
+                "OneTwo",
+                listOf(Triple("1:GEN:1:1", 0, 3), Triple("1:GEN:1:2", 3, 6)),
+            )
+
+        val ranges =
+            text.highlightedCharacterRanges(
+                mapOf(
+                    BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1) to Color.Red,
+                    BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2) to Color.Blue,
+                ),
+            )
+
+        assertEquals(2, ranges.size)
+        assertEquals(Color.Red, ranges.first { it.first == 0 until 3 }.second)
+        assertEquals(Color.Blue, ranges.first { it.first == 3 until 6 }.second)
+    }
+
+    private fun cachedHighlight(
+        verse: Int,
+        hexColor: String,
+    ) = BibleHighlight(
+        bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = verse),
+        hexColor = hexColor,
+    )
+
+    @Test
+    fun `highlightColorsForReference keeps highlights at full strength on a light theme`() {
+        val colors =
+            highlightColorsForReference(
+                cachedHighlights = listOf(cachedHighlight(verse = 1, hexColor = "#fffe00")),
+                reference = chapterReference,
+                highlightAlpha = PureWhite.highlightAlpha,
+            )
+
+        assertEquals(Color(0xFFFFFE00), colors.values.single())
+    }
+
+    @Test
+    fun `highlightColorsForReference dims highlights on a dark theme without shifting their hue`() {
+        val colors =
+            highlightColorsForReference(
+                cachedHighlights = listOf(cachedHighlight(verse = 1, hexColor = "#fffe00")),
+                reference = chapterReference,
+                highlightAlpha = Charcoal.highlightAlpha,
+            )
+
+        val dimmed = colors.values.single()
+        val palette = Color(0xFFFFFE00)
+        assertEquals(
+            0.3f,
+            dimmed.alpha,
+            absoluteTolerance = 0.01f,
+            message = "Compose quantizes the stored alpha to 8 bits, so 0.3f round-trips as 77/255",
+        )
+        assertEquals(palette.red, dimmed.red)
+        assertEquals(palette.green, dimmed.green)
+        assertEquals(palette.blue, dimmed.blue)
+    }
+
+    @Test
+    fun `highlightColorsForReference dims each verse independently and keeps them distinguishable`() {
+        val colors =
+            highlightColorsForReference(
+                cachedHighlights =
+                    listOf(
+                        cachedHighlight(verse = 1, hexColor = "#fffe00"),
+                        cachedHighlight(verse = 2, hexColor = "#5dff79"),
+                    ),
+                reference = chapterReference,
+                highlightAlpha = Charcoal.highlightAlpha,
+            )
+
+        assertEquals(2, colors.size)
+        assertTrue(colors.values.all { abs(it.alpha - 0.3f) < 0.01f })
+        assertEquals(2, colors.values.toSet().size)
+    }
+
+    @Test
+    fun `highlighted verses render on text blocks`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } returns listOf(annotatedBlock("Genesis verse", referenceAnnotation = "1:GEN:1:1"))
+
+        highlightsRepository.seedCachedHighlights(
+            listOf(
+                BibleHighlight(
+                    bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
+                    hexColor = "#FFFF00",
+                ),
+            ),
+        )
+
+        composeTestRule.setContent {
+            BibleText(reference = testReference)
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Genesis verse").assertIsDisplayed()
+    }
+
+    @Test
+    fun `highlighted verses render on table cells`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+
+        val cellText =
+            buildAnnotatedString {
+                append("Selah")
+                addStringAnnotation(
+                    tag = BibleReferenceAttribute.NAME,
+                    annotation = "1:GEN:1:1",
+                    start = 0,
+                    end = 5,
+                )
+            }
+        coEvery {
+            BibleVersionRendering.textBlocks(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } returns
+            listOf(
+                BibleTextBlock(
+                    text = AnnotatedString(""),
+                    chapter = 1,
+                    rows = listOf(listOf(cellText)),
+                    headIndent = 0.sp,
+                    marginTop = 8.dp,
+                    alignment = TextAlign.Start,
+                    footnotes = emptyList(),
+                ),
+            )
+
+        highlightsRepository.seedCachedHighlights(
+            listOf(
+                BibleHighlight(
+                    bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
+                    hexColor = "#FFFF00",
+                ),
+            ),
+        )
+
+        composeTestRule.setContent {
+            BibleText(reference = testReference)
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Selah").assertIsDisplayed()
+    }
+
+    @Test
+    fun `highlightLineSpan on a single ltr line spans between the two carets`() {
+        val span =
+            highlightLineSpan(
+                isRtl = false,
+                isStartLine = true,
+                isEndLine = true,
+                startCaretX = 50f,
+                endCaretX = 300f,
+                lineLeft = 0f,
+                lineRight = 400f,
+            )
+
+        assertEquals(50f to 300f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan on a single rtl line keeps left less than right despite inverted carets`() {
+        val span =
+            highlightLineSpan(
+                isRtl = true,
+                isStartLine = true,
+                isEndLine = true,
+                startCaretX = 300f,
+                endCaretX = 50f,
+                lineLeft = 0f,
+                lineRight = 400f,
+            )
+
+        assertEquals(50f to 300f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan fills from the start caret to the trailing text edge on an ltr start line`() {
+        val span =
+            highlightLineSpan(
+                isRtl = false,
+                isStartLine = true,
+                isEndLine = false,
+                startCaretX = 50f,
+                endCaretX = 0f,
+                lineLeft = 0f,
+                lineRight = 350f,
+            )
+
+        assertEquals(50f to 350f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan fills from the leading text edge to the start caret on an rtl start line`() {
+        val span =
+            highlightLineSpan(
+                isRtl = true,
+                isStartLine = true,
+                isEndLine = false,
+                startCaretX = 300f,
+                endCaretX = 0f,
+                lineLeft = 50f,
+                lineRight = 400f,
+            )
+
+        assertEquals(50f to 300f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan fills from the end caret to the trailing text edge on an rtl end line`() {
+        val span =
+            highlightLineSpan(
+                isRtl = true,
+                isStartLine = false,
+                isEndLine = true,
+                startCaretX = 0f,
+                endCaretX = 50f,
+                lineLeft = 50f,
+                lineRight = 350f,
+            )
+
+        assertEquals(50f to 350f, span)
+    }
+
+    @Test
+    fun `highlightLineSpan fills the text width on an interior wrapped line regardless of direction`() {
+        val ltr =
+            highlightLineSpan(
+                isRtl = false,
+                isStartLine = false,
+                isEndLine = false,
+                startCaretX = 0f,
+                endCaretX = 0f,
+                lineLeft = 20f,
+                lineRight = 380f,
+            )
+        val rtl =
+            highlightLineSpan(
+                isRtl = true,
+                isStartLine = false,
+                isEndLine = false,
+                startCaretX = 0f,
+                endCaretX = 0f,
+                lineLeft = 20f,
+                lineRight = 380f,
+            )
+
+        assertEquals(20f to 380f, ltr)
+        assertEquals(20f to 380f, rtl)
+    }
+
+    // endregion
+
+    // region Hex Color Parsing
+
+    @Test
+    fun `toHighlightColorOrNull parses six digit hex as opaque`() {
+        assertEquals(Color(0xFFFFFF00L), "#FFFF00".toHighlightColorOrNull())
+    }
+
+    @Test
+    fun `toHighlightColorOrNull parses eight digit hex with alpha`() {
+        assertEquals(Color(0x80FF0000L), "#80FF0000".toHighlightColorOrNull())
+    }
+
+    @Test
+    fun `toHighlightColorOrNull parses a value without a leading hash`() {
+        assertEquals(Color(0xFF00FF00L), "00FF00".toHighlightColorOrNull())
+    }
+
+    @Test
+    fun `toHighlightColorOrNull returns null for invalid or wrong-length hex`() {
+        assertNull("#ZZZZZZ".toHighlightColorOrNull())
+        assertNull("#FFF".toHighlightColorOrNull())
+        assertNull("".toHighlightColorOrNull())
     }
 
     // endregion

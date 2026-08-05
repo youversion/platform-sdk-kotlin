@@ -14,21 +14,30 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
+import com.youversion.platform.ui.dataexchange.rememberDataExchange
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.views.SignInWithYouVersionButton
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
     val signInViewModel = viewModel<SignInViewModel>()
     val state by signInViewModel.state.collectAsStateWithLifecycle()
+    val config by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
+    val hasHighlightsPermission =
+        config?.grantedPermissions?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+    val scope = rememberCoroutineScope()
+    val requestDataExchange = rememberDataExchange()
 
     LaunchedEffect(Unit) {
         signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState)
@@ -57,6 +66,26 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                     Text(state.userName ?: "user name")
                     Text(state.userEmail ?: "user email")
                     Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        if (hasHighlightsPermission) {
+                            "Highlights permission: granted"
+                        } else {
+                            "Highlights permission: not granted"
+                        },
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    if (!hasHighlightsPermission) {
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+                                }
+                            },
+                        ) {
+                            Text("Request highlights permission")
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                     Button(onClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut()) }) {
                         Text("Sign Out")
                     }

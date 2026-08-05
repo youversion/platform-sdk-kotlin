@@ -1,16 +1,19 @@
 package com.youversion.platform.reader.sheets
 
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.theme.Charcoal
+import com.youversion.platform.ui.theme.PureWhite
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
@@ -19,19 +22,50 @@ class BibleReaderVerseActionSheetTest {
     val composeTestRule = createComposeRule()
 
     private fun renderSheet(
-        selectedVerses: Set<BibleReference> = emptySet(),
+        colorsToRemove: List<HighlightColor> = emptyList(),
+        colorsToAdd: List<HighlightColor> = emptyList(),
+        showsHighlightColors: Boolean = true,
+        onAddHighlight: (String) -> Unit = {},
+        onRemoveHighlight: (String) -> Unit = {},
         onCopy: () -> Unit = {},
         onShare: () -> Unit = {},
     ) {
         composeTestRule.setContent {
             BibleReaderMaterialTheme {
                 BibleReaderVerseActionSheet(
-                    selectedVerses = selectedVerses,
+                    colorsToRemove = colorsToRemove,
+                    colorsToAdd = colorsToAdd,
+                    showsHighlightColors = showsHighlightColors,
+                    onAddHighlight = onAddHighlight,
+                    onRemoveHighlight = onRemoveHighlight,
                     onCopy = onCopy,
                     onShare = onShare,
                 )
             }
         }
+    }
+
+    @Test
+    fun `hides the highlight colors when sign-in is unavailable`() {
+        renderSheet(
+            colorsToRemove = listOf(HighlightColor.Yellow),
+            colorsToAdd = listOf(HighlightColor.Green),
+            showsHighlightColors = false,
+        )
+
+        composeTestRule.onNodeWithContentDescription("Remove yellow highlight").assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("Add green highlight").assertDoesNotExist()
+    }
+
+    @Test
+    fun `keeps copy and share available when the highlight colors are hidden`() {
+        renderSheet(
+            colorsToAdd = listOf(HighlightColor.Green),
+            showsHighlightColors = false,
+        )
+
+        composeTestRule.onNodeWithContentDescription("Copy").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Share").assertIsDisplayed()
     }
 
     // ----- Action Buttons
@@ -84,5 +118,76 @@ class BibleReaderVerseActionSheetTest {
         renderSheet()
 
         composeTestRule.onNodeWithContentDescription("Share").assertIsDisplayed()
+    }
+
+    // ----- Highlight Color Picker
+
+    @Test
+    fun `displays an add affordance for a color to add`() {
+        renderSheet(colorsToAdd = listOf(HighlightColor.Yellow))
+
+        composeTestRule.onNodeWithContentDescription("Add yellow highlight").assertIsDisplayed()
+    }
+
+    @Test
+    fun `displays a remove affordance for a color to remove`() {
+        renderSheet(colorsToRemove = listOf(HighlightColor.Yellow))
+
+        composeTestRule.onNodeWithContentDescription("Remove yellow highlight").assertIsDisplayed()
+    }
+
+    @Test
+    fun `clicking a color to add calls onAddHighlight with its hex`() {
+        var addedHex: String? = null
+
+        renderSheet(
+            colorsToAdd = listOf(HighlightColor.Green),
+            onAddHighlight = { addedHex = it },
+        )
+
+        composeTestRule.onNodeWithContentDescription("Add green highlight").performClick()
+
+        assertEquals(HighlightColor.Green.hexColor, addedHex)
+    }
+
+    @Test
+    fun `clicking a color to remove calls onRemoveHighlight with its hex`() {
+        var removedHex: String? = null
+
+        renderSheet(
+            colorsToRemove = listOf(HighlightColor.Cyan),
+            onRemoveHighlight = { removedHex = it },
+        )
+
+        composeTestRule.onNodeWithContentDescription("Remove cyan highlight").performClick()
+
+        assertEquals(HighlightColor.Cyan.hexColor, removedHex)
+    }
+
+    @Test
+    fun `a color present on some but not all verses renders both add and remove affordances`() {
+        renderSheet(
+            colorsToRemove = listOf(HighlightColor.Yellow),
+            colorsToAdd = listOf(HighlightColor.Yellow),
+        )
+
+        composeTestRule.onNodeWithContentDescription("Remove yellow highlight").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Add yellow highlight").assertIsDisplayed()
+    }
+
+    // ----- Swatch Color
+
+    @Test
+    fun `swatchColor keeps the palette color on a light theme`() {
+        assertEquals(HighlightColor.Yellow.color, HighlightColor.Yellow.swatchColor(PureWhite))
+    }
+
+    @Test
+    fun `swatchColor composites the dimmed color over the reader background on a dark theme`() {
+        val swatchColor = HighlightColor.Yellow.swatchColor(Charcoal)
+        val dimmed = HighlightColor.Yellow.color.copy(alpha = Charcoal.highlightAlpha)
+
+        assertEquals(1f, swatchColor.alpha)
+        assertEquals(dimmed.compositeOver(Charcoal.background), swatchColor)
     }
 }

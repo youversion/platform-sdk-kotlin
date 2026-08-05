@@ -26,6 +26,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,8 +49,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.reader.BibleReaderViewModel
@@ -63,6 +68,10 @@ import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
 import com.youversion.platform.reader.sheets.BibleReaderIntroFootnotesSheet
 import com.youversion.platform.reader.sheets.BibleReaderVerseActionSheet
+import com.youversion.platform.reader.sheets.DataExchangeConfirmationDialog
+import com.youversion.platform.reader.sheets.HighlightColor
+import com.youversion.platform.ui.dataexchange.DataExchangeStatus
+import com.youversion.platform.ui.dataexchange.rememberDataExchange
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.signin.SignOutConfirmationAlert
@@ -73,23 +82,36 @@ import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
 import com.youversion.platform.ui.views.BibleTextOptions
+import com.youversion.platform.ui.views.SignInWithYouVersionPromptSheet
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun BibleScreen(
     viewModel: BibleReaderViewModel,
-    appName: String,
-    appSignInMessage: String,
     bottomBar: @Composable (() -> Unit)? = null,
     onReferencesClick: () -> Unit,
     onVersionsClick: () -> Unit,
     onFontsClick: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val highlights by viewModel.highlights.collectAsStateWithLifecycle()
+
+    val colorsToRemove =
+        remember(state.selectedVerses, highlights) {
+            HighlightColor.entries.filter { viewModel.isColorPresentOnAnySelectedVerses(it.hexColor) }
+        }
+    val colorsToAdd =
+        remember(state.selectedVerses, highlights) {
+            HighlightColor.entries.filter { !viewModel.isColorPresentOnAllSelectedVerses(it.hexColor) }
+        }
 
     val signInViewModel = viewModel<SignInViewModel>()
     val signInState by signInViewModel.state.collectAsStateWithLifecycle()
+
+    // A signed-in reader keeps the colors even where sign-in is disabled: they already have the account the
+    // highlight needs, so there is nothing left to prompt for.
+    val showsHighlightColors = signInState.isSignedIn || signInState.isSignInEnabled
 
     var showSignInError by rememberSaveable { mutableStateOf(false) }
 
@@ -98,15 +120,84 @@ internal fun BibleScreen(
     val permissions =
         setOf(
             SignInWithYouVersionPermission.PROFILE,
-            SignInWithYouVersionPermission.EMAIL,
+            SignInWithYouVersionPermission.HIGHLIGHTS,
         )
-    val launchSignIn: () -> Unit = {
+
+    fun launchSignIn(onComplete: () -> Unit = {}) {
         scope.launch {
             try {
                 signIn(permissions)
             } catch (_: Exception) {
                 showSignInError = true
             }
+            onComplete()
+        }
+    }
+
+    // The flow can end on two routes, so it is completed by whichever reports first. The launcher returning a grant is
+    // the direct signal, and is acted on alone; a launcher cancellation is not, because the browser tab reports one
+    // when it is dismissed after a deep link the reader has yet to process. Everything else settles on the resume,
+    // which reads the permission both routes persist before the reader can resume: a grant applies the pending
+    // highlight, a dismissal or cancellation reads no grant and clears it.
+    val isDataExchangeInProgress = rememberSaveable { mutableStateOf(false) }
+    val requestDataExchange = rememberDataExchange(onBrowserOpened = { isDataExchangeInProgress.value = true })
+    LaunchedEffect(state.shouldStartDataExchangeFlow) {
+        if (!state.shouldStartDataExchangeFlow) return@LaunchedEffect
+        val result = requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+        val isHighlightsGranted = result?.grants(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+        // A null result means there was no launcher to open the browser with, and NotStarted means the flow could not
+        // be started; either way nothing was asked and no resume will follow, so end the flow here rather than leaving
+        // the reader waiting on a prompt it never saw.
+        val wasBrowserNeverOpened = result == null || result.status == DataExchangeStatus.NotStarted
+        if ((isHighlightsGranted || wasBrowserNeverOpened) && viewModel.state.value.shouldStartDataExchangeFlow) {
+            isDataExchangeInProgress.value = false
+            viewModel.onAction(
+                BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted = isHighlightsGranted),
+            )
+        }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME &&
+                    viewModel.state.value.shouldStartDataExchangeFlow &&
+                    isDataExchangeInProgress.value
+                ) {
+                    isDataExchangeInProgress.value = false
+                    val isHighlightsGranted =
+                        YouVersionPlatformConfiguration.configState.value
+                            ?.grantedPermissions
+                            ?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+                    viewModel.onAction(
+                        BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted = isHighlightsGranted),
+                    )
+                }
+            }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // A highlight requested before a grant is held by the view model and reapplied once highlights access lands. The
+    // grant arrives synchronously through data exchange but asynchronously through sign-in, so observe the persisted
+    // permission and apply when it becomes available — this also covers a request that outlived the reader being
+    // recreated during either browser flow.
+    val config by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
+    val isHighlightsGranted =
+        config?.grantedPermissions?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+    LaunchedEffect(isHighlightsGranted, state.hasHighlightRequest) {
+        if (isHighlightsGranted && state.hasHighlightRequest) {
+            viewModel.applyHighlightRequestIfPermitted()
+        }
+    }
+
+    // A highlight change needs an account, so the view model holds it and raises shouldStartSignIn for a signed-out
+    // reader; the change is dispatched regardless of sign-in state so the view model can capture it. Where the host
+    // app has disabled sign-in the colors are hidden, so the guard here only stops a tap that should not be possible.
+    val requestHighlight: (BibleReaderViewModel.Action) -> Unit = { action ->
+        if (signInState.isSignedIn || signInState.isSignInEnabled) {
+            viewModel.onAction(action)
         }
     }
 
@@ -188,7 +279,15 @@ internal fun BibleScreen(
                                 ),
                     )
                     BibleReaderVerseActionSheet(
-                        selectedVerses = state.selectedVerses,
+                        colorsToRemove = colorsToRemove,
+                        colorsToAdd = colorsToAdd,
+                        showsHighlightColors = showsHighlightColors,
+                        onAddHighlight = {
+                            requestHighlight(BibleReaderViewModel.Action.AddHighlight(it))
+                        },
+                        onRemoveHighlight = {
+                            requestHighlight(BibleReaderViewModel.Action.RemoveHighlight(it))
+                        },
                         onCopy = { viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses) },
                         onShare = { viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses) },
                     )
@@ -217,7 +316,7 @@ internal fun BibleScreen(
                         onVersionClick = onVersionsClick,
                         onOpenHeaderMenu = { signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState) },
                         onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
-                        onSignInClick = launchSignIn,
+                        onSignInClick = { launchSignIn() },
                         onSignOutClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut(true)) },
                     )
                 },
@@ -310,11 +409,7 @@ internal fun BibleScreen(
                                     reference = state.bibleReference,
                                     selectedVerses = state.selectedVerses,
                                     onVerseTap = { reference, _ ->
-                                        if (signInState.isSignedIn) {
-                                            viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(reference))
-                                        } else {
-                                            launchSignIn()
-                                        }
+                                        viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(reference))
                                     },
                                     onStateChange = { loadingPhase = it },
                                     onFootnoteTap = { reference, footnotes ->
@@ -361,6 +456,22 @@ internal fun BibleScreen(
                         )
                     }
 
+                    if (state.shouldStartSignIn) {
+                        SignInWithYouVersionPromptSheet(
+                            onSignIn = {
+                                launchSignIn { viewModel.onAction(BibleReaderViewModel.Action.SignInCompleted) }
+                            },
+                            onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CancelSignIn) },
+                        )
+                    }
+
+                    if (state.showDataExchangeConfirmation) {
+                        DataExchangeConfirmationDialog(
+                            onConfirm = { viewModel.onAction(BibleReaderViewModel.Action.ConfirmDataExchange) },
+                            onDismiss = { viewModel.onAction(BibleReaderViewModel.Action.CancelDataExchange) },
+                        )
+                    }
+
                     if (showSignInError) {
                         SignInErrorAlert(
                             onDismissRequest = { showSignInError = false },
@@ -368,13 +479,14 @@ internal fun BibleScreen(
                         )
                     }
 
-                    if (signInState.showSignOutConfirmation) {
+                    signInState.signOutConfirmation?.let { signOutConfirmation ->
                         SignOutConfirmationAlert(
                             onDismissRequest = { signInViewModel.onAction(SignInViewModel.Action.CancelSignOut) },
                             onConfirm =
                                 {
                                     signInViewModel.onAction(SignInViewModel.Action.SignOut(false))
                                 },
+                            confirmation = signOutConfirmation,
                         )
                     }
 

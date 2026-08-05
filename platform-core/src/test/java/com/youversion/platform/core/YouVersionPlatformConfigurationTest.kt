@@ -1,12 +1,15 @@
 package com.youversion.platform.core
 
+import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.domain.Storage
 import com.youversion.platform.core.users.domain.SessionRepository
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfiguredException
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
 import org.koin.test.inject
+import java.util.Base64
 import java.util.Date
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -104,6 +107,51 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             configure(appKey = "appKey")
             assertNull(permittedLanguageTags)
             assertNull(permittedVersionIds)
+        }
+    }
+
+    @Test
+    fun `appName and signInPromptMessage default to null`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+
+            assertNull(appName)
+            assertNull(signInPromptMessage)
+        }
+    }
+
+    @Test
+    fun `configure sets appName and signInPromptMessage when provided`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(
+                appKey = "appKey",
+                appName = "Sample App",
+                signInPromptMessage = "Keep your highlights",
+            )
+
+            assertEquals("Sample App", appName)
+            assertEquals("Keep your highlights", signInPromptMessage)
+        }
+    }
+
+    @Test
+    fun `configureSignIn sets appName and signInPromptMessage without disturbing the rest`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey", accessToken = "token")
+
+            configureSignIn(appName = "Sample App", signInPromptMessage = "Keep your highlights")
+
+            assertEquals("Sample App", appName)
+            assertEquals("Keep your highlights", signInPromptMessage)
+            assertEquals("appKey", appKey)
+            assertEquals("token", accessToken)
+        }
+    }
+
+    @Test
+    fun `configureSignIn before configure fails`() {
+        assertFailsWith<YouVersionNotConfiguredException> {
+            YouVersionPlatformConfiguration.configureSignIn(appName = "Sample App", signInPromptMessage = null)
         }
     }
 
@@ -323,6 +371,392 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     }
 
     @Test
+    fun `grantedPermissions is empty when nothing has been granted`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+
+            assertEquals(emptySet(), grantedPermissions)
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `granted permissions survive a relaunch`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            configure(appKey = "appKey")
+
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `saveGrantedPermissions unions with previously granted permissions`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.PROFILE))
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.PROFILE))
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `configure with tokens naming a different user drops the stored session`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveAuthData(
+                accessToken = "userAAccessToken",
+                refreshToken = "userARefreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            // A host managing its own tokens reconfigures as another user.
+            configure(appKey = "appKey", accessToken = "userBAccessToken")
+
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            // Mixing in user A's tokens would report user A while requests carried user B's.
+            assertEquals("userBAccessToken", accessToken)
+            assertNull(refreshToken)
+            assertNull(idToken)
+        }
+    }
+
+    @Test
+    fun `configure with the stored access token keeps the rest of the stored session`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveAuthData(
+                accessToken = "userAAccessToken",
+                refreshToken = "userARefreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            configure(appKey = "appKey", accessToken = "userAAccessToken")
+
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertEquals("userARefreshToken", refreshToken)
+        }
+    }
+
+    @Test
+    fun `configure with the stored refresh token keeps the stored session`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveAuthData(
+                accessToken = "userAAccessToken",
+                refreshToken = "userARefreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            // A host managing its own tokens refreshed out of band. Its refresh token names the stored session even
+            // though it passes no ID token to name the account with.
+            configure(
+                appKey = "appKey",
+                accessToken = "userARefreshedAccessToken",
+                refreshToken = "userARefreshToken",
+            )
+
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertEquals("userARefreshedAccessToken", accessToken)
+            assertEquals(idTokenFor("userA"), idToken)
+        }
+    }
+
+    @Test
+    fun `configure with a reissued ID token for the stored account keeps the stored session`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveAuthData(
+                accessToken = "userAAccessToken",
+                refreshToken = "userARefreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            // The account the ID token names is what has to match, not the token itself, so a reissued one for the
+            // same account is still that account.
+            configure(
+                appKey = "appKey",
+                accessToken = "userARefreshedAccessToken",
+                idToken = idTokenFor("userA", nonce = "reissued"),
+            )
+
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertEquals("userARefreshToken", refreshToken)
+        }
+    }
+
+    @Test
+    fun `granted permissions dropped by a reconfiguration are not restored by a later saveAuthData`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveAuthData(
+                accessToken = "userAAccessToken",
+                refreshToken = "userARefreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            configure(appKey = "appKey", accessToken = "userBAccessToken")
+            // The same session the reconfiguration established, so this keeps whatever permissions storage holds.
+            saveAuthData(
+                accessToken = "userBAccessToken",
+                refreshToken = null,
+                idToken = null,
+                expiryDate = Date(),
+            )
+
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `saveAuthData preserves granted permissions across a token refresh`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(
+                appKey = "appKey",
+                accessToken = "accessToken",
+                refreshToken = "refreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            saveAuthData(
+                accessToken = "refreshedToken",
+                refreshToken = "refreshedRefreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            configure(appKey = "appKey")
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `saveAuthData drops granted permissions when the tokens name a different user`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(
+                appKey = "appKey",
+                accessToken = "accessToken",
+                refreshToken = "refreshToken",
+                idToken = idTokenFor("userA"),
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            saveAuthData(
+                accessToken = "userBAccessToken",
+                refreshToken = "userBRefreshToken",
+                idToken = idTokenFor("userB"),
+                expiryDate = Date(),
+            )
+
+            assertEquals(emptySet(), grantedPermissions)
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            configure(appKey = "appKey")
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `saveAuthData drops granted permissions when an unnamed user is replaced`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(
+                appKey = "appKey",
+                accessToken = "accessToken",
+                refreshToken = "refreshToken",
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            saveAuthData(
+                accessToken = "userBAccessToken",
+                refreshToken = "userBRefreshToken",
+                idToken = null,
+                expiryDate = Date(),
+            )
+
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `saveAuthData preserves granted permissions when an unnamed user refreshes`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(
+                appKey = "appKey",
+                accessToken = "accessToken",
+                refreshToken = "refreshToken",
+                expiryDate = Date(),
+            )
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            saveAuthData(
+                accessToken = "refreshedAccessToken",
+                refreshToken = "refreshToken",
+                idToken = null,
+                expiryDate = Date(),
+            )
+
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `clearAuthData clears granted permissions`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            clearAuthData()
+
+            assertEquals(emptySet(), grantedPermissions)
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+
+            configure(appKey = "appKey")
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `a permission grant persists when the session that started it is still signed in`() {
+        with(YouVersionPlatformConfiguration) {
+            configureAsUser("userA")
+            beginPermissionGrant()
+
+            assertTrue(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `a permission grant is dropped when a different user signed in while the browser was open`() {
+        with(YouVersionPlatformConfiguration) {
+            configureAsUser("userA")
+            beginPermissionGrant()
+
+            saveAuthData(
+                accessToken = "userBAccessToken",
+                refreshToken = "userBRefreshToken",
+                idToken = idTokenFor("userB"),
+                expiryDate = Date(),
+            )
+
+            assertFalse(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `a permission grant persists when the process was recreated while the browser was open`() {
+        with(YouVersionPlatformConfiguration) {
+            configureAsUser("userA")
+            beginPermissionGrant()
+
+            // The process dies while the user answers the prompt; the callback arrives after a relaunch rebuilds the
+            // configuration from storage, still signed in as the user who was asked.
+            reset()
+            configure(appKey = "appKey")
+
+            assertTrue(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `a permission grant is dropped when the process was recreated and a different user signed in`() {
+        with(YouVersionPlatformConfiguration) {
+            configureAsUser("userA")
+            beginPermissionGrant()
+
+            reset()
+            configureAsUser("userB")
+
+            assertFalse(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `a permission grant with no flow behind it is dropped`() {
+        with(YouVersionPlatformConfiguration) {
+            configureAsUser("userA")
+
+            assertFalse(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `a permission grant is dropped when nobody is signed in`() {
+        with(YouVersionPlatformConfiguration) {
+            // Both the recorded and the current session read null here, so a bare equality check would let this
+            // through and attribute the grant to a signed-out SDK.
+            configure(appKey = "appKey")
+            beginPermissionGrant()
+
+            assertFalse(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
+            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
+    fun `clearAuthData forgets a permission grant in progress`() {
+        with(YouVersionPlatformConfiguration) {
+            configureAsUser("userA")
+            beginPermissionGrant()
+
+            clearAuthData()
+
+            assertNull(sessionRepository.permissionGrantSessionId)
+        }
+    }
+
+    /**
+     * Signs in as [user] the way the sign-in flow does, so the tokens reach storage and a later [configure] restores
+     * them the way a relaunched process would.
+     */
+    private fun configureAsUser(user: String) {
+        YouVersionPlatformConfiguration.configure(appKey = "appKey")
+        YouVersionPlatformConfiguration.saveAuthData(
+            accessToken = "${user}AccessToken",
+            refreshToken = "${user}RefreshToken",
+            idToken = idTokenFor(user),
+            expiryDate = Date(),
+        )
+    }
+
+    @Test
+    fun `an unrecognized stored permission is reported as not granted`() {
+        storage.putString(SessionRepository.KEY_GRANTED_PERMISSIONS, "highlights,notes")
+
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+
+            assertEquals(setOf(SignInWithYouVersionPermission.HIGHLIGHTS), grantedPermissions)
+            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+        }
+    }
+
+    @Test
     fun `configState emits updated config`() {
         with(YouVersionPlatformConfiguration) {
             assertNull(configState.value)
@@ -343,5 +777,18 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             assertEquals("newRefresh", configState.value?.refreshToken)
             assertEquals("newId", configState.value?.idToken)
         }
+    }
+
+    private fun idTokenFor(
+        subject: String,
+        nonce: String? = null,
+    ): String {
+        val claims = """{"sub":"$subject"""" + nonce?.let { ""","nonce":"$it"""" }.orEmpty() + "}"
+        val payload =
+            Base64
+                .getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(claims.toByteArray())
+        return "header.$payload.signature"
     }
 }

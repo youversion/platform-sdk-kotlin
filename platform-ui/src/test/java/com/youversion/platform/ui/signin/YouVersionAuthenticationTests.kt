@@ -206,6 +206,7 @@ class YouVersionAuthenticationTests {
                 mockUsersApi.getSignInResult(any(), any(), any(), any(), any())
             } returns expectedResult
             every { YouVersionPlatformConfiguration.saveAuthData(any(), any(), any(), any()) } just Runs
+            every { YouVersionPlatformConfiguration.saveGrantedPermissions(any()) } just Runs
 
             val result = YouVersionAuthentication.handleAuthCallback(context, intent)
 
@@ -232,6 +233,7 @@ class YouVersionAuthenticationTests {
                 mockUsersApi.getSignInResult(any(), any(), any(), any(), any())
             } returns expectedResult
             every { YouVersionPlatformConfiguration.saveAuthData(any(), any(), any(), any()) } just Runs
+            every { YouVersionPlatformConfiguration.saveGrantedPermissions(any()) } just Runs
 
             YouVersionAuthentication.handleAuthCallback(context, intent)
 
@@ -243,6 +245,7 @@ class YouVersionAuthenticationTests {
                     expiryDate = expectedResult.expiryDate,
                 )
             }
+            verify { YouVersionPlatformConfiguration.saveGrantedPermissions(expectedResult.permissions) }
             verify { PKCEStateStore.clear(context) }
         }
 
@@ -255,6 +258,7 @@ class YouVersionAuthenticationTests {
                 mockUsersApi.getSignInResult(any(), any(), any(), any(), any())
             } throws YouVersionNetworkException(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD)
             every { YouVersionPlatformConfiguration.saveAuthData(any(), any(), any(), any()) } just Runs
+            every { YouVersionPlatformConfiguration.saveGrantedPermissions(any()) } just Runs
 
             assertFailsWith<YouVersionNetworkException> {
                 YouVersionAuthentication.handleAuthCallback(context, intent)

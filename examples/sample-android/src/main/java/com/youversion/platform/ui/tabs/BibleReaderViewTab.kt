@@ -21,8 +21,6 @@ fun BibleReaderViewTab(onDestinationClick: (SampleDestination) -> Unit) {
         }
 
     BibleReader(
-        appName = "Sample App",
-        appSignInMessage = "Sign in to YouVersion to access your saved versions.",
         fontDefinitionProvider = fontDefinitionProvider,
         bottomBar = {
             SampleBottomBar(

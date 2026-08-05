@@ -12,6 +12,7 @@ import com.youversion.platform.core.bibles.domain.BibleIntroRepository
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.data.SharedPreferencesStorage
 import com.youversion.platform.core.domain.Storage
+import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.users.domain.SessionRepository
 import io.ktor.client.HttpClient
@@ -26,6 +27,7 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.headers
 import io.ktor.http.HeadersBuilder
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMessageBuilder
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
@@ -67,6 +69,8 @@ internal val PlatformCoreDomainKoinModule =
         }
 
         single { BibleIntroRepository() }
+
+        single { BibleHighlightsRepository() }
 
         factoryOf(::LanguageRepository)
         factoryOf(::SessionRepository)
@@ -111,7 +115,7 @@ private fun HttpMessageBuilder.defaultRequestHeaders(): HeadersBuilder =
         }
 
         YouVersionPlatformConfiguration.accessToken?.let {
-            append("X-YV-LAT", it)
+            append(HttpHeaders.Authorization, "Bearer $it")
         }
     }
 

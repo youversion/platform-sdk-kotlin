@@ -1,0 +1,1229 @@
+package com.youversion.platform.core.highlights.domain
+
+import com.youversion.platform.core.api.YouVersionNetworkException
+import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.highlights.api.HighlightsApi
+import com.youversion.platform.core.highlights.models.BibleHighlight
+import com.youversion.platform.core.highlights.models.Highlight
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class BibleHighlightsRepositoryTests {
+    private val testDispatcher = StandardTestDispatcher()
+    private val cache = BibleHighlightCache()
+
+    private fun repository(api: HighlightsApi) =
+        BibleHighlightsRepository(api = api, scope = CoroutineScope(testDispatcher), cache = cache)
+
+    @Test
+    fun `optimistic add is reflected in the highlights state immediately`() =
+        runTest(testDispatcher) {
+            val repository = repository(FakeHighlightsApi())
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.addHighlights(listOf(reference), color = "#ff00ff")
+
+            assertEquals(1, repository.highlights.value.size)
+            assertEquals("#ff00ff", repository.highlights(overlapping = reference).first().hexColor)
+        }
+
+    @Test
+    fun `ensureHighlightsForChapterLoaded fetches and converts server highlights`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                )
+            val repository = repository(api)
+
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+
+            assertEquals(1, api.highlightsCount)
+            val highlights =
+                repository.highlights(
+                    overlapping = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1),
+                )
+            assertEquals(1, highlights.size)
+            assertEquals("#ff0000", highlights.first().hexColor)
+            assertEquals(1, highlights.first().bibleReference.verseStart)
+        }
+
+    @Test
+    fun `a synced add is not duplicated when the chapter is later fetched from the server`() =
+        runTest(testDispatcher) {
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff00ff")),
+                )
+            val repository = repository(api)
+
+            repository.addHighlights(listOf(reference), color = "#ff00ff")
+            advanceUntilIdle()
+
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+
+            assertEquals(1, repository.highlights(overlapping = reference).size)
+        }
+
+    @Test
+    fun `ensureHighlightsForChapterLoaded throttles repeated loads of the same chapter`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi()
+            val repository = repository(api)
+            val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+
+            repository.ensureHighlightsForChapterLoaded(chapter)
+            advanceUntilIdle()
+            repository.ensureHighlightsForChapterLoaded(chapter)
+            advanceUntilIdle()
+
+            assertEquals(1, api.highlightsCount)
+        }
+
+    @Test
+    fun `addHighlights syncs a create to the server with verse-level passage and bare hex`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi()
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            advanceUntilIdle()
+
+            assertEquals(1, api.createCount)
+            assertEquals("GEN.1.1", api.createdPassages.first())
+            assertEquals("ff00ff", api.createdColors.first())
+        }
+
+    @Test
+    fun `an add with no verse start syncs once and a later recolor updates rather than firing a second create`() =
+        runTest(testDispatcher) {
+            // A caller-supplied reference with a null verseStart is normalized to verse 1 for the cache; the queued
+            // operation must be normalized the same way, or the sync-completion lookup misses and the entry stays a
+            // pending create, so the recolor fires a duplicate POST instead of a PUT.
+            val api = FakeHighlightsApi()
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+
+            repository.addHighlights(listOf(reference), color = "#ff0000")
+            advanceUntilIdle()
+            assertEquals(1, api.createCount)
+
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            advanceUntilIdle()
+
+            assertEquals(1, api.createCount)
+            assertEquals(1, api.updateCount)
+            assertEquals(1, repository.highlights.value.size)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `an add rejected for permission is not retried`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(rejectsChanges = true)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            advanceUntilIdle()
+
+            assertEquals(1, api.createCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `a remove rejected for permission is not retried`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(rejectsChanges = true)
+            val repository = repository(api)
+
+            repository.removeHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+            )
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `an add rejected for permission stops being shown`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(rejectsChanges = true)
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.addHighlights(listOf(reference), color = "#ff00ff")
+            assertEquals(1, repository.highlights(overlapping = reference).size)
+
+            advanceUntilIdle()
+
+            assertEquals(emptyList(), repository.highlights(overlapping = reference))
+        }
+
+    @Test
+    fun `a remove rejected for permission reconciles back to the highlight it hid`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn = listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    rejectsChanges = true,
+                )
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+
+            repository.removeHighlights(listOf(reference))
+            assertEquals(emptyList(), repository.highlights(overlapping = reference))
+
+            advanceUntilIdle()
+
+            assertEquals("#ff0000", repository.highlights(overlapping = reference).single().hexColor)
+        }
+
+    @Test
+    fun `a recolor rejected for permission reconciles back to the server color`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn = listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    rejectsChanges = true,
+                )
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            assertEquals("#00ff00", repository.highlights(overlapping = reference).single().hexColor)
+
+            advanceUntilIdle()
+
+            assertEquals("#ff0000", repository.highlights(overlapping = reference).single().hexColor)
+        }
+
+    @Test
+    fun `a rejected write drains from the queue instead of retrying forever`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(rejectsChanges = true)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            advanceUntilIdle()
+
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `a rejected write does not stop a later write from saving`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi()
+            val repository = repository(api)
+            val rejected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val accepted = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
+
+            api.rejectsChanges = true
+            repository.addHighlights(listOf(rejected), color = "#ff00ff")
+            advanceUntilIdle()
+
+            api.rejectsChanges = false
+            repository.addHighlights(listOf(accepted), color = "#00ff00")
+            advanceUntilIdle()
+
+            assertEquals(2, api.createCount)
+            assertEquals("#00ff00", repository.highlights(overlapping = accepted).first().hexColor)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `a recolor made while a rejected add is in flight is reconciled, not left behind as a phantom`() =
+        runTest(testDispatcher) {
+            val createGate = CompletableDeferred<Unit>()
+            val api = FakeHighlightsApi(rejectsChanges = true, createGate = createGate)
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.addHighlights(listOf(reference), color = "#ff00ff")
+            runCurrent()
+
+            // The recolor lands while the add is still in flight, so its row is the one the cache now holds. Undoing
+            // the add by restoring the rows it replaced would erase this recolor and then resurrect the add's own row,
+            // leaving a highlight the server never accepted and no reload can clear.
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            createGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(emptyList(), repository.highlights(overlapping = reference))
+            assertEquals(1, api.createCount)
+            assertEquals(0, api.updateCount)
+        }
+
+    @Test
+    fun `a removal queued behind a rejected recolor is dropped and the server highlight stands`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn = listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    rejectsChanges = true,
+                )
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            repository.removeHighlights(listOf(reference))
+            advanceUntilIdle()
+
+            // The refusal is account-wide, so the removal is never attempted: it cannot succeed against the server and
+            // then be undone by the recolor's rollback.
+            assertEquals(0, api.deleteCount)
+            assertEquals("#ff0000", repository.highlights(overlapping = reference).single().hexColor)
+        }
+
+    @Test
+    fun `a refusal drops the rest of the queue instead of sending each doomed write`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(rejectsChanges = true)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)),
+                color = "#00ff00",
+            )
+            advanceUntilIdle()
+
+            assertEquals(1, api.createCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+            assertEquals(0, repository.failedOperationCount.value)
+        }
+
+    @Test
+    fun `a reload that fails after a refusal keeps the highlight until a later load reconciles it`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(rejectsChanges = true, highlightsFailures = 1)
+            val repository = repository(api)
+            val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.addHighlights(listOf(reference), color = "#ff00ff")
+            advanceUntilIdle()
+
+            // The reconciling reload never returned, so nothing was discarded: the reader still sees the highlight they
+            // made rather than watching it disappear on a connection that dropped.
+            assertEquals("#ff00ff", repository.highlights(overlapping = reference).single().hexColor)
+
+            repository.ensureHighlightsForChapterLoaded(chapter)
+            advanceUntilIdle()
+
+            assertEquals(emptyList(), repository.highlights(overlapping = reference))
+        }
+
+    @Test
+    fun `a read the server refuses clears every cached highlight, not only the chapter being loaded`() =
+        runTest(testDispatcher) {
+            val genesis = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+            val exodus = BibleReference(versionId = 1, bookUSFM = "EXO", chapter = 1, verse = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn = listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                )
+            val repository = repository(api)
+
+            repository.ensureHighlightsForChapterLoaded(genesis)
+            advanceUntilIdle()
+            repository.seedCachedHighlights(listOf(BibleHighlight(bibleReference = exodus, hexColor = "#00ff00")))
+            assertEquals(1, repository.highlights(overlapping = genesis).size)
+            assertEquals(1, repository.highlights(overlapping = exodus).size)
+
+            api.rejectsReads = true
+            repository.ensureHighlightsForChapterLoaded(genesis, forceReload = true)
+            advanceUntilIdle()
+
+            // The refusal says the user has not granted access to their highlights at all, so a chapter this load never
+            // touched is no longer theirs to show either.
+            assertEquals(emptyList(), repository.highlights(overlapping = genesis))
+            assertEquals(emptyList(), repository.highlights(overlapping = exodus))
+        }
+
+    @Test
+    fun `a read that fails without being refused leaves the cached highlights untouched`() =
+        runTest(testDispatcher) {
+            val genesis = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn = listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                )
+            val repository = repository(api)
+
+            repository.ensureHighlightsForChapterLoaded(genesis)
+            advanceUntilIdle()
+            assertEquals(1, repository.highlights(overlapping = genesis).size)
+
+            // A signed-out reader, an expired token or a server error carries no answer about what the user holds, so
+            // it must not be mistaken for the server reporting an empty chapter.
+            api.highlightsFailures = 1
+            repository.ensureHighlightsForChapterLoaded(genesis, forceReload = true)
+            advanceUntilIdle()
+
+            assertEquals("#ff0000", repository.highlights(overlapping = genesis).single().hexColor)
+        }
+
+    @Test
+    fun `queue retries a failing operation until it succeeds`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 2)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            advanceUntilIdle()
+
+            assertEquals(3, api.createCount)
+        }
+
+    @Test
+    fun `updateHighlightColors syncs a recolor of an existing highlight with verse-level passage and bare hex`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                )
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+
+            repository.updateHighlightColors(listOf(reference), newColor = "#ff00ff")
+            advanceUntilIdle()
+
+            assertEquals(1, api.updateCount)
+            assertEquals(0, api.createCount)
+            assertEquals("GEN.1.1", api.updatedPassages.first())
+            assertEquals("ff00ff", api.updatedColors.first())
+        }
+
+    @Test
+    fun `an add that fails while a recolor creates the highlight retries as an update`() =
+        runTest(testDispatcher) {
+            // The first server call (the add's create) fails; the recolor queued in the same batch then creates the
+            // highlight, so the add's retry must sync as an update rather than firing a second create.
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 1)
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.addHighlights(listOf(reference), color = "#ff0000")
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            advanceUntilIdle()
+
+            assertEquals(2, api.createCount)
+            assertEquals(1, api.updateCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `add then remove then recolor before sync re-creates rather than updating the deleted highlight`() =
+        runTest(testDispatcher) {
+            // The remove's delete lands before the recolor syncs; the recolor must post a fresh highlight, not put the
+            // one the server just deleted, which would 404 and retry forever.
+            val api = FakeHighlightsApi()
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.addHighlights(listOf(reference), color = "#ff0000")
+            repository.removeHighlights(listOf(reference))
+            repository.updateHighlightColors(listOf(reference), newColor = "#0000ff")
+            advanceUntilIdle()
+
+            assertEquals(2, api.createCount)
+            assertEquals(1, api.deleteCount)
+            assertEquals(0, api.updateCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `updateHighlightColors syncs a create when no highlight exists for the reference yet`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi()
+            val repository = repository(api)
+
+            repository.updateHighlightColors(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                newColor = "#ff00ff",
+            )
+            advanceUntilIdle()
+
+            assertEquals(1, api.createCount)
+            assertEquals(0, api.updateCount)
+            assertEquals("GEN.1.1", api.createdPassages.first())
+            assertEquals("ff00ff", api.createdColors.first())
+        }
+
+    @Test
+    fun `recolor during an in-flight chapter load syncs as an update once the server highlight arrives`() =
+        runTest(testDispatcher) {
+            val gate = CompletableDeferred<Unit>()
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    highlightsGate = gate,
+                )
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            runCurrent()
+
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            runCurrent()
+            assertEquals(0, api.createCount)
+            assertEquals(0, api.updateCount)
+            // The write is in flight, suspended awaiting the chapter load rather than being sent or retried. It must
+            // not be reported as failed: waiting on a load is not a failure and must not accrue retry backoff.
+            assertEquals(0, repository.failedOperationCount.value)
+
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(1, api.updateCount)
+            assertEquals(0, api.createCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+            assertEquals(1, repository.highlights(overlapping = reference).size)
+            assertEquals(1, repository.highlights.value.size)
+        }
+
+    @Test
+    fun `removeHighlights syncs a delete to the server with verse-level passage`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi()
+            val repository = repository(api)
+
+            repository.removeHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+            )
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals("GEN.1.1", api.deletedPassages.first())
+        }
+
+    @Test
+    fun `removeHighlights with a matching color loads the chapter then deletes only the matching references`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(
+                            Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000"),
+                            Highlight(bibleId = 1, passageId = "GEN.1.2", color = "0000ff"),
+                        ),
+                )
+            val repository = repository(api)
+            val redVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val blueVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
+
+            repository.removeHighlights(listOf(redVerse, blueVerse), matchingColor = "#ff0000")
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals("GEN.1.1", api.deletedPassages.first())
+        }
+
+    @Test
+    fun `removeHighlights with a non-matching color deletes nothing`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                )
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            repository.removeHighlights(listOf(reference), matchingColor = "#0000ff")
+            advanceUntilIdle()
+
+            assertEquals(0, api.deleteCount)
+        }
+
+    @Test
+    fun `removeHighlights with a matching color deletes only the verses carrying that color`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(
+                            Highlight(bibleId = 1, passageId = "GEN.1.1", color = "0000ff"),
+                            Highlight(bibleId = 1, passageId = "GEN.1.2", color = "ff0000"),
+                        ),
+                )
+            val repository = repository(api)
+            val blueVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val redVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
+
+            repository.removeHighlights(listOf(blueVerse, redVerse), matchingColor = "#ff0000")
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals("GEN.1.2", api.deletedPassages.first())
+            val survivingHighlights = repository.highlights(overlapping = blueVerse)
+            assertEquals(1, survivingHighlights.size)
+            assertEquals(1, survivingHighlights.first().bibleReference.verseStart)
+            assertEquals("#0000ff", survivingHighlights.first().hexColor)
+        }
+
+    @Test
+    fun `a server range highlight is cached per verse so one verse can be cleared independently`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1-GEN.1.3", color = "ff0000")),
+                )
+            val repository = repository(api)
+            val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+            val middleVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
+
+            repository.ensureHighlightsForChapterLoaded(chapter)
+            advanceUntilIdle()
+            assertEquals(3, repository.highlights(overlapping = chapter).size)
+
+            repository.removeHighlights(listOf(middleVerse), matchingColor = "#ff0000")
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals("GEN.1.2", api.deletedPassages.first())
+            val survivingVerses =
+                repository.highlights(overlapping = chapter).mapNotNull { it.bibleReference.verseStart }.sorted()
+            assertEquals(listOf(1, 3), survivingVerses)
+        }
+
+    @Test
+    fun `queue retries a failing update until it succeeds`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    failuresBeforeSuccess = 2,
+                )
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+
+            repository.updateHighlightColors(listOf(reference), newColor = "#ff00ff")
+            advanceUntilIdle()
+
+            assertEquals(3, api.updateCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `a concurrent chapter load does not re-add a highlight whose delete is in flight`() =
+        runTest(testDispatcher) {
+            val deleteGate = CompletableDeferred<Unit>()
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    deleteGate = deleteGate,
+                )
+            val repository = repository(api)
+
+            // Park the delete in flight on its gate, then load the chapter whose server copy still holds the highlight.
+            repository.removeHighlights(listOf(reference))
+            runCurrent()
+
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            advanceUntilIdle()
+            // The tombstone blocks the merge, so the highlight is never resurrected while the delete is outstanding.
+            assertEquals(0, repository.highlights.value.size)
+
+            deleteGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals(0, repository.highlights.value.size)
+        }
+
+    @Test
+    fun `a queued delete is not re-added by a concurrent chapter load`() =
+        runTest(testDispatcher) {
+            val blockingGate = CompletableDeferred<Unit>()
+            val target = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    deleteGate = blockingGate,
+                )
+            val repository = repository(api)
+
+            // Park the processor on a gated delete so the target's delete stays queued rather than in flight.
+            repository.removeHighlights(listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verse = 1)))
+            runCurrent()
+            repository.removeHighlights(listOf(target))
+            runCurrent()
+
+            // A load arrives while the target's delete is still queued; the server copy must not be re-added.
+            repository.ensureHighlightsForChapterLoaded(
+                BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1),
+                forceReload = true,
+            )
+            advanceUntilIdle()
+            assertEquals(0, repository.highlights(overlapping = target).size)
+
+            blockingGate.complete(Unit)
+            advanceUntilIdle()
+        }
+
+    @Test
+    fun `a delete tombstones synchronously so a load merging in the same turn cannot resurrect it`() =
+        runTest(testDispatcher) {
+            // Regression: removeHighlights writes the delete's tombstone into the cache synchronously, and a chapter
+            // load's merge consults that tombstone to skip the server copy. A load that merges in the same turn as the
+            // delete must see the tombstone; this pins that it is written synchronously rather than after a dispatch.
+            val loadGate = CompletableDeferred<Unit>()
+            val deleteGate = CompletableDeferred<Unit>()
+            val target = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    highlightsGate = loadGate,
+                    deleteGate = deleteGate,
+                )
+            val repository = repository(api)
+
+            // Park a chapter load after it has fetched the server copy but before it merges.
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            runCurrent()
+
+            // Release the load first, then delete: the load's merge runs before the delete is confirmed by the server,
+            // so only the synchronous cache tombstone can keep the load from resurrecting target.
+            loadGate.complete(Unit)
+            repository.removeHighlights(listOf(target))
+            runCurrent()
+
+            assertEquals(0, repository.highlights(overlapping = target).size)
+
+            deleteGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals(0, repository.highlights(overlapping = target).size)
+        }
+
+    @Test
+    fun `a delete is not resurrected by a stale load that lands after the delete synced`() =
+        runTest(testDispatcher) {
+            // Regression: a chapter GET issued before the delete reached the server can still return the highlight, and
+            // its response can land after the delete has fully synced and left the queue. Nothing queue-based remains to
+            // filter it; only the delete tombstone, kept until a load that started after the delete synced confirms the
+            // removal, stops the stale response from resurrecting the highlight.
+            val loadGate = CompletableDeferred<Unit>()
+            val target = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    highlightsGate = loadGate,
+                )
+            val repository = repository(api)
+
+            // Start a chapter load and park it after it has fetched the stale server copy but before it merges.
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            runCurrent()
+
+            // Delete the highlight and let the delete fully sync and drain from the queue while the load is parked.
+            repository.removeHighlights(listOf(target))
+            advanceUntilIdle()
+            assertEquals(1, api.deleteCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+
+            // The stale response now lands. The queue no longer holds the delete, so the tombstone is the only guard.
+            loadGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(0, repository.highlights(overlapping = target).size)
+            assertEquals(0, repository.highlights.value.size)
+        }
+
+    @Test
+    fun `queue retries a failing remove until it succeeds`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 2)
+            val repository = repository(api)
+
+            repository.removeHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+            )
+            advanceUntilIdle()
+
+            assertEquals(3, api.deleteCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `operation counts track a write that fails and then drains`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 1)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            runCurrent()
+
+            assertEquals(1, repository.pendingOperationCount.value)
+            assertEquals(1, repository.failedOperationCount.value)
+
+            advanceUntilIdle()
+
+            assertEquals(0, repository.pendingOperationCount.value)
+            assertEquals(0, repository.failedOperationCount.value)
+            assertEquals(2, api.createCount)
+        }
+
+    @Test
+    fun `a write retries indefinitely until it succeeds, past the old retry cap`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 6)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            advanceUntilIdle()
+
+            assertEquals(7, api.createCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `clearOperationResults resets the failed operation count`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 1)
+            val repository = repository(api)
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            runCurrent()
+            assertEquals(1, repository.failedOperationCount.value)
+
+            repository.clearOperationResults()
+            runCurrent()
+            assertEquals(0, repository.failedOperationCount.value)
+
+            advanceUntilIdle()
+            assertEquals(2, api.createCount)
+        }
+
+    @Test
+    fun `a write is not sent when the session changes before it syncs`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi()
+            var sessionId: String? = "session-a"
+            val repository =
+                BibleHighlightsRepository(
+                    api = api,
+                    scope = CoroutineScope(testDispatcher),
+                    cache = cache,
+                    currentSessionId = { sessionId },
+                )
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            sessionId = "session-b"
+            advanceUntilIdle()
+
+            assertEquals(0, api.createCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `a write is dropped when the session changes while its chapter load is in flight`() =
+        runTest(testDispatcher) {
+            val loadGate = CompletableDeferred<Unit>()
+            var sessionId: String? = "session-a"
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    highlightsGate = loadGate,
+                )
+            val repository =
+                BibleHighlightsRepository(
+                    api = api,
+                    scope = CoroutineScope(testDispatcher),
+                    cache = cache,
+                    currentSessionId = { sessionId },
+                )
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            // Start a chapter load and park it, then queue a recolor that must wait for the load before it classifies.
+            repository.ensureHighlightsForChapterLoaded(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1))
+            runCurrent()
+            repository.updateHighlightColors(listOf(reference), newColor = "#00ff00")
+            runCurrent()
+
+            // The session switches while the write is parked on the in-flight load; it must not be sent under session-b.
+            sessionId = "session-b"
+            loadGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(0, api.createCount)
+            assertEquals(0, api.updateCount)
+        }
+
+    @Test
+    fun `a write still syncs across a token refresh that keeps the same session`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi()
+            val repository =
+                BibleHighlightsRepository(
+                    api = api,
+                    scope = CoroutineScope(testDispatcher),
+                    cache = cache,
+                    currentSessionId = { "session-a" },
+                )
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            advanceUntilIdle()
+
+            assertEquals(1, api.createCount)
+        }
+
+    @Test
+    fun `a session change clears the cached highlights`() =
+        runTest(testDispatcher) {
+            val sessionIdChanges = MutableStateFlow<String?>("session-a")
+            val repository =
+                BibleHighlightsRepository(
+                    api = FakeHighlightsApi(),
+                    scope = CoroutineScope(testDispatcher),
+                    cache = cache,
+                    currentSessionId = { sessionIdChanges.value },
+                    sessionIdChanges = sessionIdChanges,
+                )
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            runCurrent()
+            assertEquals(1, repository.highlights.value.size)
+
+            sessionIdChanges.value = "session-b"
+            advanceUntilIdle()
+
+            assertEquals(0, repository.highlights.value.size)
+        }
+
+    @Test
+    fun `a session change that lands before the first emission clears the cached highlights`() =
+        runTest(testDispatcher) {
+            cache.addHighlights(
+                listOf(
+                    BibleHighlight(
+                        bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
+                        hexColor = "#ff00ff",
+                    ),
+                ),
+            )
+
+            val repository =
+                BibleHighlightsRepository(
+                    api = FakeHighlightsApi(),
+                    scope = CoroutineScope(testDispatcher),
+                    cache = cache,
+                    currentSessionId = { "session-a" },
+                    sessionIdChanges = MutableStateFlow("session-b"),
+                )
+            advanceUntilIdle()
+
+            assertEquals(0, repository.highlights.value.size)
+        }
+
+    @Test
+    fun `a session change clears the cached highlights before the change is observable`() =
+        runTest(testDispatcher) {
+            val sessionIdChanges = MutableStateFlow<String?>("session-a")
+            val repository =
+                BibleHighlightsRepository(
+                    api = FakeHighlightsApi(),
+                    scope = CoroutineScope(testDispatcher),
+                    cache = cache,
+                    currentSessionId = { sessionIdChanges.value },
+                    sessionIdChanges = sessionIdChanges,
+                )
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            runCurrent()
+            assertEquals(1, repository.highlights.value.size)
+
+            sessionIdChanges.value = "session-b"
+
+            // Deliberately not advanced: publishing the change must itself have cleared the cache, so that nothing can
+            // read the new session's state while the previous session's highlights are still cached.
+            assertEquals(0, repository.highlights.value.size)
+        }
+
+    @Test
+    fun `a repeated signal for the same session leaves the cached highlights intact`() =
+        runTest(testDispatcher) {
+            val sessionIdChanges = MutableSharedFlow<String?>(replay = 1)
+            sessionIdChanges.tryEmit("session-a")
+            val repository =
+                BibleHighlightsRepository(
+                    api = FakeHighlightsApi(),
+                    scope = CoroutineScope(testDispatcher),
+                    cache = cache,
+                    currentSessionId = { "session-a" },
+                    sessionIdChanges = sessionIdChanges,
+                )
+
+            repository.addHighlights(
+                listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+                color = "#ff00ff",
+            )
+            runCurrent()
+            assertEquals(1, repository.highlights.value.size)
+
+            // A token refresh re-emits the same session; the cache must survive rather than being wiped each refresh.
+            sessionIdChanges.tryEmit("session-a")
+            advanceUntilIdle()
+
+            assertEquals(1, repository.highlights.value.size)
+        }
+
+    @Test
+    fun `reset cancels an in-flight load so it cannot repopulate the cleared cache`() =
+        runTest(testDispatcher) {
+            val gate = CompletableDeferred<Unit>()
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    highlightsGate = gate,
+                )
+            val repository = repository(api)
+            val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+
+            repository.ensureHighlightsForChapterLoaded(chapter)
+            runCurrent()
+            assertEquals(1, api.highlightsCount)
+
+            repository.reset()
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(0, repository.highlights(overlapping = chapter).size)
+        }
+
+    @Test
+    fun `reset drops an in-flight failing write instead of retrying it forever`() =
+        runTest(testDispatcher) {
+            val deleteGate = CompletableDeferred<Unit>()
+            // The delete fails on its first attempt; without the generation guard the processor would re-queue it and
+            // retry until it succeeds.
+            val api = FakeHighlightsApi(failuresBeforeSuccess = 1, deleteGate = deleteGate)
+            val repository = repository(api)
+
+            // Park the processor mid-send on the gated delete.
+            repository.removeHighlights(listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)))
+            runCurrent()
+            assertEquals(1, api.deleteCount)
+
+            // Reset while the write is in flight bumps the operation generation, so when the send comes back a failure
+            // the batch is dropped rather than re-queued.
+            repository.reset()
+            deleteGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertEquals(1, api.deleteCount)
+            assertEquals(0, repository.pendingOperationCount.value)
+        }
+
+    @Test
+    fun `forceReload starts a fresh load once the in-flight load finishes`() =
+        runTest(testDispatcher) {
+            val gate = CompletableDeferred<Unit>()
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1.1", color = "ff0000")),
+                    highlightsGate = gate,
+                )
+            val repository = repository(api)
+            val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+
+            // Start a load and park it, then ask for a forced reload while it is still in flight.
+            repository.ensureHighlightsForChapterLoaded(chapter)
+            runCurrent()
+            assertEquals(1, api.highlightsCount)
+            repository.ensureHighlightsForChapterLoaded(chapter, forceReload = true)
+            runCurrent()
+
+            // The forced reload must wait for the in-flight load rather than starting a second one concurrently.
+            assertEquals(1, api.highlightsCount)
+
+            // Once the first load finishes, the forced reload fetches again rather than being silently dropped.
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertEquals(2, api.highlightsCount)
+        }
+
+    @Test
+    fun `hasPendingOperations stays true while a claimed batch is still in flight`() =
+        runTest(testDispatcher) {
+            val createGate = CompletableDeferred<Unit>()
+            val api = FakeHighlightsApi(createGate = createGate)
+            val repository = repository(api)
+            val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+            assertFalse(repository.hasPendingOperations())
+
+            repository.addHighlights(listOf(reference), color = "#ff00ff")
+            runCurrent()
+
+            assertEquals(0, repository.pendingOperationCount.value)
+            assertTrue(repository.hasPendingOperations())
+
+            createGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertFalse(repository.hasPendingOperations())
+        }
+}
+
+private class FakeHighlightsApi(
+    private val highlightsToReturn: List<Highlight> = emptyList(),
+    failuresBeforeSuccess: Int = 0,
+    private val highlightsGate: CompletableDeferred<Unit>? = null,
+    private val deleteGate: CompletableDeferred<Unit>? = null,
+    private val createGate: CompletableDeferred<Unit>? = null,
+    var highlightsFailures: Int = 0,
+    var rejectsChanges: Boolean = false,
+    var rejectsReads: Boolean = false,
+) : HighlightsApi {
+    var createCount = 0
+    var updateCount = 0
+    var deleteCount = 0
+    var highlightsCount = 0
+    val createdPassages = mutableListOf<String>()
+    val createdColors = mutableListOf<String>()
+    val updatedPassages = mutableListOf<String>()
+    val updatedColors = mutableListOf<String>()
+    val deletedPassages = mutableListOf<String>()
+
+    private var remainingFailures = failuresBeforeSuccess
+
+    private fun nextResult(): Boolean {
+        if (rejectsChanges) {
+            throw YouVersionNetworkException(YouVersionNetworkException.Reason.NOT_PERMITTED)
+        }
+        if (remainingFailures > 0) {
+            remainingFailures--
+            return false
+        }
+        return true
+    }
+
+    override suspend fun createHighlight(
+        versionId: Int,
+        passageId: String,
+        color: String,
+    ): Boolean {
+        createCount++
+        createdPassages.add(passageId)
+        createdColors.add(color)
+        createGate?.await()
+        return nextResult()
+    }
+
+    override suspend fun highlights(
+        versionId: Int,
+        passageId: String,
+    ): List<Highlight> {
+        highlightsCount++
+        highlightsGate?.await()
+        if (rejectsReads) {
+            throw YouVersionNetworkException(YouVersionNetworkException.Reason.NOT_PERMITTED)
+        }
+        if (highlightsFailures > 0) {
+            highlightsFailures--
+            throw YouVersionNetworkException(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD)
+        }
+        return highlightsToReturn
+    }
+
+    override suspend fun updateHighlight(
+        versionId: Int,
+        passageId: String,
+        color: String,
+    ): Boolean {
+        updateCount++
+        updatedPassages.add(passageId)
+        updatedColors.add(color)
+        return nextResult()
+    }
+
+    override suspend fun deleteHighlight(
+        versionId: Int,
+        passageId: String,
+    ): Boolean {
+        deleteCount++
+        deletedPassages.add(passageId)
+        deleteGate?.await()
+        return nextResult()
+    }
+}

@@ -3,10 +3,12 @@ package com.youversion.platform.reader
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.reader.di.PlatformReaderKoinModule
@@ -22,11 +24,19 @@ import org.koin.compose.module.rememberKoinModules
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.parameter.parametersOf
 
+/**
+ * A complete Bible reader.
+ *
+ * The sign-in prompt a signed-out reader sees names the host app and shows its reason for asking, both of which come
+ * from [YouVersionPlatformConfiguration.appName] and [YouVersionPlatformConfiguration.signInPromptMessage].
+ *
+ * @param bibleReference The reference to open. When null, the reader restores the last-read reference.
+ * @param fontDefinitionProvider The fonts the host app offers in the reader's font settings.
+ * @param bottomBar The host app's own bottom bar, drawn below the reader.
+ */
 @OptIn(KoinExperimentalAPI::class)
 @Composable
 fun BibleReader(
-    appName: String,
-    appSignInMessage: String,
     bibleReference: BibleReference? = null,
     fontDefinitionProvider: FontDefinitionProvider? = null,
     bottomBar: @Composable () -> Unit = {},
@@ -56,8 +66,6 @@ fun BibleReader(
                 ) {
                     BibleScreen(
                         viewModel = bibleReaderViewModel,
-                        appName = appName,
-                        appSignInMessage = appSignInMessage,
                         bottomBar = bottomBar,
                         onReferencesClick = {
                             onDestinationClick(BibleReaderDestination.References)
@@ -132,6 +140,38 @@ fun BibleReader(
             }
         }
     }
+}
+
+/**
+ * A complete Bible reader, taking the sign-in prompt's copy as parameters.
+ *
+ * @param appName The name of the host app, shown in the sign-in prompt.
+ * @param appSignInMessage The host app's own reason for asking the reader to sign in.
+ * @param bibleReference The reference to open. When null, the reader restores the last-read reference.
+ * @param fontDefinitionProvider The fonts the host app offers in the reader's font settings.
+ * @param bottomBar The host app's own bottom bar, drawn below the reader.
+ */
+@Deprecated("Pass appName and signInPromptMessage to YouVersionPlatformConfiguration.configure() instead.")
+@Composable
+fun BibleReader(
+    appName: String,
+    appSignInMessage: String,
+    bibleReference: BibleReference? = null,
+    fontDefinitionProvider: FontDefinitionProvider? = null,
+    bottomBar: @Composable () -> Unit = {},
+) {
+    LaunchedEffect(appName, appSignInMessage) {
+        YouVersionPlatformConfiguration.configureSignIn(
+            appName = appName,
+            signInPromptMessage = appSignInMessage,
+        )
+    }
+
+    BibleReader(
+        bibleReference = bibleReference,
+        fontDefinitionProvider = fontDefinitionProvider,
+        bottomBar = bottomBar,
+    )
 }
 
 internal sealed class BibleReaderDestination(

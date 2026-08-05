@@ -14,12 +14,19 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import io.mockk.verify
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import java.util.Locale
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class BibleReaderRepositoryTest {
@@ -255,10 +262,289 @@ class BibleReaderRepositoryTest {
         )
     }
 
+    @Test
+    fun `a session change clears the persisted highlight request`() {
+        val storage = mockk<Storage>(relaxed = true)
+        val sessionIdChanges = MutableStateFlow<String?>("session-a")
+        val repository =
+            createRepository(
+                storage = storage,
+                currentSessionId = { "session-a" },
+                sessionIdChanges = sessionIdChanges,
+            )
+        repository.highlightRequest = highlightRequest()
+        assertNotNull(repository.highlightRequest)
+
+        sessionIdChanges.value = "session-b"
+
+        assertNull(repository.highlightRequest)
+        assertNull(repository.highlightRequestChanges.value)
+        verify { storage.putString(STORAGE_KEY_HIGHLIGHT_REQUEST, null) }
+    }
+
+    @Test
+    fun `a session change that lands before the first emission clears the highlight request`() {
+        val repository =
+            createRepository(
+                currentSessionId = { "session-a" },
+                sessionIdChanges = MutableStateFlow("session-b"),
+                storedHighlightRequest = highlightRequest(sessionId = "session-a"),
+            )
+
+        assertNull(repository.highlightRequest)
+        assertNull(repository.highlightRequestChanges.value)
+    }
+
+    @Test
+    fun `a highlight request reads as absent in another session before the clear runs`() {
+        var sessionId: String? = "session-a"
+        val repository =
+            createRepository(
+                currentSessionId = { sessionId },
+                sessionIdChanges = MutableSharedFlow(),
+                storedHighlightRequest = highlightRequest(sessionId = "session-a"),
+            )
+        assertNotNull(repository.highlightRequest)
+
+        sessionId = "session-b"
+
+        assertNull(repository.highlightRequest)
+    }
+
+    @Test
+    fun `signing in does not clear a highlight request held while signed out`() {
+        val sessionIdChanges = MutableStateFlow<String?>(null)
+        val repository = createRepository(sessionIdChanges = sessionIdChanges)
+        repository.highlightRequest = highlightRequest()
+
+        sessionIdChanges.value = "session-a"
+
+        assertNotNull(repository.highlightRequest)
+    }
+
+    @Test
+    fun `signing in binds a highlight request held while signed out to that session`() {
+        var sessionId: String? = null
+        val sessionIdChanges = MutableStateFlow<String?>(null)
+        val repository =
+            createRepository(
+                currentSessionId = { sessionId },
+                sessionIdChanges = sessionIdChanges,
+            )
+        repository.highlightRequest = highlightRequest()
+
+        sessionId = "session-a"
+        sessionIdChanges.value = "session-a"
+
+        assertEquals("session-a", repository.highlightRequest?.sessionId)
+    }
+
+    @Test
+    fun `a highlight request answered by one sign-in is refused by the session that signs in after it`() {
+        var sessionId: String? = null
+        val sessionIdChanges = MutableStateFlow<String?>(null)
+        val repository =
+            createRepository(
+                currentSessionId = { sessionId },
+                sessionIdChanges = sessionIdChanges,
+            )
+        repository.highlightRequest = highlightRequest()
+
+        sessionId = "session-a"
+        sessionIdChanges.value = "session-a"
+        sessionId = "session-b"
+        sessionIdChanges.value = "session-b"
+
+        assertNull(repository.highlightRequest)
+    }
+
+    @Test
+    fun `signing out clears the highlight request`() {
+        var sessionId: String? = "session-a"
+        val sessionIdChanges = MutableSharedFlow<String?>(extraBufferCapacity = 1)
+        val repository =
+            createRepository(
+                currentSessionId = { sessionId },
+                sessionIdChanges = sessionIdChanges,
+            )
+        repository.highlightRequest = highlightRequest()
+
+        sessionId = null
+        sessionIdChanges.tryEmit(null)
+
+        assertNull(repository.highlightRequestChanges.value)
+    }
+
+    @Test
+    fun `the highlight request survives a config change that keeps the same session`() =
+        runTest {
+            val sessionIdChanges = MutableSharedFlow<String?>(replay = 1)
+            sessionIdChanges.emit("session-a")
+            val repository =
+                createRepository(
+                    currentSessionId = { "session-a" },
+                    sessionIdChanges = sessionIdChanges,
+                )
+            repository.highlightRequest = highlightRequest()
+
+            sessionIdChanges.emit("session-a")
+
+            assertNotNull(repository.highlightRequest)
+        }
+
+    @Test
+    fun `a highlight request already in storage survives construction`() {
+        val stored = highlightRequest(sessionId = "session-a")
+
+        val repository =
+            createRepository(
+                currentSessionId = { "session-a" },
+                sessionIdChanges = MutableStateFlow("session-a"),
+                storedHighlightRequest = stored,
+            )
+
+        assertEquals(stored, repository.highlightRequest)
+    }
+
+    @Test
+    fun `a highlight request stored by another session is dropped at construction`() {
+        val storage = mockk<Storage>(relaxed = true)
+
+        val repository =
+            createRepository(
+                storage = storage,
+                currentSessionId = { "session-b" },
+                sessionIdChanges = MutableStateFlow("session-b"),
+                storedHighlightRequest = highlightRequest(sessionId = "session-a"),
+            )
+
+        assertNull(repository.highlightRequest)
+        assertNull(repository.highlightRequestChanges.value)
+        verify { storage.putString(STORAGE_KEY_HIGHLIGHT_REQUEST, null) }
+    }
+
+    @Test
+    fun `a highlight request that no longer decodes is dropped at construction`() {
+        val storage = mockk<Storage>(relaxed = true)
+
+        val repository =
+            createRepository(
+                storage = storage,
+                storedHighlightRequestValue = """{"references":[{"versionId":1,"bookUSFM":""",
+            )
+
+        assertNull(repository.highlightRequest)
+        verify { storage.putString(STORAGE_KEY_HIGHLIGHT_REQUEST, null) }
+    }
+
+    @Test
+    fun `a highlight request whose reference is no longer valid is dropped at construction`() {
+        val storage = mockk<Storage>(relaxed = true)
+
+        val repository =
+            createRepository(
+                storage = storage,
+                storedHighlightRequestValue =
+                    """{"references":[{"versionId":1,"bookUSFM":"GEN","chapter":0,""" +
+                        """"verseStart":null,"verseEnd":null}],"hexColor":"#ff00ff","isRemoval":false}""",
+            )
+
+        assertNull(repository.highlightRequest)
+        verify { storage.putString(STORAGE_KEY_HIGHLIGHT_REQUEST, null) }
+    }
+
+    @Test
+    fun `a highlight request stored by a session is dropped at construction when signed out`() {
+        val repository =
+            createRepository(
+                storedHighlightRequest = highlightRequest(sessionId = "session-a"),
+            )
+
+        assertNull(repository.highlightRequest)
+    }
+
+    @Test
+    fun `a highlight request stored while signed out is bound to the session that restores it`() {
+        val storage = mockk<Storage>(relaxed = true)
+
+        val repository =
+            createRepository(
+                storage = storage,
+                currentSessionId = { "session-a" },
+                sessionIdChanges = MutableStateFlow("session-a"),
+                storedHighlightRequest = highlightRequest(),
+            )
+
+        assertEquals(highlightRequest(sessionId = "session-a"), repository.highlightRequest)
+        verify {
+            storage.putString(
+                STORAGE_KEY_HIGHLIGHT_REQUEST,
+                Json.encodeToString(highlightRequest(sessionId = "session-a")),
+            )
+        }
+    }
+
+    @Test
+    fun `a highlight request stored while signed out is refused by a session after the one that restored it`() {
+        var sessionId: String? = "session-a"
+        val repository =
+            createRepository(
+                currentSessionId = { sessionId },
+                sessionIdChanges = MutableSharedFlow(),
+                storedHighlightRequest = highlightRequest(),
+            )
+        assertNotNull(repository.highlightRequest)
+
+        sessionId = "session-b"
+
+        assertNull(repository.highlightRequest)
+    }
+
+    @Test
+    fun `setting a highlight request stamps it with the current session`() {
+        val repository = createRepository(currentSessionId = { "session-a" })
+
+        repository.highlightRequest = highlightRequest()
+
+        assertEquals("session-a", repository.highlightRequest?.sessionId)
+    }
+
+    @Test
+    fun `setting a highlight request while signed out leaves it unstamped`() {
+        val repository = createRepository()
+
+        repository.highlightRequest = highlightRequest()
+
+        assertNotNull(repository.highlightRequest)
+        assertNull(repository.highlightRequest?.sessionId)
+    }
+
+    private fun highlightRequest(sessionId: String? = null): HighlightRequest =
+        HighlightRequest(
+            references = listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+            hexColor = "#ff00ff",
+            isRemoval = false,
+            sessionId = sessionId,
+        )
+
     private fun createRepository(
         storage: Storage = mockk(relaxed = true),
         bibleVersionRepository: BibleVersionRepository = mockk(relaxed = true),
-    ): BibleReaderRepository = BibleReaderRepository(storage, bibleVersionRepository)
+        scope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
+        currentSessionId: () -> String? = { null },
+        sessionIdChanges: Flow<String?> = MutableStateFlow(null),
+        storedHighlightRequest: HighlightRequest? = null,
+        storedHighlightRequestValue: String? = storedHighlightRequest?.let { Json.encodeToString(it) },
+    ): BibleReaderRepository {
+        every { storage.getStringOrNull(STORAGE_KEY_HIGHLIGHT_REQUEST) } returns storedHighlightRequestValue
+        return BibleReaderRepository(
+            storage = storage,
+            bibleVersionRepository = bibleVersionRepository,
+            scope = scope,
+            currentSessionId = currentSessionId,
+            sessionIdChanges = sessionIdChanges,
+        )
+    }
 
     private fun book(
         id: String,
@@ -291,5 +577,6 @@ class BibleReaderRepositoryTest {
 
     private companion object {
         private const val STORAGE_KEY_BIBLE_READER_REFERENCE = "bible-reader-view--reference"
+        private const val STORAGE_KEY_HIGHLIGHT_REQUEST = "bible-reader-view--highlight-request"
     }
 }

@@ -7,7 +7,6 @@ import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.ui.di.PlatformUIKoinModule
 import org.koin.core.module.dsl.factoryOf
-import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 internal val PlatformReaderKoinModule =
@@ -15,7 +14,7 @@ internal val PlatformReaderKoinModule =
         includes(PlatformUIKoinModule)
 
         // Repositories
-        singleOf(::BibleReaderRepository)
+        single { BibleReaderRepository(storage = get(), bibleVersionRepository = get()) }
         factoryOf(::UserSettingsRepository)
         factoryOf(::CopyManager)
         factoryOf(::ShareManager)
@@ -30,6 +29,7 @@ internal val PlatformReaderKoinModule =
                 userSettingsRepository = get(),
                 bibleChapterRepository = get(),
                 languageRepository = get(),
+                bibleHighlightsRepository = get(),
                 copyManager = get(),
                 shareManager = get(),
             )

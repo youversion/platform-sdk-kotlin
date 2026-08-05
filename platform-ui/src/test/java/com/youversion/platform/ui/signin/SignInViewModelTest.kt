@@ -32,6 +32,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
@@ -43,6 +44,7 @@ class SignInViewModelTest {
     private lateinit var mockUsersApi: UsersApi
     private lateinit var configStateFlow: MutableStateFlow<Config?>
     private lateinit var viewModel: SignInViewModel
+    private var hasUnsyncedHighlights = false
 
     @BeforeTest
     fun setup() {
@@ -61,7 +63,9 @@ class SignInViewModelTest {
         every { mockUsersApi.currentUserName } returns null
         every { mockUsersApi.currentUserEmail } returns null
 
+        hasUnsyncedHighlights = false
         viewModel = SignInViewModel(application)
+        viewModel.hasUnsyncedHighlights = { hasUnsyncedHighlights }
     }
 
     @AfterTest
@@ -82,7 +86,7 @@ class SignInViewModelTest {
                 assertFalse(isSignedIn)
                 assertEquals(null, userName)
                 assertEquals(null, userEmail)
-                assertFalse(showSignOutConfirmation)
+                assertNull(signOutConfirmation)
             }
         }
 
@@ -202,7 +206,10 @@ class SignInViewModelTest {
         runTest {
             viewModel.onAction(SignInViewModel.Action.SignOut(requireConfirmation = true))
 
-            assertTrue(viewModel.state.value.showSignOutConfirmation)
+            assertEquals(
+                SignInViewModel.SignOutConfirmation.STANDARD,
+                viewModel.state.value.signOutConfirmation,
+            )
         }
 
     @Test
@@ -226,20 +233,20 @@ class SignInViewModelTest {
         runTest {
             viewModel.onAction(SignInViewModel.Action.SignOut(requireConfirmation = false))
 
-            assertFalse(viewModel.state.value.showSignOutConfirmation)
+            assertNull(viewModel.state.value.signOutConfirmation)
         }
 
     // ---- CancelSignOut
 
     @Test
-    fun `CancelSignOut sets showSignOutConfirmation to false`() =
+    fun `CancelSignOut clears signOutConfirmation`() =
         runTest {
             viewModel.onAction(SignInViewModel.Action.SignOut(requireConfirmation = true))
-            assertTrue(viewModel.state.value.showSignOutConfirmation)
+            assertNotNull(viewModel.state.value.signOutConfirmation)
 
             viewModel.onAction(SignInViewModel.Action.CancelSignOut)
 
-            assertFalse(viewModel.state.value.showSignOutConfirmation)
+            assertNull(viewModel.state.value.signOutConfirmation)
         }
 
     // ---- UpdateSignInState

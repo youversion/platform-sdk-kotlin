@@ -2,8 +2,11 @@ package com.youversion.platform.ui.signin
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
+import com.youversion.platform.ui.dataexchange.DataExchangeHandler
+import com.youversion.platform.ui.dataexchange.dataExchangeResult
 import kotlin.getValue
 
 abstract class SignInWithYouVersionActivity : ComponentActivity() {
@@ -28,8 +31,25 @@ abstract class SignInWithYouVersionActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        if (intent?.data != null) {
+        val callback = intent?.data ?: return
+        // Sign-in and data exchange arrive on the same youversionauth://callback deep link. A data exchange callback
+        // carries data_exchange_status; persist any granted permission and let observers of the configuration react.
+        // Anything else is a sign-in callback.
+        val dataExchangeStatus =
+            try {
+                callback.getQueryParameter(DATA_EXCHANGE_STATUS_PARAMETER)
+            } catch (error: Exception) {
+                Log.w("YouVersionDataExchange", "Ignoring an unreadable callback deep link", error)
+                return
+            }
+        if (dataExchangeStatus != null) {
+            DataExchangeHandler.persistGrantedPermissions(dataExchangeResult(callback))
+        } else {
             signInViewModel.onAction(SignInViewModel.Action.ProcessAuthCallback(intent))
         }
+    }
+
+    private companion object {
+        const val DATA_EXCHANGE_STATUS_PARAMETER = "data_exchange_status"
     }
 }
