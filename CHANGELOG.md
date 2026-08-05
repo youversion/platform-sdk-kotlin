@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.7.1...1.8.0) (2026-08-05)
+
+
+### Features
+
+* add highlights ([6053b71](https://github.com/youversion/platform-sdk-kotlin/commit/6053b717390d42b07828c1eab122f7c82edc137b))
+
 ## [1.7.1](https://github.com/youversion/platform-sdk-kotlin/compare/1.7.0...1.7.1) (2026-07-29)
 
 
