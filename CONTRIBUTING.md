@@ -61,6 +61,32 @@ The library includes a sample app under `examples/sample-android` which is used 
 SDK. It requires a valid YouVersion API key to be added to `examples/sample-android/src/main/java/com/youversion/platform/MainApplication.kt`. 
 If a key is not provided, the sample app will crash on launch.
 
+#### Device builds on BrowserStack
+
+When an approved collaborator on `platform-sdk-kotlin_automation` opens a PR
+from a branch in this repository, **BrowserStack App Live PR Build** dispatches
+the existing automation build for the PR's exact head commit. New commits do
+not rebuild automatically. To upload the current PR head again, an approved
+collaborator comments exactly `/app-live` on the open PR. On this explicit
+rebuild path, the commenter authorizes the current same-repository PR head; the
+PR author does not also need access to the automation repository. The
+automation repository builds the `sample-android` `.apk`, uploads it to
+BrowserStack App Live, and returns the `bs://...` app id in the SDK workflow
+summary.
+After a successful upload, `github-actions[bot]` creates or updates one PR
+comment with the latest build details and the `/app-live` instruction.
+
+Builds are numbered per PR: the key is the branch's ticket key plus the PR
+number, incrementing for each upload, for example `kotlin-YPE-3011-pr9-1`
+and `kotlin-YPE-3011-pr9-2`. A sanitized 10-character branch label plus the
+PR number is used when the branch has no ticket key, for example
+`feature/rework-reader` becomes `kotlin-rework-rea-pr9-1`. The exact source
+SHA is recorded separately in the workflow summary.
+
+This initial bridge produces an App Live build only. It does not run the Hinqa
+corpus or upload to App Automate. Ported from the same bridge in
+`platform-sdk-swift` (YPE-3011); when one changes, check the other.
+
 ### Project Structure
 
 The project is structured into several modules:
