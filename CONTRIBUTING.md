@@ -67,7 +67,10 @@ When an approved collaborator on `platform-sdk-kotlin_automation` opens a PR
 from a branch in this repository, **BrowserStack App Live PR Build** dispatches
 the existing automation build for the PR's exact head commit. New commits do
 not rebuild automatically. To upload the current PR head again, an approved
-collaborator comments exactly `/app-live` on the open PR. On this explicit
+collaborator comments `/app-live` — and nothing else — on the open PR.
+Surrounding whitespace is ignored; a comment that starts with `/app-live` but
+carries any other text is refused with a notice in the workflow log rather
+than silently ignored. On this explicit
 rebuild path, the commenter authorizes the current same-repository PR head; the
 PR author does not also need access to the automation repository. The
 automation repository builds the `sample-android` `.apk`, uploads it to

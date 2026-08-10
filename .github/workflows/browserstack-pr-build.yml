@@ -52,9 +52,19 @@ jobs:
     name: Build sample-android for App Live
     runs-on: ubuntu-latest
     timeout-minutes: 55
+    # The comment condition is a deliberately loose PREFIX match. Actions
+    # expressions have no trim(), so an exact `== '/app-live'` here silently
+    # ignores the overwhelmingly common `/app-live ` (trailing space or
+    # newline) — the user sees no response at all and no log to explain it.
+    # The exact match therefore moves into the first step, where the body can
+    # be normalized in the shell; anything that starts with /app-live but
+    # isn't the command is refused there with a notice. Prefix, not
+    # `contains`: this workflow's own status comment quotes `/app-live`, and a
+    # contains() trigger would re-fire the job on every one of those.
     if: >-
       github.event_name == 'pull_request_target' ||
-      (github.event.issue.pull_request && github.event.comment.body == '/app-live')
+      (github.event.issue.pull_request &&
+       startsWith(github.event.comment.body, '/app-live'))
 
     steps:
       - name: Read current PR context
@@ -70,9 +80,29 @@ jobs:
           # the Swift bridge this was ported from (platform-sdk-swift#228).
           if [ "$EVENT_NAME" = "pull_request_target" ]; then
             PR_JSON=$(jq '.pull_request' "$GITHUB_EVENT_PATH")
+            # No command to validate on the open event.
+            COMMAND_OK=true
           else
             PR_NUMBER=$(jq -r '.issue.number' "$GITHUB_EVENT_PATH")
             PR_JSON=$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER")
+
+            # The job-level `if` only proved the body STARTS WITH /app-live.
+            # Normalize here (strip CRs, then leading/trailing whitespace)
+            # and require an exact match, so `/app-live ` works and
+            # `/app-live-please` is refused out loud instead of silently.
+            CMD=$(jq -r '.comment.body' "$GITHUB_EVENT_PATH" | tr -d '\r')
+            CMD=$(printf '%s' "$CMD" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')
+            if [ "$CMD" = "/app-live" ]; then
+              COMMAND_OK=true
+            else
+              COMMAND_OK=false
+              # Echo a sanitized single-line excerpt, never the raw body: a
+              # comment is untrusted input, and echoing it verbatim would let
+              # it emit its own ::workflow commands:: into this step's log.
+              SAFE_CMD=$(printf '%s' "$CMD" |
+                sed -n '1p' | cut -c1-60 | sed 's/::/;;/g')
+              echo "::notice::Ignoring unrecognized command '$SAFE_CMD'."
+            fi
           fi
 
           PR_NUMBER=$(jq -r '.number' <<< "$PR_JSON")
@@ -87,10 +117,14 @@ jobs:
             echo "head_sha=$HEAD_SHA"
             echo "same_repo=$([ "$HEAD_REPO" = "$REPOSITORY" ] && echo true || echo false)"
             echo "open=$([ "$PR_STATE" = "open" ] && echo true || echo false)"
+            echo "command_ok=$COMMAND_OK"
           } >> "$GITHUB_OUTPUT"
 
       - name: Verify trigger actor is an approved automation collaborator
-        if: steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.open == 'true'
+        if: >-
+          steps.pr.outputs.same_repo == 'true' &&
+          steps.pr.outputs.open == 'true' &&
+          steps.pr.outputs.command_ok == 'true'
         id: authorization
         env:
           GH_TOKEN: ${{ secrets.AUTOMATION_DISPATCH_TOKEN }}
@@ -296,7 +330,7 @@ jobs:
               ("| Automation run | [Open run](" + $run + ") |"),
               ("| App Live id | `" + $app + "` |"),
               "",
-              "Review-fix commits are not uploaded automatically. To upload the current PR head again, comment exactly:",
+              "Review-fix commits are not uploaded automatically. To upload the current PR head again, post a comment containing only:",
               "",
               "`/app-live`",
               "",
@@ -325,6 +359,7 @@ jobs:
           ALLOWED: ${{ steps.authorization.outputs.allowed }}
           APP_LIVE_ID: ${{ steps.app_live.outputs.id }}
           BUILD_NAME: ${{ steps.build.outputs.name }}
+          COMMAND_OK: ${{ steps.pr.outputs.command_ok }}
           HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
           IS_OPEN: ${{ steps.pr.outputs.open }}
           IS_SAME_REPO: ${{ steps.pr.outputs.same_repo }}
@@ -341,6 +376,10 @@ jobs:
             fi
             if [ "$IS_OPEN" != "true" ]; then
               echo "No build was dispatched because PR #$PR_NUMBER is not open."
+              exit 0
+            fi
+            if [ "$COMMAND_OK" != "true" ]; then
+              echo "No build was dispatched because the comment was not the \`/app-live\` command. See the job log for the command that was read."
               exit 0
             fi
             if [ "$ALLOWED" != "true" ]; then
