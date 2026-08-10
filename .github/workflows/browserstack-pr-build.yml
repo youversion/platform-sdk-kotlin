@@ -100,6 +100,14 @@ jobs:
             # The second form is what binds an approval to a revision — see
             # the "Bind the approval to a revision" step below for which
             # form is required when.
+            #
+            # The sha must be all 40 characters. An abbreviation could only be
+            # matched as a prefix, and a 7-character prefix is 28 bits:
+            # grinding a second commit that shares it is ordinary vanity-hash
+            # work, and the author can pre-compute it against their own
+            # commit's prefix before the approval is ever posted. Accepting
+            # abbreviations would hand back the exact race this binding
+            # removes, so they are refused, not resolved.
             CMD=$(jq -r '.comment.body' "$GITHUB_EVENT_PATH" | tr -d '\r')
             CMD=$(printf '%s' "$CMD" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')
             # Echo a sanitized single-line excerpt, never the raw body: a
@@ -120,11 +128,14 @@ jobs:
               "/app-live "*)
                 ARG=$(printf '%s' "${CMD#/app-live }" |
                   sed -E 's/^[[:space:]]+//')
-                if printf '%s' "$ARG" | grep -qE '^[0-9a-fA-F]{7,40}$'; then
+                if printf '%s' "$ARG" | grep -qE '^[0-9a-fA-F]{40}$'; then
                   REQUESTED_SHA=$(printf '%s' "$ARG" | tr '[:upper:]' '[:lower:]')
+                elif printf '%s' "$ARG" | grep -qE '^[0-9a-fA-F]{1,39}$'; then
+                  COMMAND_OK=false
+                  echo "::notice::'$SAFE_CMD' names an abbreviated commit. Abbreviations are matched as prefixes and a short prefix can be deliberately collided, so the full 40-character sha is required."
                 else
                   COMMAND_OK=false
-                  echo "::notice::'$SAFE_CMD' is not a recognized command. Use \`/app-live\` or \`/app-live <commit sha>\`."
+                  echo "::notice::'$SAFE_CMD' is not a recognized command. Use \`/app-live\` or \`/app-live <full 40-character commit sha>\`."
                 fi
                 ;;
               *)
@@ -171,7 +182,7 @@ jobs:
       #   - pull_request_target: bound already. The event payload carries the
       #     exact revision that fired it; a later push cannot change it.
       #   - /app-live <sha>: bound by the commenter naming the revision. The
-      #     named sha must still be the head, so a push after the comment
+      #     named sha must equal the head exactly, so a push after the comment
       #     refuses the build instead of silently retargeting it.
       #   - bare /app-live: bound only when the PR author is themselves an
       #     approved automation collaborator, because then winning the race
@@ -196,25 +207,23 @@ jobs:
           REQUESTED_SHA: ${{ steps.pr.outputs.requested_sha }}
         run: |
           set -euo pipefail
-          SHA7=$(printf '%s' "$HEAD_SHA" | cut -c1-7)
-
           if [ "$EVENT_NAME" = "pull_request_target" ]; then
             echo "bound=true" >> "$GITHUB_OUTPUT"
             echo "Bound to $HEAD_SHA by the event payload."
             exit 0
           fi
 
+          # String equality on the full 40 characters, never a prefix test: a
+          # prefix test is what a ground colliding commit defeats. The parser
+          # above already refused anything shorter.
           if [ -n "$REQUESTED_SHA" ]; then
-            case "$HEAD_SHA" in
-              "$REQUESTED_SHA"*)
-                echo "bound=true" >> "$GITHUB_OUTPUT"
-                echo "Bound to $HEAD_SHA by explicit approval of $REQUESTED_SHA."
-                ;;
-              *)
-                echo "bound=false" >> "$GITHUB_OUTPUT"
-                echo "::notice::Approval named '$REQUESTED_SHA' but PR head is now $SHA7 — build refused. Re-issue \`/app-live $SHA7\` to approve the current head."
-                ;;
-            esac
+            if [ "$REQUESTED_SHA" = "$HEAD_SHA" ]; then
+              echo "bound=true" >> "$GITHUB_OUTPUT"
+              echo "Bound to $HEAD_SHA by explicit approval of that revision."
+            else
+              echo "bound=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::Approval named '$REQUESTED_SHA' but PR head is now $HEAD_SHA — build refused. Re-issue \`/app-live $HEAD_SHA\` to approve the current head."
+            fi
             exit 0
           fi
 
@@ -231,7 +240,7 @@ jobs:
               ;;
             *)
               echo "bound=false" >> "$GITHUB_OUTPUT"
-              echo "::notice::PR author '$PR_AUTHOR' is not an approved collaborator on $AUTOMATION_REPO, so a bare \`/app-live\` cannot be bound to a revision. Comment \`/app-live $SHA7\` to approve this exact head."
+              echo "::notice::PR author '$PR_AUTHOR' is not an approved collaborator on $AUTOMATION_REPO, so a bare \`/app-live\` cannot be bound to a revision. Comment \`/app-live $HEAD_SHA\` to approve this exact head."
               ;;
           esac
 
@@ -453,7 +462,7 @@ jobs:
               "",
               "`/app-live <sha>`",
               "",
-              "Replace `<sha>` with the head commit you are approving (at least 7 characters). Naming it binds the approval to that exact revision: if the head moves before the build starts, the build is refused rather than silently retargeted, and the log names the sha to re-issue. A bare `/app-live` is accepted when the PR author is themselves an approved collaborator on `platform-sdk-kotlin_automation`.",
+              "Replace `<sha>` with the full 40-character sha of the head commit you are approving — abbreviations are refused, because a short prefix can be deliberately collided. Naming it binds the approval to that exact revision: if the head moves before the build starts, the build is refused rather than silently retargeted, and the log names the sha to re-issue. A bare `/app-live` is accepted when the PR author is themselves an approved collaborator on `platform-sdk-kotlin_automation`.",
               "",
               "Only approved collaborators on `platform-sdk-kotlin_automation` can trigger a build."
             ] | join("\n")')

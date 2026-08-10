@@ -67,8 +67,9 @@ When an approved collaborator on `platform-sdk-kotlin_automation` opens a PR
 from a branch in this repository, **BrowserStack App Live PR Build** dispatches
 the existing automation build for the PR's exact head commit. New commits do
 not rebuild automatically. To upload the current PR head again, an approved
-collaborator comments `/app-live <sha>` — naming the head commit being
-approved, and nothing else — on the open PR. On this explicit rebuild path the
+collaborator comments `/app-live <sha>` — naming the full 40-character sha of
+the head commit being approved, and nothing else — on the open PR. On this
+explicit rebuild path the
 commenter authorizes that one same-repository revision; the PR author does not
 also need access to the automation repository. The automation repository builds
 the `sample-android` `.apk`, uploads it to BrowserStack App Live, and returns
@@ -90,6 +91,12 @@ conveniences on top of that rule:
 - Surrounding whitespace is ignored, and a comment that starts with
   `/app-live` but is not one of these two forms is refused with a notice in the
   workflow log rather than silently ignored.
+
+The sha has to be all 40 characters. An abbreviation could only be compared as
+a prefix, and a 7-character prefix is 28 bits — grinding a second commit that
+shares it is ordinary vanity-hash work, and the author can pre-compute it
+against their own commit's prefix before the approval is even posted. So
+abbreviations are refused rather than resolved.
 
 Builds are numbered per PR: the key is the branch's ticket key plus the PR
 number, incrementing for each upload, for example `kotlin-YPE-3011-pr9-1`
