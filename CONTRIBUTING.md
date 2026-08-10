@@ -67,17 +67,29 @@ When an approved collaborator on `platform-sdk-kotlin_automation` opens a PR
 from a branch in this repository, **BrowserStack App Live PR Build** dispatches
 the existing automation build for the PR's exact head commit. New commits do
 not rebuild automatically. To upload the current PR head again, an approved
-collaborator comments `/app-live` — and nothing else — on the open PR.
-Surrounding whitespace is ignored; a comment that starts with `/app-live` but
-carries any other text is refused with a notice in the workflow log rather
-than silently ignored. On this explicit
-rebuild path, the commenter authorizes the current same-repository PR head; the
-PR author does not also need access to the automation repository. The
-automation repository builds the `sample-android` `.apk`, uploads it to
-BrowserStack App Live, and returns the `bs://...` app id in the SDK workflow
-summary.
+collaborator comments `/app-live <sha>` — naming the head commit being
+approved, and nothing else — on the open PR. On this explicit rebuild path the
+commenter authorizes that one same-repository revision; the PR author does not
+also need access to the automation repository. The automation repository builds
+the `sample-android` `.apk`, uploads it to BrowserStack App Live, and returns
+the `bs://...` app id in the SDK workflow summary.
 After a successful upload, `github-actions[bot]` creates or updates one PR
 comment with the latest build details and the `/app-live` instruction.
+
+Naming the commit is what binds the approval to a revision. Because a comment
+event carries no head commit, the workflow has to read the head when it runs,
+which is not when the comment was posted — so without the sha, a push landing
+in between would inherit the approval and send an unreviewed revision into a
+build that holds the automation repository's credentials. With the sha, a moved
+head refuses the build and the workflow log names the sha to re-issue. Two
+conveniences on top of that rule:
+
+- A bare `/app-live` is accepted when the PR author is themselves an approved
+  collaborator on `platform-sdk-kotlin_automation`, since winning that race
+  would grant them nothing they cannot already do directly.
+- Surrounding whitespace is ignored, and a comment that starts with
+  `/app-live` but is not one of these two forms is refused with a notice in the
+  workflow log rather than silently ignored.
 
 Builds are numbered per PR: the key is the branch's ticket key plus the PR
 number, incrementing for each upload, for example `kotlin-YPE-3011-pr9-1`

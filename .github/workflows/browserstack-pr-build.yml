@@ -5,9 +5,9 @@ name: BrowserStack App Live PR Build
 # automation-repository collaborator opens a same-repository PR, dispatch the
 # existing SDK build for the PR's exact head SHA and upload the resulting
 # .apk to BrowserStack App Live. Later builds are requested deliberately by
-# an approved collaborator commenting /app-live on the open PR. For that
-# issue_comment path, the approved commenter explicitly authorizes the
-# current same-repository PR head; the PR author does not also need
+# an approved collaborator commenting /app-live <sha> on the open PR. For that
+# issue_comment path, the approved commenter authorizes one exact
+# same-repository revision by naming it; the PR author does not also need
 # automation-repository access. Test automation and App Automate execution
 # are deliberately out of scope.
 #
@@ -78,6 +78,7 @@ jobs:
           # GITHUB_EVENT_PATH is the runner-provided default env var — the
           # ${{ github.event_path }} expression resolved empty at runtime in
           # the Swift bridge this was ported from (platform-sdk-swift#228).
+          REQUESTED_SHA=""
           if [ "$EVENT_NAME" = "pull_request_target" ]; then
             PR_JSON=$(jq '.pull_request' "$GITHUB_EVENT_PATH")
             # No command to validate on the open event.
@@ -88,24 +89,53 @@ jobs:
 
             # The job-level `if` only proved the body STARTS WITH /app-live.
             # Normalize here (strip CRs, then leading/trailing whitespace)
-            # and require an exact match, so `/app-live ` works and
+            # and require an exact command, so `/app-live ` works and
             # `/app-live-please` is refused out loud instead of silently.
+            #
+            # Two accepted forms:
+            #   /app-live          approve whatever the PR head is when this
+            #                      workflow reads it
+            #   /app-live <sha>    approve one exact revision; the build is
+            #                      refused if the head has moved since
+            # The second form is what binds an approval to a revision — see
+            # the "Bind the approval to a revision" step below for which
+            # form is required when.
             CMD=$(jq -r '.comment.body' "$GITHUB_EVENT_PATH" | tr -d '\r')
             CMD=$(printf '%s' "$CMD" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')
-            if [ "$CMD" = "/app-live" ]; then
-              COMMAND_OK=true
-            else
-              COMMAND_OK=false
-              # Echo a sanitized single-line excerpt, never the raw body: a
-              # comment is untrusted input, and echoing it verbatim would let
-              # it emit its own ::workflow commands:: into this step's log.
-              SAFE_CMD=$(printf '%s' "$CMD" |
-                sed -n '1p' | cut -c1-60 | sed 's/::/;;/g')
-              echo "::notice::Ignoring unrecognized command '$SAFE_CMD'."
+            # Echo a sanitized single-line excerpt, never the raw body: a
+            # comment is untrusted input, and echoing it verbatim would let
+            # it emit its own ::workflow commands:: into this step's log.
+            SAFE_CMD=$(printf '%s' "$CMD" |
+              sed -n '1p' | cut -c1-60 | sed 's/::/;;/g')
+            # A command is one line. wc -l counts newlines, and printf '%s'
+            # adds none, so >0 means the body carries trailing prose.
+            if [ "$(printf '%s' "$CMD" | wc -l)" -gt 0 ]; then
+              CMD="$SAFE_CMD …"
             fi
+
+            COMMAND_OK=true
+            case "$CMD" in
+              "/app-live")
+                ;;
+              "/app-live "*)
+                ARG=$(printf '%s' "${CMD#/app-live }" |
+                  sed -E 's/^[[:space:]]+//')
+                if printf '%s' "$ARG" | grep -qE '^[0-9a-fA-F]{7,40}$'; then
+                  REQUESTED_SHA=$(printf '%s' "$ARG" | tr '[:upper:]' '[:lower:]')
+                else
+                  COMMAND_OK=false
+                  echo "::notice::'$SAFE_CMD' is not a recognized command. Use \`/app-live\` or \`/app-live <commit sha>\`."
+                fi
+                ;;
+              *)
+                COMMAND_OK=false
+                echo "::notice::Ignoring unrecognized command '$SAFE_CMD'."
+                ;;
+            esac
           fi
 
           PR_NUMBER=$(jq -r '.number' <<< "$PR_JSON")
+          PR_AUTHOR=$(jq -r '.user.login' <<< "$PR_JSON")
           HEAD_REF=$(jq -r '.head.ref' <<< "$PR_JSON")
           HEAD_REPO=$(jq -r '.head.repo.full_name' <<< "$PR_JSON")
           HEAD_SHA=$(jq -r '.head.sha' <<< "$PR_JSON")
@@ -113,18 +143,107 @@ jobs:
 
           {
             echo "number=$PR_NUMBER"
+            echo "author=$PR_AUTHOR"
             echo "head_ref=$HEAD_REF"
             echo "head_sha=$HEAD_SHA"
             echo "same_repo=$([ "$HEAD_REPO" = "$REPOSITORY" ] && echo true || echo false)"
             echo "open=$([ "$PR_STATE" = "open" ] && echo true || echo false)"
             echo "command_ok=$COMMAND_OK"
+            echo "requested_sha=$REQUESTED_SHA"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Verify trigger actor is an approved automation collaborator
+      # An /app-live comment authorizes the ACTOR. It does not, by itself,
+      # authorize a REVISION: issue_comment payloads carry no head SHA, so the
+      # step above has to read the head from the pulls API when this workflow
+      # runs — which is not when the comment was posted. The PR author can push
+      # in between and inherit the approval for a commit the approver never
+      # saw. The window is not milliseconds: the concurrency group below is
+      # per-PR with cancel-in-progress false, so a comment run can queue behind
+      # an in-flight build of the same PR for that build's full duration.
+      #
+      # That matters because this path deliberately does NOT require the PR
+      # author to hold automation-repository access — the dispatch runs the PR's
+      # SDK source through the automation repository's Gradle build, so winning
+      # the race converts "write on this repo" into "code execution with the
+      # automation repository's secrets".
+      #
+      # The binding is proportional to what the race can actually gain:
+      #   - pull_request_target: bound already. The event payload carries the
+      #     exact revision that fired it; a later push cannot change it.
+      #   - /app-live <sha>: bound by the commenter naming the revision. The
+      #     named sha must still be the head, so a push after the comment
+      #     refuses the build instead of silently retargeting it.
+      #   - bare /app-live: bound only when the PR author is themselves an
+      #     approved automation collaborator, because then winning the race
+      #     grants them nothing they could not already do directly.
+      # Otherwise a bare /app-live is refused, with the sha to re-issue.
+      #
+      # Deliberately NOT time-based: comparing the head commit's date against
+      # the comment's created_at looks equivalent and is not, because
+      # GIT_COMMITTER_DATE is set by whoever writes the commit. The exact
+      # attacker this guards against can backdate their push.
+      - name: Bind the approval to a revision
         if: >-
           steps.pr.outputs.same_repo == 'true' &&
           steps.pr.outputs.open == 'true' &&
           steps.pr.outputs.command_ok == 'true'
+        id: binding
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GH_TOKEN: ${{ secrets.AUTOMATION_DISPATCH_TOKEN }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          PR_AUTHOR: ${{ steps.pr.outputs.author }}
+          REQUESTED_SHA: ${{ steps.pr.outputs.requested_sha }}
+        run: |
+          set -euo pipefail
+          SHA7=$(printf '%s' "$HEAD_SHA" | cut -c1-7)
+
+          if [ "$EVENT_NAME" = "pull_request_target" ]; then
+            echo "bound=true" >> "$GITHUB_OUTPUT"
+            echo "Bound to $HEAD_SHA by the event payload."
+            exit 0
+          fi
+
+          if [ -n "$REQUESTED_SHA" ]; then
+            case "$HEAD_SHA" in
+              "$REQUESTED_SHA"*)
+                echo "bound=true" >> "$GITHUB_OUTPUT"
+                echo "Bound to $HEAD_SHA by explicit approval of $REQUESTED_SHA."
+                ;;
+              *)
+                echo "bound=false" >> "$GITHUB_OUTPUT"
+                echo "::notice::Approval named '$REQUESTED_SHA' but PR head is now $SHA7 — build refused. Re-issue \`/app-live $SHA7\` to approve the current head."
+                ;;
+            esac
+            exit 0
+          fi
+
+          # Bare /app-live. Fail closed on a lookup failure, same contract as
+          # the actor check below: "could not ask" is treated as "no".
+          AUTHOR_PERMISSION=$(gh api \
+            "repos/$AUTOMATION_REPO/collaborators/$PR_AUTHOR/permission" \
+            --jq '.permission') || AUTHOR_PERMISSION=""
+
+          case "$AUTHOR_PERMISSION" in
+            admin|maintain|write)
+              echo "bound=true" >> "$GITHUB_OUTPUT"
+              echo "PR author '$PR_AUTHOR' holds '$AUTHOR_PERMISSION' on $AUTOMATION_REPO, so a race on the head grants no new access."
+              ;;
+            *)
+              echo "bound=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::PR author '$PR_AUTHOR' is not an approved collaborator on $AUTOMATION_REPO, so a bare \`/app-live\` cannot be bound to a revision. Comment \`/app-live $SHA7\` to approve this exact head."
+              ;;
+          esac
+
+      # Gating this on `bound` keeps steps.authorization.outputs.allowed the
+      # single condition every later step tests: allowed means an approved
+      # actor authorized THIS revision.
+      - name: Verify trigger actor is an approved automation collaborator
+        if: >-
+          steps.pr.outputs.same_repo == 'true' &&
+          steps.pr.outputs.open == 'true' &&
+          steps.pr.outputs.command_ok == 'true' &&
+          steps.binding.outputs.bound == 'true'
         id: authorization
         env:
           GH_TOKEN: ${{ secrets.AUTOMATION_DISPATCH_TOKEN }}
@@ -332,7 +451,9 @@ jobs:
               "",
               "Review-fix commits are not uploaded automatically. To upload the current PR head again, post a comment containing only:",
               "",
-              "`/app-live`",
+              "`/app-live <sha>`",
+              "",
+              "Replace `<sha>` with the head commit you are approving (at least 7 characters). Naming it binds the approval to that exact revision: if the head moves before the build starts, the build is refused rather than silently retargeted, and the log names the sha to re-issue. A bare `/app-live` is accepted when the PR author is themselves an approved collaborator on `platform-sdk-kotlin_automation`.",
               "",
               "Only approved collaborators on `platform-sdk-kotlin_automation` can trigger a build."
             ] | join("\n")')
@@ -358,6 +479,7 @@ jobs:
         env:
           ALLOWED: ${{ steps.authorization.outputs.allowed }}
           APP_LIVE_ID: ${{ steps.app_live.outputs.id }}
+          BOUND: ${{ steps.binding.outputs.bound }}
           BUILD_NAME: ${{ steps.build.outputs.name }}
           COMMAND_OK: ${{ steps.pr.outputs.command_ok }}
           HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
@@ -379,7 +501,11 @@ jobs:
               exit 0
             fi
             if [ "$COMMAND_OK" != "true" ]; then
-              echo "No build was dispatched because the comment was not the \`/app-live\` command. See the job log for the command that was read."
+              echo "No build was dispatched because the comment was not an \`/app-live\` command. See the job log for the command that was read."
+              exit 0
+            fi
+            if [ "$BOUND" != "true" ]; then
+              echo "No build was dispatched because the approval could not be bound to PR head \`$HEAD_SHA\`. See the job log for the sha to re-issue."
               exit 0
             fi
             if [ "$ALLOWED" != "true" ]; then
