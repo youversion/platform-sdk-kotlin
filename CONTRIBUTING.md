@@ -61,6 +61,54 @@ The library includes a sample app under `examples/sample-android` which is used 
 SDK. It requires a valid YouVersion API key to be added to `examples/sample-android/src/main/java/com/youversion/platform/MainApplication.kt`. 
 If a key is not provided, the sample app will crash on launch.
 
+#### Device builds on BrowserStack
+
+When an approved collaborator on `platform-sdk-kotlin_automation` opens a PR
+from a branch in this repository, **BrowserStack App Live PR Build** dispatches
+the existing automation build for the PR's exact head commit. New commits do
+not rebuild automatically. To upload the current PR head again, an approved
+collaborator comments `/app-live <sha>` — naming the full 40-character sha of
+the head commit being approved, and nothing else — on the open PR. On this
+explicit rebuild path the
+commenter authorizes that one same-repository revision; the PR author does not
+also need access to the automation repository. The automation repository builds
+the `sample-android` `.apk`, uploads it to BrowserStack App Live, and returns
+the `bs://...` app id in the SDK workflow summary.
+After a successful upload, `github-actions[bot]` creates or updates one PR
+comment with the latest build details and the `/app-live` instruction.
+
+Naming the commit is what binds the approval to a revision. Because a comment
+event carries no head commit, the workflow has to read the head when it runs,
+which is not when the comment was posted — so without the sha, a push landing
+in between would inherit the approval and send an unreviewed revision into a
+build that holds the automation repository's credentials. With the sha, a moved
+head refuses the build and the workflow log names the sha to re-issue. Two
+conveniences on top of that rule:
+
+- A bare `/app-live` is accepted when the PR author is themselves an approved
+  collaborator on `platform-sdk-kotlin_automation`, since winning that race
+  would grant them nothing they cannot already do directly.
+- Surrounding whitespace is ignored, and a comment that starts with
+  `/app-live` but is not one of these two forms is refused with a notice in the
+  workflow log rather than silently ignored.
+
+The sha has to be all 40 characters. An abbreviation could only be compared as
+a prefix, and a 7-character prefix is 28 bits — grinding a second commit that
+shares it is ordinary vanity-hash work, and the author can pre-compute it
+against their own commit's prefix before the approval is even posted. So
+abbreviations are refused rather than resolved.
+
+Builds are numbered per PR: the key is the branch's ticket key plus the PR
+number, incrementing for each upload, for example `kotlin-YPE-3011-pr9-1`
+and `kotlin-YPE-3011-pr9-2`. A sanitized 10-character branch label plus the
+PR number is used when the branch has no ticket key, for example
+`feature/rework-reader` becomes `kotlin-rework-rea-pr9-1`. The exact source
+SHA is recorded separately in the workflow summary.
+
+This initial bridge produces an App Live build only. It does not run the Hinqa
+corpus or upload to App Automate. Ported from the same bridge in
+`platform-sdk-swift` (YPE-3011); when one changes, check the other.
+
 ### Project Structure
 
 The project is structured into several modules:
