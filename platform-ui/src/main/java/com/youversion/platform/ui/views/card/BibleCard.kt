@@ -1,8 +1,10 @@
 package com.youversion.platform.ui.views.card
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,9 +32,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -50,7 +54,6 @@ import com.youversion.platform.ui.di.PlatformUIKoinModule
 import com.youversion.platform.ui.utilities.ObserveAsEvents
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextOptions
-import com.youversion.platform.ui.views.components.BibleAppLogo
 import com.youversion.platform.ui.views.versions.BibleVersionPickingButton
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinIsolatedContext
@@ -157,7 +160,13 @@ fun BibleCard(
                     version = state.bibleVersion,
                     onClick = { viewModel.onAction(BibleCardViewModel.Action.OnViewCopyright) },
                 )
-                BibleAppLogo()
+                Image(
+                    imageVector =
+                        ImageVector.vectorResource(
+                            if (isSystemInDarkTheme()) R.drawable.yv_bibleapp_dm else R.drawable.yv_bibleapp_lm,
+                        ),
+                    contentDescription = "YouVersion Logo",
+                )
             }
         }
 
