@@ -44,7 +44,6 @@ class HardcodedUiStringsChecker(
         setOf(
             "ReaderFontSettings.kt",
             "BibleReaderFontSettingsSheet.kt",
-            "BibleAppLogo.kt",
             "SignInWithYouVersionButton.kt",
         )
 
@@ -183,6 +182,10 @@ class HardcodedUiStringsChecker(
         }
 
         if (trimmed.contains("FontDefinition(")) {
+            return true
+        }
+
+        if (trimmed.contains("contentDescription") && trimmed.contains("\"YouVersion Logo\"")) {
             return true
         }
 

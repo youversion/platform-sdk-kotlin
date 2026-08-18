@@ -23,7 +23,7 @@ Add or change keys in **platform-localization**, then sync into this repo.
 |----------|------------------|
 | Sample app | `examples/sample-android/**` (entire tree) |
 | Font display names | `ReaderFontSettings.kt` — Untitled Serif, Serif, System Default, etc. |
-| Brand / proper names | YouVersion, YouVersion Logo, Bible Logo (`BibleAppLogo.kt`, `SignInWithYouVersionButton.kt`) |
+| Brand / proper names | YouVersion, YouVersion Logo, Bible Logo (`BibleCard.kt`, `VerseOfTheDay.kt`, `SignInWithYouVersionButton.kt`) |
 | Formal name fallbacks | `"English"` default for `activeLanguageName` in `BibleVersionsViewModel.kt` |
 | `@Preview` / `@CombinedPreview` | Compose preview scaffolding only |
 | `testTag` strings | `Modifier.testTag("...")` — UI test selectors |
