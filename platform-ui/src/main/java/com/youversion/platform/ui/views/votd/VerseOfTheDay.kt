@@ -1,5 +1,6 @@
 package com.youversion.platform.ui.views.votd
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,7 +39,6 @@ import com.youversion.platform.ui.di.PlatformUIKoinModule
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.PreviewBackground
-import com.youversion.platform.ui.views.components.BibleAppLogo
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinIsolatedContext
 import org.koin.compose.module.rememberKoinModules
@@ -196,7 +196,13 @@ private fun VerseOfTheDayContent(
                     text = stringResource(R.string.full_chapter),
                 )
             }
-            BibleAppLogo()
+            Image(
+                imageVector =
+                    ImageVector.vectorResource(
+                        if (dark) R.drawable.yv_bibleapp_dm else R.drawable.yv_bibleapp_lm,
+                    ),
+                contentDescription = "YouVersion Logo",
+            )
         }
     }
 }

@@ -179,6 +179,16 @@ class HardcodedUiStringsCheckerTest {
         assertEquals("Hardcoded production", violations.first().stringLiteral)
     }
 
+    @Test
+    fun youVersionLogoContentDescription_doesNotFlag() {
+        val violations =
+            violationsFor(
+                """contentDescription = "YouVersion Logo",""",
+            )
+
+        assertTrue(violations.isEmpty())
+    }
+
     private fun violationsFor(line: String): List<HardcodedStringViolation> {
         val root =
             createTempProject(

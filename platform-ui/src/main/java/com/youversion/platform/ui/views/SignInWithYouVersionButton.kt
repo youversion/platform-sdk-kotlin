@@ -141,7 +141,7 @@ fun SignInWithYouVersionButton(
         ) {
             Box(modifier = Modifier.size(26.dp)) {
                 Image(
-                    ImageVector.vectorResource(R.drawable.yv_bibleapp),
+                    ImageVector.vectorResource(R.drawable.yv_bibleapp_icon),
                     contentDescription = "Bible Logo",
                     modifier =
                         Modifier
