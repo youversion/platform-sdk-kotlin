@@ -1,3 +1,10 @@
+## [1.8.3](https://github.com/youversion/platform-sdk-kotlin/compare/1.8.2...1.8.3) (2026-08-19)
+
+
+### Bug Fixes
+
+* **ui:** update the bible app logo ([83af387](https://github.com/youversion/platform-sdk-kotlin/commit/83af387954bac9b8fb1f09014c30b18d16931ee4))
+
 ## [1.8.2](https://github.com/youversion/platform-sdk-kotlin/compare/1.8.1...1.8.2) (2026-08-19)
 
 
