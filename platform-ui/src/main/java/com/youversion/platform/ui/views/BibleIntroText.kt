@@ -78,6 +78,9 @@ fun BibleIntroText(
 
     LaunchedEffect(versionId, bookUSFM, passageId, textOptions) {
         loadingPhase = BibleTextLoadingPhase.LOADING
+        // Drop the previous passage's blocks so the reported title flag never outlives the content it describes,
+        // including when this load never produces blocks.
+        blocks = emptyList()
         try {
             val version = versionRepository.version(versionId)
             isVersionRightToLeft = version.isRightToLeft

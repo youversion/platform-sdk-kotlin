@@ -41,6 +41,7 @@ import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -91,6 +92,25 @@ class BibleIntroTextTests {
             footnotes = footnotes,
         )
     }
+
+    private fun headerBlock(text: String): BibleTextBlock =
+        BibleTextBlock(
+            text =
+                buildAnnotatedString {
+                    append(text)
+                    addStringAnnotation(
+                        tag = BibleTextCategoryAttribute.NAME,
+                        annotation = BibleTextCategory.HEADER.name,
+                        start = 0,
+                        end = text.length,
+                    )
+                },
+            chapter = 1,
+            headIndent = 0.sp,
+            marginTop = 8.dp,
+            alignment = TextAlign.Start,
+            footnotes = emptyList(),
+        )
 
     @Before
     fun setup() {
@@ -607,6 +627,65 @@ class BibleIntroTextTests {
         val afterTextOptionsChange = callCount.get()
         assertTrue(afterTextOptionsChange > afterPassageChange)
         composeTestRule.onNodeWithText("Content $afterTextOptionsChange").assertIsDisplayed()
+    }
+
+    // endregion
+
+    // region Own Title Reporting
+
+    @Test
+    fun `reports no own title while the next passage loads`() {
+        val reported = mutableListOf<Boolean>()
+        val passageIdState = mutableStateOf("GEN.INTRO")
+        val secondLoad = CompletableDeferred<List<BibleTextBlock>?>()
+        val callCount = AtomicInteger(0)
+
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
+        coEvery {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } coAnswers {
+            if (callCount.incrementAndGet() == 1) listOf(headerBlock("Genesis")) else secondLoad.await()
+        }
+
+        composeTestRule.setContent {
+            val passageId by remember { passageIdState }
+            BibleIntroText(1, "GEN", passageId, onHasOwnTitleChange = { reported.add(it) })
+        }
+        composeTestRule.waitForIdle()
+        assertTrue(reported.last())
+
+        passageIdState.value = "EXO.INTRO"
+        composeTestRule.waitForIdle()
+
+        assertFalse(reported.last())
+    }
+
+    @Test
+    fun `reports no own title when a reload fails after a title-bearing intro`() {
+        val reported = mutableListOf<Boolean>()
+        val passageIdState = mutableStateOf("GEN.INTRO")
+        val callCount = AtomicInteger(0)
+
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
+        coEvery {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } answers {
+            if (callCount.incrementAndGet() == 1) listOf(headerBlock("Genesis")) else null
+        }
+
+        composeTestRule.setContent {
+            val passageId by remember { passageIdState }
+            BibleIntroText(1, "GEN", passageId, onHasOwnTitleChange = { reported.add(it) })
+        }
+        composeTestRule.waitForIdle()
+        assertTrue(reported.last())
+
+        passageIdState.value = "EXO.INTRO"
+        composeTestRule.waitForIdle()
+
+        assertFalse(reported.last())
     }
 
     // endregion
