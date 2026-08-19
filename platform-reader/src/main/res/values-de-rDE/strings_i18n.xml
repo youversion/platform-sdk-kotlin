@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Schließen</string>
+    <string name="yv_banner_offline_icon">Offline-Symbol</string>
+    <string name="yv_banner_offline_message">Du hast deine Internetverbindung verloren. Stelle die Verbindung wieder her und lade eine Bibelversion herunter, um offline fortzufahren.</string>
+    <string name="yv_banner_version_unavailable_icon">Symbol für nicht verfügbare Version</string>
+    <string name="yv_banner_version_unavailable_message">Deine zuvor ausgewählte Bibelversion ist nicht verfügbar. Eine andere ähnliche Bibelversion wurde für dich ausgewählt.</string>
+    <string name="yv_book_chapter_picker_title">Bücher</string>
+    <string name="yv_cancel">Abbrechen</string>
+    <string name="yv_data_exchange_continue">Weiter</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion wird dich um Zugriff bitten, bevor Markierungen gespeichert werden können.</string>
+    <string name="yv_data_exchange_highlights_question">Dieser App erlauben, Hervorhebungen mit YouVersion zu speichern?</string>
+    <string name="yv_font_selected_check">Häkchen für ausgewählte Schriftart</string>
+    <string name="yv_font_settings_label">Schriftart</string>
+    <string name="yv_footnote_header_label">Fußnote</string>
+    <string name="yv_highlight_color_cyan">Cyan</string>
+    <string name="yv_highlight_color_green">Grün</string>
+    <string name="yv_highlight_color_orange">Orange</string>
+    <string name="yv_highlight_color_pink">Pink</string>
+    <string name="yv_highlight_color_yellow">Gelb</string>
+    <string name="yv_intro_chapter_label">Einführung</string>
+    <string name="yv_language_content_desc">Sprache</string>
+    <string name="yv_line_spacing_label">Zeilenabstand</string>
+    <string name="yv_next_chapter_content_desc">Nächstes Kapitel</string>
+    <string name="yv_previous_chapter_content_desc">Vorheriges Kapitel</string>
+    <string name="yv_reader_menu_font_settings">Schriftart &amp; Einstellungen</string>
+    <string name="yv_reader_menu_sign_in">Anmelden</string>
+    <string name="yv_reader_menu_sign_out">Abmelden</string>
+    <string name="yv_theme_selected">Ausgewählt</string>
+    <string name="yv_verse_action_add_highlight">%1$s hervorheben</string>
+    <string name="yv_verse_action_copy">Kopieren</string>
+    <string name="yv_verse_action_remove_highlight">%1$s -Markierung entfernen</string>
+    <string name="yv_verse_action_share">Teilen</string>
+</resources>

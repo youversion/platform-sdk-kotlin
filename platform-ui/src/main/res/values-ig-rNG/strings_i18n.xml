@@ -29,10 +29,17 @@
     <string name="yv_sign_in_button_full">Mee mbanye site na</string>
     <string name="yv_sign_in_error_message">Anyị enweghị ike ime gị ka ịbanye n\'oge a. Biko nwaa ọzọ.</string>
     <string name="yv_sign_in_error_title">Nbanye Agaghị Nke Ọma</string>
+    <string name="yv_sign_in_prompt_introducing">NÀ-ÈWÉBÀTÁ</string>
+    <string name="yv_sign_in_prompt_no_button">Mba, Daalụ</string>
+    <string name="yv_sign_in_prompt_paragraph">**%1$s** chọrọ ijikọ na akaụntụ **Ngwá Baịbụl** YouVersion gị. Nke a gà-ènyé ha ohere ịhụ ma sòró ihe omume Ngwá Baịbụl gị ná-èmekọrịtá ihe. Ị̀ gà-àchọ́ ịga n\'ihu?</string>
+    <string name="yv_sign_in_prompt_yes_button">Ee</string>
     <string name="yv_sign_out_cancel_button_text">Kagbuo</string>
     <string name="yv_sign_out_confirm_button_text">Pụọ</string>
     <string name="yv_sign_out_confirmation_message">Ị̀ jì n\'aka na ị chọrọ isi na YouVersion pụọ? Ọ gà-àdị́ mkpa ka ị bànyé ọzọ iji nweta ihe gị ndị ị merè ka ha pụta ìhè.</string>
     <string name="yv_sign_out_confirmation_title">Pụọ</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">Pụọ n\'agbanyèghị</string>
+    <string name="yv_sign_out_pending_highlights_message">Echekwabèghị ụfọdụ ihe ndị ị merè ka ha pụta ìhè, ma ha gá-efù ma ị pụọ. Ị̀ chọrọ̀ ịpụ n\'agbanyèghị?</string>
+    <string name="yv_sign_out_pending_highlights_title">Chekwaa ihe ndị ị merè ka ha pụta ìhè?</string>
     <string name="yv_tab_votd">Amaokwu Nke Ụbọchị Taa</string>
     <string name="yv_version_info_agree_and_download">Kwenye ma Budata</string>
     <string name="yv_version_info_maybe_later">Ikekwe Mgbe Emesịrị</string>

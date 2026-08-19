@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_active_language_versions_header">%1$s Weergawes (%2$s)</string>
+    <string name="yv_back_button">Terug</string>
+    <string name="yv_bible_card_unavailable_reference">Hierdie gedeelte is nie in die gekose Bybelweergawe beskikbaar nie.</string>
+    <string name="yv_bible_version_details_content_desc">Besonderhede van Bybelweergawe</string>
+    <string name="yv_bible_version_load_error">Fout met laai van Bybelweergawe</string>
+    <string name="yv_bible_versions_heading">Bybelweergawes</string>
+    <string name="yv_books_heading">Bybelboeke</string>
+    <string name="yv_close_search_bar">Maak die soekveld toe</string>
+    <string name="yv_footnote_content_desc">voetnota</string>
+    <string name="yv_full_chapter">Volledige hoofstuk</string>
+    <string name="yv_language_label">Taal</string>
+    <string name="yv_language_tab_all">Alle</string>
+    <string name="yv_language_tab_suggested">Voorgestel</string>
+    <string name="yv_ok">In orde</string>
+    <string name="yv_placeholder_offline">Jou internetverbinding is onderbreek. Herstel die verbinding en laai \'n Bybelweergawe af om vanlyn voort te gaan.</string>
+    <string name="yv_placeholder_offline_icon_content_desc">Geen Wi-Fi nie</string>
+    <string name="yv_placeholder_version_unavailable">Die Bybelweergawe wat jy voorheen gekies het, is nie beskikbaar nie. \'n Ander soortgelyke Bybelweergawe is vir jou uitgekies.</string>
+    <string name="yv_placeholder_version_unavailable_icon_content_desc">Weergawe nie beskikbaar nie</string>
+    <string name="yv_search">Soek</string>
+    <string name="yv_search_bible_versions">Soek na \'n Bybelweergawe</string>
+    <string name="yv_search_languages">Soek na \'n taal</string>
+    <string name="yv_select_language_title">Kies \'n taal</string>
+    <string name="yv_share_content_desc">Deel</string>
+    <string name="yv_sign_in_button_compact">Teken aan</string>
+    <string name="yv_sign_in_button_content_desc">Teken aan met YouVersion</string>
+    <string name="yv_sign_in_button_full">Teken aan met</string>
+    <string name="yv_sign_in_error_message">Op hierdie stadium kan jy nie aanteken nie. Probeer asseblief weer.</string>
+    <string name="yv_sign_in_error_title">Kon nie aanteken nie</string>
+    <string name="yv_sign_in_prompt_introducing">Stel bekend</string>
+    <string name="yv_sign_in_prompt_no_button">Nee, dankie</string>
+    <string name="yv_sign_in_prompt_paragraph">**%1$s** wil koppel aan jou YouVersion **Bible App**-rekening. Dit sal hulle toelaat om jou Bybeltoep-aktiwiteit te sien en daarmee te kommunikeer. Wil jy voortgaan?</string>
+    <string name="yv_sign_in_prompt_yes_button">Ja, asseblief</string>
+    <string name="yv_sign_out_cancel_button_text">Kanselleer</string>
+    <string name="yv_sign_out_confirm_button_text">Teken uit</string>
+    <string name="yv_sign_out_confirmation_message">Is jy seker jy wil jou intekening by YouVersion beëindig? Jy sal weer moet aanteken om toegang tot jou kleurmerke te kry.</string>
+    <string name="yv_sign_out_confirmation_title">Teken uit</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">Teken wel uit</string>
+    <string name="yv_sign_out_pending_highlights_message">Sommige van jou hoogtepunte is nog nie gestoor nie, en hulle sal verlore gaan as jy uitteken. Wil jy nogsteeds uitteken?</string>
+    <string name="yv_sign_out_pending_highlights_title">Stoor jou hoogtepunte?</string>
+    <string name="yv_tab_votd">Vers-van-die-dag</string>
+    <string name="yv_version_info_agree_and_download">Stem in en laai af</string>
+    <string name="yv_version_info_maybe_later">Miskien later</string>
+    <string name="yv_version_info_offline_agreement">Ons ooreenkoms met die uitgewer van hierdie Bybelweergawe vereis dat ons sekere inligting aan hulle bekend maak om hierdie weergawe vir vanlyn gebruik beskikbaar te stel. Deur voort te gaan, stem jy in om jou inligting toeganklik te maak en dat die uitgewer jou per e-pos mag kontak.</string>
+    <string name="yv_version_info_offline_tagline">Lees dit enige tyd, enige plek – selfs vanlyn</string>
+    <string name="yv_versions_empty_for_language">Geen weergawes vir hierdie taal gevind nie</string>
+    <string name="yv_versions_load_error">Kon nie weergawes laai nie. Maak seker van jou verbinding en probeer weer.</string>
+    <string name="yv_versions_screen_title">Weergawes</string>
+    <string name="yv_versions_statistics">%1$s weergawes in %2$s tale</string>
+    <string name="yv_widget_bible_app">Bybeltoep</string>
+    <string name="yv_widget_copyright">Kopiereg</string>
+</resources>

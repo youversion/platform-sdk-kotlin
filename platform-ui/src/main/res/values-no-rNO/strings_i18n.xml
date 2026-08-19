@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_active_language_versions_header">%1$s utgaver (%2$s)</string>
+    <string name="yv_back_button">Tilbake</string>
+    <string name="yv_bible_card_unavailable_reference">Dette avsnittet er ikke tilgjengelig i den valgte bibelutgaven.</string>
+    <string name="yv_bible_version_details_content_desc">Detaljer om bibelutgaven</string>
+    <string name="yv_bible_version_load_error">Feil ved lasting av bibelutgaven</string>
+    <string name="yv_bible_versions_heading">Bibelutgaver</string>
+    <string name="yv_books_heading">Bøker</string>
+    <string name="yv_close_search_bar">Lukk søkefeltet</string>
+    <string name="yv_footnote_content_desc">fotnote</string>
+    <string name="yv_full_chapter">Les hele kapittelet</string>
+    <string name="yv_language_label">Språk</string>
+    <string name="yv_language_tab_all">Alle</string>
+    <string name="yv_language_tab_suggested">Foreslått</string>
+    <string name="yv_ok">OK</string>
+    <string name="yv_placeholder_offline">Du har mistet internettforbindelsen. Koble til igjen og last ned en bibelutgave for å fortsette uten nett.</string>
+    <string name="yv_placeholder_offline_icon_content_desc">Ingen Wi-Fi</string>
+    <string name="yv_placeholder_version_unavailable">Den tidligere valgte bibelutgaven er ikke tilgjengelig. En annen lignende bibelutgave er valgt for deg.</string>
+    <string name="yv_placeholder_version_unavailable_icon_content_desc">Utgave ikke tilgjengelig</string>
+    <string name="yv_search">Søk</string>
+    <string name="yv_search_bible_versions">Søk etter en bibelutgave</string>
+    <string name="yv_search_languages">Søk etter et språk</string>
+    <string name="yv_select_language_title">Velg et språk</string>
+    <string name="yv_share_content_desc">Del</string>
+    <string name="yv_sign_in_button_compact">Logg inn</string>
+    <string name="yv_sign_in_button_content_desc">Logg inn med YouVersion</string>
+    <string name="yv_sign_in_button_full">Logg inn med</string>
+    <string name="yv_sign_in_error_message">Du kunne ikke logge inn akkurat nå. Prøv på nytt.</string>
+    <string name="yv_sign_in_error_title">Innlogging mislyktes</string>
+    <string name="yv_sign_in_prompt_introducing">INTRODUSERER</string>
+    <string name="yv_sign_in_prompt_no_button">Nei takk</string>
+    <string name="yv_sign_in_prompt_paragraph">**%1$s** ønsker å koble til YouVersion **Bibelappen✱-kontoen din. Dette lar dem se og samhandle med aktiviteten din i Bibelappen. Vil du fortsette?</string>
+    <string name="yv_sign_in_prompt_yes_button">Ja, gjerne</string>
+    <string name="yv_sign_out_cancel_button_text">Avbryt</string>
+    <string name="yv_sign_out_confirm_button_text">Logg ut</string>
+    <string name="yv_sign_out_confirmation_message">Er du sikker på at du vil logge ut fra YouVersion? Du må logge inn igjen for å få tilgang til markeringene dine.</string>
+    <string name="yv_sign_out_confirmation_title">Logg ut</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">Logg ut likevel</string>
+    <string name="yv_sign_out_pending_highlights_message">Du har markeringer som ikke er lagret ennå. De vil gå tapt hvis du logger ut. Vil du logge ut likevel?</string>
+    <string name="yv_sign_out_pending_highlights_title">Lagre markeringene dine?</string>
+    <string name="yv_tab_votd">Dagens vers</string>
+    <string name="yv_version_info_agree_and_download">Godta og last ned</string>
+    <string name="yv_version_info_maybe_later">Kanskje senere</string>
+    <string name="yv_version_info_offline_agreement">Avtalen vår med utgiveren av denne bibelutgaven krever at vi deler spesifikk informasjon med dem for å kunne tilby denne utgaven for bruk uten nett. Ved å fortsette samtykker du i å dele informasjonen din og tillate utgiveren å sende deg e-post.</string>
+    <string name="yv_version_info_offline_tagline">Les den når som helst, hvor som helst – også uten nett</string>
+    <string name="yv_versions_empty_for_language">Ingen utgaver funnet for dette språket</string>
+    <string name="yv_versions_load_error">Kunne ikke laste utgaver. Sjekk tilkoblingen og prøv igjen.</string>
+    <string name="yv_versions_screen_title">Utgaver</string>
+    <string name="yv_versions_statistics">%1$s utgaver på %2$s språk</string>
+    <string name="yv_widget_bible_app">Bibelappen</string>
+    <string name="yv_widget_copyright">Opphavsrett</string>
+</resources>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Dispensar</string>
+    <string name="yv_banner_offline_icon">Ícone Off-line</string>
+    <string name="yv_banner_offline_message">Você perdeu a conexão com a internet. Reconecte-se e baixe uma versão da Bíblia para continuar off-line.</string>
+    <string name="yv_banner_version_unavailable_icon">Ícone de Versão Indisponível</string>
+    <string name="yv_banner_version_unavailable_message">A versão da Bíblia selecionada anteriormente não está disponível. Outra versão similar da Bíblia foi selecionada para você.</string>
+    <string name="yv_book_chapter_picker_title">Livros</string>
+    <string name="yv_cancel">Cancelar</string>
+    <string name="yv_data_exchange_continue">Continuar</string>
+    <string name="yv_data_exchange_highlights_explanation">A YouVersion pedirá sua permissão antes que os destaques possam ser salvos.</string>
+    <string name="yv_data_exchange_highlights_question">Permitir que este app salve destaques com a YouVersion?</string>
+    <string name="yv_font_selected_check">Marca de seleção de fonte selecionada</string>
+    <string name="yv_font_settings_label">Fonte</string>
+    <string name="yv_footnote_header_label">Nota de rodapé</string>
+    <string name="yv_highlight_color_cyan">ciano</string>
+    <string name="yv_highlight_color_green">verde</string>
+    <string name="yv_highlight_color_orange">laranja</string>
+    <string name="yv_highlight_color_pink">rosa</string>
+    <string name="yv_highlight_color_yellow">amarelo</string>
+    <string name="yv_intro_chapter_label">Introdução</string>
+    <string name="yv_language_content_desc">Idioma</string>
+    <string name="yv_line_spacing_label">Espaçamento entre linhas</string>
+    <string name="yv_next_chapter_content_desc">Próximo Capítulo</string>
+    <string name="yv_previous_chapter_content_desc">Capítulo Anterior</string>
+    <string name="yv_reader_menu_font_settings">Fonte e Configurações</string>
+    <string name="yv_reader_menu_sign_in">Entrar</string>
+    <string name="yv_reader_menu_sign_out">Sair</string>
+    <string name="yv_theme_selected">Selecionado</string>
+    <string name="yv_verse_action_add_highlight">Adicionar destaque de %1$s</string>
+    <string name="yv_verse_action_copy">Copiar</string>
+    <string name="yv_verse_action_remove_highlight">Remover destaque de %1$s</string>
+    <string name="yv_verse_action_share">Compartilhar</string>
+</resources>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Van die hand wys</string>
+    <string name="yv_banner_offline_icon">Vanlyn-ikoon</string>
+    <string name="yv_banner_offline_message">Jou internetverbinding is onderbreek. Herstel die verbinding en laai \'n Bybelweergawe af om vanlyn voort te gaan.</string>
+    <string name="yv_banner_version_unavailable_icon">Onbeskikbare weergawe-ikoon</string>
+    <string name="yv_banner_version_unavailable_message">Die Bybelweergawe wat jy voorheen gekies het, is nie beskikbaar nie. \'n Ander soortgelyke Bybelweergawe is vir jou uitgekies.</string>
+    <string name="yv_book_chapter_picker_title">Bybelboeke</string>
+    <string name="yv_cancel">Kanselleer</string>
+    <string name="yv_data_exchange_continue">Gaan voort</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion sal jou vra om toegang te verleen voordat hoogtepunte gestoor kan word.</string>
+    <string name="yv_data_exchange_highlights_question">Laat hierdie toep toe om hoogtepunte met YouVersion te stoor?</string>
+    <string name="yv_font_selected_check">Kontroleer geselekteerde lettertipe</string>
+    <string name="yv_font_settings_label">Lettertipe</string>
+    <string name="yv_footnote_header_label">Voetnota</string>
+    <string name="yv_highlight_color_cyan">siaan</string>
+    <string name="yv_highlight_color_green">groen</string>
+    <string name="yv_highlight_color_orange">oranje</string>
+    <string name="yv_highlight_color_pink">pienk</string>
+    <string name="yv_highlight_color_yellow">geel</string>
+    <string name="yv_intro_chapter_label">Inleiding</string>
+    <string name="yv_language_content_desc">Taal</string>
+    <string name="yv_line_spacing_label">Reëlspasiëring</string>
+    <string name="yv_next_chapter_content_desc">Volgende hoofstuk</string>
+    <string name="yv_previous_chapter_content_desc">Vorige hoofstuk</string>
+    <string name="yv_reader_menu_font_settings">Lettertipe &amp; instellings</string>
+    <string name="yv_reader_menu_sign_in">Teken aan</string>
+    <string name="yv_reader_menu_sign_out">Teken uit</string>
+    <string name="yv_theme_selected">Gekies</string>
+    <string name="yv_verse_action_add_highlight">Voeg %1$s kleurmerk by</string>
+    <string name="yv_verse_action_copy">Kopieer</string>
+    <string name="yv_verse_action_remove_highlight">Verwyder %1$s kleurmerk</string>
+    <string name="yv_verse_action_share">Deel</string>
+</resources>

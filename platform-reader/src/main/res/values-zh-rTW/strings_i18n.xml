@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">關閉</string>
+    <string name="yv_banner_offline_icon">離線圖示</string>
+    <string name="yv_banner_offline_message">你已失去網路連線。請重新連線並下載聖經譯本以繼續離線使用。</string>
+    <string name="yv_banner_version_unavailable_icon">譯本無法使用圖示</string>
+    <string name="yv_banner_version_unavailable_message">你先前選擇的聖經譯本無法使用。已為你選擇另一個類似的譯本。</string>
+    <string name="yv_book_chapter_picker_title">書卷</string>
+    <string name="yv_cancel">取消</string>
+    <string name="yv_data_exchange_continue">繼續</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion will ask you to grant access before highlights can be saved.</string>
+    <string name="yv_data_exchange_highlights_question">Allow this app to save highlights with YouVersion?</string>
+    <string name="yv_font_selected_check">已選擇字型勾選</string>
+    <string name="yv_font_settings_label">字型</string>
+    <string name="yv_footnote_header_label">備註</string>
+    <string name="yv_highlight_color_cyan">青色</string>
+    <string name="yv_highlight_color_green">綠色</string>
+    <string name="yv_highlight_color_orange">橙色</string>
+    <string name="yv_highlight_color_pink">粉紅色</string>
+    <string name="yv_highlight_color_yellow">黃色</string>
+    <string name="yv_intro_chapter_label">簡介</string>
+    <string name="yv_language_content_desc">語言</string>
+    <string name="yv_line_spacing_label">行距</string>
+    <string name="yv_next_chapter_content_desc">下一章</string>
+    <string name="yv_previous_chapter_content_desc">上一章</string>
+    <string name="yv_reader_menu_font_settings">字型 &amp; 設定</string>
+    <string name="yv_reader_menu_sign_in">登入</string>
+    <string name="yv_reader_menu_sign_out">登出</string>
+    <string name="yv_theme_selected">已選擇</string>
+    <string name="yv_verse_action_add_highlight">添加 %1$s 螢光標記</string>
+    <string name="yv_verse_action_copy">複製</string>
+    <string name="yv_verse_action_remove_highlight">移除 %1$s 螢光標記</string>
+    <string name="yv_verse_action_share">分享</string>
+</resources>

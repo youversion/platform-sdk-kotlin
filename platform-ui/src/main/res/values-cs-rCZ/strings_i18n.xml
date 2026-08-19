@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_active_language_versions_header">%1$s Verze (%2$s)</string>
+    <string name="yv_back_button">Zpět</string>
+    <string name="yv_bible_card_unavailable_reference">Tato pasáž není dostupná ve vybrané verzi Bible.</string>
+    <string name="yv_bible_version_details_content_desc">Podrobnosti o verzi Bible</string>
+    <string name="yv_bible_version_load_error">Chyba při načítání verze Bible</string>
+    <string name="yv_bible_versions_heading">Verze Bible</string>
+    <string name="yv_books_heading">Knihy</string>
+    <string name="yv_close_search_bar">Zavřít vyhledávací pole</string>
+    <string name="yv_footnote_content_desc">poznámka pod čarou</string>
+    <string name="yv_full_chapter">Celá kapitola</string>
+    <string name="yv_language_label">Jazyk</string>
+    <string name="yv_language_tab_all">Vše</string>
+    <string name="yv_language_tab_suggested">Doporučené</string>
+    <string name="yv_ok">OK</string>
+    <string name="yv_placeholder_offline">Ztratili jste připojení k internetu. Znovu se připojte a stáhněte verzi Bible pro použití offline.</string>
+    <string name="yv_placeholder_offline_icon_content_desc">Bez Wi-Fi</string>
+    <string name="yv_placeholder_version_unavailable">Vaše dříve vybraná verze Bible není dostupná. Byla pro vás vybrána jiná podobná verze Bible.</string>
+    <string name="yv_placeholder_version_unavailable_icon_content_desc">Verze není dostupná</string>
+    <string name="yv_search">Hledat</string>
+    <string name="yv_search_bible_versions">Hledat verzi Bible</string>
+    <string name="yv_search_languages">Hledat jazyk</string>
+    <string name="yv_select_language_title">Vybrat jazyk</string>
+    <string name="yv_share_content_desc">Sdílet</string>
+    <string name="yv_sign_in_button_compact">Přihlásit se</string>
+    <string name="yv_sign_in_button_content_desc">Přihlásit se pomocí YouVersion</string>
+    <string name="yv_sign_in_button_full">Přihlásit se pomocí</string>
+    <string name="yv_sign_in_error_message">V tuto chvíli se vás nepodařilo přihlásit. Zkuste to prosím znovu.</string>
+    <string name="yv_sign_in_error_title">Přihlášení se nezdařilo</string>
+    <string name="yv_sign_in_prompt_introducing">PŘEDSTAVUJEME</string>
+    <string name="yv_sign_in_prompt_no_button">Ne, děkuji</string>
+    <string name="yv_sign_in_prompt_paragraph">**%1$s** se chce připojit k vašemu účtu YouVersion **aplikace Bible**. Uvidí vaši činnost v aplikaci Bible a bude v ní moct pracovat. Chcete pokračovat?</string>
+    <string name="yv_sign_in_prompt_yes_button">Ano, prosím</string>
+    <string name="yv_sign_out_cancel_button_text">Zrušit</string>
+    <string name="yv_sign_out_confirm_button_text">Odhlásit se</string>
+    <string name="yv_sign_out_confirmation_message">Opravdu se chcete odhlásit z YouVersion? Pro přístup ke svým zvýrazněním se budete muset znovu přihlásit.</string>
+    <string name="yv_sign_out_confirmation_title">Odhlásit se</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">Opravdu se odhlásit</string>
+    <string name="yv_sign_out_pending_highlights_message">Některá vaše zvýraznění ještě nebyla uložena a, pokud se nyní odhlásíte, budou ztracena. Chcete se přesto odhlásit?</string>
+    <string name="yv_sign_out_pending_highlights_title">Uložit zvýraznění?</string>
+    <string name="yv_tab_votd">Verš dne</string>
+    <string name="yv_version_info_agree_and_download">Souhlasím a stáhnout</string>
+    <string name="yv_version_info_maybe_later">Možná později</string>
+    <string name="yv_version_info_offline_agreement">Naše dohoda s vydavatelem této verze Bible nás zavazuje sdílet s ním určité informace, abychom mohli tuto verzi nabídnout pro offline použití. Pokračováním souhlasíte se sdílením svých informací a s tím, že vám vydavatel může zasílat e-maily.</string>
+    <string name="yv_version_info_offline_tagline">Čtěte kdykoli a kdekoli – i offline</string>
+    <string name="yv_versions_empty_for_language">Pro tento jazyk nebyla nalezena žádná verze</string>
+    <string name="yv_versions_load_error">Verzi se nepodařilo načíst. Zkontrolujte připojení a zkuste to znovu.</string>
+    <string name="yv_versions_screen_title">Verze</string>
+    <string name="yv_versions_statistics">%1$s verzí v %2$s jazycích</string>
+    <string name="yv_widget_bible_app">Bible App</string>
+    <string name="yv_widget_copyright">Autorská práva</string>
+</resources>
