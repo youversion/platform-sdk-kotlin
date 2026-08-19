@@ -103,7 +103,6 @@ class BibleReaderViewModel(
             bibleVersionsViewModel ?: BibleVersionsViewModel(
                 initialVersionId = reference.versionId,
                 onVersionChange = { version ->
-                    this.bibleVersion = version
                     onHeaderSelectionChange(this.bibleReference.copy(versionId = version.id))
                 },
                 languageRepository = languageRepository,
@@ -368,7 +367,6 @@ class BibleReaderViewModel(
             if (bibleVersion?.id != newReference.versionId) {
                 val newVersion = bibleVersionRepository.version(id = newReference.versionId)
                 bibleVersion = newVersion
-                // TODO: INsert my version
             }
             _state.update { it.copy(introBookUSFM = null, introPassageId = null) }
             bibleReference = newReference
