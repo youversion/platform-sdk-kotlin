@@ -29,10 +29,17 @@
     <string name="yv_sign_in_button_full">Đăng nhập bằng</string>
     <string name="yv_sign_in_error_message">Chúng tôi không thể đăng nhập cho bạn lúc này. Vui lòng thử lại.</string>
     <string name="yv_sign_in_error_title">Đăng Nhập Thất Bại</string>
+    <string name="yv_sign_in_prompt_introducing">GIỚI THIỆU</string>
+    <string name="yv_sign_in_prompt_no_button">Không, Cảm Ơn</string>
+    <string name="yv_sign_in_prompt_paragraph">**%1$s** muốn kết nối với tài khoản **Ứng dụng Kinh Thánh** YouVersion của bạn. Điều này sẽ cho phép họ xem và tương tác với hoạt động Ứng dụng Kinh Thánh của bạn. Bạn có muốn tiếp tục không?</string>
+    <string name="yv_sign_in_prompt_yes_button">Vâng, Được Thôi</string>
     <string name="yv_sign_out_cancel_button_text">Hủy</string>
     <string name="yv_sign_out_confirm_button_text">Đăng Xuất</string>
     <string name="yv_sign_out_confirmation_message">Bạn có chắc muốn đăng xuất khỏi YouVersion không? Bạn sẽ cần đăng nhập lại để truy cập các phần đánh dấu của mình.</string>
     <string name="yv_sign_out_confirmation_title">Đăng Xuất</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">Vẫn đăng xuất</string>
+    <string name="yv_sign_out_pending_highlights_message">Một số điểm đánh dấu của bạn chưa được lưu và sẽ bị mất nếu bạn đăng xuất. Bạn có muốn đăng xuất không?</string>
+    <string name="yv_sign_out_pending_highlights_title">Lưu các điểm đánh dấu của bạn?</string>
     <string name="yv_tab_votd">Câu Kinh Thánh Hằng Ngày</string>
     <string name="yv_version_info_agree_and_download">Đồng Ý và Tải Xuống</string>
     <string name="yv_version_info_maybe_later">Để Sau</string>

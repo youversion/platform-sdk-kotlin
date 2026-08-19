@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">关闭</string>
+    <string name="yv_banner_offline_icon">离线图标</string>
+    <string name="yv_banner_offline_message">你已断开网络连接。请重新连接并下载圣经译本以继续离线使用。</string>
+    <string name="yv_banner_version_unavailable_icon">译本不可用图标</string>
+    <string name="yv_banner_version_unavailable_message">你之前选择的圣经译本不可用。已为你选择了另一个类似的译本。</string>
+    <string name="yv_book_chapter_picker_title">书卷</string>
+    <string name="yv_cancel">取消</string>
+    <string name="yv_data_exchange_continue">继续</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion 将在保存高亮内容之前请求你授予访问权限。</string>
+    <string name="yv_data_exchange_highlights_question">允许此应用将高亮内容保存至 YouVersion？</string>
+    <string name="yv_font_selected_check">字体已选中标记</string>
+    <string name="yv_font_settings_label">字体</string>
+    <string name="yv_footnote_header_label">脚注</string>
+    <string name="yv_highlight_color_cyan">青色</string>
+    <string name="yv_highlight_color_green">绿色</string>
+    <string name="yv_highlight_color_orange">橙色</string>
+    <string name="yv_highlight_color_pink">粉红色</string>
+    <string name="yv_highlight_color_yellow">黄色</string>
+    <string name="yv_intro_chapter_label">简介</string>
+    <string name="yv_language_content_desc">语言</string>
+    <string name="yv_line_spacing_label">行间距</string>
+    <string name="yv_next_chapter_content_desc">下一章</string>
+    <string name="yv_previous_chapter_content_desc">上一章</string>
+    <string name="yv_reader_menu_font_settings">字体 &amp; 设置</string>
+    <string name="yv_reader_menu_sign_in">登录</string>
+    <string name="yv_reader_menu_sign_out">退出</string>
+    <string name="yv_theme_selected">已选择</string>
+    <string name="yv_verse_action_add_highlight">添加 %1$s 高亮</string>
+    <string name="yv_verse_action_copy">复制</string>
+    <string name="yv_verse_action_remove_highlight">移除 %1$s 高亮</string>
+    <string name="yv_verse_action_share">分享</string>
+</resources>

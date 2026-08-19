@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Zavřít</string>
+    <string name="yv_banner_offline_icon">Ikona offline</string>
+    <string name="yv_banner_offline_message">Ztratili jste připojení k internetu. Znovu se připojte a stáhněte verzi Bible pro použití offline.</string>
+    <string name="yv_banner_version_unavailable_icon">Ikona nedostupné verze</string>
+    <string name="yv_banner_version_unavailable_message">Vaše dříve vybraná verze Bible není dostupná. Byla pro vás vybrána jiná podobná verze Bible.</string>
+    <string name="yv_book_chapter_picker_title">Knihy</string>
+    <string name="yv_cancel">Zrušit</string>
+    <string name="yv_data_exchange_continue">Pokračovat</string>
+    <string name="yv_data_exchange_highlights_explanation">Než budou zvýraznění uložena, YouVersion vás požádá o udělení přístupu.</string>
+    <string name="yv_data_exchange_highlights_question">Povolit YouVersion ukládat zvýraznění v této aplikaci?</string>
+    <string name="yv_font_selected_check">Zaškrtnutí vybraného písma</string>
+    <string name="yv_font_settings_label">Písmo</string>
+    <string name="yv_footnote_header_label">Poznámka pod čarou</string>
+    <string name="yv_highlight_color_cyan">azurová</string>
+    <string name="yv_highlight_color_green">zelená</string>
+    <string name="yv_highlight_color_orange">oranžová</string>
+    <string name="yv_highlight_color_pink">růžová</string>
+    <string name="yv_highlight_color_yellow">žlutá</string>
+    <string name="yv_intro_chapter_label">Úvod</string>
+    <string name="yv_language_content_desc">Jazyk</string>
+    <string name="yv_line_spacing_label">Řádkování</string>
+    <string name="yv_next_chapter_content_desc">Další kapitola</string>
+    <string name="yv_previous_chapter_content_desc">Předchozí kapitola</string>
+    <string name="yv_reader_menu_font_settings">Písmo &amp; Nastavení</string>
+    <string name="yv_reader_menu_sign_in">Přihlásit se</string>
+    <string name="yv_reader_menu_sign_out">Odhlásit se</string>
+    <string name="yv_theme_selected">Vybráno</string>
+    <string name="yv_verse_action_add_highlight">Přidat %1$s zvýraznění</string>
+    <string name="yv_verse_action_copy">Kopírovat</string>
+    <string name="yv_verse_action_remove_highlight">Odebrat %1$s zvýraznění</string>
+    <string name="yv_verse_action_share">Sdílet</string>
+</resources>

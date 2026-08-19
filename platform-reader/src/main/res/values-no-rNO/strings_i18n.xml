@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Avvis</string>
+    <string name="yv_banner_offline_icon">Frakoblet-ikon</string>
+    <string name="yv_banner_offline_message">Du har mistet internettforbindelsen. Koble til igjen og last ned en bibelutgave for å fortsette uten nett.</string>
+    <string name="yv_banner_version_unavailable_icon">Ikon for utilgjengelig utgave</string>
+    <string name="yv_banner_version_unavailable_message">Den tidligere valgte bibelutgaven er ikke tilgjengelig. En annen lignende bibelutgave er valgt for deg.</string>
+    <string name="yv_book_chapter_picker_title">Bøker</string>
+    <string name="yv_cancel">Avbryt</string>
+    <string name="yv_data_exchange_continue">Fortsett</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion vil be deg om å gi tilgang før markeringer kan lagres.</string>
+    <string name="yv_data_exchange_highlights_question">Vil du la denne appen lagre markeringer i YouVersion?</string>
+    <string name="yv_font_selected_check">Skrift valgt hake</string>
+    <string name="yv_font_settings_label">Skrift</string>
+    <string name="yv_footnote_header_label">Fotnote</string>
+    <string name="yv_highlight_color_cyan">cyan</string>
+    <string name="yv_highlight_color_green">grønn</string>
+    <string name="yv_highlight_color_orange">oransje</string>
+    <string name="yv_highlight_color_pink">rosa</string>
+    <string name="yv_highlight_color_yellow">gul</string>
+    <string name="yv_intro_chapter_label">Introduksjon</string>
+    <string name="yv_language_content_desc">Språk</string>
+    <string name="yv_line_spacing_label">Linjeavstand</string>
+    <string name="yv_next_chapter_content_desc">Neste kapittel</string>
+    <string name="yv_previous_chapter_content_desc">Forrige kapittel</string>
+    <string name="yv_reader_menu_font_settings">Skrifttype og innstillinger</string>
+    <string name="yv_reader_menu_sign_in">Logg inn</string>
+    <string name="yv_reader_menu_sign_out">Logg ut</string>
+    <string name="yv_theme_selected">Valgt</string>
+    <string name="yv_verse_action_add_highlight">Legg til %1$s utheving</string>
+    <string name="yv_verse_action_copy">Kopier</string>
+    <string name="yv_verse_action_remove_highlight">Fjern %1$s markering</string>
+    <string name="yv_verse_action_share">Del</string>
+</resources>

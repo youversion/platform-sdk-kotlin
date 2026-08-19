@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">رفض</string>
+    <string name="yv_banner_offline_icon">أيقونة وضع عدم الاتصال</string>
+    <string name="yv_banner_offline_message">لقد فقدت اتصالك بالإنترنت. أعد الاتصال وقم بتنزيل إصدار من الكتاب المقدس للمتابعة دون اتصال بالإنترنيت.</string>
+    <string name="yv_banner_version_unavailable_icon">أيقونة الإصدار غير متوفر</string>
+    <string name="yv_banner_version_unavailable_message">اصدار الكتاب المقدس الذي اخترته سابقاً غير متوفر. تم اختيار اصدار آخر مشابه لك.</string>
+    <string name="yv_book_chapter_picker_title">الأسفار</string>
+    <string name="yv_cancel">إلغاء</string>
+    <string name="yv_data_exchange_continue">متابعة</string>
+    <string name="yv_data_exchange_highlights_explanation">سيطلب منك YouVersion منح الإذن قبل أن يمكن حفظ التمييزات.</string>
+    <string name="yv_data_exchange_highlights_question">هل تسمح لهذا التطبيق بحفظ التميزات مع YouVersion؟</string>
+    <string name="yv_font_selected_check">علامة اختيار الخط المحدد</string>
+    <string name="yv_font_settings_label">الخط</string>
+    <string name="yv_footnote_header_label">حاشية</string>
+    <string name="yv_highlight_color_cyan">سماوي</string>
+    <string name="yv_highlight_color_green">أخضر</string>
+    <string name="yv_highlight_color_orange">برتقالي</string>
+    <string name="yv_highlight_color_pink">وردي</string>
+    <string name="yv_highlight_color_yellow">أصفر</string>
+    <string name="yv_intro_chapter_label">مقدمة</string>
+    <string name="yv_language_content_desc">اللغة</string>
+    <string name="yv_line_spacing_label">تباعد الأسطر</string>
+    <string name="yv_next_chapter_content_desc">الإصحاح التالي</string>
+    <string name="yv_previous_chapter_content_desc">الإصحاح السابق</string>
+    <string name="yv_reader_menu_font_settings">الخط &amp; الإعدادات</string>
+    <string name="yv_reader_menu_sign_in">تسجيل الدخول</string>
+    <string name="yv_reader_menu_sign_out">تسجيل الخروج</string>
+    <string name="yv_theme_selected">المحدد</string>
+    <string name="yv_verse_action_add_highlight">إضافة تمييز %1$s</string>
+    <string name="yv_verse_action_copy">نسخ</string>
+    <string name="yv_verse_action_remove_highlight">إزالة تمييز %1$s</string>
+    <string name="yv_verse_action_share">شارك</string>
+</resources>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Diystyru</string>
+    <string name="yv_banner_offline_icon">Eicon All-lein</string>
+    <string name="yv_banner_offline_message">Rwyt wedi colli dy gysylltiad rhyngrwyd. Ailgysta a lawrlwytha fersiwn o\'r Beibl i barhau all-lein.</string>
+    <string name="yv_banner_version_unavailable_icon">Eicon Fersiwn Ddim ar Gael</string>
+    <string name="yv_banner_version_unavailable_message">Nid yw dy fersiwn Beibl a ddewiswyd gen ti yn flaenorol ar gael. Mae fersiwn Beibl tebyg arall wedi\'i ddewis ar dy gyfer.</string>
+    <string name="yv_book_chapter_picker_title">Llyfrau</string>
+    <string name="yv_cancel">Canslo</string>
+    <string name="yv_data_exchange_continue">Parhau</string>
+    <string name="yv_data_exchange_highlights_explanation">Bydd YouVersion yn gofyn am fynediad cyn y gellir cadw amlygiadau.</string>
+    <string name="yv_data_exchange_highlights_question">Caniatáu i\'r ap hwn gadw amlygiadau gyda YouVersion?</string>
+    <string name="yv_font_selected_check">Gwiriad ffont wedi\'i ddewis</string>
+    <string name="yv_font_settings_label">Ffont</string>
+    <string name="yv_footnote_header_label">Troednodyn</string>
+    <string name="yv_highlight_color_cyan">gwyrddlas</string>
+    <string name="yv_highlight_color_green">gwyrdd</string>
+    <string name="yv_highlight_color_orange">oren</string>
+    <string name="yv_highlight_color_pink">pinc</string>
+    <string name="yv_highlight_color_yellow">melyn</string>
+    <string name="yv_intro_chapter_label">Cyflwyniad</string>
+    <string name="yv_language_content_desc">Iaith</string>
+    <string name="yv_line_spacing_label">Bwlch Rhwng Llinellau</string>
+    <string name="yv_next_chapter_content_desc">Pennod Nesaf</string>
+    <string name="yv_previous_chapter_content_desc">Pennod Flaenorol</string>
+    <string name="yv_reader_menu_font_settings">Ffont &amp; Gosodiadau</string>
+    <string name="yv_reader_menu_sign_in">Mewngofnodi</string>
+    <string name="yv_reader_menu_sign_out">Allgofnodi</string>
+    <string name="yv_theme_selected">Wedi\'i Ddewis</string>
+    <string name="yv_verse_action_add_highlight">Ychwanegu amlygiad %1$s</string>
+    <string name="yv_verse_action_copy">Copïo</string>
+    <string name="yv_verse_action_remove_highlight">Dileu amlygiad %1$s</string>
+    <string name="yv_verse_action_share">Rhannu</string>
+</resources>

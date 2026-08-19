@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_active_language_versions_header">%1$s Fersiwn (%2$s)</string>
+    <string name="yv_back_button">Yn ôl</string>
+    <string name="yv_bible_card_unavailable_reference">Mae\'r darn hwn yn anhygyrch yn y fersiwn Beibl a ddewiswyd.</string>
+    <string name="yv_bible_version_details_content_desc">Manylion Fersiwn y Beibl</string>
+    <string name="yv_bible_version_load_error">Gwall wrth lwytho fersiwn y Beibl</string>
+    <string name="yv_bible_versions_heading">Fersiynau\'r Beibl</string>
+    <string name="yv_books_heading">Llyfrau</string>
+    <string name="yv_close_search_bar">Cau\'r mewnbwn chwilio</string>
+    <string name="yv_footnote_content_desc">troednodyn</string>
+    <string name="yv_full_chapter">Pennod Lawn</string>
+    <string name="yv_language_label">Iaith</string>
+    <string name="yv_language_tab_all">Pob un</string>
+    <string name="yv_language_tab_suggested">Awgrymedig</string>
+    <string name="yv_ok">Iawn</string>
+    <string name="yv_placeholder_offline">Rwyt wedi colli dy gysylltiad rhyngrwyd. Ailgysyllta a lawrlwytha fersiwn o\'r Beibl i barhau all-lein.</string>
+    <string name="yv_placeholder_offline_icon_content_desc">Dim Wi-Fi</string>
+    <string name="yv_placeholder_version_unavailable">Nid yw dy fersiwn Beibl a ddewiswyd gen ti yn flaenorol ar gael. Mae fersiwn Beibl tebyg arall wedi\'i ddewis ar dy gyfer.</string>
+    <string name="yv_placeholder_version_unavailable_icon_content_desc">Fersiwn ddim ar gael</string>
+    <string name="yv_search">Chwilio</string>
+    <string name="yv_search_bible_versions">Chwilia am fersiwn beibl</string>
+    <string name="yv_search_languages">Chwilia am iaith</string>
+    <string name="yv_select_language_title">Dewisa Iaith</string>
+    <string name="yv_share_content_desc">Rhannu</string>
+    <string name="yv_sign_in_button_compact">Mewngofnodi</string>
+    <string name="yv_sign_in_button_content_desc">Mewngofnodi gyda YouVersion</string>
+    <string name="yv_sign_in_button_full">Mewngofnodi gyda</string>
+    <string name="yv_sign_in_error_message">Nid oeddem yn gallu dy fewngofnodi ar hyn o bryd. Rho gynnig arall arni.</string>
+    <string name="yv_sign_in_error_title">Mewngofnodi Wedi Methu</string>
+    <string name="yv_sign_in_prompt_introducing">YN CYFLWYNO</string>
+    <string name="yv_sign_in_prompt_no_button">Dim Diolch</string>
+    <string name="yv_sign_in_prompt_paragraph">Mae **%1$s** am gysylltu â\'th gyfrif **Bible App** YouVersion. Bydd hyn yn caniatáu iddyn nhw weld a rhyngweithio â\'th weithgaredd Bible App. Hoffet ti fwrw ymlaen?</string>
+    <string name="yv_sign_in_prompt_yes_button">Ie, Os Gwelwch yn Dda</string>
+    <string name="yv_sign_out_cancel_button_text">Canslo</string>
+    <string name="yv_sign_out_confirm_button_text">Allgofnodi</string>
+    <string name="yv_sign_out_confirmation_message">Wyt ti\'n siŵr dy fod am allgofnodi o YouVersion? Bydd angen i ti fewngofnodi eto i gael mynediad at dy uchafbwyntiau.</string>
+    <string name="yv_sign_out_confirmation_title">Allgofnodi</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">Allgofnodi beth bynnag</string>
+    <string name="yv_sign_out_pending_highlights_message">Mae rhai o\'th amlygiadau heb eu cadw eto, a byddan nhw\'n cael eu colli os byddi di\'n allgofnodi. Wyt ti am allgofnodi beth bynnag?</string>
+    <string name="yv_sign_out_pending_highlights_title">Cadw dy amlygiadau?</string>
+    <string name="yv_tab_votd">Adnod y Dydd</string>
+    <string name="yv_version_info_agree_and_download">Cytuno a Lawrlwytho</string>
+    <string name="yv_version_info_maybe_later">Efallai yn Ddiweddarach</string>
+    <string name="yv_version_info_offline_agreement">Mae ein cytundeb â chyhoeddwr y fersiwn Beibl hwn yn ei gwneud yn ofynnol i ni rannu gwybodaeth benodol gyda nhw er mwyn cynnig y fersiwn hwn i\'w ddefnyddio all-lein. Drwy barhau rwyt yn cytuno i rannu dy wybodaeth ac i ganiatáu i\'r cyhoeddwr anfon e-bost atat.</string>
+    <string name="yv_version_info_offline_tagline">Darllena unrhyw bryd, unrhyw le—hyd yn oed all-lein</string>
+    <string name="yv_versions_empty_for_language">Dim fersiynau wedi\'u canfod ar gyfer yr iaith hon</string>
+    <string name="yv_versions_load_error">Methu llwytho fersiynau. Gwiria dy gysylltiad a rho gynnig arall arni.</string>
+    <string name="yv_versions_screen_title">Fersiynau</string>
+    <string name="yv_versions_statistics">%1$s Fersiwn mewn %2$s Iaith</string>
+    <string name="yv_widget_bible_app">Ap Beibl</string>
+    <string name="yv_widget_copyright">Hawlfraint</string>
+</resources>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_active_language_versions_header">%1$s إصدارات (%2$s)</string>
+    <string name="yv_back_button">رجوع</string>
+    <string name="yv_bible_card_unavailable_reference">هذا المقطع غير متوفر في نسخة الكتاب المقدس المختارة.</string>
+    <string name="yv_bible_version_details_content_desc">تفاصيل إصدار الكتاب المقدس</string>
+    <string name="yv_bible_version_load_error">خطأ في تحميل إصدار الكتاب المقدس</string>
+    <string name="yv_bible_versions_heading">إصدارات الكتاب المقدس</string>
+    <string name="yv_books_heading">كتب</string>
+    <string name="yv_close_search_bar">أغلق حقل البحث</string>
+    <string name="yv_footnote_content_desc">حاشية</string>
+    <string name="yv_full_chapter">الإصحاح الكامل</string>
+    <string name="yv_language_label">اللغة</string>
+    <string name="yv_language_tab_all">الكل</string>
+    <string name="yv_language_tab_suggested">مقترحة</string>
+    <string name="yv_ok">حسناً</string>
+    <string name="yv_placeholder_offline">لقد انقطع اتصالك بالإنترنت. أعد الاتصال وقم بتنزيل أصدار من الكتاب المقدس للمتابعة دون اتصال بالإنترنت.</string>
+    <string name="yv_placeholder_offline_icon_content_desc">لا يوجد واي فاي (Wi-Fi)</string>
+    <string name="yv_placeholder_version_unavailable">نسخة الكتاب المقدس التي اخترتها سابقاً غير متوفرة. تم اختيار نسخة أخرى مشابهة لك.</string>
+    <string name="yv_placeholder_version_unavailable_icon_content_desc">الإصدار غير متوفر</string>
+    <string name="yv_search">بحث</string>
+    <string name="yv_search_bible_versions">ابحث عن إصدار من الكتاب المقدس</string>
+    <string name="yv_search_languages">ابحث عن لغة</string>
+    <string name="yv_select_language_title">اختر لغة</string>
+    <string name="yv_share_content_desc">شارك</string>
+    <string name="yv_sign_in_button_compact">تسجيل الدخول</string>
+    <string name="yv_sign_in_button_content_desc">تسجيل الدخول باستخدام YouVersion</string>
+    <string name="yv_sign_in_button_full">سجّل الدخول باستخدام</string>
+    <string name="yv_sign_in_error_message">تعذّر تسجيل دخولك في الوقت الحالي. يرجى المحاولة مرة أخرى.</string>
+    <string name="yv_sign_in_error_title">فشل تسجيل الدخول</string>
+    <string name="yv_sign_in_prompt_introducing">تقديم</string>
+    <string name="yv_sign_in_prompt_no_button">لا شكراً</string>
+    <string name="yv_sign_in_prompt_paragraph">**%1$s** يريد الاتصال بحساب **تطبيق الكتاب المقدس** الخاص بك على YouVersion. سيتيح لهم ذلك رؤية نشاطك في تطبيق الكتاب المقدس والتفاعل معه. هل تريد المتابعة؟</string>
+    <string name="yv_sign_in_prompt_yes_button">نعم من فضلك</string>
+    <string name="yv_sign_out_cancel_button_text">إلغاء</string>
+    <string name="yv_sign_out_confirm_button_text">تسجيل الخروج</string>
+    <string name="yv_sign_out_confirmation_message">هل أنت متأكد أنك تريد تسجيل الخروج من YouVersion؟ ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى إبراز النصوص الخاصة بك.</string>
+    <string name="yv_sign_out_confirmation_title">تسجيل الخروج</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">تسجيل الخروج على أي حال</string>
+    <string name="yv_sign_out_pending_highlights_message">بعض تمييزاتك لم يتم حفظها بعد، وستُفقد إذا قمت بتسجيل الخروج. هل تريد تسجيل الخروج على أي حال؟</string>
+    <string name="yv_sign_out_pending_highlights_title">هل تريد حفظ التمييزات؟</string>
+    <string name="yv_tab_votd">آية اليوم</string>
+    <string name="yv_version_info_agree_and_download">وافق وقم بالتنزيل</string>
+    <string name="yv_version_info_maybe_later">ربما لاحقاً</string>
+    <string name="yv_version_info_offline_agreement">تتطلب منا اتفاقيتنا مع ناشر إصدار الكتاب المقدس هذا مشاركة معلومات معينة معهم لتقديم هذا الإصدار للاستخدام دون اتصال. بالمتابعة، فإنك توافق على مشاركة معلوماتك والسماح للناشر بمراسلتك عبر البريد الإلكتروني.</string>
+    <string name="yv_version_info_offline_tagline">اقرأه في أي وقت وفي أي مكان—حتى دون اتصال</string>
+    <string name="yv_versions_empty_for_language">لم يتم العثور على إصدارات لهذه اللغة</string>
+    <string name="yv_versions_load_error">تعذّر تحميل الإصدارات. تحقق من اتصالك وحاول مجددًا.</string>
+    <string name="yv_versions_screen_title">الإصدارات</string>
+    <string name="yv_versions_statistics">%1$s إصدار بـ %2$s لغة</string>
+    <string name="yv_widget_bible_app">تطبيق الكتاب المقدس</string>
+    <string name="yv_widget_copyright">حقوق النشر</string>
+</resources>

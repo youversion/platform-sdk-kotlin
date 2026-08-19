@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_active_language_versions_header">%1$s Übersetzungen (%2$s)</string>
+    <string name="yv_back_button">Zurück</string>
+    <string name="yv_bible_card_unavailable_reference">Diese Passage ist in der ausgewählten Bibelversion nicht verfügbar.</string>
+    <string name="yv_bible_version_details_content_desc">Details der Bibelübersetzung</string>
+    <string name="yv_bible_version_load_error">Fehler beim Laden der Bibelübersetzung</string>
+    <string name="yv_bible_versions_heading">Bibelversionen</string>
+    <string name="yv_books_heading">Bücher</string>
+    <string name="yv_close_search_bar">Sucheingabe schließen</string>
+    <string name="yv_footnote_content_desc">Fußnote</string>
+    <string name="yv_full_chapter">Vollständiges Kapitel</string>
+    <string name="yv_language_label">Sprache</string>
+    <string name="yv_language_tab_all">Alle</string>
+    <string name="yv_language_tab_suggested">Vorgeschlagen</string>
+    <string name="yv_ok">OK</string>
+    <string name="yv_placeholder_offline">Du hast deine Internetverbindung verloren. Stelle die Verbindung wieder her und lade eine Bibelversion herunter, um offline fortzufahren.</string>
+    <string name="yv_placeholder_offline_icon_content_desc">Kein WLAN</string>
+    <string name="yv_placeholder_version_unavailable">Deine zuvor ausgewählte Bibelversion ist nicht verfügbar. Eine andere ähnliche Bibelversion wurde für dich ausgewählt.</string>
+    <string name="yv_placeholder_version_unavailable_icon_content_desc">Version nicht verfügbar</string>
+    <string name="yv_search">Suchen</string>
+    <string name="yv_search_bible_versions">Nach einer Bibelversion suchen</string>
+    <string name="yv_search_languages">Nach einer Sprache suchen</string>
+    <string name="yv_select_language_title">Sprache auswählen</string>
+    <string name="yv_share_content_desc">Teilen</string>
+    <string name="yv_sign_in_button_compact">Anmelden</string>
+    <string name="yv_sign_in_button_content_desc">Mit YouVersion anmelden</string>
+    <string name="yv_sign_in_button_full">Anmelden mit</string>
+    <string name="yv_sign_in_error_message">Wir konnten dich derzeit nicht anmelden. Bitte versuche es erneut.</string>
+    <string name="yv_sign_in_error_title">Anmeldung fehlgeschlagen</string>
+    <string name="yv_sign_in_prompt_introducing">EINFÜHRUNG</string>
+    <string name="yv_sign_in_prompt_no_button">Nein, danke</string>
+    <string name="yv_sign_in_prompt_paragraph">**%1$s** möchte eine Verbindung zu deinem YouVersion **Bibel App**-Konto herstellen. Dadurch kann die App deine Aktivitäten in der Bibel App sehen und damit interagieren. Möchtest du fortfahren?</string>
+    <string name="yv_sign_in_prompt_yes_button">Ja, bitte</string>
+    <string name="yv_sign_out_cancel_button_text">Abbrechen</string>
+    <string name="yv_sign_out_confirm_button_text">Abmelden</string>
+    <string name="yv_sign_out_confirmation_message">Bist du sicher, dass du dich von YouVersion abmelden möchtest? Du musst dich erneut anmelden, um auf deine Markierungen zuzugreifen.</string>
+    <string name="yv_sign_out_confirmation_title">Abmelden</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">Trotzdem abmelden</string>
+    <string name="yv_sign_out_pending_highlights_message">Einige deiner Markierungen wurden noch nicht gespeichert und gehen verloren, wenn du dich abmeldest. Möchtest du dich trotzdem abmelden?</string>
+    <string name="yv_sign_out_pending_highlights_title">Markierungen speichern?</string>
+    <string name="yv_tab_votd">Vers des Tages</string>
+    <string name="yv_version_info_agree_and_download">Zustimmen und herunterladen</string>
+    <string name="yv_version_info_maybe_later">Vielleicht später</string>
+    <string name="yv_version_info_offline_agreement">Unsere Vereinbarung mit dem Herausgeber dieser Bibelausgabe erfordert, dass wir bestimmte Informationen an ihn weitergeben, um diese Ausgabe für die Offline-Nutzung anbieten zu können. Wenn du fortfährst, erklärst du dich damit einverstanden, deine Daten weiterzugeben und dem Herausgeber zu gestatten, dir E-Mails zu senden.</string>
+    <string name="yv_version_info_offline_tagline">Jederzeit und überall lesen – auch offline</string>
+    <string name="yv_versions_empty_for_language">Keine Bibelübersetzungen für diese Sprache gefunden</string>
+    <string name="yv_versions_load_error">Bibleübersetzungen konnten nicht geladen werden. Überprüfe deine Verbindung und versuche es erneut.</string>
+    <string name="yv_versions_screen_title">Übersetzungen</string>
+    <string name="yv_versions_statistics">%1$s Übersetzungen in %2$s Sprachen</string>
+    <string name="yv_widget_bible_app">Bibel App</string>
+    <string name="yv_widget_copyright">Urheberrecht</string>
+</resources>

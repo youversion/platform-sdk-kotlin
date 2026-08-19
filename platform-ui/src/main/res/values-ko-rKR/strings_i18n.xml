@@ -37,6 +37,9 @@
     <string name="yv_sign_out_confirm_button_text">로그아웃</string>
     <string name="yv_sign_out_confirmation_message">YouVersion에서 로그아웃하시겠습니까? 하이라이트에 접근하려면 다시 로그인해야 합니다.</string>
     <string name="yv_sign_out_confirmation_title">로그아웃</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">로그아웃 진행</string>
+    <string name="yv_sign_out_pending_highlights_message">일부 하이라이트가 아직 저장되지 않았으며, 로그아웃하면 삭제됩니다. 그래도 로그아웃하시겠습니까?</string>
+    <string name="yv_sign_out_pending_highlights_title">하이라이트를 저장하시겠습니까?</string>
     <string name="yv_tab_votd">오늘의 말씀</string>
     <string name="yv_version_info_agree_and_download">동의 및 다운로드</string>
     <string name="yv_version_info_maybe_later">나중에</string>

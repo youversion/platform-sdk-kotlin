@@ -29,10 +29,17 @@
     <string name="yv_sign_in_button_full">以此登入</string>
     <string name="yv_sign_in_error_message">我們目前無法為你登入。請再試一次。</string>
     <string name="yv_sign_in_error_title">登入失敗</string>
+    <string name="yv_sign_in_prompt_introducing">介紹</string>
+    <string name="yv_sign_in_prompt_no_button">不，謝謝</string>
+    <string name="yv_sign_in_prompt_paragraph">**%1$s** 想連接你的 YouVersion **聖經軟件** 帳戶。這將允許他們查看你的 聖經軟件 活動並與之互動。你想繼續嗎？</string>
+    <string name="yv_sign_in_prompt_yes_button">是的，請繼續</string>
     <string name="yv_sign_out_cancel_button_text">取消</string>
     <string name="yv_sign_out_confirm_button_text">登出</string>
     <string name="yv_sign_out_confirmation_message">你確定要從 YouVersion 登出嗎？你需要重新登入才能存取你的亮點記錄。</string>
     <string name="yv_sign_out_confirmation_title">登出</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">仍然登出</string>
+    <string name="yv_sign_out_pending_highlights_message">你部分的重點標記尚未儲存，如果你登出，這些標記將會遺失。你確定仍要登出嗎？</string>
+    <string name="yv_sign_out_pending_highlights_title">儲存你的重點標記？</string>
     <string name="yv_tab_votd">今日經文</string>
     <string name="yv_version_info_agree_and_download">同意並下載</string>
     <string name="yv_version_info_maybe_later">稍後再說</string>
