@@ -239,6 +239,94 @@ class BibleIntroRenderingTests {
         }
 
     @Test
+    fun `intro blocks have a leading title when the intro opens with one`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="imt1"><span>Matthew</span></div>
+                    <div class="p">Intro paragraph text.</div>
+                </div>
+                """.trimIndent()
+
+            assertTrue(renderIntroBlocks(html).hasLeadingTitle())
+        }
+
+    @Test
+    fun `intro blocks have a leading title when the intro opens with a section heading`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="is1"><span>Introduction</span></div>
+                    <div class="p">Intro paragraph text.</div>
+                </div>
+                """.trimIndent()
+
+            assertTrue(renderIntroBlocks(html).hasLeadingTitle())
+        }
+
+    @Test
+    fun `intro blocks have a leading title when the intro opens with an outline title`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="iot"><span>Outline</span></div>
+                    <div class="p">Intro paragraph text.</div>
+                </div>
+                """.trimIndent()
+
+            assertTrue(renderIntroBlocks(html).hasLeadingTitle())
+        }
+
+    @Test
+    fun `intro blocks have no leading title when the intro opens with body text`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="p">Intro paragraph text.</div>
+                    <div class="yv-h s1"><span>Authorship</span></div>
+                </div>
+                """.trimIndent()
+
+            assertFalse(renderIntroBlocks(html).hasLeadingTitle())
+        }
+
+    @Test
+    fun `intro blocks have no leading title when headlines are not rendered`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="yv-h s1"><span>Introduction</span></div>
+                    <div class="p">Intro paragraph text.</div>
+                </div>
+                """.trimIndent()
+
+            assertFalse(renderIntroBlocks(html, renderHeadlines = false).hasLeadingTitle())
+        }
+
+    @Test
+    fun `intro blocks have no leading title when the intro opens with a table`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="p">
+                        <table>
+                            <tr><td>Col1</td><td>Col2</td></tr>
+                        </table>
+                    </div>
+                    <div class="p">Intro paragraph text.</div>
+                </div>
+                """.trimIndent()
+
+            assertFalse(renderIntroBlocks(html).hasLeadingTitle())
+        }
+
+    @Test
     fun `intro blocks with p class produce first line indent`() =
         runTest {
             val html =

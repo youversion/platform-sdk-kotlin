@@ -206,18 +206,21 @@ internal fun interpretBlockClasses(
             }
 
             "iot" -> {
+                newTextCategory = BibleTextCategory.HEADER
                 newCurrentFont = BibleTextFontOption.TEXT_BOLD
                 newAlignment = TextAlign.Center
                 setMarginTop(stateIn.fonts.baseSize.value.dp / 3)
             }
 
             "is", "is1" -> {
+                newTextCategory = BibleTextCategory.HEADER
                 newCurrentFont = BibleTextFontOption.HEADER2
                 newAlignment = TextAlign.Center
                 setMarginTop(stateIn.fonts.baseSize.value.dp / 2)
             }
 
             "is2" -> {
+                newTextCategory = BibleTextCategory.HEADER
                 newCurrentFont = BibleTextFontOption.TEXT_BOLD
                 newAlignment = TextAlign.Center
                 setMarginTop(stateIn.fonts.baseSize.value.dp / 3)

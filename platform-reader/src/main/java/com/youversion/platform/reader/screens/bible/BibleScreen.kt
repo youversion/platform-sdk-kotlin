@@ -202,6 +202,7 @@ internal fun BibleScreen(
     }
 
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
+    var hasIntroOwnTitle by remember { mutableStateOf(false) }
     var isBannerDismissed by rememberSaveable { mutableStateOf(false) }
 
     val bannerType =
@@ -344,7 +345,9 @@ internal fun BibleScreen(
                                     .verticalScroll(rememberScrollState()),
                         ) {
                             Spacer(modifier = Modifier.height(32.dp))
-                            if (state.bookName.isNotEmpty()) {
+                            val isHeaderVisible =
+                                state.bookName.isNotEmpty() && !(state.isViewingIntro && hasIntroOwnTitle)
+                            if (isHeaderVisible) {
                                 Text(
                                     text = state.bookName,
                                     style =
@@ -396,6 +399,7 @@ internal fun BibleScreen(
                                         )
                                     },
                                     onStateChange = { loadingPhase = it },
+                                    onHasOwnTitleChange = { hasIntroOwnTitle = it },
                                 )
                             } else {
                                 BibleText(
@@ -428,7 +432,7 @@ internal fun BibleScreen(
                             Spacer(modifier = Modifier.height(48.dp))
                         }
                         BibleReaderPassageSelection(
-                            bookAndChapter = state.bookAndChapter,
+                            bookAndChapter = state.bookAndChapter(stringResource(R.string.intro_chapter_label)),
                             onReferenceClick = onReferencesClick,
                             onPreviousChapter = { viewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter) },
                             onNextChapter = { viewModel.onAction(BibleReaderViewModel.Action.GoToNextChapter) },

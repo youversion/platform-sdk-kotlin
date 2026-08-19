@@ -25,3 +25,20 @@ enum class BibleTextCategory {
     FOOTNOTE_TEXT,
     HEADER,
 }
+
+/**
+ * Whether the passage opens with a title of its own, rather than with body text.
+ *
+ * Blocks that render as nothing are skipped, so a title hidden by
+ * [com.youversion.platform.ui.views.BibleTextOptions.renderHeadlines] does not count.
+ */
+internal fun List<BibleTextBlock>.hasLeadingTitle(): Boolean {
+    val leadingBlock = firstOrNull { it.text.isNotBlank() || it.rows.isNotEmpty() } ?: return false
+    return leadingBlock.rows.isEmpty() &&
+        leadingBlock.text
+            .getStringAnnotations(
+                tag = BibleTextCategoryAttribute.NAME,
+                start = 0,
+                end = leadingBlock.text.length,
+            ).any { it.item == BibleTextCategory.HEADER.name }
+}

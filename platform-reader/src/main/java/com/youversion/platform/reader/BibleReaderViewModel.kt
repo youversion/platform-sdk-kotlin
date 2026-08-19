@@ -704,14 +704,6 @@ class BibleReaderViewModel(
         val chapterNumber: Int
             get() = bibleReference.chapter
 
-        val bookAndChapter: String
-            get() =
-                if (bookName.isNotEmpty()) {
-                    if (isViewingIntro) "$bookName Intro" else "$bookName $chapterNumber"
-                } else {
-                    ""
-                }
-
         val versionAbbreviation: String
             get() =
                 bibleVersion?.let { version ->
@@ -725,6 +717,18 @@ class BibleReaderViewModel(
 
         val allFontDefinitions: List<FontDefinition>
             get() = defaultFontDefinitions + providedFontDefinitions
+
+        /**
+         * The reference label shown in the reader's passage picker, empty while the book name is unknown.
+         *
+         * @param introLabel the localized word for an intro chapter, used in place of a chapter number.
+         */
+        fun bookAndChapter(introLabel: String): String =
+            if (bookName.isNotEmpty()) {
+                if (isViewingIntro) "$bookName $introLabel" else "$bookName $chapterNumber"
+            } else {
+                ""
+            }
     }
 
     // ----- Actions
