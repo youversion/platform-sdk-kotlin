@@ -126,6 +126,24 @@ class BibleReaderViewModelReferenceTests {
         coVerify { bibleVersionRepository.version(id = 99) }
     }
 
+    // ----- Version picker selection
+
+    @Test
+    fun `version picker selection loads the full version instead of the listing entry`() {
+        // The picker's list comes from the versions listing endpoint, which carries no books.
+        val listedVersion = BibleVersion(id = 99, abbreviation = "NIV")
+        val fullVersion = listedVersion.copy(books = testBibleVersion.books)
+        coEvery { bibleVersionRepository.version(id = 99) } returns fullVersion
+
+        viewModel.bibleVersionsViewModel.onVersionChange(listedVersion)
+
+        assertEquals(
+            fullVersion.books,
+            viewModel.state.value.bibleVersion
+                ?.books,
+        )
+    }
+
     // ----- onIntroSelected
 
     @Test

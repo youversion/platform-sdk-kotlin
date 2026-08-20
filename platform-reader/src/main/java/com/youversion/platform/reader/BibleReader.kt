@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -108,10 +110,13 @@ fun BibleReader(
                 composable(
                     route = BibleReaderDestination.References.route,
                 ) {
-                    bibleReaderViewModel.bibleVersion?.let {
+                    // Collected rather than read off the view model, so the screen appears once the version loads
+                    // instead of staying blank for a reader who opened it before the load finished.
+                    val readerState by bibleReaderViewModel.state.collectAsStateWithLifecycle()
+                    readerState.bibleVersion?.let { version ->
                         ReferencesScreen(
-                            bibleVersion = it,
-                            bibleReference = bibleReaderViewModel.bibleReference,
+                            bibleVersion = version,
+                            bibleReference = readerState.bibleReference,
                             onSelectionClick = { versionId, bookCode, chapter ->
                                 val chapterNumber = chapter.toIntOrNull()
                                 if (chapterNumber == null) {

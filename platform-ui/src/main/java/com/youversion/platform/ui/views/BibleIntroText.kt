@@ -32,6 +32,8 @@ import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleTextCategory
 import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
+import com.youversion.platform.ui.views.rendering.hasLeadingBookTitle
+import com.youversion.platform.ui.views.rendering.isVisible
 import kotlinx.coroutines.CancellationException
 
 /**
@@ -47,6 +49,8 @@ import kotlinx.coroutines.CancellationException
  * @param onFootnoteTap Callback invoked when a footnote icon is tapped, providing the footnotes for that verse.
  * @param placeholder A composable to display during loading and error states.
  * @param onStateChange Callback invoked when the loading phase changes.
+ * @param onHasOwnTitleChange Callback invoked when it becomes known whether the intro opens with a
+ * title of its own, so a host rendering its own heading above this view can leave that heading out.
  */
 @Composable
 fun BibleIntroText(
@@ -57,6 +61,7 @@ fun BibleIntroText(
     onFootnoteTap: ((footnotes: List<AnnotatedString>) -> Unit)? = null,
     placeholder: @Composable (BibleTextLoadingPhase) -> Unit = { StandardPlaceholder(it) },
     onStateChange: (BibleTextLoadingPhase) -> Unit = {},
+    onHasOwnTitleChange: (hasOwnTitle: Boolean) -> Unit = {},
 ) {
     var blocks by remember { mutableStateOf<List<BibleTextBlock>>(emptyList()) }
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
@@ -66,6 +71,17 @@ fun BibleIntroText(
 
     LaunchedEffect(loadingPhase) {
         onStateChange(loadingPhase)
+    }
+
+    LaunchedEffect(blocks) {
+        onHasOwnTitleChange(blocks.hasLeadingBookTitle())
+    }
+
+    // Drop the previous passage's blocks so the reported title flag never outlives the content it describes,
+    // including when the next load never produces blocks. A text option change re-renders the same passage, so it
+    // leaves the flag alone rather than flashing a host heading in mid-reload.
+    LaunchedEffect(versionId, bookUSFM, passageId) {
+        blocks = emptyList()
     }
 
     LaunchedEffect(versionId, bookUSFM, passageId, textOptions) {
@@ -112,7 +128,7 @@ fun BibleIntroText(
         placeholder(loadingPhase)
     } else {
         Column(horizontalAlignment = mainColumnAlignment) {
-            val visibleBlocks = remember(blocks) { blocks.filter { it.text.isNotBlank() || it.rows.isNotEmpty() } }
+            val visibleBlocks = remember(blocks) { blocks.filter { it.isVisible } }
             visibleBlocks.forEachIndexed { index, block ->
                 if (block.rows.isEmpty()) {
                     IntroTextBlock(

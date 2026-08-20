@@ -140,20 +140,20 @@ class BibleReaderViewModelStateTests {
     fun `bookAndChapter returns book name and chapter number`() {
         viewModel.bibleVersion = multiBookVersion
 
-        assertEquals("Genesis 1", viewModel.state.value.bookAndChapter)
+        assertEquals("Genesis 1", viewModel.state.value.bookAndChapter("Intro"))
     }
 
     @Test
-    fun `bookAndChapter returns book name with Intro when viewing intro`() {
+    fun `bookAndChapter returns book name with the provided intro label when viewing intro`() {
         viewModel.bibleVersion = multiBookVersion
         viewModel.onIntroSelected("LEV", "LEV.INTRO1")
 
-        assertEquals("Leviticus Intro", viewModel.state.value.bookAndChapter)
+        assertEquals("Leviticus Introducción", viewModel.state.value.bookAndChapter("Introducción"))
     }
 
     @Test
     fun `bookAndChapter returns empty string when bookName is empty`() {
-        assertEquals("", viewModel.state.value.bookAndChapter)
+        assertEquals("", viewModel.state.value.bookAndChapter("Intro"))
     }
 
     // ----- versionAbbreviation
