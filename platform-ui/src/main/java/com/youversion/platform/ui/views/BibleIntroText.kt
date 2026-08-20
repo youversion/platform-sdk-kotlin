@@ -33,6 +33,7 @@ import com.youversion.platform.ui.views.rendering.BibleTextCategory
 import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import com.youversion.platform.ui.views.rendering.hasLeadingBookTitle
+import com.youversion.platform.ui.views.rendering.isVisible
 import kotlinx.coroutines.CancellationException
 
 /**
@@ -127,7 +128,7 @@ fun BibleIntroText(
         placeholder(loadingPhase)
     } else {
         Column(horizontalAlignment = mainColumnAlignment) {
-            val visibleBlocks = remember(blocks) { blocks.filter { it.text.isNotBlank() || it.rows.isNotEmpty() } }
+            val visibleBlocks = remember(blocks) { blocks.filter { it.isVisible } }
             visibleBlocks.forEachIndexed { index, block ->
                 if (block.rows.isEmpty()) {
                     IntroTextBlock(

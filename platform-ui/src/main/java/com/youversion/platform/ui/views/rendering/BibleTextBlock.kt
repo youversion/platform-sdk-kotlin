@@ -29,6 +29,10 @@ enum class BibleTextCategory {
     BOOK_TITLE,
 }
 
+/** Whether the block renders as anything; an empty one is skipped rather than laid out. */
+internal val BibleTextBlock.isVisible: Boolean
+    get() = text.isNotBlank() || rows.isNotEmpty()
+
 /**
  * Whether the passage opens with a book title of its own, which a host would otherwise duplicate
  * with a heading of its own.
@@ -39,7 +43,7 @@ enum class BibleTextCategory {
  * [com.youversion.platform.ui.views.BibleTextOptions.renderHeadlines] does not count either.
  */
 internal fun List<BibleTextBlock>.hasLeadingBookTitle(): Boolean {
-    val leadingBlock = firstOrNull { it.text.isNotBlank() || it.rows.isNotEmpty() } ?: return false
+    val leadingBlock = firstOrNull { it.isVisible } ?: return false
     return leadingBlock.rows.isEmpty() &&
         leadingBlock.text
             .getStringAnnotations(
