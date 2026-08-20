@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Odbaciti</string>
+    <string name="yv_banner_offline_icon">Ikonica van mreže</string>
+    <string name="yv_banner_offline_message">Izgubili ste internet vezu. Ponovo se povežite i preuzmite prevod Biblije da biste nastavili van mreže.</string>
+    <string name="yv_banner_version_unavailable_icon">Ikona nedostupnog prevoda</string>
+    <string name="yv_banner_version_unavailable_message">Prethodno izabran prevod Biblije nije dostupan. Umesto njega, izabran je drugi, sličan prevod Biblije.</string>
+    <string name="yv_book_chapter_picker_title">Knjige</string>
+    <string name="yv_cancel">Otkažite</string>
+    <string name="yv_data_exchange_continue">Nastavite</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion će od vas tražiti da odobrite pristup pre nego što se isticanja mogu sačuvati.</string>
+    <string name="yv_data_exchange_highlights_question">Dozvoliti ovoj aplikaciji da čuva isticanja sa YouVersion-om?</string>
+    <string name="yv_font_selected_check">Kvačica za izabrani font</string>
+    <string name="yv_font_settings_label">Font</string>
+    <string name="yv_footnote_header_label">Fusnota</string>
+    <string name="yv_highlight_color_cyan">cijan</string>
+    <string name="yv_highlight_color_green">zeleno</string>
+    <string name="yv_highlight_color_orange">narandžasto</string>
+    <string name="yv_highlight_color_pink">roze</string>
+    <string name="yv_highlight_color_yellow">žuto</string>
+    <string name="yv_intro_chapter_label">Uvod</string>
+    <string name="yv_language_content_desc">Jezik</string>
+    <string name="yv_line_spacing_label">Razmak između redova</string>
+    <string name="yv_next_chapter_content_desc">Sledeće poglavlje</string>
+    <string name="yv_previous_chapter_content_desc">Prethodno poglavlje</string>
+    <string name="yv_reader_menu_font_settings">Podešavanja fonta &amp;</string>
+    <string name="yv_reader_menu_sign_in">Prijavite se</string>
+    <string name="yv_reader_menu_sign_out">Odjavite se</string>
+    <string name="yv_theme_selected">Izabrano</string>
+    <string name="yv_verse_action_add_highlight">Dodajte %1$s isticanje</string>
+    <string name="yv_verse_action_copy">Kopirajte</string>
+    <string name="yv_verse_action_remove_highlight">Uklonite %1$s isticanje</string>
+    <string name="yv_verse_action_share">Podelite</string>
+</resources>
