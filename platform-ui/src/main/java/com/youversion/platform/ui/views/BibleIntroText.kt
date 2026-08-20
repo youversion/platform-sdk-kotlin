@@ -32,7 +32,7 @@ import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleTextCategory
 import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
-import com.youversion.platform.ui.views.rendering.hasLeadingTitle
+import com.youversion.platform.ui.views.rendering.hasLeadingBookTitle
 import kotlinx.coroutines.CancellationException
 
 /**
@@ -73,7 +73,7 @@ fun BibleIntroText(
     }
 
     LaunchedEffect(blocks) {
-        onHasOwnTitleChange(blocks.hasLeadingTitle())
+        onHasOwnTitleChange(blocks.hasLeadingBookTitle())
     }
 
     LaunchedEffect(versionId, bookUSFM, passageId, textOptions) {

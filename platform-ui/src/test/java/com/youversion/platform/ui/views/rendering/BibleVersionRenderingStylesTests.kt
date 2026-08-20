@@ -390,12 +390,12 @@ class BibleVersionRenderingStylesTests {
     }
 
     @Test
-    fun `interpretBlockClasses sets HEADER font and category for imt, imt1, imte, and imte1 classes`() {
+    fun `interpretBlockClasses sets HEADER font and BOOK_TITLE category for imt, imt1, imte, and imte1 classes`() {
         listOf("imt", "imt1", "imte", "imte1").forEach { className ->
             val stateDown = defaultStateDown()
             callInterpretBlock(listOf(className), stateDown = stateDown)
             assertEquals(BibleTextFontOption.HEADER, stateDown.currentFont)
-            assertEquals(BibleTextCategory.HEADER, stateDown.textCategory)
+            assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
             assertEquals(TextAlign.Center, stateDown.alignment)
         }
     }
@@ -461,7 +461,7 @@ class BibleVersionRenderingStylesTests {
             val stateDown = defaultStateDown()
             val margin = callInterpretBlock(listOf(className), stateDown = stateDown)
             assertEquals(BibleTextFontOption.HEADER_ITALIC, stateDown.currentFont)
-            assertEquals(BibleTextCategory.HEADER, stateDown.textCategory)
+            assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
             assertEquals(TextAlign.Center, stateDown.alignment)
             assertEquals(fonts.baseSize.value.dp / 2, margin)
         }
@@ -472,7 +472,7 @@ class BibleVersionRenderingStylesTests {
         val stateDown = defaultStateDown()
         val margin = callInterpretBlock(listOf("imt3"), stateDown = stateDown)
         assertEquals(BibleTextFontOption.HEADER3, stateDown.currentFont)
-        assertEquals(BibleTextCategory.HEADER, stateDown.textCategory)
+        assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
         assertEquals(TextAlign.Center, stateDown.alignment)
         assertEquals(fonts.baseSize.value.dp / 3, margin)
     }
@@ -482,7 +482,7 @@ class BibleVersionRenderingStylesTests {
         val stateDown = defaultStateDown()
         val margin = callInterpretBlock(listOf("imt4"), stateDown = stateDown)
         assertEquals(BibleTextFontOption.HEADER4, stateDown.currentFont)
-        assertEquals(BibleTextCategory.HEADER, stateDown.textCategory)
+        assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
         assertEquals(TextAlign.Center, stateDown.alignment)
         assertEquals(fonts.baseSize.value.dp / 3, margin)
     }
@@ -599,7 +599,9 @@ class BibleVersionRenderingStylesTests {
             val stateDown = defaultStateDown()
             callInterpretBlock(listOf("yv-h", className), stateDown = stateDown)
             assertEquals(expectedFont, stateDown.currentFont)
-            assertEquals(BibleTextCategory.HEADER, stateDown.textCategory)
+            val expectedCategory =
+                if (className.startsWith("imt")) BibleTextCategory.BOOK_TITLE else BibleTextCategory.HEADER
+            assertEquals(expectedCategory, stateDown.textCategory)
         }
     }
 

@@ -24,15 +24,21 @@ enum class BibleTextCategory {
     FOOTNOTE_IMAGE,
     FOOTNOTE_TEXT,
     HEADER,
+
+    /** A title naming the book itself, as opposed to a heading naming a section within it. */
+    BOOK_TITLE,
 }
 
 /**
- * Whether the passage opens with a title of its own, rather than with body text.
+ * Whether the passage opens with a book title of its own, which a host would otherwise duplicate
+ * with a heading of its own.
  *
- * Blocks that render as nothing are skipped, so a title hidden by
- * [com.youversion.platform.ui.views.BibleTextOptions.renderHeadlines] does not count.
+ * Section headings such as an intro's Outline or Introduction do not count: they name a section
+ * rather than the book, so a host heading above them is not a duplicate. Blocks that render as
+ * nothing are skipped, so a title hidden by
+ * [com.youversion.platform.ui.views.BibleTextOptions.renderHeadlines] does not count either.
  */
-internal fun List<BibleTextBlock>.hasLeadingTitle(): Boolean {
+internal fun List<BibleTextBlock>.hasLeadingBookTitle(): Boolean {
     val leadingBlock = firstOrNull { it.text.isNotBlank() || it.rows.isNotEmpty() } ?: return false
     return leadingBlock.rows.isEmpty() &&
         leadingBlock.text
@@ -40,5 +46,5 @@ internal fun List<BibleTextBlock>.hasLeadingTitle(): Boolean {
                 tag = BibleTextCategoryAttribute.NAME,
                 start = 0,
                 end = leadingBlock.text.length,
-            ).any { it.item == BibleTextCategory.HEADER.name }
+            ).any { it.item == BibleTextCategory.BOOK_TITLE.name }
 }

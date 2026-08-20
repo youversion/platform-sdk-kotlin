@@ -93,14 +93,14 @@ class BibleIntroTextTests {
         )
     }
 
-    private fun headerBlock(text: String): BibleTextBlock =
+    private fun bookTitleBlock(text: String): BibleTextBlock =
         BibleTextBlock(
             text =
                 buildAnnotatedString {
                     append(text)
                     addStringAnnotation(
                         tag = BibleTextCategoryAttribute.NAME,
-                        annotation = BibleTextCategory.HEADER.name,
+                        annotation = BibleTextCategory.BOOK_TITLE.name,
                         start = 0,
                         end = text.length,
                     )
@@ -645,7 +645,7 @@ class BibleIntroTextTests {
         coEvery {
             BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
         } coAnswers {
-            if (callCount.incrementAndGet() == 1) listOf(headerBlock("Genesis")) else secondLoad.await()
+            if (callCount.incrementAndGet() == 1) listOf(bookTitleBlock("Genesis")) else secondLoad.await()
         }
 
         composeTestRule.setContent {
@@ -672,7 +672,7 @@ class BibleIntroTextTests {
         coEvery {
             BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
         } answers {
-            if (callCount.incrementAndGet() == 1) listOf(headerBlock("Genesis")) else null
+            if (callCount.incrementAndGet() == 1) listOf(bookTitleBlock("Genesis")) else null
         }
 
         composeTestRule.setContent {

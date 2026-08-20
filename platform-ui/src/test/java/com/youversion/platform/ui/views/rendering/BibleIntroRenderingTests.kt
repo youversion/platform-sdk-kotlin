@@ -249,35 +249,23 @@ class BibleIntroRenderingTests {
                 </div>
                 """.trimIndent()
 
-            assertTrue(renderIntroBlocks(html).hasLeadingTitle())
+            assertTrue(renderIntroBlocks(html).hasLeadingBookTitle())
         }
 
     @Test
-    fun `intro blocks have a leading title when the intro opens with a section heading`() =
+    fun `intro blocks have no leading title when the intro opens with a section heading`() =
         runTest {
-            val html =
-                """
-                <div>
-                    <div class="is1"><span>Introduction</span></div>
-                    <div class="p">Intro paragraph text.</div>
-                </div>
-                """.trimIndent()
+            listOf("is1", "iot", "yv-h s1").forEach { className ->
+                val html =
+                    """
+                    <div>
+                        <div class="$className"><span>Introduction</span></div>
+                        <div class="p">Intro paragraph text.</div>
+                    </div>
+                    """.trimIndent()
 
-            assertTrue(renderIntroBlocks(html).hasLeadingTitle())
-        }
-
-    @Test
-    fun `intro blocks have a leading title when the intro opens with an outline title`() =
-        runTest {
-            val html =
-                """
-                <div>
-                    <div class="iot"><span>Outline</span></div>
-                    <div class="p">Intro paragraph text.</div>
-                </div>
-                """.trimIndent()
-
-            assertTrue(renderIntroBlocks(html).hasLeadingTitle())
+                assertFalse(renderIntroBlocks(html).hasLeadingBookTitle(), className)
+            }
         }
 
     @Test
@@ -291,7 +279,7 @@ class BibleIntroRenderingTests {
                 </div>
                 """.trimIndent()
 
-            assertFalse(renderIntroBlocks(html).hasLeadingTitle())
+            assertFalse(renderIntroBlocks(html).hasLeadingBookTitle())
         }
 
     @Test
@@ -300,12 +288,12 @@ class BibleIntroRenderingTests {
             val html =
                 """
                 <div>
-                    <div class="yv-h s1"><span>Introduction</span></div>
+                    <div class="yv-h imt1"><span>Matthew</span></div>
                     <div class="p">Intro paragraph text.</div>
                 </div>
                 """.trimIndent()
 
-            assertFalse(renderIntroBlocks(html, renderHeadlines = false).hasLeadingTitle())
+            assertFalse(renderIntroBlocks(html, renderHeadlines = false).hasLeadingBookTitle())
         }
 
     @Test
@@ -323,7 +311,7 @@ class BibleIntroRenderingTests {
                 </div>
                 """.trimIndent()
 
-            assertFalse(renderIntroBlocks(html).hasLeadingTitle())
+            assertFalse(renderIntroBlocks(html).hasLeadingBookTitle())
         }
 
     @Test

@@ -773,7 +773,10 @@ class StateUp(
                 start = start,
                 end = end,
             )
-            if (verse > 0 && category != BibleTextCategory.HEADER) {
+            if (verse > 0 &&
+                category != BibleTextCategory.HEADER &&
+                category != BibleTextCategory.BOOK_TITLE
+            ) {
                 addStringAnnotation(
                     tag = BibleReferenceAttribute.NAME,
                     annotation = "$versionId:$bookUSFM:$chapter:$verse",

@@ -206,21 +206,18 @@ internal fun interpretBlockClasses(
             }
 
             "iot" -> {
-                newTextCategory = BibleTextCategory.HEADER
                 newCurrentFont = BibleTextFontOption.TEXT_BOLD
                 newAlignment = TextAlign.Center
                 setMarginTop(stateIn.fonts.baseSize.value.dp / 3)
             }
 
             "is", "is1" -> {
-                newTextCategory = BibleTextCategory.HEADER
                 newCurrentFont = BibleTextFontOption.HEADER2
                 newAlignment = TextAlign.Center
                 setMarginTop(stateIn.fonts.baseSize.value.dp / 2)
             }
 
             "is2" -> {
-                newTextCategory = BibleTextCategory.HEADER
                 newCurrentFont = BibleTextFontOption.TEXT_BOLD
                 newAlignment = TextAlign.Center
                 setMarginTop(stateIn.fonts.baseSize.value.dp / 3)
@@ -239,27 +236,27 @@ internal fun interpretBlockClasses(
             }
 
             "imt", "imt1", "imte", "imte1" -> {
-                newTextCategory = BibleTextCategory.HEADER
+                newTextCategory = BibleTextCategory.BOOK_TITLE
                 newCurrentFont = BibleTextFontOption.HEADER
                 newAlignment = TextAlign.Center
             }
 
             "imt2", "imte2" -> {
-                newTextCategory = BibleTextCategory.HEADER
+                newTextCategory = BibleTextCategory.BOOK_TITLE
                 newCurrentFont = BibleTextFontOption.HEADER_ITALIC
                 newAlignment = TextAlign.Center
                 setMarginTop(stateIn.fonts.baseSize.value.dp / 2)
             }
 
             "imt3" -> {
-                newTextCategory = BibleTextCategory.HEADER
+                newTextCategory = BibleTextCategory.BOOK_TITLE
                 newCurrentFont = BibleTextFontOption.HEADER3
                 newAlignment = TextAlign.Center
                 setMarginTop(stateIn.fonts.baseSize.value.dp / 3)
             }
 
             "imt4" -> {
-                newTextCategory = BibleTextCategory.HEADER
+                newTextCategory = BibleTextCategory.BOOK_TITLE
                 newCurrentFont = BibleTextFontOption.HEADER4
                 newAlignment = TextAlign.Center
                 setMarginTop(stateIn.fonts.baseSize.value.dp / 3)
@@ -287,7 +284,12 @@ internal fun interpretBlockClasses(
                         "sr" to BibleTextFontOption.HEADER_ITALIC,
                         "mr" to BibleTextFontOption.HEADER_SMALLER,
                     )
-                newTextCategory = BibleTextCategory.HEADER
+                newTextCategory =
+                    if (classes.any { it.startsWith("imt") }) {
+                        BibleTextCategory.BOOK_TITLE
+                    } else {
+                        BibleTextCategory.HEADER
+                    }
                 setMarginTop(stateIn.fonts.baseSize.value.dp)
                 newCurrentFont = BibleTextFontOption.HEADER
 
