@@ -688,5 +688,33 @@ class BibleIntroTextTests {
         assertFalse(reported.last())
     }
 
+    @Test
+    fun `keeps the reported own title while a text option change reloads the same passage`() {
+        val reported = mutableListOf<Boolean>()
+        val textOptionsState = mutableStateOf(BibleTextOptions(fontSize = 16.sp))
+        val secondLoad = CompletableDeferred<List<BibleTextBlock>?>()
+        val callCount = AtomicInteger(0)
+
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
+        coEvery {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } coAnswers {
+            if (callCount.incrementAndGet() == 1) listOf(bookTitleBlock("Genesis")) else secondLoad.await()
+        }
+
+        composeTestRule.setContent {
+            val textOptions by remember { textOptionsState }
+            BibleIntroText(1, "GEN", "GEN.INTRO", textOptions, onHasOwnTitleChange = { reported.add(it) })
+        }
+        composeTestRule.waitForIdle()
+        assertTrue(reported.last())
+
+        textOptionsState.value = BibleTextOptions(fontSize = 24.sp)
+        composeTestRule.waitForIdle()
+
+        assertTrue(reported.last())
+    }
+
     // endregion
 }

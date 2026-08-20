@@ -76,11 +76,15 @@ fun BibleIntroText(
         onHasOwnTitleChange(blocks.hasLeadingBookTitle())
     }
 
+    // Drop the previous passage's blocks so the reported title flag never outlives the content it describes,
+    // including when the next load never produces blocks. A text option change re-renders the same passage, so it
+    // leaves the flag alone rather than flashing a host heading in mid-reload.
+    LaunchedEffect(versionId, bookUSFM, passageId) {
+        blocks = emptyList()
+    }
+
     LaunchedEffect(versionId, bookUSFM, passageId, textOptions) {
         loadingPhase = BibleTextLoadingPhase.LOADING
-        // Drop the previous passage's blocks so the reported title flag never outlives the content it describes,
-        // including when this load never produces blocks.
-        blocks = emptyList()
         try {
             val version = versionRepository.version(versionId)
             isVersionRightToLeft = version.isRightToLeft
