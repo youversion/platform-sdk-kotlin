@@ -1,3 +1,10 @@
+## [1.8.4](https://github.com/youversion/platform-sdk-kotlin/compare/1.8.3...1.8.4) (2026-08-20)
+
+
+### Bug Fixes
+
+* **reader:** remove duplicate intro chapter headers (YPE-1654) ([6bd95e4](https://github.com/youversion/platform-sdk-kotlin/commit/6bd95e4fb2f999844cc657eb881499e835389d4d))
+
 ## [1.8.3](https://github.com/youversion/platform-sdk-kotlin/compare/1.8.2...1.8.3) (2026-08-19)
 
 
