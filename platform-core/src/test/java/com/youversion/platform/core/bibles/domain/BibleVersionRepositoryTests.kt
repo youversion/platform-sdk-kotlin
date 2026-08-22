@@ -6,6 +6,7 @@ import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import com.youversion.platform.helpers.FixtureLoader
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
@@ -855,6 +856,32 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
 
             repository.clearVersionListings()
             repository.permittedVersionsListing()
+            assertEquals(2, requestCount.load())
+        }
+
+    /**
+     * Exercises the configure() side of the invalidation: reconfiguring with a different
+     * excludedVersionIds must clear the memoized listing, so this resolves the Koin singleton that
+     * configure() clears rather than the hand-built [repository] the other tests use.
+     */
+    @OptIn(ExperimentalAtomicApi::class)
+    @Test
+    fun `test reconfiguring with a changed excludedVersionIds refetches permittedVersionsListing`() =
+        runTest {
+            val requestCount = AtomicInt(0)
+            MockEngine { _ ->
+                requestCount.incrementAndFetch()
+                respondJson(PERMITTED_VERSIONS_JSON)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+            val configuredRepository = PlatformCoreKoinComponent.bibleVersionRepository
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            assertEquals(listOf(12, 206), configuredRepository.permittedVersionsListing().map { it.id })
+            assertEquals(1, requestCount.load())
+
+            YouVersionPlatformConfiguration.configure(appKey = "app", excludedVersionIds = setOf(206))
+
+            assertEquals(listOf(12), configuredRepository.permittedVersionsListing().map { it.id })
             assertEquals(2, requestCount.load())
         }
 
