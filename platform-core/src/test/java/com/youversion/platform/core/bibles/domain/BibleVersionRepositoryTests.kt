@@ -885,6 +885,28 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
             assertEquals(2, requestCount.load())
         }
 
+    /** Pins the guard that only clears when a filter actually changed, so an unchanged reconfigure is free. */
+    @OptIn(ExperimentalAtomicApi::class)
+    @Test
+    fun `test reconfiguring with an unchanged excludedVersionIds keeps the memoized permittedVersionsListing`() =
+        runTest {
+            val requestCount = AtomicInt(0)
+            MockEngine { _ ->
+                requestCount.incrementAndFetch()
+                respondJson(PERMITTED_VERSIONS_JSON)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+            val configuredRepository = PlatformCoreKoinComponent.bibleVersionRepository
+
+            YouVersionPlatformConfiguration.configure(appKey = "app", excludedVersionIds = setOf(206))
+            assertEquals(listOf(12), configuredRepository.permittedVersionsListing().map { it.id })
+            assertEquals(1, requestCount.load())
+
+            YouVersionPlatformConfiguration.configure(appKey = "app", excludedVersionIds = setOf(206))
+
+            assertEquals(listOf(12), configuredRepository.permittedVersionsListing().map { it.id })
+            assertEquals(1, requestCount.load())
+        }
+
     @OptIn(ExperimentalAtomicApi::class)
     @Test
     fun `test clearVersionListings forces a refetch of fullVersions`() =
