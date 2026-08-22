@@ -131,8 +131,9 @@ class BibleVersionRepository(
 
     /**
      * Clears the in-memory listings of versions returned by [permittedVersionsListing] and [fullVersions].
-     * Call this when the configured [YouVersionPlatformConfiguration.permittedLanguageTags] or
-     * [YouVersionPlatformConfiguration.permittedVersionIds] change so callers do not receive stale
+     * Call this when the configured [YouVersionPlatformConfiguration.permittedLanguageTags],
+     * [YouVersionPlatformConfiguration.permittedVersionIds] or
+     * [YouVersionPlatformConfiguration.excludedVersionIds] change so callers do not receive stale
      * filtered results from a previous configuration.
      *
      * Reassigns rather than mutates the language-keyed map so a fetch already running under
@@ -176,11 +177,15 @@ class BibleVersionRepository(
 }
 
 /**
- * Returns true when this version satisfies the configured [YouVersionPlatformConfiguration.permittedLanguageTags]
- * and [YouVersionPlatformConfiguration.permittedVersionIds] filters. A `null` filter means
- * "no restriction" on that dimension.
+ * Returns true when this version satisfies the configured
+ * [YouVersionPlatformConfiguration.excludedVersionIds],
+ * [YouVersionPlatformConfiguration.permittedLanguageTags] and
+ * [YouVersionPlatformConfiguration.permittedVersionIds] filters. A `null` allowlist means
+ * "no restriction" on that dimension; an exclusion always wins over
+ * [YouVersionPlatformConfiguration.permittedVersionIds].
  */
 private fun BibleVersion.isPermittedByConfiguration(): Boolean {
+    if (id in YouVersionPlatformConfiguration.excludedVersionIds) return false
     YouVersionPlatformConfiguration.permittedLanguageTags?.let { permittedTags ->
         if (languageTag == null || languageTag !in permittedTags) return false
     }

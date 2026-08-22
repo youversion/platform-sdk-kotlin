@@ -65,13 +65,21 @@ object YouVersionPlatformConfiguration {
         get() = config?.permittedLanguageTags
 
     /**
-     * When set, only Bible versions whose `id` is in this set are made available in the
-     * version picker UI and other version listings. When `null` (the default), all versions
-     * are available. Combines with [permittedLanguageTags] — a version must satisfy both
-     * filters to be available.
+     * When set, Bible versions whose `id` is not in this set are withheld from the version picker UI
+     * and other version listings. When `null` (the default), no version is withheld on this basis.
+     * Combines with [permittedLanguageTags] — a version must satisfy both filters to be available —
+     * and is overruled by [excludedVersionIds], so an id named by both is not available.
      */
     val permittedVersionIds: Set<Int>?
         get() = config?.permittedVersionIds
+
+    /**
+     * Bible version IDs to withhold from the version picker UI, other version listings, and automatic
+     * fallbacks. Empty by default, which withholds nothing. Takes precedence over
+     * [permittedVersionIds].
+     */
+    val excludedVersionIds: Set<Int>
+        get() = config?.excludedVersionIds.orEmpty()
 
     /**
      * Whether the SDK may offer to sign the user in to YouVersion.
@@ -105,6 +113,7 @@ object YouVersionPlatformConfiguration {
         hostEnv: String? = null,
         permittedLanguageTags: Set<String>? = null,
         permittedVersionIds: Set<Int>? = null,
+        excludedVersionIds: Set<Int> = emptySet(),
         isSignInEnabled: Boolean = true,
         appName: String? = null,
         signInPromptMessage: String? = null,
@@ -130,6 +139,7 @@ object YouVersionPlatformConfiguration {
             hostEnv = hostEnv,
             permittedLanguageTags = permittedLanguageTags,
             permittedVersionIds = permittedVersionIds,
+            excludedVersionIds = excludedVersionIds,
             isSignInEnabled = isSignInEnabled,
             appName = appName,
             signInPromptMessage = signInPromptMessage,
@@ -147,6 +157,7 @@ object YouVersionPlatformConfiguration {
         hostEnv: String? = null,
         permittedLanguageTags: Set<String>? = null,
         permittedVersionIds: Set<Int>? = null,
+        excludedVersionIds: Set<Int> = emptySet(),
         isSignInEnabled: Boolean = true,
         appName: String? = null,
         signInPromptMessage: String? = null,
@@ -184,6 +195,7 @@ object YouVersionPlatformConfiguration {
                 expiryDate = expiryDate ?: sessionRepository.expiryDate.takeIf { keepsStoredSession },
                 permittedLanguageTags = permittedLanguageTags,
                 permittedVersionIds = permittedVersionIds,
+                excludedVersionIds = excludedVersionIds,
                 grantedPermissions = sessionRepository.grantedPermissionValues.toGrantedPermissions(),
                 isSignInEnabled = isSignInEnabled,
                 appName = appName,
@@ -197,7 +209,8 @@ object YouVersionPlatformConfiguration {
             previousConfig != null &&
                 (
                     previousConfig.permittedLanguageTags != permittedLanguageTags ||
-                        previousConfig.permittedVersionIds != permittedVersionIds
+                        previousConfig.permittedVersionIds != permittedVersionIds ||
+                        previousConfig.excludedVersionIds != excludedVersionIds
                 )
         if (filtersChanged) {
             PlatformCoreKoinComponent.bibleVersionRepository.clearVersionListings()
@@ -432,6 +445,7 @@ data class Config(
     val expiryDate: Date?,
     val permittedLanguageTags: Set<String>? = null,
     val permittedVersionIds: Set<Int>? = null,
+    val excludedVersionIds: Set<Int> = emptySet(),
     val grantedPermissions: Set<SignInWithYouVersionPermission> = emptySet(),
     val isSignInEnabled: Boolean = true,
     val appName: String? = null,
