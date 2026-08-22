@@ -773,6 +773,22 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
         }
 
     @Test
+    fun `test permittedVersions excludes ids in excludedVersionIds even when permittedVersionIds allows them`() =
+        runTest {
+            MockEngine { _ -> respondJson(MULTI_LANG_PERMITTED_VERSIONS_JSON) }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(
+                appKey = "app",
+                permittedVersionIds = setOf(206, 1588),
+                excludedVersionIds = setOf(206),
+            )
+
+            val versions = repository.permittedVersions()
+            assertEquals(listOf(1588), versions.map { it.id })
+        }
+
+    @Test
     fun `test permittedVersions excludes versions with null languageTag when permittedLanguageTags is set`() =
         runTest {
             MockEngine { _ ->

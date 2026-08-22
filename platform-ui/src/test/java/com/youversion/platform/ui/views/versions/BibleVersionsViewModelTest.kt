@@ -71,7 +71,8 @@ class BibleVersionsViewModelTest {
         // back to a clean baseline so subsequent tests do not see leftover filters, then stop Koin
         // so state does not leak into other test classes sharing the JVM.
         if (YouVersionPlatformConfiguration.permittedLanguageTags != null ||
-            YouVersionPlatformConfiguration.permittedVersionIds != null
+            YouVersionPlatformConfiguration.permittedVersionIds != null ||
+            YouVersionPlatformConfiguration.excludedVersionIds.isNotEmpty()
         ) {
             val context = ApplicationProvider.getApplicationContext<Context>()
             YouVersionPlatformConfiguration.configure(context = context, appKey = "test")
@@ -98,6 +99,7 @@ class BibleVersionsViewModelTest {
     private fun configureFilters(
         permittedLanguageTags: Set<String>? = null,
         permittedVersionIds: Set<Int>? = null,
+        excludedVersionIds: Set<Int> = emptySet(),
     ) {
         val context = ApplicationProvider.getApplicationContext<Context>()
         YouVersionPlatformConfiguration.configure(
@@ -105,6 +107,7 @@ class BibleVersionsViewModelTest {
             appKey = "test",
             permittedLanguageTags = permittedLanguageTags,
             permittedVersionIds = permittedVersionIds,
+            excludedVersionIds = excludedVersionIds,
         )
     }
 
@@ -180,6 +183,21 @@ class BibleVersionsViewModelTest {
             advanceUntilIdle()
 
             assertEquals(permitted, received)
+        }
+
+    @Test
+    fun `selectFallbackVersion skips downloaded versions in excludedVersionIds`() =
+        runTest(testDispatcher) {
+            configureFilters(excludedVersionIds = setOf(77))
+            val allowed = BibleVersion(id = 88, abbreviation = "A", languageTag = "en")
+            every { bibleVersionRepository.downloadedVersions } returns listOf(77, 88)
+            coEvery { bibleVersionRepository.version(id = 88) } returns allowed
+
+            var received: BibleVersion? = null
+            createViewModel(initialVersionId = null, onVersionChange = { received = it })
+            advanceUntilIdle()
+
+            assertEquals(allowed, received)
         }
 
     @Test

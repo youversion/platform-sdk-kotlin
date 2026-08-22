@@ -247,6 +247,20 @@ YouVersionPlatformConfiguration.configure(
 
 IDs are the YouVersion Bible version IDs (e.g. `111` for NIV, `1588` for AMP). Combines with `permittedLanguageTags` — a version must satisfy both filters to be shown.
 
+#### Excluding Specific Versions
+
+To withhold particular Bible versions while leaving everything else available, pass `excludedVersionIds` during configuration:
+
+```kotlin
+YouVersionPlatformConfiguration.configure(
+    context = this,
+    appKey = "YOUR_APP_KEY_HERE",
+    excludedVersionIds = setOf(206),
+)
+```
+
+Excluded versions are withheld from the version picker, other version listings, and automatic fallbacks. Exclusion takes precedence over `permittedVersionIds` — a version named by both is not shown.
+
 ### Displaying Verse of the Day
 
 Use the built-in VOTD component:
