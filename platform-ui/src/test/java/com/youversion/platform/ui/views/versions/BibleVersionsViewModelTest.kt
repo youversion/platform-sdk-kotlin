@@ -186,6 +186,22 @@ class BibleVersionsViewModelTest {
         }
 
     @Test
+    fun `loadVersion falls back when initialVersionId is in excludedVersionIds`() =
+        runTest(testDispatcher) {
+            configureFilters(excludedVersionIds = setOf(42))
+            val allowed = BibleVersion(id = 88, abbreviation = "A", languageTag = "en")
+            every { bibleVersionRepository.downloadedVersions } returns listOf(88)
+            coEvery { bibleVersionRepository.version(id = 88) } returns allowed
+
+            var received: BibleVersion? = null
+            createViewModel(initialVersionId = 42, onVersionChange = { received = it })
+            advanceUntilIdle()
+
+            assertEquals(allowed, received)
+            coVerify(exactly = 0) { bibleVersionRepository.version(id = 42) }
+        }
+
+    @Test
     fun `selectFallbackVersion skips downloaded versions in excludedVersionIds`() =
         runTest(testDispatcher) {
             configureFilters(excludedVersionIds = setOf(77))

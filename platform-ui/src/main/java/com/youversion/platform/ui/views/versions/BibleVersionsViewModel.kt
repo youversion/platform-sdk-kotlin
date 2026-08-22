@@ -40,7 +40,7 @@ class BibleVersionsViewModel(
 
     private suspend fun loadVersion(versionId: Int?) {
         var loadedVersion: BibleVersion? = null
-        if (versionId != null) {
+        if (versionId != null && versionId !in YouVersionPlatformConfiguration.excludedVersionIds) {
             try {
                 loadedVersion = bibleVersionRepository.version(id = versionId)
             } catch (e: CancellationException) {
