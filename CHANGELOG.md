@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.8.4...1.9.0) (2026-08-24)
+
+
+### Features
+
+* **core:** add excluded version ids configuration option ([4010532](https://github.com/youversion/platform-sdk-kotlin/commit/4010532ca4c522ad758beaf3f2743123b4e0b658))
+
 ## [1.8.4](https://github.com/youversion/platform-sdk-kotlin/compare/1.8.3...1.8.4) (2026-08-20)
 
 
