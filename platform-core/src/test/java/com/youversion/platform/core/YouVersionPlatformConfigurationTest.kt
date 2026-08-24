@@ -81,16 +81,27 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     }
 
     @Test
-    fun `configure sets permittedLanguageTags and permittedVersionIds when provided`() {
+    fun `excludedVersionIds defaults to an empty set`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+
+            assertEquals(emptySet(), excludedVersionIds)
+        }
+    }
+
+    @Test
+    fun `configure sets permittedLanguageTags, permittedVersionIds and excludedVersionIds when provided`() {
         with(YouVersionPlatformConfiguration) {
             configure(
                 appKey = "appKey",
                 permittedLanguageTags = setOf("en", "es"),
                 permittedVersionIds = setOf(111, 1588),
+                excludedVersionIds = setOf(206),
             )
 
             assertEquals(setOf("en", "es"), permittedLanguageTags)
             assertEquals(setOf(111, 1588), permittedVersionIds)
+            assertEquals(setOf(206), excludedVersionIds)
         }
     }
 
