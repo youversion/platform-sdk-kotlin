@@ -18,8 +18,11 @@ import com.youversion.platform.helpers.testInvalidResponse
 import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.headersOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -120,6 +123,32 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
             assertNull(cached)
         }
 
+    @Test
+    fun `test versionIfCached promotion from temporary cache carries expiration into memory`() =
+        runTest {
+            val expiresAt = System.currentTimeMillis() + 60_000
+            temporaryCache.addVersion(BibleVersion(id = 111, abbreviation = "TEMP"), expiresAt)
+
+            repository.versionIfCached(111)
+
+            assertEquals(expiresAt, memoryCache.version(111)?.expiresAt)
+        }
+
+    @Test
+    fun `test versionIfCached promotion from persistent cache stores no expiration in memory`() =
+        runTest {
+            persistentCache.addVersion(
+                BibleVersion(id = 111, abbreviation = "PERS"),
+                System.currentTimeMillis() + 60_000,
+            )
+
+            repository.versionIfCached(111)
+
+            val promoted = memoryCache.version(111)
+            assertEquals("PERS", promoted?.value?.abbreviation)
+            assertNull(promoted?.expiresAt)
+        }
+
     // ----- version
     @Test
     fun `test version returns a cached version`() =
@@ -131,7 +160,8 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
 
             val version = repository.version(111)
             assertEquals(111, version.id)
-            assertFalse(memoryCache.versionIsPresent(111))
+            // Persistent hit is promoted into memory only; persistent still holds its own copy
+            assertTrue(memoryCache.versionIsPresent(111))
             assertFalse(temporaryCache.versionIsPresent(111))
             assertTrue(persistentCache.versionIsPresent(111))
         }
@@ -154,7 +184,32 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
             assertEquals(206, version.id)
             assertTrue { memoryCache.versionIsPresent(206) }
             assertTrue { temporaryCache.versionIsPresent(206) }
-            assertTrue { persistentCache.versionIsPresent(206) }
+            // Persistent tier is downloads-only, never written by a fetch
+            assertFalse { persistentCache.versionIsPresent(206) }
+        }
+
+    @Test
+    fun `test version fetched with no-store is not written to the temporary cache`() =
+        runTest {
+            MockEngine { request ->
+                val bible206Json = FixtureLoader().loadFixtureString("bible_206")
+                val bible206IndexJson = FixtureLoader().loadFixtureString("bible_206_index")
+                val headers =
+                    headersOf(
+                        HttpHeaders.ContentType to listOf(ContentType.Application.Json.toString()),
+                        HttpHeaders.CacheControl to listOf("no-store"),
+                    )
+                when (request.url.encodedPath) {
+                    "/v1/bibles/206" -> respond(bible206Json, headers = headers)
+                    "/v1/bibles/206/index" -> respond(bible206IndexJson, headers = headers)
+                    else -> throw IllegalArgumentException("Unexpected request path: ${request.url.encodedPath}")
+                }
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            repository.version(206)
+
+            assertTrue { memoryCache.versionIsPresent(206) }
+            assertFalse { temporaryCache.versionIsPresent(206) }
         }
 
     @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
@@ -493,6 +548,58 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
             assertFalse(memoryCache.versionIsPresent(999))
             assertFalse(temporaryCache.versionIsPresent(999))
             assertFalse(persistentCache.versionIsPresent(999))
+        }
+
+    // ----- removeExpiredContent
+
+    @Test
+    fun `test removeExpiredContent removes expired entries from all caches`() =
+        runTest {
+            val expired = BibleVersion(id = 111, abbreviation = "OLD")
+            val fresh = BibleVersion(id = 206, abbreviation = "NEW")
+            listOf(memoryCache, temporaryCache, persistentCache).forEach { cache ->
+                cache.addVersion(expired, expiresAt = 1L)
+                cache.addVersion(fresh)
+                assertTrue(cache.versionIsPresent(111))
+            }
+
+            repository.removeExpiredContent()
+
+            listOf(memoryCache, temporaryCache, persistentCache).forEach { cache ->
+                assertFalse(cache.versionIsPresent(111))
+                assertTrue(cache.versionIsPresent(206))
+            }
+        }
+
+    @Test
+    fun `test removeUnpermittedVersions also removes permitted but expired versions`() =
+        runTest {
+            memoryCache.addVersion(BibleVersion(id = 111, abbreviation = "NIV"), expiresAt = 1L)
+
+            repository.removeUnpermittedVersions(setOf(111))
+
+            assertFalse(memoryCache.versionIsPresent(111))
+        }
+
+    @Test
+    fun `test removeUnpermittedVersions also removes configured excludedVersionIds`() =
+        runTest {
+            startYouVersionPlatformTest()
+            YouVersionPlatformConfiguration.configure(appKey = "app", excludedVersionIds = setOf(206))
+
+            val permitted = BibleVersion(id = 111, abbreviation = "NIV")
+            val excluded = BibleVersion(id = 206, abbreviation = "WEBUS")
+            listOf(memoryCache, temporaryCache, persistentCache).forEach { cache ->
+                cache.addVersion(permitted)
+                cache.addVersion(excluded)
+            }
+
+            repository.removeUnpermittedVersions(setOf(111, 206))
+
+            listOf(memoryCache, temporaryCache, persistentCache).forEach { cache ->
+                assertTrue(cache.versionIsPresent(111))
+                assertFalse(cache.versionIsPresent(206))
+            }
         }
 
     // ----- chaptersArePresent

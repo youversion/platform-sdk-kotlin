@@ -18,7 +18,9 @@ import kotlin.test.assertTrue
 
 private class TestBibleVersionFileCache(
     override val rootDir: File,
-) : BibleVersionFileCache()
+    isExpiring: Boolean = false,
+    now: () -> Long = System::currentTimeMillis,
+) : BibleVersionFileCache(isExpiring, now)
 
 class BibleVersionFileCacheTests {
     private lateinit var tempDir: File
@@ -26,6 +28,10 @@ class BibleVersionFileCacheTests {
 
     private val testVersion = BibleVersion(id = 111, abbreviation = "NIV", title = "New International Version")
     private val testReference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verse = 1)
+
+    private var currentTime = 1_000L
+
+    private fun expiringCache() = TestBibleVersionFileCache(tempDir, isExpiring = true, now = { currentTime })
 
     @BeforeTest
     fun setup() {
@@ -76,9 +82,9 @@ class BibleVersionFileCacheTests {
 
             assertTrue(cache.versionIsPresent(111))
             val retrieved = cache.version(111)
-            assertEquals(111, retrieved?.id)
-            assertEquals("NIV", retrieved?.abbreviation)
-            assertEquals("New International Version", retrieved?.title)
+            assertEquals(111, retrieved?.value?.id)
+            assertEquals("NIV", retrieved?.value?.abbreviation)
+            assertEquals("New International Version", retrieved?.value?.title)
         }
 
     @Test
@@ -96,8 +102,8 @@ class BibleVersionFileCacheTests {
             cache.addVersion(updated)
 
             val retrieved = cache.version(111)
-            assertEquals("NIV2", retrieved?.abbreviation)
-            assertEquals("Updated", retrieved?.title)
+            assertEquals("NIV2", retrieved?.value?.abbreviation)
+            assertEquals("Updated", retrieved?.value?.title)
         }
 
     // ----- Add and retrieve chapter content
@@ -109,7 +115,7 @@ class BibleVersionFileCacheTests {
             cache.addChapterContents(content, testReference)
 
             val retrieved = cache.chapterContent(testReference)
-            assertEquals(content, retrieved)
+            assertEquals(content, retrieved?.value)
         }
 
     @Test
@@ -125,7 +131,7 @@ class BibleVersionFileCacheTests {
             cache.addChapterContents("original", testReference)
             cache.addChapterContents("updated", testReference)
 
-            assertEquals("updated", cache.chapterContent(testReference))
+            assertEquals("updated", cache.chapterContent(testReference)?.value)
         }
 
     @Test
@@ -134,7 +140,7 @@ class BibleVersionFileCacheTests {
             cache.addChapterContents("", testReference)
 
             val retrieved = cache.chapterContent(testReference)
-            assertEquals("", retrieved)
+            assertEquals("", retrieved?.value)
         }
 
     // ----- removeVersion
@@ -158,7 +164,7 @@ class BibleVersionFileCacheTests {
 
             assertFalse(cache.versionIsPresent(111))
             assertTrue(cache.chaptersArePresent(111))
-            assertEquals("content", cache.chapterContent(testReference))
+            assertEquals("content", cache.chapterContent(testReference)?.value)
         }
 
     @Test
@@ -356,8 +362,8 @@ class BibleVersionFileCacheTests {
             cache.addChapterContents("Genesis 1 content", gen1)
             cache.addChapterContents("Genesis 2 content", gen2)
 
-            assertEquals("Genesis 1 content", cache.chapterContent(gen1))
-            assertEquals("Genesis 2 content", cache.chapterContent(gen2))
+            assertEquals("Genesis 1 content", cache.chapterContent(gen1)?.value)
+            assertEquals("Genesis 2 content", cache.chapterContent(gen2)?.value)
         }
 
     @Test
@@ -369,8 +375,8 @@ class BibleVersionFileCacheTests {
             cache.addChapterContents("NIV Genesis 1", refV111)
             cache.addChapterContents("KJV Genesis 1", refV222)
 
-            assertEquals("NIV Genesis 1", cache.chapterContent(refV111))
-            assertEquals("KJV Genesis 1", cache.chapterContent(refV222))
+            assertEquals("NIV Genesis 1", cache.chapterContent(refV111)?.value)
+            assertEquals("KJV Genesis 1", cache.chapterContent(refV222)?.value)
         }
 
     @Test
@@ -382,7 +388,7 @@ class BibleVersionFileCacheTests {
             cache.addVersion(testVersion)
 
             assertTrue(cache.versionIsPresent(111))
-            assertEquals("content", cache.chapterContent(testReference))
+            assertEquals("content", cache.chapterContent(testReference)?.value)
         }
 
     // ----- chaptersArePresent edge cases
@@ -394,5 +400,81 @@ class BibleVersionFileCacheTests {
             File(File(tempDir, "bible_111"), "chapters").mkdir()
 
             assertFalse(cache.chaptersArePresent(111))
+        }
+
+    // ----- Expiration
+
+    @Test
+    fun `test expiring cache writes expiration sidecars on add`() =
+        runTest {
+            val cache = expiringCache()
+            cache.addVersion(testVersion, expiresAt = 5_000)
+            cache.addChapterContents("content", testReference, expiresAt = 6_000)
+
+            assertEquals("5000", File(tempDir, "bible_111/metadata.json.expiration").readText())
+            assertEquals("6000", File(tempDir, "bible_111/chapters/GEN.1.expiration").readText())
+        }
+
+    @Test
+    fun `test expiring cache returns unexpired entry with its expiration`() =
+        runTest {
+            val cache = expiringCache()
+            cache.addVersion(testVersion, expiresAt = 5_000)
+
+            val retrieved = cache.version(111)
+            assertEquals(111, retrieved?.value?.id)
+            assertEquals(5_000, retrieved?.expiresAt)
+        }
+
+    @Test
+    fun `test expiring cache evicts expired entry on read`() =
+        runTest {
+            val cache = expiringCache()
+            cache.addChapterContents("content", testReference, expiresAt = 5_000)
+
+            currentTime = 5_000
+
+            assertNull(cache.chapterContent(testReference))
+            assertFalse(File(tempDir, "bible_111/chapters/GEN.1").exists())
+            assertFalse(File(tempDir, "bible_111/chapters/GEN.1.expiration").exists())
+        }
+
+    @Test
+    fun `test expiring cache treats entry without sidecar as expired`() =
+        runTest {
+            val cache = expiringCache()
+            cache.addVersion(testVersion)
+
+            assertNull(cache.version(111))
+        }
+
+    @Test
+    fun `test removeExpiredEntries evicts expired entries and keeps unexpired ones`() =
+        runTest {
+            val cache = expiringCache()
+            val gen2 = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 2, verse = 1)
+            cache.addVersion(testVersion, expiresAt = 2_000)
+            cache.addChapterContents("expired chapter", testReference, expiresAt = 2_000)
+            cache.addChapterContents("fresh chapter", gen2, expiresAt = 9_000)
+
+            currentTime = 3_000
+            cache.removeExpiredEntries()
+
+            assertFalse(cache.versionIsPresent(111))
+            assertNull(cache.chapterContent(testReference))
+            assertEquals("fresh chapter", cache.chapterContent(gen2)?.value)
+        }
+
+    @Test
+    fun `test removeExpiredEntries is a no-op for non-expiring cache`() =
+        runTest {
+            cache.addVersion(testVersion)
+            cache.addChapterContents("content", testReference)
+
+            cache.removeExpiredEntries()
+
+            assertEquals(111, cache.version(111)?.value?.id)
+            assertNull(cache.version(111)?.expiresAt)
+            assertEquals("content", cache.chapterContent(testReference)?.value)
         }
 }

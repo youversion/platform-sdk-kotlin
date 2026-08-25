@@ -31,9 +31,9 @@ interface BibleVersionCache {
      * ```
      *
      * @param id The ID of the version to retrieve.
-     * @return The [BibleVersion] if found, or null if not found.
+     * @return The [BibleVersion] and its expiration if found, or null if not found or expired.
      */
-    suspend fun version(id: Int): BibleVersion?
+    suspend fun version(id: Int): CachedBibleContent<BibleVersion>?
 
     /**
      * Retrieves chapter content from the cache.
@@ -47,26 +47,32 @@ interface BibleVersionCache {
      * ```
      *
      * @param reference The [BibleReference] for the chapter.
-     * @return The chapter's content, or null if not found.
+     * @return The chapter's content and its expiration, or null if not found or expired.
      */
-    suspend fun chapterContent(reference: BibleReference): String?
+    suspend fun chapterContent(reference: BibleReference): CachedBibleContent<String>?
 
     /**
      * Adds a [BibleVersion] to the cache.
      *
      * @param version The [BibleVersion] to add.
+     * @param expiresAt When the entry expires, as epoch milliseconds, or null to never expire.
      */
-    suspend fun addVersion(version: BibleVersion)
+    suspend fun addVersion(
+        version: BibleVersion,
+        expiresAt: Long? = null,
+    )
 
     /**
      * Adds chapter content to the cache.
      *
      * @param content The chapter content to add.
      * @param reference The [BibleReference] for the chapter.
+     * @param expiresAt When the entry expires, as epoch milliseconds, or null to never expire.
      */
     suspend fun addChapterContents(
         content: String,
         reference: BibleReference,
+        expiresAt: Long? = null,
     )
 
     /**
@@ -90,6 +96,11 @@ interface BibleVersionCache {
      * @param permittedIds A set of IDs for [BibleVersion]s that are allowed to remain in the cache.
      */
     suspend fun removeUnpermittedVersions(permittedIds: Set<Int>)
+
+    /**
+     * Removes every entry whose expiration time has passed.
+     */
+    suspend fun removeExpiredEntries()
 
     /**
      * Checks if a [BibleVersion] is present in the cache.

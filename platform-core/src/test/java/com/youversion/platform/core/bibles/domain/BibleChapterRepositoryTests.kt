@@ -71,7 +71,7 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
             val chapter = repository.chapter(reference)
             assertEquals(contents, chapter)
 
-            assertEquals(contents, memoryCache.chapterContent(reference))
+            assertEquals(contents, memoryCache.chapterContent(reference)?.value)
         }
 
     @Test
@@ -85,7 +85,32 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
             val chapter = repository.chapter(reference)
             assertEquals(contents, chapter)
 
-            assertEquals(contents, memoryCache.chapterContent(reference))
+            assertEquals(contents, memoryCache.chapterContent(reference)?.value)
+        }
+
+    @Test
+    fun `test chapter promotion from temporary cache carries expiration into memory`() =
+        runTest {
+            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+            val expiresAt = System.currentTimeMillis() + 60_000
+            temporaryCache.addChapterContents("contents", reference, expiresAt)
+
+            repository.chapter(reference)
+
+            assertEquals(expiresAt, memoryCache.chapterContent(reference)?.expiresAt)
+        }
+
+    @Test
+    fun `test chapter promotion from persistent cache stores no expiration in memory`() =
+        runTest {
+            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+            persistentCache.addChapterContents("contents", reference, System.currentTimeMillis() + 60_000)
+
+            repository.chapter(reference)
+
+            val promoted = memoryCache.chapterContent(reference)
+            assertEquals("contents", promoted?.value)
+            assertNull(promoted?.expiresAt)
         }
 
     @Test
@@ -107,9 +132,9 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
             val chapter = repository.chapter(reference)
             assertEquals("content", chapter)
 
-            assertEquals("content", memoryCache.chapterContent(reference))
-            assertEquals("content", temporaryCache.chapterContent(reference))
-            assertEquals("content", persistentCache.chapterContent(reference))
+            assertEquals("content", memoryCache.chapterContent(reference)?.value)
+            assertEquals("content", temporaryCache.chapterContent(reference)?.value)
+            assertNull(persistentCache.chapterContent(reference))
         }
 
     @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
@@ -163,9 +188,9 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
             temporaryCache.addChapterContents(contents, reference)
             persistentCache.addChapterContents(contents, reference)
 
-            assertEquals("In the beginning...", memoryCache.chapterContent(reference))
-            assertEquals("In the beginning...", temporaryCache.chapterContent(reference))
-            assertEquals("In the beginning...", persistentCache.chapterContent(reference))
+            assertEquals("In the beginning...", memoryCache.chapterContent(reference)?.value)
+            assertEquals("In the beginning...", temporaryCache.chapterContent(reference)?.value)
+            assertEquals("In the beginning...", persistentCache.chapterContent(reference)?.value)
 
             repository.removeVersionChapters(206)
 

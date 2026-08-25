@@ -69,6 +69,37 @@ class BibleIntroRepositoryTests : YouVersionPlatformTest {
             assertEquals(1, count.load())
         }
 
+    @OptIn(ExperimentalAtomicApi::class)
+    @Test
+    fun `test introContent refetches after cached content expires`() =
+        runTest {
+            val count = AtomicInt(0)
+
+            MockEngine {
+                count.incrementAndFetch()
+                respondJson(
+                    """
+                    {
+                        "id": "GEN.INTRO",
+                        "content": "<html>intro</html>",
+                        "reference": "Genesis Intro"
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            var currentTime = System.currentTimeMillis()
+            val repository = BibleIntroRepository(now = { currentTime })
+
+            repository.introContent(206, "GEN.INTRO")
+            repository.introContent(206, "GEN.INTRO")
+            assertEquals(1, count.load())
+
+            currentTime += 8L * 24 * 60 * 60 * 1000
+            repository.introContent(206, "GEN.INTRO")
+            assertEquals(2, count.load())
+        }
+
     @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
     @Test
     fun `test concurrent calls deduplicate into a single network request`() =

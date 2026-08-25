@@ -1,7 +1,8 @@
 package com.youversion.platform.core.bibles.domain
 
 import co.touchlab.kermit.Logger
-import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.bibles.api.BiblesEndpoints
+import com.youversion.platform.core.bibles.data.CachedBibleContent
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.sync.Mutex
@@ -14,8 +15,10 @@ import kotlinx.coroutines.sync.withLock
  * a numeric chapter >= 1), so this repository fetches passages by their
  * string passage ID (e.g., "GEN.INTRO") directly.
  */
-class BibleIntroRepository {
-    private val introCache = mutableMapOf<String, String>()
+class BibleIntroRepository(
+    private val now: () -> Long = System::currentTimeMillis,
+) {
+    private val introCache = mutableMapOf<String, CachedBibleContent<String>>()
     private val inFlightTasks = mutableMapOf<String, Deferred<String>>()
     private val inFlightTasksMutex = Mutex()
 
@@ -32,7 +35,10 @@ class BibleIntroRepository {
     ): String {
         val cacheKey = "${versionId}_$passageId"
 
-        introCache[cacheKey]?.let { return it }
+        introCache[cacheKey]?.let { cached ->
+            if (cached.expiresAt == null || cached.expiresAt > now()) return cached.value
+            introCache.remove(cacheKey)
+        }
 
         Logger.d { "$cacheKey Not found in cache. Fetching from network..." }
 
@@ -46,8 +52,9 @@ class BibleIntroRepository {
         inFlightTasksMutex.withLock { inFlightTasks[cacheKey] = deferred }
 
         return try {
-            val contents = YouVersionApi.bible.passage(versionId, passageId).content
-            introCache[cacheKey] = contents
+            val response = BiblesEndpoints.passageResponse(versionId, passageId)
+            val contents = response.value.content
+            introCache[cacheKey] = CachedBibleContent(contents, response.expiresAt)
             deferred.complete(contents)
             contents
         } catch (e: Exception) {

@@ -2,6 +2,7 @@ package com.youversion.platform.core.bibles.domain
 
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.bibles.api.BiblesEndpoints
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.models.BibleVersion
 import kotlinx.coroutines.CompletableDeferred
@@ -30,10 +31,21 @@ class BibleVersionRepository(
     private val fullVersionsMutex = Mutex()
 
     // ----- Versions
-    suspend fun versionIfCached(id: Int): BibleVersion? =
-        memoryCache.version(id)
-            ?: temporaryCache.version(id)
-            ?: persistentCache.version(id)
+    suspend fun versionIfCached(id: Int): BibleVersion? {
+        memoryCache.version(id)?.let { return it.value }
+
+        temporaryCache.version(id)?.let {
+            memoryCache.addVersion(it.value, it.expiresAt)
+            return it.value
+        }
+
+        persistentCache.version(id)?.let {
+            memoryCache.addVersion(it.value)
+            return it.value
+        }
+
+        return null
+    }
 
     suspend fun version(id: Int): BibleVersion {
         // Try to get from cache first
@@ -55,10 +67,12 @@ class BibleVersionRepository(
         inFlightTasksMutex.withLock { inFlightTasks[id] = deferred }
 
         return try {
-            val version = YouVersionApi.bible.version(id)
-            temporaryCache.addVersion(version)
-            memoryCache.addVersion(version)
-            persistentCache.addVersion(version)
+            val response = BiblesEndpoints.versionResponse(id)
+            val version = response.value
+            memoryCache.addVersion(version, response.expiresAt)
+            if (response.isCacheable) {
+                temporaryCache.addVersion(version, response.expiresAt)
+            }
             deferred.complete(version)
             version
         } catch (e: Exception) {
@@ -99,9 +113,18 @@ class BibleVersionRepository(
     }
 
     suspend fun removeUnpermittedVersions(permittedIds: Set<Int>) {
-        memoryCache.removeUnpermittedVersions(permittedIds)
-        temporaryCache.removeUnpermittedVersions(permittedIds)
-        persistentCache.removeUnpermittedVersions(permittedIds)
+        removeExpiredContent()
+        val allowedIds = permittedIds - YouVersionPlatformConfiguration.excludedVersionIds
+        memoryCache.removeUnpermittedVersions(allowedIds)
+        temporaryCache.removeUnpermittedVersions(allowedIds)
+        persistentCache.removeUnpermittedVersions(allowedIds)
+    }
+
+    /** Removes expired entries from every cache tier. */
+    suspend fun removeExpiredContent() {
+        memoryCache.removeExpiredEntries()
+        temporaryCache.removeExpiredEntries()
+        persistentCache.removeExpiredEntries()
     }
 
     suspend fun permittedVersions(languageTag: String? = null): List<BibleVersion> =

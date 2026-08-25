@@ -2,6 +2,7 @@ package com.youversion.platform.ui.views.rendering
 
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
+import com.youversion.platform.core.bibles.data.CachedBibleContent
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -36,15 +37,20 @@ class BibleVersionRenderingPlainTextTests {
             object : BibleVersionCache {
                 override val storedVersionIds: List<Int> = emptyList()
 
-                override suspend fun version(id: Int): BibleVersion? = null
+                override suspend fun version(id: Int): CachedBibleContent<BibleVersion>? = null
 
-                override suspend fun chapterContent(reference: BibleReference): String? = throw exception
+                override suspend fun chapterContent(reference: BibleReference): CachedBibleContent<String>? =
+                    throw exception
 
-                override suspend fun addVersion(version: BibleVersion) {}
+                override suspend fun addVersion(
+                    version: BibleVersion,
+                    expiresAt: Long?,
+                ) {}
 
                 override suspend fun addChapterContents(
                     content: String,
                     reference: BibleReference,
+                    expiresAt: Long?,
                 ) {}
 
                 override suspend fun removeVersion(versionId: Int) {}
@@ -52,6 +58,8 @@ class BibleVersionRenderingPlainTextTests {
                 override suspend fun removeVersionChapters(versionId: Int) {}
 
                 override suspend fun removeUnpermittedVersions(permittedIds: Set<Int>) {}
+
+                override suspend fun removeExpiredEntries() {}
 
                 override fun versionIsPresent(versionId: Int): Boolean = false
 

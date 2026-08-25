@@ -121,16 +121,32 @@ object BiblesEndpoints : BiblesApi {
             }
     }
 
-    override suspend fun version(versionId: Int): BibleVersion =
+    override suspend fun version(versionId: Int): BibleVersion = versionResponse(versionId).value
+
+    internal suspend fun versionResponse(versionId: Int): BibleContentResponse<BibleVersion> =
         coroutineScope {
-            val deferredBibleVersion = async { versionMetaData(versionId) }
-            val deferredBibleIndex = async { versionIndex(versionId) }
+            val deferredMetadata = async { versionMetaDataResponse(versionId) }
+            val deferredIndex = async { versionIndexResponse(versionId) }
 
-            val basic = deferredBibleVersion.await()
-            val index = deferredBibleIndex.await()
+            val metadata = deferredMetadata.await()
+            val index = deferredIndex.await()
 
-            BibleVersion.Builder.merge(basic, index)
+            BibleContentResponse(
+                value = BibleVersion.Builder.merge(metadata.value, index.value),
+                expiresAt = minOf(metadata.expiresAt, index.expiresAt),
+                isCacheable = metadata.isCacheable && index.isCacheable,
+            )
         }
+
+    private suspend fun versionMetaDataResponse(versionId: Int): BibleContentResponse<BibleVersion> =
+        httpClient
+            .get(versionUrl(versionId))
+            .let { parseBibleContentResponse(it) }
+
+    private suspend fun versionIndexResponse(versionId: Int): BibleContentResponse<BibleVersionIndex> =
+        httpClient
+            .get(versionIndexUrl(versionId))
+            .let { parseBibleContentResponse(it) }
 
     override suspend fun versionMetaData(versionId: Int): BibleVersion =
         httpClient
@@ -194,17 +210,28 @@ object BiblesEndpoints : BiblesApi {
     override suspend fun passage(
         reference: BibleReference,
         format: String,
-    ): BiblePassage =
-        httpClient
-            .get(passageUrl(reference, format))
-            .let { parseApiBody(it) }
+    ): BiblePassage = passageResponse(reference, format).value
 
     override suspend fun passage(
         versionId: Int,
         passageId: String,
         format: String,
-    ): BiblePassage =
+    ): BiblePassage = passageResponse(versionId, passageId, format).value
+
+    internal suspend fun passageResponse(
+        reference: BibleReference,
+        format: String = "html",
+    ): BibleContentResponse<BiblePassage> =
+        httpClient
+            .get(passageUrl(reference, format))
+            .let { parseBibleContentResponse(it) }
+
+    internal suspend fun passageResponse(
+        versionId: Int,
+        passageId: String,
+        format: String = "html",
+    ): BibleContentResponse<BiblePassage> =
         httpClient
             .get(passageUrl(versionId, passageId, format))
-            .let { parseApiBody(it) }
+            .let { parseBibleContentResponse(it) }
 }
