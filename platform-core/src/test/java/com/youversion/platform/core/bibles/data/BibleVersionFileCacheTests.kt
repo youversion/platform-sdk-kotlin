@@ -73,6 +73,17 @@ class BibleVersionFileCacheTests {
         assertFalse(cache.chaptersArePresent(111))
     }
 
+    @Test
+    fun `test reads do not create version directories`() =
+        runTest {
+            cache.version(999)
+            cache.chapterContent(testReference)
+            cache.versionIsPresent(999)
+            cache.chaptersArePresent(999)
+
+            assertTrue(cache.storedVersionIds.isEmpty())
+        }
+
     // ----- Add and retrieve version
 
     @Test

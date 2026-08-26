@@ -80,13 +80,13 @@ abstract class BibleVersionFileCache(
     protected abstract val rootDir: File
 
     /** @return [File] representing bible_<id>/ dir */
-    private fun bibleVersionDir(id: Int): File = ensureExists(File(rootDir, "bible_$id"))
+    private fun bibleVersionDir(id: Int): File = File(rootDir, "bible_$id")
 
     /** @return [File] representing bible_<id>/metadata.json file */
     private fun bibleVersionMetadataFile(id: Int): File = File(bibleVersionDir(id), "metadata.json")
 
     /** @return [File] representing bible_<id>/chapters/ dir */
-    private fun bibleVersionChaptersDir(id: Int): File = ensureExists(File(bibleVersionDir(id), "chapters"))
+    private fun bibleVersionChaptersDir(id: Int): File = File(bibleVersionDir(id), "chapters")
 
     /** @return [File] representing bible_<id>/chapters/<usfm> file */
     private fun chapterContentsFile(
@@ -128,6 +128,7 @@ abstract class BibleVersionFileCache(
         expiresAt: Long?,
     ) = withContext(Dispatchers.IO) {
         mutex.withLock {
+            ensureExists(bibleVersionDir(version.id))
             val file = bibleVersionMetadataFile(version.id)
             file.writeText(Json.encodeToString(version))
             writeExpiration(file, expiresAt)
@@ -142,6 +143,7 @@ abstract class BibleVersionFileCache(
         val usfm = reference.chapterUSFM
 
         mutex.withLock {
+            ensureExists(bibleVersionChaptersDir(reference.versionId))
             val file = chapterContentsFile(usfm, reference.versionId)
             file.writeText(content)
             writeExpiration(file, expiresAt)
