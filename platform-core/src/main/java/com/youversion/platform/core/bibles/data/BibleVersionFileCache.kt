@@ -23,22 +23,23 @@ class BibleVersionTemporaryCache(
 }
 
 /**
- * A file-based implementation of [BibleVersionCache] that stores data in the app's
- * files directory. Holds downloaded versions, which never expire.
+ * A file-based implementation of [BibleVersionCache] that holds downloaded versions,
+ * which never expire. Downloads live in a dedicated directory under the app's files
+ * directory; earlier releases cached all fetched content at the files directory root,
+ * and [removeExpiredEntries] removes that previously cached content.
  */
 class BibleVersionPersistentCache(
     private val context: Context,
 ) : BibleVersionFileCache(isExpiring = false) {
     override val rootDir: File
-        get() = context.filesDir
+        get() = File(context.filesDir, DOWNLOADS_DIR_NAME)
 
     override suspend fun removeExpiredEntries() {
         withContext(Dispatchers.IO) {
             mutex.withLock {
-                val marker = File(rootDir, LEGACY_CLEANUP_MARKER)
-                if (marker.exists()) return@withLock
-                storedVersionIds.forEach { File(rootDir, "bible_$it").deleteRecursively() }
-                marker.createNewFile()
+                scanForVersionIds(context.filesDir).forEach {
+                    File(context.filesDir, "bible_$it").deleteRecursively()
+                }
             }
         }
     }
@@ -239,12 +240,12 @@ abstract class BibleVersionFileCache(
 
     private fun ensureExists(file: File): File {
         if (!file.exists()) {
-            file.mkdir()
+            file.mkdirs()
         }
         return file
     }
 
-    private fun scanForVersionIds(dir: File): List<Int> {
+    protected fun scanForVersionIds(dir: File): List<Int> {
         val prefix = "bible_"
 
         return dir
@@ -269,4 +270,4 @@ abstract class BibleVersionFileCache(
 
 private const val EXPIRATION_SUFFIX = ".expiration"
 
-private const val LEGACY_CLEANUP_MARKER = ".bible_downloads_only"
+private const val DOWNLOADS_DIR_NAME = "bible_downloads"
