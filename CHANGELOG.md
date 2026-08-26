@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.9.0...1.10.0) (2026-08-26)
+
+
+### Features
+
+* **core:** obey cache-control headers for Bible content ([d482877](https://github.com/youversion/platform-sdk-kotlin/commit/d482877eaa238ccce10d3466c635dadd991ad9c3))
+
 # [1.9.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.8.4...1.9.0) (2026-08-24)
 
 
