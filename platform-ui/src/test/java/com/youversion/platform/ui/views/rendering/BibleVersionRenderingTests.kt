@@ -3,6 +3,7 @@ package com.youversion.platform.ui.views.rendering
 import androidx.compose.ui.graphics.Color
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
+import com.youversion.platform.core.bibles.data.CachedBibleContent
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -321,18 +322,22 @@ class BibleVersionRenderingTests {
                 object : BibleVersionCache {
                     override val storedVersionIds: List<Int> = emptyList()
 
-                    override suspend fun version(id: Int): BibleVersion? = null
+                    override suspend fun version(id: Int): CachedBibleContent<BibleVersion>? = null
 
-                    override suspend fun chapterContent(reference: BibleReference): String {
+                    override suspend fun chapterContent(reference: BibleReference): CachedBibleContent<String> {
                         val count = callCount.incrementAndGet()
-                        return if (count == 1) emptyChildrenHtml else validHtml
+                        return CachedBibleContent(if (count == 1) emptyChildrenHtml else validHtml, expiresAt = null)
                     }
 
-                    override suspend fun addVersion(version: BibleVersion) {}
+                    override suspend fun addVersion(
+                        version: BibleVersion,
+                        expiresAt: Long?,
+                    ) {}
 
                     override suspend fun addChapterContents(
                         content: String,
                         reference: BibleReference,
+                        expiresAt: Long?,
                     ) {}
 
                     override suspend fun removeVersion(versionId: Int) {}
@@ -340,6 +345,8 @@ class BibleVersionRenderingTests {
                     override suspend fun removeVersionChapters(versionId: Int) {}
 
                     override suspend fun removeUnpermittedVersions(permittedIds: Set<Int>) {}
+
+                    override suspend fun removeExpiredEntries() {}
 
                     override fun versionIsPresent(versionId: Int): Boolean = false
 

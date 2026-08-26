@@ -1,7 +1,7 @@
 package com.youversion.platform.core.bibles.domain
 
 import co.touchlab.kermit.Logger
-import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.bibles.api.BiblesEndpoints
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
@@ -18,17 +18,17 @@ class BibleChapterRepository(
 
     suspend fun chapter(reference: BibleReference): String {
         memoryCache.chapterContent(reference)?.let {
-            return it
+            return it.value
         }
 
         temporaryCache.chapterContent(reference)?.let {
-            memoryCache.addChapterContents(it, reference)
-            return it
+            memoryCache.addChapterContents(it.value, reference, it.expiresAt)
+            return it.value
         }
 
         persistentCache.chapterContent(reference)?.let {
-            memoryCache.addChapterContents(it, reference)
-            return it
+            memoryCache.addChapterContents(it.value, reference)
+            return it.value
         }
 
         val cacheKey = cacheKey(reference)
@@ -46,10 +46,12 @@ class BibleChapterRepository(
         inFlightTasksMutex.withLock { inFlightTasks[cacheKey] = deferred }
 
         return try {
-            val contents = YouVersionApi.bible.passage(reference).content
-            memoryCache.addChapterContents(contents, reference)
-            temporaryCache.addChapterContents(contents, reference)
-            persistentCache.addChapterContents(contents, reference)
+            val response = BiblesEndpoints.passageResponse(reference)
+            val contents = response.value.content
+            memoryCache.addChapterContents(contents, reference, response.expiresAt)
+            if (response.isCacheable) {
+                temporaryCache.addChapterContents(contents, reference, response.expiresAt)
+            }
             deferred.complete(contents)
             contents
         } catch (e: Exception) {

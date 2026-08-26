@@ -10,8 +10,12 @@ import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfiguredException
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import com.youversion.platform.core.utilities.koin.startCore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.util.Date
 
 object YouVersionPlatformConfiguration {
@@ -144,6 +148,12 @@ object YouVersionPlatformConfiguration {
             appName = appName,
             signInPromptMessage = signInPromptMessage,
         )
+
+        // Sweep expired Bible content in the background on each launch.
+        val bibleVersionRepository = PlatformCoreKoinComponent.bibleVersionRepository
+        CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
+            bibleVersionRepository.removeExpiredContent()
+        }
     }
 
     internal fun configure(

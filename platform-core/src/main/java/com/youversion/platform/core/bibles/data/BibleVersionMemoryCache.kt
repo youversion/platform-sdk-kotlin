@@ -28,46 +28,61 @@ import kotlinx.coroutines.sync.withLock
  *
  * Cache is volatile and will be lost when the app is closed.
  */
-class BibleVersionMemoryCache : BibleVersionCache {
-    private val versionCache = mutableMapOf<Int, BibleVersion>()
+class BibleVersionMemoryCache(
+    private val now: () -> Long = System::currentTimeMillis,
+) : BibleVersionCache {
+    private val versionCache = mutableMapOf<Int, CachedBibleContent<BibleVersion>>()
     private val versionMutex = Mutex()
 
-    private val chapterCache = mutableMapOf<String, String>()
+    private val chapterCache = mutableMapOf<String, CachedBibleContent<String>>()
     private val chapterMutex = Mutex()
 
     private val cacheType = "MemoryCache"
 
     private fun cacheKey(reference: BibleReference): String = "${reference.versionId}_${reference.chapterUSFM}"
 
+    private fun CachedBibleContent<*>.isExpired(): Boolean = expiresAt != null && expiresAt <= now()
+
     // ----- BibleVersionCache
     override val storedVersionIds: List<Int>
         get() = versionCache.keys.toList()
 
-    override suspend fun version(id: Int): BibleVersion? =
+    override suspend fun version(id: Int): CachedBibleContent<BibleVersion>? =
         versionMutex.withLock {
-            val version = versionCache[id]
-            version
+            val cached = versionCache[id] ?: return@withLock null
+            if (cached.isExpired()) {
+                versionCache.remove(id)
+                null
+            } else {
+                cached
+            }
         }
 
-    override suspend fun chapterContent(reference: BibleReference): String? =
+    override suspend fun chapterContent(reference: BibleReference): CachedBibleContent<String>? =
         chapterMutex.withLock {
             val cacheKey = cacheKey(reference)
-            val contents = chapterCache[cacheKey]
-
-            contents
+            val cached = chapterCache[cacheKey] ?: return@withLock null
+            if (cached.isExpired()) {
+                chapterCache.remove(cacheKey)
+                null
+            } else {
+                cached
+            }
         }
 
-    override suspend fun addVersion(version: BibleVersion) =
-        versionMutex.withLock {
-            versionCache[version.id] = version
-        }
+    override suspend fun addVersion(
+        version: BibleVersion,
+        expiresAt: Long?,
+    ) = versionMutex.withLock {
+        versionCache[version.id] = CachedBibleContent(version, expiresAt)
+    }
 
     override suspend fun addChapterContents(
         content: String,
         reference: BibleReference,
+        expiresAt: Long?,
     ) = chapterMutex.withLock {
-        val cacheKey = cacheKey(reference)
-        chapterCache[cacheKey] = content
+        chapterCache[cacheKey(reference)] = CachedBibleContent(content, expiresAt)
     }
 
     override suspend fun removeVersion(versionId: Int) {
@@ -87,6 +102,15 @@ class BibleVersionMemoryCache : BibleVersionCache {
     override suspend fun removeUnpermittedVersions(permittedIds: Set<Int>) {
         versionMutex.withLock {
             versionCache.entries.removeAll { !permittedIds.contains(it.key) }
+        }
+    }
+
+    override suspend fun removeExpiredEntries() {
+        versionMutex.withLock {
+            versionCache.entries.removeAll { it.value.isExpired() }
+        }
+        chapterMutex.withLock {
+            chapterCache.entries.removeAll { it.value.isExpired() }
         }
     }
 
