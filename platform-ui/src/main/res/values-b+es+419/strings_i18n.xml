@@ -51,4 +51,5 @@
     <string name="yv_versions_statistics">%1$s Versiones en %2$s Idiomas</string>
     <string name="yv_widget_bible_app">Biblia App</string>
     <string name="yv_widget_copyright">Derechos de autor</string>
+    <string name="yv_youversion_logo">Logo de YouVersion</string>
 </resources>

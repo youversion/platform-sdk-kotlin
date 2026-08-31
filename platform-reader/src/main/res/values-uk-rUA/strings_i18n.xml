@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Відхилити</string>
+    <string name="yv_banner_offline_icon">Значок офлайн</string>
+    <string name="yv_banner_offline_message">Ви втратили підключення до інтернету. Відновіть з\'єднання та завантажте переклад Біблії для використання в офлайн-режимі.</string>
+    <string name="yv_banner_version_unavailable_icon">Значок недоступного перекладу</string>
+    <string name="yv_banner_version_unavailable_message">Раніше вибраний вами переклад Біблії недоступний. Для вас було вибрано інший схожий переклад Біблії.</string>
+    <string name="yv_book_chapter_picker_title">Книги</string>
+    <string name="yv_cancel">Скасувати</string>
+    <string name="yv_data_exchange_continue">Продовжити</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion попросить вас надати доступ, перш ніж позначення можна буде зберегти.</string>
+    <string name="yv_data_exchange_highlights_question">Дозволити цьому застосунку зберігати позначення за допомогою YouVersion?</string>
+    <string name="yv_font_selected_check">Позначка вибраного шрифту</string>
+    <string name="yv_font_settings_label">Шрифт</string>
+    <string name="yv_footnote_header_label">Виноска</string>
+    <string name="yv_highlight_color_cyan">блакитний</string>
+    <string name="yv_highlight_color_green">зелений</string>
+    <string name="yv_highlight_color_orange">помаранчевий</string>
+    <string name="yv_highlight_color_pink">рожевий</string>
+    <string name="yv_highlight_color_yellow">жовтий</string>
+    <string name="yv_intro_chapter_label">Вступ</string>
+    <string name="yv_language_content_desc">Мова</string>
+    <string name="yv_line_spacing_label">Міжрядковий інтервал</string>
+    <string name="yv_next_chapter_content_desc">Наступний розділ</string>
+    <string name="yv_previous_chapter_content_desc">Попередній розділ</string>
+    <string name="yv_reader_menu_font_settings">Шрифт і налаштування</string>
+    <string name="yv_reader_menu_sign_in">Увійти</string>
+    <string name="yv_reader_menu_sign_out">Вийти</string>
+    <string name="yv_theme_selected">Вибрано</string>
+    <string name="yv_verse_action_add_highlight">Додати позначення %1$s</string>
+    <string name="yv_verse_action_copy">Копіювати</string>
+    <string name="yv_verse_action_remove_highlight">Видалити позначення %1$s</string>
+    <string name="yv_verse_action_share">Поділитися</string>
+</resources>
