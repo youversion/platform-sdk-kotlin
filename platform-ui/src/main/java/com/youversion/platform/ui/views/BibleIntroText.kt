@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,9 +22,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.style.TextIndent
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleIntroRepository
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.di.PlatformKoinGraph
@@ -135,6 +138,7 @@ fun BibleIntroText(
                         block = block,
                         textOptions = textOptions,
                         isFirstBlock = index == 0,
+                        previousMarginBottom = if (index == 0) 0.dp else visibleBlocks[index - 1].marginBottom,
                         onFootnoteTap = onFootnoteTap,
                     )
                 } else {
@@ -150,21 +154,36 @@ private fun IntroTextBlock(
     block: BibleTextBlock,
     textOptions: BibleTextOptions,
     isFirstBlock: Boolean,
+    previousMarginBottom: Dp,
     onFootnoteTap: ((footnotes: List<AnnotatedString>) -> Unit)?,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-    val marginTop = if (isFirstBlock) 0.dp else block.marginTop
-    val paragraphSpacing = (textOptions.paragraphSpacing ?: (textOptions.fontSize / 2)).value.dp
+    val lineSpacing = textOptions.fontSize.value * (textOptions.lineSpacing ?: 0.4f)
+    val marginTop = if (isFirstBlock) 0.dp else maxOf(0.dp, block.marginTop - previousMarginBottom)
+    val marginBottom =
+        block.marginBottom + lineSpacing.dp + (textOptions.paragraphSpacing ?: 0.sp).value.dp
 
     Text(
         text = block.text,
         textAlign = block.alignment,
-        lineHeight = textOptions.lineSpacing ?: (textOptions.fontSize * 1.5),
+        lineHeight = textOptions.fontSize * (1.2f + (textOptions.lineSpacing ?: 0.4f)),
         color = textOptions.textColor ?: Color.Unspecified,
+        style =
+            LocalTextStyle.current.copy(
+                textIndent =
+                    TextIndent(
+                        firstLine =
+                            textOptions.fontSize * 0.25f *
+                                (block.firstLineHeadIndent * 3).coerceIn(0, 24),
+                    ),
+            ),
         modifier =
             Modifier
-                .padding(top = marginTop, bottom = paragraphSpacing)
-                .fillMaxWidth()
+                .padding(
+                    start = (8 * block.headIndent).dp,
+                    top = marginTop,
+                    bottom = marginBottom,
+                ).fillMaxWidth()
                 .pointerInput(onFootnoteTap) {
                     detectTapGestures(
                         onTap = { position ->
@@ -233,7 +252,7 @@ private fun IntroTableBlock(
                         Box(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = cellText,
-                                lineHeight = textOptions.lineSpacing ?: TextUnit.Unspecified,
+                                lineHeight = textOptions.fontSize * (1.2f + (textOptions.lineSpacing ?: 0.4f)),
                                 color = textOptions.textColor ?: Color.Unspecified,
                             )
                         }
@@ -241,7 +260,7 @@ private fun IntroTableBlock(
                         Box {
                             Text(
                                 text = cellText,
-                                lineHeight = textOptions.lineSpacing ?: TextUnit.Unspecified,
+                                lineHeight = textOptions.fontSize * (1.2f + (textOptions.lineSpacing ?: 0.4f)),
                                 color = textOptions.textColor ?: Color.Unspecified,
                             )
                         }

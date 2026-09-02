@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.ResolvedTextDirection
+import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
@@ -89,7 +91,8 @@ internal val ImageFootnoteMarker: AnnotatedString =
 data class BibleTextOptions(
     val fontFamily: FontFamily = UntitledSerif,
     val fontSize: TextUnit = 16.sp,
-    val lineSpacing: TextUnit? = null,
+    /** Extra space between lines as a fraction of [fontSize]; null means the default 0.4. */
+    val lineSpacing: Float? = null,
     val paragraphSpacing: TextUnit? = null,
     val textColor: Color? = null,
     val wocColor: Color = Color(0xFFF04C59), // YouVersion red
@@ -266,6 +269,7 @@ fun BibleText(
                         block = block,
                         textOptions = textOptions,
                         isFirstBlock = index == 0,
+                        previousMarginBottom = if (index == 0) 0.dp else visibleBlocks[index - 1].marginBottom,
                         selectedVerses = selectedVerses,
                         highlights = highlights,
                         onClick = { localPosition, textLayoutResult ->
@@ -547,13 +551,18 @@ private fun BibleTextBlock(
     block: BibleTextBlock,
     textOptions: BibleTextOptions,
     isFirstBlock: Boolean,
+    previousMarginBottom: Dp,
     selectedVerses: Set<BibleReference>,
     highlights: Map<BibleReference, Color>,
     onClick: (position: Offset, layoutResult: TextLayoutResult) -> Unit,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-    val marginTop = if (isFirstBlock) 0.dp else block.marginTop
-    val paragraphSpacing = (textOptions.paragraphSpacing ?: (textOptions.fontSize / 2)).value.dp
+    val lineSpacing = textOptions.fontSize.value * (textOptions.lineSpacing ?: 0.4f)
+    // Adjacent blocks share whichever margin is bigger instead of stacking both, mirroring
+    // how CSS collapses margins; the topmost block gets no top margin at all.
+    val marginTop = if (isFirstBlock) 0.dp else maxOf(0.dp, block.marginTop - previousMarginBottom)
+    val marginBottom =
+        block.marginBottom + lineSpacing.dp + (textOptions.paragraphSpacing ?: 0.sp).value.dp
 
     val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
 
@@ -570,12 +579,27 @@ private fun BibleTextBlock(
     Text(
         text = block.text,
         textAlign = block.alignment,
-        lineHeight = textOptions.lineSpacing ?: (textOptions.fontSize * 1.5),
+        lineHeight = textOptions.fontSize * (1.2f + (textOptions.lineSpacing ?: 0.4f)),
         color = textOptions.textColor ?: Color.Unspecified,
+        style =
+            LocalTextStyle.current.copy(
+                // Swift fakes this with repeated non-breaking spaces (3 per unit, capped at 24)
+                // because AttributedString has no first-line indent; Compose has the real thing,
+                // sized to match at a nbsp's typical width of 0.25em.
+                textIndent =
+                    TextIndent(
+                        firstLine =
+                            textOptions.fontSize * 0.25f *
+                                (block.firstLineHeadIndent * 3).coerceIn(0, 24),
+                    ),
+            ),
         modifier =
             Modifier
-                .padding(top = marginTop, bottom = paragraphSpacing)
-                .fillMaxWidth()
+                .padding(
+                    start = (8 * block.headIndent).dp,
+                    top = marginTop,
+                    bottom = marginBottom,
+                ).fillMaxWidth()
                 .drawWithContent {
                     textLayoutResult?.let { drawHighlightBackgrounds(it, highlightedRanges) }
                     drawContent()
@@ -677,7 +701,7 @@ private fun BibleTableCell(
 
     Text(
         text = cellText,
-        lineHeight = textOptions.lineSpacing ?: TextUnit.Unspecified,
+        lineHeight = textOptions.fontSize * (1.2f + (textOptions.lineSpacing ?: 0.4f)),
         color = textOptions.textColor ?: Color.Unspecified,
         modifier =
             Modifier

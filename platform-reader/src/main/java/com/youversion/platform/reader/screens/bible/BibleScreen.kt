@@ -378,7 +378,6 @@ internal fun BibleScreen(
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
                             val introPassageId = state.introPassageId
-                            val effectiveLineHeight = state.fontSize * state.lineSpacing
                             if (state.isViewingIntro && introPassageId != null) {
                                 BibleIntroText(
                                     versionId = state.bibleReference.versionId,
@@ -388,7 +387,7 @@ internal fun BibleScreen(
                                         BibleTextOptions(
                                             fontFamily = state.fontFamily,
                                             fontSize = state.fontSize,
-                                            lineSpacing = effectiveLineHeight,
+                                            lineSpacing = state.lineSpacing,
                                             footnoteMode = BibleTextFootnoteMode.IMAGE,
                                         ),
                                     onFootnoteTap = { footnotes ->
@@ -407,7 +406,7 @@ internal fun BibleScreen(
                                         BibleTextOptions(
                                             fontFamily = state.fontFamily,
                                             fontSize = state.fontSize,
-                                            lineSpacing = effectiveLineHeight,
+                                            lineSpacing = state.lineSpacing,
                                             footnoteMode = BibleTextFootnoteMode.IMAGE,
                                         ),
                                     reference = state.bibleReference,

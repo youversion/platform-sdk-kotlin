@@ -118,20 +118,20 @@ class BibleReaderViewModelActionTests {
 
     @Test
     fun `CycleLineSpacing advances through the available multipliers and wraps`() {
-        // Default seeded state is 1.5f. Cycling should walk 1.5 -> 1.8 -> 1.2 -> 1.5.
+        // Default seeded state is 0.4f. Cycling should walk 0.4 -> 0.6 -> 0.3 -> 0.4.
         assertEquals(ReaderFontSettings.DEFAULT_LINE_SPACING, viewModel.state.value.lineSpacing)
 
         viewModel.onAction(BibleReaderViewModel.Action.CycleLineSpacing)
-        assertEquals(1.8f, viewModel.state.value.lineSpacing)
-        verify { userSettingsRepository.readerLineSpacing = 1.8f }
+        assertEquals(0.6f, viewModel.state.value.lineSpacing)
+        verify { userSettingsRepository.readerLineSpacing = 0.6f }
 
         viewModel.onAction(BibleReaderViewModel.Action.CycleLineSpacing)
-        assertEquals(1.2f, viewModel.state.value.lineSpacing)
-        verify { userSettingsRepository.readerLineSpacing = 1.2f }
+        assertEquals(0.3f, viewModel.state.value.lineSpacing)
+        verify { userSettingsRepository.readerLineSpacing = 0.3f }
 
         viewModel.onAction(BibleReaderViewModel.Action.CycleLineSpacing)
-        assertEquals(1.5f, viewModel.state.value.lineSpacing)
-        verify { userSettingsRepository.readerLineSpacing = 1.5f }
+        assertEquals(0.4f, viewModel.state.value.lineSpacing)
+        verify { userSettingsRepository.readerLineSpacing = 0.4f }
     }
 
     // ----- SetFontDefinition

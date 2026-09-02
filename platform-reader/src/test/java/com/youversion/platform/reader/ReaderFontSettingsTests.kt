@@ -67,30 +67,30 @@ class ReaderFontSettingsTests {
         assertEquals(24.sp, ReaderFontSettings.nextLargerFontSize(21.sp))
     }
 
-    // availableLineSpacings = [1.2f, 1.5f, 1.8f]
+    // availableLineSpacings = [0.3f, 0.4f, 0.6f]
 
     @Test
     fun `nextLineSpacing steps up from the smallest`() {
-        assertEquals(1.5f, ReaderFontSettings.nextLineSpacing(1.2f))
+        assertEquals(0.4f, ReaderFontSettings.nextLineSpacing(0.3f))
     }
 
     @Test
     fun `nextLineSpacing steps up from the middle`() {
-        assertEquals(1.8f, ReaderFontSettings.nextLineSpacing(1.5f))
+        assertEquals(0.6f, ReaderFontSettings.nextLineSpacing(0.4f))
     }
 
     @Test
     fun `nextLineSpacing wraps to smallest when already at largest`() {
-        assertEquals(1.2f, ReaderFontSettings.nextLineSpacing(1.8f))
+        assertEquals(0.3f, ReaderFontSettings.nextLineSpacing(0.6f))
     }
 
     @Test
     fun `nextLineSpacing wraps to smallest for value above the largest`() {
-        assertEquals(1.2f, ReaderFontSettings.nextLineSpacing(2.0f))
+        assertEquals(0.3f, ReaderFontSettings.nextLineSpacing(1.0f))
     }
 
     @Test
     fun `nextLineSpacing returns the smallest available for a value below the smallest`() {
-        assertEquals(1.2f, ReaderFontSettings.nextLineSpacing(1.0f))
+        assertEquals(0.3f, ReaderFontSettings.nextLineSpacing(0.1f))
     }
 }

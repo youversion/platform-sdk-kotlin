@@ -3,7 +3,6 @@ package com.youversion.platform.ui.views.rendering
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import java.util.UUID
 
 data class BibleTextBlock(
@@ -11,8 +10,10 @@ data class BibleTextBlock(
     val text: AnnotatedString,
     val chapter: Int,
     val rows: List<List<AnnotatedString>> = emptyList(),
-    val headIndent: TextUnit,
+    val firstLineHeadIndent: Int,
+    val headIndent: Int,
     val marginTop: Dp,
+    val marginBottom: Dp,
     val alignment: TextAlign,
     val footnotes: List<AnnotatedString>,
 )

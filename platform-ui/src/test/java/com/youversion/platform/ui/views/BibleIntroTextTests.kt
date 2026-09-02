@@ -86,8 +86,10 @@ class BibleIntroTextTests {
         return BibleTextBlock(
             text = annotatedText,
             chapter = 1,
-            headIndent = 0.sp,
+            firstLineHeadIndent = 0,
+            headIndent = 0,
             marginTop = marginTop,
+            marginBottom = 0.dp,
             alignment = TextAlign.Start,
             footnotes = footnotes,
         )
@@ -106,8 +108,10 @@ class BibleIntroTextTests {
                     )
                 },
             chapter = 1,
-            headIndent = 0.sp,
+            firstLineHeadIndent = 0,
+            headIndent = 0,
             marginTop = 8.dp,
+            marginBottom = 0.dp,
             alignment = TextAlign.Start,
             footnotes = emptyList(),
         )
@@ -392,9 +396,9 @@ class BibleIntroTextTests {
     // region Paragraph Spacing Defaults
 
     @Test
-    fun `paragraph spacing defaults to half of the fontSize`() {
+    fun `blocks are separated by the default line spacing`() {
         val fontSize = 20.sp
-        val expectedSpacing = (fontSize / 2).value.dp
+        val expectedSpacing = (fontSize.value * 0.4f).dp
 
         coEvery { mockVersionRepository.version(any()) } returns ltrVersion
         coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
@@ -447,8 +451,10 @@ class BibleIntroTextTests {
                         listOf(AnnotatedString("Cell 1"), AnnotatedString("Cell 2")),
                         listOf(AnnotatedString("Cell 3"), AnnotatedString("Cell 4")),
                     ),
-                headIndent = 0.sp,
+                firstLineHeadIndent = 0,
+                headIndent = 0,
                 marginTop = 8.dp,
+                marginBottom = 0.dp,
                 alignment = TextAlign.Start,
                 footnotes = emptyList(),
             )

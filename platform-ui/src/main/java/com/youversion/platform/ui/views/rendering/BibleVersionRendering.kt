@@ -2,16 +2,13 @@ package com.youversion.platform.ui.views.rendering
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
@@ -111,7 +108,7 @@ object BibleVersionRendering {
             val resultBlocks = mutableListOf<BibleTextBlock>()
             val stateDown =
                 StateDown(
-                    currentFont = BibleTextFontOption.TEXT,
+                    currentFont = BibleTextFontOption.FONT_100EM,
                     textCategory = BibleTextCategory.SCRIPTURE,
                 )
             val stateUp =
@@ -197,7 +194,7 @@ object BibleVersionRendering {
             val resultBlocks = mutableListOf<BibleTextBlock>()
             val stateDown =
                 StateDown(
-                    currentFont = BibleTextFontOption.TEXT,
+                    currentFont = BibleTextFontOption.FONT_100EM,
                     textCategory = BibleTextCategory.SCRIPTURE,
                 )
             val stateUp =
@@ -234,34 +231,15 @@ object BibleVersionRendering {
     private fun createBlock(
         stateDown: StateDown,
         stateUp: StateUp,
-        marginTop: Dp,
     ): BibleTextBlock {
-        val text =
-            buildAnnotatedString {
-                withStyle(
-                    style =
-                        ParagraphStyle(
-                            textIndent =
-                                TextIndent(
-                                    firstLine =
-                                        TextUnit(
-                                            stateUp.headIndent.value + stateUp.firstLineHeadIndent.value,
-                                            TextUnitType.Sp,
-                                        ),
-                                    restLine = stateUp.headIndent,
-                                ),
-                        ),
-                ) {
-                    append(stateUp.textBuilder.toAnnotatedString())
-                }
-            }
-
         val block =
             BibleTextBlock(
-                text = text,
+                text = stateUp.textBuilder.toAnnotatedString(),
                 chapter = stateUp.chapter,
+                firstLineHeadIndent = stateUp.firstLineHeadIndent,
                 headIndent = stateUp.headIndent,
-                marginTop = marginTop,
+                marginTop = stateDown.marginTop,
+                marginBottom = stateDown.marginBottom,
                 alignment = stateDown.alignment,
                 footnotes = stateUp.footnotes.toList(),
             )
@@ -290,15 +268,11 @@ object BibleVersionRendering {
             val text = if (node.text == "  ") " " else node.text
             val style =
                 stateIn.fonts
-                    .styleFor(stateDown.currentFont)
+                    .styleFor(stateDown.currentFont, inSmallcaps = stateDown.smallcaps)
                     .let {
                         if (stateDown.woc) it.copy(color = stateIn.wocColor) else it
-                    }.let {
-                        if (stateDown.currentFont == BibleTextFontOption.VERSE_NUM) {
-                            it.copy(baselineShift = stateIn.fonts.verseNumBaselineShift)
-                        } else {
-                            it
-                        }
+                    }.let { style ->
+                        stateDown.baselineShift?.let { style.copy(baselineShift = it) } ?: style
                     }
             stateUp.append(text, style, stateDown.textCategory)
         }
@@ -309,7 +283,7 @@ object BibleVersionRendering {
                 val maybeSpace = if (stateUp.isTextEmpty() || stateUp.endsWithSpace()) "" else " "
                 val verseNumText = "$maybeSpace$text\u00A0" // non-breaking space
                 val verseNumStyle =
-                    stateIn.fonts.styleFor(BibleTextFontOption.VERSE_NUM).copy(
+                    stateIn.fonts.styleFor(BibleTextFontOption.VERSE_NUM_FONT).copy(
                         baselineShift = stateIn.fonts.verseNumBaselineShift,
                         color = stateIn.textColor.copy(alpha = stateIn.textColor.alpha * stateIn.fonts.verseNumOpacity),
                     )
@@ -410,7 +384,7 @@ object BibleVersionRendering {
                     currentFont = BibleTextFontOption.FOOTNOTE
                 }
 
-            val defaultStyle = stateIn.fonts.styleFor(BibleTextFontOption.TEXT)
+            val defaultStyle = stateIn.fonts.styleFor(BibleTextFontOption.FONT_100EM)
             stateUp.append("[", defaultStyle, BibleTextCategory.SCRIPTURE)
 
             for (child in node.children) {
@@ -476,8 +450,10 @@ object BibleVersionRendering {
                 BibleTextBlock(
                     text = AnnotatedString(""), // Table blocks have no primary text
                     chapter = stateUp.chapter,
-                    headIndent = TextUnit(0f, TextUnitType.Sp),
+                    firstLineHeadIndent = 0,
+                    headIndent = 0,
                     marginTop = 10.dp, // A default margin for tables
+                    marginBottom = 0.dp,
                     alignment = TextAlign.Start,
                     footnotes = stateUp.footnotes.toList(), // Capture any footnotes found so far
                     rows = rows,
@@ -546,7 +522,7 @@ object BibleVersionRendering {
         val stateDown =
             parentStateDown.copy().apply {
                 nodeDepth = parentStateDown.nodeDepth + 1
-                currentFont = BibleTextFontOption.TEXT // Reset font to default for table cells
+                currentFont = BibleTextFontOption.FONT_100EM // Reset font to default for table cells
             }
         traceLog(node, stateDown)
 
@@ -573,9 +549,11 @@ object BibleVersionRendering {
         stateUp: StateUp,
         resultBlocks: MutableList<BibleTextBlock>,
     ) {
-        var stateDown = parentStateDown.copy().apply { nodeDepth = parentStateDown.nodeDepth + 1 }
-        var marginTop: Dp = 0.dp
-        stateDown = stateDown.copy().apply { currentFont = BibleTextFontOption.TEXT }
+        val stateDown =
+            parentStateDown.copy().apply {
+                nodeDepth = parentStateDown.nodeDepth + 1
+                currentFont = BibleTextFontOption.FONT_100EM
+            }
 
         if (node.type != BibleTextNodeType.BLOCK) {
             assertionFailed("handleNodeBlock was given non-block: ", node.type)
@@ -585,23 +563,19 @@ object BibleVersionRendering {
         if (node.classes.contains("cl")) { // Chapter label, handled by UI, so ignore.
             return
         }
-        stateUp.firstLineHeadIndent = TextUnit(0f, TextUnitType.Sp)
-        stateUp.headIndent = TextUnit(0f, TextUnitType.Sp)
 
         interpretBlockClasses(
             classes = node.classes,
             stateIn = stateIn,
             stateDown = stateDown,
             stateUp = stateUp,
-        ) { newMargin ->
-            marginTop = newMargin
-        }
+        )
 
         for ((index, child) in node.children.withIndex()) {
             if (child.type == BibleTextNodeType.BLOCK || child.type == BibleTextNodeType.TABLE) {
                 if (!stateUp.isTextEmpty()) {
                     if (stateUp.rendering) {
-                        resultBlocks.add(createBlock(stateDown, stateUp, marginTop))
+                        resultBlocks.add(createBlock(stateDown, stateUp))
                     }
                     stateUp.clearText()
                 }
@@ -652,11 +626,11 @@ object BibleVersionRendering {
             } else if (child.type == BibleTextNodeType.SPAN && child.classes.contains("qs")) {
                 if (!stateUp.isTextEmpty()) {
                     if (stateUp.rendering) {
-                        resultBlocks.add(createBlock(stateDown, stateUp, marginTop))
+                        resultBlocks.add(createBlock(stateDown, stateUp))
                         stateUp.clearText()
                         handleBlockChild(child, stateIn, stateDown, stateUp)
                         val selahStateDown = stateDown.copy().apply { alignment = TextAlign.End }
-                        resultBlocks.add(createBlock(selahStateDown, stateUp, marginTop))
+                        resultBlocks.add(createBlock(selahStateDown, stateUp))
                     }
                     stateUp.clearText()
                 }
@@ -674,7 +648,6 @@ object BibleVersionRendering {
                 createBlock(
                     stateDown = stateDown,
                     stateUp = stateUp,
-                    marginTop = marginTop,
                 ),
             )
             stateUp.clearText()
@@ -705,7 +678,7 @@ internal fun assertionFailed(
 
 // --- State Management Classes ---
 
-data class StateIn(
+internal data class StateIn(
     val versionId: Int,
     val bookUSFM: String,
     val currentChapter: Int,
@@ -720,13 +693,16 @@ data class StateIn(
     val fonts: BibleTextFonts,
 )
 
-class StateDown(
+internal class StateDown(
     var woc: Boolean = false,
     var smallcaps: Boolean = false,
     var alignment: TextAlign = TextAlign.Start,
     var currentFont: BibleTextFontOption,
+    var baselineShift: BaselineShift? = null,
     var textCategory: BibleTextCategory,
     var nodeDepth: Int = 0,
+    var marginTop: Dp = 0.dp,
+    var marginBottom: Dp = 0.dp,
 ) {
     fun copy(): StateDown =
         StateDown(
@@ -734,15 +710,18 @@ class StateDown(
             smallcaps = smallcaps,
             alignment = alignment,
             currentFont = currentFont,
+            baselineShift = baselineShift,
             textCategory = textCategory,
             nodeDepth = nodeDepth,
+            marginTop = marginTop,
+            marginBottom = marginBottom,
         )
 }
 
-class StateUp(
+internal class StateUp(
     var rendering: Boolean,
-    var firstLineHeadIndent: TextUnit = TextUnit(0f, TextUnitType.Sp),
-    var headIndent: TextUnit = TextUnit(0f, TextUnitType.Sp),
+    var firstLineHeadIndent: Int = 0,
+    var headIndent: Int = 0,
     val versionId: Int,
     val bookUSFM: String,
     val chapter: Int,

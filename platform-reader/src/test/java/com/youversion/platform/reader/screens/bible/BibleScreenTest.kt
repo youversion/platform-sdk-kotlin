@@ -17,7 +17,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.Config
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
@@ -616,8 +615,10 @@ class BibleScreenTest {
                         )
                     },
                 chapter = 1,
-                headIndent = 0.sp,
+                firstLineHeadIndent = 0,
+                headIndent = 0,
                 marginTop = 8.dp,
+                marginBottom = 0.dp,
                 alignment = TextAlign.Start,
                 footnotes = listOf(footnoteText),
             )
@@ -690,8 +691,10 @@ class BibleScreenTest {
                         )
                     },
                 chapter = 1,
-                headIndent = 0.sp,
+                firstLineHeadIndent = 0,
+                headIndent = 0,
                 marginTop = 8.dp,
+                marginBottom = 0.dp,
                 alignment = TextAlign.Start,
                 footnotes = listOf(footnoteText),
             )
@@ -755,8 +758,10 @@ class BibleScreenTest {
                         )
                     },
                 chapter = 1,
-                headIndent = 0.sp,
+                firstLineHeadIndent = 0,
+                headIndent = 0,
                 marginTop = 8.dp,
+                marginBottom = 0.dp,
                 alignment = TextAlign.Start,
                 footnotes = emptyList(),
             )

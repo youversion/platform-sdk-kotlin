@@ -14,12 +14,12 @@ object ReaderFontSettings {
     val DEFAULT_FONT_SIZE: TextUnit = 18.sp
 
     /**
-     * Multipliers applied to the current font size to produce the effective line height.
-     * Ordered smallest → largest so [nextLineSpacing] can advance by choosing the next
+     * Extra space between lines as a fraction of the current font size, ordered
+     * smallest → largest so [nextLineSpacing] can advance by choosing the next
      * value greater than the current selection.
      */
-    val availableLineSpacings: List<Float> = listOf(1.2f, 1.5f, 1.8f)
-    const val DEFAULT_LINE_SPACING: Float = 1.5f
+    val availableLineSpacings: List<Float> = listOf(0.3f, 0.4f, 0.6f)
+    const val DEFAULT_LINE_SPACING: Float = 0.4f
 
     val DEFAULT_FONT_DEFINITION: FontDefinition = FontDefinition("Untitled Serif", UntitledSerif)
 
