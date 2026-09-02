@@ -658,10 +658,11 @@ class BibleScreenTest {
             stateFlow.value.copy(
                 showingFootnotes = true,
                 footnotes = listOf(AnnotatedString("Test footnote")),
-                footnotesReference = defaultReference,
+                footnotesReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
             )
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Test footnote").assertIsDisplayed()
+        // The sheet re-renders footnotes at a fixed size instead of showing the state's list directly.
+        composeTestRule.onNodeWithText("This is a footnote").assertIsDisplayed()
     }
 
     @Test

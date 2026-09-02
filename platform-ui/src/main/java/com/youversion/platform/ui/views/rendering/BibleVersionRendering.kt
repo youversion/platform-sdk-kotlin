@@ -361,11 +361,6 @@ object BibleVersionRendering {
                     verse = stateUp.verse,
                 )
 
-            stateDown =
-                stateDown.copy().apply {
-                    currentFont = BibleTextFontOption.FOOTNOTE
-                }
-
             for (child in node.children) {
                 handleBlockChild(
                     node = child,

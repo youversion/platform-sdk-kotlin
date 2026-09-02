@@ -14,7 +14,6 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
-import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -105,7 +104,6 @@ class BibleReaderFootnotesSheetTest {
         composeTestRule.setContent {
             BibleReaderMaterialTheme {
                 BibleReaderFootnotesSheet(
-                    textOptions = BibleTextOptions(),
                     onDismissRequest = onDismissRequest,
                     version = version,
                     reference = reference,
