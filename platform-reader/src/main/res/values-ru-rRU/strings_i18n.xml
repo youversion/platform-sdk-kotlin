@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Закрыть</string>
+    <string name="yv_banner_offline_icon">Значок офлайн</string>
+    <string name="yv_banner_offline_message">У вас пропало подключение к интернету. Восстановите связь и загрузите перевод Библии для использования в автономном режиме.</string>
+    <string name="yv_banner_version_unavailable_icon">Значок недоступного перевода</string>
+    <string name="yv_banner_version_unavailable_message">Ранее выбранный вами перевод Библии недоступен. Для вас был выбран другой похожий перевод.</string>
+    <string name="yv_book_chapter_picker_title">Книги</string>
+    <string name="yv_cancel">Отмена</string>
+    <string name="yv_data_exchange_continue">Продолжить</string>
+    <string name="yv_data_exchange_highlights_explanation">Перед сохранением маркеров YouVersion запросит у вас разрешение на доступ.</string>
+    <string name="yv_data_exchange_highlights_question">Разрешить этому приложению сохранять маркеры в YouVersion?</string>
+    <string name="yv_font_selected_check">Галочка выбранного шрифта</string>
+    <string name="yv_font_settings_label">Шрифт</string>
+    <string name="yv_footnote_header_label">Сноска</string>
+    <string name="yv_highlight_color_cyan">голубой</string>
+    <string name="yv_highlight_color_green">зелёный</string>
+    <string name="yv_highlight_color_orange">оранжевый</string>
+    <string name="yv_highlight_color_pink">розовый</string>
+    <string name="yv_highlight_color_yellow">жёлтый</string>
+    <string name="yv_intro_chapter_label">Введение</string>
+    <string name="yv_language_content_desc">Язык</string>
+    <string name="yv_line_spacing_label">Межстрочный интервал</string>
+    <string name="yv_next_chapter_content_desc">Следующая глава</string>
+    <string name="yv_previous_chapter_content_desc">Предыдущая глава</string>
+    <string name="yv_reader_menu_font_settings">Шрифт и настройки</string>
+    <string name="yv_reader_menu_sign_in">Войти</string>
+    <string name="yv_reader_menu_sign_out">Выйти</string>
+    <string name="yv_theme_selected">Выбрано</string>
+    <string name="yv_verse_action_add_highlight">Добавить %1$s маркер</string>
+    <string name="yv_verse_action_copy">Копировать</string>
+    <string name="yv_verse_action_remove_highlight">Убрать %1$s маркер</string>
+    <string name="yv_verse_action_share">Поделиться</string>
+</resources>

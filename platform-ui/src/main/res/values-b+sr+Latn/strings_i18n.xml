@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_active_language_versions_header">%1$s prevoda (%2$s)</string>
+    <string name="yv_back_button">Nazad</string>
+    <string name="yv_bible_card_unavailable_reference">Ovaj odlomak nije dostupan u odabranom prevodu Biblije.</string>
+    <string name="yv_bible_version_details_content_desc">Detalji prevoda Biblije</string>
+    <string name="yv_bible_version_load_error">Greška pri učitavanju prevoda Biblije</string>
+    <string name="yv_bible_versions_heading">Prevodi Biblije</string>
+    <string name="yv_books_heading">Knjige</string>
+    <string name="yv_close_search_bar">Zatvorite unos za pretragu</string>
+    <string name="yv_footnote_content_desc">fusnota</string>
+    <string name="yv_full_chapter">Celo poglavlje</string>
+    <string name="yv_language_label">Jezik</string>
+    <string name="yv_language_tab_all">Sve</string>
+    <string name="yv_language_tab_suggested">Predloženo</string>
+    <string name="yv_ok">OK</string>
+    <string name="yv_placeholder_offline">Izgubili ste internet vezu. Ponovo se povežite i preuzmite prevod Biblije da biste nastavili van mreže.</string>
+    <string name="yv_placeholder_offline_icon_content_desc">Nema Wi-Fi-ja</string>
+    <string name="yv_placeholder_version_unavailable">Prethodno izabrani prevod Biblije nije dostupan. Umesto njega, izabran je drugi, sličan prevod Biblije.</string>
+    <string name="yv_placeholder_version_unavailable_icon_content_desc">Prevod nije dostupan</string>
+    <string name="yv_search">Pretražite</string>
+    <string name="yv_search_bible_versions">Pretražite prevod Biblije</string>
+    <string name="yv_search_languages">Pretražite jezik</string>
+    <string name="yv_select_language_title">Izaberite jezik</string>
+    <string name="yv_share_content_desc">Podelite</string>
+    <string name="yv_sign_in_button_compact">Prijavite se</string>
+    <string name="yv_sign_in_button_content_desc">Prijavite se sa YouVersion nalogom</string>
+    <string name="yv_sign_in_button_full">Prijavite se pomoću</string>
+    <string name="yv_sign_in_error_message">Trenutno nismo mogli da vas prijavimo. Molimo, pokušajte ponovo.</string>
+    <string name="yv_sign_in_error_title">Prijava nije uspela</string>
+    <string name="yv_sign_in_prompt_introducing">PREDSTAVLJAMO</string>
+    <string name="yv_sign_in_prompt_no_button">Ne, hvala</string>
+    <string name="yv_sign_in_prompt_paragraph">**%1$s** želi da se poveže sa vašim YouVersion **Bible App** nalogom. Ovo će im omogućiti da vide i komuniciraju sa vašom aktivnošću u Bible App-u. Da li želite da nastavite?</string>
+    <string name="yv_sign_in_prompt_yes_button">Da, naravno</string>
+    <string name="yv_sign_out_cancel_button_text">Otkažite</string>
+    <string name="yv_sign_out_confirm_button_text">Odjavite se</string>
+    <string name="yv_sign_out_confirmation_message">Da li ste sigurni da se želite odjaviti iz YouVersion-a? Moraćete ponovo da se prijavite da biste pristupili svom istaknutom.</string>
+    <string name="yv_sign_out_confirmation_title">Odjavite se</string>
+    <string name="yv_sign_out_pending_highlights_confirm_button_text">Ipak se odjavite</string>
+    <string name="yv_sign_out_pending_highlights_message">Neki od vaših istaknutih odlomaka još nisu sačuvani i biće izgubljeni ako se odjavite. Da li ipak želite da se odjavite?</string>
+    <string name="yv_sign_out_pending_highlights_title">Sačuvati istaknute odlomke?</string>
+    <string name="yv_tab_votd">Stih dana</string>
+    <string name="yv_version_info_agree_and_download">Prihvatite i preuzmite</string>
+    <string name="yv_version_info_maybe_later">Možda kasnije</string>
+    <string name="yv_version_info_offline_agreement">Naš sporazum s izdavačem ovog prevoda Biblije zahteva da delimo određene informacije sa njima kako bismo ponudili ovaj prevod za korišćenje van mreže. Nastavljajući, pristajete na deljenje vaših informacija i dozvoljavate izdavaču da vam šalje imejl.</string>
+    <string name="yv_version_info_offline_tagline">Čitajte bilo kada, bilo gde — čak i bez interneta</string>
+    <string name="yv_versions_empty_for_language">Nisu pronađeni prevodi za ovaj jezik</string>
+    <string name="yv_versions_load_error">Učitavanje prevoda nije uspelo. Proverite vezu i pokušajte ponovo.</string>
+    <string name="yv_versions_screen_title">Prevodi</string>
+    <string name="yv_versions_statistics">%1$s prevoda na %2$s jezika</string>
+    <string name="yv_widget_bible_app">Apl. Biblija</string>
+    <string name="yv_widget_copyright">Autorska prava</string>
+    <string name="yv_youversion_logo">YouVersion logotip</string>
+</resources>

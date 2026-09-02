@@ -9,8 +9,8 @@
     <string name="yv_book_chapter_picker_title">書卷</string>
     <string name="yv_cancel">取消</string>
     <string name="yv_data_exchange_continue">繼續</string>
-    <string name="yv_data_exchange_highlights_explanation">YouVersion will ask you to grant access before highlights can be saved.</string>
-    <string name="yv_data_exchange_highlights_question">Allow this app to save highlights with YouVersion?</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion 將在儲存醒目標示前要求你授予存取權限。</string>
+    <string name="yv_data_exchange_highlights_question">允許此應用程式將醒目標示儲存至 YouVersion？</string>
     <string name="yv_font_selected_check">已選擇字型勾選</string>
     <string name="yv_font_settings_label">字型</string>
     <string name="yv_footnote_header_label">備註</string>
