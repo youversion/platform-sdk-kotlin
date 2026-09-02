@@ -47,6 +47,31 @@ data class BibleTextNode(
             }
 
     companion object {
+        private val supportedElementNames =
+            setOf("block", "div", "root", "span", "table", "td", "text", "tr")
+
+        private val htmlVoidElementNames =
+            setOf(
+                "area",
+                "base",
+                "br",
+                "col",
+                "embed",
+                "hr",
+                "img",
+                "input",
+                "link",
+                "meta",
+                "param",
+                "source",
+                "track",
+                "wbr",
+            )
+
+        private val voidElementRegex = Regex("""<([A-Za-z][A-Za-z0-9:-]*)([^<>]*)>""")
+
+        private val multipleSpacesRegex = Regex(" {2,}")
+
         /**
          * Parses a string of HTML content into a root BibleTextNode.
          *
@@ -78,11 +103,8 @@ data class BibleTextNode(
         private fun sanitizeHTMLForXML(html: String): String {
             var s = html
 
-            // Self-close common void elements
-            s =
-                s
-                    .replace("<br>", "<br/>")
-                    .replace("<br >", "<br/>")
+            // Self-close HTML void elements if they appear unclosed
+            s = selfCloseHTMLVoidElements(s)
 
             // Decode common HTML named entities to Unicode characters
             val entityMap =
@@ -105,6 +127,17 @@ data class BibleTextNode(
             // Wrap with a root element to guarantee a single top-level node for the parser
             return "<root>$s</root>"
         }
+
+        private fun selfCloseHTMLVoidElements(html: String): String =
+            voidElementRegex.replace(html) { match ->
+                val elementName = match.groupValues[1].lowercase()
+                val tag = match.value
+                if (elementName in htmlVoidElementNames && !tag.endsWith("/>")) {
+                    tag.dropLast(1) + "/>"
+                } else {
+                    tag
+                }
+            }
     }
 
     /**
@@ -136,7 +169,7 @@ data class BibleTextNode(
 
             val filteredAttributes = attributeMap.filterKeys { it != "class" }
 
-            val node = BibleTextNode(name = qName, classes = classes, attributes = filteredAttributes)
+            val node = BibleTextNode(name = qName.lowercase(), classes = classes, attributes = filteredAttributes)
             stack.last().children.add(node)
             stack.add(node)
         }
@@ -165,11 +198,11 @@ data class BibleTextNode(
             // Coalesce adjacent text nodes for efficiency.
             if (current.children.lastOrNull()?.type == BibleTextNodeType.TEXT) {
                 val lastChild = current.children.last()
-                lastChild.textSegments.add(segment)
-                val joined = lastChild.textSegments.joinToString("")
+                // Collapse the seam between coalesced segments so removed elements
+                // (e.g. an ignored <br>) don't leave a double space behind.
+                val joined = (lastChild.text + segment).replace(multipleSpacesRegex, " ")
                 lastChild.text = joined
-                // Once joined, we can reset textSegments to keep memory usage low.
-                lastChild.textSegments = if (joined.isEmpty()) mutableListOf() else mutableListOf(joined)
+                lastChild.textSegments = mutableListOf(joined)
             } else {
                 // This is a new text node.
                 val textNode = BibleTextNode(name = "text", text = segment)
@@ -183,7 +216,15 @@ data class BibleTextNode(
             localName: String?,
             qName: String?,
         ) {
-            stack.removeAt(stack.lastIndex)
+            val node = stack.removeAt(stack.lastIndex)
+
+            // Drop unsupported elements from the tree but keep their children,
+            // hoisting them into the parent so their text still renders.
+            if (node.name !in supportedElementNames) {
+                val parent = stack.last()
+                parent.children.remove(node)
+                parent.children.addAll(node.children)
+            }
         }
     }
 }

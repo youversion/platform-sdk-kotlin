@@ -207,4 +207,64 @@ class BibleTextNodeTests {
         assertEquals(BibleTextNodeType.BLOCK, outer.children[0].type)
         assertEquals(BibleTextNodeType.SPAN, outer.children[1].type)
     }
+
+    @Test
+    fun `parse should ignore unsupported elements and preserve their children`() {
+        val html =
+            """<div>Before <p>inside <em>emphasis</em></p> after """ +
+                """<custom><span class="nd">Lord</span></custom>.</div>"""
+
+        val root = BibleTextNode.parse(html)
+        assertNotNull(root)
+        assertSupportedNodeTypes(root)
+
+        assertEquals("Before inside emphasis after Lord.", collectRenderedText(root.children.first()))
+    }
+
+    @Test
+    fun `parse should ignore unsupported void elements`() {
+        val html = """<div>Before <br> after <br class="poetry"> done <img alt="ignored"> end</div>"""
+
+        val root = BibleTextNode.parse(html)
+        assertNotNull(root)
+        assertSupportedNodeTypes(root)
+
+        assertEquals("Before after done end", collectRenderedText(root.children.first()))
+    }
+
+    @Test
+    fun `parse should handle unclosed HTML void elements`() {
+        val html =
+            """
+            <div>Before
+            <area><base><BR><col><embed><hr><img alt="ignored"><input value="ignored">
+            <link><meta name="ignored" content="ignored"><param><source><track><wbr>
+            after</div>
+            """.trimIndent()
+
+        val root = BibleTextNode.parse(html)
+        assertNotNull(root)
+        assertSupportedNodeTypes(root)
+
+        assertEquals("Before after", collectRenderedText(root.children.first()))
+    }
+
+    private fun collectRenderedText(node: BibleTextNode): String {
+        val text = StringBuilder()
+
+        fun append(node: BibleTextNode) {
+            if (node.type == BibleTextNodeType.TEXT) {
+                text.append(node.text)
+            }
+            node.children.forEach(::append)
+        }
+        append(node)
+
+        return text.toString().trim()
+    }
+
+    private fun assertSupportedNodeTypes(node: BibleTextNode) {
+        node.type
+        node.children.forEach(::assertSupportedNodeTypes)
+    }
 }
