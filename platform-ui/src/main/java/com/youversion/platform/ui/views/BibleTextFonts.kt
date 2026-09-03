@@ -60,7 +60,6 @@ data class BibleTextFonts(
                 SpanStyle(
                     fontFamily = FontFamily.SansSerif,
                     fontSize = baseSize * 0.65,
-                    fontFeatureSettings = "c2sc on, smcp on",
                 ),
         )
 
