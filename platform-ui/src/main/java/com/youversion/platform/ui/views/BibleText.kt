@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -107,22 +109,24 @@ data class BibleTextOptions(
             FOOTNOTE_IMAGE_ID to
                 InlineTextContent(
                     Placeholder(
-                        width = 24.sp,
-                        height = 32.sp,
+                        width = fontSize * 1.5,
+                        height = fontSize,
                         placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
                     ),
                 ) {
+                    val iconSize = with(LocalDensity.current) { fontSize.toDp() }
                     Box(
                         modifier =
                             Modifier
                                 .fillMaxSize()
+                                .offset(y = -iconSize / 4)
                                 .alpha(0.8f),
-                        contentAlignment = Alignment.TopCenter,
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.ic_material_footnotes),
                             contentDescription = stringResource(R.string.footnote_content_desc),
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(iconSize),
                             tint = LocalContentColor.current.copy(alpha = 0.6f),
                         )
                     }
