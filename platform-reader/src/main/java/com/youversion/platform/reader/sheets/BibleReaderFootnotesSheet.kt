@@ -105,7 +105,7 @@ fun BibleReaderFootnotesSheet(
 
         if (blocks != null) {
             val referenceAnnotation = "${ref.versionId}:${ref.bookUSFM}:${ref.chapter}:${ref.verseStart}"
-            displayFootnotes =
+            val renderedFootnotes =
                 blocks
                     .flatMap { it.footnotes }
                     .filter { footnote ->
@@ -113,6 +113,9 @@ fun BibleReaderFootnotesSheet(
                             .getStringAnnotations(BibleReferenceAttribute.NAME, 0, footnote.length)
                             .any { it.item == referenceAnnotation }
                     }
+            if (renderedFootnotes.isNotEmpty()) {
+                displayFootnotes = renderedFootnotes
+            }
         }
     }
 
