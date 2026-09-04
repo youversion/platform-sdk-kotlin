@@ -46,7 +46,7 @@ class BibleReaderViewModelActionTests {
 
         // Explicit null stubs — relaxed mockk otherwise returns 0f for `Float?` getters, which
         // would poison the ViewModel's default state when it restores from storage on init.
-        every { userSettingsRepository.readerLineSpacing } returns null
+        every { userSettingsRepository.readerLineSpacingFraction } returns null
 
         every { bibleReaderRepository.produceBibleReference(any()) } returns defaultReference
 
@@ -117,21 +117,21 @@ class BibleReaderViewModelActionTests {
     // ----- Line Spacing
 
     @Test
-    fun `CycleLineSpacing advances through the available multipliers and wraps`() {
+    fun `CycleLineSpacing advances through the available fractions and wraps`() {
         // Default seeded state is 0.4f. Cycling should walk 0.4 -> 0.6 -> 0.3 -> 0.4.
-        assertEquals(ReaderFontSettings.DEFAULT_LINE_SPACING, viewModel.state.value.lineSpacing)
+        assertEquals(ReaderFontSettings.DEFAULT_LINE_SPACING_FRACTION, viewModel.state.value.lineSpacingFraction)
 
         viewModel.onAction(BibleReaderViewModel.Action.CycleLineSpacing)
-        assertEquals(0.6f, viewModel.state.value.lineSpacing)
-        verify { userSettingsRepository.readerLineSpacing = 0.6f }
+        assertEquals(0.6f, viewModel.state.value.lineSpacingFraction)
+        verify { userSettingsRepository.readerLineSpacingFraction = 0.6f }
 
         viewModel.onAction(BibleReaderViewModel.Action.CycleLineSpacing)
-        assertEquals(0.3f, viewModel.state.value.lineSpacing)
-        verify { userSettingsRepository.readerLineSpacing = 0.3f }
+        assertEquals(0.3f, viewModel.state.value.lineSpacingFraction)
+        verify { userSettingsRepository.readerLineSpacingFraction = 0.3f }
 
         viewModel.onAction(BibleReaderViewModel.Action.CycleLineSpacing)
-        assertEquals(0.4f, viewModel.state.value.lineSpacing)
-        verify { userSettingsRepository.readerLineSpacing = 0.4f }
+        assertEquals(0.4f, viewModel.state.value.lineSpacingFraction)
+        verify { userSettingsRepository.readerLineSpacingFraction = 0.4f }
     }
 
     // ----- SetFontDefinition

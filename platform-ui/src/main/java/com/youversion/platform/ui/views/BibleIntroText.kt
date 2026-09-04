@@ -158,15 +158,14 @@ private fun IntroTextBlock(
     onFootnoteTap: ((footnotes: List<AnnotatedString>) -> Unit)?,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-    val lineSpacing = textOptions.fontSize.value * (textOptions.lineSpacing ?: 0.4f)
     val marginTop = if (isFirstBlock) 0.dp else maxOf(0.dp, block.marginTop - previousMarginBottom)
     val marginBottom =
-        block.marginBottom + lineSpacing.dp + (textOptions.paragraphSpacing ?: 0.sp).value.dp
+        block.marginBottom + textOptions.extraLeading.dp + (textOptions.paragraphSpacing ?: 0.sp).value.dp
 
     Text(
         text = block.text,
         textAlign = block.alignment,
-        lineHeight = textOptions.fontSize * (1.2f + (textOptions.lineSpacing ?: 0.4f)),
+        lineHeight = textOptions.resolvedLineHeight,
         color = textOptions.textColor ?: Color.Unspecified,
         style =
             LocalTextStyle.current.copy(
@@ -252,7 +251,7 @@ private fun IntroTableBlock(
                         Box(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = cellText,
-                                lineHeight = textOptions.fontSize * (1.2f + (textOptions.lineSpacing ?: 0.4f)),
+                                lineHeight = textOptions.resolvedLineHeight,
                                 color = textOptions.textColor ?: Color.Unspecified,
                             )
                         }
@@ -260,7 +259,7 @@ private fun IntroTableBlock(
                         Box {
                             Text(
                                 text = cellText,
-                                lineHeight = textOptions.fontSize * (1.2f + (textOptions.lineSpacing ?: 0.4f)),
+                                lineHeight = textOptions.resolvedLineHeight,
                                 color = textOptions.textColor ?: Color.Unspecified,
                             )
                         }

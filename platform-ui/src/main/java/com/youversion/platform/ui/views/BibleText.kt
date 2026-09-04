@@ -93,8 +93,11 @@ internal val ImageFootnoteMarker: AnnotatedString =
 data class BibleTextOptions(
     val fontFamily: FontFamily = UntitledSerif,
     val fontSize: TextUnit = 16.sp,
-    /** Extra space between lines as a fraction of [fontSize]; null means the default 0.4. */
-    val lineSpacing: Float? = null,
+    /**
+     * Extra space between lines as a fraction of [fontSize]; null means
+     * [DEFAULT_LINE_SPACING_FRACTION].
+     */
+    val lineSpacingFraction: Float? = null,
     val paragraphSpacing: TextUnit? = null,
     val textColor: Color? = null,
     val wocColor: Color = Color(0xFFF04C59), // YouVersion red
@@ -132,6 +135,22 @@ data class BibleTextOptions(
                     }
                 },
         )
+
+    /** Line height including [lineSpacingFraction], or the default when it is unset. */
+    internal val resolvedLineHeight: TextUnit
+        get() = fontSize * (BASE_LINE_HEIGHT + (lineSpacingFraction ?: DEFAULT_LINE_SPACING_FRACTION))
+
+    /** Extra leading in the same units as [fontSize], used to pad a block's bottom margin. */
+    internal val extraLeading: Float
+        get() = fontSize.value * (lineSpacingFraction ?: DEFAULT_LINE_SPACING_FRACTION)
+
+    companion object {
+        /** Extra leading applied when [lineSpacingFraction] is unset. */
+        const val DEFAULT_LINE_SPACING_FRACTION: Float = 0.4f
+
+        // The line height a font already carries before any extra leading is added.
+        private const val BASE_LINE_HEIGHT = 1.2f
+    }
 }
 
 fun Int.convertToEnumeration(): String {
@@ -561,12 +580,11 @@ private fun BibleTextBlock(
     onClick: (position: Offset, layoutResult: TextLayoutResult) -> Unit,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-    val lineSpacing = textOptions.fontSize.value * (textOptions.lineSpacing ?: 0.4f)
     // Adjacent blocks share whichever margin is bigger instead of stacking both, mirroring
     // how CSS collapses margins; the topmost block gets no top margin at all.
     val marginTop = if (isFirstBlock) 0.dp else maxOf(0.dp, block.marginTop - previousMarginBottom)
     val marginBottom =
-        block.marginBottom + lineSpacing.dp + (textOptions.paragraphSpacing ?: 0.sp).value.dp
+        block.marginBottom + textOptions.extraLeading.dp + (textOptions.paragraphSpacing ?: 0.sp).value.dp
 
     val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
 
@@ -583,7 +601,7 @@ private fun BibleTextBlock(
     Text(
         text = block.text,
         textAlign = block.alignment,
-        lineHeight = textOptions.fontSize * (1.2f + (textOptions.lineSpacing ?: 0.4f)),
+        lineHeight = textOptions.resolvedLineHeight,
         color = textOptions.textColor ?: Color.Unspecified,
         style =
             LocalTextStyle.current.copy(
@@ -705,7 +723,7 @@ private fun BibleTableCell(
 
     Text(
         text = cellText,
-        lineHeight = textOptions.fontSize * (1.2f + (textOptions.lineSpacing ?: 0.4f)),
+        lineHeight = textOptions.resolvedLineHeight,
         color = textOptions.textColor ?: Color.Unspecified,
         modifier =
             Modifier
