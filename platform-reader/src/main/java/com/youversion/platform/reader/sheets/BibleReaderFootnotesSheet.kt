@@ -62,6 +62,12 @@ private val SheetTextOptions =
         footnoteMarker = null,
     )
 
+/**
+ * Bottom sheet listing the footnotes for [reference].
+ *
+ * Content is rendered at a fixed size rather than with the reader's font settings, so the sheet
+ * takes no [BibleTextOptions].
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BibleReaderFootnotesSheet(
