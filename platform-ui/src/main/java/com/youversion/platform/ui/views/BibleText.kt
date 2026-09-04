@@ -174,6 +174,23 @@ enum class BibleTextLoadingPhase {
     SUCCESS,
 }
 
+/**
+ * Renders the chapter, or the passage within it, named by [reference].
+ *
+ * @param reference The passage to render.
+ * @param textOptions Text styling options (font family, font size, line spacing, etc.).
+ * @param selectedVerses The verses to draw as selected.
+ * @param onVerseSelectedChange Callback invoked when a tap adds a verse to or removes it from the selection.
+ * @param onVerseTap Callback invoked when a verse is tapped, with the tap position.
+ * @param onFootnoteTap Callback invoked when a footnote icon is tapped, providing the footnotes for that verse.
+ * @param placeholder A composable to display during loading and error states.
+ * @param onStateChange Callback invoked when the loading phase changes.
+ * @param onBlocksChange Callback invoked with the rendered blocks each time a load succeeds, so a host that needs
+ * the same content can reuse them instead of rendering the chapter twice. It fires once per successful load: on
+ * first composition, and again whenever [reference] or [textOptions] compares unequal to the previous value. It
+ * does not fire when a load fails, is not permitted, or is cancelled. The blocks are rebuilt from scratch on every
+ * load and carry no stable identity, so replace the previous list wholesale rather than diffing against it.
+ */
 @Composable
 fun BibleText(
     reference: BibleReference,
@@ -184,6 +201,7 @@ fun BibleText(
     onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)? = null,
     placeholder: @Composable (BibleTextLoadingPhase) -> Unit = { StandardPlaceholder(it) },
     onStateChange: (BibleTextLoadingPhase) -> Unit = {},
+    onBlocksChange: (List<BibleTextBlock>) -> Unit = {},
 ) {
     var blocks by remember { mutableStateOf<List<BibleTextBlock>>(emptyList()) }
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
@@ -255,6 +273,7 @@ fun BibleText(
 
             if (loadedBlocks != null) {
                 blocks = loadedBlocks
+                onBlocksChange(loadedBlocks)
                 loadingPhase = BibleTextLoadingPhase.SUCCESS
             } else {
                 loadingPhase = BibleTextLoadingPhase.FAILED

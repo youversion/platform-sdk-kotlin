@@ -21,6 +21,7 @@ import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
@@ -290,5 +291,26 @@ class BibleReaderFootnotesSheetTest {
 
         composeTestRule.onNodeWithText("Passed-in footnote").assertIsDisplayed()
         composeTestRule.onNodeWithText("Other verse footnote").assertDoesNotExist()
+    }
+
+    @Test
+    fun `renders the chapter once for both the passage and its footnotes`() {
+        stubRenderedFootnotes(listOf(footnoteFor(testVerseReference, "Re-rendered footnote")))
+
+        renderSheet(reference = testVerseReference)
+
+        coVerify(exactly = 1) {
+            BibleVersionRendering.textBlocks(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        }
     }
 }
