@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun BibleLanguageRow(
+internal fun BibleLanguageRow(
     language: LanguageRowItem,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,

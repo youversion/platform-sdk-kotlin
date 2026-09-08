@@ -4,7 +4,7 @@ import com.youversion.platform.core.domain.Storage
 import java.util.Date
 import java.util.UUID
 
-class SessionRepository(
+internal class SessionRepository(
     private val storage: Storage,
 ) {
     companion object {

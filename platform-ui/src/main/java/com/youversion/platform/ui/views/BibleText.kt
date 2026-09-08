@@ -386,7 +386,7 @@ fun BibleText(
     }
 }
 
-fun BibleReference.Companion.fromAnnotation(annotation: String): BibleReference {
+internal fun BibleReference.Companion.fromAnnotation(annotation: String): BibleReference {
     val split = annotation.split(":")
     return BibleReference(
         versionId = split[0].toInt(),
@@ -777,7 +777,7 @@ private fun BibleTableCell(
 }
 
 @Composable
-fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
+internal fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,

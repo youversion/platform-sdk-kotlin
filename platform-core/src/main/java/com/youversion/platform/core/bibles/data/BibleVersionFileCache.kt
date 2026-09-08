@@ -14,7 +14,7 @@ import java.io.File
  * A file-based implementation of [BibleVersionCache] that stores data in the app's
  * cache directory. Entries expire per the server's caching headers.
  */
-class BibleVersionTemporaryCache(
+internal class BibleVersionTemporaryCache(
     private val context: Context,
     now: () -> Long = System::currentTimeMillis,
 ) : BibleVersionFileCache(isExpiring = true, now = now) {
@@ -28,7 +28,7 @@ class BibleVersionTemporaryCache(
  * directory; earlier releases cached all fetched content at the files directory root,
  * and [removeExpiredEntries] removes that previously cached content.
  */
-class BibleVersionPersistentCache(
+internal class BibleVersionPersistentCache(
     private val context: Context,
 ) : BibleVersionFileCache(isExpiring = false) {
     override val rootDir: File
@@ -67,7 +67,7 @@ class BibleVersionPersistentCache(
  * holding its expiration as epoch milliseconds; entries whose sidecar is missing,
  * unreadable, or past are evicted on read and by [removeExpiredEntries].
  */
-abstract class BibleVersionFileCache(
+internal abstract class BibleVersionFileCache(
     private val isExpiring: Boolean,
     private val now: () -> Long = System::currentTimeMillis,
 ) : BibleVersionCache {

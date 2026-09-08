@@ -24,7 +24,7 @@ import io.ktor.http.path
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
-object BiblesEndpoints : BiblesApi {
+internal object BiblesEndpoints : BiblesApi {
     private val httpClient: HttpClient
         get() = PlatformCoreKoinComponent.httpClient
 

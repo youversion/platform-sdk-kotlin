@@ -60,7 +60,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BibleReaderFontSettingsSheet(
+internal fun BibleReaderFontSettingsSheet(
     onDismissRequest: () -> Unit,
     onSmallerFontClick: () -> Unit,
     onBiggerFontClick: () -> Unit,

@@ -6,7 +6,7 @@ import android.content.Intent
 /**
  * Manages launching the Android share sheet for sharing plain text content.
  */
-class ShareManager(
+internal class ShareManager(
     private val context: Context,
 ) {
     /**

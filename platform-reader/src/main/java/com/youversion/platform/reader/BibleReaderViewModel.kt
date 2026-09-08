@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class BibleReaderViewModel(
+internal class BibleReaderViewModel(
     bibleReference: BibleReference?,
     fontDefinitionProvider: FontDefinitionProvider?,
     private val bibleVersionRepository: BibleVersionRepository,

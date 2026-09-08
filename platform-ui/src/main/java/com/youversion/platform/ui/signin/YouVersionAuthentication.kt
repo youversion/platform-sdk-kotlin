@@ -17,7 +17,7 @@ import kotlinx.coroutines.withContext
 /**
  * Handles the user authentication flow for signing in with YouVersion.
  */
-object YouVersionAuthentication {
+internal object YouVersionAuthentication {
     /**
      * Presents the YouVersion login flow to the user. This function is now a 'fire-and-forget'
      * operation. The result must be handled by `handleAuthCallback`.

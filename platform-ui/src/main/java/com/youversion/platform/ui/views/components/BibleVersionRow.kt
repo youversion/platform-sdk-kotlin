@@ -22,7 +22,7 @@ import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
 @Composable
-fun BibleVersionRow(
+internal fun BibleVersionRow(
     bibleVersion: BibleVersion,
     onVersionInfoClick: () -> Unit,
     onVersionClick: () -> Unit,

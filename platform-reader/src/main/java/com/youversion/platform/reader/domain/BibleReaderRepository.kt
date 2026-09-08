@@ -49,7 +49,7 @@ internal data class HighlightRequest(
  * Emissions are compared against the session read at construction rather than the first emission, which can already be
  * the new session.
  */
-class BibleReaderRepository internal constructor(
+internal class BibleReaderRepository(
     private val storage: Storage,
     private val bibleVersionRepository: BibleVersionRepository,
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),

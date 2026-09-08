@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.youversion.platform.core.domain.Storage
 
-class SharedPreferencesStorage(
+internal class SharedPreferencesStorage(
     context: Context,
 ) : Storage {
     companion object {

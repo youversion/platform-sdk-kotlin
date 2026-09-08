@@ -7,7 +7,7 @@ import android.content.Context
 /**
  * Manages copying plain text content to the system clipboard.
  */
-class CopyManager(
+internal class CopyManager(
     context: Context,
 ) {
     private val clipboardManager = context.getSystemService(ClipboardManager::class.java)

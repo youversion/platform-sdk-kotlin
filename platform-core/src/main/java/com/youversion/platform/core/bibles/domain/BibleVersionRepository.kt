@@ -12,7 +12,7 @@ import kotlinx.coroutines.sync.withLock
 import java.text.Collator
 import java.util.Locale
 
-enum class BibleVersionDownloadStatus {
+internal enum class BibleVersionDownloadStatus {
     DOWNLOADABLE,
     DOWNLOADED,
     NOT_DOWNLOADABLE,
@@ -97,7 +97,7 @@ class BibleVersionRepository(
         temporaryCache.removeVersion(id) // Don't want 2 copies
     }
 
-    fun downloadStatus(id: Int): BibleVersionDownloadStatus {
+    internal fun downloadStatus(id: Int): BibleVersionDownloadStatus {
         if (persistentCache.versionIsPresent(id)) {
             return BibleVersionDownloadStatus.DOWNLOADED
         }

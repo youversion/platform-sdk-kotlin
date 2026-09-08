@@ -32,7 +32,7 @@ import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class, KoinExperimentalAPI::class)
 @Composable
-fun BibleVersionPickingButton(
+internal fun BibleVersionPickingButton(
     initialVersionId: Int,
     modifier: Modifier = Modifier,
     onVersionChange: ((BibleVersion) -> Unit)? = null,

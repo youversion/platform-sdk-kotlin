@@ -54,7 +54,7 @@ import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BibleReaderPassageSelection(
+internal fun BibleReaderPassageSelection(
     bookAndChapter: String,
     onReferenceClick: () -> Unit,
     onPreviousChapter: () -> Unit,
@@ -153,7 +153,7 @@ private fun Preview_BibleReader_PassageSelection() {
     }
 }
 
-fun PassageSelectionState(
+internal fun PassageSelectionState(
     initialHeightOffsetLimit: Float,
     initialHeightOffset: Float,
     initialContentOffset: Float,
@@ -164,7 +164,7 @@ fun PassageSelectionState(
         initialContentOffset,
     )
 
-interface PassageSelectionState {
+internal interface PassageSelectionState {
     var heightOffsetLimit: Float
 
     var heightOffset: Float
@@ -216,7 +216,7 @@ private class PassageSelectionStateImpl(
 }
 
 @Composable
-fun rememberPassageSelectionState(
+internal fun rememberPassageSelectionState(
     initialHeightOffsetLimit: Float = -Float.MAX_VALUE,
     initialHeightOffset: Float = 0f,
     initialContentOffset: Float = 0f,
@@ -225,7 +225,7 @@ fun rememberPassageSelectionState(
         PassageSelectionState(initialHeightOffsetLimit, initialHeightOffset, initialContentOffset)
     }
 
-object PassageSelectionDefaults {
+internal object PassageSelectionDefaults {
     @Composable
     fun fadeAlwaysScrollBehavior(
         state: PassageSelectionState = rememberPassageSelectionState(),
@@ -247,7 +247,7 @@ object PassageSelectionDefaults {
         }
 }
 
-interface PassageSelectionScrollBehavior {
+internal interface PassageSelectionScrollBehavior {
     /**
      * A [PassageSelectionState] that is attached to this behavior and is read and updated
      * when scrolling happens.

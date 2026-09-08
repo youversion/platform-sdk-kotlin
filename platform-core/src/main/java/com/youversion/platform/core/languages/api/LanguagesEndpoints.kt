@@ -14,7 +14,7 @@ import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.path
 
-object LanguagesEndpoints : LanguagesApi {
+internal object LanguagesEndpoints : LanguagesApi {
     private val httpClient: HttpClient
         get() = PlatformCoreKoinComponent.httpClient
 

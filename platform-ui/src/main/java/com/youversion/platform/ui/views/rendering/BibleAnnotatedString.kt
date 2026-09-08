@@ -2,7 +2,7 @@ package com.youversion.platform.ui.views.rendering
 
 import androidx.compose.ui.text.AnnotatedString
 
-fun AnnotatedString.Builder.addTextCategoryAnnotation(
+internal fun AnnotatedString.Builder.addTextCategoryAnnotation(
     category: BibleTextCategory,
     start: Int,
     end: Int,

@@ -9,7 +9,7 @@ import com.youversion.platform.ui.theme.UntitledSerif
  * A utility object that provides constants and helper functions for managing font settings
  * within the reader feature.
  */
-object ReaderFontSettings {
+internal object ReaderFontSettings {
     val availableSizes = listOf(9.sp, 12.sp, 15.sp, 18.sp, 21.sp, 24.sp)
     val DEFAULT_FONT_SIZE: TextUnit = 18.sp
 

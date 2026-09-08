@@ -1,5 +1,6 @@
 package com.youversion.platform.core.users.model
 
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.users.api.UsersEndpoints
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -14,6 +15,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
  * @property state An opaque value used to prevent cross-site request forgery.
  * @property nonce An opaque value used to associate a client session with an ID token.
  */
+@PlatformInternalApi
 data class SignInWithYouVersionPKCEParameters(
     val codeVerifier: String,
     val codeChallenge: String,
@@ -24,6 +26,7 @@ data class SignInWithYouVersionPKCEParameters(
 /**
  * Data class holding the generated authorization URL and the PKCE parameters used to create it.
  */
+@PlatformInternalApi
 data class SignInWithYouVersionPKCEAuthorizationRequest(
     val url: String,
     val parameters: SignInWithYouVersionPKCEParameters,
@@ -106,6 +109,6 @@ data class SignInWithYouVersionPKCEAuthorizationRequest(
 /**
  * Sealed class for custom errors related to the PKCE authorization flow.
  */
-sealed class SignInWithYouVersionPKCEAuthorizationError : Throwable() {
+private sealed class SignInWithYouVersionPKCEAuthorizationError : Throwable() {
     class RandomGenerationFailed : SignInWithYouVersionPKCEAuthorizationError()
 }

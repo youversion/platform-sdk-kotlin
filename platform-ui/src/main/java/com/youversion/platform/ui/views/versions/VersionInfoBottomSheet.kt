@@ -43,7 +43,7 @@ import com.youversion.platform.ui.R as UiR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VersionInfoBottomSheet(
+internal fun VersionInfoBottomSheet(
     bibleVersion: BibleVersion,
     organization: Organization?,
     onDismissRequest: () -> Unit,

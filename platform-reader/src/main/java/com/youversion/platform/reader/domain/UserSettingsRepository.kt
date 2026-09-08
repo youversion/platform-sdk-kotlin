@@ -2,7 +2,7 @@ package com.youversion.platform.reader.domain
 
 import com.youversion.platform.core.domain.Storage
 
-class UserSettingsRepository(
+internal class UserSettingsRepository(
     private val storage: Storage,
 ) {
     companion object {

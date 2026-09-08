@@ -2,7 +2,7 @@ package com.youversion.platform.ui.theme.tokens
 
 import androidx.compose.ui.graphics.Color
 
-object BiblePaletteTokens {
+internal object BiblePaletteTokens {
     val White = Color.White
     val Gray5 = Color(0xFFF6F4F4)
     val Gray10 = Color(0xFFEDEBEB)

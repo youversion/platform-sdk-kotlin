@@ -222,7 +222,7 @@ data class BibleVersion(
             }
     }
 
-    object Builder {
+    internal object Builder {
         fun merge(
             basic: BibleVersion,
             index: BibleVersionIndex,

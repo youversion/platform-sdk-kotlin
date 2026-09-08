@@ -10,7 +10,7 @@ import io.ktor.client.request.get
 import io.ktor.http.appendPathSegments
 import io.ktor.http.path
 
-object VotdEndpoints : VotdApi {
+internal object VotdEndpoints : VotdApi {
     private val httpClient: HttpClient
         get() = PlatformCoreKoinComponent.httpClient
 

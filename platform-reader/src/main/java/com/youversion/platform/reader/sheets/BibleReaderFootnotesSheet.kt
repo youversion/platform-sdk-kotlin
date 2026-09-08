@@ -65,7 +65,7 @@ private val SheetTextOptions =
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BibleReaderFootnotesSheet(
+internal fun BibleReaderFootnotesSheet(
     onDismissRequest: () -> Unit,
     version: BibleVersion?,
     reference: BibleReference?,
@@ -162,7 +162,7 @@ private fun footnotesFor(
 }
 
 @Composable
-fun Footnotes(footnotes: List<AnnotatedString>) {
+internal fun Footnotes(footnotes: List<AnnotatedString>) {
     Column {
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp).testTag("footnote_divider"))
         footnotes.forEachIndexed { index, footnote ->

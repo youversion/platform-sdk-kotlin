@@ -37,7 +37,7 @@ data class ReaderColorScheme(
         get() = if (isDark) 0.3f else 1f
 }
 
-fun lightReaderColorScheme(
+internal fun lightReaderColorScheme(
     background: Color,
     foreground: Color,
     surfacePrimaryColor: Color = LightSurfacePrimaryColor,
@@ -70,7 +70,7 @@ fun lightReaderColorScheme(
     wordsOfChristColor = wordsOfChristColor,
 )
 
-fun darkReaderColorScheme(
+internal fun darkReaderColorScheme(
     background: Color,
     foreground: Color,
     surfacePrimaryColor: Color = DarkSurfacePrimaryColor,
