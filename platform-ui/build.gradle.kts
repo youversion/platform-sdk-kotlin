@@ -54,24 +54,27 @@ android {
 }
 
 dependencies {
-    implementation(projects.platformCore)
+    // api(): these types appear in platform-ui's public signatures, so consumers need
+    // them on their compile classpath. Everything else stays implementation.
+    api(projects.platformCore) // BibleText(BibleReference), BibleCard(BibleVersion), rememberSignIn()
+    api(platform(libs.androidx.compose.bom))
+    api(libs.androidx.compose.ui) // BibleTextOptions/BibleTextFonts (TextStyle, AnnotatedString, TextUnit)
+    api(libs.androidx.compose.ui.graphics) // ReaderColorScheme(Color), SignInWithYouVersionButtonDefaults (Shape)
+    api(libs.androidx.compose.material3) // MaterialTheme.readerColorScheme extension receiver
+    api(libs.androidx.activity.compose) // SignInWithYouVersionActivity : ComponentActivity
+    api(libs.androidx.lifecycle.viewmodel.compose) // SignInViewModel : AndroidViewModel
+    api(libs.koin.core) // PlatformUIKoinModule : Module
+    api(libs.kotlin.coroutines) // SignInViewModel.state, BibleVersionsViewModel.state : StateFlow
 
     implementation(libs.androidx.browser)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.icons.core)
     implementation(libs.androidx.compose.icons.extended)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.compose.navigation)
     implementation(libs.touchlab.kermit)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    implementation(libs.koin.core)
     implementation(libs.koin.androidx.compose)
 
     testImplementation(libs.kotlin.test)

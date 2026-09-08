@@ -57,10 +57,12 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.koin.core)
+    // api(): these types appear in platform-core's public signatures, so consumers need
+    // them on their compile classpath. Everything else stays implementation.
+    api(libs.koin.core) // PlatformKoinGraph.koinApplication, start(List<Module>)
+    api(libs.kotlin.coroutines) // YouVersionPlatformConfiguration.configState, BibleHighlightsRepository.highlights
 
-    implementation(libs.kotlin.coroutines)
+    implementation(libs.androidx.core.ktx)
     implementation(libs.kotlin.serialization)
 
     implementation(libs.ktor.client.core)
