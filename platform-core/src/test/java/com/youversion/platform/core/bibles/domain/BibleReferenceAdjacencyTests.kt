@@ -88,4 +88,13 @@ class BibleReferenceAdjacencyTests {
         assertTrue(ref1.isAdjacentOrOverlapping(ref2))
         assertTrue(ref2.isAdjacentOrOverlapping(ref1))
     }
+
+    @Test
+    fun `test whole chapter is adjacent to the highest verse without overflowing`() {
+        val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val highestVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = Int.MAX_VALUE)
+
+        assertTrue(chapter.isAdjacentOrOverlapping(highestVerse))
+        assertTrue(highestVerse.isAdjacentOrOverlapping(chapter))
+    }
 }
