@@ -1,9 +1,16 @@
 package com.youversion.platform.core.bibles.domain
 
 import com.youversion.platform.core.bibles.models.BibleVersion
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
-@Serializable
+@Serializable(with = BibleReferenceSerializer::class)
 data class BibleReference(
     val versionId: Int,
     val bookUSFM: String,
@@ -381,6 +388,50 @@ data class BibleReference(
             }
 
             return null
+        }
+    }
+}
+
+/**
+ * Reads references saved before a reference was required to be one of the three shapes the SDK means, repairing the
+ * half-specified ones on the way in: a starting verse alone becomes that single verse, and an ending verse alone
+ * becomes the whole chapter. Encoding is unchanged — [Stored] mirrors the saved shape field for field.
+ */
+private object BibleReferenceSerializer : KSerializer<BibleReference> {
+    @Serializable
+    @SerialName("com.youversion.platform.core.bibles.domain.BibleReference")
+    @OptIn(ExperimentalSerializationApi::class)
+    private data class Stored(
+        val versionId: Int,
+        val bookUSFM: String,
+        val chapter: Int,
+        @EncodeDefault(EncodeDefault.Mode.ALWAYS) val verseStart: Int? = null,
+        @EncodeDefault(EncodeDefault.Mode.ALWAYS) val verseEnd: Int? = null,
+    )
+
+    override val descriptor: SerialDescriptor = Stored.serializer().descriptor
+
+    override fun serialize(
+        encoder: Encoder,
+        value: BibleReference,
+    ) {
+        val stored = Stored(value.versionId, value.bookUSFM, value.chapter, value.verseStart, value.verseEnd)
+        encoder.encodeSerializableValue(Stored.serializer(), stored)
+    }
+
+    override fun deserialize(decoder: Decoder): BibleReference {
+        val stored = decoder.decodeSerializableValue(Stored.serializer())
+        val verseStart = stored.verseStart
+        val verseEnd = stored.verseEnd
+
+        return when {
+            // Whole chapter, whether nothing was saved or only an ending verse was
+            verseStart == null -> BibleReference(stored.versionId, stored.bookUSFM, stored.chapter)
+
+            // Single verse
+            verseEnd == null -> BibleReference(stored.versionId, stored.bookUSFM, stored.chapter, verse = verseStart)
+
+            else -> BibleReference(stored.versionId, stored.bookUSFM, stored.chapter, verseStart, verseEnd)
         }
     }
 }
