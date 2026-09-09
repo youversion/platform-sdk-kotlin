@@ -53,7 +53,15 @@ data class BibleReference private constructor(
         get() = "${bookUSFM.uppercase()}.$chapter"
 
     val isRange: Boolean
-        get() = verseEnd != null && verseStart != verseEnd
+        get() = verseStart != verseEnd
+
+    /** The verses this reference covers; a whole chapter covers all of them. */
+    private val verseRange: IntRange
+        get() {
+            val start = verseStart
+            val end = verseEnd
+            return if (start != null && end != null) start..end else 1..Int.MAX_VALUE
+        }
 
     override fun toString(): String {
         val prefix = "bible${versionId}__$bookUSFM.$chapter"
@@ -123,29 +131,10 @@ data class BibleReference private constructor(
             return false // TODO change this when we support cross-chapter ranges
         }
 
-        // Treat a reference with both verseStart and verseEnd nil as a whole chapter reference.
-        // Whole chapter overlaps any reference within the same chapter.
-        val aStart: Int
-        val aEnd: Int
-        if (a.verseStart == null && a.verseEnd == null) {
-            aStart = 1
-            aEnd = Int.MAX_VALUE
-        } else {
-            aStart = a.verseStart ?: 1
-            aEnd = a.verseEnd ?: aStart
-        }
+        val aVerses = a.verseRange
+        val bVerses = b.verseRange
 
-        val bStart: Int
-        val bEnd: Int
-        if (b.verseStart == null && b.verseEnd == null) {
-            bStart = 1
-            bEnd = Int.MAX_VALUE
-        } else {
-            bStart = b.verseStart ?: 1
-            bEnd = b.verseEnd ?: bStart
-        }
-
-        return aEnd >= bStart && bEnd >= aStart
+        return aVerses.last >= bVerses.first && bVerses.last >= aVerses.first
     }
 
     fun contains(otherReference: BibleReference): Boolean {
@@ -157,29 +146,10 @@ data class BibleReference private constructor(
             return false // TODO change this when we support cross-chapter ranges
         }
 
-        // Treat a reference with both verseStart and verseEnd nil as a whole chapter reference.
-        // Whole chapter contains any reference within the same chapter.
-        val aStart: Int
-        val aEnd: Int
-        if (verseStart == null && verseEnd == null) {
-            aStart = 1
-            aEnd = Int.MAX_VALUE
-        } else {
-            aStart = verseStart ?: 1
-            aEnd = verseEnd ?: aStart
-        }
+        val outerVerses = verseRange
+        val innerVerses = otherReference.verseRange
 
-        val bStart: Int
-        val bEnd: Int
-        if (otherReference.verseStart == null && otherReference.verseEnd == null) {
-            bStart = 1
-            bEnd = Int.MAX_VALUE
-        } else {
-            bStart = otherReference.verseStart ?: 1
-            bEnd = otherReference.verseEnd ?: bStart
-        }
-
-        return aStart <= bStart && aEnd >= bEnd
+        return outerVerses.first <= innerVerses.first && outerVerses.last >= innerVerses.last
     }
 
     fun isAdjacentOrOverlapping(otherReference: BibleReference): Boolean {
@@ -193,13 +163,8 @@ data class BibleReference private constructor(
         val a = minOf(this, otherReference)
         val b = maxOf(this, otherReference)
 
-        val lastVerseOfA = a.verseEnd ?: a.verseStart
-        return if (lastVerseOfA != null) {
-            val firstVerseOfB = b.verseStart ?: 1
-            lastVerseOfA + 1 >= firstVerseOfB
-        } else {
-            true
-        }
+        // Subtracting from b rather than adding to a keeps a whole chapter's open-ended last verse from overflowing.
+        return a.verseRange.last >= b.verseRange.first - 1
     }
 
     companion object {
@@ -221,36 +186,20 @@ data class BibleReference private constructor(
                 return if (a.chapter < b.chapter) -1 else 1
             }
 
-            return when {
-                a.verseStart != null && b.verseStart != null -> {
-                    val lhs = a.verseStart
-                    val rhs = b.verseStart
-                    if (lhs == rhs) {
-                        when {
-                            a.verseEnd != null && b.verseEnd != null -> {
-                                val lhsEnd = a.verseEnd
-                                val rhsEnd = b.verseEnd
-                                if (lhsEnd == rhsEnd) {
-                                    0
-                                } else if (lhsEnd < rhsEnd) {
-                                    -1
-                                } else {
-                                    1
-                                }
-                            }
-
-                            a.verseEnd == null && b.verseEnd == null -> 0
-                            a.verseEnd == null -> 1
-                            else -> -1
-                        }
-                    } else {
-                        if (lhs < rhs) -1 else 1
-                    }
+            if (a.verseStart == null || b.verseStart == null) {
+                return when {
+                    a.verseStart == b.verseStart -> 0
+                    a.verseStart == null -> -1
+                    else -> 1
                 }
+            }
 
-                a.verseStart == null && b.verseStart == null -> 0
-                a.verseStart == null -> -1
-                else -> 1
+            val aVerses = a.verseRange
+            val bVerses = b.verseRange
+            return when {
+                aVerses.first != bVerses.first -> if (aVerses.first < bVerses.first) -1 else 1
+                aVerses.last != bVerses.last -> if (aVerses.last < bVerses.last) -1 else 1
+                else -> 0
             }
         }
 
@@ -289,17 +238,12 @@ data class BibleReference private constructor(
 
             val minReference = minOf(a, b)
 
-            val lastVerseOfA = a.verseEnd ?: a.verseStart
-            val lastVerseOfB = b.verseEnd ?: b.verseStart
-            val firstVerse = minOf(a.verseStart, b.verseStart)
-            val lastVerse = maxOf(lastVerseOfA, lastVerseOfB)
-
             return BibleReference(
                 versionId = minReference.versionId,
                 bookUSFM = minReference.bookUSFM,
                 chapter = minReference.chapter,
-                verseStart = firstVerse,
-                verseEnd = lastVerse,
+                verseStart = minOf(a.verseRange.first, b.verseRange.first),
+                verseEnd = maxOf(a.verseRange.last, b.verseRange.last),
             )
         }
 
