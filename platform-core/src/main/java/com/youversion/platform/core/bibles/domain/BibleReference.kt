@@ -271,11 +271,15 @@ data class BibleReference private constructor(
             // GEN.1.3-1.5
             val patBCVCV = Regex("""(\w{3})\.(\d+)\.(\d+)-(\d+)\.(\d+)""")
             patBCVCV.matchEntire(usfm)?.let { match ->
-                val (bText, cText, vText, _, v2Text) = match.destructured
+                val (bText, cText, vText, c2Text, v2Text) = match.destructured
                 val c = cText.toIntOrNull()
+                val c2 = c2Text.toIntOrNull()
                 val v = vText.toIntOrNull()
                 val v2 = v2Text.toIntOrNull()
-                if (c != null && v != null && v2 != null) {
+                if (c != null && c2 != null && v != null && v2 != null) {
+                    if (c != c2) {
+                        return null
+                    }
                     return reference(bText.uppercase(), c, v, v2)
                 }
                 return null
@@ -284,12 +288,13 @@ data class BibleReference private constructor(
             // GEN.1.3-GEN.1.5
             val patBCVBCV = Regex("""(\w{3})\.(\d+)\.(\d+)-(\w{3})\.(\d+)\.(\d+)""")
             patBCVBCV.matchEntire(usfm)?.let { match ->
-                val (bText, cText, vText, b2Text, _, v2Text) = match.destructured
+                val (bText, cText, vText, b2Text, c2Text, v2Text) = match.destructured
                 val c = cText.toIntOrNull()
+                val c2 = c2Text.toIntOrNull()
                 val v = vText.toIntOrNull()
                 val v2 = v2Text.toIntOrNull()
-                if (c != null && v != null && v2 != null) {
-                    if (bText != b2Text) {
+                if (c != null && c2 != null && v != null && v2 != null) {
+                    if (bText != b2Text || c != c2) {
                         return null
                     }
                     return reference(bText.uppercase(), c, v, v2)
