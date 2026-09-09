@@ -98,19 +98,21 @@ data class BibleVersion(
                 ?: abbreviation?.takeIf { it.isNotEmpty() }
                 ?: id.toString()
 
-        val urlString =
-            if (reference.verseStart != null) {
-                val verseStart = reference.verseStart
-                if (reference.verseEnd != null && verseStart != reference.verseEnd) {
-                    "$prefix$book.${reference.chapter}.$verseStart-${reference.verseEnd}.$version"
-                } else {
-                    "$prefix$book.${reference.chapter}.$verseStart.$version"
-                }
-            } else {
-                "$prefix$book.${reference.chapter}.$version"
-            }
+        val verseStart = reference.verseStart
+        val verseEnd = reference.verseEnd
+        val chapterUrl = "$prefix$book.${reference.chapter}.$version"
 
-        return urlString
+        return when {
+            // Whole chapter, either marked by the sentinel end verse or by having no verses at all
+            verseEnd == WHOLE_CHAPTER_VERSE_END || verseStart == null -> chapterUrl
+
+            // Verse range
+            verseEnd != null && verseStart != verseEnd ->
+                "$prefix$book.${reference.chapter}.$verseStart-$verseEnd.$version"
+
+            // Single verse
+            else -> "$prefix$book.${reference.chapter}.$verseStart.$version"
+        }
     }
 
     /**
@@ -161,8 +163,8 @@ data class BibleVersion(
         val verseEnd = reference.verseEnd
 
         return when {
-            // Whole chapter (verseEnd is 999)
-            verseEnd == 999 -> {
+            // Whole chapter
+            verseEnd == WHOLE_CHAPTER_VERSE_END -> {
                 listOf(bookName, bookAndChapterSeparator, chapter)
             }
 
@@ -207,6 +209,9 @@ data class BibleVersion(
 
     // ----- Companion
     companion object {
+        /** The end verse the platform uses to mean "the whole chapter" rather than a real verse number. */
+        private const val WHOLE_CHAPTER_VERSE_END = 999
+
         val preview: BibleVersion
             get() {
                 val copyrightLong =

@@ -114,6 +114,15 @@ class BibleVersionShareUrlTests {
         assertEquals("https://www.bible.com/bible/999/PSA.23.999", url)
     }
 
+    @Test
+    fun `test shareUrl whole chapter marker shares as a chapter`() {
+        val version = createBibleVersion(id = 111, abbreviation = "NIV")
+        val reference = BibleReference(versionId = 111, bookUSFM = "1SA", chapter = 3, verseStart = 1, verseEnd = 999)
+
+        val url = version.shareUrl(reference)
+        assertEquals("https://www.bible.com/bible/111/1SA.3.NIV", url)
+    }
+
     // ----- Version ID Tests
 
     @Test
