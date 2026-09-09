@@ -107,7 +107,7 @@ data class BibleTextOptions(
     val footnoteMarker: AnnotatedString? = DefaultFootnoteMarker,
     val selectionColor: Color? = null,
 ) {
-    val inlineContentMap =
+    internal val inlineContentMap =
         mapOf(
             FOOTNOTE_IMAGE_ID to
                 InlineTextContent(

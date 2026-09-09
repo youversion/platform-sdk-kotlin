@@ -12,9 +12,9 @@ import java.util.Locale
 class LanguageRepository(
     private val bibleVersionRepository: BibleVersionRepository,
 ) {
-    val localeCountryCode: String
+    private val localeCountryCode: String
         get() = Locale.getDefault().country ?: "US"
-    val localeLanguageCode: String
+    private val localeLanguageCode: String
         get() = Locale.getDefault().language ?: "en"
 
     /**
