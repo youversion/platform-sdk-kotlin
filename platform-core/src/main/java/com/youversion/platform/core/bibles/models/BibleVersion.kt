@@ -104,7 +104,7 @@ data class BibleVersion(
 
         return when {
             verseEnd == WHOLE_CHAPTER_VERSE_END || verseStart == null -> chapterUrl
-            verseStart != verseEnd ->
+            reference.isRange ->
                 "$prefix$book.${reference.chapter}.$verseStart-$verseEnd.$version"
             else -> "$prefix$book.${reference.chapter}.$verseStart.$version"
         }
@@ -158,18 +158,18 @@ data class BibleVersion(
         val verseEnd = reference.verseEnd
 
         return when {
-            // Whole chapter
+            // Whole chapter, as the platform marks it
             verseEnd == WHOLE_CHAPTER_VERSE_END -> {
                 listOf(bookName, bookAndChapterSeparator, chapter)
             }
 
-            // Whole chapter (no verses specified)
+            // Whole chapter, with no verses specified
             verseStart == null -> {
                 listOf(bookName, bookAndChapterSeparator, chapter)
             }
 
             // Single verse (both start and end are the same)
-            verseStart == verseEnd -> {
+            !reference.isRange -> {
                 listOf(bookName, bookAndChapterSeparator, chapter, chapterSeparator, verseStart.toString())
             }
 
