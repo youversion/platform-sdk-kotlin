@@ -104,7 +104,7 @@ data class BibleVersion(
 
         return when {
             verseEnd == WHOLE_CHAPTER_VERSE_END || verseStart == null -> chapterUrl
-            verseEnd != null && verseStart != verseEnd ->
+            verseStart != verseEnd ->
                 "$prefix$book.${reference.chapter}.$verseStart-$verseEnd.$version"
             else -> "$prefix$book.${reference.chapter}.$verseStart.$version"
         }
@@ -169,12 +169,12 @@ data class BibleVersion(
             }
 
             // Single verse (both start and end are the same)
-            verseEnd != null && verseStart == verseEnd -> {
+            verseStart == verseEnd -> {
                 listOf(bookName, bookAndChapterSeparator, chapter, chapterSeparator, verseStart.toString())
             }
 
             // Verse range (different start and end)
-            verseEnd != null -> {
+            else -> {
                 listOf(
                     bookName,
                     bookAndChapterSeparator,
@@ -184,11 +184,6 @@ data class BibleVersion(
                     "-",
                     verseEnd.toString(),
                 )
-            }
-
-            // Single verse with no verseEnd
-            else -> {
-                listOf(bookName, bookAndChapterSeparator, chapter, chapterSeparator, verseStart.toString())
             }
         }
     }

@@ -56,7 +56,7 @@ data class BibleReference private constructor(
         get() = verseStart != verseEnd
 
     /** The verses this reference covers; a whole chapter covers all of them. */
-    private val verseRange: IntRange
+    internal val verseRange: IntRange
         get() {
             val start = verseStart
             val end = verseEnd
@@ -66,14 +66,9 @@ data class BibleReference private constructor(
     override fun toString(): String {
         val prefix = "bible${versionId}__$bookUSFM.$chapter"
         return when {
-            verseStart != null && verseEnd != null && verseStart != verseEnd ->
-                "$prefix.$verseStart-$verseEnd"
-
-            verseStart != null ->
-                "$prefix.$verseStart"
-
-            else ->
-                prefix
+            verseStart == null -> prefix
+            isRange -> "$prefix.$verseStart-$verseEnd"
+            else -> "$prefix.$verseStart"
         }
     }
 
@@ -83,14 +78,9 @@ data class BibleReference private constructor(
         get() {
             val upperBookUSFM = bookUSFM.uppercase()
             return when {
-                verseStart != null && verseEnd != null && verseStart != verseEnd ->
-                    "$upperBookUSFM.$chapter.$verseStart-$upperBookUSFM.$chapter.$verseEnd"
-
-                verseStart != null ->
-                    "$upperBookUSFM.$chapter.$verseStart"
-
-                else ->
-                    "$upperBookUSFM.$chapter"
+                verseStart == null -> "$upperBookUSFM.$chapter"
+                isRange -> "$upperBookUSFM.$chapter.$verseStart-$upperBookUSFM.$chapter.$verseEnd"
+                else -> "$upperBookUSFM.$chapter.$verseStart"
             }
         }
 
