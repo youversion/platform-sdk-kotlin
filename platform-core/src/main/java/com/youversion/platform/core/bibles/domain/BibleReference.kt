@@ -10,8 +10,14 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
+/** Widens a verse so the range constructor delegates to the primary constructor rather than to itself. */
+private fun nullable(verse: Int): Int? = verse
+
+// The primary constructor is private so a reference can only be built as one of the three shapes below. Copying to
+// another version, book or chapter must keep working, so the generated copy stays public and init asserts the shape.
+@ExposedCopyVisibility
 @Serializable(with = BibleReferenceSerializer::class)
-data class BibleReference(
+data class BibleReference private constructor(
     val versionId: Int,
     val bookUSFM: String,
     val chapter: Int,
@@ -26,18 +32,22 @@ data class BibleReference(
         verseEnd?.let {
             require(it >= 1) { "Ending verse must be greater than or equal to 1." }
         }
+        require((verseStart == null) == (verseEnd == null)) { LEGAL_SHAPES }
         if (verseStart != null && verseEnd != null) {
             require(verseEnd >= verseStart) { "Ending verse must be equal to or after starting verse." }
         }
     }
 
-    // Secondary constructor for single verse
-    constructor(
-        versionId: Int,
-        bookUSFM: String,
-        chapter: Int,
-        verse: Int? = null,
-    ) : this(versionId, bookUSFM, chapter, verseStart = verse, verseEnd = verse)
+    /** The whole chapter. */
+    constructor(versionId: Int, bookUSFM: String, chapter: Int) : this(versionId, bookUSFM, chapter, null, null)
+
+    /** A single verse. */
+    constructor(versionId: Int, bookUSFM: String, chapter: Int, verse: Int) :
+        this(versionId, bookUSFM, chapter, nullable(verse), nullable(verse))
+
+    /** A verse range, ending on or after it starts. */
+    constructor(versionId: Int, bookUSFM: String, chapter: Int, verseStart: Int, verseEnd: Int) :
+        this(versionId, bookUSFM, chapter, nullable(verseStart), nullable(verseEnd))
 
     val chapterUSFM: String
         get() = "${bookUSFM.uppercase()}.$chapter"
@@ -193,6 +203,10 @@ data class BibleReference(
     }
 
     companion object {
+        private const val LEGAL_SHAPES =
+            "A reference must be a whole chapter (neither verse), a single verse (both verses the same) or a " +
+                "verse range (both verses set); it cannot have only one of verseStart and verseEnd."
+
         // Static function equivalent
         fun compare(
             a: BibleReference,

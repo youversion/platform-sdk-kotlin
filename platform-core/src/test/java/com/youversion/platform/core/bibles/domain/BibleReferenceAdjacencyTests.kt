@@ -81,27 +81,9 @@ class BibleReferenceAdjacencyTests {
     }
 
     @Test
-    fun `test isAdjacentOrOverlapping verseEnd null verseStart set on one reference`() {
-        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 3, verseEnd = null)
-        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 4, verseEnd = 6)
-
-        assertTrue(ref1.isAdjacentOrOverlapping(ref2))
-        assertTrue(ref2.isAdjacentOrOverlapping(ref1))
-    }
-
-    @Test
     fun `test isAdjacentOrOverlapping verseStart null and verseEnd null on one side verse ref on other`() {
-        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = null, verseEnd = null)
+        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
         val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 5)
-
-        assertTrue(ref1.isAdjacentOrOverlapping(ref2))
-        assertTrue(ref2.isAdjacentOrOverlapping(ref1))
-    }
-
-    @Test
-    fun `test isAdjacentOrOverlapping b verseStart fallback where b verseStart is null`() {
-        val ref1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
-        val ref2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = null, verseEnd = 5)
 
         assertTrue(ref1.isAdjacentOrOverlapping(ref2))
         assertTrue(ref2.isAdjacentOrOverlapping(ref1))
