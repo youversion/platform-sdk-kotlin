@@ -103,14 +103,9 @@ data class BibleVersion(
         val chapterUrl = "$prefix$book.${reference.chapter}.$version"
 
         return when {
-            // Whole chapter, either marked by the sentinel end verse or by having no verses at all
             verseEnd == WHOLE_CHAPTER_VERSE_END || verseStart == null -> chapterUrl
-
-            // Verse range
             verseEnd != null && verseStart != verseEnd ->
                 "$prefix$book.${reference.chapter}.$verseStart-$verseEnd.$version"
-
-            // Single verse
             else -> "$prefix$book.${reference.chapter}.$verseStart.$version"
         }
     }

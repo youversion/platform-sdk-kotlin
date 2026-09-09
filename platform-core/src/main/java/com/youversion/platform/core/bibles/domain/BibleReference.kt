@@ -163,7 +163,6 @@ data class BibleReference private constructor(
         val a = minOf(this, otherReference)
         val b = maxOf(this, otherReference)
 
-        // Subtracting from b rather than adding to a keeps a whole chapter's open-ended last verse from overflowing.
         return a.verseRange.last >= b.verseRange.first - 1
     }
 
@@ -334,7 +333,7 @@ data class BibleReference private constructor(
                 return null
             }
 
-            // GEN.1-2, narrowed to its first chapter because a reference cannot span chapters
+            // GEN.1-2
             val patBCC = Regex("""(\w{3})\.(\d+)-(\d+)""")
             patBCC.matchEntire(usfm)?.let { match ->
                 val (bText, cText, _) = match.destructured
@@ -383,12 +382,8 @@ private object BibleReferenceSerializer : KSerializer<BibleReference> {
         val verseEnd = stored.verseEnd
 
         return when {
-            // Whole chapter, whether nothing was saved or only an ending verse was
             verseStart == null -> BibleReference(stored.versionId, stored.bookUSFM, stored.chapter)
-
-            // Single verse
             verseEnd == null -> BibleReference(stored.versionId, stored.bookUSFM, stored.chapter, verse = verseStart)
-
             else -> BibleReference(stored.versionId, stored.bookUSFM, stored.chapter, verseStart, verseEnd)
         }
     }
