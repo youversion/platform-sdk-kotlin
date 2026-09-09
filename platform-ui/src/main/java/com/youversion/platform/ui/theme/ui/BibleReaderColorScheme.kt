@@ -3,10 +3,12 @@ package com.youversion.platform.ui.theme.ui
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.theme.tokens.BibleColorDarkTokens
 import com.youversion.platform.ui.theme.tokens.BibleColorLightTokens
 
 @Immutable
+@PlatformInternalApi
 class BibleReaderColorScheme internal constructor(
     val canvasPrimary: Color,
     val canvasSecondary: Color,

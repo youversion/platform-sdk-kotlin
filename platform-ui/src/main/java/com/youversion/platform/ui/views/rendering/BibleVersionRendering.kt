@@ -15,6 +15,7 @@ import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleTextNode
 import com.youversion.platform.core.bibles.domain.BibleTextNodeType
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.ui.views.BibleTextFontOption
 import com.youversion.platform.ui.views.BibleTextFonts
@@ -33,6 +34,7 @@ private const val LAST_RENDERABLE_VERSE = 999
  * Provides functionality for rendering Bible references into plain text or rich text blocks
  * for use in Jetpack Compose.
  */
+@PlatformInternalApi
 object BibleVersionRendering {
     /**
      * Returns plain text for a Bible reference.

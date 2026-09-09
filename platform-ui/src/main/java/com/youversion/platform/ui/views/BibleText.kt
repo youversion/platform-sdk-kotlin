@@ -61,6 +61,7 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
@@ -153,6 +154,7 @@ data class BibleTextOptions(
     }
 }
 
+@PlatformInternalApi
 fun Int.convertToEnumeration(): String {
     val value = 'a'.code + minOf(25, this)
     return value.toChar().toString()

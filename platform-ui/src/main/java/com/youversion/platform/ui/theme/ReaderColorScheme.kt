@@ -1,7 +1,9 @@
 package com.youversion.platform.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import com.youversion.platform.core.di.PlatformInternalApi
 
+@PlatformInternalApi
 data class ReaderColorScheme(
     val isDark: Boolean,
     val background: Color,

@@ -8,18 +8,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.theme.ui.darkBibleReaderColorScheme
 import com.youversion.platform.ui.theme.ui.lightBibleReaderColorScheme
 
 private val LocalReaderColorScheme = staticCompositionLocalOf { PureWhite }
 
+@PlatformInternalApi
 val MaterialTheme.readerColorScheme: ReaderColorScheme
     @Composable
     @ReadOnlyComposable
     get() = LocalReaderColorScheme.current
 
 @Composable
+@PlatformInternalApi
 fun BibleReaderMaterialTheme(
     readerColorScheme: ReaderColorScheme? = null,
     content: @Composable () -> Unit,

@@ -2,8 +2,10 @@ package com.youversion.platform.ui.theme.ui
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.text.TextStyle
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.theme.tokens.BibleTypographyTokens
 
+@PlatformInternalApi
 class BibleReaderTypography internal constructor(
     val headerXXL: TextStyle = BibleTypographyTokens.HeaderXXL,
     val headerXL: TextStyle = BibleTypographyTokens.HeaderXL,

@@ -7,6 +7,7 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.organizations.models.Organization
 import com.youversion.platform.ui.views.components.LanguageRowItem
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
  * @param onVersionChange called when the user has chosen a new version (or their first). The caller
  *   should ensure their current reference exists in this new version and choose a new one if not.
  */
+@PlatformInternalApi
 class BibleVersionsViewModel(
     initialVersionId: Int? = null,
     var onVersionChange: (BibleVersion) -> Unit,

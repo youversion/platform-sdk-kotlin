@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleIntroRepository
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
@@ -56,6 +57,7 @@ import kotlinx.coroutines.CancellationException
  * title of its own, so a host rendering its own heading above this view can leave that heading out.
  */
 @Composable
+@PlatformInternalApi
 fun BibleIntroText(
     versionId: Int,
     bookUSFM: String,

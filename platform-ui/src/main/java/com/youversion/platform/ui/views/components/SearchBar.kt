@@ -22,11 +22,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.readerColorScheme
 
 /** A styled search text field with a search icon and placeholder text. */
 @Composable
+@PlatformInternalApi
 fun SearchBar(
     query: String,
     onQueryChange: (String) -> Unit,

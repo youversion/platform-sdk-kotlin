@@ -1,6 +1,7 @@
 package com.youversion.platform.ui.views.rendering
 
 import androidx.compose.ui.text.AnnotatedString
+import com.youversion.platform.core.di.PlatformInternalApi
 
 internal fun AnnotatedString.Builder.addTextCategoryAnnotation(
     category: BibleTextCategory,
@@ -28,10 +29,12 @@ internal fun AnnotatedString.trimTrailingWhitespace(): AnnotatedString {
     return this
 }
 
+@PlatformInternalApi
 object BibleReferenceAttribute {
     const val NAME = "BibleReference"
 }
 
+@PlatformInternalApi
 object BibleTextCategoryAttribute {
     const val NAME = "BibleTextCategory"
 }

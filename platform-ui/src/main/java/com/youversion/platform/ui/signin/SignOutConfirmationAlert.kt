@@ -7,6 +7,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.error
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.R
 
 /**
@@ -14,6 +15,7 @@ import com.youversion.platform.ui.R
  * that unsynced highlight changes will be lost.
  */
 @Composable
+@PlatformInternalApi
 fun SignOutConfirmationAlert(
     onDismissRequest: () -> Unit,
     onConfirm: () -> Unit,

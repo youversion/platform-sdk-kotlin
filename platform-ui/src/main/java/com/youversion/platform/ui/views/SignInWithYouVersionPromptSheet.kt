@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.core.YouVersionPlatformConfiguration
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.fonts.AktivGrotesk
@@ -55,6 +56,7 @@ import com.youversion.platform.ui.theme.readerColorScheme
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@PlatformInternalApi
 fun SignInWithYouVersionPromptSheet(
     onSignIn: () -> Unit,
     onDismissRequest: () -> Unit,
