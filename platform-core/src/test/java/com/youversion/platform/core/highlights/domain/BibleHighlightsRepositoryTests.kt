@@ -633,6 +633,28 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
+    fun `a server chapter highlight is cached at the same verse-level reference the local path uses`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(Highlight(bibleId = 1, passageId = "GEN.1", color = "ff0000")),
+                )
+            val repository = repository(api)
+            val chapter = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+
+            repository.ensureHighlightsForChapterLoaded(chapter)
+            advanceUntilIdle()
+
+            val highlights = repository.highlights(overlapping = chapter)
+            assertEquals(1, highlights.size)
+            assertEquals(
+                BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
+                highlights.first().bibleReference,
+            )
+        }
+
+    @Test
     fun `queue retries a failing update until it succeeds`() =
         runTest(testDispatcher) {
             val api =

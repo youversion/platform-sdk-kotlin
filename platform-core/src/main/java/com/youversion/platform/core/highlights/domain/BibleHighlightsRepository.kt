@@ -735,7 +735,7 @@ class BibleHighlightsRepository internal constructor(
         val verseStart = reference.verseStart
         val verseEnd = reference.verseEnd
         if (verseStart == null || verseEnd == null || verseStart == verseEnd) {
-            return listOf(BibleHighlight(bibleReference = reference, hexColor = hexColor))
+            return listOf(BibleHighlight(bibleReference = reference.verseLevelReference(), hexColor = hexColor))
         }
         return (verseStart..verseEnd).map { verse ->
             BibleHighlight(
