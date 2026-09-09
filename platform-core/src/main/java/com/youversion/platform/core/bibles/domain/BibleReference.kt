@@ -329,18 +329,18 @@ data class BibleReference private constructor(
                 val (bText, cText) = match.destructured
                 val c = cText.toIntOrNull()
                 if (c != null) {
-                    return reference(bText.uppercase(), c, 1, 1)
+                    return BibleReference(versionId = versionId, bookUSFM = bText.uppercase(), chapter = c)
                 }
                 return null
             }
 
-            // GEN.1-2
+            // GEN.1-2, narrowed to its first chapter because a reference cannot span chapters
             val patBCC = Regex("""(\w{3})\.(\d+)-(\d+)""")
             patBCC.matchEntire(usfm)?.let { match ->
                 val (bText, cText, _) = match.destructured
                 val c = cText.toIntOrNull()
                 if (c != null) {
-                    return reference(bText.uppercase(), c, 1, 1)
+                    return BibleReference(versionId = versionId, bookUSFM = bText.uppercase(), chapter = c)
                 }
                 return null
             }

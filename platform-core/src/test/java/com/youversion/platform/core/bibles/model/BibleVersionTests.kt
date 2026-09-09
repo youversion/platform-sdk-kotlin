@@ -254,7 +254,8 @@ class BibleVersionTests : YouVersionPlatformTest {
         assertEquals(206, ref.versionId)
         assertEquals("PSA", ref.bookUSFM)
         assertEquals(23, ref.chapter)
-        assertEquals(1, ref.verseStart)
+        assertNull(ref.verseStart)
+        assertNull(ref.verseEnd)
     }
 
     @Test
