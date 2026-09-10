@@ -55,7 +55,10 @@ data class BibleReference private constructor(
     val isRange: Boolean
         get() = verseStart != verseEnd
 
-    /** The verses this reference covers; a whole chapter covers all of them. */
+    /**
+     * The verses this reference covers; a whole chapter covers all of them, so its range is unbounded. Compare or
+     * intersect endpoints rather than iterating: iterating a whole-chapter range walks to [Int.MAX_VALUE].
+     */
     internal val verseRange: IntRange
         get() {
             val start = verseStart
