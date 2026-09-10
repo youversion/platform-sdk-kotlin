@@ -29,6 +29,9 @@ import kotlinx.coroutines.withContext
 
 internal const val DEBUG_RENDERING = false
 
+/** Upper bound for the verse range to lay out when rendering should run to the end of the chapter. */
+private const val LAST_RENDERABLE_VERSE = 999
+
 /**
  * Provides functionality for rendering Bible references into plain text or rich text blocks
  * for use in Jetpack Compose.
@@ -95,7 +98,7 @@ object BibleVersionRendering {
                     bookUSFM = bookUSFM,
                     currentChapter = 0,
                     fromVerse = 1,
-                    toVerse = 999,
+                    toVerse = LAST_RENDERABLE_VERSE,
                     renderVerseNumbers = false,
                     renderHeadlines = renderHeadlines,
                     footnoteMode = footnoteMode,
@@ -181,7 +184,7 @@ object BibleVersionRendering {
                     bookUSFM = reference.bookUSFM,
                     currentChapter = reference.chapter,
                     fromVerse = reference.verseStart ?: 1,
-                    toVerse = reference.verseEnd ?: 999,
+                    toVerse = reference.verseEnd ?: LAST_RENDERABLE_VERSE,
                     renderVerseNumbers = renderVerseNumbers,
                     renderHeadlines = renderHeadlines,
                     footnoteMode = footnoteMode,

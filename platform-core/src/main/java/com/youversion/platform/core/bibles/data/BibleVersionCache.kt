@@ -41,7 +41,7 @@ interface BibleVersionCache {
      * ### Example:
      * ```kotlin
      * val content = cache.chapterContent(
-     *     BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verseStart = 1)
+     *     BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1)
      * )
      * // "<html><body><p>In the beginning..."
      * ```
