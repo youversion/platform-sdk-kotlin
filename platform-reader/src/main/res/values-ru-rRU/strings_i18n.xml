@@ -2,15 +2,11 @@
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_banner_dismiss_content_description">Закрыть</string>
-    <string name="yv_banner_offline_icon">Значок офлайн</string>
-    <string name="yv_banner_offline_message">У вас пропало подключение к интернету. Восстановите связь и загрузите перевод Библии для использования в автономном режиме.</string>
-    <string name="yv_banner_version_unavailable_icon">Значок недоступного перевода</string>
-    <string name="yv_banner_version_unavailable_message">Ранее выбранный вами перевод Библии недоступен. Для вас был выбран другой похожий перевод.</string>
+    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_message">У нас возникли проблемы с вашим подключением. Пожалуйста, скачайте перевод Библии, когда будете в сети.</string>
+    <string name="yv_banner_version_unavailable_icon">Перевод недоступен</string>
+    <string name="yv_banner_version_unavailable_message">Ранее выбранный перевод Библии недоступен. Пожалуйста, переключитесь на другой.</string>
     <string name="yv_book_chapter_picker_title">Книги</string>
-    <string name="yv_cancel">Отмена</string>
-    <string name="yv_data_exchange_continue">Продолжить</string>
-    <string name="yv_data_exchange_highlights_explanation">Перед сохранением маркеров YouVersion запросит у вас разрешение на доступ.</string>
-    <string name="yv_data_exchange_highlights_question">Разрешить этому приложению сохранять маркеры в YouVersion?</string>
     <string name="yv_font_selected_check">Галочка выбранного шрифта</string>
     <string name="yv_font_settings_label">Шрифт</string>
     <string name="yv_footnote_header_label">Сноска</string>

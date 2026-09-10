@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
-    <string name="yv_banner_dismiss_content_description">Bỏ qua</string>
-    <string name="yv_banner_offline_icon">Biểu tượng Ngoại tuyến</string>
-    <string name="yv_banner_offline_message">Bạn đã mất kết nối internet. Hãy kết nối lại và tải xuống một phiên bản Kinh Thánh để tiếp tục sử dụng ngoại tuyến.</string>
-    <string name="yv_banner_version_unavailable_icon">Biểu tượng Phiên bản Không khả dụng</string>
-    <string name="yv_banner_version_unavailable_message">Phiên bản Kinh Thánh bạn đã chọn trước đó không khả dụng. Một phiên bản Kinh Thánh tương tự khác đã được chọn cho bạn.</string>
+    <string name="yv_banner_dismiss_content_description">Đóng</string>
+    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_message">Chúng tôi đang gặp sự cố với kết nối của bạn. Vui lòng tải xuống một phiên bản Kinh Thánh khi bạn trực tuyến.</string>
+    <string name="yv_banner_version_unavailable_icon">Phiên bản không khả dụng</string>
+    <string name="yv_banner_version_unavailable_message">Phiên bản Kinh Thánh bạn đã chọn trước đó không khả dụng. Vui lòng chuyển sang phiên bản khác.</string>
     <string name="yv_book_chapter_picker_title">Sách</string>
-    <string name="yv_cancel">Hủy</string>
-    <string name="yv_data_exchange_continue">Tiếp tục</string>
-    <string name="yv_data_exchange_highlights_explanation">YouVersion sẽ yêu cầu bạn cấp quyền truy cập trước khi có thể lưu các phần đánh dấu.</string>
-    <string name="yv_data_exchange_highlights_question">Cho phép ứng dụng này lưu các phần đánh dấu với YouVersion?</string>
     <string name="yv_font_selected_check">Dấu kiểm phông chữ đã chọn</string>
     <string name="yv_font_settings_label">Phông chữ</string>
     <string name="yv_footnote_header_label">Chú thích cuối trang</string>
@@ -22,8 +18,8 @@
     <string name="yv_intro_chapter_label">Giới thiệu</string>
     <string name="yv_language_content_desc">Ngôn ngữ</string>
     <string name="yv_line_spacing_label">Giãn dòng</string>
-    <string name="yv_next_chapter_content_desc">Chương Tiếp Theo</string>
-    <string name="yv_previous_chapter_content_desc">Chương Trước</string>
+    <string name="yv_next_chapter_content_desc">Chương tiếp theo</string>
+    <string name="yv_previous_chapter_content_desc">Chương trước</string>
     <string name="yv_reader_menu_font_settings">Phông chữ &amp; Cài đặt</string>
     <string name="yv_reader_menu_sign_in">Đăng nhập</string>
     <string name="yv_reader_menu_sign_out">Đăng xuất</string>

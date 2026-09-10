@@ -3,12 +3,12 @@
 <resources>
     <string name="yv_banner_dismiss_content_description">Fechar</string>
     <string name="yv_banner_offline_icon">Offline</string>
-    <string name="yv_banner_offline_message">Estamos tendo dificuldades com a conexão. Baixe uma versão da Bíblia quando estiver on-line.</string>
+    <string name="yv_banner_offline_message">Estamos a ter dificuldades com a sua ligação. Por favor, descarregue uma versão da Bíblia quando estiver online.</string>
     <string name="yv_banner_version_unavailable_icon">Versão indisponível</string>
-    <string name="yv_banner_version_unavailable_message">A versão da Bíblia selecionada anteriormente não está disponível. Mude para outra.</string>
+    <string name="yv_banner_version_unavailable_message">A versão da Bíblia selecionada anteriormente não está disponível. Por favor, mude para outra.</string>
     <string name="yv_book_chapter_picker_title">Livros</string>
-    <string name="yv_font_selected_check">Marca de seleção de fonte selecionada</string>
-    <string name="yv_font_settings_label">Fonte</string>
+    <string name="yv_font_selected_check">Verificação de tipo de letra selecionado</string>
+    <string name="yv_font_settings_label">Tipo de letra</string>
     <string name="yv_footnote_header_label">Nota de rodapé</string>
     <string name="yv_highlight_color_cyan">ciano</string>
     <string name="yv_highlight_color_green">verde</string>
@@ -20,12 +20,12 @@
     <string name="yv_line_spacing_label">Espaçamento entre linhas</string>
     <string name="yv_next_chapter_content_desc">Próximo capítulo</string>
     <string name="yv_previous_chapter_content_desc">Capítulo anterior</string>
-    <string name="yv_reader_menu_font_settings">Fonte e Configurações</string>
-    <string name="yv_reader_menu_sign_in">Entrar</string>
+    <string name="yv_reader_menu_font_settings">Tipo de letra &amp; Definições</string>
+    <string name="yv_reader_menu_sign_in">Iniciar sessão</string>
     <string name="yv_reader_menu_sign_out">Sair</string>
     <string name="yv_theme_selected">Selecionado</string>
-    <string name="yv_verse_action_add_highlight">Adicionar destaque de %1$s</string>
+    <string name="yv_verse_action_add_highlight">Adicionar destaque %1$s</string>
     <string name="yv_verse_action_copy">Copiar</string>
-    <string name="yv_verse_action_remove_highlight">Remover destaque de %1$s</string>
-    <string name="yv_verse_action_share">Compartilhar</string>
+    <string name="yv_verse_action_remove_highlight">Remover destaque %1$s</string>
+    <string name="yv_verse_action_share">Partilhar</string>
 </resources>

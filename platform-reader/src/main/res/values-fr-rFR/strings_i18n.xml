@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
-    <string name="yv_banner_dismiss_content_description">Ignorer</string>
-    <string name="yv_banner_offline_icon">Icône hors ligne</string>
-    <string name="yv_banner_offline_message">Vous avez perdu votre connexion Internet. Reconnectez-vous et téléchargez une version de la Bible pour continuer hors ligne.</string>
-    <string name="yv_banner_version_unavailable_icon">Icône de version non disponible</string>
-    <string name="yv_banner_version_unavailable_message">La version de la Bible précédemment sélectionnée n\'est pas disponible. Une autre version similaire de la Bible a été sélectionnée pour vous.</string>
+    <string name="yv_banner_dismiss_content_description">Fermer</string>
+    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_message">Nous rencontrons des difficultés avec votre connexion. Veuillez télécharger une version de la Bible lorsque vous êtes en ligne.</string>
+    <string name="yv_banner_version_unavailable_icon">Version non disponible</string>
+    <string name="yv_banner_version_unavailable_message">La version de la Bible précédemment sélectionnée n\'est pas disponible. Veuillez en choisir une autre.</string>
     <string name="yv_book_chapter_picker_title">Livres</string>
-    <string name="yv_cancel">Annuler</string>
-    <string name="yv_data_exchange_continue">Continuer</string>
-    <string name="yv_data_exchange_highlights_explanation">YouVersion vous demandera d\'accorder l\'accès avant que les surlignages puissent être enregistrés.</string>
-    <string name="yv_data_exchange_highlights_question">Autoriser cette application à enregistrer des surlignages avec YouVersion ?</string>
     <string name="yv_font_selected_check">Coche de police sélectionnée</string>
     <string name="yv_font_settings_label">Police</string>
     <string name="yv_footnote_header_label">Note de bas de page</string>
