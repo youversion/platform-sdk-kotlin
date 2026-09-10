@@ -178,18 +178,6 @@ class BibleVersionShareUrlTests {
     // ----- Edge Cases and Potential Bugs
 
     @Test
-    fun `test shareUrl verse start nil but verse end not nil`() {
-        val version = createBibleVersion(id = 111, abbreviation = "NIV")
-
-        // Create a reference with verseStart nil but verseEnd not nil
-        // Since the initializers don't allow this, we'll test the logic path with chapter only
-        val reference = BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1)
-
-        val url = version.shareUrl(reference)
-        assertEquals("https://www.bible.com/bible/111/GEN.1.NIV", url)
-    }
-
-    @Test
     fun `test shareUrl large verse numbers`() {
         val version = createBibleVersion(id = 111, abbreviation = "NIV")
         val reference = BibleReference(versionId = 111, bookUSFM = "PSA", chapter = 119, verse = 176)

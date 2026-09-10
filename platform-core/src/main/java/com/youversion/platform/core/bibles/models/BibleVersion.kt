@@ -158,13 +158,8 @@ data class BibleVersion(
         val verseEnd = reference.verseEnd
 
         return when {
-            // Whole chapter, as the platform marks it
-            verseEnd == WHOLE_CHAPTER_VERSE_END -> {
-                listOf(bookName, bookAndChapterSeparator, chapter)
-            }
-
-            // Whole chapter, with no verses specified
-            verseStart == null -> {
+            // Whole chapter, either as the platform marks it or with no verses specified
+            verseEnd == WHOLE_CHAPTER_VERSE_END || verseStart == null -> {
                 listOf(bookName, bookAndChapterSeparator, chapter)
             }
 
