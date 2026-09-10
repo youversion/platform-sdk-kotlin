@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.BibleLanguageRow
@@ -51,6 +52,7 @@ private enum class LanguageTab(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@PlatformInternalApi
 fun LanguagesScreen(
     viewModel: BibleVersionsViewModel,
     onBackClick: () -> Unit,

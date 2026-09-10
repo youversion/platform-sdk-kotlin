@@ -145,15 +145,7 @@ class BibleVersionRenderingStructureTests {
                 )
             assertTrue(innerRefs.any { it.item.endsWith(":2") })
 
-            val outerParagraphStyle =
-                outerBlock.text.paragraphStyles
-                    .first()
-                    .item
-            assertTrue(outerParagraphStyle.textIndent!!.firstLine.value > 0)
-            val innerParagraphStyle =
-                innerBlock.text.paragraphStyles
-                    .first()
-                    .item
-            assertTrue(innerParagraphStyle.textIndent!!.firstLine.value > 0)
+            assertEquals(1, outerBlock.firstLineHeadIndent)
+            assertEquals(1, innerBlock.firstLineHeadIndent)
         }
 }

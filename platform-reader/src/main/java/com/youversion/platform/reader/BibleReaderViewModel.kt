@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class BibleReaderViewModel(
+internal class BibleReaderViewModel(
     bibleReference: BibleReference?,
     fontDefinitionProvider: FontDefinitionProvider?,
     private val bibleVersionRepository: BibleVersionRepository,
@@ -173,16 +173,16 @@ class BibleReaderViewModel(
             _state.update { it.copy(fontSize = savedFontSize.sp) }
         }
 
-        userSettingsRepository.readerLineSpacing?.let { savedLineSpacing ->
+        userSettingsRepository.readerLineSpacingFraction?.let { savedFraction ->
             // Snap the stored value to the nearest supported step so a value written by an
             // older app version (or otherwise nudged out of range) still renders correctly on
             // first paint. The next cycle would clamp it back anyway, but the initial frame
-            // should not use an arbitrary multiplier.
-            val clampedSpacing =
-                ReaderFontSettings.availableLineSpacings
-                    .minByOrNull { kotlin.math.abs(it - savedLineSpacing) }
-                    ?: ReaderFontSettings.DEFAULT_LINE_SPACING
-            _state.update { it.copy(lineSpacing = clampedSpacing) }
+            // should not use an arbitrary fraction.
+            val clampedFraction =
+                ReaderFontSettings.availableLineSpacingFractions
+                    .minByOrNull { kotlin.math.abs(it - savedFraction) }
+                    ?: ReaderFontSettings.DEFAULT_LINE_SPACING_FRACTION
+            _state.update { it.copy(lineSpacingFraction = clampedFraction) }
         }
     }
 
@@ -598,10 +598,10 @@ class BibleReaderViewModel(
     }
 
     private fun cycleLineSpacing() {
-        val current = _state.value.lineSpacing
-        val next = ReaderFontSettings.nextLineSpacing(current)
-        userSettingsRepository.readerLineSpacing = next
-        _state.update { it.copy(lineSpacing = next) }
+        val current = _state.value.lineSpacingFraction
+        val next = ReaderFontSettings.nextLineSpacingFraction(current)
+        userSettingsRepository.readerLineSpacingFraction = next
+        _state.update { it.copy(lineSpacingFraction = next) }
     }
 
     private fun setFontFamily(action: Action.SetFontDefinition) {
@@ -673,7 +673,7 @@ class BibleReaderViewModel(
         val providedFontDefinitions: List<FontDefinition> = listOf(),
         val selectedFontDefinition: FontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
         val fontSize: TextUnit = ReaderFontSettings.DEFAULT_FONT_SIZE,
-        val lineSpacing: Float = ReaderFontSettings.DEFAULT_LINE_SPACING,
+        val lineSpacingFraction: Float = ReaderFontSettings.DEFAULT_LINE_SPACING_FRACTION,
         val suggestedLanguages: List<LanguageRowItem> = emptyList(),
         val showingFootnotes: Boolean = false,
         val footnotesReference: BibleReference? = null,

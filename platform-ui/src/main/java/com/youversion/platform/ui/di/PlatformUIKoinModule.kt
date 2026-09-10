@@ -1,11 +1,13 @@
 package com.youversion.platform.ui.di
 
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.views.card.BibleCardViewModel
 import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
 import com.youversion.platform.ui.views.votd.VerseOfTheDayViewModel
 import org.koin.dsl.module
 
+@PlatformInternalApi
 val PlatformUIKoinModule =
     module {
 

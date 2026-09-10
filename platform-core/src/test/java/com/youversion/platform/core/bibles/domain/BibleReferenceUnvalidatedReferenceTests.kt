@@ -50,6 +50,20 @@ class BibleReferenceUnvalidatedReferenceTests {
     }
 
     @Test
+    fun `test unvalidated reference invalid chapter mismatch`() {
+        val ref = BibleReference.unvalidatedReference("GEN.1.3-2.5", versionId = 1)
+
+        assertNull(ref)
+    }
+
+    @Test
+    fun `test unvalidated reference invalid chapter mismatch with book`() {
+        val ref = BibleReference.unvalidatedReference("GEN.1.3-GEN.2.5", versionId = 1)
+
+        assertNull(ref)
+    }
+
+    @Test
     fun `test unvalidated reference invalid verse order`() {
         val ref = BibleReference.unvalidatedReference("GEN.1.5-3", versionId = 1)
 
@@ -61,8 +75,10 @@ class BibleReferenceUnvalidatedReferenceTests {
         val ref = BibleReference.unvalidatedReference("GEN.1", versionId = 1)
         assertNotNull(ref)
 
-        val expected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 1, verseEnd = 1)
+        val expected = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
         assertEquals(expected, ref)
+        assertNull(ref.verseStart)
+        assertNull(ref.verseEnd)
     }
 
     @Test
@@ -72,7 +88,7 @@ class BibleReferenceUnvalidatedReferenceTests {
         assertNotNull(ref)
         assertEquals("GEN", ref.bookUSFM)
         assertEquals(1, ref.chapter)
-        assertEquals(1, ref.verseStart)
-        assertEquals(1, ref.verseEnd)
+        assertNull(ref.verseStart)
+        assertNull(ref.verseEnd)
     }
 }

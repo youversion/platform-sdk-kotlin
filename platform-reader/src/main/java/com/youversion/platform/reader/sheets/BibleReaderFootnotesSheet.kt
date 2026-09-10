@@ -20,6 +20,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,15 +38,34 @@ import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.BibleDefaults
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.ui.theme.UntitledSerif
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.convertToEnumeration
+import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
+import com.youversion.platform.ui.views.rendering.BibleTextBlock
 
+// The sheet ignores the user's reader font settings and renders everything at a fixed size.
+private val SheetTextOptions =
+    BibleTextOptions(
+        fontFamily = UntitledSerif,
+        fontSize = 16.sp,
+        renderHeadlines = false,
+        renderVerseNumbers = false,
+        footnoteMode = BibleTextFootnoteMode.LETTERS,
+        footnoteMarker = null,
+    )
+
+/**
+ * Bottom sheet listing the footnotes for [reference].
+ *
+ * Content is rendered at a fixed size rather than with the reader's font settings, so the sheet
+ * takes no [BibleTextOptions].
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BibleReaderFootnotesSheet(
-    textOptions: BibleTextOptions,
+internal fun BibleReaderFootnotesSheet(
     onDismissRequest: () -> Unit,
     version: BibleVersion?,
     reference: BibleReference?,
@@ -50,6 +73,10 @@ fun BibleReaderFootnotesSheet(
 ) {
     val sheetState =
         rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // The passed-in footnotes were rendered with the user's Bible font family and size, which might look odd in
+    // this sheet; the fixed-size render below supplies replacements, keeping the passed-in list as a fallback.
+    var displayFootnotes by remember(reference, footnotes) { mutableStateOf(footnotes) }
 
     ModalBottomSheet(
         sheetState = sheetState,
@@ -98,18 +125,19 @@ fun BibleReaderFootnotesSheet(
                         maxLines = 1,
                     )
                 }
-                reference?.let {
+                reference?.let { ref ->
                     BibleText(
-                        reference = it,
-                        textOptions =
-                            textOptions.copy(
-                                renderHeadlines = false,
-                                renderVerseNumbers = false,
-                                footnoteMode = BibleTextFootnoteMode.LETTERS,
-                            ),
+                        reference = ref,
+                        textOptions = SheetTextOptions,
+                        onBlocksChange = { blocks ->
+                            val rendered = footnotesFor(blocks, ref)
+                            if (rendered.isNotEmpty()) {
+                                displayFootnotes = rendered
+                            }
+                        },
                     )
                 }
-                Footnotes(footnotes = footnotes)
+                Footnotes(footnotes = displayFootnotes)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -117,8 +145,24 @@ fun BibleReaderFootnotesSheet(
     }
 }
 
+/** The footnotes in [blocks] that belong to [reference]. */
+private fun footnotesFor(
+    blocks: List<BibleTextBlock>,
+    reference: BibleReference,
+): List<AnnotatedString> {
+    val referenceAnnotation =
+        "${reference.versionId}:${reference.bookUSFM}:${reference.chapter}:${reference.verseStart}"
+    return blocks
+        .flatMap { it.footnotes }
+        .filter { footnote ->
+            footnote
+                .getStringAnnotations(BibleReferenceAttribute.NAME, 0, footnote.length)
+                .any { it.item == referenceAnnotation }
+        }
+}
+
 @Composable
-fun Footnotes(footnotes: List<AnnotatedString>) {
+internal fun Footnotes(footnotes: List<AnnotatedString>) {
     Column {
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp).testTag("footnote_divider"))
         footnotes.forEachIndexed { index, footnote ->
@@ -157,7 +201,6 @@ private fun Preview_BibleReaderFootnotesSheet() {
                     verseStart = 3,
                     verseEnd = 5,
                 ),
-            textOptions = BibleTextOptions(),
             footnotes = listOf(AnnotatedString("1:5 Footnote details")),
         )
     }

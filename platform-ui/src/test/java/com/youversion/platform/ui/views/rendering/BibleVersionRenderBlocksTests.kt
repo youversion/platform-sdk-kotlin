@@ -3,170 +3,104 @@ package com.youversion.platform.ui.views.rendering
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BibleVersionRenderBlocksTests {
-    private val oneIndent = RENDERING_TEST_FONTS.baseSize.value
-    private val twoIndent = oneIndent * 2
-    private val threeIndent = oneIndent * 3
-    private val fourIndent = oneIndent * 4
-
     // ----- indentation
+
+    private suspend fun renderSingleBlock(
+        className: String,
+        text: String,
+    ): BibleTextBlock {
+        val html =
+            """
+            <div>
+                <div class="$className">
+                    <span class="yv-v" v="1"></span>
+                    $text
+                </div>
+            </div>
+            """.trimIndent()
+
+        val blocks = renderBlocks(html, FULL_CHAPTER_REF)
+        return blocks.first { it.text.text.contains(text) }
+    }
+
+    private fun assertIndents(
+        block: BibleTextBlock,
+        className: String,
+        firstLineHeadIndent: Int,
+        headIndent: Int,
+    ) {
+        assertEquals(
+            firstLineHeadIndent,
+            block.firstLineHeadIndent,
+            "Expected first line head indent $firstLineHeadIndent for class '$className'",
+        )
+        assertEquals(
+            headIndent,
+            block.headIndent,
+            "Expected head indent $headIndent for class '$className'",
+        )
+    }
 
     @Test
     fun `p and related classes produce first line indent`() =
         runTest {
-            listOf("p", "ip", "imi", "ipi").forEach { className ->
-                val html =
-                    """
-                    <div>
-                        <div class="$className">
-                            <span class="yv-v" v="1"></span>
-                            Indented paragraph.
-                        </div>
-                    </div>
-                    """.trimIndent()
-
-                val blocks = renderBlocks(html, FULL_CHAPTER_REF)
-                val block = blocks.first { it.text.text.contains("Indented paragraph.") }
-                val paragraphStyle =
-                    block.text.paragraphStyles
-                        .first()
-                        .item
-                assertEquals(
-                    twoIndent,
-                    paragraphStyle.textIndent!!.firstLine.value,
-                    "Expected two-indent first line for class '$className'",
-                )
+            listOf("p", "ip", "imi").forEach { className ->
+                val block = renderSingleBlock(className, "Indented paragraph.")
+                assertIndents(block, className, firstLineHeadIndent = 1, headIndent = 0)
             }
         }
 
     @Test
     fun `mi class produces head indent`() =
         runTest {
-            val html =
-                """
-                <div>
-                    <div class="mi">
-                        <span class="yv-v" v="1"></span>
-                        Margin indent text.
-                    </div>
-                </div>
-                """.trimIndent()
-
-            val blocks = renderBlocks(html, FULL_CHAPTER_REF)
-            val block = blocks.first { it.text.text.contains("Margin indent text.") }
-            val paragraphStyle =
-                block.text.paragraphStyles
-                    .first()
-                    .item
-            assertEquals(twoIndent, paragraphStyle.textIndent!!.restLine.value)
+            val block = renderSingleBlock("mi", "Margin indent text.")
+            assertIndents(block, "mi", firstLineHeadIndent = 0, headIndent = 2)
         }
 
     @Test
-    fun `pi and pi1 classes produce first line indent`() =
+    fun `pi class produces no indent`() =
         runTest {
-            listOf("pi", "pi1").forEach { className ->
-                val html =
-                    """
-                    <div>
-                        <div class="$className">
-                            <span class="yv-v" v="1"></span>
-                            Paragraph indent text.
-                        </div>
-                    </div>
-                    """.trimIndent()
+            val block = renderSingleBlock("pi", "Paragraph indent text.")
+            assertIndents(block, "pi", firstLineHeadIndent = 0, headIndent = 0)
+        }
 
-                val blocks = renderBlocks(html, FULL_CHAPTER_REF)
-                val block = blocks.first { it.text.text.contains("Paragraph indent text.") }
-                val paragraphStyle =
-                    block.text.paragraphStyles
-                        .first()
-                        .item
-                assertEquals(
-                    oneIndent,
-                    paragraphStyle.textIndent!!.firstLine.value,
-                    "Expected one-indent first line for class '$className'",
-                )
+    @Test
+    fun `pi1 and ipi classes produce first line and head indent`() =
+        runTest {
+            listOf("pi1", "ipi").forEach { className ->
+                val block = renderSingleBlock(className, "Paragraph indent text.")
+                assertIndents(block, className, firstLineHeadIndent = 1, headIndent = 2)
             }
         }
 
     @Test
     fun `pi2 class produces first line and head indent`() =
         runTest {
-            val html =
-                """
-                <div>
-                    <div class="pi2">
-                        <span class="yv-v" v="1"></span>
-                        Deep indent text.
-                    </div>
-                </div>
-                """.trimIndent()
-
-            val blocks = renderBlocks(html, FULL_CHAPTER_REF)
-            val block = blocks.first { it.text.text.contains("Deep indent text.") }
-            val paragraphStyle =
-                block.text.paragraphStyles
-                    .first()
-                    .item
-            assertEquals(threeIndent, paragraphStyle.textIndent!!.firstLine.value)
-            assertEquals(twoIndent, paragraphStyle.textIndent!!.restLine.value)
+            val block = renderSingleBlock("pi2", "Deep indent text.")
+            assertIndents(block, "pi2", firstLineHeadIndent = 1, headIndent = 4)
         }
 
     @Test
     fun `pi3 class produces first line and deeper head indent`() =
         runTest {
-            val html =
-                """
-                <div>
-                    <div class="pi3">
-                        <span class="yv-v" v="1"></span>
-                        Deepest indent text.
-                    </div>
-                </div>
-                """.trimIndent()
-
-            val blocks = renderBlocks(html, FULL_CHAPTER_REF)
-            val block = blocks.first { it.text.text.contains("Deepest indent text.") }
-            val paragraphStyle =
-                block.text.paragraphStyles
-                    .first()
-                    .item
-            assertEquals(fourIndent, paragraphStyle.textIndent!!.firstLine.value)
-            assertEquals(threeIndent, paragraphStyle.textIndent!!.restLine.value)
+            val block = renderSingleBlock("pi3", "Deepest indent text.")
+            assertIndents(block, "pi3", firstLineHeadIndent = 1, headIndent = 6)
         }
 
     @Test
     fun `li1 and aliases produce head indent`() =
         runTest {
             listOf("li1", "ili", "ili1").forEach { className ->
-                val html =
-                    """
-                    <div>
-                        <div class="$className">
-                            <span class="yv-v" v="1"></span>
-                            List item text.
-                        </div>
-                    </div>
-                    """.trimIndent()
-
-                val blocks = renderBlocks(html, FULL_CHAPTER_REF)
-                val block = blocks.first { it.text.text.contains("List item text.") }
-                val paragraphStyle =
-                    block.text.paragraphStyles
-                        .first()
-                        .item
-                assertEquals(
-                    oneIndent,
-                    paragraphStyle.textIndent!!.restLine.value,
-                    "Expected one-indent head for class '$className'",
-                )
+                val block = renderSingleBlock(className, "List item text.")
+                assertIndents(block, className, firstLineHeadIndent = 0, headIndent = 2)
             }
         }
 
@@ -174,27 +108,8 @@ class BibleVersionRenderBlocksTests {
     fun `li2 and ili2 classes produce deeper head indent than li1`() =
         runTest {
             listOf("li2", "ili2").forEach { className ->
-                val html =
-                    """
-                    <div>
-                        <div class="$className">
-                            <span class="yv-v" v="1"></span>
-                            List level 2 text.
-                        </div>
-                    </div>
-                    """.trimIndent()
-
-                val blocks = renderBlocks(html, FULL_CHAPTER_REF)
-                val block = blocks.first { it.text.text.contains("List level 2 text.") }
-                val paragraphStyle =
-                    block.text.paragraphStyles
-                        .first()
-                        .item
-                assertEquals(
-                    twoIndent,
-                    paragraphStyle.textIndent!!.restLine.value,
-                    "Expected two-indent head for class '$className'",
-                )
+                val block = renderSingleBlock(className, "List level 2 text.")
+                assertIndents(block, className, firstLineHeadIndent = 0, headIndent = 4)
             }
         }
 
@@ -202,27 +117,8 @@ class BibleVersionRenderBlocksTests {
     fun `li3 and ili3 classes produce head indent`() =
         runTest {
             listOf("li3", "ili3").forEach { className ->
-                val html =
-                    """
-                    <div>
-                        <div class="$className">
-                            <span class="yv-v" v="1"></span>
-                            List level 3 text.
-                        </div>
-                    </div>
-                    """.trimIndent()
-
-                val blocks = renderBlocks(html, FULL_CHAPTER_REF)
-                val block = blocks.first { it.text.text.contains("List level 3 text.") }
-                val paragraphStyle =
-                    block.text.paragraphStyles
-                        .first()
-                        .item
-                assertEquals(
-                    threeIndent,
-                    paragraphStyle.textIndent!!.restLine.value,
-                    "Expected three-indent head for class '$className'",
-                )
+                val block = renderSingleBlock(className, "List level 3 text.")
+                assertIndents(block, className, firstLineHeadIndent = 0, headIndent = 6)
             }
         }
 
@@ -230,61 +126,25 @@ class BibleVersionRenderBlocksTests {
     fun `li4 and ili4 classes produce head indent`() =
         runTest {
             listOf("li4", "ili4").forEach { className ->
-                val html =
-                    """
-                    <div>
-                        <div class="$className">
-                            <span class="yv-v" v="1"></span>
-                            List level 4 text.
-                        </div>
-                    </div>
-                    """.trimIndent()
-
-                val blocks = renderBlocks(html, FULL_CHAPTER_REF)
-                val block = blocks.first { it.text.text.contains("List level 4 text.") }
-                val paragraphStyle =
-                    block.text.paragraphStyles
-                        .first()
-                        .item
-                assertEquals(
-                    fourIndent,
-                    paragraphStyle.textIndent!!.restLine.value,
-                    "Expected four-indent head for class '$className'",
-                )
+                val block = renderSingleBlock(className, "List level 4 text.")
+                assertIndents(block, className, firstLineHeadIndent = 0, headIndent = 8)
             }
         }
 
     @Test
-    fun `q1 and aliases produce no indent`() =
+    fun `default poetry level uses first level indent`() =
         runTest {
-            listOf("q", "q1", "iq", "iq1", "qm", "qm1").forEach { className ->
-                val html =
-                    """
-                    <div>
-                        <div class="$className">
-                            <span class="yv-v" v="1"></span>
-                            Poetry line.
-                        </div>
-                    </div>
-                    """.trimIndent()
-
-                val blocks = renderBlocks(html, FULL_CHAPTER_REF)
-                val block = blocks.first { it.text.text.contains("Poetry line.") }
-                val paragraphStyle =
-                    block.text.paragraphStyles
-                        .first()
-                        .item
-                assertEquals(
-                    0f,
-                    paragraphStyle.textIndent!!.firstLine.value,
-                    "Expected no first line indent for class '$className'",
-                )
-                assertEquals(
-                    0f,
-                    paragraphStyle.textIndent!!.restLine.value,
-                    "Expected no rest line indent for class '$className'",
-                )
+            listOf("q", "q1", "iq", "iq1", "qm1").forEach { className ->
+                val block = renderSingleBlock(className, "Poetry line.")
+                assertIndents(block, className, firstLineHeadIndent = 0, headIndent = 2)
             }
+        }
+
+    @Test
+    fun `qm class produces no indent`() =
+        runTest {
+            val block = renderSingleBlock("qm", "Poetry line.")
+            assertIndents(block, "qm", firstLineHeadIndent = 0, headIndent = 0)
         }
 
     // ----- alignment
@@ -337,10 +197,10 @@ class BibleVersionRenderBlocksTests {
             }
         }
 
-    // ----- margin top
+    // ----- margins
 
     @Test
-    fun `header blocks have margin top`() =
+    fun `s1 header blocks have margin bottom and no margin top`() =
         runTest {
             val html =
                 """
@@ -355,7 +215,8 @@ class BibleVersionRenderBlocksTests {
 
             val blocks = renderBlocks(html, FULL_CHAPTER_REF)
             val headerBlock = blocks.first { it.text.text.contains("Section Title") }
-            assertTrue(headerBlock.marginTop.value > 0)
+            assertEquals(0.dp, headerBlock.marginTop)
+            assertTrue(headerBlock.marginBottom.value > 0)
         }
 
     // ----- font styles
@@ -409,7 +270,7 @@ class BibleVersionRenderBlocksTests {
         }
 
     @Test
-    fun `iot class applies bold font weight`() =
+    fun `iot class applies medium font weight`() =
         runTest {
             val html =
                 """
@@ -424,9 +285,9 @@ class BibleVersionRenderBlocksTests {
             val blocks = renderBlocks(html, FULL_CHAPTER_REF)
             val block = blocks.first { it.text.text.contains("Outline Title") }
             val titleStart = block.text.text.indexOf("Outline Title")
-            val boldStyles =
+            val mediumStyles =
                 block.text.spanStyles.filter { it.start <= titleStart && it.end > titleStart }
-            assertTrue(boldStyles.any { it.item.fontWeight == FontWeight.Bold })
+            assertTrue(mediumStyles.any { it.item.fontWeight == FontWeight.Medium })
         }
 
     // ----- words of Christ
@@ -471,7 +332,7 @@ class BibleVersionRenderBlocksTests {
 
             val verseStyles =
                 block.text.spanStyles.filter { it.start <= verseStart && it.end > verseStart }
-            assertTrue(verseStyles.any { it.item.baselineShift == BaselineShift.Superscript })
+            assertTrue(verseStyles.any { it.item.baselineShift == RENDERING_TEST_FONTS.verseNumBaselineShift })
             assertTrue(
                 verseStyles.any {
                     it.item.color.alpha < 1f && it.item.color.alpha > 0f

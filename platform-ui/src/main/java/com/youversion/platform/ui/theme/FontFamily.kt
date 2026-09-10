@@ -4,8 +4,10 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.R
 
+@PlatformInternalApi
 val UntitledSerif =
     FontFamily(
         Font(R.font.untitled_serif_app_regular, FontWeight.Normal),

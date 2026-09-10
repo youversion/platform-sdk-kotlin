@@ -28,7 +28,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-object UsersEndpoints : UsersApi {
+internal object UsersEndpoints : UsersApi {
     private val httpClient: HttpClient
         get() = PlatformCoreKoinComponent.httpClient
 

@@ -39,8 +39,6 @@ class PlatformReaderKoinModuleTests {
             versionId = 1,
             bookUSFM = "GEN",
             chapter = 1,
-            verseStart = null,
-            verseEnd = null,
         )
 
     private val bibleReaderRepository =

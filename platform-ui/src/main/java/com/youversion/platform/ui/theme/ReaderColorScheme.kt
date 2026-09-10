@@ -1,7 +1,9 @@
 package com.youversion.platform.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import com.youversion.platform.core.di.PlatformInternalApi
 
+@PlatformInternalApi
 data class ReaderColorScheme(
     val isDark: Boolean,
     val background: Color,
@@ -37,7 +39,7 @@ data class ReaderColorScheme(
         get() = if (isDark) 0.3f else 1f
 }
 
-fun lightReaderColorScheme(
+internal fun lightReaderColorScheme(
     background: Color,
     foreground: Color,
     surfacePrimaryColor: Color = LightSurfacePrimaryColor,
@@ -70,7 +72,7 @@ fun lightReaderColorScheme(
     wordsOfChristColor = wordsOfChristColor,
 )
 
-fun darkReaderColorScheme(
+internal fun darkReaderColorScheme(
     background: Color,
     foreground: Color,
     surfacePrimaryColor: Color = DarkSurfacePrimaryColor,

@@ -254,7 +254,8 @@ class BibleVersionTests : YouVersionPlatformTest {
         assertEquals(206, ref.versionId)
         assertEquals("PSA", ref.bookUSFM)
         assertEquals(23, ref.chapter)
-        assertEquals(1, ref.verseStart)
+        assertNull(ref.verseStart)
+        assertNull(ref.verseEnd)
     }
 
     @Test
@@ -584,17 +585,5 @@ class BibleVersionTests : YouVersionPlatformTest {
     fun `test displayTitle for single-chapter book with verseEnd 999`() {
         val reference = BibleReference(versionId = 206, bookUSFM = "JUD", chapter = 1, verseStart = 1, verseEnd = 999)
         assertEquals("Jude WEBUS", bibleVersion.displayTitle(reference))
-    }
-
-    @Test
-    fun `test displayTitle for verse with no verseEnd`() {
-        val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verseStart = 16, verseEnd = null)
-        assertEquals("Genesis 3:16 WEBUS", bibleVersion.displayTitle(reference))
-    }
-
-    @Test
-    fun `test displayTitle for single-chapter book verse with no verseEnd`() {
-        val reference = BibleReference(versionId = 206, bookUSFM = "JUD", chapter = 1, verseStart = 5, verseEnd = null)
-        assertEquals("Jude 5 WEBUS", bibleVersion.displayTitle(reference))
     }
 }

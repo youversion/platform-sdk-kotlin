@@ -10,7 +10,9 @@ import java.util.Date
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -459,4 +461,25 @@ class BibleHighlightsCacheTests {
             assertTrue(hasResumed)
             waiter.join()
         }
+
+    @Test
+    fun `both whole-chapter shapes key the same chapter load and fetch entry`() {
+        cache.clear()
+        val unspecified = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+        val marked = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 1, verseEnd = 999)
+
+        // The two whole-chapter shapes stay unequal by design, so a chapter map keyed on the reference itself would
+        // split them and let the same chapter load twice.
+        assertNotEquals(unspecified, marked)
+
+        val load = assertNotNull(cache.markChapterAsLoading(unspecified))
+        assertTrue(cache.isChapterLoading(marked))
+        assertNull(cache.markChapterAsLoading(marked))
+
+        cache.applyServerHighlights(chapter = marked, highlights = emptyList(), load = load)
+        assertTrue(cache.hasRecentlyLoadedChapter(unspecified))
+
+        cache.unmarkChapterAsLoading(marked, load)
+        assertFalse(cache.isChapterLoading(unspecified))
+    }
 }

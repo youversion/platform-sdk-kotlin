@@ -5,6 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.R
 
 /**
@@ -15,6 +16,7 @@ import com.youversion.platform.ui.R
  * @param onConfirm Lambda invoked when the user clicks the confirmation ("OK") button.
  */
 @Composable
+@PlatformInternalApi
 fun SignInErrorAlert(
     onDismissRequest: () -> Unit,
     onConfirm: () -> Unit,

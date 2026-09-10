@@ -98,19 +98,16 @@ data class BibleVersion(
                 ?: abbreviation?.takeIf { it.isNotEmpty() }
                 ?: id.toString()
 
-        val urlString =
-            if (reference.verseStart != null) {
-                val verseStart = reference.verseStart
-                if (reference.verseEnd != null && verseStart != reference.verseEnd) {
-                    "$prefix$book.${reference.chapter}.$verseStart-${reference.verseEnd}.$version"
-                } else {
-                    "$prefix$book.${reference.chapter}.$verseStart.$version"
-                }
-            } else {
-                "$prefix$book.${reference.chapter}.$version"
-            }
+        val verseStart = reference.verseStart
+        val verseEnd = reference.verseEnd
+        val chapterUrl = "$prefix$book.${reference.chapter}.$version"
 
-        return urlString
+        return when {
+            verseEnd == WHOLE_CHAPTER_VERSE_END || verseStart == null -> chapterUrl
+            reference.isRange ->
+                "$prefix$book.${reference.chapter}.$verseStart-$verseEnd.$version"
+            else -> "$prefix$book.${reference.chapter}.$verseStart.$version"
+        }
     }
 
     /**
@@ -161,23 +158,18 @@ data class BibleVersion(
         val verseEnd = reference.verseEnd
 
         return when {
-            // Whole chapter (verseEnd is 999)
-            verseEnd == 999 -> {
-                listOf(bookName, bookAndChapterSeparator, chapter)
-            }
-
-            // Whole chapter (no verses specified)
-            verseStart == null -> {
+            // Whole chapter, either as the platform marks it or with no verses specified
+            verseEnd == WHOLE_CHAPTER_VERSE_END || verseStart == null -> {
                 listOf(bookName, bookAndChapterSeparator, chapter)
             }
 
             // Single verse (both start and end are the same)
-            verseEnd != null && verseStart == verseEnd -> {
+            !reference.isRange -> {
                 listOf(bookName, bookAndChapterSeparator, chapter, chapterSeparator, verseStart.toString())
             }
 
             // Verse range (different start and end)
-            verseEnd != null -> {
+            else -> {
                 listOf(
                     bookName,
                     bookAndChapterSeparator,
@@ -187,11 +179,6 @@ data class BibleVersion(
                     "-",
                     verseEnd.toString(),
                 )
-            }
-
-            // Single verse with no verseEnd
-            else -> {
-                listOf(bookName, bookAndChapterSeparator, chapter, chapterSeparator, verseStart.toString())
             }
         }
     }
@@ -207,6 +194,9 @@ data class BibleVersion(
 
     // ----- Companion
     companion object {
+        /** The end verse the platform uses to mean "the whole chapter" rather than a real verse number. */
+        private const val WHOLE_CHAPTER_VERSE_END = 999
+
         val preview: BibleVersion
             get() {
                 val copyrightLong =
@@ -232,7 +222,7 @@ data class BibleVersion(
             }
     }
 
-    object Builder {
+    internal object Builder {
         fun merge(
             basic: BibleVersion,
             index: BibleVersionIndex,

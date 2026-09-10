@@ -7,7 +7,7 @@ import androidx.navigation.compose.rememberNavController
 import com.youversion.platform.core.bibles.models.BibleVersion
 
 @Composable
-fun BibleVersionsStack(
+internal fun BibleVersionsStack(
     viewModel: BibleVersionsViewModel,
     onDismiss: () -> Unit,
     onVersionSelect: (BibleVersion) -> Unit,

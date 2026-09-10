@@ -32,7 +32,7 @@ import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
 /** The type of informational banner to display in the Bible reader. */
-enum class BibleReaderBannerType {
+internal enum class BibleReaderBannerType {
     OFFLINE,
     VERSION_UNAVAILABLE,
 }
@@ -44,7 +44,7 @@ private data class BannerIcon(
 
 /** A dismissible informational banner displayed at the top of the Bible reader. */
 @Composable
-fun BibleReaderBanner(
+internal fun BibleReaderBanner(
     bannerType: BibleReaderBannerType,
     isVisible: Boolean,
     onDismiss: () -> Unit,
