@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun BibleReaderHalfPillPicker(
+internal fun BibleReaderHalfPillPicker(
     bookAndChapter: String,
     versionAbbreviation: String,
     handleChapterTap: () -> Unit,

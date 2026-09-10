@@ -29,7 +29,7 @@ import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BibleReaderHeader(
+internal fun BibleReaderHeader(
     isSignInProcessing: Boolean,
     signedIn: Boolean,
     scrollBehavior: TopAppBarScrollBehavior,

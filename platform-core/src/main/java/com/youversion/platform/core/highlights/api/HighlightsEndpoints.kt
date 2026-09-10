@@ -26,7 +26,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import java.util.UUID
 
-object HighlightsEndpoints : HighlightsApi {
+internal object HighlightsEndpoints : HighlightsApi {
     private val httpClient: HttpClient
         get() = PlatformCoreKoinComponent.httpClient
 

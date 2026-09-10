@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
  * Represents the JSON response from the /auth/token endpoint.
  */
 @Serializable
-data class TokenResponse(
+internal data class TokenResponse(
     @SerialName("access_token") val accessToken: String,
     @SerialName("expires_in") val expiresIn: Long,
     @SerialName("id_token") val idToken: String,

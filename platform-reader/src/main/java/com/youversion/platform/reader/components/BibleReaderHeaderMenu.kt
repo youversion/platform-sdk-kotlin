@@ -18,7 +18,7 @@ import androidx.compose.ui.res.vectorResource
 import com.youversion.platform.reader.R
 
 @Composable
-fun BibleReaderHeaderDropdownMenu(
+internal fun BibleReaderHeaderDropdownMenu(
     isSignInProcessing: Boolean,
     signedIn: Boolean,
     onOpenMenu: () -> Unit,

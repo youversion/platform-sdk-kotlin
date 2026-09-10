@@ -328,11 +328,8 @@ class BibleIntroRenderingTests {
 
             val blocks = renderIntroBlocks(html)
             val block = blocks.first { it.text.text.contains("Indented intro paragraph.") }
-            val paragraphStyle =
-                block.text.paragraphStyles
-                    .first()
-                    .item
-            assertTrue(paragraphStyle.textIndent!!.firstLine.value > 0)
+            assertEquals(1, block.firstLineHeadIndent)
+            assertEquals(0, block.headIndent)
         }
 }
 

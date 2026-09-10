@@ -20,5 +20,5 @@ object PlatformKoinGraph {
 
     fun stop() = PlatformKoinContext.stopKoin()
 
-    fun getContext(): KoinContext = PlatformKoinContext
+    internal fun getContext(): KoinContext = PlatformKoinContext
 }

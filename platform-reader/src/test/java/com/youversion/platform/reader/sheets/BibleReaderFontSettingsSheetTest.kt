@@ -37,7 +37,7 @@ class BibleReaderFontSettingsSheetTest {
         onFontClick: () -> Unit = {},
         onThemeSelect: (ReaderTheme) -> Unit = {},
         fontDefinition: FontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
-        lineSpacing: Float = ReaderFontSettings.DEFAULT_LINE_SPACING,
+        lineSpacingFraction: Float = ReaderFontSettings.DEFAULT_LINE_SPACING_FRACTION,
     ) {
         composeTestRule.setContent {
             BibleReaderMaterialTheme(readerColorScheme = Cream) {
@@ -49,7 +49,7 @@ class BibleReaderFontSettingsSheetTest {
                     onFontClick = onFontClick,
                     onThemeSelect = onThemeSelect,
                     fontDefinition = fontDefinition,
-                    lineSpacing = lineSpacing,
+                    lineSpacingFraction = lineSpacingFraction,
                 )
             }
         }

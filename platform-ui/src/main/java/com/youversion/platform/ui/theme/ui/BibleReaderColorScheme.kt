@@ -3,11 +3,13 @@ package com.youversion.platform.ui.theme.ui
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.theme.tokens.BibleColorDarkTokens
 import com.youversion.platform.ui.theme.tokens.BibleColorLightTokens
 
 @Immutable
-class BibleReaderColorScheme(
+@PlatformInternalApi
+class BibleReaderColorScheme internal constructor(
     val canvasPrimary: Color,
     val canvasSecondary: Color,
     val surfacePrimary: Color,
@@ -37,7 +39,7 @@ class BibleReaderColorScheme(
     val brandLogoText: Color,
 )
 
-fun lightBibleReaderColorScheme(
+internal fun lightBibleReaderColorScheme(
     canvasPrimary: Color = BibleColorLightTokens.CanvasPrimary,
     canvasSecondary: Color = BibleColorLightTokens.CanvasSecondary,
     surfacePrimary: Color = BibleColorLightTokens.SurfacePrimary,
@@ -96,7 +98,7 @@ fun lightBibleReaderColorScheme(
         brandLogoText = brandLogoText,
     )
 
-fun darkBibleReaderColorScheme(
+internal fun darkBibleReaderColorScheme(
     canvasPrimary: Color = BibleColorDarkTokens.CanvasPrimary,
     canvasSecondary: Color = BibleColorDarkTokens.CanvasSecondary,
     surfacePrimary: Color = BibleColorDarkTokens.SurfacePrimary,

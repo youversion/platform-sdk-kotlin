@@ -6,6 +6,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
@@ -14,9 +17,11 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
-import com.youversion.platform.ui.views.BibleTextOptions
+import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
+import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
@@ -62,6 +67,14 @@ class BibleReaderFootnotesSheetTest {
             chapter = 1,
         )
 
+    private val testVerseReference =
+        BibleReference(
+            versionId = 1,
+            bookUSFM = "GEN",
+            chapter = 1,
+            verse = 3,
+        )
+
     @Before
     fun setUp() {
         mockkObject(BibleVersionRendering)
@@ -105,7 +118,6 @@ class BibleReaderFootnotesSheetTest {
         composeTestRule.setContent {
             BibleReaderMaterialTheme {
                 BibleReaderFootnotesSheet(
-                    textOptions = BibleTextOptions(),
                     onDismissRequest = onDismissRequest,
                     version = version,
                     reference = reference,
@@ -113,6 +125,47 @@ class BibleReaderFootnotesSheetTest {
                 )
             }
         }
+    }
+
+    private fun stubRenderedFootnotes(footnotes: List<AnnotatedString>) {
+        coEvery {
+            BibleVersionRendering.textBlocks(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } returns
+            listOf(
+                BibleTextBlock(
+                    text = AnnotatedString(""),
+                    chapter = 1,
+                    firstLineHeadIndent = 0,
+                    headIndent = 0,
+                    marginTop = 0.dp,
+                    marginBottom = 0.dp,
+                    alignment = TextAlign.Start,
+                    footnotes = footnotes,
+                ),
+            )
+    }
+
+    private fun footnoteFor(
+        reference: BibleReference,
+        text: String,
+    ) = buildAnnotatedString {
+        append(text)
+        addStringAnnotation(
+            tag = BibleReferenceAttribute.NAME,
+            annotation = "${reference.versionId}:${reference.bookUSFM}:${reference.chapter}:${reference.verseStart}",
+            start = 0,
+            end = text.length,
+        )
     }
 
     private fun renderFootnotes(footnotes: List<AnnotatedString>) {
@@ -209,5 +262,55 @@ class BibleReaderFootnotesSheetTest {
         composeTestRule.onNodeWithText("First footnote").assertIsDisplayed()
         composeTestRule.onNodeWithText("Second footnote").assertIsDisplayed()
         composeTestRule.onNodeWithText("Third footnote").assertIsDisplayed()
+    }
+
+    // ----- Re-rendering
+
+    @Test
+    fun `shows re-rendered footnotes when an annotation matches the reference`() {
+        stubRenderedFootnotes(listOf(footnoteFor(testVerseReference, "Re-rendered footnote")))
+
+        renderSheet(
+            reference = testVerseReference,
+            footnotes = listOf(AnnotatedString("Passed-in footnote")),
+        )
+
+        composeTestRule.onNodeWithText("Re-rendered footnote").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Passed-in footnote").assertDoesNotExist()
+    }
+
+    @Test
+    fun `keeps passed-in footnotes when no annotation matches the reference`() {
+        val otherVerse = testVerseReference.copy(verseStart = 9, verseEnd = 9)
+        stubRenderedFootnotes(listOf(footnoteFor(otherVerse, "Other verse footnote")))
+
+        renderSheet(
+            reference = testVerseReference,
+            footnotes = listOf(AnnotatedString("Passed-in footnote")),
+        )
+
+        composeTestRule.onNodeWithText("Passed-in footnote").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Other verse footnote").assertDoesNotExist()
+    }
+
+    @Test
+    fun `renders the chapter once for both the passage and its footnotes`() {
+        stubRenderedFootnotes(listOf(footnoteFor(testVerseReference, "Re-rendered footnote")))
+
+        renderSheet(reference = testVerseReference)
+
+        coVerify(exactly = 1) {
+            BibleVersionRendering.textBlocks(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        }
     }
 }

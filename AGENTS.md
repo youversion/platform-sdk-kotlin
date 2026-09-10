@@ -29,7 +29,9 @@ The project uses a multi-module architecture with clear separation of concerns:
 
 - **platform-reader**: High-level reader functionality:
   - Combines `platform-core` + `platform-ui`
-  - Exposes both modules via `api()` dependencies
+  - Re-exposes `platform-core` via `api()`, since `BibleReader` takes a `BibleReference`
+  - Depends on `platform-ui` via `implementation`: it backs the reader's internals but
+    never appears in its public signatures, so it stays off the consumer's compile classpath
   - Intended as the main entry point for consumer apps
 
 - **examples/sample-android**: Sample Android app demonstrating SDK usage

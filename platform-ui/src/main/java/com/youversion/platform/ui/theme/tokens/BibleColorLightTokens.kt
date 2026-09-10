@@ -1,6 +1,6 @@
 package com.youversion.platform.ui.theme.tokens
 
-object BibleColorLightTokens {
+internal object BibleColorLightTokens {
     val CanvasPrimary = BiblePaletteTokens.White
     val CanvasSecondary = BiblePaletteTokens.Gray5
     val SurfacePrimary = BiblePaletteTokens.Gray5

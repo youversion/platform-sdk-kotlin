@@ -9,17 +9,17 @@ import com.youversion.platform.ui.theme.UntitledSerif
  * A utility object that provides constants and helper functions for managing font settings
  * within the reader feature.
  */
-object ReaderFontSettings {
+internal object ReaderFontSettings {
     val availableSizes = listOf(9.sp, 12.sp, 15.sp, 18.sp, 21.sp, 24.sp)
     val DEFAULT_FONT_SIZE: TextUnit = 18.sp
 
     /**
-     * Multipliers applied to the current font size to produce the effective line height.
-     * Ordered smallest → largest so [nextLineSpacing] can advance by choosing the next
+     * Extra space between lines as a fraction of the current font size, ordered
+     * smallest → largest so [nextLineSpacingFraction] can advance by choosing the next
      * value greater than the current selection.
      */
-    val availableLineSpacings: List<Float> = listOf(1.2f, 1.5f, 1.8f)
-    const val DEFAULT_LINE_SPACING: Float = 1.5f
+    val availableLineSpacingFractions: List<Float> = listOf(0.3f, 0.4f, 0.6f)
+    const val DEFAULT_LINE_SPACING_FRACTION: Float = 0.4f
 
     val DEFAULT_FONT_DEFINITION: FontDefinition = FontDefinition("Untitled Serif", UntitledSerif)
 
@@ -50,15 +50,16 @@ object ReaderFontSettings {
         availableSizes.firstOrNull { it > currentSize } ?: availableSizes.last()
 
     /**
-     * Advances to the next line-spacing multiplier, wrapping back to the smallest option
+     * Advances to the next line-spacing fraction, wrapping back to the smallest option
      * when the current selection is already the largest. Mirrors Swift's
      * `ReaderFonts.nextLineSpacing`.
-     * @param currentSpacing The current line-spacing multiplier.
-     * @return The smallest option greater than [currentSpacing], or the smallest option
-     * overall if [currentSpacing] is already the largest (wrap).
+     * @param currentFraction The current extra leading, as a fraction of the font size.
+     * @return The smallest option greater than [currentFraction], or the smallest option
+     * overall if [currentFraction] is already the largest (wrap).
      */
-    fun nextLineSpacing(currentSpacing: Float): Float =
-        availableLineSpacings.firstOrNull { it > currentSpacing } ?: availableLineSpacings.first()
+    fun nextLineSpacingFraction(currentFraction: Float): Float =
+        availableLineSpacingFractions.firstOrNull { it > currentFraction }
+            ?: availableLineSpacingFractions.first()
 }
 
 data class FontDefinition(

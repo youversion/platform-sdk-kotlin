@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
@@ -41,6 +42,7 @@ import com.youversion.platform.ui.views.components.SearchBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@PlatformInternalApi
 fun VersionsScreen(
     viewModel: BibleVersionsViewModel,
     onBackClick: () -> Unit,

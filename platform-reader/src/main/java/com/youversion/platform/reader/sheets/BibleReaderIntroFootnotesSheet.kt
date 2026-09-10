@@ -17,10 +17,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youversion.platform.reader.R
+import com.youversion.platform.ui.theme.UntitledSerif
+
+// Matches the fixed size the chapter footnotes sheet renders at, so both sheets ignore the reader's font settings.
+private val SheetFootnoteStyle =
+    SpanStyle(
+        fontFamily = UntitledSerif,
+        fontSize = 16.sp,
+    )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,9 +60,9 @@ internal fun BibleReaderIntroFootnotesSheet(
                 fontWeight = FontWeight.Bold,
             )
             Column {
-                footnotes.forEachIndexed { index, footnote ->
+                footnotes.forEach { footnote ->
                     Row {
-                        Text(footnote)
+                        Text(footnote.atSheetSize())
                     }
                 }
             }
@@ -60,3 +70,16 @@ internal fun BibleReaderIntroFootnotesSheet(
         }
     }
 }
+
+/**
+ * A copy of this footnote pinned to the sheet's font family and size.
+ *
+ * The footnote was rendered with the reader's font settings. Span styles merge attribute by attribute with the
+ * last one winning, so overlaying [SheetFootnoteStyle] replaces only the family and size, leaving emphasis and
+ * color intact.
+ */
+private fun AnnotatedString.atSheetSize(): AnnotatedString =
+    buildAnnotatedString {
+        append(this@atSheetSize)
+        addStyle(SheetFootnoteStyle, 0, length)
+    }

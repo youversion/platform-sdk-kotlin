@@ -55,14 +55,19 @@ android {
 }
 
 dependencies {
+    // api(): these types appear in platform-reader's public signatures, so consumers need
+    // them on their compile classpath. Everything else stays implementation.
+    api(projects.platformCore) // BibleReader(bibleReference: BibleReference?)
+    api(platform(libs.androidx.compose.bom))
+    api(libs.androidx.compose.ui) // FontDefinition(fontFamily: FontFamily), BibleReader's @Composable bottomBar
+
+    // platform-ui backs the reader's internals but never surfaces in its four public
+    // declarations, so it stays off the consumer's compile classpath.
     implementation(projects.platformUi)
-    implementation(projects.platformCore)
 
     implementation(libs.kotlin.coroutines)
     implementation(libs.kotlin.serialization)
 
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)

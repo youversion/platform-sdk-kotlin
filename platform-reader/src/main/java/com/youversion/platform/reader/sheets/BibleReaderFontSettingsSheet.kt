@@ -60,7 +60,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BibleReaderFontSettingsSheet(
+internal fun BibleReaderFontSettingsSheet(
     onDismissRequest: () -> Unit,
     onSmallerFontClick: () -> Unit,
     onBiggerFontClick: () -> Unit,
@@ -68,7 +68,7 @@ fun BibleReaderFontSettingsSheet(
     onFontClick: () -> Unit,
     onThemeSelect: (ReaderTheme) -> Unit,
     fontDefinition: FontDefinition,
-    lineSpacing: Float,
+    lineSpacingFraction: Float,
 ) {
     val sheetState =
         rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -101,7 +101,7 @@ fun BibleReaderFontSettingsSheet(
                         )
                     }
                     LineSpacingButton(
-                        lineSpacing = lineSpacing,
+                        lineSpacingFraction = lineSpacingFraction,
                         onClick = onLineSpacingClick,
                     )
                 }
@@ -189,16 +189,16 @@ private fun FontSizeButtons(
 
 @Composable
 private fun LineSpacingButton(
-    lineSpacing: Float,
+    lineSpacingFraction: Float,
     onClick: () -> Unit,
 ) {
     // Preview: three horizontal bars whose vertical gap is derived from the option index
-    // (0 / 1 / 2 → 1 / 3 / 5 dp) rather than the raw multiplier — matches Swift's control
-    // and produces a visibly wider spread across 1.2 / 1.5 / 1.8 than a proportional gap
-    // would (which was only ~1.5× between smallest and largest).
+    // (0 / 1 / 2 → 1 / 3 / 5 dp) rather than the raw fraction — matches Swift's control
+    // and produces a visibly wider spread across the three options than a proportional gap
+    // would (which was only ~2× between smallest and largest).
     val optionIndex =
-        ReaderFontSettings.availableLineSpacings.indices.minByOrNull {
-            kotlin.math.abs(ReaderFontSettings.availableLineSpacings[it] - lineSpacing)
+        ReaderFontSettings.availableLineSpacingFractions.indices.minByOrNull {
+            kotlin.math.abs(ReaderFontSettings.availableLineSpacingFractions[it] - lineSpacingFraction)
         } ?: 0
     val previewGap = (optionIndex * 2 + 1).dp
     val barColor = MaterialTheme.readerColorScheme.readerTextPrimaryColor
@@ -386,7 +386,7 @@ private fun Preview_BibleReaderFontSettingsSheet() {
             onFontClick = {},
             onThemeSelect = {},
             fontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
-            lineSpacing = ReaderFontSettings.DEFAULT_LINE_SPACING,
+            lineSpacingFraction = ReaderFontSettings.DEFAULT_LINE_SPACING_FRACTION,
         )
     }
 }

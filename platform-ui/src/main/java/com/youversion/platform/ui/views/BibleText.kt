@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +17,7 @@ import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -47,6 +50,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.ResolvedTextDirection
+import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
@@ -57,6 +61,7 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
@@ -89,7 +94,11 @@ internal val ImageFootnoteMarker: AnnotatedString =
 data class BibleTextOptions(
     val fontFamily: FontFamily = UntitledSerif,
     val fontSize: TextUnit = 16.sp,
-    val lineSpacing: TextUnit? = null,
+    /**
+     * Extra space between lines as a fraction of [fontSize]; null means
+     * [DEFAULT_LINE_SPACING_FRACTION].
+     */
+    val lineSpacingFraction: Float? = null,
     val paragraphSpacing: TextUnit? = null,
     val textColor: Color? = null,
     val wocColor: Color = Color(0xFFF04C59), // YouVersion red
@@ -99,34 +108,53 @@ data class BibleTextOptions(
     val footnoteMarker: AnnotatedString? = DefaultFootnoteMarker,
     val selectionColor: Color? = null,
 ) {
-    val inlineContentMap =
+    internal val inlineContentMap =
         mapOf(
             FOOTNOTE_IMAGE_ID to
                 InlineTextContent(
                     Placeholder(
-                        width = 24.sp,
-                        height = 32.sp,
+                        width = fontSize * 1.5,
+                        height = fontSize,
                         placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
                     ),
                 ) {
+                    val iconSize = with(LocalDensity.current) { fontSize.toDp() }
                     Box(
                         modifier =
                             Modifier
                                 .fillMaxSize()
+                                .offset(y = -iconSize / 4)
                                 .alpha(0.8f),
-                        contentAlignment = Alignment.TopCenter,
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.ic_material_footnotes),
                             contentDescription = stringResource(R.string.footnote_content_desc),
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(iconSize),
                             tint = LocalContentColor.current.copy(alpha = 0.6f),
                         )
                     }
                 },
         )
+
+    /** Line height including [lineSpacingFraction], or the default when it is unset. */
+    internal val resolvedLineHeight: TextUnit
+        get() = fontSize * (BASE_LINE_HEIGHT + (lineSpacingFraction ?: DEFAULT_LINE_SPACING_FRACTION))
+
+    /** Extra leading in the same units as [fontSize], used to pad a block's bottom margin. */
+    internal val extraLeading: Float
+        get() = fontSize.value * (lineSpacingFraction ?: DEFAULT_LINE_SPACING_FRACTION)
+
+    companion object {
+        /** Extra leading applied when [lineSpacingFraction] is unset. */
+        const val DEFAULT_LINE_SPACING_FRACTION: Float = 0.4f
+
+        // The line height a font already carries before any extra leading is added.
+        private const val BASE_LINE_HEIGHT = 1.2f
+    }
 }
 
+@PlatformInternalApi
 fun Int.convertToEnumeration(): String {
     val value = 'a'.code + minOf(25, this)
     return value.toChar().toString()
@@ -148,6 +176,23 @@ enum class BibleTextLoadingPhase {
     SUCCESS,
 }
 
+/**
+ * Renders the chapter, or the passage within it, named by [reference].
+ *
+ * @param reference The passage to render.
+ * @param textOptions Text styling options (font family, font size, line spacing, etc.).
+ * @param selectedVerses The verses to draw as selected.
+ * @param onVerseSelectedChange Callback invoked when a tap adds a verse to or removes it from the selection.
+ * @param onVerseTap Callback invoked when a verse is tapped, with the tap position.
+ * @param onFootnoteTap Callback invoked when a footnote icon is tapped, providing the footnotes for that verse.
+ * @param placeholder A composable to display during loading and error states.
+ * @param onStateChange Callback invoked when the loading phase changes.
+ * @param onBlocksChange Callback invoked with the rendered blocks each time a load succeeds, so a host that needs
+ * the same content can reuse them instead of rendering the chapter twice. It fires once per successful load: on
+ * first composition, and again whenever [reference] or [textOptions] compares unequal to the previous value. It
+ * does not fire when a load fails, is not permitted, or is cancelled. The blocks are rebuilt from scratch on every
+ * load and carry no stable identity, so replace the previous list wholesale rather than diffing against it.
+ */
 @Composable
 fun BibleText(
     reference: BibleReference,
@@ -158,6 +203,7 @@ fun BibleText(
     onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)? = null,
     placeholder: @Composable (BibleTextLoadingPhase) -> Unit = { StandardPlaceholder(it) },
     onStateChange: (BibleTextLoadingPhase) -> Unit = {},
+    onBlocksChange: (List<BibleTextBlock>) -> Unit = {},
 ) {
     var blocks by remember { mutableStateOf<List<BibleTextBlock>>(emptyList()) }
     var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
@@ -229,6 +275,7 @@ fun BibleText(
 
             if (loadedBlocks != null) {
                 blocks = loadedBlocks
+                onBlocksChange(loadedBlocks)
                 loadingPhase = BibleTextLoadingPhase.SUCCESS
             } else {
                 loadingPhase = BibleTextLoadingPhase.FAILED
@@ -266,6 +313,7 @@ fun BibleText(
                         block = block,
                         textOptions = textOptions,
                         isFirstBlock = index == 0,
+                        previousMarginBottom = if (index == 0) 0.dp else visibleBlocks[index - 1].marginBottom,
                         selectedVerses = selectedVerses,
                         highlights = highlights,
                         onClick = { localPosition, textLayoutResult ->
@@ -340,7 +388,7 @@ fun BibleText(
     }
 }
 
-fun BibleReference.Companion.fromAnnotation(annotation: String): BibleReference {
+internal fun BibleReference.Companion.fromAnnotation(annotation: String): BibleReference {
     val split = annotation.split(":")
     return BibleReference(
         versionId = split[0].toInt(),
@@ -547,13 +595,17 @@ private fun BibleTextBlock(
     block: BibleTextBlock,
     textOptions: BibleTextOptions,
     isFirstBlock: Boolean,
+    previousMarginBottom: Dp,
     selectedVerses: Set<BibleReference>,
     highlights: Map<BibleReference, Color>,
     onClick: (position: Offset, layoutResult: TextLayoutResult) -> Unit,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-    val marginTop = if (isFirstBlock) 0.dp else block.marginTop
-    val paragraphSpacing = (textOptions.paragraphSpacing ?: (textOptions.fontSize / 2)).value.dp
+    // Adjacent blocks share whichever margin is bigger instead of stacking both, mirroring
+    // how CSS collapses margins; the topmost block gets no top margin at all.
+    val marginTop = if (isFirstBlock) 0.dp else maxOf(0.dp, block.marginTop - previousMarginBottom)
+    val marginBottom =
+        block.marginBottom + textOptions.extraLeading.dp + (textOptions.paragraphSpacing ?: 0.sp).value.dp
 
     val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
 
@@ -570,12 +622,27 @@ private fun BibleTextBlock(
     Text(
         text = block.text,
         textAlign = block.alignment,
-        lineHeight = textOptions.lineSpacing ?: (textOptions.fontSize * 1.5),
+        lineHeight = textOptions.resolvedLineHeight,
         color = textOptions.textColor ?: Color.Unspecified,
+        style =
+            LocalTextStyle.current.copy(
+                // Swift fakes this with repeated non-breaking spaces (3 per unit, capped at 24)
+                // because AttributedString has no first-line indent; Compose has the real thing,
+                // sized to match at a nbsp's typical width of 0.25em.
+                textIndent =
+                    TextIndent(
+                        firstLine =
+                            textOptions.fontSize * 0.25f *
+                                (block.firstLineHeadIndent * 3).coerceIn(0, 24),
+                    ),
+            ),
         modifier =
             Modifier
-                .padding(top = marginTop, bottom = paragraphSpacing)
-                .fillMaxWidth()
+                .padding(
+                    start = (8 * block.headIndent).dp,
+                    top = marginTop,
+                    bottom = marginBottom,
+                ).fillMaxWidth()
                 .drawWithContent {
                     textLayoutResult?.let { drawHighlightBackgrounds(it, highlightedRanges) }
                     drawContent()
@@ -677,7 +744,7 @@ private fun BibleTableCell(
 
     Text(
         text = cellText,
-        lineHeight = textOptions.lineSpacing ?: TextUnit.Unspecified,
+        lineHeight = textOptions.resolvedLineHeight,
         color = textOptions.textColor ?: Color.Unspecified,
         modifier =
             Modifier
@@ -712,7 +779,7 @@ private fun BibleTableCell(
 }
 
 @Composable
-fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
+internal fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,

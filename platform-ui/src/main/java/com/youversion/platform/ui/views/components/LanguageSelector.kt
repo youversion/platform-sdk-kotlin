@@ -25,7 +25,7 @@ import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
 @Composable
-fun LanguageSelector(
+internal fun LanguageSelector(
     activeLanguageName: String,
     enabled: Boolean,
     onClick: () -> Unit,

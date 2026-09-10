@@ -22,8 +22,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
-    val storage: Storage by inject()
-    val sessionRepository: SessionRepository by inject()
+    private val storage: Storage by inject()
+    private val sessionRepository: SessionRepository by inject()
 
     @BeforeTest
     fun setup() = startYouVersionPlatformTest()

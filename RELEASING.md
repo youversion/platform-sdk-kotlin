@@ -11,7 +11,7 @@ For recovery procedures when a release fails partway, see [docs/RELEASE-RUNBOOK.
 3. The next version is determined automatically:
    - `fix:` commits bump the **patch** version (e.g., `0.5.0` -> `0.5.1`)
    - `feat:` commits bump the **minor** version (e.g., `0.5.0` -> `0.6.0`)
-   - `BREAKING CHANGE:` or `feat!:` / `fix!:` bumps the **major** version (e.g., `0.5.0` -> `1.0.0`)
+   - a `BREAKING CHANGE:` footer bumps the **major** version (e.g., `0.5.0` -> `1.0.0`). A `!` after the type does *not* — see [Breaking Changes](#breaking-changes)
 4. A **preflight** step probes `repo1.maven.org` for each module/version. If all three coordinates are already present (e.g. the workflow is being re-dispatched after a successful prior run), publishing is skipped.
 5. A **breaking-change gate** routes the publish job through the `production-breaking` GitHub Environment when the commit window contains `feat!:`, `fix!:`, or `BREAKING CHANGE:`. Non-breaking releases continue through the existing `production` environment. Required reviewers on `production-breaking` must approve the run before the publish step starts.
 6. The version in `gradle/libs.versions.toml` is updated.
@@ -52,13 +52,20 @@ All commits must follow the [Conventional Commits](https://www.conventionalcommi
 
 ### Breaking Changes
 
-Append `!` after the type or include a `BREAKING CHANGE:` footer:
+Use a `BREAKING CHANGE:` footer. Do **not** append `!` to the type.
 
 ```
-feat!: remove deprecated BibleText API
+feat: remove deprecated BibleText API
 
 BREAKING CHANGE: The `BibleText(passage: String)` overload has been removed. Use `BibleText(reference: BibleReference)` instead.
 ```
+
+The footer is the only thing semantic-release acts on, and it is the entire migration guide consumers get — it lands verbatim in both `CHANGELOG.md` and the GitHub Release, so write it in full.
+
+`!` is unsupported here and fails silently. The pinned `conventional-changelog-angular` preset (7.0.0) matches headers with `/^(\w*)(?:\((.*)\))?: (.*)$/` and defines no `breakingHeaderPattern`, so `!` makes the header fail to match and `type`, `scope`, and `subject` all parse as `null`:
+
+- `feat!:` **with** a footer still bumps the major, but the commit renders with no type and an empty subject, so it never appears under `### Features` in the changelog or release notes.
+- `feat!:` **without** a footer produces **no release at all** — not even a patch — while still tripping the `production-breaking` gate below, which greps the raw commit text rather than the parsed result.
 
 ## Pre-release Branches
 

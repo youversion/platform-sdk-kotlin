@@ -1,6 +1,7 @@
 package com.youversion.platform.ui.views.rendering
 
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.youversion.platform.ui.views.BibleTextFontOption
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,9 +16,11 @@ class StateDownTests {
                 woc = true,
                 smallcaps = true,
                 alignment = TextAlign.End,
-                currentFont = BibleTextFontOption.HEADER_ITALIC,
+                currentFont = BibleTextFontOption.FONT_117EM_500,
                 textCategory = BibleTextCategory.HEADER,
                 nodeDepth = 3,
+                marginTop = 4.dp,
+                marginBottom = 8.dp,
             )
 
         val copy = original.copy()
@@ -28,14 +31,16 @@ class StateDownTests {
         assertEquals(original.currentFont, copy.currentFont)
         assertEquals(original.textCategory, copy.textCategory)
         assertEquals(original.nodeDepth, copy.nodeDepth)
+        assertEquals(original.marginTop, copy.marginTop)
+        assertEquals(original.marginBottom, copy.marginBottom)
 
         copy.woc = false
         copy.smallcaps = false
-        copy.currentFont = BibleTextFontOption.TEXT
+        copy.currentFont = BibleTextFontOption.FONT_100EM
 
         assertTrue(original.woc)
         assertTrue(original.smallcaps)
-        assertEquals(BibleTextFontOption.HEADER_ITALIC, original.currentFont)
+        assertEquals(BibleTextFontOption.FONT_117EM_500, original.currentFont)
 
         assertNotEquals(original.woc, copy.woc)
         assertNotEquals(original.smallcaps, copy.smallcaps)

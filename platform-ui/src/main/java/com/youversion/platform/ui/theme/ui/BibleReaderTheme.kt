@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.mutableStateOf
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.theme.ReaderColorScheme
 
 @Composable
@@ -20,6 +21,7 @@ internal fun BibleReaderTheme(
     }
 }
 
+@PlatformInternalApi
 object BibleReaderTheme {
     // Observable state for the selected color scheme. Might deprecate.
     val selectedColorScheme = mutableStateOf<ReaderColorScheme?>(null)

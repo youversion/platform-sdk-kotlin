@@ -30,14 +30,19 @@ tasks.register<VerifyNoHardcodedUiStringsTask>("verifyNoHardcodedUiStrings") {
     resultFile.set(layout.buildDirectory.file("verifyNoHardcodedUiStrings/result.txt"))
 }
 
+// The SDK's own modules opt in to each other's @PlatformInternalApi declarations. Sample apps
+// deliberately do not, so that they compile against the same surface a consumer sees.
+val sdkModulePaths = setOf(":platform-core", ":platform-ui", ":platform-reader")
+
 subprojects {
     tasks.matching { it.name == "check" }.configureEach {
         dependsOn(rootProject.tasks.named("verifyNoHardcodedUiStrings"))
     }
 
-    // opt-in to internal APIs
-    tasks.withType<KotlinCompile> {
-        compilerOptions.optIn.add("com.youversion.platform.core.di.PlatformInternalApi")
+    if (path in sdkModulePaths) {
+        tasks.withType<KotlinCompile> {
+            compilerOptions.optIn.add("com.youversion.platform.core.di.PlatformInternalApi")
+        }
     }
 
     // Provides running test coverage using `./gradlew kover[Html|Xml]Report`.
