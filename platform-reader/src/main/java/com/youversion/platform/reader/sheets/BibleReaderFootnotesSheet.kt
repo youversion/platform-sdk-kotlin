@@ -76,7 +76,7 @@ internal fun BibleReaderFootnotesSheet(
 
     // The passed-in footnotes were rendered with the user's Bible font family and size, which might look odd in
     // this sheet; the fixed-size render below supplies replacements, keeping the passed-in list as a fallback.
-    var displayFootnotes by remember { mutableStateOf(footnotes) }
+    var displayFootnotes by remember(reference, footnotes) { mutableStateOf(footnotes) }
 
     ModalBottomSheet(
         sheetState = sheetState,
