@@ -35,6 +35,12 @@ build. Each module's breaking-change list below names what it moved.
 * share whole-chapter references as chapter links ([05f4484](https://github.com/youversion/platform-sdk-kotlin/commit/05f4484f8038b9d013dbc922942a19b45da20701))
 * ignore unsupported HTML nodes in the BibleTextNode parser ([05f4484](https://github.com/youversion/platform-sdk-kotlin/commit/05f4484f8038b9d013dbc922942a19b45da20701))
 
+`BibleVersion.shareUrl` keeps its signature, but a reference covering a whole
+chapter — either shape, `verseEnd` 999 or no verses at all — now returns the
+chapter URL (`.../GEN.3.NIV`) where 1.x returned a verse range
+(`.../GEN.3.1-999.NIV`). Both forms resolve to the same passage, so existing
+links keep working; assertions on the exact URL string may need updating.
+
 #### BREAKING CHANGES
 
 * **`BibleReference` construction.** `BibleReference` can no longer be built with
@@ -83,7 +89,12 @@ when adjacent text nodes are joined.
 `BibleVersionDownloadStatus`.
 
 * **Now `@PlatformInternalApi`.** `PlatformKoinGraph` and the PKCE request
-models.
+models. `PlatformKoinGraph.getContext()` did not come with it — it is now
+`internal`, so it is unreachable even with the opt-in.
+
+* **Now `private`.** `LanguageRepository.localeLanguageCode` and
+`LanguageRepository.localeCountryCode`. Both read from `Locale.getDefault()`;
+callers that used them can read the default locale directly.
 
 
 ### platform-ui
