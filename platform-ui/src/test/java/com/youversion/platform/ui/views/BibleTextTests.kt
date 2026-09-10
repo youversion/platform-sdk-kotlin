@@ -8,6 +8,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
@@ -17,6 +19,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -89,6 +92,8 @@ class BibleTextTests {
         text: String,
         referenceAnnotation: String? = null,
         marginTop: Dp = 8.dp,
+        firstLineHeadIndent: Int = 0,
+        headIndent: Int = 0,
         footnoteMarkerRange: IntRange? = null,
         footnotes: List<AnnotatedString> = emptyList(),
     ): BibleTextBlock {
@@ -115,13 +120,20 @@ class BibleTextTests {
         return BibleTextBlock(
             text = annotatedText,
             chapter = 1,
-            firstLineHeadIndent = 0,
-            headIndent = 0,
+            firstLineHeadIndent = firstLineHeadIndent,
+            headIndent = headIndent,
             marginTop = marginTop,
             marginBottom = 0.dp,
             alignment = TextAlign.Start,
             footnotes = footnotes,
         )
+    }
+
+    /** Where the block's first glyph sits within the text, which is the first-line indent. */
+    private fun SemanticsNodeInteraction.firstLineIndentPx(): Float {
+        val layoutResults = mutableListOf<TextLayoutResult>()
+        fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult].action?.invoke(layoutResults)
+        return layoutResults.first().getHorizontalPosition(offset = 0, usePrimaryDirection = true)
     }
 
     // region convertToEnumeration
@@ -1138,6 +1150,52 @@ class BibleTextTests {
         val firstBounds = composeTestRule.onNodeWithText("First block").getBoundsInRoot()
         val secondBounds = composeTestRule.onNodeWithText("Second block").getBoundsInRoot()
         assertTrue(secondBounds.top > firstBounds.bottom)
+    }
+
+    // endregion
+
+    // region Block Indents
+
+    @Test
+    fun `head indent stays fixed while first line indent scales with font size`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } returns listOf(annotatedBlock("Indented block", firstLineHeadIndent = 1, headIndent = 2))
+
+        var fontSize by mutableStateOf(16.sp)
+        composeTestRule.setContent {
+            BibleText(
+                reference = testReference,
+                textOptions = BibleTextOptions(fontSize = fontSize),
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        val smallLeft = composeTestRule.onNodeWithText("Indented block").getBoundsInRoot().left
+        val smallIndent = composeTestRule.onNodeWithText("Indented block").firstLineIndentPx()
+
+        fontSize = 32.sp
+        composeTestRule.waitForIdle()
+
+        val largeLeft = composeTestRule.onNodeWithText("Indented block").getBoundsInRoot().left
+        val largeIndent = composeTestRule.onNodeWithText("Indented block").firstLineIndentPx()
+
+        // headIndent is applied as 8dp per unit, so doubling the font size leaves the block where it was.
+        assertEquals(smallLeft, largeLeft)
+        // firstLineHeadIndent is sized in sp, so it doubles with the font size.
+        assertTrue(smallIndent > 0f)
+        assertEquals(smallIndent * 2, largeIndent, absoluteTolerance = 1f)
     }
 
     // endregion

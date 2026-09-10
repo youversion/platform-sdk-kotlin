@@ -10,7 +10,21 @@ data class BibleTextBlock(
     val text: AnnotatedString,
     val chapter: Int,
     val rows: List<List<AnnotatedString>> = emptyList(),
+    /**
+     * Indent applied to the block's first line only, in units of three non-breaking spaces capped at 24.
+     *
+     * Swift has no first-line indent on `AttributedString` and fakes it with that many spaces rendered at the
+     * body font, so the indent scales with the font size. Compose sizes the real `TextIndent` in `sp` to match,
+     * which means it scales with the user's font-scale setting as well.
+     */
     val firstLineHeadIndent: Int,
+    /**
+     * Indent applied to every line of the block, in units of 8dp.
+     *
+     * Unlike [firstLineHeadIndent] this is a fixed physical size: Swift applies it as leading padding in points,
+     * so it tracks neither the font size nor the font-scale setting. The asymmetry is deliberate parity rather
+     * than an oversight; changing it here alone would drift Android away from iOS.
+     */
     val headIndent: Int,
     val marginTop: Dp,
     val marginBottom: Dp,
