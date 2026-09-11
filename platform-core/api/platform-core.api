@@ -1,0 +1,1156 @@
+public final class com/youversion/platform/core/BibleDefaults {
+	public static final field INSTANCE Lcom/youversion/platform/core/BibleDefaults;
+	public static final field VERSION_ID I
+}
+
+public final class com/youversion/platform/core/BuildConfig {
+	public static final field BUILD_TYPE Ljava/lang/String;
+	public static final field DEBUG Z
+	public static final field LIBRARY_PACKAGE_NAME Ljava/lang/String;
+	public static final field SDK_VERSION Ljava/lang/String;
+	public fun <init> ()V
+}
+
+public final class com/youversion/platform/core/Config {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ZLjava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ZLjava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/util/Set;
+	public final fun component11 ()Ljava/util/Set;
+	public final fun component12 ()Ljava/util/Set;
+	public final fun component13 ()Ljava/util/Set;
+	public final fun component14 ()Z
+	public final fun component15 ()Ljava/lang/String;
+	public final fun component16 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/util/Date;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ZLjava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/Config;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/Config;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ZLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/Config;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccessToken ()Ljava/lang/String;
+	public final fun getApiHost ()Ljava/lang/String;
+	public final fun getAppKey ()Ljava/lang/String;
+	public final fun getAppName ()Ljava/lang/String;
+	public final fun getAuthCallback ()Ljava/lang/String;
+	public final fun getExcludedVersionIds ()Ljava/util/Set;
+	public final fun getExpiryDate ()Ljava/util/Date;
+	public final fun getGrantedPermissions ()Ljava/util/Set;
+	public final fun getHostEnv ()Ljava/lang/String;
+	public final fun getIdToken ()Ljava/lang/String;
+	public final fun getInstallId ()Ljava/lang/String;
+	public final fun getPermittedLanguageTags ()Ljava/util/Set;
+	public final fun getPermittedVersionIds ()Ljava/util/Set;
+	public final fun getRefreshToken ()Ljava/lang/String;
+	public final fun getSignInPromptMessage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isSignInEnabled ()Z
+	public final fun isSignedIn ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/YouVersionPlatformConfiguration {
+	public static final field INSTANCE Lcom/youversion/platform/core/YouVersionPlatformConfiguration;
+	public final fun beginPermissionGrant ()V
+	public final fun clearAuthData ()V
+	public final fun completePermissionGrant (Ljava/util/Collection;)Z
+	public final fun configure (Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ZLjava/lang/String;Ljava/lang/String;)V
+	public static synthetic fun configure$default (Lcom/youversion/platform/core/YouVersionPlatformConfiguration;Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ZLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)V
+	public final fun configureSignIn (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun getAccessToken ()Ljava/lang/String;
+	public final fun getApiHost ()Ljava/lang/String;
+	public final fun getAppKey ()Ljava/lang/String;
+	public final fun getAppName ()Ljava/lang/String;
+	public final fun getAuthCallback ()Ljava/lang/String;
+	public final fun getConfigState ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getExcludedVersionIds ()Ljava/util/Set;
+	public final fun getExpiryDate ()Ljava/util/Date;
+	public final fun getGrantedPermissions ()Ljava/util/Set;
+	public final fun getHostEnv ()Ljava/lang/String;
+	public final fun getIdToken ()Ljava/lang/String;
+	public final fun getInstallId ()Ljava/lang/String;
+	public final fun getPermittedLanguageTags ()Ljava/util/Set;
+	public final fun getPermittedVersionIds ()Ljava/util/Set;
+	public final fun getRefreshToken ()Ljava/lang/String;
+	public final fun getSignInPromptMessage ()Ljava/lang/String;
+	public final fun isSignInEnabled ()Z
+	public final fun isSignedIn ()Z
+	public final fun saveAuthData (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Z)V
+	public static synthetic fun saveAuthData$default (Lcom/youversion/platform/core/YouVersionPlatformConfiguration;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;ZILjava/lang/Object;)V
+	public final fun saveGrantedPermissions (Ljava/util/Collection;)V
+	public final fun setApiHost (Ljava/lang/String;)V
+}
+
+public final class com/youversion/platform/core/api/PaginatedResponse {
+	public static final field Companion Lcom/youversion/platform/core/api/PaginatedResponse$Companion;
+	public fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)Lcom/youversion/platform/core/api/PaginatedResponse;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/api/PaginatedResponse;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/youversion/platform/core/api/PaginatedResponse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getData ()Ljava/util/List;
+	public final fun getNextPageToken ()Ljava/lang/String;
+	public final fun getTotalSize ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/api/PaginatedResponse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public fun <init> (Lkotlinx/serialization/KSerializer;)V
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/api/PaginatedResponse;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/api/PaginatedResponse;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/api/PaginatedResponse$Companion {
+	public final fun serializer (Lkotlinx/serialization/KSerializer;)Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/api/YouVersionApi {
+	public static final field INSTANCE Lcom/youversion/platform/core/api/YouVersionApi;
+	public final fun getBible ()Lcom/youversion/platform/core/bibles/api/BiblesApi;
+	public final fun getCurrentSessionId ()Ljava/lang/String;
+	public final fun getDataExchange ()Lcom/youversion/platform/core/dataexchange/api/DataExchangeApi;
+	public final fun getHighlights ()Lcom/youversion/platform/core/highlights/api/HighlightsApi;
+	public final fun getLanguages ()Lcom/youversion/platform/core/languages/api/LanguagesApi;
+	public final fun getOrganizations ()Lcom/youversion/platform/core/organizations/api/OrganizationsApi;
+	public final fun getUsers ()Lcom/youversion/platform/core/users/api/UsersApi;
+	public final fun getVotd ()Lcom/youversion/platform/core/votd/api/VotdApi;
+	public final fun hasPermission (Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;)Z
+	public final fun hasValidToken (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun isSignedIn ()Z
+}
+
+public final class com/youversion/platform/core/api/YouVersionNetworkException : java/lang/Exception {
+	public fun <init> (Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;Ljava/lang/Exception;)V
+	public synthetic fun <init> (Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;Ljava/lang/Exception;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getReason ()Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+}
+
+public final class com/youversion/platform/core/api/YouVersionNetworkException$Reason : java/lang/Enum {
+	public static final field CANNOT_DOWNLOAD Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+	public static final field INVALID_DOWNLOAD Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+	public static final field INVALID_RESPONSE Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+	public static final field MISSING_AUTHENTICATION Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+	public static final field NOT_PERMITTED Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+	public static fun values ()[Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+}
+
+public abstract interface class com/youversion/platform/core/bibles/api/BiblesApi {
+	public abstract fun book (ILjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun books (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun chapter (ILjava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun chapters (ILjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun passage (ILjava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun passage (Lcom/youversion/platform/core/bibles/domain/BibleReference;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun passage$default (Lcom/youversion/platform/core/bibles/api/BiblesApi;ILjava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun passage$default (Lcom/youversion/platform/core/bibles/api/BiblesApi;Lcom/youversion/platform/core/bibles/domain/BibleReference;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun verse (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun verses (ILjava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun version (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun versionIndex (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun versionMetaData (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun versions (Ljava/lang/String;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun versions$default (Lcom/youversion/platform/core/bibles/api/BiblesApi;Ljava/lang/String;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/bibles/api/BiblesApi$DefaultImpls {
+	public static synthetic fun passage$default (Lcom/youversion/platform/core/bibles/api/BiblesApi;ILjava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun passage$default (Lcom/youversion/platform/core/bibles/api/BiblesApi;Lcom/youversion/platform/core/bibles/domain/BibleReference;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun versions$default (Lcom/youversion/platform/core/bibles/api/BiblesApi;Ljava/lang/String;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class com/youversion/platform/core/bibles/data/BibleVersionCache {
+	public abstract fun addChapterContents (Ljava/lang/String;Lcom/youversion/platform/core/bibles/domain/BibleReference;Ljava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun addChapterContents$default (Lcom/youversion/platform/core/bibles/data/BibleVersionCache;Ljava/lang/String;Lcom/youversion/platform/core/bibles/domain/BibleReference;Ljava/lang/Long;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun addVersion (Lcom/youversion/platform/core/bibles/models/BibleVersion;Ljava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun addVersion$default (Lcom/youversion/platform/core/bibles/data/BibleVersionCache;Lcom/youversion/platform/core/bibles/models/BibleVersion;Ljava/lang/Long;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun chapterContent (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun chaptersArePresent (I)Z
+	public abstract fun getStoredVersionIds ()Ljava/util/List;
+	public abstract fun removeExpiredEntries (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun removeUnpermittedVersions (Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun removeVersion (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun removeVersionChapters (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun version (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun versionIsPresent (I)Z
+}
+
+public final class com/youversion/platform/core/bibles/data/BibleVersionCache$DefaultImpls {
+	public static synthetic fun addChapterContents$default (Lcom/youversion/platform/core/bibles/data/BibleVersionCache;Ljava/lang/String;Lcom/youversion/platform/core/bibles/domain/BibleReference;Ljava/lang/Long;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun addVersion$default (Lcom/youversion/platform/core/bibles/data/BibleVersionCache;Lcom/youversion/platform/core/bibles/models/BibleVersion;Ljava/lang/Long;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/bibles/data/BibleVersionMemoryCache : com/youversion/platform/core/bibles/data/BibleVersionCache {
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun addChapterContents (Ljava/lang/String;Lcom/youversion/platform/core/bibles/domain/BibleReference;Ljava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun addVersion (Lcom/youversion/platform/core/bibles/models/BibleVersion;Ljava/lang/Long;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun chapterContent (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun chaptersArePresent (I)Z
+	public fun getStoredVersionIds ()Ljava/util/List;
+	public fun removeExpiredEntries (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun removeUnpermittedVersions (Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun removeVersion (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun removeVersionChapters (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun version (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun versionIsPresent (I)Z
+}
+
+public final class com/youversion/platform/core/bibles/data/CachedBibleContent {
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Long;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun component2 ()Ljava/lang/Long;
+	public final fun copy (Ljava/lang/Object;Ljava/lang/Long;)Lcom/youversion/platform/core/bibles/data/CachedBibleContent;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/data/CachedBibleContent;Ljava/lang/Object;Ljava/lang/Long;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/data/CachedBibleContent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getExpiresAt ()Ljava/lang/Long;
+	public final fun getValue ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/bibles/domain/BibleChapterRepository {
+	public fun <init> (Lcom/youversion/platform/core/bibles/data/BibleVersionCache;Lcom/youversion/platform/core/bibles/data/BibleVersionCache;Lcom/youversion/platform/core/bibles/data/BibleVersionCache;)V
+	public final fun chapter (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun removeVersionChapters (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/bibles/domain/BibleIntroRepository {
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun introContent (ILjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/bibles/domain/BibleReference : java/lang/Comparable {
+	public static final field Companion Lcom/youversion/platform/core/bibles/domain/BibleReference$Companion;
+	public fun <init> (ILjava/lang/String;I)V
+	public fun <init> (ILjava/lang/String;II)V
+	public fun <init> (ILjava/lang/String;III)V
+	public fun compareTo (Lcom/youversion/platform/core/bibles/domain/BibleReference;)I
+	public synthetic fun compareTo (Ljava/lang/Object;)I
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/lang/Integer;
+	public final fun component5 ()Ljava/lang/Integer;
+	public final fun contains (Lcom/youversion/platform/core/bibles/domain/BibleReference;)Z
+	public final fun copy (ILjava/lang/String;ILjava/lang/Integer;Ljava/lang/Integer;)Lcom/youversion/platform/core/bibles/domain/BibleReference;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/domain/BibleReference;ILjava/lang/String;ILjava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/domain/BibleReference;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun existsIn (Lcom/youversion/platform/core/bibles/models/BibleVersion;)Z
+	public final fun getAsUSFM ()Ljava/lang/String;
+	public final fun getBookUSFM ()Ljava/lang/String;
+	public final fun getChapter ()I
+	public final fun getChapterUSFM ()Ljava/lang/String;
+	public final fun getVerseEnd ()Ljava/lang/Integer;
+	public final fun getVerseStart ()Ljava/lang/Integer;
+	public final fun getVersionId ()I
+	public fun hashCode ()I
+	public final fun isAdjacentOrOverlapping (Lcom/youversion/platform/core/bibles/domain/BibleReference;)Z
+	public final fun isRange ()Z
+	public final fun overlaps (Lcom/youversion/platform/core/bibles/domain/BibleReference;)Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/bibles/domain/BibleReference$Companion {
+	public final fun compare (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lcom/youversion/platform/core/bibles/domain/BibleReference;)I
+	public final fun referenceByMerging (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lcom/youversion/platform/core/bibles/domain/BibleReference;)Lcom/youversion/platform/core/bibles/domain/BibleReference;
+	public final fun referencesByMerging (Ljava/util/List;)Ljava/util/List;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+	public final fun unvalidatedReference (Ljava/lang/String;I)Lcom/youversion/platform/core/bibles/domain/BibleReference;
+}
+
+public final class com/youversion/platform/core/bibles/domain/BibleTextNode {
+	public static final field Companion Lcom/youversion/platform/core/bibles/domain/BibleTextNode$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/Map;)Lcom/youversion/platform/core/bibles/domain/BibleTextNode;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/domain/BibleTextNode;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/Map;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/domain/BibleTextNode;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttributes ()Ljava/util/Map;
+	public final fun getChildren ()Ljava/util/List;
+	public final fun getClasses ()Ljava/util/List;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getText ()Ljava/lang/String;
+	public final fun getType ()Lcom/youversion/platform/core/bibles/domain/BibleTextNodeType;
+	public fun hashCode ()I
+	public static final fun parse (Ljava/lang/String;)Lcom/youversion/platform/core/bibles/domain/BibleTextNode;
+	public final fun setText (Ljava/lang/String;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/bibles/domain/BibleTextNode$Companion {
+	public final fun parse (Ljava/lang/String;)Lcom/youversion/platform/core/bibles/domain/BibleTextNode;
+}
+
+public final class com/youversion/platform/core/bibles/domain/BibleTextNodeType : java/lang/Enum {
+	public static final field BLOCK Lcom/youversion/platform/core/bibles/domain/BibleTextNodeType;
+	public static final field CELL Lcom/youversion/platform/core/bibles/domain/BibleTextNodeType;
+	public static final field ROOT Lcom/youversion/platform/core/bibles/domain/BibleTextNodeType;
+	public static final field ROW Lcom/youversion/platform/core/bibles/domain/BibleTextNodeType;
+	public static final field SPAN Lcom/youversion/platform/core/bibles/domain/BibleTextNodeType;
+	public static final field TABLE Lcom/youversion/platform/core/bibles/domain/BibleTextNodeType;
+	public static final field TEXT Lcom/youversion/platform/core/bibles/domain/BibleTextNodeType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/youversion/platform/core/bibles/domain/BibleTextNodeType;
+	public static fun values ()[Lcom/youversion/platform/core/bibles/domain/BibleTextNodeType;
+}
+
+public final class com/youversion/platform/core/bibles/domain/BibleVersionRepository {
+	public fun <init> (Lcom/youversion/platform/core/bibles/data/BibleVersionCache;Lcom/youversion/platform/core/bibles/data/BibleVersionCache;Lcom/youversion/platform/core/bibles/data/BibleVersionCache;)V
+	public final fun clearVersionListings ()V
+	public final fun downloadVersion (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun fullVersions (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getDownloadedVersions ()Ljava/util/List;
+	public final fun getPermittedVersions ()Ljava/util/List;
+	public final fun permittedVersions (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun permittedVersions$default (Lcom/youversion/platform/core/bibles/domain/BibleVersionRepository;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun permittedVersionsListing (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun removeExpiredContent (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun removeUnpermittedVersions (Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun removeVersion (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun version (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun versionIfCached (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun versionIsPresent (I)Z
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleBook {
+	public static final field Companion Lcom/youversion/platform/core/bibles/models/BibleBook$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lcom/youversion/platform/core/bibles/models/BibleBookIntro;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lcom/youversion/platform/core/bibles/models/BibleBookIntro;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Lcom/youversion/platform/core/bibles/models/BibleBookIntro;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lcom/youversion/platform/core/bibles/models/BibleBookIntro;)Lcom/youversion/platform/core/bibles/models/BibleBook;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BibleBook;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lcom/youversion/platform/core/bibles/models/BibleBookIntro;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BibleBook;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAbbreviation ()Ljava/lang/String;
+	public final fun getCanon ()Ljava/lang/String;
+	public final fun getChapters ()Ljava/util/List;
+	public final fun getFullTitle ()Ljava/lang/String;
+	public final fun getHasIntro ()Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getIntro ()Lcom/youversion/platform/core/bibles/models/BibleBookIntro;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUsfm ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isCanonical ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/bibles/models/BibleBook$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/bibles/models/BibleBook$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/bibles/models/BibleBook;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/bibles/models/BibleBook;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleBook$CodingKey {
+	public static final field ABBREVIATION Ljava/lang/String;
+	public static final field CANON Ljava/lang/String;
+	public static final field CHAPTERS Ljava/lang/String;
+	public static final field FULL_TITLE Ljava/lang/String;
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lcom/youversion/platform/core/bibles/models/BibleBook$CodingKey;
+	public static final field INTRO Ljava/lang/String;
+	public static final field TITLE Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleBook$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleBookIntro {
+	public static final field Companion Lcom/youversion/platform/core/bibles/models/BibleBookIntro$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/bibles/models/BibleBookIntro;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BibleBookIntro;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BibleBookIntro;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getPassageId ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/bibles/models/BibleBookIntro$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/bibles/models/BibleBookIntro$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/bibles/models/BibleBookIntro;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/bibles/models/BibleBookIntro;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleBookIntro$CodingKey {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lcom/youversion/platform/core/bibles/models/BibleBookIntro$CodingKey;
+	public static final field PASSAGE_ID Ljava/lang/String;
+	public static final field TITLE Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleBookIntro$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleChapter {
+	public static final field Companion Lcom/youversion/platform/core/bibles/models/BibleChapter$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lcom/youversion/platform/core/bibles/models/BibleChapter;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BibleChapter;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BibleChapter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getPassageId ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getVerses ()Ljava/util/List;
+	public fun hashCode ()I
+	public final fun isCanonical ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/bibles/models/BibleChapter$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/bibles/models/BibleChapter$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/bibles/models/BibleChapter;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/bibles/models/BibleChapter;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleChapter$CodingKey {
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lcom/youversion/platform/core/bibles/models/BibleChapter$CodingKey;
+	public static final field PASSAGE_ID Ljava/lang/String;
+	public static final field TITLE Ljava/lang/String;
+	public static final field VERSES Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleChapter$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/bibles/models/BiblePassage {
+	public static final field Companion Lcom/youversion/platform/core/bibles/models/BiblePassage$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/bibles/models/BiblePassage;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BiblePassage;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BiblePassage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContent ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getReference ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/bibles/models/BiblePassage$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/bibles/models/BiblePassage$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/bibles/models/BiblePassage;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/bibles/models/BiblePassage;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/bibles/models/BiblePassage$Companion {
+	public final fun getPreview ()Lcom/youversion/platform/core/bibles/models/BiblePassage;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleVerse {
+	public static final field Companion Lcom/youversion/platform/core/bibles/models/BibleVerse$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/bibles/models/BibleVerse;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BibleVerse;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BibleVerse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getPassageId ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/bibles/models/BibleVerse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/bibles/models/BibleVerse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/bibles/models/BibleVerse;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/bibles/models/BibleVerse;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleVerse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleVersion {
+	public static final field Companion Lcom/youversion/platform/core/bibles/models/BibleVersion$Companion;
+	public fun <init> (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun book (Ljava/lang/String;)Lcom/youversion/platform/core/bibles/models/BibleBook;
+	public final fun bookName (Ljava/lang/String;)Ljava/lang/String;
+	public final fun canonicalChapters (Ljava/lang/String;)Ljava/util/List;
+	public final fun chapterLabels (Ljava/lang/String;)Ljava/util/List;
+	public final fun component1 ()I
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()Ljava/util/List;
+	public final fun component12 ()Ljava/util/List;
+	public final fun component13 ()Ljava/lang/String;
+	public final fun component14 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/bibles/models/BibleVersion;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BibleVersion;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BibleVersion;
+	public final fun displayTitle (Lcom/youversion/platform/core/bibles/domain/BibleReference;Z)Ljava/lang/String;
+	public static synthetic fun displayTitle$default (Lcom/youversion/platform/core/bibles/models/BibleVersion;Lcom/youversion/platform/core/bibles/domain/BibleReference;ZILjava/lang/Object;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAbbreviation ()Ljava/lang/String;
+	public final fun getBookCodes ()Ljava/util/List;
+	public final fun getBookUSFMs ()Ljava/util/List;
+	public final fun getBooks ()Ljava/util/List;
+	public final fun getCopyright ()Ljava/lang/String;
+	public final fun getId ()I
+	public final fun getLanguageTag ()Ljava/lang/String;
+	public final fun getLocalizedAbbreviation ()Ljava/lang/String;
+	public final fun getLocalizedTitle ()Ljava/lang/String;
+	public final fun getOrganizationId ()Ljava/lang/String;
+	public final fun getPromotionalContent ()Ljava/lang/String;
+	public final fun getReaderFooter ()Ljava/lang/String;
+	public final fun getReaderFooterUrl ()Ljava/lang/String;
+	public final fun getTextDirection ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isRightToLeft ()Z
+	public final fun reference (Ljava/lang/String;)Lcom/youversion/platform/core/bibles/domain/BibleReference;
+	public final fun shareUrl (Lcom/youversion/platform/core/bibles/domain/BibleReference;)Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/bibles/models/BibleVersion$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/bibles/models/BibleVersion$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/bibles/models/BibleVersion;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/bibles/models/BibleVersion;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleVersion$CodingKey {
+	public static final field ABBREVIATION Ljava/lang/String;
+	public static final field BOOKS Ljava/lang/String;
+	public static final field BOOK_CODES Ljava/lang/String;
+	public static final field COPYRIGHT Ljava/lang/String;
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lcom/youversion/platform/core/bibles/models/BibleVersion$CodingKey;
+	public static final field LANGUAGE_TAG Ljava/lang/String;
+	public static final field LOCALIZED_ABBREVIATION Ljava/lang/String;
+	public static final field LOCALIZED_TITLE Ljava/lang/String;
+	public static final field ORGANIZATION_ID Ljava/lang/String;
+	public static final field PROMOTIONAL_CONTENT Ljava/lang/String;
+	public static final field READER_FOOTER Ljava/lang/String;
+	public static final field READER_FOOTER_URL Ljava/lang/String;
+	public static final field TEXT_DIRECTION Ljava/lang/String;
+	public static final field TITLE Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleVersion$Companion {
+	public final fun getPreview ()Lcom/youversion/platform/core/bibles/models/BibleVersion;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleVersionIndex {
+	public static final field Companion Lcom/youversion/platform/core/bibles/models/BibleVersionIndex$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lcom/youversion/platform/core/bibles/models/BibleVersionIndex;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BibleVersionIndex;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BibleVersionIndex;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBooks ()Ljava/util/List;
+	public final fun getTextDirection ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/bibles/models/BibleVersionIndex$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/bibles/models/BibleVersionIndex$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/bibles/models/BibleVersionIndex;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/bibles/models/BibleVersionIndex;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleVersionIndex$CodingKey {
+	public static final field BOOKS Ljava/lang/String;
+	public static final field INSTANCE Lcom/youversion/platform/core/bibles/models/BibleVersionIndex$CodingKey;
+	public static final field TEXT_DIRECTION Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/bibles/models/BibleVersionIndex$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/youversion/platform/core/dataexchange/api/DataExchangeApi {
+	public abstract fun dataExchangeToken (Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/dataexchange/api/DataExchangeEndpoints : com/youversion/platform/core/dataexchange/api/DataExchangeApi {
+	public static final field INSTANCE Lcom/youversion/platform/core/dataexchange/api/DataExchangeEndpoints;
+	public fun dataExchangeToken (Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun dataExchangeUrl (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/dataexchange/models/DataExchangeToken {
+	public static final field Companion Lcom/youversion/platform/core/dataexchange/models/DataExchangeToken$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/youversion/platform/core/dataexchange/models/DataExchangeToken;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/dataexchange/models/DataExchangeToken;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/dataexchange/models/DataExchangeToken;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getToken ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/dataexchange/models/DataExchangeToken$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/dataexchange/models/DataExchangeToken$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/dataexchange/models/DataExchangeToken;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/dataexchange/models/DataExchangeToken;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/dataexchange/models/DataExchangeToken$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface annotation class com/youversion/platform/core/di/PlatformInternalApi : java/lang/annotation/Annotation {
+}
+
+public abstract interface class com/youversion/platform/core/domain/Storage {
+	public abstract fun getFloatOrNull (Ljava/lang/String;)Ljava/lang/Float;
+	public abstract fun getIntOrNull (Ljava/lang/String;)Ljava/lang/Integer;
+	public abstract fun getStringOrNull (Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun putFloat (Ljava/lang/String;Ljava/lang/Float;)V
+	public abstract fun putInt (Ljava/lang/String;Ljava/lang/Integer;)V
+	public abstract fun putString (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public abstract interface class com/youversion/platform/core/highlights/api/HighlightsApi {
+	public abstract fun createHighlight (ILjava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteHighlight (ILjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun highlights (ILjava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun updateHighlight (ILjava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/highlights/domain/BibleHighlightsRepository {
+	public static final field MAX_BACKOFF_EXPONENT I
+	public static final field MAX_BACKOFF_MILLIS J
+	public static final field MILLIS_PER_SECOND J
+	public static final field SERVER_OPERATION_FAILED_MESSAGE Ljava/lang/String;
+	public fun <init> ()V
+	public fun <init> (Lcom/youversion/platform/core/highlights/api/HighlightsApi;)V
+	public final fun addHighlights (Ljava/util/List;Ljava/lang/String;)V
+	public final fun clearCachedHighlights ()V
+	public final fun clearOperationResults ()V
+	public final fun ensureHighlightsForChapterLoaded (Lcom/youversion/platform/core/bibles/domain/BibleReference;Z)V
+	public static synthetic fun ensureHighlightsForChapterLoaded$default (Lcom/youversion/platform/core/highlights/domain/BibleHighlightsRepository;Lcom/youversion/platform/core/bibles/domain/BibleReference;ZILjava/lang/Object;)V
+	public final fun getFailedOperationCount ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getHighlights ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getPendingOperationCount ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun hasPendingOperations ()Z
+	public final fun highlights (Lcom/youversion/platform/core/bibles/domain/BibleReference;)Ljava/util/List;
+	public final fun operationResult (Ljava/util/UUID;)Lcom/youversion/platform/core/highlights/domain/OperationResult;
+	public final fun removeHighlights (Ljava/util/List;)V
+	public final fun removeHighlights (Ljava/util/List;Ljava/lang/String;)V
+	public final fun reset ()V
+	public final fun retryFailedOperations (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun seedCachedHighlights (Ljava/util/List;)V
+	public final fun updateHighlightColors (Ljava/util/List;Ljava/lang/String;)V
+}
+
+public abstract interface class com/youversion/platform/core/highlights/domain/HighlightChange {
+}
+
+public final class com/youversion/platform/core/highlights/domain/HighlightChange$Remove : com/youversion/platform/core/highlights/domain/HighlightChange {
+	public static final field INSTANCE Lcom/youversion/platform/core/highlights/domain/HighlightChange$Remove;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/highlights/domain/HighlightChange$SetColor : com/youversion/platform/core/highlights/domain/HighlightChange {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/youversion/platform/core/highlights/domain/HighlightChange$SetColor;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/highlights/domain/HighlightChange$SetColor;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/highlights/domain/HighlightChange$SetColor;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/highlights/domain/OperationResult {
+	public fun <init> (Ljava/util/UUID;ZLjava/lang/Throwable;I)V
+	public synthetic fun <init> (Ljava/util/UUID;ZLjava/lang/Throwable;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/UUID;
+	public final fun component2 ()Z
+	public final fun component3 ()Ljava/lang/Throwable;
+	public final fun component4 ()I
+	public final fun copy (Ljava/util/UUID;ZLjava/lang/Throwable;I)Lcom/youversion/platform/core/highlights/domain/OperationResult;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/highlights/domain/OperationResult;Ljava/util/UUID;ZLjava/lang/Throwable;IILjava/lang/Object;)Lcom/youversion/platform/core/highlights/domain/OperationResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Ljava/lang/Throwable;
+	public final fun getOperationId ()Ljava/util/UUID;
+	public final fun getRetryCount ()I
+	public fun hashCode ()I
+	public final fun isSuccess ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/highlights/domain/PendingHighlightOperation {
+	public fun <init> (Ljava/util/List;Lcom/youversion/platform/core/highlights/domain/HighlightChange;Ljava/util/UUID;Ljava/util/Date;ILjava/lang/String;)V
+	public synthetic fun <init> (Ljava/util/List;Lcom/youversion/platform/core/highlights/domain/HighlightChange;Ljava/util/UUID;Ljava/util/Date;ILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lcom/youversion/platform/core/highlights/domain/HighlightChange;
+	public final fun component3 ()Ljava/util/UUID;
+	public final fun component4 ()Ljava/util/Date;
+	public final fun component5 ()I
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Lcom/youversion/platform/core/highlights/domain/HighlightChange;Ljava/util/UUID;Ljava/util/Date;ILjava/lang/String;)Lcom/youversion/platform/core/highlights/domain/PendingHighlightOperation;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/highlights/domain/PendingHighlightOperation;Ljava/util/List;Lcom/youversion/platform/core/highlights/domain/HighlightChange;Ljava/util/UUID;Ljava/util/Date;ILjava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/highlights/domain/PendingHighlightOperation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChange ()Lcom/youversion/platform/core/highlights/domain/HighlightChange;
+	public final fun getId ()Ljava/util/UUID;
+	public final fun getReferences ()Ljava/util/List;
+	public final fun getRetryCount ()I
+	public final fun getSessionId ()Ljava/lang/String;
+	public final fun getTimestamp ()Ljava/util/Date;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/highlights/models/BibleHighlight {
+	public fun <init> (Lcom/youversion/platform/core/bibles/domain/BibleReference;Ljava/lang/String;)V
+	public final fun component1 ()Lcom/youversion/platform/core/bibles/domain/BibleReference;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lcom/youversion/platform/core/bibles/domain/BibleReference;Ljava/lang/String;)Lcom/youversion/platform/core/highlights/models/BibleHighlight;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/highlights/models/BibleHighlight;Lcom/youversion/platform/core/bibles/domain/BibleReference;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/highlights/models/BibleHighlight;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBibleReference ()Lcom/youversion/platform/core/bibles/domain/BibleReference;
+	public final fun getHexColor ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/highlights/models/Highlight {
+	public static final field Companion Lcom/youversion/platform/core/highlights/models/Highlight$Companion;
+	public fun <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/highlights/models/Highlight;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/highlights/models/Highlight;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/highlights/models/Highlight;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBibleId ()I
+	public final fun getColor ()Ljava/lang/String;
+	public final fun getCreateTime ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getPassageId ()Ljava/lang/String;
+	public final fun getUpdateTime ()Ljava/lang/String;
+	public final fun getUserId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/highlights/models/Highlight$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/highlights/models/Highlight$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/highlights/models/Highlight;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/highlights/models/Highlight;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/highlights/models/Highlight$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/youversion/platform/core/languages/api/LanguagesApi {
+	public abstract fun languages (Ljava/lang/String;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun languages$default (Lcom/youversion/platform/core/languages/api/LanguagesApi;Ljava/lang/String;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/languages/api/LanguagesApi$DefaultImpls {
+	public static synthetic fun languages$default (Lcom/youversion/platform/core/languages/api/LanguagesApi;Ljava/lang/String;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/languages/domain/LanguageRepository {
+	public fun <init> (Lcom/youversion/platform/core/bibles/domain/BibleVersionRepository;)V
+	public final fun allPermittedLanguageTags (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun languageName (Ljava/lang/String;)Ljava/lang/String;
+	public final fun languages (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun loadLanguageNames (Lcom/youversion/platform/core/bibles/models/BibleVersion;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun suggestedLanguageTags (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun suggestedLanguages (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/languages/models/Language {
+	public static final field Companion Lcom/youversion/platform/core/languages/models/Language$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()Ljava/lang/Integer;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Ljava/util/Map;
+	public final fun component7 ()Ljava/util/List;
+	public final fun component8 ()Ljava/util/List;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)Lcom/youversion/platform/core/languages/models/Language;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/languages/models/Language;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/youversion/platform/core/languages/models/Language;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAliases ()Ljava/util/List;
+	public final fun getCountries ()Ljava/util/List;
+	public final fun getDefaultBibleVersionId ()Ljava/lang/Integer;
+	public final fun getDisplayNames ()Ljava/util/Map;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getLanguage ()Ljava/lang/String;
+	public final fun getScript ()Ljava/lang/String;
+	public final fun getScriptName ()Ljava/lang/String;
+	public final fun getScripts ()Ljava/util/List;
+	public final fun getTextDirection ()Ljava/lang/String;
+	public final fun getVariants ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/languages/models/Language$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/languages/models/Language$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/languages/models/Language;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/languages/models/Language;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/languages/models/Language$CodingKey {
+	public static final field ALIASES Ljava/lang/String;
+	public static final field COUNTRIES Ljava/lang/String;
+	public static final field DEFAULT_BIBLE_VERSION_ID Ljava/lang/String;
+	public static final field DISPLAY_NAMES Ljava/lang/String;
+	public static final field ID Ljava/lang/String;
+	public static final field INSTANCE Lcom/youversion/platform/core/languages/models/Language$CodingKey;
+	public static final field LANGUAGE Ljava/lang/String;
+	public static final field SCRIPT Ljava/lang/String;
+	public static final field SCRIPTS Ljava/lang/String;
+	public static final field SCRIPT_NAME Ljava/lang/String;
+	public static final field TEXT_DIRECTION Ljava/lang/String;
+	public static final field VARIANTS Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/languages/models/Language$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/youversion/platform/core/organizations/api/OrganizationsApi {
+	public abstract fun organization (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun organizations (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/organizations/models/Organization {
+	public static final field Companion Lcom/youversion/platform/core/organizations/models/Organization$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/organizations/models/Organization;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/organizations/models/Organization;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/organizations/models/Organization;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAddress ()Ljava/lang/String;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getEmail ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getParentOrgId ()Ljava/lang/String;
+	public final fun getPhone ()Ljava/lang/String;
+	public final fun getPrimaryLanguage ()Ljava/lang/String;
+	public final fun getWebsiteUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/organizations/models/Organization$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/organizations/models/Organization$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/organizations/models/Organization;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/organizations/models/Organization;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/organizations/models/Organization$Companion {
+	public final fun getPreview ()Lcom/youversion/platform/core/organizations/models/Organization;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/youversion/platform/core/users/api/UsersApi {
+	public abstract fun decodeJWT (Ljava/lang/String;)Ljava/util/Map;
+	public fun getCurrentUserEmail ()Ljava/lang/String;
+	public fun getCurrentUserId ()Ljava/lang/String;
+	public fun getCurrentUserName ()Ljava/lang/String;
+	public fun getCurrentUserProfilePicture ()Ljava/lang/String;
+	public abstract fun getSignInResult (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun performRefresh (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun signOut ()V
+	public abstract fun userInfo (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/users/api/UsersApi$DefaultImpls {
+	public static fun getCurrentUserEmail (Lcom/youversion/platform/core/users/api/UsersApi;)Ljava/lang/String;
+	public static fun getCurrentUserId (Lcom/youversion/platform/core/users/api/UsersApi;)Ljava/lang/String;
+	public static fun getCurrentUserName (Lcom/youversion/platform/core/users/api/UsersApi;)Ljava/lang/String;
+	public static fun getCurrentUserProfilePicture (Lcom/youversion/platform/core/users/api/UsersApi;)Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/users/model/SignInWithYouVersionPKCEAuthorizationRequest$Companion {
+	public final fun invoke (Ljava/lang/String;Ljava/util/Set;Ljava/lang/String;)Lcom/youversion/platform/core/users/model/SignInWithYouVersionPKCEAuthorizationRequest;
+}
+
+public final class com/youversion/platform/core/users/model/SignInWithYouVersionPermission : java/lang/Enum {
+	public static final field Companion Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission$Companion;
+	public static final field EMAIL Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
+	public static final field HIGHLIGHTS Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
+	public static final field OPENID Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
+	public static final field PROFILE Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getRawValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
+	public static fun values ()[Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
+}
+
+public final class com/youversion/platform/core/users/model/SignInWithYouVersionPermission$Companion {
+	public final fun fromRawValue (Ljava/lang/String;)Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
+}
+
+public final class com/youversion/platform/core/users/model/SignInWithYouVersionResult {
+	public static final field Companion Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/Date;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Date;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/util/Date;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult;Ljava/lang/String;Ljava/util/Date;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAccessToken ()Ljava/lang/String;
+	public final fun getEmail ()Ljava/lang/String;
+	public final fun getExpiryDate ()Ljava/util/Date;
+	public final fun getIdToken ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getPermissions ()Ljava/util/List;
+	public final fun getProfilePicture ()Ljava/lang/String;
+	public final fun getRefreshToken ()Ljava/lang/String;
+	public final fun getYvpUserId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/users/model/SignInWithYouVersionResult$Companion {
+	public final fun create (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult;
+	public static synthetic fun create$default (Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult$Companion;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult;
+}
+
+public final class com/youversion/platform/core/users/model/YouVersionUserInfo {
+	public static final field Companion Lcom/youversion/platform/core/users/model/YouVersionUserInfo$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/users/model/YouVersionUserInfo;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/users/model/YouVersionUserInfo;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/users/model/YouVersionUserInfo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAvatarUrl ()Ljava/lang/String;
+	public final fun getAvatarUrlFormat ()Ljava/lang/String;
+	public final fun getFirstName ()Ljava/lang/String;
+	public final fun getLastName ()Ljava/lang/String;
+	public final fun getUserId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/users/model/YouVersionUserInfo$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/users/model/YouVersionUserInfo$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/users/model/YouVersionUserInfo;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/users/model/YouVersionUserInfo;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/users/model/YouVersionUserInfo$Companion {
+	public final fun getPreview ()Lcom/youversion/platform/core/users/model/YouVersionUserInfo;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/utilities/exceptions/BibleVersionApiException : java/lang/Exception {
+	public fun <init> (Lcom/youversion/platform/core/utilities/exceptions/BibleVersionApiException$Reason;Ljava/lang/Exception;)V
+	public synthetic fun <init> (Lcom/youversion/platform/core/utilities/exceptions/BibleVersionApiException$Reason;Ljava/lang/Exception;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getReason ()Lcom/youversion/platform/core/utilities/exceptions/BibleVersionApiException$Reason;
+}
+
+public final class com/youversion/platform/core/utilities/exceptions/BibleVersionApiException$Reason : java/lang/Enum {
+	public static final field CANNOT_DOWNLOAD Lcom/youversion/platform/core/utilities/exceptions/BibleVersionApiException$Reason;
+	public static final field INVALID_DOWNLOAD Lcom/youversion/platform/core/utilities/exceptions/BibleVersionApiException$Reason;
+	public static final field INVALID_RESPONSE Lcom/youversion/platform/core/utilities/exceptions/BibleVersionApiException$Reason;
+	public static final field NOT_PERMITTED Lcom/youversion/platform/core/utilities/exceptions/BibleVersionApiException$Reason;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/youversion/platform/core/utilities/exceptions/BibleVersionApiException$Reason;
+	public static fun values ()[Lcom/youversion/platform/core/utilities/exceptions/BibleVersionApiException$Reason;
+}
+
+public final class com/youversion/platform/core/utilities/exceptions/YouVersionNotConfiguredException : java/lang/Exception {
+	public fun <init> ()V
+}
+
+public abstract interface class com/youversion/platform/core/votd/api/VotdApi {
+	public abstract fun verseOfTheDay (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun verseOfTheDay$default (Lcom/youversion/platform/core/votd/api/VotdApi;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun verseOfTheDays (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/votd/api/VotdApi$DefaultImpls {
+	public static synthetic fun verseOfTheDay$default (Lcom/youversion/platform/core/votd/api/VotdApi;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/votd/models/YouVersionVerseOfTheDay {
+	public static final field Companion Lcom/youversion/platform/core/votd/models/YouVersionVerseOfTheDay$Companion;
+	public fun <init> (ILjava/lang/String;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (ILjava/lang/String;)Lcom/youversion/platform/core/votd/models/YouVersionVerseOfTheDay;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/votd/models/YouVersionVerseOfTheDay;ILjava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/votd/models/YouVersionVerseOfTheDay;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDay ()I
+	public final fun getPassageUsfm ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/votd/models/YouVersionVerseOfTheDay$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/votd/models/YouVersionVerseOfTheDay$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/votd/models/YouVersionVerseOfTheDay;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/votd/models/YouVersionVerseOfTheDay;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/votd/models/YouVersionVerseOfTheDay$CodingKey {
+	public static final field DAY Ljava/lang/String;
+	public static final field INSTANCE Lcom/youversion/platform/core/votd/models/YouVersionVerseOfTheDay$CodingKey;
+	public static final field PASSAGE_ID Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/votd/models/YouVersionVerseOfTheDay$Companion {
+	public final fun getPreview ()Lcom/youversion/platform/core/votd/models/YouVersionVerseOfTheDay;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+

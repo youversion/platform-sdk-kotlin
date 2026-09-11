@@ -15,6 +15,7 @@ spotless = "8.1.0"
 ktlint = "1.7.1" # .get()
 kover = "0.9.4"
 mavenPublish = "0.35.0"
+binaryCompatibilityValidator = "0.18.2"
 androidXBrowser = "1.9.0"
 
 # Dependencies
@@ -85,4 +86,5 @@ kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
+binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
 

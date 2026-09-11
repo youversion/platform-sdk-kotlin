@@ -1,0 +1,90 @@
+public final class com/youversion/platform/reader/BibleReaderKt {
+	public static final fun BibleReader (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lcom/youversion/platform/reader/FontDefinitionProvider;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun BibleReader (Ljava/lang/String;Ljava/lang/String;Lcom/youversion/platform/core/bibles/domain/BibleReference;Lcom/youversion/platform/reader/FontDefinitionProvider;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class com/youversion/platform/reader/ComposableSingletons$BibleReaderKt {
+	public static final field INSTANCE Lcom/youversion/platform/reader/ComposableSingletons$BibleReaderKt;
+	public fun <init> ()V
+	public final fun getLambda$-1886664161$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-1979241537$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class com/youversion/platform/reader/FontDefinition {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Landroidx/compose/ui/text/font/FontFamily;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Landroidx/compose/ui/text/font/FontFamily;
+	public final fun copy (Ljava/lang/String;Landroidx/compose/ui/text/font/FontFamily;)Lcom/youversion/platform/reader/FontDefinition;
+	public static synthetic fun copy$default (Lcom/youversion/platform/reader/FontDefinition;Ljava/lang/String;Landroidx/compose/ui/text/font/FontFamily;ILjava/lang/Object;)Lcom/youversion/platform/reader/FontDefinition;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFontFamily ()Landroidx/compose/ui/text/font/FontFamily;
+	public final fun getFontName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/youversion/platform/reader/FontDefinitionProvider {
+	public abstract fun fonts ()Ljava/util/List;
+}
+
+public final class com/youversion/platform/reader/components/ComposableSingletons$BibleReaderBannerKt {
+	public static final field INSTANCE Lcom/youversion/platform/reader/components/ComposableSingletons$BibleReaderBannerKt;
+	public fun <init> ()V
+	public final fun getLambda$-1886225196$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1045631833$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1270005098$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class com/youversion/platform/reader/components/ComposableSingletons$BibleReaderHeaderKt {
+	public static final field INSTANCE Lcom/youversion/platform/reader/components/ComposableSingletons$BibleReaderHeaderKt;
+	public fun <init> ()V
+	public final fun getLambda$1413767408$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$209843791$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class com/youversion/platform/reader/components/ComposableSingletons$BibleReaderHeaderMenuKt {
+	public static final field INSTANCE Lcom/youversion/platform/reader/components/ComposableSingletons$BibleReaderHeaderMenuKt;
+	public fun <init> ()V
+	public final fun getLambda$-1516840373$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-699692492$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$896907224$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$970859855$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class com/youversion/platform/reader/components/ComposableSingletons$BibleReaderPassageSelectionKt {
+	public static final field INSTANCE Lcom/youversion/platform/reader/components/ComposableSingletons$BibleReaderPassageSelectionKt;
+	public fun <init> ()V
+	public final fun getLambda$-2088746957$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-894950468$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$392571129$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class com/youversion/platform/reader/screens/fonts/ComposableSingletons$FontsScreenKt {
+	public static final field INSTANCE Lcom/youversion/platform/reader/screens/fonts/ComposableSingletons$FontsScreenKt;
+	public fun <init> ()V
+	public final fun getLambda$-1514891121$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class com/youversion/platform/reader/sheets/ComposableSingletons$BibleReaderFontSettingsSheetKt {
+	public static final field INSTANCE Lcom/youversion/platform/reader/sheets/ComposableSingletons$BibleReaderFontSettingsSheetKt;
+	public fun <init> ()V
+	public final fun getLambda$774778295$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class com/youversion/platform/reader/sheets/ComposableSingletons$BibleReaderFootnotesSheetKt {
+	public static final field INSTANCE Lcom/youversion/platform/reader/sheets/ComposableSingletons$BibleReaderFootnotesSheetKt;
+	public fun <init> ()V
+	public final fun getLambda$-1995449047$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1547754200$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class com/youversion/platform/reader/sheets/ComposableSingletons$DataExchangeConfirmationDialogKt {
+	public static final field INSTANCE Lcom/youversion/platform/reader/sheets/ComposableSingletons$DataExchangeConfirmationDialogKt;
+	public fun <init> ()V
+	public final fun getLambda$-1276575678$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1103616637$platform_reader_release ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$1204598915$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$436234747$platform_reader_release ()Lkotlin/jvm/functions/Function3;
+}
+

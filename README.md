@@ -497,6 +497,37 @@ User-facing strings in `platform-ui` and `platform-reader` must come from synced
 
 Greptile PR rules live in `.greptile/`. See [docs/localization-guardrails.md](./docs/localization-guardrails.md) for the full policy.
 
+### Public API validation
+
+`platform-core`, `platform-ui` and `platform-reader` ship to Maven Central, so a change to a signature an
+already-released app links against breaks that app at runtime even though everything here still compiles and
+passes. The recorded public API of each module lives in `<module>/api/<module>.api`, and CI fails a pull
+request whose code no longer matches its dump.
+
+```bash
+# Fail if the public API has changed without the dump being updated
+./gradlew apiCheck
+
+# Re-record the dump after an intentional API change
+./gradlew apiDump
+```
+
+When `apiCheck` fails, read the diff it prints before reaching for `apiDump`. An unexpected removal or
+signature change there is a break for existing consumers; regenerating the dump only hides it. When the
+change *is* intended, run `apiDump` and commit the updated `.api` files alongside the change, so the break
+is visible in review.
+
+The check compares compiled signatures only. It catches a removed constructor or a changed parameter type;
+it cannot see a function that keeps its signature and starts behaving differently.
+
+Two things are deliberately outside the protected surface. Declarations marked `@PlatformInternalApi` are
+left out of the dump entirely — the annotation is an error-level opt-in, so consumers cannot link against
+them and they stay free to change. Compose's generated `ComposableSingletons$...` lambda holders, by
+contrast, *are* recorded, because the plugin matches exclusions by exact class name and any list of them
+would go stale as soon as someone adds a file. Adding or removing a `@Composable` lambda — a `@Preview`
+included — therefore shows up as a `getLambda$...` line in the dump. Those lines are compiler bookkeeping,
+not API: regenerate with `apiDump` and move on.
+
 ## Contributing (Starting Early 2026)
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for details on how to get started.
