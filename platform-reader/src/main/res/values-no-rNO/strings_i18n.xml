@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
-    <string name="yv_banner_dismiss_content_description">Avvis</string>
-    <string name="yv_banner_offline_icon">Frakoblet-ikon</string>
-    <string name="yv_banner_offline_message">Du har mistet internettforbindelsen. Koble til igjen og last ned en bibelutgave for å fortsette uten nett.</string>
-    <string name="yv_banner_version_unavailable_icon">Ikon for utilgjengelig utgave</string>
-    <string name="yv_banner_version_unavailable_message">Den tidligere valgte bibelutgaven er ikke tilgjengelig. En annen lignende bibelutgave er valgt for deg.</string>
+    <string name="yv_banner_dismiss_content_description">Lukk</string>
+    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_message">Vi har problemer med tilkoblingen. Last ned en bibelutgave når du er tilkoblet internett.</string>
+    <string name="yv_banner_version_unavailable_icon">Utgave ikke tilgjengelig</string>
+    <string name="yv_banner_version_unavailable_message">Den tidligere valgte bibelutgaven er ikke tilgjengelig. Bytt til en annen.</string>
     <string name="yv_book_chapter_picker_title">Bøker</string>
-    <string name="yv_cancel">Avbryt</string>
-    <string name="yv_data_exchange_continue">Fortsett</string>
-    <string name="yv_data_exchange_highlights_explanation">YouVersion vil be deg om å gi tilgang før markeringer kan lagres.</string>
-    <string name="yv_data_exchange_highlights_question">Vil du la denne appen lagre markeringer i YouVersion?</string>
     <string name="yv_font_selected_check">Skrift valgt hake</string>
     <string name="yv_font_settings_label">Skrift</string>
     <string name="yv_footnote_header_label">Fotnote</string>
