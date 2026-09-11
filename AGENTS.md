@@ -95,7 +95,14 @@ Reading highlights requires both a signed-in user and `HIGHLIGHTS`; `BibleText` 
 # Code coverage report
 ./gradlew koverXmlReport
 # Reports in: build/reports/kover/
+
+# Public API validation (published modules only; sample app is excluded)
+./gradlew apiCheck   # fails if the code no longer matches <module>/api/<module>.api
+./gradlew apiDump    # re-records the dump after an intentional API change
 ```
+
+**Note**: `apiDump` output is committed. An intentional API change ships with its updated `.api` file; an
+unintentional one shows up as a CI failure rather than a silent break for apps on a released version.
 
 ## Code Formatting
 

@@ -15,6 +15,18 @@ plugins {
     alias(libs.plugins.kover) apply false
     alias(libs.plugins.maven.publish) apply false
     alias(libs.plugins.spotless) apply false
+    alias(libs.plugins.binary.compatibility.validator)
+}
+
+// Records the public API of the published modules in `<module>/api/<module>.api`, so that a change
+// to a signature a released consumer links against shows up as a diff. Run `./gradlew apiDump`
+// to re-record after an intentional API change; `./gradlew apiCheck` verifies the dump is current.
+apiValidation {
+    // The sample app is not published, so it has no API to protect.
+    ignoredProjects += listOf("examples", "sample-android")
+    // @PlatformInternalApi is an ERROR-level opt-in: consumers are not allowed to link against
+    // what it marks, so those declarations are left out of the dump and stay free to change.
+    nonPublicMarkers += "com.youversion.platform.core.di.PlatformInternalApi"
 }
 
 tasks.register<VerifyNoHardcodedUiStringsTask>("verifyNoHardcodedUiStrings") {
