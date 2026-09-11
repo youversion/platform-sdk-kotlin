@@ -11,6 +11,8 @@ import com.youversion.platform.core.languages.api.LanguagesApi
 import com.youversion.platform.core.languages.api.LanguagesEndpoints
 import com.youversion.platform.core.organizations.api.OrganizationsApi
 import com.youversion.platform.core.organizations.api.OrganizationsEndpoints
+import com.youversion.platform.core.search.api.SearchApi
+import com.youversion.platform.core.search.api.SearchEndpoints
 import com.youversion.platform.core.users.api.UsersApi
 import com.youversion.platform.core.users.api.UsersEndpoints
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
@@ -27,6 +29,7 @@ object YouVersionApi {
     val highlights: HighlightsApi = HighlightsEndpoints
     val languages: LanguagesApi = LanguagesEndpoints
     val organizations: OrganizationsApi = OrganizationsEndpoints
+    val search: SearchApi = SearchEndpoints
     val users: UsersApi = UsersEndpoints
     val votd: VotdApi = VotdEndpoints
 

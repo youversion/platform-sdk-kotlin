@@ -126,6 +126,7 @@ public final class com/youversion/platform/core/api/YouVersionApi {
 	public final fun getHighlights ()Lcom/youversion/platform/core/highlights/api/HighlightsApi;
 	public final fun getLanguages ()Lcom/youversion/platform/core/languages/api/LanguagesApi;
 	public final fun getOrganizations ()Lcom/youversion/platform/core/organizations/api/OrganizationsApi;
+	public final fun getSearch ()Lcom/youversion/platform/core/search/api/SearchApi;
 	public final fun getUsers ()Lcom/youversion/platform/core/users/api/UsersApi;
 	public final fun getVotd ()Lcom/youversion/platform/core/votd/api/VotdApi;
 	public final fun hasPermission (Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;)Z
@@ -977,6 +978,24 @@ public final synthetic class com/youversion/platform/core/organizations/models/O
 public final class com/youversion/platform/core/organizations/models/Organization$Companion {
 	public final fun getPreview ()Lcom/youversion/platform/core/organizations/models/Organization;
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/youversion/platform/core/search/api/SearchApi {
+	public abstract fun suggestedQueries (Ljava/lang/String;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun trendingQueries (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/search/models/SearchQuery {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/search/models/SearchQuery;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/search/models/SearchQuery;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/search/models/SearchQuery;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSource ()Ljava/lang/String;
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class com/youversion/platform/core/users/api/UsersApi {
