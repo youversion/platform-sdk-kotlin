@@ -1,5 +1,6 @@
 package com.youversion.platform.core.search.api
 
+import com.youversion.platform.core.search.models.SearchUserIntent
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -30,6 +31,29 @@ class SearchEndpointsTests {
         assertEquals(
             "https://api.youversion.com/v1/search-queries?language_ranges%5B%5D=%2A&trending=true",
             SearchEndpoints.searchQueriesUrl(languageRanges = listOf("*"), isTrending = true),
+        )
+    }
+
+    @Test
+    fun `test verse search url`() {
+        assertEquals(
+            "https://api.youversion.com/v1/search-verses" +
+                "?query=two+fish&bible_id=111&user_intent=text&page_size=25&page_token=current-token",
+            SearchEndpoints.searchVersesUrl(
+                query = "two fish",
+                bibleId = 111,
+                userIntent = SearchUserIntent.text,
+                pageSize = 25,
+                pageToken = "current-token",
+            ),
+        )
+    }
+
+    @Test
+    fun `test verse search url omits paging when it is not supplied`() {
+        assertEquals(
+            "https://api.youversion.com/v1/search-verses?query=love&bible_id=111&user_intent=unknown",
+            SearchEndpoints.searchVersesUrl(query = "love", bibleId = 111, userIntent = SearchUserIntent.unknown),
         )
     }
 }
