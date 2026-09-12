@@ -23,9 +23,12 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -248,6 +251,83 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
             // Assert another call would trigger a new request, asserting the task was removed
             repository.version(206)
             assertEquals(4, count.load())
+        }
+
+    /**
+     * The second caller coalesces onto the first caller's in-flight fetch, then the first caller is cancelled.
+     * The first request never responds, so the only way the second caller can reach a result is by re-driving
+     * the fetch itself once it sees a cancellation that is not its own.
+     */
+    @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test cancelling one caller does not cancel another coalesced onto the same fetch`() =
+        runTest {
+            val versionRequests = AtomicInt(0)
+            val firstRequestStarted = CompletableDeferred<Unit>()
+
+            MockEngine { request ->
+                when (request.url.encodedPath) {
+                    "/v1/bibles/206" -> {
+                        if (versionRequests.incrementAndFetch() == 1) {
+                            firstRequestStarted.complete(Unit)
+                            awaitCancellation()
+                        }
+                        respondJson(FixtureLoader().loadFixtureString("bible_206"))
+                    }
+
+                    "/v1/bibles/206/index" -> respondJson(FixtureLoader().loadFixtureString("bible_206_index"))
+                    else -> throw IllegalArgumentException("Unexpected request path: ${request.url.encodedPath}")
+                }
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            val first = launch { repository.version(206) }
+            firstRequestStarted.await()
+
+            val outcome = CompletableDeferred<Result<BibleVersion>>()
+            launch { outcome.complete(runCatching { repository.version(206) }) }
+            runCurrent()
+
+            first.cancel()
+
+            assertEquals(206, outcome.await().getOrThrow().id)
+            assertEquals(2, versionRequests.load())
+        }
+
+    /**
+     * Both callers share one fetch and that fetch fails. Unlike cancellation, a genuine failure belongs to
+     * every caller awaiting it, so both must see it. The single request count is what proves the second
+     * caller coalesced rather than quietly fetching for itself.
+     */
+    @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test a failed fetch is reported to every coalesced caller`() =
+        runTest {
+            val requestCount = AtomicInt(0)
+            val firstRequestStarted = CompletableDeferred<Unit>()
+            val failFirstRequest = CompletableDeferred<Unit>()
+
+            MockEngine { request ->
+                if (request.url.encodedPath == "/v1/bibles/206") {
+                    requestCount.incrementAndFetch()
+                    firstRequestStarted.complete(Unit)
+                }
+                failFirstRequest.await()
+                respond("", HttpStatusCode.InternalServerError)
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            val ownerOutcome = CompletableDeferred<Result<BibleVersion>>()
+            launch { ownerOutcome.complete(runCatching { repository.version(206) }) }
+            firstRequestStarted.await()
+
+            val waiterOutcome = CompletableDeferred<Result<BibleVersion>>()
+            launch { waiterOutcome.complete(runCatching { repository.version(206) }) }
+            runCurrent()
+
+            failFirstRequest.complete(Unit)
+
+            assertFailsWith<YouVersionNetworkException> { ownerOutcome.await().getOrThrow() }
+            assertFailsWith<YouVersionNetworkException> { waiterOutcome.await().getOrThrow() }
+            assertEquals(1, requestCount.load())
         }
 
     @OptIn(ExperimentalAtomicApi::class)

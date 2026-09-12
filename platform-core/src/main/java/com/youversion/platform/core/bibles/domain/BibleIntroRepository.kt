@@ -3,8 +3,11 @@ package com.youversion.platform.core.bibles.domain
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.bibles.api.BiblesEndpoints
 import com.youversion.platform.core.bibles.data.CachedBibleContent
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -45,7 +48,13 @@ class BibleIntroRepository(
         inFlightTasksMutex
             .withLock { inFlightTasks[cacheKey] }
             ?.let { task ->
-                if (task.isActive) return task.await()
+                if (task.isActive) {
+                    try {
+                        return task.await()
+                    } catch (_: CancellationException) {
+                        currentCoroutineContext().ensureActive()
+                    }
+                }
             }
 
         val deferred = CompletableDeferred<String>()
@@ -62,7 +71,7 @@ class BibleIntroRepository(
             throw e
         } finally {
             inFlightTasksMutex.withLock {
-                inFlightTasks.remove(cacheKey)
+                if (inFlightTasks[cacheKey] === deferred) inFlightTasks.remove(cacheKey)
             }
         }
     }

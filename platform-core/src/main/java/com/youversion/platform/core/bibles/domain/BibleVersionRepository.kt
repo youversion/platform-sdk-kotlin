@@ -8,6 +8,8 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.text.Collator
@@ -62,7 +64,13 @@ class BibleVersionRepository(
         inFlightTasksMutex
             .withLock { inFlightTasks[id] }
             ?.let { task ->
-                if (task.isActive) return task.await()
+                if (task.isActive) {
+                    try {
+                        return task.await()
+                    } catch (_: CancellationException) {
+                        currentCoroutineContext().ensureActive()
+                    }
+                }
             }
 
         // Otherwise, create a new fetch task
@@ -82,7 +90,9 @@ class BibleVersionRepository(
             deferred.completeExceptionally(e)
             throw e
         } finally {
-            inFlightTasksMutex.withLock { inFlightTasks.remove(id) }
+            inFlightTasksMutex.withLock {
+                if (inFlightTasks[id] === deferred) inFlightTasks.remove(id)
+            }
         }
     }
 
