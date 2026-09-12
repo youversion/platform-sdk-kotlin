@@ -5,6 +5,7 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.api.BiblesEndpoints
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.models.BibleVersion
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.sync.Mutex
@@ -51,6 +52,8 @@ class BibleVersionRepository(
         // Try to get from cache first
         try {
             versionIfCached(id)?.let { return it }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             println("BibleVersionRepository.version: $e")
         }
