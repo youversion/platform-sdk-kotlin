@@ -8,7 +8,9 @@ import com.youversion.platform.core.api.parseApiBody
 import com.youversion.platform.core.api.parseApiResponse
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.search.models.SearchQuery
+import com.youversion.platform.core.search.models.SearchTopic
 import com.youversion.platform.core.search.models.SearchUserIntent
+import com.youversion.platform.core.search.models.TopicSearchResults
 import com.youversion.platform.core.search.models.VerseSearchResults
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import io.ktor.client.HttpClient
@@ -66,6 +68,17 @@ internal object SearchEndpoints : SearchApi {
             pageToken(pageToken)
         }
 
+    /** The address of a topic search for [query] in the first of [languageRanges] the platform supports. */
+    fun searchTopicsUrl(
+        query: String,
+        languageRanges: List<String>,
+    ): String =
+        buildYouVersionUrlString {
+            path("/v1/search-topics")
+            parameter("query", query)
+            languageRanges(languageRanges)
+        }
+
     override suspend fun suggestedQueries(
         query: String,
         languageRanges: List<String>,
@@ -84,7 +97,7 @@ internal object SearchEndpoints : SearchApi {
         pageSize: Int?,
         pageToken: String?,
     ): VerseSearchResults {
-        require(query.graphemeClusterCount in 1..100) { "query must be between 1 and 100 grapheme clusters" }
+        requireValidQueryLength(query)
         require(bibleId > 0) { "bibleId must be greater than zero" }
         pageSize?.let { require(it in 1..99) { "pageSize must be between 1 and 99" } }
 
@@ -101,15 +114,28 @@ internal object SearchEndpoints : SearchApi {
         )
     }
 
+    override suspend fun topics(
+        query: String,
+        languageRanges: List<String>,
+    ): TopicSearchResults {
+        requireValidQueryLength(query)
+        requireValidLanguageRanges(languageRanges)
+
+        val response =
+            parseApiBody<TopicSearchResponse>(httpClient.get(searchTopicsUrl(query, languageRanges)))
+        return TopicSearchResults(
+            topics = response.topics.map { SearchTopic(id = it.id, text = it.text, subtopics = it.subtopics) },
+            didYouMean = response.didYouMean,
+            searchInsteadFor = response.searchInsteadFor,
+        )
+    }
+
     private suspend fun queries(
         languageRanges: List<String>,
         query: String?,
         isTrending: Boolean,
     ): List<SearchQuery> {
-        require(languageRanges.isNotEmpty()) { "languageRanges must not be empty" }
-        require(languageRanges.all(::isValidLanguageRange)) {
-            "languageRanges must each be a canonical BCP 47 language tag, or \"*\""
-        }
+        requireValidLanguageRanges(languageRanges)
         return httpClient
             .get(searchQueriesUrl(languageRanges, query, isTrending))
             .let {
@@ -138,6 +164,17 @@ internal object SearchEndpoints : SearchApi {
             chapter = chapter,
             verse = verse,
         )
+    }
+
+    private fun requireValidQueryLength(query: String) {
+        require(query.graphemeClusterCount in 1..100) { "query must be between 1 and 100 grapheme clusters" }
+    }
+
+    private fun requireValidLanguageRanges(languageRanges: List<String>) {
+        require(languageRanges.isNotEmpty()) { "languageRanges must not be empty" }
+        require(languageRanges.all(::isValidLanguageRange)) {
+            "languageRanges must each be a canonical BCP 47 language tag, or \"*\""
+        }
     }
 
     private fun isValidLanguageRange(languageRange: String): Boolean =

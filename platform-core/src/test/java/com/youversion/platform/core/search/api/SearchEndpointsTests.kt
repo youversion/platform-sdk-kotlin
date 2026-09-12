@@ -56,4 +56,13 @@ class SearchEndpointsTests {
             SearchEndpoints.searchVersesUrl(query = "love", bibleId = 111, userIntent = SearchUserIntent.unknown),
         )
     }
+
+    @Test
+    fun `test topic search url repeats every language range`() {
+        assertEquals(
+            "https://api.youversion.com/v1/search-topics" +
+                "?query=faif&language_ranges%5B%5D=en-US&language_ranges%5B%5D=%2A",
+            SearchEndpoints.searchTopicsUrl(query = "faif", languageRanges = listOf("en-US", "*")),
+        )
+    }
 }

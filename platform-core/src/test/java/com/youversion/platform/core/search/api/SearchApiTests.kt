@@ -4,6 +4,7 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.search.models.SearchTopic
 import com.youversion.platform.core.search.models.SearchUserIntent
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
@@ -406,6 +407,87 @@ class SearchApiTests : YouVersionPlatformTest {
     @Test
     fun `test verse search malformed body is an invalid response`() =
         testInvalidResponse { YouVersionApi.search.verses(query = "love", bibleId = 111) }
+
+    @Test
+    fun `test topic search success returns data`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals(HttpMethod.Get, request.method)
+                assertEquals(
+                    "/v1/search-topics?query=faif&language_ranges%5B%5D=en-US&language_ranges%5B%5D=%2A",
+                    request.url.encodedPathAndQuery,
+                )
+                respondJson(
+                    """
+                    {
+                        "topics": [
+                            { "id": 42, "text": "Faith", "subtopics": ["trust", "belief"] },
+                            { "id": null, "text": "Love", "subtopics": [] }
+                        ],
+                        "did_you_mean": ["faith"],
+                        "search_instead_for": "faif"
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.topics(query = "faif", languageRanges = listOf("en-US", "*"))
+
+            assertEquals(
+                listOf(
+                    SearchTopic(id = 42, text = "Faith", subtopics = listOf("trust", "belief")),
+                    SearchTopic(id = null, text = "Love", subtopics = emptyList()),
+                ),
+                results.topics,
+            )
+            assertEquals(listOf("faith"), results.didYouMean)
+            assertEquals("faif", results.searchInsteadFor)
+        }
+
+    @Test
+    fun `test topic search intentionally fails on no content rather than returning nothing found`() =
+        runTest {
+            MockEngine { respond("", HttpStatusCode.NoContent) }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            assertFailsWith<YouVersionNetworkException> {
+                YouVersionApi.search.topics(query = "faith", languageRanges = listOf("en"))
+            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
+        }
+
+    @Test
+    fun `test topic search intentionally fails when did you mean is absent`() =
+        runTest {
+            MockEngine { respondJson("""{ "topics": [] }""") }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            assertFailsWith<YouVersionNetworkException> {
+                YouVersionApi.search.topics(query = "faith", languageRanges = listOf("en"))
+            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
+        }
+
+    @Test
+    fun `test topic search rejects a query outside one to one hundred graphemes`() =
+        runTest {
+            startNoRequestExpected()
+            listOf("", "a".repeat(101)).forEach { query ->
+                assertFailsWith<IllegalArgumentException>("expected a query of ${query.length} to be rejected") {
+                    YouVersionApi.search.topics(query = query, languageRanges = listOf("en"))
+                }
+            }
+        }
+
+    @Test
+    fun `test topic search rejects an empty language range list`() =
+        runTest {
+            startNoRequestExpected()
+            assertFailsWith<IllegalArgumentException> {
+                YouVersionApi.search.topics(query = "faith", languageRanges = emptyList())
+            }
+        }
 
     private fun startNoRequestExpected() {
         MockEngine { fail("no request should have been issued") }

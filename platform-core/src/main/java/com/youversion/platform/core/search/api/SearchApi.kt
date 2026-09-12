@@ -2,6 +2,7 @@ package com.youversion.platform.core.search.api
 
 import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.core.search.models.SearchUserIntent
+import com.youversion.platform.core.search.models.TopicSearchResults
 import com.youversion.platform.core.search.models.VerseSearchResults
 
 interface SearchApi {
@@ -70,4 +71,28 @@ interface SearchApi {
         pageSize: Int? = null,
         pageToken: String? = null,
     ): VerseSearchResults
+
+    /**
+     * Retrieves the topics matching [query] in the first supported language range.
+     *
+     * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
+     *
+     * Unlike [suggestedQueries] and [trendingQueries], a response carrying no content is not treated as an empty
+     * result here; it surfaces as a [com.youversion.platform.core.api.YouVersionNetworkException]. That asymmetry is
+     * deliberate and matches the other YouVersion Platform SDKs.
+     *
+     * @param query The text to search for. It must be between 1 and 100 grapheme clusters, so that it is accepted or
+     *     rejected identically on every platform.
+     * @param languageRanges An ordered list of canonical BCP 47 language tags, such as `en-US`, or `*` to match
+     *     all languages. It must not be empty.
+     * @return The matching [TopicSearchResults]. Topic results do not page.
+     * @throws IllegalArgumentException if [query] is outside the range stated above, or if [languageRanges] is empty
+     *     or holds a range that is neither `*` nor a well-formed BCP 47 tag. An argument error is a mistake in the
+     *     calling code rather than a network condition, so it is reported separately from one.
+     * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
+     */
+    suspend fun topics(
+        query: String,
+        languageRanges: List<String>,
+    ): TopicSearchResults
 }
