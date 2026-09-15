@@ -216,6 +216,7 @@ internal object SearchEndpoints : SearchApi {
 
     private fun isValidLanguageRange(languageRange: String): Boolean {
         if (languageRange == "*") return true
+        if (languageRange.isEmpty()) return false
         return try {
             Locale.Builder().setLanguageTag(languageRange)
             true
