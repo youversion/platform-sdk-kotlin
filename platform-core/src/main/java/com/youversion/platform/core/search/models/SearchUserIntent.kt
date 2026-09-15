@@ -9,8 +9,7 @@ package com.youversion.platform.core.search.models
  *
  * @property rawValue The intent as the platform spells it.
  */
-@JvmInline
-value class SearchUserIntent(
+data class SearchUserIntent(
     val rawValue: String,
 ) {
     companion object {
