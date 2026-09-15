@@ -227,7 +227,8 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
     /**
      * Two callers coalesce onto one fetch and the owner is then cancelled. Exactly one survivor may take the
      * fetch over; if claiming and joining were not one critical section, each survivor would install its own
-     * task and the chapter would be requested once per survivor.
+     * task and the chapter would be requested once per survivor. The re-driven request is held open until the
+     * other survivor has had its turn, so the second survivor has a task to find whatever order the two run in.
      */
     @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
     @Test
@@ -235,11 +236,20 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
         runTest {
             val requestCount = AtomicInt(0)
             val firstRequestStarted = CompletableDeferred<Unit>()
+            val secondRequestStarted = CompletableDeferred<Unit>()
+            val finishSecondRequest = CompletableDeferred<Unit>()
 
             MockEngine {
-                if (requestCount.incrementAndFetch() == 1) {
-                    firstRequestStarted.complete(Unit)
-                    awaitCancellation()
+                when (requestCount.incrementAndFetch()) {
+                    1 -> {
+                        firstRequestStarted.complete(Unit)
+                        awaitCancellation()
+                    }
+
+                    2 -> {
+                        secondRequestStarted.complete(Unit)
+                        finishSecondRequest.await()
+                    }
                 }
                 respondJson(
                     """
@@ -262,6 +272,9 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
             runCurrent()
 
             owner.cancel()
+            secondRequestStarted.await()
+            runCurrent()
+            finishSecondRequest.complete(Unit)
 
             outcomes.forEach { outcome -> assertEquals("content", outcome.await().getOrThrow()) }
             assertEquals(2, requestCount.load())
