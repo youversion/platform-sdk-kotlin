@@ -3,10 +3,7 @@ package com.youversion.platform.core.search.api
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/**
- * A topic search as the platform returns it. The collection fields deliberately take no default, so that a response
- * missing one fails to decode rather than reaching a reader as an empty result.
- */
+/** Collections take no default: a response missing one must fail decoding, not arrive empty. */
 @Serializable
 internal data class TopicSearchResponse(
     @SerialName("topics") val topics: List<TopicSearchResultResponse>,
@@ -14,7 +11,6 @@ internal data class TopicSearchResponse(
     @SerialName("search_instead_for") val searchInsteadFor: String? = null,
 )
 
-/** A single match, carrying the topic the platform found and any subtopics that narrow it. */
 @Serializable
 internal data class TopicSearchResultResponse(
     @SerialName("id") val id: Int? = null,

@@ -3,10 +3,7 @@ package com.youversion.platform.core.search.api
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/**
- * A unified search as the platform returns it. The collection fields deliberately take no default, so that a response
- * missing one fails to decode rather than reaching a reader as an empty result.
- */
+/** Collections take no default: a response missing one must fail decoding, not arrive empty. */
 @Serializable
 internal data class UnifiedSearchResponse(
     @SerialName("verses") val references: List<VerseSearchResultResponse>,

@@ -28,10 +28,7 @@ internal object SearchEndpoints : SearchApi {
     private val httpClient: HttpClient
         get() = PlatformCoreKoinComponent.httpClient
 
-    /**
-     * The number of characters a reader perceives, rather than the number of UTF-16 code units they occupy, so that a
-     * query of emoji or combining marks is measured the same here as it is on the other YouVersion Platform SDKs.
-     */
+    /** Counts what a reader perceives as characters, not UTF-16 code units; `length` is not equivalent. */
     private val String.graphemeClusterCount: Int
         get() {
             val iterator = BreakIterator.getCharacterInstance()
@@ -53,7 +50,6 @@ internal object SearchEndpoints : SearchApi {
             if (isTrending) parameter("trending", "true")
         }
 
-    /** The address of a verse search for [query] in the Bible version identified by [bibleId]. */
     fun searchVersesUrl(
         query: String,
         bibleId: Int,
@@ -70,7 +66,6 @@ internal object SearchEndpoints : SearchApi {
             pageToken(pageToken)
         }
 
-    /** The address of a topic search for [query] in the first of [languageRanges] the platform supports. */
     fun searchTopicsUrl(
         query: String,
         languageRanges: List<String>,
@@ -81,10 +76,6 @@ internal object SearchEndpoints : SearchApi {
             languageRanges(languageRanges)
         }
 
-    /**
-     * The address of a unified search for [query] in the Bible version identified by [bibleId] and in the first of
-     * [languageRanges] the platform supports, narrowed to the result kinds named by [fields].
-     */
     fun searchUnifiedUrl(
         query: String,
         bibleId: Int,
@@ -195,10 +186,7 @@ internal object SearchEndpoints : SearchApi {
             }
     }
 
-    /**
-     * Reads a result's dotted address as a reference in [versionId], or `null` when it is not one. The book is
-     * upper-cased so that a result compares equal to the same reference built anywhere else in the SDK.
-     */
+    /** The dotted address as a reference in [versionId], or `null` when it is not one. */
     private fun VerseSearchResultResponse.bibleReference(versionId: Int): BibleReference? {
         val components = reference.split(".")
         if (components.size != 3 || components[0].isEmpty()) return null
