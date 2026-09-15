@@ -163,13 +163,25 @@ class SearchApiTests : YouVersionPlatformTest {
     fun `test suggested queries rejects a malformed language range`() =
         runTest {
             startNoRequestExpected()
-            listOf("", "en_US", "en-", "-US", "abcdefghi", "en-US!").forEach { languageRange ->
+            listOf("", "en_US", "en-", "-US", "abcdefghi", "en-US!", "en-a", "en-x").forEach { languageRange ->
                 assertFailsWith<IllegalArgumentException>("expected $languageRange to be rejected") {
                     YouVersionApi.search.suggestedQueries(
                         query = "love",
                         languageRanges = listOf("en", languageRange),
                     )
                 }
+            }
+        }
+
+    @Test
+    fun `test suggested queries accepts every well-formed language range`() =
+        runTest {
+            MockEngine { respondJson("""{ "data": [] }""") }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            listOf("en", "en-US", "es-419", "zh-Hant-TW", "de-CH-1901", "en-x-private", "*").forEach { languageRange ->
+                YouVersionApi.search.suggestedQueries(query = "love", languageRanges = listOf(languageRange))
             }
         }
 

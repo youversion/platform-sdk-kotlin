@@ -21,10 +21,10 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLBuilder
 import io.ktor.http.path
 import java.text.BreakIterator
+import java.util.IllformedLocaleException
+import java.util.Locale
 
 internal object SearchEndpoints : SearchApi {
-    private val languageRangeRegex = Regex("[A-Za-z]{1,8}(-[0-9A-Za-z]{1,8})*")
-
     private val httpClient: HttpClient
         get() = PlatformCoreKoinComponent.httpClient
 
@@ -210,12 +210,19 @@ internal object SearchEndpoints : SearchApi {
     private fun requireValidLanguageRanges(languageRanges: List<String>) {
         require(languageRanges.isNotEmpty()) { "languageRanges must not be empty" }
         require(languageRanges.all(::isValidLanguageRange)) {
-            "languageRanges must each be a canonical BCP 47 language tag, or \"*\""
+            "languageRanges must each be a well-formed BCP 47 language tag, or \"*\""
         }
     }
 
-    private fun isValidLanguageRange(languageRange: String): Boolean =
-        languageRange == "*" || languageRangeRegex.matches(languageRange)
+    private fun isValidLanguageRange(languageRange: String): Boolean {
+        if (languageRange == "*") return true
+        return try {
+            Locale.Builder().setLanguageTag(languageRange)
+            true
+        } catch (_: IllformedLocaleException) {
+            false
+        }
+    }
 
     private fun URLBuilder.languageRanges(languageRanges: List<String>) {
         languageRanges.forEach { languageRange -> parameters.append("language_ranges[]", languageRange) }
