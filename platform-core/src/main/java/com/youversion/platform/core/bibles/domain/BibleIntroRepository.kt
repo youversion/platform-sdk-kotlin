@@ -3,13 +3,7 @@ package com.youversion.platform.core.bibles.domain
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.bibles.api.BiblesEndpoints
 import com.youversion.platform.core.bibles.data.CachedBibleContent
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import com.youversion.platform.core.utilities.InFlightTasks
 
 /**
  * Fetches and caches intro chapter HTML content.
@@ -22,8 +16,7 @@ class BibleIntroRepository(
     private val now: () -> Long = System::currentTimeMillis,
 ) {
     private val introCache = mutableMapOf<String, CachedBibleContent<String>>()
-    private val inFlightTasks = mutableMapOf<String, Deferred<String>>()
-    private val inFlightTasksMutex = Mutex()
+    private val inFlightTasks = InFlightTasks<String, String>()
 
     /**
      * The HTML content for an intro passage.
@@ -45,34 +38,11 @@ class BibleIntroRepository(
 
         Logger.d { "$cacheKey Not found in cache. Fetching from network..." }
 
-        inFlightTasksMutex
-            .withLock { inFlightTasks[cacheKey] }
-            ?.let { task ->
-                if (task.isActive) {
-                    try {
-                        return task.await()
-                    } catch (_: CancellationException) {
-                        currentCoroutineContext().ensureActive()
-                    }
-                }
-            }
-
-        val deferred = CompletableDeferred<String>()
-        inFlightTasksMutex.withLock { inFlightTasks[cacheKey] = deferred }
-
-        return try {
+        return inFlightTasks.result(cacheKey) {
             val response = BiblesEndpoints.passageResponse(versionId, passageId)
             val contents = response.value.content
             introCache[cacheKey] = CachedBibleContent(contents, response.expiresAt)
-            deferred.complete(contents)
             contents
-        } catch (e: Exception) {
-            deferred.completeExceptionally(e)
-            throw e
-        } finally {
-            inFlightTasksMutex.withLock {
-                if (inFlightTasks[cacheKey] === deferred) inFlightTasks.remove(cacheKey)
-            }
         }
     }
 }

@@ -225,6 +225,49 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
         }
 
     /**
+     * Two callers coalesce onto one fetch and the owner is then cancelled. Exactly one survivor may take the
+     * fetch over; if claiming and joining were not one critical section, each survivor would install its own
+     * task and the chapter would be requested once per survivor.
+     */
+    @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test only one caller re-drives a fetch whose owner was cancelled`() =
+        runTest {
+            val requestCount = AtomicInt(0)
+            val firstRequestStarted = CompletableDeferred<Unit>()
+
+            MockEngine {
+                if (requestCount.incrementAndFetch() == 1) {
+                    firstRequestStarted.complete(Unit)
+                    awaitCancellation()
+                }
+                respondJson(
+                    """
+                    {
+                        "id": "JHN.3.1",
+                        "content": "content",
+                        "reference": "John 3:1"
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+
+            val owner = launch { repository.chapter(reference) }
+            firstRequestStarted.await()
+
+            val outcomes = List(2) { CompletableDeferred<Result<String>>() }
+            outcomes.forEach { outcome -> launch { outcome.complete(runCatching { repository.chapter(reference) }) } }
+            runCurrent()
+
+            owner.cancel()
+
+            outcomes.forEach { outcome -> assertEquals("content", outcome.await().getOrThrow()) }
+            assertEquals(2, requestCount.load())
+        }
+
+    /**
      * Both callers share one fetch and that fetch fails. Unlike cancellation, a genuine failure belongs to
      * every caller awaiting it, so both must see it. The single request count is what proves the second
      * caller coalesced rather than quietly fetching for itself.
