@@ -28,10 +28,13 @@ internal object SearchEndpoints : SearchApi {
     private val httpClient: HttpClient
         get() = PlatformCoreKoinComponent.httpClient
 
-    /** Counts what a reader perceives as characters, not UTF-16 code units; `length` is not equivalent. */
+    /**
+     * Counts what a reader perceives as characters, not UTF-16 code units; `length` is not equivalent.
+     * Pinned to [Locale.ROOT] so a query is accepted or rejected identically on every device.
+     */
     private val String.graphemeClusterCount: Int
         get() {
-            val iterator = BreakIterator.getCharacterInstance()
+            val iterator = BreakIterator.getCharacterInstance(Locale.ROOT)
             iterator.setText(this)
             var count = 0
             while (iterator.next() != BreakIterator.DONE) count++
