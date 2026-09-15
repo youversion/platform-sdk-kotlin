@@ -1,8 +1,12 @@
 # YouVersion Platform SDK
 
-The vocabulary this SDK exposes to the apps that embed it. Terms here are the ones a consumer
-meets in the public API and in our documentation, and they are shared with the Swift, React, and
-React Native SDKs — a term defined here should mean the same thing on every platform.
+The vocabulary this SDK exposes to the apps that embed it. Terms here are the ones a consumer meets
+in the public API and in our documentation. Where a term also appears in the Swift, React, or React
+Native SDKs it is meant to carry the same meaning; where this SDK genuinely means something
+different, the entry says so.
+
+A term earns an entry by being contestable — a word with two plausible readings, or one this SDK
+uses differently from everyday usage. Terms whose meaning is obvious are left to the KDoc.
 
 ## Language
 
@@ -46,6 +50,60 @@ selecting fields asks for less of each thing.
 A named subject a reader can search for and that scripture speaks to, such as anxiety or forgiveness.
 A topic may name related **subtopics**.
 
+### Bibles
+
+**Bible version**:
+A translation or edition of scripture, identified by a numeric id. This SDK names that id
+`versionId` everywhere except search, which takes the same value as a `bibleId` — the platform's own
+spelling in that one place.
+_Avoid_: bible, translation id
+
+**Permitted version**:
+A Bible version an embedding app is allowed to use — one that satisfies every allow and deny list the
+integrator sets at configuration. Permission here is the integrator's policy, not the reader's
+preference.
+_Avoid_: available version, allowed version, filtered version
+
+**Passage**:
+Two things wear this name. A _passage id_ is an address within a version's text, such as `JHN.3.16`
+or `GEN.INTRO`. A `BiblePassage` is the scripture returned for one — the text, not the address.
+_Avoid_: passage as a synonym for _Bible reference_
+
+**Downloaded**:
+Held on the device for offline reading because someone asked for it. Distinct from _cached_, which is
+incidental and may be discarded at any time; only downloads live in the SDK's persistent store.
+_Avoid_: saved, offline copy, legacy cache
+
+### Highlights
+
+**Highlight**:
+A reader's color marking on scripture, owned by their YouVersion account. Two public types spell it:
+`BibleHighlight` is the domain shape — a _Bible reference_ and a color — while `Highlight` is the
+platform's wire shape, addressed by `bibleId` and `passageId`.
+_Avoid_: annotation, marker, bookmark
+
+**Pending highlight**:
+A highlight the reader has made that the platform has not yet accepted. It is bound to the account
+that made it, so it outlives a sign-out rather than passing to whoever signs in next.
+_Avoid_: unsaved highlight, queued highlight, optimistic highlight
+
+### Identity
+
+**App key**:
+The credential identifying an embedding app to the platform. It belongs to the app, not to a reader,
+and never stands in for a reader's access token.
+_Avoid_: API key, developer key, client id
+
+**Data exchange**:
+The flow by which an already signed-in reader grants a permission they did not grant at sign-in.
+Named for the exchange of data it authorizes, not for any transfer of files.
+_Avoid_: incremental consent, re-authorization, permission upgrade
+
+**Granted permission**:
+A permission a reader has given this app, such as `HIGHLIGHTS`. A grant is permanent from the app's
+side — there is no revoking one — so a permission is either not yet granted or granted for good.
+_Avoid_: scope, consent, entitlement
+
 ### Cross-cutting
 
 **Bible reference**:
@@ -57,3 +115,9 @@ meaning "this reader is looking for a specific address rather than for text or a
 A reader's language preference, written as a BCP 47 language tag such as `en-US`, or as `*` to mean
 any language. Several may be given, and their order is their order of preference.
 _Avoid_: locale, language code, language filter
+
+**Fields**:
+A sparse selection of properties, naming which parts of a thing the platform should return. Distinct
+from a _result kind_, which narrows what kinds of thing come back at all, although the platform
+happens to spell both the same way.
+_Avoid_: projection, sparse fieldset, columns
