@@ -65,4 +65,37 @@ class SearchEndpointsTests {
             SearchEndpoints.searchTopicsUrl(query = "faif", languageRanges = listOf("en-US", "*")),
         )
     }
+
+    @Test
+    fun `test unified search url sends every parameter in order`() {
+        assertEquals(
+            "https://api.youversion.com/v1/search-unified" +
+                "?query=love&bible_id=111" +
+                "&language_ranges%5B%5D=en-US&language_ranges%5B%5D=%2A" +
+                "&user_intent=topical" +
+                "&fields%5B%5D=verses&fields%5B%5D=topics",
+            SearchEndpoints.searchUnifiedUrl(
+                query = "love",
+                bibleId = 111,
+                languageRanges = listOf("en-US", "*"),
+                userIntent = SearchUserIntent.topical,
+                fields = listOf("verses", "topics"),
+            ),
+        )
+    }
+
+    @Test
+    fun `test unified search url asks for every result kind by omitting fields`() {
+        assertEquals(
+            "https://api.youversion.com/v1/search-unified" +
+                "?query=love&bible_id=111&language_ranges%5B%5D=en-US&user_intent=unknown",
+            SearchEndpoints.searchUnifiedUrl(
+                query = "love",
+                bibleId = 111,
+                languageRanges = listOf("en-US"),
+                userIntent = SearchUserIntent.unknown,
+                fields = emptyList(),
+            ),
+        )
+    }
 }

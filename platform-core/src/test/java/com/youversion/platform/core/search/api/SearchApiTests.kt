@@ -489,6 +489,157 @@ class SearchApiTests : YouVersionPlatformTest {
             }
         }
 
+    @Test
+    fun `test unified search success returns data`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals(HttpMethod.Get, request.method)
+                assertEquals(
+                    "/v1/search-unified?query=faif&bible_id=111" +
+                        "&language_ranges%5B%5D=en-US&language_ranges%5B%5D=%2A" +
+                        "&user_intent=topical&fields%5B%5D=verses&fields%5B%5D=topics",
+                    request.url.encodedPathAndQuery,
+                )
+                respondJson(
+                    """
+                    {
+                        "verses": [
+                            { "reference": "MAT.14.17" },
+                            { "reference": "jhn.6.9" },
+                            { "reference": "JHN.3" }
+                        ],
+                        "topics": [
+                            { "id": 42, "text": "Faith", "subtopics": ["trust", "belief"] },
+                            { "id": null, "text": "Love", "subtopics": [] }
+                        ],
+                        "user_intent": "topical",
+                        "did_you_mean": ["faith"],
+                        "search_instead_for": "faif"
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results =
+                YouVersionApi.search.unified(
+                    query = "faif",
+                    bibleId = 111,
+                    languageRanges = listOf("en-US", "*"),
+                    userIntent = SearchUserIntent.topical,
+                    fields = listOf("verses", "topics"),
+                )
+
+            assertEquals(
+                listOf(
+                    BibleReference(versionId = 111, bookUSFM = "MAT", chapter = 14, verse = 17),
+                    BibleReference(versionId = 111, bookUSFM = "JHN", chapter = 6, verse = 9),
+                ),
+                results.references,
+            )
+            assertEquals(
+                listOf(
+                    SearchTopic(id = 42, text = "Faith", subtopics = listOf("trust", "belief")),
+                    SearchTopic(id = null, text = "Love", subtopics = emptyList()),
+                ),
+                results.topics,
+            )
+            assertEquals(SearchUserIntent.topical, results.userIntent)
+            assertEquals(listOf("faith"), results.didYouMean)
+            assertEquals("faif", results.searchInsteadFor)
+        }
+
+    @Test
+    fun `test unified search asks for every result kind when none are named`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals(
+                    "/v1/search-unified?query=love&bible_id=111&language_ranges%5B%5D=en&user_intent=unknown",
+                    request.url.encodedPathAndQuery,
+                )
+                respondJson("""{ "verses": [], "topics": [], "did_you_mean": [] }""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
+
+            assertTrue { results.references.isEmpty() && results.topics.isEmpty() }
+            assertNull(results.userIntent)
+            assertNull(results.searchInsteadFor)
+        }
+
+    @Test
+    fun `test unified search preserves a user intent this version does not name`() =
+        runTest {
+            MockEngine {
+                respondJson(
+                    """
+                    { "verses": [], "topics": [], "user_intent": "future-intent", "did_you_mean": [] }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
+
+            assertEquals(SearchUserIntent("future-intent"), results.userIntent)
+        }
+
+    @Test
+    fun `test unified search intentionally fails on no content rather than returning nothing found`() =
+        runTest {
+            MockEngine { respond("", HttpStatusCode.NoContent) }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            assertFailsWith<YouVersionNetworkException> {
+                YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
+            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
+        }
+
+    @Test
+    fun `test unified search intentionally fails when did you mean is absent`() =
+        runTest {
+            MockEngine { respondJson("""{ "verses": [], "topics": [] }""") }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            assertFailsWith<YouVersionNetworkException> {
+                YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
+            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
+        }
+
+    @Test
+    fun `test unified search rejects a query outside one to one hundred graphemes`() =
+        runTest {
+            startNoRequestExpected()
+            listOf("", "a".repeat(101)).forEach { query ->
+                assertFailsWith<IllegalArgumentException>("expected a query of ${query.length} to be rejected") {
+                    YouVersionApi.search.unified(query = query, bibleId = 111, languageRanges = listOf("en"))
+                }
+            }
+        }
+
+    @Test
+    fun `test unified search rejects a bible version identifier of zero or less`() =
+        runTest {
+            startNoRequestExpected()
+            listOf(0, -1).forEach { bibleId ->
+                assertFailsWith<IllegalArgumentException>("expected $bibleId to be rejected") {
+                    YouVersionApi.search.unified(query = "love", bibleId = bibleId, languageRanges = listOf("en"))
+                }
+            }
+        }
+
+    @Test
+    fun `test unified search rejects an empty language range list`() =
+        runTest {
+            startNoRequestExpected()
+            assertFailsWith<IllegalArgumentException> {
+                YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = emptyList())
+            }
+        }
+
     private fun startNoRequestExpected() {
         MockEngine { fail("no request should have been issued") }
             .also { engine -> startYouVersionPlatformTest(engine) }

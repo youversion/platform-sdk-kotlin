@@ -1,6 +1,7 @@
 package com.youversion.platform.core.search.api
 
 import com.youversion.platform.core.search.models.SearchQuery
+import com.youversion.platform.core.search.models.SearchResults
 import com.youversion.platform.core.search.models.SearchUserIntent
 import com.youversion.platform.core.search.models.TopicSearchResults
 import com.youversion.platform.core.search.models.VerseSearchResults
@@ -95,4 +96,41 @@ interface SearchApi {
         query: String,
         languageRanges: List<String>,
     ): TopicSearchResults
+
+    /**
+     * Retrieves both the scripture in the Bible version identified by [bibleId] and the topics matching [query], in a
+     * single round trip.
+     *
+     * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
+     *
+     * Unlike [suggestedQueries] and [trendingQueries], a response carrying no content is not treated as an empty
+     * result here; it surfaces as a [com.youversion.platform.core.api.YouVersionNetworkException]. That asymmetry is
+     * deliberate and matches the other YouVersion Platform SDKs.
+     *
+     * A result the platform returns that does not name a book, chapter and verse is dropped, so that one malformed
+     * entry does not cost the reader the rest of the results.
+     *
+     * @param query The text to search for. It must be between 1 and 100 grapheme clusters, so that it is accepted or
+     *     rejected identically on every platform.
+     * @param bibleId The identifier of the Bible version to search. It must be greater than zero.
+     * @param languageRanges An ordered list of canonical BCP 47 language tags, such as `en-US`, or `*` to match
+     *     all languages. It must not be empty.
+     * @param userIntent The kind of thing the reader is believed to be looking for, used to rank the results.
+     *     Defaults to [SearchUserIntent.unknown].
+     * @param fields The kinds of result to return — `verses`, `topics`, or both. Defaults to empty, which asks for
+     *     every kind. Name only the kinds you intend to display, so that you are not paying for results you discard.
+     * @return The matching [SearchResults]. Unified results do not page.
+     * @throws IllegalArgumentException if [query] or [bibleId] is outside the range stated above, or if
+     *     [languageRanges] is empty or holds a range that is neither `*` nor a well-formed BCP 47 tag. An argument
+     *     error is a mistake in the calling code rather than a network condition, so it is reported separately from
+     *     one.
+     * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
+     */
+    suspend fun unified(
+        query: String,
+        bibleId: Int,
+        languageRanges: List<String>,
+        userIntent: SearchUserIntent = SearchUserIntent.unknown,
+        fields: List<String> = emptyList(),
+    ): SearchResults
 }

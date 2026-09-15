@@ -1,6 +1,7 @@
 package com.youversion.platform.core.search.api
 
 import com.youversion.platform.core.api.buildYouVersionUrlString
+import com.youversion.platform.core.api.fields
 import com.youversion.platform.core.api.pageSize
 import com.youversion.platform.core.api.pageToken
 import com.youversion.platform.core.api.parameter
@@ -8,6 +9,7 @@ import com.youversion.platform.core.api.parseApiBody
 import com.youversion.platform.core.api.parseApiResponse
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.search.models.SearchQuery
+import com.youversion.platform.core.search.models.SearchResults
 import com.youversion.platform.core.search.models.SearchTopic
 import com.youversion.platform.core.search.models.SearchUserIntent
 import com.youversion.platform.core.search.models.TopicSearchResults
@@ -79,6 +81,26 @@ internal object SearchEndpoints : SearchApi {
             languageRanges(languageRanges)
         }
 
+    /**
+     * The address of a unified search for [query] in the Bible version identified by [bibleId] and in the first of
+     * [languageRanges] the platform supports, narrowed to the result kinds named by [fields].
+     */
+    fun searchUnifiedUrl(
+        query: String,
+        bibleId: Int,
+        languageRanges: List<String>,
+        userIntent: SearchUserIntent,
+        fields: List<String>,
+    ): String =
+        buildYouVersionUrlString {
+            path("/v1/search-unified")
+            parameter("query", query)
+            parameter("bible_id", bibleId)
+            languageRanges(languageRanges)
+            parameter("user_intent", userIntent.rawValue)
+            fields(fields)
+        }
+
     override suspend fun suggestedQueries(
         query: String,
         languageRanges: List<String>,
@@ -124,7 +146,31 @@ internal object SearchEndpoints : SearchApi {
         val response =
             parseApiBody<TopicSearchResponse>(httpClient.get(searchTopicsUrl(query, languageRanges)))
         return TopicSearchResults(
-            topics = response.topics.map { SearchTopic(id = it.id, text = it.text, subtopics = it.subtopics) },
+            topics = response.topics.map { it.searchTopic() },
+            didYouMean = response.didYouMean,
+            searchInsteadFor = response.searchInsteadFor,
+        )
+    }
+
+    override suspend fun unified(
+        query: String,
+        bibleId: Int,
+        languageRanges: List<String>,
+        userIntent: SearchUserIntent,
+        fields: List<String>,
+    ): SearchResults {
+        requireValidQueryLength(query)
+        require(bibleId > 0) { "bibleId must be greater than zero" }
+        requireValidLanguageRanges(languageRanges)
+
+        val response =
+            parseApiBody<UnifiedSearchResponse>(
+                httpClient.get(searchUnifiedUrl(query, bibleId, languageRanges, userIntent, fields)),
+            )
+        return SearchResults(
+            references = response.references.mapNotNull { it.bibleReference(bibleId) },
+            topics = response.topics.map { it.searchTopic() },
+            userIntent = response.userIntent?.let(::SearchUserIntent),
             didYouMean = response.didYouMean,
             searchInsteadFor = response.searchInsteadFor,
         )
@@ -165,6 +211,9 @@ internal object SearchEndpoints : SearchApi {
             verse = verse,
         )
     }
+
+    private fun TopicSearchResultResponse.searchTopic(): SearchTopic =
+        SearchTopic(id = id, text = text, subtopics = subtopics)
 
     private fun requireValidQueryLength(query: String) {
         require(query.graphemeClusterCount in 1..100) { "query must be between 1 and 100 grapheme clusters" }
