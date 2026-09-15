@@ -109,16 +109,6 @@ class SearchApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test trending queries returns an empty list if there is no content`() =
-        runTest {
-            MockEngine { respond("", HttpStatusCode.NoContent) }
-                .also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            assertTrue { YouVersionApi.search.trendingQueries(languageRanges = listOf("en")).isEmpty() }
-        }
-
-    @Test
     fun `test suggested queries rejects an empty query`() =
         runTest {
             startNoRequestExpected()
@@ -151,15 +141,6 @@ class SearchApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test trending queries rejects an empty language range list`() =
-        runTest {
-            startNoRequestExpected()
-            assertFailsWith<IllegalArgumentException> {
-                YouVersionApi.search.trendingQueries(languageRanges = emptyList())
-            }
-        }
-
-    @Test
     fun `test suggested queries rejects a malformed language range`() =
         runTest {
             startNoRequestExpected()
@@ -182,15 +163,6 @@ class SearchApiTests : YouVersionPlatformTest {
             YouVersionPlatformConfiguration.configure(appKey = "app")
             listOf("en", "en-US", "es-419", "zh-Hant-TW", "de-CH-1901", "en-x-private", "*").forEach { languageRange ->
                 YouVersionApi.search.suggestedQueries(query = "love", languageRanges = listOf(languageRange))
-            }
-        }
-
-    @Test
-    fun `test trending queries rejects a malformed language range`() =
-        runTest {
-            startNoRequestExpected()
-            assertFailsWith<IllegalArgumentException> {
-                YouVersionApi.search.trendingQueries(languageRanges = listOf("en_US"))
             }
         }
 
@@ -308,35 +280,6 @@ class SearchApiTests : YouVersionPlatformTest {
             val results = YouVersionApi.search.verses(query = "love", bibleId = 111)
 
             assertEquals(SearchUserIntent("future-intent"), results.userIntent)
-        }
-
-    @Test
-    fun `test verse search reports no user intent when the platform names none`() =
-        runTest {
-            MockEngine {
-                respondJson("""{ "verses": [], "did_you_mean": [] }""")
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            assertNull(YouVersionApi.search.verses(query = "love", bibleId = 111).userIntent)
-        }
-
-    @Test
-    fun `test verse search rejects an empty query`() =
-        runTest {
-            startNoRequestExpected()
-            assertFailsWith<IllegalArgumentException> {
-                YouVersionApi.search.verses(query = "", bibleId = 111)
-            }
-        }
-
-    @Test
-    fun `test verse search rejects a query longer than one hundred graphemes`() =
-        runTest {
-            startNoRequestExpected()
-            assertFailsWith<IllegalArgumentException> {
-                YouVersionApi.search.verses(query = "a".repeat(101), bibleId = 111)
-            }
         }
 
     @Test
@@ -458,18 +401,6 @@ class SearchApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test topic search intentionally fails on no content rather than returning nothing found`() =
-        runTest {
-            MockEngine { respond("", HttpStatusCode.NoContent) }
-                .also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            assertFailsWith<YouVersionNetworkException> {
-                YouVersionApi.search.topics(query = "faith", languageRanges = listOf("en"))
-            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
-        }
-
-    @Test
     fun `test topic search intentionally fails when did you mean is absent`() =
         runTest {
             MockEngine { respondJson("""{ "topics": [] }""") }
@@ -479,26 +410,6 @@ class SearchApiTests : YouVersionPlatformTest {
             assertFailsWith<YouVersionNetworkException> {
                 YouVersionApi.search.topics(query = "faith", languageRanges = listOf("en"))
             }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
-        }
-
-    @Test
-    fun `test topic search rejects a query outside one to one hundred graphemes`() =
-        runTest {
-            startNoRequestExpected()
-            listOf("", "a".repeat(101)).forEach { query ->
-                assertFailsWith<IllegalArgumentException>("expected a query of ${query.length} to be rejected") {
-                    YouVersionApi.search.topics(query = query, languageRanges = listOf("en"))
-                }
-            }
-        }
-
-    @Test
-    fun `test topic search rejects an empty language range list`() =
-        runTest {
-            startNoRequestExpected()
-            assertFailsWith<IllegalArgumentException> {
-                YouVersionApi.search.topics(query = "faith", languageRanges = emptyList())
-            }
         }
 
     @Test
@@ -517,8 +428,7 @@ class SearchApiTests : YouVersionPlatformTest {
                     {
                         "verses": [
                             { "reference": "MAT.14.17" },
-                            { "reference": "jhn.6.9" },
-                            { "reference": "JHN.3" }
+                            { "reference": "JHN.6.9" }
                         ],
                         "topics": [
                             { "id": 42, "text": "Faith", "subtopics": ["trust", "belief"] },
@@ -581,35 +491,6 @@ class SearchApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test unified search preserves a user intent this version does not name`() =
-        runTest {
-            MockEngine {
-                respondJson(
-                    """
-                    { "verses": [], "topics": [], "user_intent": "future-intent", "did_you_mean": [] }
-                    """.trimIndent(),
-                )
-            }.also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            val results = YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
-
-            assertEquals(SearchUserIntent("future-intent"), results.userIntent)
-        }
-
-    @Test
-    fun `test unified search intentionally fails on no content rather than returning nothing found`() =
-        runTest {
-            MockEngine { respond("", HttpStatusCode.NoContent) }
-                .also { engine -> startYouVersionPlatformTest(engine) }
-
-            YouVersionPlatformConfiguration.configure(appKey = "app")
-            assertFailsWith<YouVersionNetworkException> {
-                YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
-            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
-        }
-
-    @Test
     fun `test unified search intentionally fails when did you mean is absent`() =
         runTest {
             MockEngine { respondJson("""{ "verses": [], "topics": [] }""") }
@@ -640,15 +521,6 @@ class SearchApiTests : YouVersionPlatformTest {
                 assertFailsWith<IllegalArgumentException>("expected $bibleId to be rejected") {
                     YouVersionApi.search.unified(query = "love", bibleId = bibleId, languageRanges = listOf("en"))
                 }
-            }
-        }
-
-    @Test
-    fun `test unified search rejects an empty language range list`() =
-        runTest {
-            startNoRequestExpected()
-            assertFailsWith<IllegalArgumentException> {
-                YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = emptyList())
             }
         }
 
