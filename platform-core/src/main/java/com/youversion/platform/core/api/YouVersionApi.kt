@@ -11,11 +11,14 @@ import com.youversion.platform.core.languages.api.LanguagesApi
 import com.youversion.platform.core.languages.api.LanguagesEndpoints
 import com.youversion.platform.core.organizations.api.OrganizationsApi
 import com.youversion.platform.core.organizations.api.OrganizationsEndpoints
+import com.youversion.platform.core.search.api.SearchApi
+import com.youversion.platform.core.search.api.SearchEndpoints
 import com.youversion.platform.core.users.api.UsersApi
 import com.youversion.platform.core.users.api.UsersEndpoints
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.votd.api.VotdApi
 import com.youversion.platform.core.votd.api.VotdEndpoints
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.security.MessageDigest
@@ -27,6 +30,7 @@ object YouVersionApi {
     val highlights: HighlightsApi = HighlightsEndpoints
     val languages: LanguagesApi = LanguagesEndpoints
     val organizations: OrganizationsApi = OrganizationsEndpoints
+    val search: SearchApi = SearchEndpoints
     val users: UsersApi = UsersEndpoints
     val votd: VotdApi = VotdEndpoints
 
@@ -110,6 +114,8 @@ object YouVersionApi {
                 expiryDate = result.expiryDate,
             )
             true
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
             false
         }

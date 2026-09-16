@@ -5,6 +5,9 @@ import io.ktor.client.call.body
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 internal suspend inline fun <reified T> parsePaginatedResponse(response: HttpResponse): PaginatedResponse<T> =
     parseApiBody<PaginatedResponse<T>>(response)
@@ -30,7 +33,10 @@ internal suspend inline fun <reified T> parseApiBody(response: HttpResponse): T 
 
     try {
         return response.body<T>()
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
+        currentCoroutineContext().ensureActive()
         throw invalidResponse(e)
     }
 }

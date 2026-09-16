@@ -5,9 +5,12 @@ import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
 import io.ktor.client.engine.mock.MockEngine
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -129,6 +132,82 @@ class BibleIntroRepositoryTests : YouVersionPlatformTest {
             )
 
             assertEquals(1, count.load())
+        }
+
+    /**
+     * The second caller coalesces onto the first caller's in-flight fetch, then the first caller is cancelled.
+     * The first request never responds, so the only way the second caller can reach a result is by re-driving
+     * the fetch itself once it sees a cancellation that is not its own.
+     */
+    @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test cancelling one caller does not cancel another coalesced onto the same fetch`() =
+        runTest {
+            val count = AtomicInt(0)
+            val firstRequestStarted = CompletableDeferred<Unit>()
+
+            MockEngine {
+                if (count.incrementAndFetch() == 1) {
+                    firstRequestStarted.complete(Unit)
+                    awaitCancellation()
+                }
+                respondJson(
+                    """
+                    {
+                        "id": "GEN.INTRO",
+                        "content": "<html>intro</html>",
+                        "reference": "Genesis Intro"
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            val first = launch { repository.introContent(206, "GEN.INTRO") }
+            firstRequestStarted.await()
+
+            val outcome = CompletableDeferred<Result<String>>()
+            launch { outcome.complete(runCatching { repository.introContent(206, "GEN.INTRO") }) }
+            runCurrent()
+
+            first.cancel()
+
+            assertEquals("<html>intro</html>", outcome.await().getOrThrow())
+            assertEquals(2, count.load())
+        }
+
+    /**
+     * Both callers share one fetch and that fetch fails. Unlike cancellation, a genuine failure belongs to
+     * every caller awaiting it, so both must see it. The single request count is what proves the second
+     * caller coalesced rather than quietly fetching for itself.
+     */
+    @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test a failed fetch is reported to every coalesced caller`() =
+        runTest {
+            val requestCount = AtomicInt(0)
+            val firstRequestStarted = CompletableDeferred<Unit>()
+            val failFirstRequest = CompletableDeferred<Unit>()
+
+            MockEngine {
+                requestCount.incrementAndFetch()
+                firstRequestStarted.complete(Unit)
+                failFirstRequest.await()
+                throw RuntimeException("Network error")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            val ownerOutcome = CompletableDeferred<Result<String>>()
+            launch { ownerOutcome.complete(runCatching { repository.introContent(206, "GEN.INTRO") }) }
+            firstRequestStarted.await()
+
+            val waiterOutcome = CompletableDeferred<Result<String>>()
+            launch { waiterOutcome.complete(runCatching { repository.introContent(206, "GEN.INTRO") }) }
+            runCurrent()
+
+            failFirstRequest.complete(Unit)
+
+            assertFailsWith<RuntimeException> { ownerOutcome.await().getOrThrow() }
+            assertFailsWith<RuntimeException> { waiterOutcome.await().getOrThrow() }
+            assertEquals(1, requestCount.load())
         }
 
     @OptIn(ExperimentalAtomicApi::class)

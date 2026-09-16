@@ -10,6 +10,8 @@ The SDK includes API access helpers, convenience classes and methods for working
 
 In addition to the README.md in this repo, more official documentation is at https://developers.youversion.com/sdks/kotlin
 
+`CONTEXT.md` at the repo root is the glossary of domain terms this SDK exposes. Consult it when naming things in code, comments, or docs: use the canonical term for a concept it defines, and not the wordings listed under `_Avoid_`.
+
 ## Module Architecture
 
 The project uses a multi-module architecture with clear separation of concerns:

@@ -5,8 +5,8 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.api.BiblesEndpoints
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.models.BibleVersion
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
+import com.youversion.platform.core.utilities.InFlightTasks
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.text.Collator
@@ -23,8 +23,7 @@ class BibleVersionRepository(
     private val temporaryCache: BibleVersionCache,
     private val persistentCache: BibleVersionCache,
 ) {
-    private val inFlightTasks = mutableMapOf<Int, Deferred<BibleVersion>>()
-    private val inFlightTasksMutex = Mutex()
+    private val inFlightTasks = InFlightTasks<Int, BibleVersion>()
 
     /** In-memory cache of bible versions which have been fetched by language */
     private var versionsInLanguage: MutableMap<String, List<BibleVersion>> = mutableMapOf()
@@ -51,35 +50,20 @@ class BibleVersionRepository(
         // Try to get from cache first
         try {
             versionIfCached(id)?.let { return it }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             println("BibleVersionRepository.version: $e")
         }
 
-        // If a fetch is already in-flight, await its result
-        inFlightTasksMutex
-            .withLock { inFlightTasks[id] }
-            ?.let { task ->
-                if (task.isActive) return task.await()
-            }
-
-        // Otherwise, create a new fetch task
-        val deferred = CompletableDeferred<BibleVersion>()
-        inFlightTasksMutex.withLock { inFlightTasks[id] = deferred }
-
-        return try {
+        return inFlightTasks.result(id) {
             val response = BiblesEndpoints.versionResponse(id)
             val version = response.value
             memoryCache.addVersion(version, response.expiresAt)
             if (response.isCacheable) {
                 temporaryCache.addVersion(version, response.expiresAt)
             }
-            deferred.complete(version)
             version
-        } catch (e: Exception) {
-            deferred.completeExceptionally(e)
-            throw e
-        } finally {
-            inFlightTasksMutex.withLock { inFlightTasks.remove(id) }
         }
     }
 

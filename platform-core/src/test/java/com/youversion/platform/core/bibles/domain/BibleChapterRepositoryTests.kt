@@ -7,9 +7,12 @@ import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
 import io.ktor.client.engine.mock.MockEngine
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -18,6 +21,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class BibleChapterRepositoryTests : YouVersionPlatformTest {
@@ -175,6 +179,142 @@ class BibleChapterRepositoryTests : YouVersionPlatformTest {
             // Assert another call would trigger a new request, asserting the task was removed
             repository.chapter(reference)
             assertEquals(2, count.load())
+        }
+
+    /**
+     * The second caller coalesces onto the first caller's in-flight fetch, then the first caller is cancelled.
+     * The first request never responds, so the only way the second caller can reach a result is by re-driving
+     * the fetch itself once it sees a cancellation that is not its own.
+     */
+    @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test cancelling one caller does not cancel another coalesced onto the same fetch`() =
+        runTest {
+            val requestCount = AtomicInt(0)
+            val firstRequestStarted = CompletableDeferred<Unit>()
+
+            MockEngine {
+                if (requestCount.incrementAndFetch() == 1) {
+                    firstRequestStarted.complete(Unit)
+                    awaitCancellation()
+                }
+                respondJson(
+                    """
+                    {
+                        "id": "JHN.3.1",
+                        "content": "content",
+                        "reference": "John 3:1"
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+
+            val first = launch { repository.chapter(reference) }
+            firstRequestStarted.await()
+
+            val outcome = CompletableDeferred<Result<String>>()
+            launch { outcome.complete(runCatching { repository.chapter(reference) }) }
+            runCurrent()
+
+            first.cancel()
+
+            assertEquals("content", outcome.await().getOrThrow())
+            assertEquals(2, requestCount.load())
+        }
+
+    /**
+     * Two callers coalesce onto one fetch and the owner is then cancelled. Exactly one survivor may take the
+     * fetch over; if claiming and joining were not one critical section, each survivor would install its own
+     * task and the chapter would be requested once per survivor. The re-driven request is held open until the
+     * other survivor has had its turn, so the second survivor has a task to find whatever order the two run in.
+     */
+    @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test only one caller re-drives a fetch whose owner was cancelled`() =
+        runTest {
+            val requestCount = AtomicInt(0)
+            val firstRequestStarted = CompletableDeferred<Unit>()
+            val secondRequestStarted = CompletableDeferred<Unit>()
+            val finishSecondRequest = CompletableDeferred<Unit>()
+
+            MockEngine {
+                when (requestCount.incrementAndFetch()) {
+                    1 -> {
+                        firstRequestStarted.complete(Unit)
+                        awaitCancellation()
+                    }
+
+                    2 -> {
+                        secondRequestStarted.complete(Unit)
+                        finishSecondRequest.await()
+                    }
+                }
+                respondJson(
+                    """
+                    {
+                        "id": "JHN.3.1",
+                        "content": "content",
+                        "reference": "John 3:1"
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+
+            val owner = launch { repository.chapter(reference) }
+            firstRequestStarted.await()
+
+            val outcomes = List(2) { CompletableDeferred<Result<String>>() }
+            outcomes.forEach { outcome -> launch { outcome.complete(runCatching { repository.chapter(reference) }) } }
+            runCurrent()
+
+            owner.cancel()
+            secondRequestStarted.await()
+            runCurrent()
+            finishSecondRequest.complete(Unit)
+
+            outcomes.forEach { outcome -> assertEquals("content", outcome.await().getOrThrow()) }
+            assertEquals(2, requestCount.load())
+        }
+
+    /**
+     * Both callers share one fetch and that fetch fails. Unlike cancellation, a genuine failure belongs to
+     * every caller awaiting it, so both must see it. The single request count is what proves the second
+     * caller coalesced rather than quietly fetching for itself.
+     */
+    @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
+    @Test
+    fun `test a failed fetch is reported to every coalesced caller`() =
+        runTest {
+            val requestCount = AtomicInt(0)
+            val firstRequestStarted = CompletableDeferred<Unit>()
+            val failFirstRequest = CompletableDeferred<Unit>()
+
+            MockEngine {
+                requestCount.incrementAndFetch()
+                firstRequestStarted.complete(Unit)
+                failFirstRequest.await()
+                throw RuntimeException("Network error")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 1)
+
+            val ownerOutcome = CompletableDeferred<Result<String>>()
+            launch { ownerOutcome.complete(runCatching { repository.chapter(reference) }) }
+            firstRequestStarted.await()
+
+            val waiterOutcome = CompletableDeferred<Result<String>>()
+            launch { waiterOutcome.complete(runCatching { repository.chapter(reference) }) }
+            runCurrent()
+
+            failFirstRequest.complete(Unit)
+
+            assertFailsWith<RuntimeException> { ownerOutcome.await().getOrThrow() }
+            assertFailsWith<RuntimeException> { waiterOutcome.await().getOrThrow() }
+            assertEquals(1, requestCount.load())
         }
 
     // ----- removeVersionChapters
