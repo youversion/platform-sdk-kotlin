@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/youversion/platform-sdk-kotlin/compare/2.0.0...2.1.0) (2026-09-16)
+
+
+### Features
+
+* **core:** add search to the core layer ([16d6d49](https://github.com/youversion/platform-sdk-kotlin/commit/16d6d49f90bedc144b2032d3c2f4bcdb4030900d))
+
 # [2.0.0](https://github.com/youversion/platform-sdk-kotlin/compare/1.10.1...2.0.0) (2026-09-10)
 
 2.0.0 breaks compatibility in all three modules. Changes are grouped by the
