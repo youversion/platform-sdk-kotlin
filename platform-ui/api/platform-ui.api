@@ -358,6 +358,12 @@ public final class com/youversion/platform/ui/views/components/ComposableSinglet
 	public final fun getLambda$537588532$platform_ui_release ()Lkotlin/jvm/functions/Function2;
 }
 
+public final class com/youversion/platform/ui/views/components/ComposableSingletons$SearchBarKt {
+	public static final field INSTANCE Lcom/youversion/platform/ui/views/components/ComposableSingletons$SearchBarKt;
+	public fun <init> ()V
+	public final fun getLambda$781335688$platform_ui_release ()Lkotlin/jvm/functions/Function2;
+}
+
 public final class com/youversion/platform/ui/views/rendering/BibleTextBlock {
 	public static final field $stable I
 	public synthetic fun <init> (Ljava/util/UUID;Landroidx/compose/ui/text/AnnotatedString;ILjava/util/List;IIFFILjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
