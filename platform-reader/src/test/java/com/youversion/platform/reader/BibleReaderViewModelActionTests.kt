@@ -65,6 +65,14 @@ class BibleReaderViewModelActionTests {
             )
     }
 
+    private fun verseReference(verse: Int) =
+        BibleReference(
+            versionId = defaultReference.versionId,
+            bookUSFM = defaultReference.bookUSFM,
+            chapter = defaultReference.chapter,
+            verse = verse,
+        )
+
     @AfterTest
     fun teardown() {
         Dispatchers.resetMain()
@@ -215,5 +223,40 @@ class BibleReaderViewModelActionTests {
 
         assertEquals(charcoalTheme.colorScheme, BibleReaderTheme.selectedColorScheme.value)
         verify { userSettingsRepository.readerThemeId = charcoalTheme.id }
+    }
+
+    // ----- Scroll Target
+
+    @Test
+    fun `ScrollToReference stages the reference on state`() {
+        val verse = verseReference(12)
+
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollToReference(verse))
+
+        assertEquals(verse, viewModel.state.value.scrollTargetReference)
+    }
+
+    @Test
+    fun `ScrollToReference replaces an unconsumed staged reference`() {
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollToReference(verseReference(3)))
+
+        val later = verseReference(9)
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollToReference(later))
+
+        assertEquals(later, viewModel.state.value.scrollTargetReference)
+    }
+
+    @Test
+    fun `ScrollTargetReached clears the staged reference`() {
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollToReference(verseReference(12)))
+
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+
+        assertNull(viewModel.state.value.scrollTargetReference)
+    }
+
+    @Test
+    fun `no scroll target is staged by default`() {
+        assertNull(viewModel.state.value.scrollTargetReference)
     }
 }
