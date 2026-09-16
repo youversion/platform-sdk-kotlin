@@ -2,15 +2,11 @@
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_banner_dismiss_content_description">關閉</string>
-    <string name="yv_banner_offline_icon">離線圖示</string>
-    <string name="yv_banner_offline_message">你已失去網路連線。請重新連線並下載聖經譯本以繼續離線使用。</string>
-    <string name="yv_banner_version_unavailable_icon">譯本無法使用圖示</string>
-    <string name="yv_banner_version_unavailable_message">你先前選擇的聖經譯本無法使用。已為你選擇另一個類似的譯本。</string>
+    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_message">你的連線發生問題。請在上線時才下載聖經譯本。</string>
+    <string name="yv_banner_version_unavailable_icon">譯本無法使用</string>
+    <string name="yv_banner_version_unavailable_message">你先前選擇的聖經譯本無法使用。請切換至其他譯本。</string>
     <string name="yv_book_chapter_picker_title">書卷</string>
-    <string name="yv_cancel">取消</string>
-    <string name="yv_data_exchange_continue">繼續</string>
-    <string name="yv_data_exchange_highlights_explanation">YouVersion 將在儲存醒目標示前要求你授予存取權限。</string>
-    <string name="yv_data_exchange_highlights_question">允許此應用程式將醒目標示儲存至 YouVersion？</string>
     <string name="yv_font_selected_check">已選擇字型勾選</string>
     <string name="yv_font_settings_label">字型</string>
     <string name="yv_footnote_header_label">備註</string>

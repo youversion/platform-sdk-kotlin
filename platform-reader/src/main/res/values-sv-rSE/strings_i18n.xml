@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
-    <string name="yv_banner_dismiss_content_description">Avvisa</string>
-    <string name="yv_banner_offline_icon">Ikon för offlinestatus</string>
-    <string name="yv_banner_offline_message">Du har tappat internetanslutningen. Anslut igen och ladda ner en bibelöversättning för att kunna fortsätta offline.</string>
-    <string name="yv_banner_version_unavailable_icon">Ikon för otillgänglig version</string>
-    <string name="yv_banner_version_unavailable_message">Den bibelöversättning du tidigare valt är inte tillgänglig. En annan liknande bibelöversättning har valts för dig.</string>
+    <string name="yv_banner_dismiss_content_description">Stäng</string>
+    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_message">Vi har problem med din anslutning. Ladda gärna ner en bibelversion när du är online.</string>
+    <string name="yv_banner_version_unavailable_icon">Översättningen är inte tillgänglig</string>
+    <string name="yv_banner_version_unavailable_message">Den bibelöversättning du tidigare valt är inte tillgänglig. Byt till en annan.</string>
     <string name="yv_book_chapter_picker_title">Böcker</string>
-    <string name="yv_cancel">Avbryt</string>
-    <string name="yv_data_exchange_continue">Fortsätt</string>
-    <string name="yv_data_exchange_highlights_explanation">YouVersion kommer att be dig bevilja åtkomst innan markeringar kan sparas.</string>
-    <string name="yv_data_exchange_highlights_question">Tillåt den här appen att spara markeringar med YouVersion?</string>
     <string name="yv_font_selected_check">Markering för valt teckensnitt</string>
     <string name="yv_font_settings_label">Teckensnitt</string>
     <string name="yv_footnote_header_label">Fotnot</string>
