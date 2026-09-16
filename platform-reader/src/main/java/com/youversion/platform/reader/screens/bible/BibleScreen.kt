@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.BottomSheetScaffold
@@ -78,12 +78,17 @@ import com.youversion.platform.ui.signin.SignOutConfirmationAlert
 import com.youversion.platform.ui.signin.rememberSignIn
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.BibleIntroText
-import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import com.youversion.platform.ui.views.BibleTextLoadingPhase
 import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.SignInWithYouVersionPromptSheet
+import com.youversion.platform.ui.views.bibleTextBlocks
+import com.youversion.platform.ui.views.rememberBibleTextBlocksState
 import kotlinx.coroutines.launch
+
+// The chapter header is the one item the list emits ahead of the blocks, so a block's scroll target is its own
+// index plus this.
+private const val CHAPTER_HEADER_ITEM_COUNT = 1
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -201,9 +206,40 @@ internal fun BibleScreen(
         }
     }
 
-    var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
+    var introLoadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
     var hasIntroOwnTitle by remember { mutableStateOf(false) }
     var isBannerDismissed by rememberSaveable { mutableStateOf(false) }
+
+    val bibleTextOptions =
+        BibleTextOptions(
+            fontFamily = state.fontFamily,
+            fontSize = state.fontSize,
+            lineSpacingFraction = state.lineSpacingFraction,
+            footnoteMode = BibleTextFootnoteMode.IMAGE,
+        )
+    val introPassageId = state.introPassageId
+    val isShowingIntro = state.isViewingIntro && introPassageId != null
+
+    val chapterBlocks =
+        if (isShowingIntro) {
+            null
+        } else {
+            rememberBibleTextBlocksState(reference = state.bibleReference, textOptions = bibleTextOptions)
+        }
+    val loadingPhase = chapterBlocks?.loadingPhase ?: introLoadingPhase
+    val chapterListState = rememberLazyListState()
+
+    LaunchedEffect(state.scrollTargetReference, chapterBlocks?.loadingPhase) {
+        val target = state.scrollTargetReference ?: return@LaunchedEffect
+        val blocks = chapterBlocks ?: return@LaunchedEffect
+        if (blocks.loadingPhase != BibleTextLoadingPhase.SUCCESS || !state.bibleReference.contains(target)) {
+            return@LaunchedEffect
+        }
+        blocks.indexOfBlockContaining(target)?.let { index ->
+            chapterListState.scrollToItem(CHAPTER_HEADER_ITEM_COUNT + index)
+        }
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+    }
 
     val bannerType =
         when (loadingPhase) {
@@ -337,84 +373,56 @@ internal fun BibleScreen(
             ) { innerPadding ->
                 Box(modifier = Modifier.padding(innerPadding)) {
                     Column {
-                        Column(
+                        LazyColumn(
+                            state = chapterListState,
                             modifier =
                                 Modifier
                                     .padding(horizontal = 32.dp)
-                                    .weight(1f)
-                                    .verticalScroll(rememberScrollState()),
+                                    .weight(1f),
                         ) {
-                            Spacer(modifier = Modifier.height(32.dp))
-                            val isHeaderVisible =
-                                state.bookName.isNotEmpty() && !(state.isViewingIntro && hasIntroOwnTitle)
-                            if (isHeaderVisible) {
-                                Text(
-                                    text = state.bookName,
-                                    style =
-                                        TextStyle(
-                                            fontFamily = state.fontFamily,
-                                            fontSize = state.fontSize * 1.3,
-                                            color = BibleReaderTheme.colorScheme.textMuted,
-                                        ),
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-                                Text(
-                                    text =
-                                        if (state.isViewingIntro) {
-                                            stringResource(R.string.intro_chapter_label)
-                                        } else {
-                                            state.chapterNumber.toString()
-                                        },
-                                    style =
-                                        TextStyle(
-                                            fontFamily = state.fontFamily,
-                                            fontSize = state.fontSize * 2.2,
-                                            color = BibleReaderTheme.colorScheme.textMuted,
-                                        ),
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-                                Spacer(modifier = Modifier.height(24.dp))
-                            }
-                            val introPassageId = state.introPassageId
-                            if (state.isViewingIntro && introPassageId != null) {
-                                BibleIntroText(
-                                    versionId = state.bibleReference.versionId,
-                                    bookUSFM = state.introBookUSFM ?: state.bibleReference.bookUSFM,
-                                    passageId = introPassageId,
-                                    textOptions =
-                                        BibleTextOptions(
-                                            fontFamily = state.fontFamily,
-                                            fontSize = state.fontSize,
-                                            lineSpacingFraction = state.lineSpacingFraction,
-                                            footnoteMode = BibleTextFootnoteMode.IMAGE,
-                                        ),
-                                    onFootnoteTap = { footnotes ->
-                                        viewModel.onAction(
-                                            BibleReaderViewModel.Action.OpenIntroFootnotes(
-                                                footnotes = footnotes,
+                            item {
+                                Spacer(modifier = Modifier.height(32.dp))
+                                val isHeaderVisible =
+                                    state.bookName.isNotEmpty() && !(isShowingIntro && hasIntroOwnTitle)
+                                if (isHeaderVisible) {
+                                    Text(
+                                        text = state.bookName,
+                                        style =
+                                            TextStyle(
+                                                fontFamily = state.fontFamily,
+                                                fontSize = state.fontSize * 1.3,
+                                                color = BibleReaderTheme.colorScheme.textMuted,
                                             ),
-                                        )
-                                    },
-                                    onStateChange = { loadingPhase = it },
-                                    onHasOwnTitleChange = { hasIntroOwnTitle = it },
-                                )
-                            } else {
-                                BibleText(
-                                    textOptions =
-                                        BibleTextOptions(
-                                            fontFamily = state.fontFamily,
-                                            fontSize = state.fontSize,
-                                            lineSpacingFraction = state.lineSpacingFraction,
-                                            footnoteMode = BibleTextFootnoteMode.IMAGE,
-                                        ),
-                                    reference = state.bibleReference,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                    Text(
+                                        text =
+                                            if (isShowingIntro) {
+                                                stringResource(R.string.intro_chapter_label)
+                                            } else {
+                                                state.chapterNumber.toString()
+                                            },
+                                        style =
+                                            TextStyle(
+                                                fontFamily = state.fontFamily,
+                                                fontSize = state.fontSize * 2.2,
+                                                color = BibleReaderTheme.colorScheme.textMuted,
+                                            ),
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                }
+                            }
+                            if (chapterBlocks != null) {
+                                bibleTextBlocks(
+                                    state = chapterBlocks,
+                                    textOptions = bibleTextOptions,
                                     selectedVerses = state.selectedVerses,
                                     onVerseTap = { reference, _ ->
                                         viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(reference))
                                     },
-                                    onStateChange = { loadingPhase = it },
                                     onFootnoteTap = { reference, footnotes ->
                                         viewModel.onAction(
                                             BibleReaderViewModel.Action.OpenFootnotes(
@@ -424,11 +432,31 @@ internal fun BibleScreen(
                                         )
                                     },
                                 )
+                            } else if (introPassageId != null) {
+                                item {
+                                    BibleIntroText(
+                                        versionId = state.bibleReference.versionId,
+                                        bookUSFM = state.introBookUSFM ?: state.bibleReference.bookUSFM,
+                                        passageId = introPassageId,
+                                        textOptions = bibleTextOptions,
+                                        onFootnoteTap = { footnotes ->
+                                            viewModel.onAction(
+                                                BibleReaderViewModel.Action.OpenIntroFootnotes(
+                                                    footnotes = footnotes,
+                                                ),
+                                            )
+                                        },
+                                        onStateChange = { introLoadingPhase = it },
+                                        onHasOwnTitleChange = { hasIntroOwnTitle = it },
+                                    )
+                                }
                             }
-                            if (loadingPhase == BibleTextLoadingPhase.SUCCESS) {
-                                Copyright(version = state.bibleVersion)
+                            item {
+                                if (loadingPhase == BibleTextLoadingPhase.SUCCESS) {
+                                    Copyright(version = state.bibleVersion)
+                                }
+                                Spacer(modifier = Modifier.height(48.dp))
                             }
-                            Spacer(modifier = Modifier.height(48.dp))
                         }
                         BibleReaderPassageSelection(
                             bookAndChapter = state.bookAndChapter(stringResource(R.string.intro_chapter_label)),

@@ -306,6 +306,14 @@ internal class BibleReaderViewModel(
                 toggleVerseSelection(action.reference)
             }
 
+            is Action.ScrollToReference -> {
+                _state.update { it.copy(scrollTargetReference = action.reference) }
+            }
+
+            is Action.ScrollTargetReached -> {
+                _state.update { it.copy(scrollTargetReference = null) }
+            }
+
             is Action.ClearVerseSelection -> {
                 clearVerseSelection()
             }
@@ -688,6 +696,7 @@ internal class BibleReaderViewModel(
         val introFootnotes: List<AnnotatedString> = emptyList(),
         val introBookUSFM: String? = null,
         val introPassageId: String? = null,
+        val scrollTargetReference: BibleReference? = null,
     ) {
         val isViewingIntro: Boolean
             get() = introBookUSFM != null && introPassageId != null
@@ -769,6 +778,14 @@ internal class BibleReaderViewModel(
         data class OnVerseTap(
             val reference: BibleReference,
         ) : Action
+
+        /** Stage a reference the reader should arrive scrolled to, now or as soon as its chapter has loaded. */
+        data class ScrollToReference(
+            val reference: BibleReference,
+        ) : Action
+
+        /** The staged scroll target has been scrolled to; clear it so it cannot fire a second time. */
+        data object ScrollTargetReached : Action
 
         data object ClearVerseSelection : Action
 
