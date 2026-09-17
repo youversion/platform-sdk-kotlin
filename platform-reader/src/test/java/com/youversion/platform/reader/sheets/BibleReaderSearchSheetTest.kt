@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.filter
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
@@ -25,6 +26,7 @@ import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleChapter
 import com.youversion.platform.core.bibles.models.BibleVerse
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.reader.BibleReaderSearchViewModel.SearchStatus
 import com.youversion.platform.reader.BibleReaderSearchViewModel.State
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
@@ -58,12 +60,15 @@ class BibleReaderSearchSheetTest {
         onSubmit: () -> Unit = {},
         onRequestResultText: (BibleReference) -> Unit = {},
         onLoadNextPage: () -> Unit = {},
+        onSelectSuggestedQuery: (SearchQuery) -> Unit = {},
         results: List<BibleReference> = emptyList(),
         searchVersion: BibleVersion? = kjv,
         status: SearchStatus = SearchStatus.IDLE,
         nextPageToken: String? = null,
         isLoadingNextPage: Boolean = false,
         hasNextPageLoadError: Boolean = false,
+        suggestedQueries: List<SearchQuery> = emptyList(),
+        isLoadingSuggestedQueries: Boolean = false,
     ) {
         loadingNextPage.value = isLoadingNextPage
         nextPageLoadError.value = hasNextPageLoadError
@@ -76,6 +81,7 @@ class BibleReaderSearchSheetTest {
                     onSubmit = onSubmit,
                     onRequestResultText = onRequestResultText,
                     onLoadNextPage = onLoadNextPage,
+                    onSelectSuggestedQuery = onSelectSuggestedQuery,
                     state =
                         State(
                             query = query.value,
@@ -86,6 +92,8 @@ class BibleReaderSearchSheetTest {
                             nextPageToken = nextPageToken,
                             isLoadingNextPage = loadingNextPage.value,
                             hasNextPageLoadError = nextPageLoadError.value,
+                            suggestedQueries = suggestedQueries,
+                            isLoadingSuggestedQueries = isLoadingSuggestedQueries,
                         ),
                 )
             }
@@ -338,6 +346,47 @@ class BibleReaderSearchSheetTest {
         composeTestRule.onNodeWithContentDescription(SEARCHING_LABEL).assertDoesNotExist()
     }
 
+    @Test
+    fun `the queries on offer are listed before anything has been searched for`() {
+        renderSheet(suggestedQueries = listOf(love, peace))
+
+        composeTestRule.onNodeWithText(love.text).assertIsDisplayed()
+        composeTestRule.onNodeWithText(peace.text).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a query on offer is taken up as the search and drops the keyboard`() {
+        var taken: SearchQuery? = null
+        renderSheet(
+            onSelectSuggestedQuery = { taken = it },
+            suggestedQueries = listOf(love, peace),
+        )
+
+        composeTestRule.onNodeWithText(love.text).performClick()
+
+        assertEquals(love, taken)
+        composeTestRule.onNode(hasSetTextAction()).assertIsNotFocused()
+    }
+
+    @Test
+    fun `a fetch of the queries on offer is announced`() {
+        renderSheet(isLoadingSuggestedQueries = true)
+
+        composeTestRule.onNodeWithContentDescription(SEARCHING_LABEL).assertIsDisplayed()
+    }
+
+    @Test
+    fun `nothing is offered once the results are on screen`() {
+        renderSheet(
+            results = listOf(john316),
+            status = SearchStatus.COMPLETED,
+            suggestedQueries = listOf(love, peace),
+        )
+
+        composeTestRule.onNodeWithTag(SEARCH_SUGGESTED_QUERIES_TEST_TAG).assertDoesNotExist()
+        composeTestRule.onNodeWithText(love.text).assertDoesNotExist()
+    }
+
     private companion object {
         /** The value of the shared UI module's `clear_search` key, the clear button's own label. */
         const val CLEAR_LABEL = "Clear search"
@@ -390,6 +439,9 @@ class BibleReaderSearchSheetTest {
                         ),
                     ),
             )
+
+        val love = SearchQuery(text = "love", source = null)
+        val peace = SearchQuery(text = "peace", source = null)
 
         val john316 = BibleReference(versionId = 1, bookUSFM = "JHN", chapter = 3, verse = 16)
         val psalm231 = BibleReference(versionId = 1, bookUSFM = "PSA", chapter = 23, verse = 1)

@@ -520,6 +520,11 @@ internal fun BibleScreen(
                             onLoadNextPage = {
                                 searchViewModel.onAction(BibleReaderSearchViewModel.Action.LoadNextPage)
                             },
+                            onSelectSuggestedQuery = { query ->
+                                searchViewModel.onAction(
+                                    BibleReaderSearchViewModel.Action.SelectSuggestedQuery(query),
+                                )
+                            },
                             state = searchState,
                         )
                     }
