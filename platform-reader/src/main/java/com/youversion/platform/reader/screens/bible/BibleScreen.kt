@@ -1,6 +1,7 @@
 package com.youversion.platform.reader.screens.bible
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -84,6 +85,7 @@ import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.SignInWithYouVersionPromptSheet
 import com.youversion.platform.ui.views.bibleTextBlocks
 import com.youversion.platform.ui.views.rememberBibleTextBlocksState
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 
 // The chapter header is the one item the list emits ahead of the blocks, so a block's scroll target is its own
@@ -239,6 +241,12 @@ internal fun BibleScreen(
             chapterListState.scrollToItem(CHAPTER_HEADER_ITEM_COUNT + index)
         }
         viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+    }
+
+    LaunchedEffect(chapterListState) {
+        chapterListState.interactionSource.interactions
+            .filterIsInstance<DragInteraction.Start>()
+            .collect { viewModel.onAction(BibleReaderViewModel.Action.ClearFocusedReference) }
     }
 
     val bannerType =
@@ -420,6 +428,7 @@ internal fun BibleScreen(
                                     state = chapterBlocks,
                                     textOptions = bibleTextOptions,
                                     selectedVerses = state.selectedVerses,
+                                    focusedReference = state.focusedReference,
                                     onVerseTap = { reference, _ ->
                                         viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(reference))
                                     },

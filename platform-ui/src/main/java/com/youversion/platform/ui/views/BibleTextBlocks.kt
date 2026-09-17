@@ -15,9 +15,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -184,13 +186,15 @@ fun rememberBibleTextBlocksState(
  * Emits the chapter held by [state] as one item per block, so a host's own header and footer can share a list with
  * it and a block can be scrolled to by its position.
  *
- * Until the load succeeds this is a single placeholder item instead.
+ * Until the load succeeds this is a single placeholder item instead. A non-null [focusedReference] draws the
+ * block covering it at full strength and dims every other one.
  */
 @PlatformInternalApi
 fun LazyListScope.bibleTextBlocks(
     state: BibleTextBlocksState,
     textOptions: BibleTextOptions,
     selectedVerses: Set<BibleReference> = emptySet(),
+    focusedReference: BibleReference? = null,
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)? = null,
     onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)? = null,
 ) {
@@ -199,9 +203,16 @@ fun LazyListScope.bibleTextBlocks(
         return
     }
 
-    itemsIndexed(state.visibleBlocks) { index, _ ->
+    itemsIndexed(state.visibleBlocks) { index, block ->
+        val focusModifier =
+            when {
+                focusedReference == null -> Modifier
+                block.covers(focusedReference) -> Modifier.testTag("focused_block")
+                else -> Modifier.alpha(DIMMED_BLOCK_ALPHA).testTag("dimmed_block")
+            }
+
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().then(focusModifier),
             horizontalAlignment = state.horizontalAlignment,
         ) {
             BibleBlockContent(
@@ -318,3 +329,5 @@ private fun BibleTextBlock.covers(reference: BibleReference): Boolean {
             ).any { BibleReference.fromAnnotation(it.item).overlaps(reference) }
     }
 }
+
+private const val DIMMED_BLOCK_ALPHA = 0.4f

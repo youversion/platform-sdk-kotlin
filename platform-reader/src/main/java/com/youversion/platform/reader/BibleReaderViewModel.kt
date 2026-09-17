@@ -80,7 +80,12 @@ internal class BibleReaderViewModel(
         get() = _state.value.bibleReference
         set(value) {
             bibleReaderRepository.lastBibleReference = value
-            _state.update { it.copy(bibleReference = value) }
+            _state.update {
+                it.copy(
+                    bibleReference = value,
+                    focusedReference = it.focusedReference?.takeIf { focus -> value.contains(focus) },
+                )
+            }
         }
 
     internal var bibleVersion: BibleVersion?
@@ -189,6 +194,7 @@ internal class BibleReaderViewModel(
     fun onAction(action: Action) {
         when (action) {
             is Action.OpenFontSettings -> {
+                clearFocusedReference()
                 _state.update { it.copy(showingFontList = true) }
             }
 
@@ -213,6 +219,7 @@ internal class BibleReaderViewModel(
             }
 
             is Action.OpenFootnotes -> {
+                clearFocusedReference()
                 openFootnotes(action)
             }
 
@@ -221,6 +228,7 @@ internal class BibleReaderViewModel(
             }
 
             is Action.OpenIntroFootnotes -> {
+                clearFocusedReference()
                 openIntroFootnotes(action)
             }
 
@@ -256,6 +264,7 @@ internal class BibleReaderViewModel(
                                     it.copy(
                                         introBookUSFM = nextReference.bookUSFM,
                                         introPassageId = nextBook.intro?.passageId,
+                                        focusedReference = null,
                                     )
                                 }
                             } else {
@@ -288,6 +297,7 @@ internal class BibleReaderViewModel(
                             it.copy(
                                 introBookUSFM = bibleReference.bookUSFM,
                                 introPassageId = currentBook.intro?.passageId,
+                                focusedReference = null,
                             )
                         }
                     } else {
@@ -303,6 +313,7 @@ internal class BibleReaderViewModel(
             }
 
             is Action.OnVerseTap -> {
+                clearFocusedReference()
                 toggleVerseSelection(action.reference)
             }
 
@@ -312,6 +323,19 @@ internal class BibleReaderViewModel(
 
             is Action.ScrollTargetReached -> {
                 _state.update { it.copy(scrollTargetReference = null) }
+            }
+
+            is Action.FocusReference -> {
+                val isFocusable =
+                    action.reference.verseStart != null &&
+                        _state.value.bibleReference.contains(action.reference)
+                if (isFocusable) {
+                    _state.update { it.copy(focusedReference = action.reference) }
+                }
+            }
+
+            is Action.ClearFocusedReference -> {
+                clearFocusedReference()
             }
 
             is Action.ClearVerseSelection -> {
@@ -404,6 +428,10 @@ internal class BibleReaderViewModel(
                 showVerseActionSheet = false,
             )
         }
+    }
+
+    private fun clearFocusedReference() {
+        _state.update { it.copy(focusedReference = null) }
     }
 
     private fun addHighlight(hexColor: String) {
@@ -697,6 +725,8 @@ internal class BibleReaderViewModel(
         val introBookUSFM: String? = null,
         val introPassageId: String? = null,
         val scrollTargetReference: BibleReference? = null,
+        /** The verse the reader is being pointed at, drawn at full strength while the rest of the chapter dims. */
+        val focusedReference: BibleReference? = null,
     ) {
         val isViewingIntro: Boolean
             get() = introBookUSFM != null && introPassageId != null
@@ -786,6 +816,20 @@ internal class BibleReaderViewModel(
 
         /** The staged scroll target has been scrolled to; clear it so it cannot fire a second time. */
         data object ScrollTargetReached : Action
+
+        /**
+         * Point the reader at [reference], dimming the rest of the chapter around it.
+         *
+         * Ignored unless [reference] names a verse in the chapter on display: a focus names one verse to stand
+         * out, and a chapter-wide or off-chapter focus would dim everything with nothing left at full strength.
+         * Focus a verse after moving the reader to its chapter, never before.
+         */
+        data class FocusReference(
+            val reference: BibleReference,
+        ) : Action
+
+        /** Lift the focus, returning the chapter to full strength. */
+        data object ClearFocusedReference : Action
 
         data object ClearVerseSelection : Action
 

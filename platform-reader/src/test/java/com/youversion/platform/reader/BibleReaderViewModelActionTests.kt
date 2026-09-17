@@ -3,6 +3,9 @@ package com.youversion.platform.reader
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.bibles.models.BibleBook
+import com.youversion.platform.core.bibles.models.BibleBookIntro
+import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.ui.theme.ReaderTheme
@@ -37,6 +40,30 @@ class BibleReaderViewModelActionTests {
             chapter = 1,
         )
 
+    private val versionWithGenesisIntro =
+        BibleVersion(
+            id = 1,
+            abbreviation = "KJV",
+            books =
+                listOf(
+                    BibleBook(
+                        id = "GEN",
+                        title = "Genesis",
+                        fullTitle = null,
+                        abbreviation = null,
+                        canon = null,
+                        chapters = null,
+                        intro =
+                            BibleBookIntro(
+                                id = "GEN.intro",
+                                passageId = "GEN.intro",
+                                title = "Introduction",
+                            ),
+                    ),
+                ),
+            copyright = "Public Domain",
+        )
+
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
@@ -66,12 +93,8 @@ class BibleReaderViewModelActionTests {
     }
 
     private fun verseReference(verse: Int) =
-        BibleReference(
-            versionId = defaultReference.versionId,
-            bookUSFM = defaultReference.bookUSFM,
-            chapter = defaultReference.chapter,
-            verse = verse,
-        )
+        viewModel.state.value.bibleReference
+            .copy(verseStart = verse, verseEnd = verse)
 
     @AfterTest
     fun teardown() {
@@ -258,5 +281,130 @@ class BibleReaderViewModelActionTests {
     @Test
     fun `no scroll target is staged by default`() {
         assertNull(viewModel.state.value.scrollTargetReference)
+    }
+
+    // ----- Focused Reference
+
+    @Test
+    fun `FocusReference points the reader at the verse`() {
+        val verse = verseReference(12)
+
+        viewModel.onAction(BibleReaderViewModel.Action.FocusReference(verse))
+
+        assertEquals(verse, viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `FocusReference ignores a whole-chapter reference`() {
+        viewModel.onAction(BibleReaderViewModel.Action.FocusReference(defaultReference))
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `FocusReference ignores a verse outside the chapter on display`() {
+        val otherChapterVerse = verseReference(5).copy(chapter = viewModel.bibleReference.chapter + 1)
+
+        viewModel.onAction(BibleReaderViewModel.Action.FocusReference(otherChapterVerse))
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `ClearFocusedReference lifts the focus`() {
+        viewModel.onAction(BibleReaderViewModel.Action.FocusReference(verseReference(12)))
+
+        viewModel.onAction(BibleReaderViewModel.Action.ClearFocusedReference)
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `tapping a verse lifts the focus`() {
+        viewModel.onAction(BibleReaderViewModel.Action.FocusReference(verseReference(12)))
+
+        viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseReference(3)))
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `opening font settings lifts the focus`() {
+        viewModel.onAction(BibleReaderViewModel.Action.FocusReference(verseReference(12)))
+
+        viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings)
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `opening footnotes lifts the focus`() {
+        val verse = verseReference(12)
+        viewModel.onAction(BibleReaderViewModel.Action.FocusReference(verse))
+
+        viewModel.onAction(
+            BibleReaderViewModel.Action.OpenFootnotes(
+                reference = verse,
+                footnotes = listOf(AnnotatedString("a note")),
+            ),
+        )
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `opening intro footnotes lifts the focus`() {
+        viewModel.onAction(BibleReaderViewModel.Action.FocusReference(verseReference(12)))
+
+        viewModel.onAction(
+            BibleReaderViewModel.Action.OpenIntroFootnotes(footnotes = listOf(AnnotatedString("a note"))),
+        )
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `navigating to another chapter lifts the focus`() {
+        viewModel.onAction(BibleReaderViewModel.Action.FocusReference(verseReference(12)))
+
+        viewModel.bibleReference = verseReference(3).copy(chapter = 2)
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `navigating within the chapter that contains the focus keeps it`() {
+        val verse = verseReference(12)
+        viewModel.onAction(BibleReaderViewModel.Action.FocusReference(verse))
+
+        viewModel.bibleReference = viewModel.bibleReference
+
+        assertEquals(verse, viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `focusing a verse leaves the reader's own selection alone`() {
+        val selected = verseReference(3)
+        viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(selected))
+
+        viewModel.onAction(BibleReaderViewModel.Action.FocusReference(verseReference(12)))
+
+        assertEquals(setOf(selected), viewModel.state.value.selectedVerses)
+    }
+
+    @Test
+    fun `entering a book intro lifts the focus`() {
+        viewModel.bibleVersion = versionWithGenesisIntro
+        viewModel.onAction(BibleReaderViewModel.Action.FocusReference(verseReference(12)))
+
+        viewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter)
+
+        assertTrue(viewModel.state.value.isViewingIntro)
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `no reference is focused by default`() {
+        assertNull(viewModel.state.value.focusedReference)
     }
 }
