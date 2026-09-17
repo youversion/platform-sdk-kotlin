@@ -58,6 +58,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.reader.BibleReaderSearchViewModel
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.R
 import com.youversion.platform.reader.components.BibleReaderBanner
@@ -68,6 +69,7 @@ import com.youversion.platform.reader.components.PassageSelectionDefaults
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
 import com.youversion.platform.reader.sheets.BibleReaderIntroFootnotesSheet
+import com.youversion.platform.reader.sheets.BibleReaderSearchSheet
 import com.youversion.platform.reader.sheets.BibleReaderVerseActionSheet
 import com.youversion.platform.reader.sheets.DataExchangeConfirmationDialog
 import com.youversion.platform.reader.sheets.HighlightColor
@@ -115,6 +117,9 @@ internal fun BibleScreen(
 
     val signInViewModel = viewModel<SignInViewModel>()
     val signInState by signInViewModel.state.collectAsStateWithLifecycle()
+
+    val searchViewModel = viewModel<BibleReaderSearchViewModel>()
+    val searchState by searchViewModel.state.collectAsStateWithLifecycle()
 
     // A signed-in reader keeps the colors even where sign-in is disabled: they already have the account the
     // highlight needs, so there is nothing left to prompt for.
@@ -359,6 +364,10 @@ internal fun BibleScreen(
                         versionAbbreviation = state.versionAbbreviation,
                         scrollBehavior = topScrollBehavior,
                         onVersionClick = onVersionsClick,
+                        onSearchClick = {
+                            searchViewModel.onAction(BibleReaderSearchViewModel.Action.OpenSearch)
+                            viewModel.onAction(BibleReaderViewModel.Action.OpenSearch)
+                        },
                         onOpenHeaderMenu = { signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState) },
                         onFontSettingsClick = { viewModel.onAction(BibleReaderViewModel.Action.OpenFontSettings) },
                         onSignInClick = { launchSignIn() },
@@ -493,6 +502,17 @@ internal fun BibleScreen(
                             },
                             fontDefinition = state.selectedFontDefinition,
                             lineSpacingFraction = state.lineSpacingFraction,
+                        )
+                    }
+
+                    if (state.showingSearch) {
+                        BibleReaderSearchSheet(
+                            onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseSearch) },
+                            onQueryChange = { newQuery ->
+                                searchViewModel.onAction(BibleReaderSearchViewModel.Action.SetQuery(newQuery))
+                            },
+                            onSubmit = {},
+                            query = searchState.query,
                         )
                     }
 

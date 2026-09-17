@@ -121,6 +121,25 @@ class BibleReaderViewModelActionTests {
         assertFalse(viewModel.state.value.showingFontList)
     }
 
+    // ----- Search
+
+    @Test
+    fun `OpenSearch sets showingSearch to true`() {
+        viewModel.onAction(BibleReaderViewModel.Action.OpenSearch)
+
+        assertTrue(viewModel.state.value.showingSearch)
+    }
+
+    @Test
+    fun `CloseSearch sets showingSearch to false`() {
+        viewModel.onAction(BibleReaderViewModel.Action.OpenSearch)
+        assertTrue(viewModel.state.value.showingSearch)
+
+        viewModel.onAction(BibleReaderViewModel.Action.CloseSearch)
+
+        assertFalse(viewModel.state.value.showingSearch)
+    }
+
     // ----- Font Size
 
     @Test
