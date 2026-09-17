@@ -46,13 +46,13 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.BibleReaderSearchViewModel.SearchStatus
 import com.youversion.platform.reader.BibleReaderSearchViewModel.State
-import com.youversion.platform.reader.R
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.Cream
 import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.views.components.SearchBar
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import com.youversion.platform.ui.R as UiR
 
 /** The query the search endpoint accepts, counted the way the field counts what is typed into it. */
 private const val MAXIMUM_QUERY_GRAPHEME_CLUSTER_COUNT = 100
@@ -129,7 +129,7 @@ internal fun BibleReaderSearchSheet(
                     },
                 ) {
                     Text(
-                        text = stringResource(R.string.done),
+                        text = stringResource(UiR.string.done),
                         style = MaterialTheme.typography.labelLarge,
                     )
                 }
@@ -143,14 +143,14 @@ internal fun BibleReaderSearchSheet(
                 SearchStatus.FAILED ->
                     SearchMessage(
                         imageVector = Icons.Default.Warning,
-                        message = stringResource(R.string.error),
+                        message = stringResource(UiR.string.error),
                     )
 
                 SearchStatus.COMPLETED ->
                     if (state.results.isEmpty()) {
                         SearchMessage(
                             imageVector = Icons.Default.Search,
-                            message = stringResource(R.string.no_bible_search_results),
+                            message = stringResource(UiR.string.no_bible_search_results),
                         )
                     } else {
                         SearchResults(
@@ -175,7 +175,7 @@ internal fun BibleReaderSearchSheet(
  */
 @Composable
 private fun SearchingIndicator() {
-    val label = stringResource(R.string.search)
+    val label = stringResource(UiR.string.search)
 
     Box(
         contentAlignment = Alignment.Center,
@@ -285,7 +285,7 @@ private fun SearchResults(
  */
 @Composable
 private fun NextPageIndicator() {
-    val label = stringResource(R.string.search)
+    val label = stringResource(UiR.string.search)
 
     Box(
         contentAlignment = Alignment.Center,
@@ -325,7 +325,7 @@ private fun NextPageRetry(onLoadNextPage: () -> Unit) {
             )
 
             Text(
-                text = stringResource(R.string.error),
+                text = stringResource(UiR.string.error),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(start = 8.dp),
             )
