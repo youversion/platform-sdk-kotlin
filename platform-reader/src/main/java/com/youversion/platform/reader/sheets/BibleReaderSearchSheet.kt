@@ -116,7 +116,6 @@ internal fun BibleReaderSearchSheet(
                     containerColor = MaterialTheme.readerColorScheme.buttonSecondaryColor,
                     onSubmit = onSubmit,
                     showsClearButton = true,
-                    clearButtonContentDescription = stringResource(R.string.cancel),
                     focusRequester = focusRequester,
                     maximumGraphemeClusterCount = MAXIMUM_QUERY_GRAPHEME_CLUSTER_COUNT,
                 )
