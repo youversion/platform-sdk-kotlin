@@ -1,21 +1,26 @@
 package com.youversion.platform.reader
 
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
+import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.search.api.SearchApi
 import com.youversion.platform.core.search.models.VerseSearchResults
 import com.youversion.platform.reader.BibleReaderSearchViewModel.Action
 import com.youversion.platform.reader.BibleReaderSearchViewModel.SearchStatus
+import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.spyk
 import io.mockk.unmockkObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -28,6 +33,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -37,17 +43,32 @@ class BibleReaderSearchViewModelTest {
     private val searchApi = mockk<SearchApi>()
     private val viewModel = BibleReaderSearchViewModel()
 
+    /**
+     * The only cache holding the chapter, so every read of it is a chapter the repository had to go and get rather
+     * than one it already had in memory.
+     */
+    private val chapterSource = spyk(BibleVersionMemoryCache())
+
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         mockkObject(YouVersionApi)
         every { YouVersionApi.search } returns searchApi
+
+        val chapterRepository =
+            BibleChapterRepository(
+                memoryCache = BibleVersionMemoryCache(),
+                temporaryCache = BibleVersionMemoryCache(),
+                persistentCache = chapterSource,
+            )
+        viewModel.bibleChapterRepository = { chapterRepository }
     }
 
     @AfterTest
     fun teardown() {
         testDispatcher.scheduler.advanceUntilIdle()
         unmockkObject(YouVersionApi)
+        unmockkObject(BibleVersionRendering)
         Dispatchers.resetMain()
     }
 
@@ -250,11 +271,171 @@ class BibleReaderSearchViewModelTest {
             assertEquals(emptyList(), viewModel.state.value.results)
         }
 
+    @Test
+    fun `a result's own verse text lands under its passage id`() =
+        runTest(testDispatcher) {
+            stubResultText("For God so loved the world")
+            stubSearch(listOf(john316))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+
+            loadResultText(john316)
+
+            assertEquals(
+                mapOf("JHN.3.16" to "For God so loved the world"),
+                viewModel.state.value.resultTextByPassageId,
+            )
+        }
+
+    @Test
+    fun `result text is trimmed of the whitespace around it`() =
+        runTest(testDispatcher) {
+            stubResultText("\n  For God so loved the world  \n")
+            stubSearch(listOf(john316))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+
+            loadResultText(john316)
+
+            assertEquals(
+                "For God so loved the world",
+                viewModel.state.value.resultTextByPassageId["JHN.3.16"],
+            )
+        }
+
+    @Test
+    fun `text arriving for a superseded result set never appears under the current one`() =
+        runTest(testDispatcher) {
+            mockkObject(BibleVersionRendering)
+            coEvery { BibleVersionRendering.plainTextOf(any(), any()) } coAnswers {
+                delay(SLOW_RESPONSE_MILLIS)
+                "For God so loved the world"
+            }
+            stubSearch(listOf(john316))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+
+            viewModel.onAction(Action.LoadResultText(john316))
+            advanceTimeBy(SLOW_RESPONSE_MILLIS / 2)
+            submit("loved")
+
+            advanceUntilIdle()
+
+            assertEquals(listOf(john316), viewModel.state.value.results)
+            assertEquals(emptyMap(), viewModel.state.value.resultTextByPassageId)
+        }
+
+    @Test
+    fun `a result whose text cannot be read keeps its title and reports no error`() =
+        runTest(testDispatcher) {
+            stubResultText(null)
+            stubSearch(listOf(john316))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+
+            loadResultText(john316)
+
+            assertNull(viewModel.state.value.resultTextByPassageId["JHN.3.16"])
+            assertEquals(listOf(john316), viewModel.state.value.results)
+            assertEquals(SearchStatus.COMPLETED, viewModel.state.value.status)
+        }
+
+    /**
+     * A row that fails leaves and re-enters the viewport, asking again each time it does. The chapter is read once
+     * across all of it: a chapter that cannot be read is not read over and over as the reader scrolls past it.
+     */
+    @Test
+    fun `a result whose text could not be read is not asked for again as its row comes back into view`() =
+        runTest(testDispatcher) {
+            stubResultText(null)
+            stubSearch(listOf(john316))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+
+            loadResultText(john316)
+            loadResultText(john316)
+            loadResultText(john316)
+
+            coVerify(exactly = 1) { BibleVersionRendering.plainTextOf(any(), any()) }
+        }
+
+    @Test
+    fun `text is not asked for before there is a result set to fetch it against`() =
+        runTest(testDispatcher) {
+            stubResultText("For God so loved the world")
+            viewModel.onAction(Action.OpenSearch(kjv))
+
+            loadResultText(john316)
+
+            coVerify(exactly = 0) { BibleVersionRendering.plainTextOf(any(), any()) }
+        }
+
+    /**
+     * The second ask arrives while the first is still out, as a row scrolled out and straight back would send it.
+     */
+    @Test
+    fun `a result already asked for is not asked for a second time while its text is still coming`() =
+        runTest(testDispatcher) {
+            stubResultText("For God so loved the world")
+            stubSearch(listOf(john316))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+
+            viewModel.onAction(Action.LoadResultText(john316))
+            viewModel.onAction(Action.LoadResultText(john316))
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { BibleVersionRendering.plainTextOf(any(), any()) }
+        }
+
+    /**
+     * Two results in one chapter, asked for in turn the way rows coming into view ask. The second finds the chapter
+     * the first left in the repository's memory cache, so the chapter is gone and got once between them.
+     */
+    @Test
+    fun `two results in the same chapter cost one chapter fetch between them`() =
+        runTest(testDispatcher) {
+            chapterSource.addChapterContents(john3Html, john3)
+            stubSearch(listOf(john31, john316))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+
+            viewModel.onAction(Action.LoadResultText(john31))
+            awaitResultText(john31)
+            viewModel.onAction(Action.LoadResultText(john316))
+            awaitResultText(john316)
+
+            assertEquals(
+                mapOf(
+                    "JHN.3.1" to "There was a man of the Pharisees",
+                    "JHN.3.16" to "For God so loved the world",
+                ),
+                viewModel.state.value.resultTextByPassageId,
+            )
+            coVerify(exactly = 1) { chapterSource.chapterContent(any()) }
+        }
+
     /** Types [query] and submits it, then drains whatever search that started. */
     private fun submit(query: String) {
         viewModel.onAction(Action.SetQuery(query))
         viewModel.onAction(Action.Submit)
         testDispatcher.scheduler.advanceUntilIdle()
+    }
+
+    /** Asks for [reference]'s text, then drains the load that started. */
+    private fun loadResultText(reference: BibleReference) {
+        viewModel.onAction(Action.LoadResultText(reference))
+        testDispatcher.scheduler.advanceUntilIdle()
+    }
+
+    /** Waits for [reference]'s text, which the real fetch path delivers off the test dispatcher. */
+    private suspend fun awaitResultText(reference: BibleReference) {
+        viewModel.state.first { it.resultTextByPassageId[reference.asUSFM] != null }
+    }
+
+    private fun stubResultText(text: String?) {
+        mockkObject(BibleVersionRendering)
+        coEvery { BibleVersionRendering.plainTextOf(any(), any()) } returns text
     }
 
     private fun stubSearch(references: List<BibleReference>) {
@@ -276,7 +457,25 @@ class BibleReaderSearchViewModelTest {
         val kjv = BibleVersion(id = 1, abbreviation = "KJV")
         val esv = BibleVersion(id = 2, abbreviation = "ESV")
 
+        val john3 = BibleReference(versionId = 1, bookUSFM = "JHN", chapter = 3)
+        val john31 = BibleReference(versionId = 1, bookUSFM = "JHN", chapter = 3, verse = 1)
         val john316 = BibleReference(versionId = 1, bookUSFM = "JHN", chapter = 3, verse = 16)
         val psalm231 = BibleReference(versionId = 1, bookUSFM = "PSA", chapter = 23, verse = 1)
+
+        val john3Html =
+            """
+            <div>
+                <div class="p">
+                    <span class="yv-v" v="1"></span>
+                    <span class="yv-vlbl">1</span>
+                    There was a man of the Pharisees
+                </div>
+                <div class="p">
+                    <span class="yv-v" v="16"></span>
+                    <span class="yv-vlbl">16</span>
+                    For God so loved the world
+                </div>
+            </div>
+            """.trimIndent()
     }
 }

@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.bibles.domain.BibleReference
@@ -50,6 +51,9 @@ import kotlinx.coroutines.launch
 /** The query the search endpoint accepts, counted the way the field counts what is typed into it. */
 private const val MAXIMUM_QUERY_GRAPHEME_CLUSTER_COUNT = 100
 
+/** How much of a result's own verse text is shown, so several results can be compared at once. */
+private const val RESULT_TEXT_MAXIMUM_LINE_COUNT = 3
+
 /** The panel a search that failed or found nothing is said in. */
 internal const val SEARCH_MESSAGE_TEST_TAG = "search_message"
 
@@ -60,6 +64,7 @@ internal fun BibleReaderSearchSheet(
     onDismissRequest: () -> Unit,
     onQueryChange: (String) -> Unit,
     onSubmit: () -> Unit,
+    onRequestResultText: (BibleReference) -> Unit,
     state: State,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -133,7 +138,12 @@ internal fun BibleReaderSearchSheet(
                             message = stringResource(R.string.no_bible_search_results),
                         )
                     } else {
-                        SearchResults(results = state.results, searchVersion = state.searchVersion)
+                        SearchResults(
+                            results = state.results,
+                            resultTextByPassageId = state.resultTextByPassageId,
+                            searchVersion = state.searchVersion,
+                            onRequestResultText = onRequestResultText,
+                        )
                     }
             }
         }
@@ -195,20 +205,60 @@ private fun SearchMessage(
 @Composable
 private fun SearchResults(
     results: List<BibleReference>,
+    resultTextByPassageId: Map<String, String?>,
     searchVersion: BibleVersion?,
+    onRequestResultText: (BibleReference) -> Unit,
 ) {
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
         items(results) { reference ->
-            Text(
-                text = reference.title(searchVersion),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
+            SearchResult(
+                reference = reference,
+                text = resultTextByPassageId[reference.asUSFM],
+                searchVersion = searchVersion,
+                onRequestResultText = onRequestResultText,
             )
         }
+    }
+}
+
+/**
+ * One result, which asks for its own verse text as it is composed — which a lazy list only does near the
+ * viewport, so a result the reader has not scrolled to costs nothing. The text is left out entirely until it
+ * arrives rather than held open, so the title does not move when it lands.
+ */
+@Composable
+private fun SearchResult(
+    reference: BibleReference,
+    text: String?,
+    searchVersion: BibleVersion?,
+    onRequestResultText: (BibleReference) -> Unit,
+) {
+    LaunchedEffect(reference) {
+        onRequestResultText(reference)
+    }
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+    ) {
+        if (text != null) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = RESULT_TEXT_MAXIMUM_LINE_COUNT,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+
+        Text(
+            text = reference.title(searchVersion),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -227,6 +277,7 @@ private fun Preview_BibleReaderSearchSheet() {
             onDismissRequest = {},
             onQueryChange = {},
             onSubmit = {},
+            onRequestResultText = {},
             state = State(),
         )
     }
