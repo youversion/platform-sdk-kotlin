@@ -12,6 +12,7 @@
     <string name="data_exchange_highlights_explanation">@string/yv_data_exchange_highlights_explanation</string>
     <string name="data_exchange_highlights_question">@string/yv_data_exchange_highlights_question</string>
     <string name="done">@string/yv_done</string>
+    <string name="error">@string/yv_error</string>
     <string name="font_selected_check">@string/yv_font_selected_check</string>
     <string name="font_settings_label">@string/yv_font_settings_label</string>
     <string name="footnote_header_label">@string/yv_footnote_header_label</string>
@@ -24,6 +25,7 @@
     <string name="language_content_desc">@string/yv_language_content_desc</string>
     <string name="line_spacing_label">@string/yv_line_spacing_label</string>
     <string name="next_chapter_content_desc">@string/yv_next_chapter_content_desc</string>
+    <string name="no_bible_search_results">@string/yv_no_bible_search_results</string>
     <string name="previous_chapter_content_desc">@string/yv_previous_chapter_content_desc</string>
     <string name="reader_menu_font_settings">@string/yv_reader_menu_font_settings</string>
     <string name="reader_menu_sign_in">@string/yv_reader_menu_sign_in</string>

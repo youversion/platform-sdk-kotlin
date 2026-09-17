@@ -365,7 +365,7 @@ internal fun BibleScreen(
                         scrollBehavior = topScrollBehavior,
                         onVersionClick = onVersionsClick,
                         onSearchClick = {
-                            searchViewModel.onAction(BibleReaderSearchViewModel.Action.OpenSearch)
+                            searchViewModel.onAction(BibleReaderSearchViewModel.Action.OpenSearch(state.bibleVersion))
                             viewModel.onAction(BibleReaderViewModel.Action.OpenSearch)
                         },
                         onOpenHeaderMenu = { signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState) },
@@ -511,8 +511,8 @@ internal fun BibleScreen(
                             onQueryChange = { newQuery ->
                                 searchViewModel.onAction(BibleReaderSearchViewModel.Action.SetQuery(newQuery))
                             },
-                            onSubmit = {},
-                            query = searchState.query,
+                            onSubmit = { searchViewModel.onAction(BibleReaderSearchViewModel.Action.Submit) },
+                            state = searchState,
                         )
                     }
 
