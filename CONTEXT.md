@@ -69,6 +69,22 @@ Two things wear this name. A _passage id_ is an address within a version's text,
 or `GEN.INTRO`. A `BiblePassage` is the scripture returned for one — the text, not the address.
 _Avoid_: passage as a synonym for _Bible reference_
 
+**Block**:
+A unit of laid-out scripture — one run of text with its own indents, margins and alignment, or a
+table. A block is neither a verse nor a paragraph of the source: it may span several verses, begin
+partway through one, or display none at all. Because of that a block names only the _first verse_ it
+displays rather than a whole _Bible reference_.
+_Avoid_: paragraph, verse, section, chunk
+
+**Focused reference**:
+The one reference a reader is being pointed at — arrived at by following a search result or a link —
+drawn at full strength while the rest of the chapter dims around it. Distinct from a reader's
+_selection_: a selection is something the reader made and can act on, and it lasts until they undo
+it, whereas a focus is something the SDK did *to* the reader and any deliberate scroll or tap
+dismisses it. A focus always names a verse inside the chapter on display; a whole chapter cannot be
+focused.
+_Avoid_: selected verse, highlighted verse, active verse
+
 **Downloaded**:
 Held on the device for offline reading because someone asked for it. Distinct from _cached_, which is
 incidental and may be discarded at any time; only downloads live in the SDK's persistent store.
