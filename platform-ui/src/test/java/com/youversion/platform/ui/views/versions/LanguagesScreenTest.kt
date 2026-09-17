@@ -281,14 +281,14 @@ class LanguagesScreenTest {
     fun `displays search icon in top app bar`() {
         renderScreen()
 
-        composeTestRule.onNodeWithContentDescription("Search for a language").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Search languages").assertIsDisplayed()
     }
 
     @Test
     fun `clicking search icon shows search bar and swaps icon to close`() {
         renderScreen()
 
-        composeTestRule.onNodeWithContentDescription("Search for a language").performClick()
+        composeTestRule.onNodeWithContentDescription("Search languages").performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Search").assertIsDisplayed()
@@ -300,14 +300,14 @@ class LanguagesScreenTest {
         stateFlow.value = BibleVersionsViewModel.State(languageSearchQuery = "eng")
 
         renderScreen()
-        composeTestRule.onNodeWithContentDescription("Search for a language").performClick()
+        composeTestRule.onNodeWithContentDescription("Search languages").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("eng").assertIsDisplayed()
 
         composeTestRule.onNodeWithContentDescription("Close the search input").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithContentDescription("Search for a language").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Search languages").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Close the search input").assertDoesNotExist()
         verify { mockViewModel.onLanguageSearchQueryChange("") }
     }
@@ -316,7 +316,7 @@ class LanguagesScreenTest {
     fun `typing in search bar calls onLanguageSearchQueryChange`() {
         renderScreen()
 
-        composeTestRule.onNodeWithContentDescription("Search for a language").performClick()
+        composeTestRule.onNodeWithContentDescription("Search languages").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNode(hasSetTextAction()).performTextInput("e")
         composeTestRule.waitForIdle()
@@ -329,7 +329,7 @@ class LanguagesScreenTest {
         stateFlow.value = BibleVersionsViewModel.State(languageSearchQuery = "eng")
 
         renderScreen()
-        composeTestRule.onNodeWithContentDescription("Search for a language").performClick()
+        composeTestRule.onNodeWithContentDescription("Search languages").performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("eng").assertIsDisplayed()
@@ -342,7 +342,7 @@ class LanguagesScreenTest {
         composeTestRule.onNodeWithText("Suggested").assertIsDisplayed()
         composeTestRule.onNodeWithText("All").assertIsDisplayed()
 
-        composeTestRule.onNodeWithContentDescription("Search for a language").performClick()
+        composeTestRule.onNodeWithContentDescription("Search languages").performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Suggested").assertDoesNotExist()
@@ -362,7 +362,7 @@ class LanguagesScreenTest {
             )
 
         renderScreen()
-        composeTestRule.onNodeWithContentDescription("Search for a language").performClick()
+        composeTestRule.onNodeWithContentDescription("Search languages").performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("English").assertIsDisplayed()
@@ -386,7 +386,7 @@ class LanguagesScreenTest {
     @Test
     fun `system back exits search mode and clears query when search is visible`() {
         renderScreen()
-        composeTestRule.onNodeWithContentDescription("Search for a language").performClick()
+        composeTestRule.onNodeWithContentDescription("Search languages").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithContentDescription("Close the search input").assertIsDisplayed()
 
@@ -395,7 +395,7 @@ class LanguagesScreenTest {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithContentDescription("Search for a language").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Search languages").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Close the search input").assertDoesNotExist()
         verify { mockViewModel.onLanguageSearchQueryChange("") }
     }

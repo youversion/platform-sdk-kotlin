@@ -111,7 +111,7 @@ class BibleVersionPickingButtonTests {
 
         composeTestRule.onNodeWithText("KJV").performClick()
 
-        composeTestRule.onNodeWithText("Versions").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Bible Versions").assertIsDisplayed()
     }
 
     @Test

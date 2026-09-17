@@ -43,8 +43,8 @@ class BibleReaderPassageSelectionTest {
         }
 
         composeTestRule.onNodeWithText("Genesis 1").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Previous Chapter").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Next Chapter").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Previous chapter").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Next chapter").assertIsDisplayed()
     }
 
     @Test
@@ -64,10 +64,10 @@ class BibleReaderPassageSelectionTest {
         composeTestRule.onNodeWithText("Genesis 1").performClick()
         assertTrue(referenceClicked)
 
-        composeTestRule.onNodeWithContentDescription("Previous Chapter").performClick()
+        composeTestRule.onNodeWithContentDescription("Previous chapter").performClick()
         assertTrue(previousChapterClicked)
 
-        composeTestRule.onNodeWithContentDescription("Next Chapter").performClick()
+        composeTestRule.onNodeWithContentDescription("Next chapter").performClick()
         assertTrue(nextChapterClicked)
     }
 
@@ -89,7 +89,7 @@ class BibleReaderPassageSelectionTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Previous Chapter").assertIsNotEnabled()
-        composeTestRule.onNodeWithContentDescription("Next Chapter").assertIsNotEnabled()
+        composeTestRule.onNodeWithContentDescription("Previous chapter").assertIsNotEnabled()
+        composeTestRule.onNodeWithContentDescription("Next chapter").assertIsNotEnabled()
     }
 }

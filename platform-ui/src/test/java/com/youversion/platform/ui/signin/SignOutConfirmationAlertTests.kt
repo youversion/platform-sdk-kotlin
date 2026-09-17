@@ -21,11 +21,11 @@ class SignOutConfirmationAlertTests {
         composeTestRule.setContent {
             SignOutConfirmationAlert(onDismissRequest = {}, onConfirm = {})
         }
-        // "Sign Out" appears as both the title and the confirm button text
-        composeTestRule.onAllNodesWithText("Sign Out")[0].assertIsDisplayed()
+        // "Sign out" appears as both the title and the confirm button text
+        composeTestRule.onAllNodesWithText("Sign out")[0].assertIsDisplayed()
         composeTestRule
             .onNodeWithText(
-                "Are you sure you want to sign out from YouVersion? You will need to sign in again to access your highlights.",
+                "Are you sure you want to sign out from YouVersion? You'll need to sign in again to access your highlights.",
             ).assertIsDisplayed()
         composeTestRule.onNodeWithText("Cancel").assertIsDisplayed()
     }
@@ -37,7 +37,7 @@ class SignOutConfirmationAlertTests {
             SignOutConfirmationAlert(onDismissRequest = {}, onConfirm = { onConfirmCalled = true })
         }
         // Index 1 is the confirm button (index 0 is the title text)
-        composeTestRule.onAllNodesWithText("Sign Out")[1].performClick()
+        composeTestRule.onAllNodesWithText("Sign out")[1].performClick()
         assertTrue(onConfirmCalled)
     }
 

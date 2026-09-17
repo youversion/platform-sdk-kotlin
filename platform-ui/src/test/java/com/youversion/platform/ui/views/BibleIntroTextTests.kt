@@ -260,7 +260,7 @@ class BibleIntroTextTests {
         assertEquals(BibleTextLoadingPhase.FAILED, lastPhase)
         composeTestRule
             .onNodeWithText(
-                "You've lost your internet connection. Re-connect and download a Bible version to proceed offline.",
+                "We’re having difficulties with your connection. Please download a Bible version when you’re online.",
             ).assertIsDisplayed()
     }
 
