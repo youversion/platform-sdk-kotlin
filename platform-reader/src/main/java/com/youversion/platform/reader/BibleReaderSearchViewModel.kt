@@ -26,6 +26,8 @@ internal class BibleReaderSearchViewModel : ViewModel() {
 
     private var searchJob: Job? = null
 
+    private var nextPageJob: Job? = null
+
     /**
      * Resolved on each text fetch rather than held as a value: the Koin graph it reads from is not guaranteed to be
      * configured when this view model is constructed.
@@ -59,13 +61,20 @@ internal class BibleReaderSearchViewModel : ViewModel() {
             is Action.Submit -> search()
 
             is Action.LoadResultText -> loadResultText(action.reference)
+
+            is Action.LoadNextPage -> loadNextPage()
         }
     }
 
-    /** Drops whatever search is running. The reader asked for this, so it is not a failure. */
+    /**
+     * Drops whatever search is running, along with any page being read on top of it. The reader asked for this, so
+     * it is not a failure.
+     */
     private fun abandonSearch() {
         searchJob?.cancel()
         searchJob = null
+        nextPageJob?.cancel()
+        nextPageJob = null
     }
 
     private fun search() {
@@ -95,6 +104,7 @@ internal class BibleReaderSearchViewModel : ViewModel() {
                             status = SearchStatus.COMPLETED,
                             results = found.references,
                             resultSetId = UUID.randomUUID(),
+                            nextPageToken = found.nextPageToken,
                         )
                     }
                 } catch (e: CancellationException) {
@@ -102,6 +112,51 @@ internal class BibleReaderSearchViewModel : ViewModel() {
                 } catch (e: Exception) {
                     Logger.e("Error searching for \"$query\"", e)
                     _state.update { it.copy(status = SearchStatus.FAILED) }
+                }
+            }
+    }
+
+    /**
+     * Reads the page that follows what is already listed, which the list asks for as the reader nears the end of it.
+     *
+     * An ask that arrives while a page is already out is dropped rather than queued: the request already running
+     * will deliver that same page. Results are de-duplicated by passage id, since the platform can return one
+     * result on either side of a page boundary and the list is keyed by that id. A page that will not load raises
+     * a retry the reader can tap, the query no longer being the obvious way to ask again.
+     */
+    private fun loadNextPage() {
+        val state = _state.value
+        val query = state.query.trim()
+        val version = state.searchVersion
+        val pageToken = state.nextPageToken
+
+        if (state.status != SearchStatus.COMPLETED || state.isLoadingNextPage) return
+        if (version == null || pageToken.isNullOrEmpty()) return
+
+        _state.update { it.copy(isLoadingNextPage = true, hasNextPageLoadError = false) }
+
+        nextPageJob =
+            viewModelScope.launch {
+                try {
+                    val found =
+                        YouVersionApi.search.verses(
+                            query = query,
+                            bibleId = version.id,
+                            pageToken = pageToken,
+                        )
+                    _state.update { current ->
+                        val listedPassageIds = current.results.mapTo(mutableSetOf()) { it.asUSFM }
+                        current.copy(
+                            results = current.results + found.references.filter { listedPassageIds.add(it.asUSFM) },
+                            nextPageToken = found.nextPageToken,
+                            isLoadingNextPage = false,
+                        )
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Logger.e("Error loading the next page of results for \"$query\"", e)
+                    _state.update { it.copy(isLoadingNextPage = false, hasNextPageLoadError = true) }
                 }
             }
     }
@@ -156,11 +211,24 @@ internal class BibleReaderSearchViewModel : ViewModel() {
         val resultTextByPassageId: Map<String, String?> = emptyMap(),
         val searchVersion: BibleVersion? = null,
         val resultSetId: UUID? = null,
+        val nextPageToken: String? = null,
+        val isLoadingNextPage: Boolean = false,
+        val hasNextPageLoadError: Boolean = false,
     )
 
-    /** The state with the last run's results, their text and the identity they were fetched under all let go. */
+    /**
+     * The state with the last run's results, their text, the identity they were fetched under and everywhere paging
+     * through them had reached all let go.
+     */
     private fun State.withoutResults(): State =
-        copy(results = emptyList(), resultTextByPassageId = emptyMap(), resultSetId = null)
+        copy(
+            results = emptyList(),
+            resultTextByPassageId = emptyMap(),
+            resultSetId = null,
+            nextPageToken = null,
+            isLoadingNextPage = false,
+            hasNextPageLoadError = false,
+        )
 
     // ----- Actions
     sealed interface Action {
@@ -181,5 +249,8 @@ internal class BibleReaderSearchViewModel : ViewModel() {
         data class LoadResultText(
             val reference: BibleReference,
         ) : Action
+
+        /** Ask for the page that follows the results already listed, which the list does as its end nears. */
+        data object LoadNextPage : Action
     }
 }
