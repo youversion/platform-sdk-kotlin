@@ -46,6 +46,7 @@ fun SearchBar(
     containerColor: Color = MaterialTheme.readerColorScheme.buttonPrimaryColor,
     onSubmit: (() -> Unit)? = null,
     showsClearButton: Boolean = false,
+    clearButtonContentDescription: String = stringResource(R.string.close_search_bar),
     focusRequester: FocusRequester = remember { FocusRequester() },
     maximumGraphemeClusterCount: Int? = null,
 ) {
@@ -106,7 +107,7 @@ fun SearchBar(
                     IconButton(onClick = { onQueryChange("") }) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.close_search_bar),
+                            contentDescription = clearButtonContentDescription,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(24.dp),
                         )

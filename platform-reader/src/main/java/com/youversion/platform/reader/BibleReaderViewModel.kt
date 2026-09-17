@@ -202,6 +202,14 @@ internal class BibleReaderViewModel(
                 _state.update { it.copy(showingFontList = false) }
             }
 
+            is Action.OpenSearch -> {
+                _state.update { it.copy(showingSearch = true) }
+            }
+
+            is Action.CloseSearch -> {
+                _state.update { it.copy(showingSearch = false) }
+            }
+
             is Action.DecreaseFontSize -> {
                 decreaseFontSize()
             }
@@ -705,6 +713,7 @@ internal class BibleReaderViewModel(
         val bibleVersion: BibleVersion? = null,
         val showCopyright: Boolean = false,
         val showingFontList: Boolean = false,
+        val showingSearch: Boolean = false,
         val defaultFontDefinitions: List<FontDefinition> = ReaderFontSettings.defaultFontDefinitions,
         val providedFontDefinitions: List<FontDefinition> = listOf(),
         val selectedFontDefinition: FontDefinition = ReaderFontSettings.DEFAULT_FONT_DEFINITION,
@@ -773,6 +782,12 @@ internal class BibleReaderViewModel(
         data object OpenFontSettings : Action
 
         data object CloseFontSettings : Action
+
+        /** Raise the search sheet over the reader. */
+        data object OpenSearch : Action
+
+        /** Lower the search sheet, leaving the reader as it was. */
+        data object CloseSearch : Action
 
         data object DecreaseFontSize : Action
 

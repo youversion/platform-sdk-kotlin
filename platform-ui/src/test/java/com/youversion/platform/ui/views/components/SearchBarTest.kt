@@ -65,6 +65,22 @@ class SearchBarTest {
     }
 
     @Test
+    fun `the clear button takes the label it is given`() {
+        composeTestRule.setContent {
+            SearchBar(
+                query = query.value,
+                onQueryChange = { query.value = it },
+                showsClearButton = true,
+                clearButtonContentDescription = "Cancel",
+            )
+        }
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("Corinthians")
+
+        composeTestRule.onNodeWithContentDescription("Cancel").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(CLEAR_LABEL).assertDoesNotExist()
+    }
+
+    @Test
     fun `there is no clear button by default`() {
         setContent()
 

@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -35,6 +37,7 @@ internal fun BibleReaderHeader(
     scrollBehavior: TopAppBarScrollBehavior,
     versionAbbreviation: String,
     onVersionClick: () -> Unit,
+    onSearchClick: () -> Unit,
     onOpenHeaderMenu: () -> Unit,
     onFontSettingsClick: () -> Unit,
     onSignInClick: () -> Unit,
@@ -47,6 +50,14 @@ internal fun BibleReaderHeader(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.padding(end = 16.dp),
             ) {
+                IconButton(onClick = onSearchClick) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = stringResource(R.string.search),
+                        tint = BibleReaderTheme.colorScheme.textPrimary,
+                    )
+                }
+
                 BibleReaderHeaderDropdownMenu(
                     isSignInProcessing = isSignInProcessing,
                     signedIn = signedIn,
@@ -103,6 +114,7 @@ private fun Preview_BibleReaderHeader() {
             scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState()),
             versionAbbreviation = "NIV",
             onVersionClick = {},
+            onSearchClick = {},
             onOpenHeaderMenu = {},
             onFontSettingsClick = {},
             onSignInClick = {},
