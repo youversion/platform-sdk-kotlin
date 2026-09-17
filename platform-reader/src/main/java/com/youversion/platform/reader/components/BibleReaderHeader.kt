@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.youversion.platform.reader.R
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
+import com.youversion.platform.ui.R as UiR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,7 +54,7 @@ internal fun BibleReaderHeader(
                 IconButton(onClick = onSearchClick) {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = stringResource(R.string.search),
+                        contentDescription = stringResource(UiR.string.search),
                         tint = BibleReaderTheme.colorScheme.textPrimary,
                     )
                 }
