@@ -1,5 +1,6 @@
 package com.youversion.platform.reader.sheets
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -44,6 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.reader.BibleReaderSearchViewModel.SearchStatus
 import com.youversion.platform.reader.BibleReaderSearchViewModel.State
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
@@ -72,6 +75,9 @@ internal const val SEARCH_MESSAGE_TEST_TAG = "search_message"
 /** The list the results are read down, which pages as it is scrolled. */
 internal const val SEARCH_RESULTS_TEST_TAG = "search_results"
 
+/** The list of queries offered to a reader who has not searched yet. */
+internal const val SEARCH_SUGGESTED_QUERIES_TEST_TAG = "search_suggested_queries"
+
 /** The full-height sheet a reader searches from, risen over the reader with the field already focused. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,6 +87,7 @@ internal fun BibleReaderSearchSheet(
     onSubmit: () -> Unit,
     onRequestResultText: (BibleReference) -> Unit,
     onLoadNextPage: () -> Unit,
+    onSelectSuggestedQuery: (SearchQuery) -> Unit,
     state: State,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -136,7 +143,12 @@ internal fun BibleReaderSearchSheet(
             }
 
             when (state.status) {
-                SearchStatus.IDLE -> Unit
+                SearchStatus.IDLE ->
+                    SuggestedQueries(
+                        queries = state.suggestedQueries,
+                        isLoading = state.isLoadingSuggestedQueries,
+                        onSelectSuggestedQuery = onSelectSuggestedQuery,
+                    )
 
                 SearchStatus.SEARCHING -> SearchingIndicator()
 
@@ -272,7 +284,7 @@ private fun SearchResults(
         }
 
         if (isLoadingNextPage) {
-            item { NextPageIndicator() }
+            item { InlineSearchingIndicator() }
         } else if (hasNextPageLoadError) {
             item { NextPageRetry(onLoadNextPage = onLoadNextPage) }
         }
@@ -280,11 +292,11 @@ private fun SearchResults(
 }
 
 /**
- * The indicator at the foot of the list while a page loads, labelled through the semantics modifier because the
+ * The indicator shown within a list that is being added to, labelled through the semantics modifier because the
  * Material indicator takes no content description of its own.
  */
 @Composable
-private fun NextPageIndicator() {
+private fun InlineSearchingIndicator() {
     val label = stringResource(UiR.string.search)
 
     Box(
@@ -329,6 +341,62 @@ private fun NextPageRetry(onLoadNextPage: () -> Unit) {
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(start = 8.dp),
             )
+        }
+    }
+}
+
+/**
+ * Somewhere for a reader who has not searched yet to start: what other readers are searching while the field is
+ * empty, and what the platform makes of what has been entered once it is not.
+ *
+ * Taking one up drops the keyboard first, so the results it runs are on screen rather than behind it. The icon on
+ * each row is decorative, the query itself being what the row says.
+ */
+@Composable
+private fun SuggestedQueries(
+    queries: List<SearchQuery>,
+    isLoading: Boolean,
+    onSelectSuggestedQuery: (SearchQuery) -> Unit,
+) {
+    val focusManager = LocalFocusManager.current
+
+    LazyColumn(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .testTag(SEARCH_SUGGESTED_QUERIES_TEST_TAG),
+    ) {
+        items(queries) { query ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            focusManager.clearFocus()
+                            onSelectSuggestedQuery(query)
+                        }.padding(vertical = 14.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
+
+                Text(
+                    text = query.text,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+
+        if (isLoading) {
+            item { InlineSearchingIndicator() }
         }
     }
 }
@@ -391,6 +459,7 @@ private fun Preview_BibleReaderSearchSheet() {
             onSubmit = {},
             onRequestResultText = {},
             onLoadNextPage = {},
+            onSelectSuggestedQuery = {},
             state = State(),
         )
     }

@@ -6,6 +6,7 @@ import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.search.api.SearchApi
+import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.core.search.models.VerseSearchResults
 import com.youversion.platform.reader.BibleReaderSearchViewModel.Action
 import com.youversion.platform.reader.BibleReaderSearchViewModel.SearchStatus
@@ -25,6 +26,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.runner.RunWith
@@ -55,6 +57,11 @@ class BibleReaderSearchViewModelTest {
         Dispatchers.setMain(testDispatcher)
         mockkObject(YouVersionApi)
         every { YouVersionApi.search } returns searchApi
+
+        // Suggestions are offered on every open and on every keystroke, so a test that is not about
+        // them still needs them answered.
+        coEvery { searchApi.trendingQueries(languageRanges = any()) } returns emptyList()
+        coEvery { searchApi.suggestedQueries(query = any(), languageRanges = any()) } returns emptyList()
 
         val chapterRepository =
             BibleChapterRepository(
@@ -598,6 +605,150 @@ class BibleReaderSearchViewModelTest {
             assertEquals(emptyList(), viewModel.state.value.results)
         }
 
+    @Test
+    fun `opening the sheet offers what other readers are searching without waiting`() =
+        runTest(testDispatcher) {
+            stubTrending(listOf(love, peace))
+
+            viewModel.onAction(Action.OpenSearch(kjv))
+            runCurrent()
+
+            assertEquals(listOf(love, peace), viewModel.state.value.suggestedQueries)
+        }
+
+    @Test
+    fun `a typed query is not asked about until the reader has stopped typing`() =
+        runTest(testDispatcher) {
+            stubSuggested(listOf(love))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            runCurrent()
+
+            viewModel.onAction(Action.SetQuery("lov"))
+            advanceTimeBy(SUGGESTION_DEBOUNCE_MILLIS - 1)
+
+            coVerify(exactly = 0) { searchApi.suggestedQueries(query = any(), languageRanges = any()) }
+
+            advanceTimeBy(1)
+            runCurrent()
+
+            assertEquals(listOf(love), viewModel.state.value.suggestedQueries)
+        }
+
+    @Test
+    fun `each keystroke drops the ask the one before it started`() =
+        runTest(testDispatcher) {
+            stubSuggested(listOf(love))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            runCurrent()
+
+            viewModel.onAction(Action.SetQuery("l"))
+            advanceTimeBy(SUGGESTION_DEBOUNCE_MILLIS / 3)
+            viewModel.onAction(Action.SetQuery("lo"))
+            advanceTimeBy(SUGGESTION_DEBOUNCE_MILLIS / 3)
+            viewModel.onAction(Action.SetQuery("lov"))
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { searchApi.suggestedQueries(query = any(), languageRanges = any()) }
+            coVerify(exactly = 1) { searchApi.suggestedQueries(query = "lov", languageRanges = any()) }
+        }
+
+    @Test
+    fun `suggestions are asked for in the language of the version being read`() =
+        runTest(testDispatcher) {
+            viewModel.onAction(Action.OpenSearch(rvr))
+            runCurrent()
+
+            coVerify { searchApi.trendingQueries(languageRanges = listOf("es")) }
+        }
+
+    @Test
+    fun `a version that declares no language of its own takes suggestions in any language`() =
+        runTest(testDispatcher) {
+            viewModel.onAction(Action.OpenSearch(kjv))
+            runCurrent()
+
+            coVerify { searchApi.trendingQueries(languageRanges = listOf("*")) }
+        }
+
+    @Test
+    fun `suggestions are announced while they are being fetched`() =
+        runTest(testDispatcher) {
+            coEvery { searchApi.trendingQueries(languageRanges = any()) } coAnswers {
+                delay(SLOW_RESPONSE_MILLIS)
+                listOf(love)
+            }
+
+            viewModel.onAction(Action.OpenSearch(kjv))
+            runCurrent()
+
+            assertTrue(viewModel.state.value.isLoadingSuggestedQueries)
+
+            advanceUntilIdle()
+
+            assertFalse(viewModel.state.value.isLoadingSuggestedQueries)
+        }
+
+    @Test
+    fun `a failed ask for suggestions leaves the reader nothing and reports no error`() =
+        runTest(testDispatcher) {
+            coEvery { searchApi.trendingQueries(languageRanges = any()) } throws RuntimeException("offline")
+
+            viewModel.onAction(Action.OpenSearch(kjv))
+            advanceUntilIdle()
+
+            assertEquals(emptyList(), viewModel.state.value.suggestedQueries)
+            assertFalse(viewModel.state.value.isLoadingSuggestedQueries)
+            assertEquals(SearchStatus.IDLE, viewModel.state.value.status)
+        }
+
+    @Test
+    fun `an ask for suggestions abandoned mid-flight is not reported as a failure`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316))
+            coEvery { searchApi.suggestedQueries(query = any(), languageRanges = any()) } coAnswers {
+                delay(SLOW_RESPONSE_MILLIS)
+                listOf(love)
+            }
+            viewModel.onAction(Action.SetQuery("love"))
+            advanceTimeBy(SUGGESTION_DEBOUNCE_MILLIS + SLOW_RESPONSE_MILLIS / 2)
+
+            viewModel.onAction(Action.OpenSearch(kjv))
+            advanceUntilIdle()
+
+            assertEquals(emptyList(), viewModel.state.value.suggestedQueries)
+            assertFalse(viewModel.state.value.isLoadingSuggestedQueries)
+            assertEquals(SearchStatus.IDLE, viewModel.state.value.status)
+        }
+
+    @Test
+    fun `suggestions are let go once a search is run`() =
+        runTest(testDispatcher) {
+            stubTrending(listOf(love, peace))
+            stubSearch(listOf(john316))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            runCurrent()
+
+            submit("love")
+
+            assertEquals(emptyList(), viewModel.state.value.suggestedQueries)
+        }
+
+    @Test
+    fun `a suggestion the reader taps is searched for`() =
+        runTest(testDispatcher) {
+            stubTrending(listOf(love, peace))
+            stubSearch(listOf(john316))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            runCurrent()
+
+            viewModel.onAction(Action.SelectSuggestedQuery(love))
+            advanceUntilIdle()
+
+            assertEquals("love", viewModel.state.value.query)
+            assertEquals(listOf(john316), viewModel.state.value.results)
+            assertEquals(SearchStatus.COMPLETED, viewModel.state.value.status)
+        }
+
     /** Types [query] and submits it, then drains whatever search that started. */
     private fun submit(query: String) {
         viewModel.onAction(Action.SetQuery(query))
@@ -625,6 +776,14 @@ class BibleReaderSearchViewModelTest {
     private fun stubResultText(text: String?) {
         mockkObject(BibleVersionRendering)
         coEvery { BibleVersionRendering.plainTextOf(any(), any()) } returns text
+    }
+
+    private fun stubTrending(queries: List<SearchQuery>) {
+        coEvery { searchApi.trendingQueries(languageRanges = any()) } returns queries
+    }
+
+    private fun stubSuggested(queries: List<SearchQuery>) {
+        coEvery { searchApi.suggestedQueries(query = any(), languageRanges = any()) } returns queries
     }
 
     private fun stubSearch(
@@ -663,8 +822,15 @@ class BibleReaderSearchViewModelTest {
         /** The token a first page comes back carrying, which the second page is then asked for with. */
         const val SECOND_PAGE_TOKEN = "second-page"
 
+        /** How long after the reader stops typing what they have entered is asked about. */
+        const val SUGGESTION_DEBOUNCE_MILLIS = 300L
+
         val kjv = BibleVersion(id = 1, abbreviation = "KJV")
         val esv = BibleVersion(id = 2, abbreviation = "ESV")
+        val rvr = BibleVersion(id = 3, abbreviation = "RVR", languageTag = "es")
+
+        val love = SearchQuery(text = "love", source = null)
+        val peace = SearchQuery(text = "peace", source = null)
 
         val john3 = BibleReference(versionId = 1, bookUSFM = "JHN", chapter = 3)
         val john31 = BibleReference(versionId = 1, bookUSFM = "JHN", chapter = 3, verse = 1)

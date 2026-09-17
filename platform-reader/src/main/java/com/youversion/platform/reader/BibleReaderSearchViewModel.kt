@@ -9,15 +9,26 @@ import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
+import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
+
+/**
+ * How long the reader has to stop typing before what they have entered is asked about, so a query is suggested
+ * against once rather than against every keystroke on the way to it.
+ */
+private const val SUGGESTION_DEBOUNCE_MILLIS = 300L
+
+/** The language range asked for on behalf of a version that declares no language of its own. */
+private const val ANY_LANGUAGE_RANGE = "*"
 
 /** Owns everything about a search run from the reader, scoped to the reader composable that creates it. */
 internal class BibleReaderSearchViewModel : ViewModel() {
@@ -27,6 +38,8 @@ internal class BibleReaderSearchViewModel : ViewModel() {
     private var searchJob: Job? = null
 
     private var nextPageJob: Job? = null
+
+    private var suggestedQueriesJob: Job? = null
 
     /**
      * Resolved on each text fetch rather than held as a value: the Koin graph it reads from is not guaranteed to be
@@ -49,6 +62,7 @@ internal class BibleReaderSearchViewModel : ViewModel() {
                             searchVersion = action.bibleVersion,
                         ).withoutResults()
                 }
+                updateSuggestedQueries()
             }
 
             is Action.SetQuery -> {
@@ -56,9 +70,15 @@ internal class BibleReaderSearchViewModel : ViewModel() {
                 _state.update {
                     it.copy(query = action.query, status = SearchStatus.IDLE).withoutResults()
                 }
+                updateSuggestedQueries()
             }
 
             is Action.Submit -> search()
+
+            is Action.SelectSuggestedQuery -> {
+                onAction(Action.SetQuery(action.query.text))
+                search()
+            }
 
             is Action.LoadResultText -> loadResultText(action.reference)
 
@@ -77,6 +97,59 @@ internal class BibleReaderSearchViewModel : ViewModel() {
         nextPageJob = null
     }
 
+    /** Takes back whatever was being offered to read next, along with any ask for more of it that is still out. */
+    private fun clearSuggestedQueries() {
+        suggestedQueriesJob?.cancel()
+        suggestedQueriesJob = null
+        _state.update { it.copy(suggestedQueries = emptyList(), isLoadingSuggestedQueries = false) }
+    }
+
+    /**
+     * Offers the reader somewhere to start: what others are searching for while the field is empty, and what the
+     * platform makes of what they have entered once it is not.
+     *
+     * A reader who has typed nothing is not made to wait, but one mid-word is: the ask is held back until they have
+     * stopped, and every keystroke cancels the job the one before it started, so a query is asked about once.
+     *
+     * An offer that cannot be fetched is not something to interrupt the reader over, so a failure takes the offer
+     * away and says nothing.
+     */
+    private fun updateSuggestedQueries() {
+        clearSuggestedQueries()
+
+        val query = _state.value.query.trim()
+        val languageRange =
+            _state.value.searchVersion
+                ?.languageTag
+                ?.takeIf { it.isNotBlank() } ?: ANY_LANGUAGE_RANGE
+
+        suggestedQueriesJob =
+            viewModelScope.launch {
+                try {
+                    if (query.isNotEmpty()) delay(SUGGESTION_DEBOUNCE_MILLIS)
+
+                    _state.update { it.copy(isLoadingSuggestedQueries = true) }
+
+                    val queries =
+                        if (query.isEmpty()) {
+                            YouVersionApi.search.trendingQueries(languageRanges = listOf(languageRange))
+                        } else {
+                            YouVersionApi.search.suggestedQueries(
+                                query = query,
+                                languageRanges = listOf(languageRange),
+                            )
+                        }
+
+                    _state.update { it.copy(suggestedQueries = queries, isLoadingSuggestedQueries = false) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Logger.e("Error offering queries alongside \"$query\"", e)
+                    _state.update { it.copy(suggestedQueries = emptyList(), isLoadingSuggestedQueries = false) }
+                }
+            }
+    }
+
     private fun search() {
         val query = _state.value.query.trim()
         val version = _state.value.searchVersion
@@ -86,6 +159,8 @@ internal class BibleReaderSearchViewModel : ViewModel() {
             _state.update { it.copy(status = SearchStatus.IDLE).withoutResults() }
             return
         }
+
+        clearSuggestedQueries()
 
         // A completed status means the results for this exact query and version are still on
         // screen, since changing either returns the status to idle. Asking again would only buy
@@ -214,6 +289,8 @@ internal class BibleReaderSearchViewModel : ViewModel() {
         val nextPageToken: String? = null,
         val isLoadingNextPage: Boolean = false,
         val hasNextPageLoadError: Boolean = false,
+        val suggestedQueries: List<SearchQuery> = emptyList(),
+        val isLoadingSuggestedQueries: Boolean = false,
     )
 
     /**
@@ -244,6 +321,11 @@ internal class BibleReaderSearchViewModel : ViewModel() {
 
         /** Search for what is in the field. */
         data object Submit : Action
+
+        /** Search for [query], which the reader has taken up from what was offered them. */
+        data class SelectSuggestedQuery(
+            val query: SearchQuery,
+        ) : Action
 
         /** Ask for [reference]'s own verse text, which a result row does as it comes into view. */
         data class LoadResultText(
