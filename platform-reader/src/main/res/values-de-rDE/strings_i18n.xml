@@ -2,15 +2,11 @@
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_banner_dismiss_content_description">Schließen</string>
-    <string name="yv_banner_offline_icon">Offline-Symbol</string>
-    <string name="yv_banner_offline_message">Du hast deine Internetverbindung verloren. Stelle die Verbindung wieder her und lade eine Bibelversion herunter, um offline fortzufahren.</string>
-    <string name="yv_banner_version_unavailable_icon">Symbol für nicht verfügbare Version</string>
-    <string name="yv_banner_version_unavailable_message">Deine zuvor ausgewählte Bibelversion ist nicht verfügbar. Eine andere ähnliche Bibelversion wurde für dich ausgewählt.</string>
+    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_message">Wir haben Probleme mit deiner Verbindung. Bitte lade eine Bibelversion herunter, wenn du online bist.</string>
+    <string name="yv_banner_version_unavailable_icon">Version nicht verfügbar</string>
+    <string name="yv_banner_version_unavailable_message">Deine zuvor ausgewählte Bibelversion ist nicht verfügbar. Bitte wechsle zu einer anderen.</string>
     <string name="yv_book_chapter_picker_title">Bücher</string>
-    <string name="yv_cancel">Abbrechen</string>
-    <string name="yv_data_exchange_continue">Weiter</string>
-    <string name="yv_data_exchange_highlights_explanation">YouVersion wird dich um Zugriff bitten, bevor Markierungen gespeichert werden können.</string>
-    <string name="yv_data_exchange_highlights_question">Dieser App erlauben, Hervorhebungen mit YouVersion zu speichern?</string>
     <string name="yv_font_selected_check">Häkchen für ausgewählte Schriftart</string>
     <string name="yv_font_settings_label">Schriftart</string>
     <string name="yv_footnote_header_label">Fußnote</string>

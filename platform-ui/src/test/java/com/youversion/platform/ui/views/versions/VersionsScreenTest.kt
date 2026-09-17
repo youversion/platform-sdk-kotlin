@@ -60,7 +60,7 @@ class VersionsScreenTest {
     fun `displays Versions title in top app bar`() {
         renderScreen()
 
-        composeTestRule.onNodeWithText("Versions").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Bible Versions").assertIsDisplayed()
     }
 
     @Test
@@ -209,7 +209,7 @@ class VersionsScreenTest {
         composeTestRule
             .onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate))
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText("No versions found for this language").assertDoesNotExist()
+        composeTestRule.onNodeWithText("No versions found").assertDoesNotExist()
     }
 
     // ----- Empty State
@@ -224,7 +224,7 @@ class VersionsScreenTest {
 
         renderScreen()
 
-        composeTestRule.onNodeWithText("No versions found for this language").assertIsDisplayed()
+        composeTestRule.onNodeWithText("No versions found").assertIsDisplayed()
     }
 
     // ----- Version List
@@ -518,7 +518,7 @@ class VersionsScreenTest {
     fun `search toggle icon is shown by default`() {
         renderScreen()
 
-        composeTestRule.onNodeWithContentDescription("Search for a bible version").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Search versions").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Close the search input").assertDoesNotExist()
     }
 
@@ -533,7 +533,7 @@ class VersionsScreenTest {
     fun `clicking search toggle icon shows search bar and swaps icon to close`() {
         renderScreen()
 
-        composeTestRule.onNodeWithContentDescription("Search for a bible version").performClick()
+        composeTestRule.onNodeWithContentDescription("Search versions").performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Search").assertIsDisplayed()
@@ -545,14 +545,14 @@ class VersionsScreenTest {
         stateFlow.value = BibleVersionsViewModel.State(versionSearchQuery = "john")
 
         renderScreen()
-        composeTestRule.onNodeWithContentDescription("Search for a bible version").performClick()
+        composeTestRule.onNodeWithContentDescription("Search versions").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("john").assertIsDisplayed()
 
         composeTestRule.onNodeWithContentDescription("Close the search input").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithContentDescription("Search for a bible version").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Search versions").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Close the search input").assertDoesNotExist()
         verify { mockViewModel.onVersionSearchQueryChange("") }
     }
@@ -561,7 +561,7 @@ class VersionsScreenTest {
     fun `typing in search bar calls onVersionSearchQueryChange`() {
         renderScreen()
 
-        composeTestRule.onNodeWithContentDescription("Search for a bible version").performClick()
+        composeTestRule.onNodeWithContentDescription("Search versions").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNode(hasSetTextAction()).performTextInput("k")
         composeTestRule.waitForIdle()
@@ -574,7 +574,7 @@ class VersionsScreenTest {
         stateFlow.value = BibleVersionsViewModel.State(versionSearchQuery = "john")
 
         renderScreen()
-        composeTestRule.onNodeWithContentDescription("Search for a bible version").performClick()
+        composeTestRule.onNodeWithContentDescription("Search versions").performClick()
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("john").assertIsDisplayed()
@@ -598,7 +598,7 @@ class VersionsScreenTest {
     @Test
     fun `system back exits search mode and clears query when search is visible`() {
         renderScreen()
-        composeTestRule.onNodeWithContentDescription("Search for a bible version").performClick()
+        composeTestRule.onNodeWithContentDescription("Search versions").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithContentDescription("Close the search input").assertIsDisplayed()
 
@@ -607,7 +607,7 @@ class VersionsScreenTest {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithContentDescription("Search for a bible version").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Search versions").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Close the search input").assertDoesNotExist()
         verify { mockViewModel.onVersionSearchQueryChange("") }
     }

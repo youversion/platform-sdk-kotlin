@@ -407,7 +407,7 @@ class BibleTextTests {
         assertEquals(BibleTextLoadingPhase.FAILED, lastPhase)
         composeTestRule
             .onNodeWithText(
-                "You've lost your internet connection. Re-connect and download a Bible version to proceed offline.",
+                "We’re having difficulties with your connection. Please download a Bible version when you’re online.",
             ).assertIsDisplayed()
     }
 
@@ -714,11 +714,11 @@ class BibleTextTests {
             .assertDoesNotExist()
         composeTestRule
             .onNodeWithText(
-                "You've lost your internet connection. Re-connect and download a Bible version to proceed offline.",
+                "We’re having difficulties with your connection. Please download a Bible version when you’re online.",
             ).assertDoesNotExist()
         composeTestRule
             .onNodeWithText(
-                "Your previously selected Bible version is unavailable. Another similar Bible version has been selected for you.",
+                "Your previously selected Bible version is unavailable. Please switch to another one.",
             ).assertDoesNotExist()
     }
 
@@ -731,11 +731,11 @@ class BibleTextTests {
 
         composeTestRule
             .onNodeWithText(
-                "You've lost your internet connection. Re-connect and download a Bible version to proceed offline.",
+                "We’re having difficulties with your connection. Please download a Bible version when you’re online.",
             ).assertDoesNotExist()
         composeTestRule
             .onNodeWithText(
-                "Your previously selected Bible version is unavailable. Another similar Bible version has been selected for you.",
+                "Your previously selected Bible version is unavailable. Please switch to another one.",
             ).assertDoesNotExist()
         composeTestRule
             .onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate))
@@ -754,7 +754,7 @@ class BibleTextTests {
             .assertIsDisplayed()
         composeTestRule
             .onNodeWithText(
-                "Your previously selected Bible version is unavailable. Another similar Bible version has been selected for you.",
+                "Your previously selected Bible version is unavailable. Please switch to another one.",
             ).assertIsDisplayed()
     }
 
@@ -766,11 +766,11 @@ class BibleTextTests {
         composeTestRule.waitForIdle()
 
         composeTestRule
-            .onNodeWithContentDescription("No Wi-Fi")
+            .onNodeWithContentDescription("Offline")
             .assertIsDisplayed()
         composeTestRule
             .onNodeWithText(
-                "You've lost your internet connection. Re-connect and download a Bible version to proceed offline.",
+                "We’re having difficulties with your connection. Please download a Bible version when you’re online.",
             ).assertIsDisplayed()
     }
 
@@ -786,11 +786,11 @@ class BibleTextTests {
             .assertDoesNotExist()
         composeTestRule
             .onNodeWithText(
-                "You've lost your internet connection. Re-connect and download a Bible version to proceed offline.",
+                "We’re having difficulties with your connection. Please download a Bible version when you’re online.",
             ).assertDoesNotExist()
         composeTestRule
             .onNodeWithText(
-                "Your previously selected Bible version is unavailable. Another similar Bible version has been selected for you.",
+                "Your previously selected Bible version is unavailable. Please switch to another one.",
             ).assertDoesNotExist()
     }
 

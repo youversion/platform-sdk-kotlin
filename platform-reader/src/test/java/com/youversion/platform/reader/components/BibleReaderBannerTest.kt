@@ -30,10 +30,10 @@ class BibleReaderBannerTest {
 
         composeTestRule
             .onNodeWithText(
-                "You've lost your internet connection. Re-connect and download a Bible version to proceed offline.",
+                "We’re having difficulties with your connection. Please download a Bible version when you’re online.",
             ).assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Offline Icon").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Dismiss").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Offline").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Close").assertIsDisplayed()
     }
 
     @Test
@@ -48,11 +48,10 @@ class BibleReaderBannerTest {
 
         composeTestRule
             .onNodeWithText(
-                "Your previously selected Bible version is unavailable. Another similar Bible version has been " +
-                    "selected for you.",
+                "Your previously selected Bible version is unavailable. Please switch to another one.",
             ).assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Version Unavailable Icon").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Dismiss").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Version unavailable").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Close").assertIsDisplayed()
     }
 
     @Test
@@ -66,16 +65,15 @@ class BibleReaderBannerTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Dismiss").performClick()
+        composeTestRule.onNodeWithContentDescription("Close").performClick()
         composeTestRule.waitForIdle()
 
         assertTrue(isDismissed.value)
         composeTestRule
             .onNodeWithText(
-                "Your previously selected Bible version is unavailable. Another similar Bible version has been " +
-                    "selected for you.",
+                "Your previously selected Bible version is unavailable. Please switch to another one.",
             ).assertIsNotDisplayed()
-        composeTestRule.onNodeWithContentDescription("Version Unavailable Icon").assertIsNotDisplayed()
-        composeTestRule.onNodeWithContentDescription("Dismiss").assertIsNotDisplayed()
+        composeTestRule.onNodeWithContentDescription("Version unavailable").assertIsNotDisplayed()
+        composeTestRule.onNodeWithContentDescription("Close").assertIsNotDisplayed()
     }
 }

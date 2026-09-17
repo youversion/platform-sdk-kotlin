@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Sulje</string>
+    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_message">Yhteydessäsi on ongelmia. Lataa Raamatun versio, kun olet verkossa.</string>
+    <string name="yv_banner_version_unavailable_icon">Versio ei saatavilla</string>
+    <string name="yv_banner_version_unavailable_message">Aiemmin valitsemasi Raamatun versio ei ole saatavilla. Vaihda toiseen.</string>
+    <string name="yv_book_chapter_picker_title">Kirjat</string>
+    <string name="yv_font_selected_check">Fontti valittu -merkki</string>
+    <string name="yv_font_settings_label">Fontti</string>
+    <string name="yv_footnote_header_label">Alaviite</string>
+    <string name="yv_highlight_color_cyan">syaani</string>
+    <string name="yv_highlight_color_green">vihreä</string>
+    <string name="yv_highlight_color_orange">oranssi</string>
+    <string name="yv_highlight_color_pink">pinkki</string>
+    <string name="yv_highlight_color_yellow">keltainen</string>
+    <string name="yv_intro_chapter_label">Johdanto</string>
+    <string name="yv_language_content_desc">Kieli</string>
+    <string name="yv_line_spacing_label">Riviväli</string>
+    <string name="yv_next_chapter_content_desc">Seuraava luku</string>
+    <string name="yv_previous_chapter_content_desc">Edellinen luku</string>
+    <string name="yv_reader_menu_font_settings">Fontti &amp; Asetukset</string>
+    <string name="yv_reader_menu_sign_in">Kirjaudu sisään</string>
+    <string name="yv_reader_menu_sign_out">Kirjaudu ulos</string>
+    <string name="yv_theme_selected">Valittu</string>
+    <string name="yv_verse_action_add_highlight">Lisää %1$s korostus</string>
+    <string name="yv_verse_action_copy">Kopioi</string>
+    <string name="yv_verse_action_remove_highlight">Poista %1$s korostus</string>
+    <string name="yv_verse_action_share">Jaa</string>
+</resources>

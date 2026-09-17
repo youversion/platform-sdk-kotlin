@@ -402,7 +402,7 @@ class BibleScreenTest {
         composeTestRule.waitForIdle()
         composeTestRule
             .onAllNodesWithText(
-                "You've lost your internet connection.",
+                "We’re having difficulties with your connection.",
                 substring = true,
             )[0]
             .assertIsDisplayed()
@@ -456,7 +456,7 @@ class BibleScreenTest {
         composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText(
-                "You've lost your internet connection.",
+                "We’re having difficulties with your connection.",
                 substring = true,
             ).assertDoesNotExist()
         composeTestRule
@@ -485,11 +485,11 @@ class BibleScreenTest {
         }
 
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithContentDescription("Dismiss").performClick()
+        composeTestRule.onNodeWithContentDescription("Close").performClick()
 
         composeTestRule.waitUntil {
             composeTestRule
-                .onAllNodesWithContentDescription("Dismiss")
+                .onAllNodesWithContentDescription("Close")
                 .fetchSemanticsNodes()
                 .isEmpty()
         }
@@ -1148,7 +1148,7 @@ class BibleScreenTest {
             composeTestRule.waitForIdle()
             composeTestRule.onNodeWithContentDescription("Font & Settings").performClick()
             composeTestRule.waitForIdle()
-            composeTestRule.onAllNodesWithText("Sign Out")[0].performClick()
+            composeTestRule.onAllNodesWithText("Sign out")[0].performClick()
             composeTestRule.waitForIdle()
 
             composeTestRule
@@ -1190,14 +1190,14 @@ class BibleScreenTest {
             composeTestRule.waitForIdle()
             composeTestRule.onNodeWithContentDescription("Font & Settings").performClick()
             composeTestRule.waitForIdle()
-            composeTestRule.onAllNodesWithText("Sign Out")[0].performClick()
+            composeTestRule.onAllNodesWithText("Sign out")[0].performClick()
             composeTestRule.waitForIdle()
 
             composeTestRule
                 .onNodeWithText("Are you sure you want to sign out", substring = true)
                 .assertIsDisplayed()
 
-            composeTestRule.onAllNodesWithText("Sign Out")[1].performClick()
+            composeTestRule.onAllNodesWithText("Sign out")[1].performClick()
             composeTestRule.waitForIdle()
 
             verify { mockUsersApi.signOut() }
@@ -1422,7 +1422,7 @@ class BibleScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Previous Chapter").performClick()
+        composeTestRule.onNodeWithContentDescription("Previous chapter").performClick()
 
         verify { mockViewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter) }
     }
@@ -1445,7 +1445,7 @@ class BibleScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Next Chapter").performClick()
+        composeTestRule.onNodeWithContentDescription("Next chapter").performClick()
 
         verify { mockViewModel.onAction(BibleReaderViewModel.Action.GoToNextChapter) }
     }

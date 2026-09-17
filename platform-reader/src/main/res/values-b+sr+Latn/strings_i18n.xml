@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
-    <string name="yv_banner_dismiss_content_description">Odbaciti</string>
-    <string name="yv_banner_offline_icon">Ikonica van mreže</string>
-    <string name="yv_banner_offline_message">Izgubili ste internet vezu. Ponovo se povežite i preuzmite prevod Biblije da biste nastavili van mreže.</string>
-    <string name="yv_banner_version_unavailable_icon">Ikona nedostupnog prevoda</string>
-    <string name="yv_banner_version_unavailable_message">Prethodno izabran prevod Biblije nije dostupan. Umesto njega, izabran je drugi, sličan prevod Biblije.</string>
+    <string name="yv_banner_dismiss_content_description">Zatvoriti</string>
+    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_message">Imamo poteškoća sa vašom vezom. Preuzmite prevod Biblije kada budete na mreži.</string>
+    <string name="yv_banner_version_unavailable_icon">Prevod nije dostupan</string>
+    <string name="yv_banner_version_unavailable_message">Prethodno odabran prevod Biblije nije dostupan. Molimo, izaberite drugi prevod.</string>
     <string name="yv_book_chapter_picker_title">Knjige</string>
-    <string name="yv_cancel">Otkažite</string>
-    <string name="yv_data_exchange_continue">Nastavite</string>
-    <string name="yv_data_exchange_highlights_explanation">YouVersion će od vas tražiti da odobrite pristup pre nego što se isticanja mogu sačuvati.</string>
-    <string name="yv_data_exchange_highlights_question">Dozvoliti ovoj aplikaciji da čuva isticanja sa YouVersion-om?</string>
     <string name="yv_font_selected_check">Kvačica za izabrani font</string>
     <string name="yv_font_settings_label">Font</string>
     <string name="yv_footnote_header_label">Fusnota</string>

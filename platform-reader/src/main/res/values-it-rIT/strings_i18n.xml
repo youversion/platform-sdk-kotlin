@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Chiudi</string>
+    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_message">Si sono verificati problemi con la tua connessione. Scarica una versione della Bibbia quando sei online.</string>
+    <string name="yv_banner_version_unavailable_icon">Versione non disponibile</string>
+    <string name="yv_banner_version_unavailable_message">La versione della Bibbia precedentemente selezionata non è disponibile. Passa a un\'altra versione.</string>
+    <string name="yv_book_chapter_picker_title">Libri</string>
+    <string name="yv_font_selected_check">Verifica del carattere selezionato</string>
+    <string name="yv_font_settings_label">Carattere</string>
+    <string name="yv_footnote_header_label">Nota a piè di pagina</string>
+    <string name="yv_highlight_color_cyan">ciano</string>
+    <string name="yv_highlight_color_green">verde</string>
+    <string name="yv_highlight_color_orange">arancione</string>
+    <string name="yv_highlight_color_pink">rosa</string>
+    <string name="yv_highlight_color_yellow">giallo</string>
+    <string name="yv_intro_chapter_label">Introduzione</string>
+    <string name="yv_language_content_desc">Lingua</string>
+    <string name="yv_line_spacing_label">Interlinea</string>
+    <string name="yv_next_chapter_content_desc">Capitolo successivo</string>
+    <string name="yv_previous_chapter_content_desc">Capitolo precedente</string>
+    <string name="yv_reader_menu_font_settings">Carattere &amp; Impostazioni</string>
+    <string name="yv_reader_menu_sign_in">Accedi</string>
+    <string name="yv_reader_menu_sign_out">Disconnetti</string>
+    <string name="yv_theme_selected">Selezionato</string>
+    <string name="yv_verse_action_add_highlight">Aggiungi evidenziazione %1$s</string>
+    <string name="yv_verse_action_copy">Copia</string>
+    <string name="yv_verse_action_remove_highlight">Rimuovi evidenziazione %1$s</string>
+    <string name="yv_verse_action_share">Condividi</string>
+</resources>
