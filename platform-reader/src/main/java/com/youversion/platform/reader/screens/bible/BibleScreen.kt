@@ -512,6 +512,11 @@ internal fun BibleScreen(
                                 searchViewModel.onAction(BibleReaderSearchViewModel.Action.SetQuery(newQuery))
                             },
                             onSubmit = { searchViewModel.onAction(BibleReaderSearchViewModel.Action.Submit) },
+                            onRequestResultText = { reference ->
+                                searchViewModel.onAction(
+                                    BibleReaderSearchViewModel.Action.LoadResultText(reference),
+                                )
+                            },
                             state = searchState,
                         )
                     }

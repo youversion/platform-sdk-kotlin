@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.filter
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasImeAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -30,6 +31,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
 class BibleReaderSearchSheetTest {
@@ -38,10 +40,14 @@ class BibleReaderSearchSheetTest {
 
     private val query = mutableStateOf("")
 
+    /** The text the view model has filled in so far, which a test can add to mid-render as a fetch would. */
+    private val resultText = mutableStateOf(emptyMap<String, String?>())
+
     /** Renders the sheet with its query hoisted into [query], the way the search view model holds it. */
     private fun renderSheet(
         onDismissRequest: () -> Unit = {},
         onSubmit: () -> Unit = {},
+        onRequestResultText: (BibleReference) -> Unit = {},
         results: List<BibleReference> = emptyList(),
         searchVersion: BibleVersion? = kjv,
         status: SearchStatus = SearchStatus.IDLE,
@@ -52,11 +58,13 @@ class BibleReaderSearchSheetTest {
                     onDismissRequest = onDismissRequest,
                     onQueryChange = { query.value = it },
                     onSubmit = onSubmit,
+                    onRequestResultText = onRequestResultText,
                     state =
                         State(
                             query = query.value,
                             status = status,
                             results = results,
+                            resultTextByPassageId = resultText.value,
                             searchVersion = searchVersion,
                         ),
                 )
@@ -142,6 +150,45 @@ class BibleReaderSearchSheetTest {
         composeTestRule.onNodeWithText("JHN.3.16").assertIsDisplayed()
     }
 
+    /**
+     * A row before and after its text arrives. The title moving down when the text lands is what says no space was
+     * held open for it beforehand — had the row reserved a gap, the title would already have been where it ends up.
+     */
+    @Test
+    fun `a result shows its title alone until its text arrives above it`() {
+        renderSheet(results = listOf(john316), status = SearchStatus.COMPLETED)
+
+        composeTestRule.onNodeWithText(JOHN_3_16_TEXT).assertDoesNotExist()
+        val titleTopWithoutText = composeTestRule.onNodeWithText("JOHN 3:16").getUnclippedBoundsInRoot().top
+
+        composeTestRule.runOnIdle { resultText.value = mapOf("JHN.3.16" to JOHN_3_16_TEXT) }
+
+        composeTestRule.onNodeWithText(JOHN_3_16_TEXT).assertIsDisplayed()
+        val titleTopWithText = composeTestRule.onNodeWithText("JOHN 3:16").getUnclippedBoundsInRoot().top
+        assertTrue(titleTopWithText > titleTopWithoutText)
+    }
+
+    /**
+     * More results than fit the sheet. Only those near the top ask for their text, and they are the top ones rather
+     * than an arbitrary handful — a list that asked eagerly would have asked for all of them.
+     */
+    @Test
+    fun `results ask for their own text as they come into view, not all at once`() {
+        val requested = mutableListOf<BibleReference>()
+        val results = (1..200).map { BibleReference(versionId = 1, bookUSFM = "JHN", chapter = 3, verse = it) }
+
+        renderSheet(
+            onRequestResultText = { requested.add(it) },
+            results = results,
+            status = SearchStatus.COMPLETED,
+        )
+        composeTestRule.waitUntil { requested.isNotEmpty() }
+        composeTestRule.waitForIdle()
+
+        assertTrue(requested.size < results.size, "asked for all ${results.size} results at once")
+        assertEquals(results.take(requested.size), requested)
+    }
+
     @Test
     fun `a search that found nothing says so`() {
         renderSheet(status = SearchStatus.COMPLETED)
@@ -179,6 +226,8 @@ class BibleReaderSearchSheetTest {
 
         const val FAILURE_MESSAGE = "Error"
         const val EMPTY_MESSAGE = "We're sorry, there are no Bible results for this search."
+
+        const val JOHN_3_16_TEXT = "For God so loved the world"
 
         private fun chapters(count: Int) =
             (1..count).map {
