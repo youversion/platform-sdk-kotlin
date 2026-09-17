@@ -144,8 +144,8 @@ class SearchBarTest {
     }
 
     private companion object {
-        /** The value of `R.string.close_search_bar`, which the clear button is labelled with. */
-        const val CLEAR_LABEL = "Close the search input"
+        /** The value of `R.string.clear_search`, which the clear button is labelled with. */
+        const val CLEAR_LABEL = "Clear search"
 
         /** `e` followed by a combining acute accent, twice. */
         const val COMBINED_LETTERS = "e\u0301e\u0301"
