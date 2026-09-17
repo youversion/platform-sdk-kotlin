@@ -339,8 +339,8 @@ class BibleReaderSearchSheetTest {
     }
 
     private companion object {
-        /** The value of the reader's `cancel` key, which the clear button is labelled with. */
-        const val CLEAR_LABEL = "Cancel"
+        /** The value of the shared UI module's `close_search_bar` key, the clear button's own label. */
+        const val CLEAR_LABEL = "Close the search input"
 
         /** The value of the reader's `search` key, which the searching indicator is labelled with. */
         const val SEARCHING_LABEL = "Search"
