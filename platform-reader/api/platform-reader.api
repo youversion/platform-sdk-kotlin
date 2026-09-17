@@ -84,7 +84,9 @@ public final class com/youversion/platform/reader/sheets/ComposableSingletons$Bi
 	public static final field INSTANCE Lcom/youversion/platform/reader/sheets/ComposableSingletons$BibleReaderSearchSheetKt;
 	public fun <init> ()V
 	public final fun getLambda$-1168204184$platform_reader_release ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$1361796878$platform_reader_release ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-240084646$platform_reader_release ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$1520386960$platform_reader_release ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$725226679$platform_reader_release ()Lkotlin/jvm/functions/Function3;
 }
 
 public final class com/youversion/platform/reader/sheets/ComposableSingletons$DataExchangeConfirmationDialogKt {

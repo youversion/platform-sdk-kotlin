@@ -33,6 +33,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -415,6 +416,188 @@ class BibleReaderSearchViewModelTest {
             coVerify(exactly = 1) { chapterSource.chapterContent(any()) }
         }
 
+    @Test
+    fun `a search records the token its next page is asked for with`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316), nextPageToken = SECOND_PAGE_TOKEN)
+            viewModel.onAction(Action.OpenSearch(kjv))
+
+            submit("love")
+
+            assertEquals(SECOND_PAGE_TOKEN, viewModel.state.value.nextPageToken)
+        }
+
+    @Test
+    fun `the next page is added to the results already listed`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316), nextPageToken = SECOND_PAGE_TOKEN)
+            stubNextPage(listOf(psalm231))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+
+            loadNextPage()
+
+            assertEquals(listOf(john316, psalm231), viewModel.state.value.results)
+            coVerify(exactly = 1) {
+                searchApi.verses(query = "love", bibleId = kjv.id, pageToken = SECOND_PAGE_TOKEN)
+            }
+        }
+
+    /**
+     * The platform can hand back a result on two pages in a row. The list is keyed by passage id, so a repeat is
+     * both a row the reader sees twice and a key collision.
+     */
+    @Test
+    fun `a result returned on two pages is listed once`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316, psalm231), nextPageToken = SECOND_PAGE_TOKEN)
+            stubNextPage(listOf(psalm231, john31))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+
+            loadNextPage()
+
+            assertEquals(listOf(john316, psalm231, john31), viewModel.state.value.results)
+        }
+
+    @Test
+    fun `paging stops once the platform has no further results to give`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316), nextPageToken = SECOND_PAGE_TOKEN)
+            stubNextPage(listOf(psalm231), nextPageToken = null)
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+            loadNextPage()
+
+            loadNextPage()
+
+            assertNull(viewModel.state.value.nextPageToken)
+            assertFalse(viewModel.state.value.isLoadingNextPage)
+            coVerify(exactly = 2) { searchApi.verses(query = any(), bibleId = any(), pageToken = any()) }
+        }
+
+    /**
+     * Three asks while the first page is still out, as a reader scrolling back and forth across the threshold sends
+     * them. The one already running will deliver the same page, so the rest are dropped rather than queued.
+     */
+    @Test
+    fun `a page already on its way is not asked for a second time`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316), nextPageToken = SECOND_PAGE_TOKEN)
+            stubNextPage(listOf(psalm231), delayMillis = SLOW_RESPONSE_MILLIS)
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+
+            viewModel.onAction(Action.LoadNextPage)
+            viewModel.onAction(Action.LoadNextPage)
+            viewModel.onAction(Action.LoadNextPage)
+            advanceUntilIdle()
+
+            assertEquals(listOf(john316, psalm231), viewModel.state.value.results)
+            coVerify(exactly = 1) {
+                searchApi.verses(query = any(), bibleId = any(), pageToken = SECOND_PAGE_TOKEN)
+            }
+        }
+
+    @Test
+    fun `a page in flight is announced until it lands`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316), nextPageToken = SECOND_PAGE_TOKEN)
+            stubNextPage(listOf(psalm231), delayMillis = SLOW_RESPONSE_MILLIS)
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+
+            viewModel.onAction(Action.LoadNextPage)
+            advanceTimeBy(SLOW_RESPONSE_MILLIS / 2)
+            assertTrue(viewModel.state.value.isLoadingNextPage)
+
+            advanceUntilIdle()
+
+            assertFalse(viewModel.state.value.isLoadingNextPage)
+        }
+
+    @Test
+    fun `a failed page load offers a retry and leaves the results already listed alone`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316), nextPageToken = SECOND_PAGE_TOKEN)
+            coEvery {
+                searchApi.verses(query = any(), bibleId = any(), pageToken = SECOND_PAGE_TOKEN)
+            } throws RuntimeException("offline")
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+
+            loadNextPage()
+
+            assertTrue(viewModel.state.value.hasNextPageLoadError)
+            assertFalse(viewModel.state.value.isLoadingNextPage)
+            assertEquals(listOf(john316), viewModel.state.value.results)
+            assertEquals(SearchStatus.COMPLETED, viewModel.state.value.status)
+        }
+
+    @Test
+    fun `asking again after a failed page load takes the retry away and lands the page`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316), nextPageToken = SECOND_PAGE_TOKEN)
+            coEvery {
+                searchApi.verses(query = any(), bibleId = any(), pageToken = SECOND_PAGE_TOKEN)
+            } throws RuntimeException("offline") andThen verseSearchResults(listOf(psalm231))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+            loadNextPage()
+
+            loadNextPage()
+
+            assertEquals(listOf(john316, psalm231), viewModel.state.value.results)
+            assertFalse(viewModel.state.value.hasNextPageLoadError)
+        }
+
+    @Test
+    fun `the next page is not asked for before a search has finished`() =
+        runTest(testDispatcher) {
+            viewModel.onAction(Action.OpenSearch(kjv))
+            viewModel.onAction(Action.SetQuery("love"))
+
+            loadNextPage()
+
+            coVerify(exactly = 0) { searchApi.verses(query = any(), bibleId = any(), pageToken = any()) }
+        }
+
+    @Test
+    fun `a page arriving after the reader has typed on never lands under the new query`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316), nextPageToken = SECOND_PAGE_TOKEN)
+            stubNextPage(listOf(psalm231), delayMillis = SLOW_RESPONSE_MILLIS)
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+
+            viewModel.onAction(Action.LoadNextPage)
+            advanceTimeBy(SLOW_RESPONSE_MILLIS / 2)
+            viewModel.onAction(Action.SetQuery("loves"))
+            advanceUntilIdle()
+
+            assertEquals(emptyList(), viewModel.state.value.results)
+            assertFalse(viewModel.state.value.isLoadingNextPage)
+        }
+
+    @Test
+    fun `a new search leaves no page token, no retry and no rows behind`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316), nextPageToken = SECOND_PAGE_TOKEN)
+            coEvery {
+                searchApi.verses(query = any(), bibleId = any(), pageToken = SECOND_PAGE_TOKEN)
+            } throws RuntimeException("offline")
+            viewModel.onAction(Action.OpenSearch(kjv))
+            submit("love")
+            loadNextPage()
+
+            viewModel.onAction(Action.SetQuery("loves"))
+
+            assertNull(viewModel.state.value.nextPageToken)
+            assertFalse(viewModel.state.value.hasNextPageLoadError)
+            assertFalse(viewModel.state.value.isLoadingNextPage)
+            assertEquals(emptyList(), viewModel.state.value.results)
+        }
+
     /** Types [query] and submits it, then drains whatever search that started. */
     private fun submit(query: String) {
         viewModel.onAction(Action.SetQuery(query))
@@ -428,6 +611,12 @@ class BibleReaderSearchViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
     }
 
+    /** Asks for the next page, then drains the load that started. */
+    private fun loadNextPage() {
+        viewModel.onAction(Action.LoadNextPage)
+        testDispatcher.scheduler.advanceUntilIdle()
+    }
+
     /** Waits for [reference]'s text, which the real fetch path delivers off the test dispatcher. */
     private suspend fun awaitResultText(reference: BibleReference) {
         viewModel.state.first { it.resultTextByPassageId[reference.asUSFM] != null }
@@ -438,21 +627,41 @@ class BibleReaderSearchViewModelTest {
         coEvery { BibleVersionRendering.plainTextOf(any(), any()) } returns text
     }
 
-    private fun stubSearch(references: List<BibleReference>) {
-        coEvery { searchApi.verses(query = any(), bibleId = any()) } returns verseSearchResults(references)
+    private fun stubSearch(
+        references: List<BibleReference>,
+        nextPageToken: String? = null,
+    ) {
+        coEvery { searchApi.verses(query = any(), bibleId = any(), pageToken = null) } returns
+            verseSearchResults(references, nextPageToken)
     }
 
-    private fun verseSearchResults(references: List<BibleReference>) =
-        VerseSearchResults(
-            references = references,
-            userIntent = null,
-            didYouMean = emptyList(),
-            searchInsteadFor = null,
-            nextPageToken = null,
-        )
+    private fun stubNextPage(
+        references: List<BibleReference>,
+        nextPageToken: String? = null,
+        delayMillis: Long = 0,
+    ) {
+        coEvery { searchApi.verses(query = any(), bibleId = any(), pageToken = SECOND_PAGE_TOKEN) } coAnswers {
+            delay(delayMillis)
+            verseSearchResults(references, nextPageToken)
+        }
+    }
+
+    private fun verseSearchResults(
+        references: List<BibleReference>,
+        nextPageToken: String? = null,
+    ) = VerseSearchResults(
+        references = references,
+        userIntent = null,
+        didYouMean = emptyList(),
+        searchInsteadFor = null,
+        nextPageToken = nextPageToken,
+    )
 
     private companion object {
         const val SLOW_RESPONSE_MILLIS = 1_000L
+
+        /** The token a first page comes back carrying, which the second page is then asked for with. */
+        const val SECOND_PAGE_TOKEN = "second-page"
 
         val kjv = BibleVersion(id = 1, abbreviation = "KJV")
         val esv = BibleVersion(id = 2, abbreviation = "ESV")

@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,8 +25,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -46,6 +51,7 @@ import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.Cream
 import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.views.components.SearchBar
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
 /** The query the search endpoint accepts, counted the way the field counts what is typed into it. */
@@ -54,8 +60,17 @@ private const val MAXIMUM_QUERY_GRAPHEME_CLUSTER_COUNT = 100
 /** How much of a result's own verse text is shown, so several results can be compared at once. */
 private const val RESULT_TEXT_MAXIMUM_LINE_COUNT = 3
 
+/**
+ * How near the end of what is loaded the reader gets before the next page is asked for. Asking short of the bottom
+ * means the page is already on its way by the time they reach it.
+ */
+private const val RESULTS_REMAINING_COUNT_BEFORE_NEXT_PAGE = 5
+
 /** The panel a search that failed or found nothing is said in. */
 internal const val SEARCH_MESSAGE_TEST_TAG = "search_message"
+
+/** The list the results are read down, which pages as it is scrolled. */
+internal const val SEARCH_RESULTS_TEST_TAG = "search_results"
 
 /** The full-height sheet a reader searches from, risen over the reader with the field already focused. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,6 +80,7 @@ internal fun BibleReaderSearchSheet(
     onQueryChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onRequestResultText: (BibleReference) -> Unit,
+    onLoadNextPage: () -> Unit,
     state: State,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -142,7 +158,11 @@ internal fun BibleReaderSearchSheet(
                             results = state.results,
                             resultTextByPassageId = state.resultTextByPassageId,
                             searchVersion = state.searchVersion,
+                            nextPageToken = state.nextPageToken,
+                            isLoadingNextPage = state.isLoadingNextPage,
+                            hasNextPageLoadError = state.hasNextPageLoadError,
                             onRequestResultText = onRequestResultText,
+                            onLoadNextPage = onLoadNextPage,
                         )
                     }
             }
@@ -202,20 +222,113 @@ private fun SearchMessage(
     }
 }
 
+/**
+ * The results, paged from the list's own scroll state: once the last row on screen is within
+ * [RESULTS_REMAINING_COUNT_BEFORE_NEXT_PAGE] of the end of what is loaded, the next page is asked for. The effect is keyed
+ * to [nextPageToken] so that a page landing restarts it and the reader standing still at the foot of the list is
+ * asked about again; a list with no token left to page on is not watched at all.
+ */
 @Composable
 private fun SearchResults(
     results: List<BibleReference>,
     resultTextByPassageId: Map<String, String?>,
     searchVersion: BibleVersion?,
+    nextPageToken: String?,
+    isLoadingNextPage: Boolean,
+    hasNextPageLoadError: Boolean,
     onRequestResultText: (BibleReference) -> Unit,
+    onLoadNextPage: () -> Unit,
 ) {
-    LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        items(results) { reference ->
+    val listState = rememberLazyListState()
+    val loadedResultCount by rememberUpdatedState(results.size)
+    val loadNextPage by rememberUpdatedState(onLoadNextPage)
+
+    LaunchedEffect(listState, nextPageToken) {
+        if (nextPageToken.isNullOrEmpty()) return@LaunchedEffect
+
+        snapshotFlow {
+            val lastVisibleIndex =
+                listState.layoutInfo.visibleItemsInfo
+                    .lastOrNull()
+                    ?.index ?: -1
+            lastVisibleIndex >= loadedResultCount - RESULTS_REMAINING_COUNT_BEFORE_NEXT_PAGE
+        }.filter { it }
+            .collect { loadNextPage() }
+    }
+
+    LazyColumn(
+        state = listState,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .testTag(SEARCH_RESULTS_TEST_TAG),
+    ) {
+        items(results, key = { it.asUSFM }) { reference ->
             SearchResult(
                 reference = reference,
                 text = resultTextByPassageId[reference.asUSFM],
                 searchVersion = searchVersion,
                 onRequestResultText = onRequestResultText,
+            )
+        }
+
+        if (isLoadingNextPage) {
+            item { NextPageIndicator() }
+        } else if (hasNextPageLoadError) {
+            item { NextPageRetry(onLoadNextPage = onLoadNextPage) }
+        }
+    }
+}
+
+/**
+ * The indicator at the foot of the list while a page loads, labelled through the semantics modifier because the
+ * Material indicator takes no content description of its own.
+ */
+@Composable
+private fun NextPageIndicator() {
+    val label = stringResource(R.string.search)
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+    ) {
+        CircularProgressIndicator(
+            modifier =
+                Modifier
+                    .size(20.dp)
+                    .semantics { contentDescription = label },
+        )
+    }
+}
+
+/**
+ * What a page that would not load offers instead, the query no longer being the obvious way to ask again. It is only
+ * ever shown while nothing is in flight, so tapping it twice over cannot start a second request. The icon is
+ * decorative.
+ */
+@Composable
+private fun NextPageRetry(onLoadNextPage: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+    ) {
+        TextButton(onClick = onLoadNextPage) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+
+            Text(
+                text = stringResource(R.string.error),
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(start = 8.dp),
             )
         }
     }
@@ -278,6 +391,7 @@ private fun Preview_BibleReaderSearchSheet() {
             onQueryChange = {},
             onSubmit = {},
             onRequestResultText = {},
+            onLoadNextPage = {},
             state = State(),
         )
     }
