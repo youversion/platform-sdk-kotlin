@@ -46,7 +46,7 @@ fun SearchBar(
     containerColor: Color = MaterialTheme.readerColorScheme.buttonPrimaryColor,
     onSubmit: (() -> Unit)? = null,
     showsClearButton: Boolean = false,
-    clearButtonContentDescription: String = stringResource(R.string.close_search_bar),
+    clearButtonContentDescription: String = stringResource(R.string.clear_search),
     focusRequester: FocusRequester = remember { FocusRequester() },
     maximumGraphemeClusterCount: Int? = null,
 ) {
