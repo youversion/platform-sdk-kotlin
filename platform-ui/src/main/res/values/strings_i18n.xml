@@ -13,12 +13,14 @@
     <string name="yv_bible_versions_heading">Bible Versions</string>
     <string name="yv_books_heading">Books</string>
     <string name="yv_cancel">Cancel</string>
+    <string name="yv_clear_search">Clear search</string>
     <string name="yv_close">Close</string>
     <string name="yv_close_search_bar">Close the search input</string>
     <string name="yv_copy">Copy</string>
     <string name="yv_data_exchange_continue">Continue</string>
     <string name="yv_data_exchange_highlights_explanation">YouVersion will ask you to grant access before highlights can be saved.</string>
     <string name="yv_data_exchange_highlights_question">Allow this app to save highlights with YouVersion?</string>
+    <string name="yv_done">Done</string>
     <string name="yv_error">Error</string>
     <string name="yv_font">Font</string>
     <string name="yv_font_and_settings">Fonts &amp; Settings</string>
