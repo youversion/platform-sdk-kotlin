@@ -564,6 +564,9 @@ internal fun BibleScreen(
                                         BibleReaderSearchViewModel.Action.LoadResultText(reference),
                                     )
                                 },
+                                onSelectResult = { reference ->
+                                    viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(reference))
+                                },
                                 onLoadNextPage = {
                                     searchViewModel.onAction(BibleReaderSearchViewModel.Action.LoadNextPage)
                                 },

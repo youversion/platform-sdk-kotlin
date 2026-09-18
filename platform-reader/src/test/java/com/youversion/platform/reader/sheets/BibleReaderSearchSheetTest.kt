@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.filter
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -59,6 +60,7 @@ class BibleReaderSearchSheetTest {
         onDismissRequest: () -> Unit = {},
         onSubmit: () -> Unit = {},
         onRequestResultText: (BibleReference) -> Unit = {},
+        onSelectResult: (BibleReference) -> Unit = {},
         onLoadNextPage: () -> Unit = {},
         onSelectSuggestedQuery: (SearchQuery) -> Unit = {},
         results: List<BibleReference> = emptyList(),
@@ -80,6 +82,7 @@ class BibleReaderSearchSheetTest {
                     onQueryChange = { query.value = it },
                     onSubmit = onSubmit,
                     onRequestResultText = onRequestResultText,
+                    onSelectResult = onSelectResult,
                     onLoadNextPage = onLoadNextPage,
                     onSelectSuggestedQuery = onSelectSuggestedQuery,
                     state =
@@ -186,13 +189,15 @@ class BibleReaderSearchSheetTest {
     fun `a result shows its title alone until its text arrives above it`() {
         renderSheet(results = listOf(john316), status = SearchStatus.COMPLETED)
 
-        composeTestRule.onNodeWithText(JOHN_3_16_TEXT).assertDoesNotExist()
-        val titleTopWithoutText = composeTestRule.onNodeWithText("JOHN 3:16").getUnclippedBoundsInRoot().top
+        composeTestRule.onNodeWithText(JOHN_3_16_TEXT, useUnmergedTree = true).assertDoesNotExist()
+        val titleTopWithoutText =
+            composeTestRule.onNodeWithText("JOHN 3:16", useUnmergedTree = true).getUnclippedBoundsInRoot().top
 
         composeTestRule.runOnIdle { resultText.value = mapOf("JHN.3.16" to JOHN_3_16_TEXT) }
 
-        composeTestRule.onNodeWithText(JOHN_3_16_TEXT).assertIsDisplayed()
-        val titleTopWithText = composeTestRule.onNodeWithText("JOHN 3:16").getUnclippedBoundsInRoot().top
+        composeTestRule.onNodeWithText(JOHN_3_16_TEXT, useUnmergedTree = true).assertIsDisplayed()
+        val titleTopWithText =
+            composeTestRule.onNodeWithText("JOHN 3:16", useUnmergedTree = true).getUnclippedBoundsInRoot().top
         assertTrue(titleTopWithText > titleTopWithoutText)
     }
 
@@ -385,6 +390,37 @@ class BibleReaderSearchSheetTest {
 
         composeTestRule.onNodeWithTag(SEARCH_SUGGESTED_QUERIES_TEST_TAG).assertDoesNotExist()
         composeTestRule.onNodeWithText(love.text).assertDoesNotExist()
+    }
+
+    @Test
+    fun `tapping a result reports it and drops the keyboard`() {
+        var selected: BibleReference? = null
+        renderSheet(
+            onSelectResult = { selected = it },
+            results = listOf(john316),
+            status = SearchStatus.COMPLETED,
+        )
+
+        composeTestRule.onNodeWithText("JOHN 3:16").performClick()
+
+        composeTestRule.onNode(hasSetTextAction()).assertIsNotFocused()
+        composeTestRule.waitUntil { selected == john316 }
+    }
+
+    /** The sheet is off the screen by the time the tap is reported, which is what says its hide was awaited. */
+    @Test
+    fun `a tapped result is reported only once the sheet has gone`() {
+        var selected: BibleReference? = null
+        renderSheet(
+            onSelectResult = { selected = it },
+            results = listOf(john316),
+            status = SearchStatus.COMPLETED,
+        )
+
+        composeTestRule.onNodeWithText("JOHN 3:16").performClick()
+        composeTestRule.waitUntil { selected != null }
+
+        composeTestRule.onNodeWithText("Done").assertIsNotDisplayed()
     }
 
     private companion object {
