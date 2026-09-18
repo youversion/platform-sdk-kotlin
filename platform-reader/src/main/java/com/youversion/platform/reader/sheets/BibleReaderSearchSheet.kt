@@ -90,6 +90,7 @@ internal fun BibleReaderSearchSheet(
     onQueryChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onRequestResultText: (BibleReference) -> Unit,
+    onSelectResult: (BibleReference) -> Unit,
     onLoadNextPage: () -> Unit,
     onSelectSuggestedQuery: (SearchQuery) -> Unit,
     state: State,
@@ -108,6 +109,17 @@ internal fun BibleReaderSearchSheet(
     ) {
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()
+        }
+
+        val focusManager = LocalFocusManager.current
+
+        val selectResult = { reference: BibleReference ->
+            focusManager.clearFocus()
+            scope.launch {
+                sheetState.hide()
+                onSelectResult(reference)
+            }
+            Unit
         }
 
         Column(
@@ -178,6 +190,7 @@ internal fun BibleReaderSearchSheet(
                             isLoadingNextPage = state.isLoadingNextPage,
                             hasNextPageLoadError = state.hasNextPageLoadError,
                             onRequestResultText = onRequestResultText,
+                            onSelectResult = selectResult,
                             onLoadNextPage = onLoadNextPage,
                         )
                     }
@@ -253,6 +266,7 @@ private fun SearchResults(
     isLoadingNextPage: Boolean,
     hasNextPageLoadError: Boolean,
     onRequestResultText: (BibleReference) -> Unit,
+    onSelectResult: (BibleReference) -> Unit,
     onLoadNextPage: () -> Unit,
 ) {
     val listState = rememberLazyListState()
@@ -285,6 +299,7 @@ private fun SearchResults(
                 text = resultTextByPassageId[reference.asUSFM],
                 searchVersion = searchVersion,
                 onRequestResultText = onRequestResultText,
+                onSelectResult = onSelectResult,
             )
         }
 
@@ -417,6 +432,7 @@ private fun SearchResult(
     text: String?,
     searchVersion: BibleVersion?,
     onRequestResultText: (BibleReference) -> Unit,
+    onSelectResult: (BibleReference) -> Unit,
 ) {
     LaunchedEffect(reference) {
         onRequestResultText(reference)
@@ -427,6 +443,7 @@ private fun SearchResult(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .clickable { onSelectResult(reference) }
                 .padding(vertical = 12.dp),
     ) {
         if (text != null) {
@@ -463,6 +480,7 @@ private fun Preview_BibleReaderSearchSheet() {
             onQueryChange = {},
             onSubmit = {},
             onRequestResultText = {},
+            onSelectResult = {},
             onLoadNextPage = {},
             onSelectSuggestedQuery = {},
             state = State(),

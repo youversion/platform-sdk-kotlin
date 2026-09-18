@@ -66,6 +66,12 @@ internal class BibleReaderViewModel(
         set(value) {
             bibleReaderRepository.highlightRequest = value
         }
+
+    /**
+     * The verse a search result asked the reader to point at, kept here rather than on state because it is not the
+     * reader's business until the chapter carrying it has loaded. Consumed by [Action.ScrollTargetReached].
+     */
+    private var pendingFocusedReference: BibleReference? = null
     private val _state: MutableStateFlow<State>
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
 
@@ -80,6 +86,7 @@ internal class BibleReaderViewModel(
         get() = _state.value.bibleReference
         set(value) {
             bibleReaderRepository.lastBibleReference = value
+            pendingFocusedReference = pendingFocusedReference?.takeIf { focus -> value.contains(focus) }
             _state.update {
                 it.copy(
                     bibleReference = value,
@@ -203,11 +210,16 @@ internal class BibleReaderViewModel(
             }
 
             is Action.OpenSearch -> {
+                clearFocusedReference()
                 _state.update { it.copy(showingSearch = true) }
             }
 
             is Action.CloseSearch -> {
                 _state.update { it.copy(showingSearch = false) }
+            }
+
+            is Action.GoToSearchResult -> {
+                goToSearchResult(action.reference)
             }
 
             is Action.DecreaseFontSize -> {
@@ -331,15 +343,14 @@ internal class BibleReaderViewModel(
 
             is Action.ScrollTargetReached -> {
                 _state.update { it.copy(scrollTargetReference = null) }
+                pendingFocusedReference?.let { reference ->
+                    pendingFocusedReference = null
+                    focusReference(reference)
+                }
             }
 
             is Action.FocusReference -> {
-                val isFocusable =
-                    action.reference.verseStart != null &&
-                        _state.value.bibleReference.contains(action.reference)
-                if (isFocusable) {
-                    _state.update { it.copy(focusedReference = action.reference) }
-                }
+                focusReference(action.reference)
             }
 
             is Action.ClearFocusedReference -> {
@@ -438,8 +449,21 @@ internal class BibleReaderViewModel(
         }
     }
 
+    private fun focusReference(reference: BibleReference) {
+        val isFocusable = reference.verseStart != null && _state.value.bibleReference.contains(reference)
+        if (isFocusable) {
+            _state.update { it.copy(focusedReference = reference) }
+        }
+    }
+
     private fun clearFocusedReference() {
         _state.update { it.copy(focusedReference = null) }
+    }
+
+    private fun goToSearchResult(reference: BibleReference) {
+        pendingFocusedReference = reference
+        _state.update { it.copy(showingSearch = false, scrollTargetReference = reference) }
+        onHeaderSelectionChange(reference.copy(verseStart = null, verseEnd = null))
     }
 
     private fun addHighlight(hexColor: String) {
@@ -845,6 +869,15 @@ internal class BibleReaderViewModel(
 
         /** Lift the focus, returning the chapter to full strength. */
         data object ClearFocusedReference : Action
+
+        /**
+         * Close search and take the reader to [reference], arriving scrolled to that verse with the rest of its
+         * chapter dimmed. The focus is staged until the chapter has loaded, since a verse cannot be focused in a
+         * chapter that is not on display yet.
+         */
+        data class GoToSearchResult(
+            val reference: BibleReference,
+        ) : Action
 
         data object ClearVerseSelection : Action
 

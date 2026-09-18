@@ -3,6 +3,7 @@ package com.youversion.platform.reader
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleBookIntro
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -10,6 +11,7 @@ import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.ui.theme.ReaderTheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -31,6 +33,7 @@ class BibleReaderViewModelActionTests {
     private val testDispatcher = UnconfinedTestDispatcher()
 
     private lateinit var userSettingsRepository: UserSettingsRepository
+    private lateinit var bibleVersionRepository: BibleVersionRepository
     private lateinit var viewModel: BibleReaderViewModel
 
     private val defaultReference =
@@ -70,6 +73,7 @@ class BibleReaderViewModelActionTests {
 
         val bibleReaderRepository = mockk<BibleReaderRepository>(relaxed = true)
         userSettingsRepository = mockk(relaxed = true)
+        bibleVersionRepository = mockk(relaxed = true)
 
         // Explicit null stubs — relaxed mockk otherwise returns 0f for `Float?` getters, which
         // would poison the ViewModel's default state when it restores from storage on init.
@@ -81,7 +85,7 @@ class BibleReaderViewModelActionTests {
             BibleReaderViewModel(
                 bibleReference = null,
                 fontDefinitionProvider = null,
-                bibleVersionRepository = mockk(relaxed = true),
+                bibleVersionRepository = bibleVersionRepository,
                 bibleReaderRepository = bibleReaderRepository,
                 userSettingsRepository = userSettingsRepository,
                 bibleChapterRepository = mockk(relaxed = true),
@@ -419,6 +423,118 @@ class BibleReaderViewModelActionTests {
         viewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter)
 
         assertTrue(viewModel.state.value.isViewingIntro)
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    // ----- Search Results
+
+    @Test
+    fun `GoToSearchResult takes the reader to the chapter containing the result`() {
+        val verse = verseReference(12).copy(chapter = 3)
+
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verse))
+
+        assertEquals(verse.copy(verseStart = null, verseEnd = null), viewModel.bibleReference)
+    }
+
+    @Test
+    fun `GoToSearchResult stages the verse as the scroll target`() {
+        val verse = verseReference(12).copy(chapter = 3)
+
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verse))
+
+        assertEquals(verse, viewModel.state.value.scrollTargetReference)
+    }
+
+    @Test
+    fun `GoToSearchResult closes search`() {
+        viewModel.onAction(BibleReaderViewModel.Action.OpenSearch)
+
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12)))
+
+        assertFalse(viewModel.state.value.showingSearch)
+    }
+
+    @Test
+    fun `the result is not focused before its chapter has loaded`() {
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12).copy(chapter = 3)))
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `the staged focus outlives the move and takes once the chapter has loaded`() {
+        val verse = verseReference(12).copy(chapter = 3)
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verse))
+
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+
+        assertEquals(verse, viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `the staged focus is consumed once`() {
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12)))
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+        viewModel.onAction(BibleReaderViewModel.Action.ClearFocusedReference)
+
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `a scroll the reader started itself focuses nothing when it lands`() {
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollToReference(verseReference(12)))
+
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `a result from another version arrives in that version, focused`() {
+        val otherVersion = BibleVersion(id = 2, abbreviation = "ESV", books = emptyList())
+        coEvery { bibleVersionRepository.version(id = 2) } returns otherVersion
+        val verse = BibleReference(versionId = 2, bookUSFM = "JHN", chapter = 3, verse = 16)
+
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verse))
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+
+        assertEquals(BibleReference(versionId = 2, bookUSFM = "JHN", chapter = 3), viewModel.bibleReference)
+        assertEquals(otherVersion, viewModel.bibleVersion)
+        assertEquals(verse, viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `opening search lifts the focus`() {
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12)))
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+
+        viewModel.onAction(BibleReaderViewModel.Action.OpenSearch)
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `a staged focus does not follow the reader into an unrelated chapter`() {
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12).copy(chapter = 3)))
+
+        viewModel.bibleReference = viewModel.bibleReference.copy(chapter = 9)
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
+    @Test
+    fun `closing search without a result leaves the reader alone`() {
+        viewModel.onAction(BibleReaderViewModel.Action.OpenSearch)
+        val readerReference = viewModel.bibleReference
+
+        viewModel.onAction(BibleReaderViewModel.Action.CloseSearch)
+
+        assertEquals(readerReference, viewModel.bibleReference)
+        assertNull(viewModel.state.value.scrollTargetReference)
         assertNull(viewModel.state.value.focusedReference)
     }
 
