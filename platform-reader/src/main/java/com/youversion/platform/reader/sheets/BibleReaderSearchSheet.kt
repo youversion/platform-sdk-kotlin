@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -78,7 +79,10 @@ internal const val SEARCH_RESULTS_TEST_TAG = "search_results"
 /** The list of queries offered to a reader who has not searched yet. */
 internal const val SEARCH_SUGGESTED_QUERIES_TEST_TAG = "search_suggested_queries"
 
-/** The full-height sheet a reader searches from, risen over the reader with the field already focused. */
+/**
+ * The sheet a reader searches from, risen over the reader with the field already focused. It stops at the status bar
+ * rather than covering it, so the dimmed reader still shows above it as it does in Swift.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun BibleReaderSearchSheet(
@@ -97,9 +101,10 @@ internal fun BibleReaderSearchSheet(
     val focusRequester = remember { FocusRequester() }
 
     ModalBottomSheet(
+        modifier = Modifier.statusBarsPadding(),
         sheetState = sheetState,
         onDismissRequest = onDismissRequest,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.background,
     ) {
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()

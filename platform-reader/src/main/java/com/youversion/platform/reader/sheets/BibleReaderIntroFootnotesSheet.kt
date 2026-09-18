@@ -44,7 +44,7 @@ internal fun BibleReaderIntroFootnotesSheet(
     ModalBottomSheet(
         sheetState = sheetState,
         onDismissRequest = onDismissRequest,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.background,
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),

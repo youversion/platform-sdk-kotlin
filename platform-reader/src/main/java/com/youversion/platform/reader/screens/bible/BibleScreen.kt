@@ -327,7 +327,7 @@ internal fun BibleScreen(
                                 offset = Offset(0f, -8f)
                                 color = Color.Black.copy(alpha = 0.15f)
                             }.clip(sheetShape)
-                            .background(MaterialTheme.colorScheme.surface),
+                            .background(MaterialTheme.colorScheme.background),
                 ) {
                     Box(
                         modifier =
