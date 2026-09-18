@@ -13,12 +13,14 @@
     <string name="bible_versions_heading">@string/yv_bible_versions_heading</string>
     <string name="books_heading">@string/yv_books_heading</string>
     <string name="cancel">@string/yv_cancel</string>
+    <string name="clear_search">@string/yv_clear_search</string>
     <string name="close">@string/yv_close</string>
     <string name="close_search_bar">@string/yv_close_search_bar</string>
     <string name="copy">@string/yv_copy</string>
     <string name="data_exchange_continue">@string/yv_data_exchange_continue</string>
     <string name="data_exchange_highlights_explanation">@string/yv_data_exchange_highlights_explanation</string>
     <string name="data_exchange_highlights_question">@string/yv_data_exchange_highlights_question</string>
+    <string name="done">@string/yv_done</string>
     <string name="error">@string/yv_error</string>
     <string name="font">@string/yv_font</string>
     <string name="font_and_settings">@string/yv_font_and_settings</string>
