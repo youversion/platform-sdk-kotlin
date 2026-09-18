@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/youversion/platform-sdk-kotlin/compare/2.1.1...2.1.2) (2026-09-18)
+
+
+### Bug Fixes
+
+* **i18n:** sync kotlin localization from platform-localization ([6576898](https://github.com/youversion/platform-sdk-kotlin/commit/6576898bac2eafd022af685cff1e1189e5428a05))
+
 ## [2.1.1](https://github.com/youversion/platform-sdk-kotlin/compare/2.1.0...2.1.1) (2026-09-17)
 
 
