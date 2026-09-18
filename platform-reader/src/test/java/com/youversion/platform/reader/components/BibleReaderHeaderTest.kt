@@ -21,8 +21,11 @@ class BibleReaderHeaderTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    @Test
-    fun `renders header with version abbreviation`() {
+    /** Renders the header, defaulting everything a given test does not care about. */
+    private fun renderHeader(
+        onVersionClick: () -> Unit = {},
+        onSearchClick: () -> Unit = {},
+    ) {
         composeTestRule.setContent {
             BibleReaderMaterialTheme {
                 BibleReaderHeader(
@@ -30,7 +33,8 @@ class BibleReaderHeaderTest {
                     signedIn = true,
                     scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState()),
                     versionAbbreviation = "NIV",
-                    onVersionClick = {},
+                    onVersionClick = onVersionClick,
+                    onSearchClick = onSearchClick,
                     onOpenHeaderMenu = {},
                     onFontSettingsClick = {},
                     onSignInClick = {},
@@ -38,6 +42,12 @@ class BibleReaderHeaderTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun `renders header with version abbreviation`() {
+        renderHeader()
+
         composeTestRule.onNodeWithContentDescription("Font & Settings").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Language").assertIsDisplayed()
         composeTestRule.onNodeWithText("NIV").assertIsDisplayed()
@@ -46,23 +56,27 @@ class BibleReaderHeaderTest {
     @Test
     fun `clicking version button triggers onVersionClick`() {
         var onVersionClicked = false
-        composeTestRule.setContent {
-            BibleReaderMaterialTheme {
-                BibleReaderHeader(
-                    isSignInProcessing = false,
-                    signedIn = true,
-                    scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState()),
-                    versionAbbreviation = "NIV",
-                    onVersionClick = { onVersionClicked = true },
-                    onOpenHeaderMenu = {},
-                    onFontSettingsClick = {},
-                    onSignInClick = {},
-                    onSignOutClick = {},
-                )
-            }
-        }
+        renderHeader(onVersionClick = { onVersionClicked = true })
 
         composeTestRule.onNodeWithText("NIV").performClick()
+
         assertTrue(onVersionClicked)
+    }
+
+    @Test
+    fun `renders a labelled search button`() {
+        renderHeader()
+
+        composeTestRule.onNodeWithContentDescription("Search").assertIsDisplayed()
+    }
+
+    @Test
+    fun `clicking search button triggers onSearchClick`() {
+        var onSearchClicked = false
+        renderHeader(onSearchClick = { onSearchClicked = true })
+
+        composeTestRule.onNodeWithContentDescription("Search").performClick()
+
+        assertTrue(onSearchClicked)
     }
 }

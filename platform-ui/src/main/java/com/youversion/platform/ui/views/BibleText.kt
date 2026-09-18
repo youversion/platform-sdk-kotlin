@@ -25,7 +25,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,7 +37,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
@@ -52,32 +50,16 @@ import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.youversion.platform.core.YouVersionPlatformConfiguration
-import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
-import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.di.PlatformInternalApi
-import com.youversion.platform.core.di.PlatformKoinGraph
-import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
-import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.UntitledSerif
-import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
-import com.youversion.platform.ui.views.rendering.BibleTextCategory
-import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
-import com.youversion.platform.ui.views.rendering.BibleVersionRendering
-import com.youversion.platform.ui.views.rendering.isVisible
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.launch
 
 private const val FOOTNOTE_IMAGE_ID = "footnote_image_id"
 
@@ -205,184 +187,32 @@ fun BibleText(
     onStateChange: (BibleTextLoadingPhase) -> Unit = {},
     onBlocksChange: (List<BibleTextBlock>) -> Unit = {},
 ) {
-    var blocks by remember { mutableStateOf<List<BibleTextBlock>>(emptyList()) }
-    var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
-    var isVersionRightToLeft by remember { mutableStateOf(false) }
-    val versionRepository: BibleVersionRepository = PlatformKoinGraph.koinApplication.koin.get()
-    val chapterRepository: BibleChapterRepository = PlatformKoinGraph.koinApplication.koin.get()
-    val highlightsRepository: BibleHighlightsRepository = PlatformKoinGraph.koinApplication.koin.get()
+    val blocksState = rememberBibleTextBlocksState(reference = reference, textOptions = textOptions)
 
-    val coroutineScope = rememberCoroutineScope()
+    LaunchedEffect(blocksState.loadingPhase) {
+        onStateChange(blocksState.loadingPhase)
+    }
 
-    val cachedHighlights by highlightsRepository.highlights.collectAsStateWithLifecycle()
-    val configState by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
-    val isSignedIn = configState?.isSignedIn == true
-
-    // Reading highlights needs both an account and that account's consent. Without either there is nothing on the
-    // server to fetch and the request would only come back unauthorized or refused, so it is not made at all.
-    val hasHighlightsAccess =
-        isSignedIn &&
-            configState?.grantedPermissions?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
-
-    LaunchedEffect(reference) {
-        if (hasHighlightsAccess) {
-            highlightsRepository.ensureHighlightsForChapterLoaded(reference)
+    LaunchedEffect(blocksState.blocks) {
+        if (blocksState.loadingPhase == BibleTextLoadingPhase.SUCCESS) {
+            onBlocksChange(blocksState.blocks)
         }
     }
 
-    // Nothing else re-triggers a load when access is gained while the reader is already viewing a chapter, whether
-    // that was by signing in or by granting the highlights permission. Force a refresh only on the false -> true
-    // transition so their highlights appear immediately, without bypassing the per-chapter throttle on every re-entry.
-    var hadHighlightsAccess by remember { mutableStateOf(hasHighlightsAccess) }
-    LaunchedEffect(hasHighlightsAccess) {
-        if (hasHighlightsAccess && !hadHighlightsAccess) {
-            highlightsRepository.ensureHighlightsForChapterLoaded(reference, forceReload = true)
-        }
-        hadHighlightsAccess = hasHighlightsAccess
-    }
-
-    val highlightAlpha = MaterialTheme.readerColorScheme.highlightAlpha
-    val highlights =
-        remember(cachedHighlights, reference, highlightAlpha, hasHighlightsAccess) {
-            if (hasHighlightsAccess) {
-                highlightColorsForReference(cachedHighlights, reference, highlightAlpha)
-            } else {
-                emptyMap()
-            }
-        }
-
-    LaunchedEffect(loadingPhase) {
-        onStateChange(loadingPhase)
-    }
-
-    LaunchedEffect(reference, textOptions) {
-        loadingPhase = BibleTextLoadingPhase.LOADING
-        try {
-            isVersionRightToLeft = versionRepository.version(reference.versionId).isRightToLeft
-
-            val loadedBlocks =
-                BibleVersionRendering.textBlocks(
-                    bibleChapterRepository = chapterRepository,
-                    reference = reference,
-                    renderVerseNumbers = textOptions.renderVerseNumbers,
-                    footnoteMode = textOptions.footnoteMode,
-                    renderHeadlines = textOptions.renderHeadlines,
-                    footnoteMarker = textOptions.footnoteMarker,
-                    textColor = textOptions.textColor ?: Color.Unspecified,
-                    wocColor = textOptions.wocColor,
-                    fonts = BibleTextFonts(fontFamily = textOptions.fontFamily, baseSize = textOptions.fontSize),
-                )
-
-            if (loadedBlocks != null) {
-                blocks = loadedBlocks
-                onBlocksChange(loadedBlocks)
-                loadingPhase = BibleTextLoadingPhase.SUCCESS
-            } else {
-                loadingPhase = BibleTextLoadingPhase.FAILED
-            }
-        } catch (_: BibleVersionApiException) {
-            loadingPhase = BibleTextLoadingPhase.NOT_PERMITTED
-        } catch (e: CancellationException) {
-            loadingPhase = BibleTextLoadingPhase.INACTIVE
-            throw e
-        } catch (e: Exception) {
-            println("loadBlocks unexpected error: $e")
-            loadingPhase = BibleTextLoadingPhase.FAILED
-        }
-    }
-
-    // Determine the alignment for the main column
-    val systemLayoutDirection = LocalLayoutDirection.current
-    val mainColumnAlignment =
-        when {
-            systemLayoutDirection == LayoutDirection.Ltr && isVersionRightToLeft -> Alignment.End
-            systemLayoutDirection == LayoutDirection.Ltr && !isVersionRightToLeft -> Alignment.Start
-            systemLayoutDirection == LayoutDirection.Rtl && isVersionRightToLeft -> Alignment.Start
-            systemLayoutDirection == LayoutDirection.Rtl && !isVersionRightToLeft -> Alignment.End
-            else -> Alignment.Start
-        }
-
-    if (loadingPhase != BibleTextLoadingPhase.SUCCESS) {
-        placeholder(loadingPhase)
+    if (blocksState.loadingPhase != BibleTextLoadingPhase.SUCCESS) {
+        placeholder(blocksState.loadingPhase)
     } else {
-        Column(horizontalAlignment = mainColumnAlignment) {
-            val visibleBlocks = remember(blocks) { blocks.filter { it.isVisible } }
-            visibleBlocks.forEachIndexed { index, block ->
-                if (block.rows.isEmpty()) {
-                    BibleTextBlock(
-                        block = block,
-                        textOptions = textOptions,
-                        isFirstBlock = index == 0,
-                        previousMarginBottom = if (index == 0) 0.dp else visibleBlocks[index - 1].marginBottom,
-                        selectedVerses = selectedVerses,
-                        highlights = highlights,
-                        onClick = { localPosition, textLayoutResult ->
-                            coroutineScope.launch {
-                                val characterIndex = textLayoutResult.getOffsetForPosition(localPosition)
-
-                                val tappedRef =
-                                    block.text
-                                        .getStringAnnotations(
-                                            tag = BibleReferenceAttribute.NAME,
-                                            start = characterIndex,
-                                            end = characterIndex,
-                                        ).firstOrNull()
-                                        ?.item
-                                        ?.let {
-                                            BibleReference.fromAnnotation(it)
-                                        }
-
-                                if (tappedRef != null) {
-                                    val tappedFootnote =
-                                        block.text
-                                            .getStringAnnotations(
-                                                tag = BibleTextCategoryAttribute.NAME,
-                                                start = characterIndex,
-                                                end = characterIndex,
-                                            ).firstOrNull {
-                                                it.item == BibleTextCategory.FOOTNOTE_MARKER.name ||
-                                                    it.item == BibleTextCategory.FOOTNOTE_IMAGE.name
-                                            }
-
-                                    if (tappedFootnote != null) {
-                                        val footNotes =
-                                            visibleBlocks.flatMap { it.footnotes }.filter { footnote ->
-                                                val referenceAnnotation =
-                                                    footnote
-                                                        .getStringAnnotations(
-                                                            tag = BibleReferenceAttribute.NAME,
-                                                            start = 0,
-                                                            end = footnote.text.length,
-                                                        ).firstOrNull()
-                                                referenceAnnotation?.let { annotation ->
-                                                    tappedRef ==
-                                                        BibleReference.fromAnnotation(annotation.item)
-                                                } == true
-                                            }
-
-                                        onFootnoteTap?.invoke(
-                                            tappedRef,
-                                            footNotes,
-                                        )
-                                    } else {
-                                        onVerseTap?.invoke(
-                                            tappedRef,
-                                            localPosition,
-                                        )
-                                    }
-                                }
-                            }
-                        },
-                    )
-                } else {
-                    BibleTableBlock(
-                        block = block,
-                        textOptions = textOptions,
-                        selectedVerses = selectedVerses,
-                        highlights = highlights,
-                        onVerseTap = onVerseTap,
-                    )
-                }
+        Column(horizontalAlignment = blocksState.horizontalAlignment) {
+            blocksState.visibleBlocks.indices.forEach { index ->
+                BibleBlockContent(
+                    visibleBlocks = blocksState.visibleBlocks,
+                    index = index,
+                    textOptions = textOptions,
+                    selectedVerses = selectedVerses,
+                    highlights = blocksState.highlights,
+                    onVerseTap = onVerseTap,
+                    onFootnoteTap = onFootnoteTap,
+                )
             }
         }
     }
@@ -590,8 +420,14 @@ private fun DrawScope.drawSelectionUnderlines(
         }
 }
 
+/**
+ * Draws one block of Bible text, with its own selection, highlight and footnote handling.
+ *
+ * [isFirstBlock] and [previousMarginBottom] place the block against the one before it, so a caller emitting
+ * blocks one at a time has to supply them from its own position in the chapter.
+ */
 @Composable
-private fun BibleTextBlock(
+internal fun BibleTextBlock(
     block: BibleTextBlock,
     textOptions: BibleTextOptions,
     isFirstBlock: Boolean,
@@ -663,8 +499,9 @@ private fun BibleTextBlock(
     )
 }
 
+/** Draws one block of Bible text laid out as a table, for the blocks that carry rows rather than a single run. */
 @Composable
-private fun BibleTableBlock(
+internal fun BibleTableBlock(
     block: BibleTextBlock,
     textOptions: BibleTextOptions,
     selectedVerses: Set<BibleReference>,

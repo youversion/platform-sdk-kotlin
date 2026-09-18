@@ -78,7 +78,7 @@ internal fun BibleReaderFontSettingsSheet(
     ModalBottomSheet(
         sheetState = sheetState,
         onDismissRequest = onDismissRequest,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.background,
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(24.dp),
