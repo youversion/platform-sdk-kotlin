@@ -251,6 +251,9 @@ internal fun BibleScreen(
     LaunchedEffect(state.scrollTargetReference, chapterBlocks?.loadingPhase) {
         val target = state.scrollTargetReference ?: return@LaunchedEffect
         val blocks = chapterBlocks ?: return@LaunchedEffect
+        // A target the load never reached is left staged rather than consumed. A chapter that failed renders no
+        // verses, so a later successful reload of it is the search result finally landing, not a scroll back to
+        // somewhere the reader had moved on from; moving off the chapter drops the target in the view model.
         if (blocks.loadingPhase != BibleTextLoadingPhase.SUCCESS || !state.bibleReference.contains(target)) {
             return@LaunchedEffect
         }
