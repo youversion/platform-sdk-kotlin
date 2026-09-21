@@ -229,23 +229,52 @@ internal fun BibleReference.Companion.fromAnnotation(annotation: String): BibleR
 }
 
 /**
- * Returns one merged character range per selected verse, spanning from the first
- * annotation start to the last annotation end for that verse.
+ * Returns one merged character range per verse [isIncluded] accepts, spanning from the first annotation start
+ * to the last annotation end for that verse.
  */
-internal fun AnnotatedString.selectedCharacterRanges(selectedVerses: Set<BibleReference>): List<IntRange> {
-    if (selectedVerses.isEmpty()) return emptyList()
-
-    return getStringAnnotations(
+private fun AnnotatedString.mergedVerseRanges(isIncluded: (BibleReference) -> Boolean): List<IntRange> =
+    getStringAnnotations(
         tag = BibleReferenceAttribute.NAME,
         start = 0,
         end = length,
     ).filter { annotation ->
-        val reference = BibleReference.fromAnnotation(annotation.item)
-        selectedVerses.any { it.overlaps(reference) }
+        isIncluded(BibleReference.fromAnnotation(annotation.item))
     }.groupBy { it.item }
         .map { (_, annotations) ->
             annotations.first().start until annotations.last().end
         }
+
+/** Returns one merged character range per selected verse. */
+internal fun AnnotatedString.selectedCharacterRanges(selectedVerses: Set<BibleReference>): List<IntRange> {
+    if (selectedVerses.isEmpty()) return emptyList()
+
+    return mergedVerseRanges { reference -> selectedVerses.any { it.overlaps(reference) } }
+}
+
+/** Returns one merged character range per verse [focusedReference] covers. */
+internal fun AnnotatedString.focusedCharacterRanges(focusedReference: BibleReference): List<IntRange> =
+    mergedVerseRanges { reference -> focusedReference.contains(reference) }
+
+/**
+ * The text with everything outside [focusedRanges] repainted in [dimmedColor], so the verse in focus is told
+ * apart from the ones it shares a block with rather than the block standing out whole.
+ */
+internal fun AnnotatedString.dimmedOutside(
+    focusedRanges: List<IntRange>,
+    dimmedColor: Color,
+): AnnotatedString {
+    val dimmedStyle = SpanStyle(color = dimmedColor)
+
+    return buildAnnotatedString {
+        append(this@dimmedOutside)
+
+        var start = 0
+        focusedRanges.sortedBy { it.first }.forEach { range ->
+            if (range.first > start) addStyle(dimmedStyle, start, range.first)
+            start = maxOf(start, range.last + 1)
+        }
+        if (start < length) addStyle(dimmedStyle, start, length)
+    }
 }
 
 /**
@@ -425,6 +454,9 @@ private fun DrawScope.drawSelectionUnderlines(
  *
  * [isFirstBlock] and [previousMarginBottom] place the block against the one before it, so a caller emitting
  * blocks one at a time has to supply them from its own position in the chapter.
+ *
+ * A block holds a whole paragraph, which is often more than one verse, so a non-null [focusedReference] draws
+ * the verses outside it at [unfocusedAlpha] rather than leaving the paragraph lit up whole.
  */
 @Composable
 internal fun BibleTextBlock(
@@ -434,6 +466,8 @@ internal fun BibleTextBlock(
     previousMarginBottom: Dp,
     selectedVerses: Set<BibleReference>,
     highlights: Map<BibleReference, Color>,
+    focusedReference: BibleReference? = null,
+    unfocusedAlpha: Float = 1f,
     onClick: (position: Offset, layoutResult: TextLayoutResult) -> Unit,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -450,13 +484,34 @@ internal fun BibleTextBlock(
             block.text.selectedCharacterRanges(selectedVerses)
         }
 
+    val textColor = textOptions.textColor ?: LocalContentColor.current
+
+    val focusedRanges =
+        remember(block.text, focusedReference) {
+            focusedReference?.let { block.text.focusedCharacterRanges(it) }.orEmpty()
+        }
+
+    val text =
+        remember(block.text, focusedReference, focusedRanges, unfocusedAlpha, textColor) {
+            if (focusedReference == null) {
+                block.text
+            } else {
+                block.text.dimmedOutside(focusedRanges, textColor.copy(alpha = textColor.alpha * unfocusedAlpha))
+            }
+        }
+
     val highlightedRanges =
-        remember(block.text, highlights) {
-            block.text.highlightedCharacterRanges(highlights)
+        remember(block.text, highlights, focusedReference, focusedRanges, unfocusedAlpha) {
+            block.text.highlightedCharacterRanges(highlights).map { (range, color) ->
+                val isInFocus =
+                    focusedReference == null ||
+                        focusedRanges.any { it.first <= range.first && it.last >= range.last }
+                range to if (isInFocus) color else color.copy(alpha = color.alpha * unfocusedAlpha)
+            }
         }
 
     Text(
-        text = block.text,
+        text = text,
         textAlign = block.alignment,
         lineHeight = textOptions.resolvedLineHeight,
         color = textOptions.textColor ?: Color.Unspecified,
@@ -506,6 +561,8 @@ internal fun BibleTableBlock(
     textOptions: BibleTextOptions,
     selectedVerses: Set<BibleReference>,
     highlights: Map<BibleReference, Color>,
+    focusedReference: BibleReference? = null,
+    unfocusedAlpha: Float = 1f,
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)?,
 ) {
     val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
@@ -540,6 +597,8 @@ internal fun BibleTableBlock(
                                 textOptions = textOptions,
                                 selectedVerses = selectedVerses,
                                 highlights = highlights,
+                                focusedReference = focusedReference,
+                                unfocusedAlpha = unfocusedAlpha,
                                 onVerseTap = onVerseTap,
                             )
                         }
@@ -550,6 +609,8 @@ internal fun BibleTableBlock(
                                 textOptions = textOptions,
                                 selectedVerses = selectedVerses,
                                 highlights = highlights,
+                                focusedReference = focusedReference,
+                                unfocusedAlpha = unfocusedAlpha,
                                 onVerseTap = onVerseTap,
                             )
                         }
@@ -566,10 +627,13 @@ private fun BibleTableCell(
     textOptions: BibleTextOptions,
     selectedVerses: Set<BibleReference>,
     highlights: Map<BibleReference, Color>,
+    focusedReference: BibleReference? = null,
+    unfocusedAlpha: Float = 1f,
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)?,
 ) {
     var cellLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
+    val textColor = textOptions.textColor ?: LocalContentColor.current
     val selectedRanges =
         remember(cellText, selectedVerses) {
             cellText.selectedCharacterRanges(selectedVerses)
@@ -578,9 +642,20 @@ private fun BibleTableCell(
         remember(cellText, highlights) {
             cellText.highlightedCharacterRanges(highlights)
         }
+    val text =
+        remember(cellText, focusedReference, unfocusedAlpha, textColor) {
+            if (focusedReference == null) {
+                cellText
+            } else {
+                cellText.dimmedOutside(
+                    focusedRanges = cellText.focusedCharacterRanges(focusedReference),
+                    dimmedColor = textColor.copy(alpha = textColor.alpha * unfocusedAlpha),
+                )
+            }
+        }
 
     Text(
-        text = cellText,
+        text = text,
         lineHeight = textOptions.resolvedLineHeight,
         color = textOptions.textColor ?: Color.Unspecified,
         modifier =

@@ -247,7 +247,9 @@ internal fun BibleScreen(
             return@LaunchedEffect
         }
         blocks.indexOfBlockContaining(target)?.let { index ->
-            chapterListState.scrollToItem(CHAPTER_HEADER_ITEM_COUNT + index)
+            // Placed in the next measure pass rather than scrolled to, so the reference is simply where the
+            // chapter opens instead of somewhere the list travels to from the top.
+            chapterListState.requestScrollToItem(CHAPTER_HEADER_ITEM_COUNT + index)
         }
         viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
     }

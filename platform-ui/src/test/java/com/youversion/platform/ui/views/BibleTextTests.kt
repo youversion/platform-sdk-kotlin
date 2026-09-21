@@ -1,6 +1,7 @@
 package com.youversion.platform.ui.views
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -19,6 +20,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -32,6 +34,7 @@ import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.highlights.api.HighlightsApi
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
@@ -535,6 +538,69 @@ class BibleTextTests {
         composeTestRule.waitForIdle()
 
         coVerify(atLeast = 1) { mockVersionRepository.version(any()) }
+    }
+
+    @Test
+    @OptIn(PlatformInternalApi::class)
+    fun `does not offer the chapter just left as the blocks of the one asked for`() {
+        val secondReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verse = 1)
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(
+                any(),
+                eq(testReference),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } returns
+            listOf(annotatedBlock("In the beginning", referenceAnnotation = "1:GEN:1:1"))
+        coEvery {
+            BibleVersionRendering.textBlocks(
+                any(),
+                eq(secondReference),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } returns
+            listOf(annotatedBlock("In the second chapter", referenceAnnotation = "1:GEN:2:1"))
+
+        var currentReference by mutableStateOf(testReference)
+        val statesByReference = mutableListOf<Pair<BibleReference, BibleTextBlocksState>>()
+        composeTestRule.setContent {
+            val reference = currentReference
+            val state = rememberBibleTextBlocksState(reference = reference)
+            // Read where a host reads it: after the composition that produced it, alongside every other effect
+            // the same frame starts, and so before the load this reference asked for has run.
+            SideEffect {
+                statesByReference += reference to state
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        val firstChapterIndex =
+            statesByReference
+                .last { (reference, _) -> reference == testReference }
+                .second
+                .indexOfBlockContaining(testReference)
+        assertEquals(0, firstChapterIndex)
+
+        currentReference = secondReference
+        composeTestRule.waitForIdle()
+
+        val statesForSecondReference =
+            statesByReference.filter { (reference, _) -> reference == secondReference }.map { it.second }
+        assertTrue(statesForSecondReference.isNotEmpty())
+        assertTrue(statesForSecondReference.all { it.indexOfBlockContaining(testReference) == null })
     }
 
     // endregion
@@ -1322,6 +1388,73 @@ class BibleTextTests {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Selah").assertIsDisplayed()
+    }
+
+    // endregion
+
+    // region Verse Focus
+
+    private val comingSoon = "Behold, I am coming soon! "
+    private val alphaAndOmega = "I am the Alpha and the Omega."
+
+    /** Revelation 22:12-13, which the platform renders as the one paragraph the reported bug was seen in. */
+    private fun twoVerseBlock(): AnnotatedString =
+        referenceAnnotatedString(
+            comingSoon + alphaAndOmega,
+            listOf(
+                Triple("1:REV:22:12", 0, comingSoon.length),
+                Triple("1:REV:22:13", comingSoon.length, comingSoon.length + alphaAndOmega.length),
+            ),
+        )
+
+    @Test
+    fun `focus covers only its own verse when a block holds more than one`() {
+        val text = twoVerseBlock()
+        val focused = BibleReference(versionId = 1, bookUSFM = "REV", chapter = 22, verse = 13)
+
+        assertEquals(
+            listOf(comingSoon.length until comingSoon.length + alphaAndOmega.length),
+            text.focusedCharacterRanges(focused),
+        )
+    }
+
+    @Test
+    fun `dimming repaints the rest of the block and leaves the focused verse alone`() {
+        val text = twoVerseBlock()
+        val focused = BibleReference(versionId = 1, bookUSFM = "REV", chapter = 22, verse = 13)
+
+        val dimmed = text.dimmedOutside(text.focusedCharacterRanges(focused), Color.Red)
+
+        assertEquals(
+            listOf(AnnotatedString.Range(SpanStyle(color = Color.Red), 0, comingSoon.length)),
+            dimmed.spanStyles,
+        )
+    }
+
+    @Test
+    fun `dimming keeps the annotations a tap is routed by`() {
+        val text = twoVerseBlock()
+        val focused = BibleReference(versionId = 1, bookUSFM = "REV", chapter = 22, verse = 13)
+
+        val dimmed = text.dimmedOutside(text.focusedCharacterRanges(focused), Color.Red)
+
+        assertEquals(
+            text.getStringAnnotations(tag = BibleReferenceAttribute.NAME, start = 0, end = text.length),
+            dimmed.getStringAnnotations(tag = BibleReferenceAttribute.NAME, start = 0, end = dimmed.length),
+        )
+    }
+
+    @Test
+    fun `a block holding nothing in focus is dimmed end to end`() {
+        val text = twoVerseBlock()
+        val elsewhere = BibleReference(versionId = 1, bookUSFM = "REV", chapter = 22, verse = 20)
+
+        val dimmed = text.dimmedOutside(text.focusedCharacterRanges(elsewhere), Color.Red)
+
+        assertEquals(
+            listOf(AnnotatedString.Range(SpanStyle(color = Color.Red), 0, text.length)),
+            dimmed.spanStyles,
+        )
     }
 
     // endregion

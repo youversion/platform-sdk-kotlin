@@ -1,5 +1,8 @@
 package com.youversion.platform.ui.views
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListScope
@@ -83,8 +86,11 @@ fun rememberBibleTextBlocksState(
     reference: BibleReference,
     textOptions: BibleTextOptions = BibleTextOptions(),
 ): BibleTextBlocksState {
-    var blocks by remember { mutableStateOf<List<BibleTextBlock>>(emptyList()) }
-    var loadingPhase by remember { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
+    // Keyed to the load below so a change of input is unloaded from the composition that made it, rather than from
+    // a frame later when the effect runs. Held across that frame, the state would offer the chapter just left as
+    // this reference's blocks, and report the success that loading it was.
+    var blocks by remember(reference, textOptions) { mutableStateOf<List<BibleTextBlock>>(emptyList()) }
+    var loadingPhase by remember(reference, textOptions) { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
     var isVersionRightToLeft by remember { mutableStateOf(false) }
     val versionRepository: BibleVersionRepository = PlatformKoinGraph.koinApplication.koin.get()
     val chapterRepository: BibleChapterRepository = PlatformKoinGraph.koinApplication.koin.get()
@@ -187,7 +193,7 @@ fun rememberBibleTextBlocksState(
  * it and a block can be scrolled to by its position.
  *
  * Until the load succeeds this is a single placeholder item instead. A non-null [focusedReference] draws the
- * block covering it at full strength and dims every other one.
+ * verses it covers at full strength and dims everything else, the rest of the block holding them included.
  */
 @PlatformInternalApi
 fun LazyListScope.bibleTextBlocks(
@@ -204,15 +210,29 @@ fun LazyListScope.bibleTextBlocks(
     }
 
     itemsIndexed(state.visibleBlocks) { index, block ->
+        val isFocused = focusedReference != null && block.covers(focusedReference)
+        val isDimmed = focusedReference != null && !isFocused
+        val blockAlpha by animateFloatAsState(
+            targetValue = if (isDimmed) DIMMED_BLOCK_ALPHA else 1f,
+            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+            label = "blockDim",
+        )
+        // A block is a whole paragraph, which usually holds more verses than the one in focus, so the block
+        // covering it is left at full strength and dims those others from the inside.
+        val unfocusedAlpha by animateFloatAsState(
+            targetValue = if (isFocused) DIMMED_BLOCK_ALPHA else 1f,
+            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+            label = "verseDim",
+        )
         val focusModifier =
             when {
-                focusedReference == null -> Modifier
-                block.covers(focusedReference) -> Modifier.testTag("focused_block")
-                else -> Modifier.alpha(DIMMED_BLOCK_ALPHA).testTag("dimmed_block")
+                isFocused -> Modifier.testTag("focused_block")
+                isDimmed -> Modifier.testTag("dimmed_block")
+                else -> Modifier
             }
 
         Column(
-            modifier = Modifier.fillMaxWidth().then(focusModifier),
+            modifier = Modifier.fillMaxWidth().alpha(blockAlpha).then(focusModifier),
             horizontalAlignment = state.horizontalAlignment,
         ) {
             BibleBlockContent(
@@ -221,6 +241,8 @@ fun LazyListScope.bibleTextBlocks(
                 textOptions = textOptions,
                 selectedVerses = selectedVerses,
                 highlights = state.highlights,
+                focusedReference = focusedReference.takeIf { isFocused },
+                unfocusedAlpha = unfocusedAlpha,
                 onVerseTap = onVerseTap,
                 onFootnoteTap = onFootnoteTap,
             )
@@ -242,6 +264,8 @@ internal fun BibleBlockContent(
     textOptions: BibleTextOptions,
     selectedVerses: Set<BibleReference>,
     highlights: Map<BibleReference, Color>,
+    focusedReference: BibleReference? = null,
+    unfocusedAlpha: Float = 1f,
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)?,
     onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)?,
 ) {
@@ -256,6 +280,8 @@ internal fun BibleBlockContent(
             previousMarginBottom = if (index == 0) 0.dp else visibleBlocks[index - 1].marginBottom,
             selectedVerses = selectedVerses,
             highlights = highlights,
+            focusedReference = focusedReference,
+            unfocusedAlpha = unfocusedAlpha,
             onClick = { localPosition, textLayoutResult ->
                 coroutineScope.launch {
                     val characterIndex = textLayoutResult.getOffsetForPosition(localPosition)
@@ -313,6 +339,8 @@ internal fun BibleBlockContent(
             textOptions = textOptions,
             selectedVerses = selectedVerses,
             highlights = highlights,
+            focusedReference = focusedReference,
+            unfocusedAlpha = unfocusedAlpha,
             onVerseTap = onVerseTap,
         )
     }

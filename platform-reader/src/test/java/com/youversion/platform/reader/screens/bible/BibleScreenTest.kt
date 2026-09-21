@@ -1,6 +1,7 @@
 package com.youversion.platform.reader.screens.bible
 
 import androidx.compose.material3.Text
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.hasScrollToIndexAction
@@ -175,6 +176,38 @@ class BibleScreenTest {
             chapter = defaultReference.chapter,
             verse = verse,
         )
+
+    /** Stubs the chapter as a single block, the way the platform renders verses that share a paragraph. */
+    private fun stubParagraphOf(vararg verses: Pair<String, Int>) {
+        coEvery { mockVersionRepository.version(any()) } returns testVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns
+            listOf(
+                BibleTextBlock(
+                    text =
+                        buildAnnotatedString {
+                            verses.forEach { (verseText, verse) ->
+                                val start = length
+                                append(verseText)
+                                addStringAnnotation(
+                                    tag = BibleReferenceAttribute.NAME,
+                                    annotation = "1:GEN:1:$verse",
+                                    start = start,
+                                    end = length,
+                                )
+                            }
+                        },
+                    chapter = 1,
+                    firstLineHeadIndent = 0,
+                    headIndent = 0,
+                    marginTop = 8.dp,
+                    marginBottom = 0.dp,
+                    alignment = TextAlign.Start,
+                    footnotes = emptyList(),
+                ),
+            )
+    }
 
     private fun stubChapterOfVerses(verseCount: Int) {
         coEvery { mockVersionRepository.version(any()) } returns testVersion
@@ -1752,6 +1785,39 @@ class BibleScreenTest {
 
         assertEquals(1, composeTestRule.onAllNodesWithTag("focused_block").fetchSemanticsNodes().size)
         assertEquals(2, composeTestRule.onAllNodesWithTag("dimmed_block").fetchSemanticsNodes().size)
+    }
+
+    @Test
+    fun `the verses sharing a block with the focused one are dimmed alongside the rest of the chapter`() {
+        val firstVerse = "Behold, I am coming soon! "
+        val secondVerse = "I am the Alpha and the Omega."
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                focusedReference = verseReference(2),
+            )
+        stubParagraphOf(firstVerse to 1, secondVerse to 2)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        val drawn =
+            composeTestRule
+                .onNodeWithText(firstVerse + secondVerse)
+                .fetchSemanticsNode()
+                .config[SemanticsProperties.Text]
+                .first()
+        val dimmed = drawn.spanStyles.filter { (it.item.color.alpha) < 1f }
+        assertEquals(listOf(0 to firstVerse.length), dimmed.map { it.start to it.end })
     }
 
     @Test
