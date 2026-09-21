@@ -87,6 +87,7 @@ public final class com/youversion/platform/reader/sheets/ComposableSingletons$Bi
 	public final fun getLambda$-1168204184$platform_reader_release ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-1489181350$platform_reader_release ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$-642670819$platform_reader_release ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$231463216$platform_reader_release ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$725226679$platform_reader_release ()Lkotlin/jvm/functions/Function3;
 }
 
