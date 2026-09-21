@@ -1,34 +1,116 @@
 # Releasing
 
-Releases are fully automated via [semantic-release](https://github.com/semantic-release/semantic-release). When a pull request is merged to `main`, the release workflow analyzes commits, determines the next version, publishes to Maven Central, and creates a GitHub Release.
+A release is a **manual dispatch with an explicit version input**. Nothing ships
+because a pull request merged. Someone opens **Actions → Release → Run
+workflow**, types the version, and runs it.
 
-For recovery procedures when a release fails partway, see [docs/RELEASE-RUNBOOK.md](docs/RELEASE-RUNBOOK.md). For the design rationale behind the current pipeline, see [docs/release-hardening-plan.md](docs/release-hardening-plan.md).
+Commit messages still do real work — they decide what the *recommended* version
+is, they group the release notes, and they drive the breaking-change signoff
+check on pull requests. What they no longer do is decide, on their own, that a
+release happens or what number it carries.
+
+For recovery when a release fails partway, see
+[docs/RELEASE-RUNBOOK.md](docs/RELEASE-RUNBOOK.md).
+
+## Vocabulary
+
+These five terms are used consistently in this file, in
+[`scripts/release.sh`](scripts/release.sh), and in the runbook. They are worth
+learning because several of them look interchangeable and are not.
+
+| Term | Meaning |
+|---|---|
+| **Chosen version** | What the operator types into the `version` input. **This is what ships.** |
+| **Calculated version** | What the commit analyzer computed from the commits since the last tag. Advisory; logged beside the chosen version for audit. |
+| **Fresh run** | No remote tag for that version yet. Commits, tags, pushes, publishes, releases. |
+| **Resume** | A remote tag for that version already exists. Auto-detected, not an input; picks up where the last run stopped. |
+| **Rehearsal** | The `dry-run` input. Runs end-to-end up to the local release commit and tag, then stops. Never pushes, never publishes. |
 
 ## How It Works
 
-1. **Merge to `main`** triggers the [Release workflow](.github/workflows/release.yml).
-2. **semantic-release** analyzes commit messages since the last tag using [Conventional Commits](https://www.conventionalcommits.org/).
-3. The next version is determined automatically:
-   - `fix:` commits bump the **patch** version (e.g., `0.5.0` -> `0.5.1`)
-   - `feat:` commits bump the **minor** version (e.g., `0.5.0` -> `0.6.0`)
-   - a `BREAKING CHANGE:` footer bumps the **major** version (e.g., `0.5.0` -> `1.0.0`). A `!` after the type does *not* — see [Breaking Changes](#breaking-changes)
-4. A **preflight** step probes `repo1.maven.org` for each module/version. If all three coordinates are already present (e.g. the workflow is being re-dispatched after a successful prior run), publishing is skipped.
-5. A **breaking-change gate** routes the publish job through the `production-breaking` GitHub Environment when the commit window contains `feat!:`, `fix!:`, or `BREAKING CHANGE:`. Non-breaking releases continue through the existing `production` environment. Required reviewers on `production-breaking` must approve the run before the publish step starts.
-6. The version in `gradle/libs.versions.toml` is updated.
-7. `CHANGELOG.md` is generated/updated.
-8. All three modules (`platform-core`, `platform-ui`, `platform-reader`) are published to Maven Central. The workflow passes the resolved version to Gradle via `-PsdkVersion=${nextRelease.version}`, which bakes it into `platform-core`'s `BuildConfig.SDK_VERSION`. At runtime, every SDK request sends an `x-yvp-sdk: KotlinSDK={version}` header so the data team can attribute traffic accurately. Non-release builds use the default value `Dev`.
-9. A git tag and GitHub Release are created.
-10. The version bump and changelog are committed back to the branch.
-11. A **post-publish verification** step polls `repo1.maven.org` for up to 30 minutes and writes a status table to the workflow summary so consumers can see when the release becomes resolvable.
+1. **Actions → Release → Run workflow**, on `main`. Enter the `version`
+   (bare semver, e.g. `2.2.0`). Optionally tick `dry-run` for a rehearsal.
+2. The **test** job runs `./gradlew test`. A release is the one path that reaches
+   consumers without a pull request in front of it, so the suite runs again here
+   even though it already ran on the PR.
+3. The **release** job runs [`scripts/release.sh`](scripts/release.sh) inside the
+   `production` environment, which is where the Maven Central and signing
+   credentials live. In order, the script:
+   - validates that the chosen version is semver and strictly greater than the
+     current tag;
+   - computes the **calculated version** and writes both numbers side-by-side
+     into the run summary, so an override is on the record;
+   - warns (does not block) if the chosen version is more than one major above
+     the calculated one — the usual sign of a typo;
+   - generates the release notes from the commits since the last tag;
+   - prepends them to `CHANGELOG.md`;
+   - stamps the version into `gradle/libs.versions.toml` and the `README.md`
+     install snippets ([`scripts/stamp-version.sh`](scripts/stamp-version.sh));
+   - commits `chore(release): <version> [skip ci]` and tags it;
+   - pushes the commit and tag to `main` over the deploy key;
+   - publishes each module in `PUBLISHABLE_MODULES` to Maven Central, one Gradle
+     invocation per module
+     ([`scripts/gradle-publish-wrapper.sh`](scripts/gradle-publish-wrapper.sh));
+   - creates the GitHub Release from the generated notes.
+4. The **post-publish-verify** job polls `repo1.maven.org` for up to 30 minutes
+   and writes a table to the run summary showing when each coordinate became
+   resolvable. It never fails the workflow — mirror lag is expected, and by that
+   point the artifacts are already immutable on Central.
+
+All three modules always ship on the same version. `PUBLISHABLE_MODULES` in
+[`.github/workflows/release.yml`](.github/workflows/release.yml) is the single
+place that list is declared. A consumer mixing `2.1.2` `platform-core` with
+`2.2.0` `platform-ui` is not a configuration we support.
+
+### How the version reaches the artifacts
+
+The workflow passes the chosen version to Gradle as `-PsdkVersion`. That single
+property does two things:
+
+- It is the **published coordinate** — each module's `coordinates(...)` call
+  reads it, falling back to `libs.versions.youversionPlatform` for local builds.
+- It is baked into `platform-core`'s `BuildConfig.SDK_VERSION`, which every SDK
+  request sends as an `x-yvp-sdk: KotlinSDK={version}` header so the data team
+  can attribute traffic. Outside a release build the property is unset and the
+  value falls back to `Dev`.
+
+There is no "restore to Dev" commit after a release.
+`gradle/libs.versions.toml` holds the last released version by design — it is
+what the README snippets and the three `coordinates(...)` calls resolve to.
+
+## Choosing the version
+
+The calculated version is computed for you in three places. Use whichever is at
+hand:
+
+- **On the pull request.** Every PR gets a Commit Lint comment showing the
+  version that would ship if it merged and nothing else landed first.
+- **Locally.**
+  ```bash
+  npm ci
+  node scripts/preview-release.mjs --base "$(git describe --tags --abbrev=0)" --head main
+  ```
+- **In the release run summary**, beside the chosen version — though by then
+  you have already typed it.
+
+You are free to enter something different. The chosen version always wins; the
+workflow just makes the divergence visible. Reasons you might: shipping a `2.0.0`
+that the commits describe as a minor because the API break is in behaviour
+rather than signature, or skipping a number that was burned by a failed publish
+(Maven Central coordinates are immutable — a version that partially uploaded can
+never be reused).
 
 ## Conventional Commits
 
-All commits must follow the [Conventional Commits](https://www.conventionalcommits.org/) format. This is enforced on pull requests by the [Commitlint workflow](.github/workflows/commitlint.yml).
+All commits must follow the
+[Conventional Commits](https://www.conventionalcommits.org/) format. This is
+enforced on pull requests by the
+[Commit Lint workflow](.github/workflows/commitlint.yml).
 
 ### Format
 
 ```
-<type>[optional scope]: <description>
+<type>[optional scope][!]: <description>
 
 [optional body]
 
@@ -41,18 +123,27 @@ All commits must follow the [Conventional Commits](https://www.conventionalcommi
 |------------|--------------------------------------|--------------|
 | `feat`     | A new feature                        | Minor        |
 | `fix`      | A bug fix                            | Patch        |
+| `perf`     | Performance improvements             | Patch        |
 | `docs`     | Documentation changes                | None         |
 | `style`    | Code style changes (formatting, etc) | None         |
 | `refactor` | Code refactoring                     | None         |
-| `perf`     | Performance improvements             | Patch        |
 | `test`     | Adding or updating tests             | None         |
 | `build`    | Build system or dependency changes   | None         |
 | `ci`       | CI/CD configuration changes          | None         |
 | `chore`    | Other changes                        | None         |
 
+The bump column is asserted in CI by
+[`scripts/assert-bump-table.mjs`](scripts/assert-bump-table.mjs), which runs the
+real analyzer against the real config on every pull request. If this table and
+the analyzer ever disagree, the build goes red.
+
 ### Breaking Changes
 
-Use a `BREAKING CHANGE:` footer. Do **not** append `!` to the type.
+**Both forms work, and both bump the major.** Use either:
+
+```
+feat!: remove deprecated BibleText API
+```
 
 ```
 feat: remove deprecated BibleText API
@@ -60,95 +151,169 @@ feat: remove deprecated BibleText API
 BREAKING CHANGE: The `BibleText(passage: String)` overload has been removed. Use `BibleText(reference: BibleReference)` instead.
 ```
 
-The footer is the only thing semantic-release acts on, and it is the entire migration guide consumers get — it lands verbatim in both `CHANGELOG.md` and the GitHub Release, so write it in full.
+Prefer the footer when there is anything to say, and say it in full: the footer
+lands verbatim in both `CHANGELOG.md` and the GitHub Release, and it is the
+entire migration guide consumers get. The `!` marker alone gets them a subject
+line.
 
-`!` is unsupported here and fails silently. The pinned `conventional-changelog-angular` preset (7.0.0) matches headers with `/^(\w*)(?:\((.*)\))?: (.*)$/` and defines no `breakingHeaderPattern`, so `!` makes the header fail to match and `type`, `scope`, and `subject` all parse as `null`:
+> **This changed in YPE-5781.** The repository previously pinned
+> `conventional-changelog-angular`, whose header pattern does not recognise `!`.
+> A `feat!:` commit parsed with `type`, `scope`, and `subject` all `null`: it
+> silently produced no release at all, or a release where the commit appeared
+> with no type and an empty subject. Two changes were needed to fix it, and
+> either one alone is a silent no-op that looks like it worked — the
+> `conventionalcommits` preset key in `.releaserc.json`, **and** a direct
+> `conventional-changelog-conventionalcommits@^8` dependency, because the v7
+> preset exports a shape the current analyzer does not understand and falls back
+> to angular without complaining. `assert-bump-table.mjs` exists to keep that
+> from regressing unnoticed.
 
-- `feat!:` **with** a footer still bumps the major, but the commit renders with no type and an empty subject, so it never appears under `### Features` in the changelog or release notes.
-- `feat!:` **without** a footer produces **no release at all** — not even a patch — while still tripping the `production-breaking` gate below, which greps the raw commit text rather than the parsed result.
+Note for squash merges: the merge commit body is the PR description, and footers
+run to the end of the message. Put `BREAKING CHANGE:` on its own line at the
+bottom. Do not put `!` in a PR *title* unless you mean it — the title becomes the
+squashed subject.
 
-## Pre-release Branches
+## Major version signoff
 
-Push to `beta` or `alpha` branches to publish pre-release versions:
+When a pull request's commits would produce a **major** bump, the
+[Major Release Signoff workflow](.github/workflows/major-release-signoff.yml)
+asks for a written acknowledgment on the PR and posts a
+`major-release-signoff` commit status.
 
-- `beta` branch: publishes versions like `1.0.0-beta.1`
-- `alpha` branch: publishes versions like `1.0.0-alpha.1`
+**This check is advisory. It does not block merging.** The "Stable Main" ruleset
+declares no required status checks, so a red signoff can be merged straight past.
+It is there so that a deliberate break is attributable, not so that it is
+impossible. The release itself is a manual dispatch with an operator-typed
+version, so a major cannot ship by accident even if the check is ignored.
 
-## Maintenance Releases
+To sign off, a repository collaborator with **write access who is not the PR
+author** comments with all three of:
 
-For patching older major versions, create a branch named `N.x` (e.g., `1.x`). Commits merged to that branch will produce patch releases for that major version line.
+1. the verbatim acknowledgment phrase,
+2. the precise next version (`3.0.0` or `v3.0.0`), and
+3. a 🚀.
 
-## Manually Re-Dispatching a Release
+The bot posts a copy-paste-ready reply on the PR. The check re-runs
+automatically when a qualifying comment is posted, edited, or deleted.
 
-When a release fails partway (e.g. the network drops mid-upload, one module's signing errored, the workflow timed out before all three coordinates published), you do not need to merge another commit to recover. The Release workflow accepts a manual dispatch:
+To make the check actually gate, add `major-release-signoff` to
+`required_status_checks` on the ruleset (**Settings → Rules → Stable Main**) and
+update this section.
 
-1. **Actions → Release → Run workflow.**
-2. Enter the `version` that was in flight. This must match the version semantic-release attempted to publish. Look at the failed run's `compute-version` job output or check `gradle/libs.versions.toml` on `main`.
-3. Optionally narrow the `modules` input (default: all three).
-4. Run.
+## Rehearsing a release
 
-The **preflight** step probes `repo1.maven.org` for each requested module and emits a `missing_modules` list. The **publish** step then runs `./gradlew :<missing>:publishToMavenCentral -PsdkVersion=<version>` for only those coordinates via [`scripts/gradle-publish-wrapper.sh`](scripts/gradle-publish-wrapper.sh). If everything is already on Central, the publish step is skipped and the workflow exits successfully.
+Before the first release after a change to this pipeline, dispatch once with
+**`dry-run` ticked**. The workflow runs end-to-end through notes generation,
+the changelog prepend, version stamping, the release commit, and the tag — then
+stops. Nothing is pushed, nothing is published, no GitHub Release is created.
 
-The wrapper classifies failures: **exit 42 = GPG signing failure (re-dispatch will not help, fix the secret first)**, exit 1 = transient (re-dispatch is reasonable). The runbook covers each case in detail.
+The run summary shows the chosen and calculated versions and flags itself as a
+rehearsal. Read the log to confirm the notes look right and the stamped files
+changed where you expect, then dispatch again without `dry-run`.
 
-## Verifying a Release Locally
-
-`scripts/verify-release.sh` smoke-tests the release pipeline without publishing. Run it before merging to confirm that the version-stamping pieces still work end-to-end.
-
-### What it checks
-
-1. **AAR contents** — builds `platform-core`'s release AAR with a fake `-PsdkVersion` and confirms the value is present in `BuildConfig.SDK_VERSION` inside the published bytes.
-2. **`.releaserc.json` template** — confirms semantic-release's `publishCmd` still passes `-PsdkVersion=${nextRelease.version}` to `publishToMavenCentral`.
-3. *(optional, with `--with-dry-run`)* **semantic-release dry-run** — runs `npx semantic-release --dry-run` against your current branch, reports the version that would be released, and reconstructs the planned gradle command.
-
-### Usage
+You can rehearse locally too, on any branch:
 
 ```bash
-# Tiers 1 + 2 (Gradle build only, ~15s)
-scripts/verify-release.sh
-
-# Override the test version used for AAR inspection
-scripts/verify-release.sh --version 2.0.0-beta.3
-
-# Add Tier 3 — npx semantic-release --dry-run
-scripts/verify-release.sh --with-dry-run
+VERSION=2.2.0 DRY_RUN=1 bash scripts/release.sh
 ```
 
-Sample successful output:
+## Resuming a partial release
 
-```
-==> Building platform-core AAR with -PsdkVersion=1.99.0-verify.local
-==> Inspecting BuildConfig.SDK_VERSION inside the AAR
-    PASS  BuildConfig.SDK_VERSION = "1.99.0-verify.local"
+If a release fails after the tag was pushed — the network dropped mid-upload,
+one module's signing errored, the job timed out — **re-dispatch with the same
+version**. Resume is auto-detected, not an input: `release.sh` sees the existing
+remote tag and picks up from there.
 
-==> Verifying .releaserc.json publishCmd template
-    PASS  publishCmd: ./gradlew publishToMavenCentral -PsdkVersion=${nextRelease.version}
+It first verifies that the tag's tree is actually stamped to that version, and
+aborts if not, rather than healing a tag someone moved by hand. Then every
+remaining step is idempotent: pushes that already landed are skipped, a module
+Maven Central already has counts as success, and an existing GitHub Release is
+left alone.
 
-==> Running semantic-release --dry-run (treating current branch as a release branch)
-    PASS  computed next version: 1.3.0
-    PASS  would invoke: ./gradlew publishToMavenCentral -PsdkVersion=1.3.0
-```
+Central's immutability means a coordinate that fully published can never be
+re-uploaded, which is why "already exists" is treated as success rather than as
+an error to retry past. The wrapper classifies the failures it cannot recover
+from: **exit 42 = GPG signing failure** (re-dispatching will not help; fix the
+secret first), exit 1 = transient.
 
-### Notes
+[docs/RELEASE-RUNBOOK.md](docs/RELEASE-RUNBOOK.md) covers each failure mode in
+detail.
 
-- The script never publishes anything — Tier 1 builds locally, Tier 3 uses dry-run mode.
-- `--with-dry-run` requires `node_modules` (the script runs `npm ci` if missing). It does **not** require `GITHUB_TOKEN`: the script temporarily mutates `.releaserc.json` to strip the GitHub plugin and pin `branches` to your current branch, which must already be pushed to the remote.
-- `.releaserc.json` is restored unconditionally by an `EXIT` trap, even on `Ctrl-C` or unexpected failure. A leftover `.releaserc.json.verify-release.bak` would indicate the trap didn't fire — the file is gitignored so it won't accidentally be committed.
+## Why not semantic-release?
+
+The pipeline still uses semantic-release's
+[commit-analyzer](https://github.com/semantic-release/commit-analyzer) and
+[release-notes-generator](https://github.com/semantic-release/release-notes-generator)
+— but as **libraries**, called directly from
+[`scripts/preview-release.mjs`](scripts/preview-release.mjs) and
+[`scripts/generate-release-notes.mjs`](scripts/generate-release-notes.mjs).
+semantic-release itself is no longer the runner. Two reasons:
+
+**It cannot be told what version to ship.** semantic-release computes
+`semver.inc(lastRelease.version, type)` and exposes no hook to override it. The
+only way to ship a different number is to engineer the commit history — brittle,
+and invisible at the point where the decision is being made.
+
+**Its lifecycle fights the preview.** On a `pull_request` event the
+`GITHUB_TOKEN` has `contents: read`, so semantic-release's `verifyAuth()` step
+(a `git push --dry-run`) aborts *before* `analyzeCommits` ever runs. The preview
+fails open as "no bump" — the most dangerous possible wrong answer. `--no-ci`
+does not help; it skips the CI environment check, not auth verification. Calling
+the analyzer directly skips the whole lifecycle and just answers the question.
+
+Everything that was worth keeping is kept: conventional-commit analysis, grouped
+release notes, the changelog entry, the tag, the GitHub Release. What was dropped
+is the orchestration we were fighting. This mirrors how the Swift SDK's release
+pipeline works.
 
 ## Troubleshooting
 
-### No release created after merge
+### The PR comment says "no release"
 
-- Ensure at least one commit uses a release-triggering type (`feat:` or `fix:`).
-- Commits with types like `docs:`, `chore:`, `ci:`, `style:`, `test:`, or `refactor:` do not trigger a release on their own.
+At least one commit must use a release-triggering type (`feat:`, `fix:`, or
+`perf:`). `docs:`, `chore:`, `ci:`, `style:`, `test:` and `refactor:` do not
+bump on their own. You can still dispatch a release by hand with any version you
+like — the analyzer is advisory.
+
+### `release.sh` refuses to run
+
+It enforces its pre-conditions loudly and each message says which one failed:
+
+- *not valid semver* / *not strictly greater than current tag* — check the input.
+- *Working tree is dirty* — something modified tracked files before the script ran.
+- *HEAD is not at origin/main* — the workflow was dispatched from a branch. Live
+  releases must run on `main`; rehearsals may run anywhere.
+- *Tag exists locally but not on origin* — a leftover local tag; push or delete it.
+- *Tag exists but its tree's catalog does not read that version* — the tag was
+  moved by hand. Do not resume; see the runbook.
 
 ### Release workflow failed
 
-- See [docs/RELEASE-RUNBOOK.md](docs/RELEASE-RUNBOOK.md) for the per-failure-mode recovery procedure.
-- Check the [Actions tab](https://github.com/youversion/platform-sdk-kotlin/actions/workflows/release.yml) for logs.
-- Verify that Maven Central and signing secrets are configured as repo-level secrets.
+- [docs/RELEASE-RUNBOOK.md](docs/RELEASE-RUNBOOK.md) has the per-failure-mode
+  procedure.
+- Check the
+  [Actions tab](https://github.com/youversion/platform-sdk-kotlin/actions/workflows/release.yml).
+- Confirm the credentials below are present **on the `production` environment**
+  (not as repository secrets) — see the next section.
 
-### Required Secrets
+### Testing the helper scripts
+
+```bash
+bash scripts/test-release-scripts.sh
+```
+
+Runs on every pull request. Covers the argument and exit-code behaviour of the
+small `.mjs` helpers, and asserts the analyzer's bump table end-to-end. Since the
+release pipeline itself only runs on a manual dispatch, without these a broken
+helper would not be discovered until someone tried to ship.
+
+## Credentials
+
+### Required secrets
+
+These are **environment secrets on `production`**, not repository secrets
+(**Settings → Environments → production → Environment secrets**). Only a job
+that declares `environment: production` can read them.
 
 | Secret | Description |
 |--------|-------------|
@@ -157,9 +322,11 @@ Sample successful output:
 | `SIGNINGKEY` | GPG signing key (armored, base64-encoded) |
 | `SIGNINGKEY_PASSWORD` | GPG signing key passphrase |
 
-### Required GitHub Environments
+`DEPLOY_KEY` is a **repository** secret. It is the SSH key the release job uses
+to push the release commit and tag to `main` past the branch-protection ruleset.
+
+### Required environments
 
 | Environment | Purpose |
 |---|---|
-| `production` | Gates every non-breaking release. |
-| `production-breaking` | Gates releases whose commit window contains `feat!:`, `fix!:`, or `BREAKING CHANGE:`. Configure required reviewers in **Settings → Environments → production-breaking**. |
+| `production` | Holds the Maven Central and signing credentials. Its deployment-branch policy (`main`) is what keeps a dispatch from a feature branch from reaching them. `scripts/release.sh` independently refuses to push when HEAD is not `origin/main`. |

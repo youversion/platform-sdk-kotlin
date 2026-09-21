@@ -42,8 +42,17 @@ google-services.json
 # Android Profiling
 *.hprof
 
-# Node.js (semantic-release)
+# Node.js (commit analyzer, release-notes generator, commitlint)
 node_modules/
 
-# verify-release.sh leftovers if interrupted
-.releaserc.json.verify-release.bak
+# Scratch files written by the release and commit-lint pipelines. They are
+# per-run artifacts of scripts/release.sh and the workflows that call the
+# preview scripts; nothing here belongs in a commit.
+/analyzer.log
+/comment.json
+/comment.md
+/commitlint.log
+/notes.md
+/preview.json
+/signoff-comment.json
+/signoff-comment.md

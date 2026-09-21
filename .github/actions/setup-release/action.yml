@@ -1,7 +1,8 @@
 name: Setup release toolchain
 description: >-
   Shared toolchain setup for jobs in the release workflow. Installs JDK,
-  Gradle, Node.js, and Node dependencies for semantic-release and commitlint.
+  Gradle, Node.js, and Node dependencies for the commit analyzer, the
+  release-notes generator, and commitlint.
   Does not check out the repo — callers must run `actions/checkout` first
   (the local action file must already be on disk to be referenced).
 

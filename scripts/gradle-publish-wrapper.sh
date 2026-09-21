@@ -1,17 +1,22 @@
 #!/usr/bin/env bash
 #
-# gradle-publish-wrapper.sh — runs `./gradlew publishToMavenCentral` for one or
-# more modules and classifies failures so the workflow can fast-fail on
+# gradle-publish-wrapper.sh — runs `./gradlew publishToMavenCentral` for ONE
+# module and classifies the outcome so the caller can fast-fail on
 # unrecoverable conditions (expired GPG key, missing passphrase) instead of
-# retrying transient-looking errors that will never succeed.
+# retrying errors that will never succeed.
+#
+# One module per invocation is deliberate. A single Gradle run publishing all
+# three modules produces one interleaved log, so a real signing failure on one
+# module and an already-published no-op on another are indistinguishable. The
+# caller (scripts/release.sh) loops.
 #
 # Exit codes:
-#   0   publish succeeded
+#   0   publish succeeded, or the coordinate is already on Maven Central
 #   42  GPG signing failure — KEY/PASSPHRASE/EXPIRED. Retry will not help; see runbook.
 #   1   other failure (transient or unclassified; retry is reasonable)
 #
 # Usage:
-#   scripts/gradle-publish-wrapper.sh <version> <module> [<module>...]
+#   scripts/gradle-publish-wrapper.sh <version> <module>
 #
 # Required env (set by release.yml):
 #   ORG_GRADLE_PROJECT_mavenCentralUsername
@@ -21,33 +26,40 @@
 
 set -uo pipefail
 
-if [[ $# -lt 2 ]]; then
-    echo "usage: $0 <version> <module> [<module>...]" >&2
+if [[ $# -ne 2 ]]; then
+    echo "usage: $0 <version> <module>" >&2
     exit 2
 fi
 
 VERSION="$1"
-shift
-
-# Build a Gradle task list of the form ":platform-core:publishToMavenCentral …"
-# so each module publishes independently and a single failure does not abort
-# the others.
-tasks=()
-for module in "$@"; do
-    tasks+=(":${module}:publishToMavenCentral")
-done
+MODULE="$2"
+task=":${MODULE}:publishToMavenCentral"
 
 log_file=$(mktemp -t gradle-publish.XXXXXX.log)
 trap 'rm -f "$log_file"' EXIT
 
-echo "==> ./gradlew ${tasks[*]} -PsdkVersion=${VERSION} --continue"
+echo "==> ./gradlew ${task} -PsdkVersion=${VERSION}"
 set +e
-./gradlew "${tasks[@]}" -PsdkVersion="${VERSION}" --continue 2>&1 | tee "$log_file"
+./gradlew "${task}" -PsdkVersion="${VERSION}" 2>&1 | tee "$log_file"
 status=${PIPESTATUS[0]}
 set -e
 
 if (( status == 0 )); then
     echo "==> publish succeeded"
+    exit 0
+fi
+
+# Maven Central is immutable: a coordinate that already exists cannot be
+# republished, and the rejection means the artifact this run wanted to ship is
+# already there. That is the desired end state, so it is success — otherwise a
+# re-dispatch after a partially-successful run could never get past the modules
+# that did publish. Checked before the GPG patterns because an already-existing
+# component is unambiguous.
+if grep -E -i -q \
+    -e 'already exists' \
+    -e 'Component with package url .* already exists' \
+    "$log_file"; then
+    echo "==> ${MODULE} ${VERSION} is already on Maven Central — treating as success."
     exit 0
 fi
 

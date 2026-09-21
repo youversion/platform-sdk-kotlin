@@ -1,5 +1,14 @@
 # Release Hardening — Engineering Plan (YPE-2791)
 
+> **Superseded in part by YPE-5781.** Push-triggered releases, the `modules`
+> input, the `preflight` / `compute-version` jobs, the `production-breaking`
+> environment, and `scripts/check-central-presence.sh` and
+> `scripts/verify-release.sh` no longer exist. Releases are now a manual
+> dispatch with an operator-typed version. This file is kept as the record of
+> the YPE-2791 design and the reasoning behind it, not as a description of
+> current behavior. For that, see [`../RELEASING.md`](../RELEASING.md) and
+> [`RELEASE-RUNBOOK.md`](RELEASE-RUNBOOK.md).
+
 This is the implementation plan committed in response to [YPE-2791 — Harden and document manual release procedure (Kotlin SDK)](https://youversion.atlassian.net/browse/YPE-2791). It documents the design choices the release workflow now reflects and the rationale behind each, so future contributors can extend the pipeline without re-deriving the constraints.
 
 ## Context
@@ -16,7 +25,7 @@ Two ticket-text assumptions did not match the repo and shaped the plan:
 ### 1. `.github/workflows/release.yml` — four sequential jobs
 
 - **compute-version** — derives the next version (`semantic-release --dry-run` on push, dispatch input on workflow_dispatch) and detects whether the commit window contains a BREAKING CHANGE. Emits `version`, `modules`, `breaking` as job outputs.
-- **preflight** — runs [`scripts/check-central-presence.sh`](../scripts/check-central-presence.sh) to probe `repo1.maven.org` for each module/version. Outputs `missing_modules` (CSV). When everything is already present, downstream jobs short-circuit to "no-op success" — the AC#2/AC#3 idempotency guarantee.
+- **preflight** — runs `scripts/check-central-presence.sh` (removed) to probe `repo1.maven.org` for each module/version. Outputs `missing_modules` (CSV). When everything is already present, downstream jobs short-circuit to "no-op success" — the AC#2/AC#3 idempotency guarantee.
 - **publish** — environment selected at runtime: `production-breaking` when `breaking == true`, `production` otherwise. On push: runs `npx semantic-release` as before. On workflow_dispatch: runs [`scripts/gradle-publish-wrapper.sh`](../scripts/gradle-publish-wrapper.sh) against only the missing modules.
 - **post-publish-verify** — runs [`scripts/poll-central-index.sh`](../scripts/poll-central-index.sh) to wait up to 30 minutes for `repo1.maven.org` propagation, then re-runs the presence script. Always writes a `$GITHUB_STEP_SUMMARY` table; never fails the workflow on propagation lag.
 
@@ -60,7 +69,7 @@ The non-breaking path continues to use the existing `production` environment. Ra
 | [`.github/workflows/commitlint.yml`](../.github/workflows/commitlint.yml) | edited | `--from` = current `origin/main` |
 | [`.github/actions/setup-release/action.yml`](../.github/actions/setup-release/action.yml) | new | shared JDK/Gradle/Node setup |
 | [`commitlint.config.js`](../commitlint.config.js) | edited | ignore `chore(release):` messages |
-| [`scripts/check-central-presence.sh`](../scripts/check-central-presence.sh) | new | HEAD per-module .pom on `repo1.maven.org` |
+| `scripts/check-central-presence.sh` (removed) | new | HEAD per-module .pom on `repo1.maven.org` |
 | [`scripts/poll-central-index.sh`](../scripts/poll-central-index.sh) | new | post-publish poll of `repo1.maven.org` |
 | [`scripts/gradle-publish-wrapper.sh`](../scripts/gradle-publish-wrapper.sh) | new | publish + GPG fast-fail classifier |
 | [`docs/RELEASE-RUNBOOK.md`](RELEASE-RUNBOOK.md) | new | operational guide for release failures |
