@@ -25,10 +25,7 @@ on:
     # a previously-posted `success` status doesn't outlive its evidence.
     types: [created, edited, deleted]
 
-permissions:
-  contents: read
-  pull-requests: write
-  statuses: write
+permissions: {}
 
 concurrency:
   group: major-release-signoff-${{ github.event.pull_request.number || github.event.issue.number }}
@@ -38,12 +35,23 @@ env:
   STATUS_CONTEXT: major-release-signoff
 
 jobs:
-  signoff:
+  # Resolving the PR's identity is split out from the job that checks it out so
+  # the fork guard below is decided before any PR-controlled file is read or
+  # executed. This job never checks out the PR.
+  context:
     # issue_comment fires for issues AND PRs across the repo. Skip non-PR
     # issues so we don't waste a run when someone comments on a plain issue.
     if: ${{ github.event_name != 'issue_comment' || github.event.issue.pull_request != null }}
-    name: Major release signoff
+    name: Resolve PR context
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      pr_number: ${{ steps.pr.outputs.pr_number }}
+      head_sha: ${{ steps.pr.outputs.head_sha }}
+      pr_author: ${{ steps.pr.outputs.pr_author }}
+      same_repo: ${{ steps.pr.outputs.same_repo }}
     steps:
       - name: Resolve PR context
         id: pr
@@ -55,6 +63,7 @@ jobs:
             PR_NUMBER=${{ github.event.pull_request.number }}
             HEAD_SHA=${{ github.event.pull_request.head.sha }}
             PR_AUTHOR=${{ github.event.pull_request.user.login }}
+            HEAD_REPO='${{ github.event.pull_request.head.repo.full_name }}'
           else
             PR_NUMBER=${{ github.event.issue.number }}
             # The issue_comment payload carries no head/base info — look it up
@@ -62,15 +71,45 @@ jobs:
             PR_JSON=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER)
             HEAD_SHA=$(jq -r .head.sha <<<"$PR_JSON")
             PR_AUTHOR=$(jq -r .user.login <<<"$PR_JSON")
+            # `// ""` covers a head whose fork has since been deleted.
+            HEAD_REPO=$(jq -r '.head.repo.full_name // ""' <<<"$PR_JSON")
           fi
           echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
           echo "pr_author=$PR_AUTHOR" >> "$GITHUB_OUTPUT"
+          if [ "$HEAD_REPO" = "${{ github.repository }}" ]; then
+            echo "same_repo=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "same_repo=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::PR #$PR_NUMBER's head lives in '${HEAD_REPO:-a deleted fork}', not ${{ github.repository }}. The signoff check does not run against fork heads."
+          fi
 
+  signoff:
+    needs: context
+    # Same-repository heads only. The job below checks the PR head out and runs
+    # code from it (`npm ci` lifecycle scripts, then scripts/preview-release.mjs)
+    # — that is acceptable for a same-repo branch, whose author already holds
+    # push access, and not for a fork. On the issue_comment trigger the token is
+    # the base repository's and carries the write permissions below regardless
+    # of who commented, so without this guard a comment on a fork PR would run
+    # fork-authored code with rights to post commit statuses — including a
+    # forged `success` for this very check — and to write PR comments.
+    #
+    # Nothing is lost by refusing: on the pull_request trigger a fork PR gets a
+    # read-only token, so the status API calls below could never have succeeded
+    # for one anyway.
+    if: needs.context.outputs.same_repo == 'true'
+    name: Major release signoff
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      statuses: write
+    steps:
       - name: Checkout PR head
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.pr.outputs.head_sha }}
+          ref: ${{ needs.context.outputs.head_sha }}
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
@@ -97,7 +136,7 @@ jobs:
         id: preview
         env:
           BASE_SHA: ${{ steps.main.outputs.sha }}
-          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          HEAD_SHA: ${{ needs.context.outputs.head_sha }}
         run: |
           set -e
           node scripts/preview-release.mjs --base "$BASE_SHA" --head "$HEAD_SHA" > preview.json
@@ -116,7 +155,7 @@ jobs:
         if: steps.preview.outputs.is_major != '1'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          HEAD_SHA: ${{ needs.context.outputs.head_sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           RELEASE_TYPE: ${{ steps.preview.outputs.release_type }}
         run: |
@@ -132,8 +171,8 @@ jobs:
         if: steps.preview.outputs.is_major == '1'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
-          PR_AUTHOR: ${{ steps.pr.outputs.pr_author }}
+          PR_NUMBER: ${{ needs.context.outputs.pr_number }}
+          PR_AUTHOR: ${{ needs.context.outputs.pr_author }}
           NEXT_VERSION: ${{ steps.preview.outputs.next }}
         run: |
           set -e
@@ -233,7 +272,7 @@ jobs:
         if: steps.preview.outputs.is_major == '1' && steps.signoff.outputs.signed_off == '1'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          HEAD_SHA: ${{ needs.context.outputs.head_sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           APPROVER: ${{ steps.signoff.outputs.approver }}
           NEXT_VERSION: ${{ steps.preview.outputs.next }}
@@ -249,7 +288,7 @@ jobs:
         if: steps.preview.outputs.is_major == '1' && steps.signoff.outputs.signed_off != '1' && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          PR_NUMBER: ${{ needs.context.outputs.pr_number }}
           NEXT_VERSION: ${{ steps.preview.outputs.next }}
         run: |
           set -e
@@ -300,7 +339,7 @@ jobs:
         if: steps.preview.outputs.is_major == '1' && steps.signoff.outputs.signed_off != '1'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          HEAD_SHA: ${{ needs.context.outputs.head_sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           NEXT_VERSION: ${{ steps.preview.outputs.next }}
         run: |
