@@ -1821,6 +1821,42 @@ class BibleScreenTest {
     }
 
     @Test
+    fun `the dim is still drawn a frame after the focus lifts, so it has one to fade out over`() {
+        val firstVerse = "Behold, I am coming soon! "
+        val secondVerse = "I am the Alpha and the Omega."
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                focusedReference = verseReference(2),
+            )
+        stubParagraphOf(firstVerse to 1, secondVerse to 2)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.mainClock.autoAdvance = false
+        stateFlow.value = stateFlow.value.copy(focusedReference = null)
+        repeat(2) { composeTestRule.mainClock.advanceTimeByFrame() }
+
+        val drawn =
+            composeTestRule
+                .onNodeWithText(firstVerse + secondVerse)
+                .fetchSemanticsNode()
+                .config[SemanticsProperties.Text]
+                .first()
+        assertTrue(drawn.spanStyles.any { it.item.color.alpha < 1f })
+    }
+
+    @Test
     fun `no block is dimmed while nothing is focused`() {
         stateFlow.value =
             BibleReaderViewModel.State(

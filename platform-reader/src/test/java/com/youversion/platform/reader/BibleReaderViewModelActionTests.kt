@@ -446,39 +446,50 @@ class BibleReaderViewModelActionTests {
         assertEquals(verse, viewModel.state.value.scrollTargetReference)
     }
 
+    /** The sheet closes itself once it has covered the move, so search is still showing when the move is made. */
     @Test
-    fun `GoToSearchResult closes search`() {
+    fun `GoToSearchResult leaves search showing`() {
         viewModel.onAction(BibleReaderViewModel.Action.OpenSearch)
 
         viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12)))
 
-        assertFalse(viewModel.state.value.showingSearch)
+        assertTrue(viewModel.state.value.showingSearch)
     }
 
     @Test
-    fun `the result is not focused before its chapter has loaded`() {
+    fun `the result is not focused while the sheet is still closing over the move`() {
         viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12).copy(chapter = 3)))
 
         assertNull(viewModel.state.value.focusedReference)
     }
 
     @Test
-    fun `the staged focus outlives the move and takes once the chapter has loaded`() {
+    fun `the staged focus outlives the move and takes once the sheet is down`() {
         val verse = verseReference(12).copy(chapter = 3)
         viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verse))
 
-        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+        viewModel.onAction(BibleReaderViewModel.Action.CloseSearch)
 
         assertEquals(verse, viewModel.state.value.focusedReference)
+    }
+
+    /** The dim is meant to be seen fading in, so the focus waits for the sheet instead of landing behind it. */
+    @Test
+    fun `the staged focus waits for the sheet even after the scroll has landed`() {
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12).copy(chapter = 3)))
+
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+
+        assertNull(viewModel.state.value.focusedReference)
     }
 
     @Test
     fun `the staged focus is consumed once`() {
         viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12)))
-        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+        viewModel.onAction(BibleReaderViewModel.Action.CloseSearch)
         viewModel.onAction(BibleReaderViewModel.Action.ClearFocusedReference)
 
-        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+        viewModel.onAction(BibleReaderViewModel.Action.CloseSearch)
 
         assertNull(viewModel.state.value.focusedReference)
     }
@@ -499,7 +510,7 @@ class BibleReaderViewModelActionTests {
         val verse = BibleReference(versionId = 2, bookUSFM = "JHN", chapter = 3, verse = 16)
 
         viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verse))
-        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+        viewModel.onAction(BibleReaderViewModel.Action.CloseSearch)
 
         assertEquals(BibleReference(versionId = 2, bookUSFM = "JHN", chapter = 3), viewModel.bibleReference)
         assertEquals(otherVersion, viewModel.bibleVersion)
@@ -509,7 +520,7 @@ class BibleReaderViewModelActionTests {
     @Test
     fun `opening search lifts the focus`() {
         viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12)))
-        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+        viewModel.onAction(BibleReaderViewModel.Action.CloseSearch)
 
         viewModel.onAction(BibleReaderViewModel.Action.OpenSearch)
 
@@ -521,7 +532,7 @@ class BibleReaderViewModelActionTests {
         viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12).copy(chapter = 3)))
 
         viewModel.bibleReference = viewModel.bibleReference.copy(chapter = 9)
-        viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
+        viewModel.onAction(BibleReaderViewModel.Action.CloseSearch)
 
         assertNull(viewModel.state.value.focusedReference)
     }

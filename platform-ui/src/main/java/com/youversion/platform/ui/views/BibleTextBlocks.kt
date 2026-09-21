@@ -1,8 +1,8 @@
 package com.youversion.platform.ui.views
 
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListScope
@@ -212,18 +212,26 @@ fun LazyListScope.bibleTextBlocks(
     itemsIndexed(state.visibleBlocks) { index, block ->
         val isFocused = focusedReference != null && block.covers(focusedReference)
         val isDimmed = focusedReference != null && !isFocused
-        val blockAlpha by animateFloatAsState(
-            targetValue = if (isDimmed) DIMMED_BLOCK_ALPHA else 1f,
-            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-            label = "blockDim",
-        )
+        // Both start undimmed so the dim is animated on even when the block is composed with the focus
+        // already set, which is how the chapter arrives once a search result is chosen.
+        val blockAlpha = remember { Animatable(1f) }
+        LaunchedEffect(isDimmed) {
+            blockAlpha.animateTo(if (isDimmed) DIMMED_BLOCK_ALPHA else 1f, DIM_ANIMATION_SPEC)
+        }
         // A block is a whole paragraph, which usually holds more verses than the one in focus, so the block
         // covering it is left at full strength and dims those others from the inside.
-        val unfocusedAlpha by animateFloatAsState(
-            targetValue = if (isFocused) DIMMED_BLOCK_ALPHA else 1f,
-            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-            label = "verseDim",
-        )
+        val unfocusedAlpha = remember { Animatable(1f) }
+        val blockFocus = focusedReference.takeIf { isFocused }
+        // The reference is held until the fade has finished, so the verses it dimmed come back up rather
+        // than snapping to full strength the moment the focus lifts.
+        var fadingFocus by remember { mutableStateOf<BibleReference?>(null) }
+        LaunchedEffect(blockFocus) {
+            if (blockFocus != null) {
+                fadingFocus = blockFocus
+            }
+            unfocusedAlpha.animateTo(if (blockFocus != null) DIMMED_BLOCK_ALPHA else 1f, DIM_ANIMATION_SPEC)
+            fadingFocus = blockFocus
+        }
         val focusModifier =
             when {
                 isFocused -> Modifier.testTag("focused_block")
@@ -232,7 +240,7 @@ fun LazyListScope.bibleTextBlocks(
             }
 
         Column(
-            modifier = Modifier.fillMaxWidth().alpha(blockAlpha).then(focusModifier),
+            modifier = Modifier.fillMaxWidth().alpha(blockAlpha.value).then(focusModifier),
             horizontalAlignment = state.horizontalAlignment,
         ) {
             BibleBlockContent(
@@ -241,8 +249,8 @@ fun LazyListScope.bibleTextBlocks(
                 textOptions = textOptions,
                 selectedVerses = selectedVerses,
                 highlights = state.highlights,
-                focusedReference = focusedReference.takeIf { isFocused },
-                unfocusedAlpha = unfocusedAlpha,
+                focusedReference = fadingFocus,
+                unfocusedAlpha = unfocusedAlpha.value,
                 onVerseTap = onVerseTap,
                 onFootnoteTap = onFootnoteTap,
             )
@@ -359,3 +367,6 @@ private fun BibleTextBlock.covers(reference: BibleReference): Boolean {
 }
 
 private const val DIMMED_BLOCK_ALPHA = 0.4f
+
+// The reader on Swift fades the focus over half a second of easeInOut, which Compose has no named easing for.
+private val DIM_ANIMATION_SPEC = tween<Float>(durationMillis = 500, easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f))

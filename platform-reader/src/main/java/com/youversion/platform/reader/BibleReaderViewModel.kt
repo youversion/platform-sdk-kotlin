@@ -69,7 +69,8 @@ internal class BibleReaderViewModel(
 
     /**
      * The verse a search result asked the reader to point at, kept here rather than on state because it is not the
-     * reader's business until the chapter carrying it has loaded. Consumed by [Action.ScrollTargetReached].
+     * reader's business until the search sheet has finished closing over the move. Consumed by [Action.CloseSearch],
+     * so the dim is seen fading in rather than arriving already applied from behind the sheet.
      */
     private var pendingFocusedReference: BibleReference? = null
     private val _state: MutableStateFlow<State>
@@ -216,6 +217,10 @@ internal class BibleReaderViewModel(
 
             is Action.CloseSearch -> {
                 _state.update { it.copy(showingSearch = false) }
+                pendingFocusedReference?.let { reference ->
+                    pendingFocusedReference = null
+                    focusReference(reference)
+                }
             }
 
             is Action.GoToSearchResult -> {
@@ -343,10 +348,6 @@ internal class BibleReaderViewModel(
 
             is Action.ScrollTargetReached -> {
                 _state.update { it.copy(scrollTargetReference = null) }
-                pendingFocusedReference?.let { reference ->
-                    pendingFocusedReference = null
-                    focusReference(reference)
-                }
             }
 
             is Action.FocusReference -> {
@@ -462,7 +463,8 @@ internal class BibleReaderViewModel(
 
     private fun goToSearchResult(reference: BibleReference) {
         pendingFocusedReference = reference
-        _state.update { it.copy(showingSearch = false, scrollTargetReference = reference) }
+        // Search is left showing so the sheet can close over the move it started, and closes itself once it has.
+        _state.update { it.copy(scrollTargetReference = reference) }
         onHeaderSelectionChange(reference.copy(verseStart = null, verseEnd = null))
     }
 
@@ -810,7 +812,7 @@ internal class BibleReaderViewModel(
         /** Raise the search sheet over the reader. */
         data object OpenSearch : Action
 
-        /** Lower the search sheet, leaving the reader as it was. */
+        /** The search sheet is down; focus whatever result it sent the reader to, if any. */
         data object CloseSearch : Action
 
         data object DecreaseFontSize : Action

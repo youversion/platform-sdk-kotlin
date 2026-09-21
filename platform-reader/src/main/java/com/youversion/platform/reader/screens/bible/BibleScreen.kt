@@ -41,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
@@ -240,6 +241,13 @@ internal fun BibleScreen(
     val loadingPhase = chapterBlocks?.loadingPhase ?: introLoadingPhase
     val chapterListState = rememberLazyListState()
 
+    // The chapter is held out of sight between laying out and the target being placed, so the frame it spends at
+    // the top is never seen. Swift hides its own text the same way while a verse scroll is pending.
+    val isScrollPending =
+        state.scrollTargetReference?.let { target ->
+            chapterBlocks?.loadingPhase == BibleTextLoadingPhase.SUCCESS && state.bibleReference.contains(target)
+        } == true
+
     LaunchedEffect(state.scrollTargetReference, chapterBlocks?.loadingPhase) {
         val target = state.scrollTargetReference ?: return@LaunchedEffect
         val blocks = chapterBlocks ?: return@LaunchedEffect
@@ -424,7 +432,8 @@ internal fun BibleScreen(
                                 modifier =
                                     Modifier
                                         .padding(horizontal = 32.dp)
-                                        .weight(1f),
+                                        .weight(1f)
+                                        .alpha(if (isScrollPending) 0f else 1f),
                             ) {
                                 item {
                                     Spacer(modifier = Modifier.height(32.dp))

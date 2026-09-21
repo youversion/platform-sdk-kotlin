@@ -142,9 +142,12 @@ internal fun BibleReaderSearchSheet(
 
         val selectResult = { reference: BibleReference ->
             focusManager.clearFocus()
+            // The reader is sent to the result before the sheet is told to go, so the chapter is reached behind the
+            // sheet rather than in front of the reader, as it is in Swift.
+            onSelectResult(reference)
             scope.launch {
                 sheetState.hide()
-                onSelectResult(reference)
+                onDismissRequest()
             }
             Unit
         }

@@ -4,7 +4,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.filter
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -407,20 +406,21 @@ class BibleReaderSearchSheetTest {
         composeTestRule.waitUntil { selected == john316 }
     }
 
-    /** The sheet is off the screen by the time the tap is reported, which is what says its hide was awaited. */
+    /** The reader is moved under the sheet, so the chapter is reached behind it rather than in front of it. */
     @Test
-    fun `a tapped result is reported only once the sheet has gone`() {
-        var selected: BibleReference? = null
+    fun `a tapped result moves the reader before the sheet is closed`() {
+        val order = mutableListOf<String>()
         renderSheet(
-            onSelectResult = { selected = it },
+            onDismissRequest = { order += "dismissed" },
+            onSelectResult = { order += "selected" },
             results = listOf(john316),
             status = SearchStatus.COMPLETED,
         )
 
         composeTestRule.onNodeWithText("JOHN 3:16").performClick()
-        composeTestRule.waitUntil { selected != null }
+        composeTestRule.waitUntil { order.size == 2 }
 
-        composeTestRule.onNodeWithText("Done").assertIsNotDisplayed()
+        assertEquals(listOf("selected", "dismissed"), order)
     }
 
     private companion object {
