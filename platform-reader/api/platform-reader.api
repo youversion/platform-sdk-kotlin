@@ -56,8 +56,6 @@ public final class com/youversion/platform/reader/components/ComposableSingleton
 public final class com/youversion/platform/reader/components/ComposableSingletons$BibleReaderPassageSelectionKt {
 	public static final field INSTANCE Lcom/youversion/platform/reader/components/ComposableSingletons$BibleReaderPassageSelectionKt;
 	public fun <init> ()V
-	public final fun getLambda$-2088746957$platform_reader_release ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda$-894950468$platform_reader_release ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$392571129$platform_reader_release ()Lkotlin/jvm/functions/Function2;
 }
 
