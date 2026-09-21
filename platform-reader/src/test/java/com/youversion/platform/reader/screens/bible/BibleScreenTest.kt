@@ -42,6 +42,7 @@ import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleTextCategory
 import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
+import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -1402,6 +1403,79 @@ class BibleScreenTest {
         composeTestRule.onNodeWithContentDescription("Copy").assertIsNotDisplayed()
 
         verify { mockViewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection) }
+    }
+
+    /**
+     * Showing the sheet clears the selection once on its own, as the sheet settles open, so only what the tap
+     * itself dispatches is recorded.
+     */
+    private fun showSheetAndForgetItsOwnActions() {
+        composeTestRule.waitUntil {
+            composeTestRule
+                .onAllNodesWithContentDescription("Copy")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        composeTestRule.waitForIdle()
+        clearMocks(mockViewModel, answers = false, childMocks = false)
+    }
+
+    @Test
+    fun `a tap no verse took clears the selection`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+            )
+        stubVersionWithTappableVerse()
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+        showSheetAndForgetItsOwnActions()
+
+        composeTestRule.onNodeWithText("Genesis").performClick()
+        composeTestRule.waitForIdle()
+
+        verify { mockViewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection) }
+    }
+
+    /** The dismissing tap is read off the reader rather than the scrim so a second verse can still be added. */
+    @Test
+    fun `a tap on a verse adds to the selection rather than clearing it`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+            )
+        stubVersionWithTappableVerse()
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+        showSheetAndForgetItsOwnActions()
+
+        composeTestRule.onNodeWithText("In the beginning").performClick()
+        composeTestRule.waitForIdle()
+
+        verify { mockViewModel.onAction(match { it is BibleReaderViewModel.Action.OnVerseTap }) }
+        verify(exactly = 0) {
+            mockViewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection)
+        }
     }
 
     // endregion

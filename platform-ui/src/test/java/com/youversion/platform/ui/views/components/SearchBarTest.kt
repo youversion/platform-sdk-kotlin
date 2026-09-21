@@ -2,6 +2,7 @@ package com.youversion.platform.ui.views.components
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasImeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.height
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -141,6 +143,26 @@ class SearchBarTest {
         setContent()
 
         composeTestRule.onNode(hasImeAction(ImeAction.Search)).assertDoesNotExist()
+    }
+
+    // ----- Height
+
+    /**
+     * The clear button is taller than the text beside it, so the row has to absorb it instead of growing the
+     * moment a reader types.
+     */
+    @Test
+    fun `the row keeps its height when the clear button appears`() {
+        setContent(showsClearButton = true)
+        val emptyHeight = composeTestRule.onNode(hasSetTextAction()).getUnclippedBoundsInRoot().height
+
+        composeTestRule.onNode(hasSetTextAction()).performTextInput("Corinthians")
+
+        composeTestRule.onNodeWithContentDescription(CLEAR_LABEL).assertIsDisplayed()
+        assertEquals(
+            emptyHeight,
+            composeTestRule.onNode(hasSetTextAction()).getUnclippedBoundsInRoot().height,
+        )
     }
 
     private companion object {

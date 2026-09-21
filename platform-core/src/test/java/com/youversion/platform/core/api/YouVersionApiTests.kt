@@ -8,7 +8,12 @@ import com.youversion.platform.helpers.stopYouVersionPlatformTest
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.Date
 import java.util.concurrent.atomic.AtomicInteger
@@ -47,6 +52,38 @@ class YouVersionApiTests : YouVersionPlatformTest {
             )
         }
     }
+
+    /**
+     * A refresh that is cancelled is not a refresh that failed, so the caller has to see the cancellation
+     * rather than a token reported invalid. Real dispatchers are needed: the request has to reach the engine
+     * and park there before the cancellation lands, which a virtual-time scheduler cannot arrange.
+     */
+    @Test
+    fun `test hasValidToken cancelled mid refresh is reported as cancellation not an invalid token`() =
+        runTest {
+            val requestReached = CompletableDeferred<Unit>()
+            val engine =
+                MockEngine {
+                    requestReached.complete(Unit)
+                    awaitCancellation()
+                }
+            configureTestEnvironment(
+                mockEngine = engine,
+                expiryDate = Date(System.currentTimeMillis() - 60_000L),
+            )
+
+            withContext(Dispatchers.Default) {
+                val answer = CompletableDeferred<Boolean>()
+                val job = launch { answer.complete(YouVersionApi.hasValidToken()) }
+
+                requestReached.await()
+                job.cancel()
+                job.join()
+
+                assertTrue(job.isCancelled)
+                assertFalse(answer.isCompleted)
+            }
+        }
 
     @Test
     fun `test hasValidToken returns false when expiryDate is null`() =
