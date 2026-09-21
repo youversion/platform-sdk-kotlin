@@ -83,16 +83,21 @@ fun SearchBar(
                     Modifier
                         .clip(RoundedCornerShape(50))
                         .background(containerColor)
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                        .padding(horizontal = 16.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.padding(vertical = 16.dp).size(24.dp),
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                Box(modifier = Modifier.weight(1f)) {
+                Box(
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .padding(vertical = 16.dp),
+                ) {
                     if (query.isEmpty()) {
                         Text(
                             text = stringResource(R.string.search),
