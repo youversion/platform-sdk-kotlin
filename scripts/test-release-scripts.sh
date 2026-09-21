@@ -102,12 +102,17 @@ assert_exit  0  "2.1.3 > 0.0.0 → accept (fresh repo)"   node scripts/release-v
 assert_exit 11  "'garbage' is not semver"               node scripts/release-validate.mjs garbage 2.1.2
 assert_exit 11  "'2.1' is not semver"                   node scripts/release-validate.mjs 2.1 2.1.2
 assert_exit 11  "empty version is not semver"           node scripts/release-validate.mjs '' 2.1.2
+assert_exit 11  "'v2.2.0' is not bare (leading v)"      node scripts/release-validate.mjs v2.2.0 2.1.2
+assert_exit 11  "'3.0.0-beta.1' prerelease unsupported" node scripts/release-validate.mjs 3.0.0-beta.1 2.1.2
+assert_exit 11  "'2.2.0+build.5' carries metadata"      node scripts/release-validate.mjs 2.2.0+build.5 2.1.2
 assert_exit 12  "2.1.2 is not greater than 2.1.2"       node scripts/release-validate.mjs 2.1.2 2.1.2
 assert_exit 12  "2.1.1 is not greater than 2.1.2"       node scripts/release-validate.mjs 2.1.1 2.1.2
 assert_exit 12  "1.9.9 is not greater than 2.1.2"       node scripts/release-validate.mjs 1.9.9 2.1.2
 assert_exit  1  "missing args → usage error"            node scripts/release-validate.mjs 2.2.0
 assert_stderr_contains "not_semver"  "rejects with not_semver token"  node scripts/release-validate.mjs garbage 2.1.2
 assert_stderr_contains "not_greater" "rejects with not_greater token" node scripts/release-validate.mjs 2.1.1 2.1.2
+assert_stderr_contains "not_bare"    "rejects v-prefix with not_bare token"        node scripts/release-validate.mjs v2.2.0 2.1.2
+assert_stderr_contains "prerelease_unsupported" "rejects prerelease with its token" node scripts/release-validate.mjs 3.0.0-beta.1 2.1.2
 
 echo
 echo "release-warn-version-jump.mjs:"

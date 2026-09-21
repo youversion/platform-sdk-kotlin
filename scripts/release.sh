@@ -98,7 +98,8 @@ if [ -n "$REMOTE_TAG_SHA" ]; then
 fi
 
 if [ "$VALIDATION_CODE" -eq 11 ]; then
-  echo "❌ '$VERSION' is not valid semver" >&2
+  echo "❌ '$VERSION' is not a bare release version (expected e.g. 2.2.0)." >&2
+  echo "   No leading \"v\", prerelease, or build metadata — it becomes the tag and the Maven coordinate verbatim." >&2
   exit 1
 elif [ "$VALIDATION_CODE" -eq 12 ] && [ "$RESUME" = "0" ]; then
   echo "❌ '$VERSION' is not strictly greater than current tag '$CURRENT_TAG'" >&2

@@ -191,7 +191,7 @@ one that failed:
 
 | Message | Cause | Fix |
 |---|---|---|
-| *not valid semver* | Typo in the input, or a `v` prefix. | Enter a bare version, e.g. `2.2.0`. |
+| *not a bare release version* | Typo in the input, a `v` prefix, a `-beta.1` prerelease, or `+build` metadata. | Enter a bare version, e.g. `2.2.0`. The string is used verbatim as the git tag and the Maven Central coordinate, so it is refused rather than normalised — a silently corrected `v2.2.0` would publish an immutable, permanently wrong coordinate. |
 | *not strictly greater than current tag* | The version was already released, or is a downgrade. | Pick the next version. If you meant to resume, the remote tag must exist — check `git ls-remote origin refs/tags/<version>`. |
 | *Working tree is dirty* | Something modified tracked files before the script ran. | Investigate; do not release from a dirty tree. |
 | *HEAD is not at origin/main* | Dispatched from a branch. | Re-dispatch on `main`. Rehearsals (`dry-run`) may run anywhere. |
