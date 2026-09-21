@@ -18,6 +18,9 @@ internal val DarkBorderPrimaryColor = Color(0xFF474545)
 internal val LightBorderSecondaryColor = Color(0xFFBFBDBD)
 internal val DarkBorderSecondaryColor = Color(0xFF636161)
 
+internal val LightTextMutedColor = Color(0xFF636161)
+internal val DarkTextMutedColor = Color(0xFFBFBDBD)
+
 internal val LightButtonPrimaryColor = Color(0xFFEDEBEB)
 internal val DarkButtonPrimaryColor = Color(0xFF353333)
 
