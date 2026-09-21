@@ -1,6 +1,7 @@
 package com.youversion.platform.ui.views.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,15 +9,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +35,7 @@ import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.utilities.graphemeClusterCount
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.theme.readerColorScheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
 /** A styled search text field with a search icon and placeholder text. */
 @Composable
@@ -67,10 +68,10 @@ fun SearchBar(
             ),
         keyboardActions = KeyboardActions(onSearch = { onSubmit?.invoke() }),
         textStyle =
-            MaterialTheme.typography.bodyLarge.copy(
-                color = MaterialTheme.colorScheme.onSurface,
+            BibleReaderTheme.typography.paragraphL.copy(
+                color = MaterialTheme.readerColorScheme.readerTextPrimaryColor,
             ),
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        cursorBrush = SolidColor(MaterialTheme.readerColorScheme.readerTextPrimaryColor),
         modifier =
             modifier
                 .fillMaxWidth()
@@ -83,40 +84,43 @@ fun SearchBar(
                     Modifier
                         .clip(RoundedCornerShape(50))
                         .background(containerColor)
-                        .padding(horizontal = 16.dp),
+                        .padding(start = 16.dp, end = 6.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 16.dp).size(24.dp),
+                    tint = MaterialTheme.readerColorScheme.readerTextMutedColor,
+                    modifier = Modifier.padding(vertical = 10.dp).size(20.dp),
                 )
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Box(
                     modifier =
                         Modifier
                             .weight(1f)
-                            .padding(vertical = 16.dp),
+                            .padding(vertical = 8.dp),
                 ) {
                     if (query.isEmpty()) {
                         Text(
                             text = stringResource(R.string.search),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = BibleReaderTheme.typography.paragraphL,
+                            color = MaterialTheme.readerColorScheme.readerTextMutedColor,
                         )
                     }
                     innerTextField()
                 }
                 if (showsClearButton && query.isNotEmpty()) {
-                    Spacer(modifier = Modifier.width(12.dp))
-                    IconButton(onClick = { onQueryChange("") }) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = clearButtonContentDescription,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = ClearSearch,
+                        contentDescription = clearButtonContentDescription,
+                        tint = MaterialTheme.readerColorScheme.readerTextMutedColor,
+                        modifier =
+                            Modifier
+                                .clip(CircleShape)
+                                .clickable { onQueryChange("") }
+                                .padding(10.dp)
+                                .size(20.dp),
+                    )
                 }
             }
         },

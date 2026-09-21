@@ -1,24 +1,32 @@
 package com.youversion.platform.reader.sheets
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -34,6 +42,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
@@ -53,6 +62,7 @@ import com.youversion.platform.reader.BibleReaderSearchViewModel.State
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.Cream
 import com.youversion.platform.ui.theme.readerColorScheme
+import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.SearchBar
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -106,6 +116,23 @@ internal fun BibleReaderSearchSheet(
         sheetState = sheetState,
         onDismissRequest = onDismissRequest,
         containerColor = MaterialTheme.colorScheme.background,
+        dragHandle = {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 5.dp, bottom = 2.dp),
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .size(width = 36.dp, height = 5.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(MaterialTheme.readerColorScheme.borderSecondaryColor),
+                )
+            }
+        },
     ) {
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()
@@ -123,15 +150,15 @@ internal fun BibleReaderSearchSheet(
         }
 
         Column(
-            modifier =
-                Modifier
-                    .fillMaxHeight()
-                    .padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxHeight(),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth(),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
                 SearchBar(
                     query = state.query,
@@ -151,13 +178,19 @@ internal fun BibleReaderSearchSheet(
                             onDismissRequest()
                         }
                     },
+                    colors =
+                        ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.readerColorScheme.readerTextPrimaryColor,
+                        ),
                 ) {
                     Text(
                         text = stringResource(UiR.string.done),
-                        style = MaterialTheme.typography.labelLarge,
+                        style = BibleReaderTheme.typography.buttonLabelL,
                     )
                 }
             }
+
+            HorizontalDivider()
 
             when (state.status) {
                 SearchStatus.IDLE ->
@@ -215,6 +248,7 @@ private fun SearchingIndicator() {
                 .padding(vertical = 48.dp),
     ) {
         CircularProgressIndicator(
+            color = MaterialTheme.readerColorScheme.readerTextMutedColor,
             modifier = Modifier.semantics { contentDescription = label },
         )
     }
@@ -238,14 +272,14 @@ private fun SearchMessage(
         Icon(
             imageVector = imageVector,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = MaterialTheme.readerColorScheme.readerTextMutedColor,
             modifier = Modifier.size(32.dp),
         )
 
         Text(
             text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = BibleReaderTheme.typography.paragraphL,
+            color = MaterialTheme.readerColorScheme.readerTextMutedColor,
             textAlign = TextAlign.Center,
         )
     }
@@ -288,9 +322,11 @@ private fun SearchResults(
 
     LazyColumn(
         state = listState,
+        contentPadding = PaddingValues(vertical = 8.dp),
         modifier =
             Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 20.dp)
                 .testTag(SEARCH_RESULTS_TEST_TAG),
     ) {
         items(results, key = { it.asUSFM }) { reference ->
@@ -327,6 +363,7 @@ private fun InlineSearchingIndicator() {
                 .padding(vertical = 16.dp),
     ) {
         CircularProgressIndicator(
+            color = MaterialTheme.readerColorScheme.readerTextMutedColor,
             modifier =
                 Modifier
                     .size(20.dp)
@@ -349,7 +386,13 @@ private fun NextPageRetry(onLoadNextPage: () -> Unit) {
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
     ) {
-        TextButton(onClick = onLoadNextPage) {
+        TextButton(
+            onClick = onLoadNextPage,
+            colors =
+                ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.readerColorScheme.readerTextMutedColor,
+                ),
+        ) {
             Icon(
                 imageVector = Icons.Default.Refresh,
                 contentDescription = null,
@@ -358,7 +401,7 @@ private fun NextPageRetry(onLoadNextPage: () -> Unit) {
 
             Text(
                 text = stringResource(UiR.string.error),
-                style = MaterialTheme.typography.labelLarge,
+                style = BibleReaderTheme.typography.paragraphL,
                 modifier = Modifier.padding(start = 8.dp),
             )
         }
@@ -381,9 +424,11 @@ private fun SuggestedQueries(
     val focusManager = LocalFocusManager.current
 
     LazyColumn(
+        contentPadding = PaddingValues(vertical = 8.dp),
         modifier =
             Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 20.dp)
                 .testTag(SEARCH_SUGGESTED_QUERIES_TEST_TAG),
     ) {
         items(queries) { query ->
@@ -401,16 +446,14 @@ private fun SuggestedQueries(
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = MaterialTheme.readerColorScheme.readerTextMutedColor,
                     modifier = Modifier.size(20.dp),
                 )
 
                 Text(
                     text = query.text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    style = BibleReaderTheme.typography.paragraphL,
+                    color = MaterialTheme.readerColorScheme.readerTextPrimaryColor,
                 )
             }
         }
@@ -438,29 +481,44 @@ private fun SearchResult(
         onRequestResultText(reference)
     }
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         modifier =
             Modifier
                 .fillMaxWidth()
                 .clickable { onSelectResult(reference) }
-                .padding(vertical = 12.dp),
+                .padding(vertical = 12.dp)
+                .height(IntrinsicSize.Min),
     ) {
-        if (text != null) {
+        Box(
+            modifier =
+                Modifier
+                    .width(3.dp)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(MaterialTheme.readerColorScheme.readerTextPrimaryColor),
+        )
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(7.dp),
+            modifier = Modifier.weight(1f),
+        ) {
+            if (text != null) {
+                Text(
+                    text = text,
+                    style = BibleReaderTheme.typography.paragraphL,
+                    color = MaterialTheme.readerColorScheme.readerTextPrimaryColor,
+                    maxLines = RESULT_TEXT_MAXIMUM_LINE_COUNT,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
             Text(
-                text = text,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = RESULT_TEXT_MAXIMUM_LINE_COUNT,
-                overflow = TextOverflow.Ellipsis,
+                text = reference.title(searchVersion),
+                style = BibleReaderTheme.typography.eyebrowS,
+                color = MaterialTheme.readerColorScheme.readerTextMutedColor,
             )
         }
-
-        Text(
-            text = reference.title(searchVersion),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
