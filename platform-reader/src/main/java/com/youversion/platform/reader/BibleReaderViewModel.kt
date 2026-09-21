@@ -92,6 +92,7 @@ internal class BibleReaderViewModel(
                 it.copy(
                     bibleReference = value,
                     focusedReference = it.focusedReference?.takeIf { focus -> value.contains(focus) },
+                    scrollTargetReference = it.scrollTargetReference?.takeIf { target -> value.contains(target) },
                 )
             }
         }

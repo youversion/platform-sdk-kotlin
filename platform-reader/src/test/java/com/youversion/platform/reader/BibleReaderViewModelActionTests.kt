@@ -306,6 +306,24 @@ class BibleReaderViewModelActionTests {
         assertNull(viewModel.state.value.scrollTargetReference)
     }
 
+    @Test
+    fun `a scroll target that never landed is dropped when the reader moves on`() {
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollToReference(verseReference(12)))
+
+        viewModel.onHeaderSelectionChange(defaultReference.copy(chapter = 2))
+
+        assertNull(viewModel.state.value.scrollTargetReference)
+    }
+
+    @Test
+    fun `a search result keeps its scroll target through the move it starts`() {
+        val verse = verseReference(12)
+
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verse))
+
+        assertEquals(verse, viewModel.state.value.scrollTargetReference)
+    }
+
     // ----- Focused Reference
 
     @Test
