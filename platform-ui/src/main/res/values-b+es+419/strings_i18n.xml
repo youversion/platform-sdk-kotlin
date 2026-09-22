@@ -13,12 +13,14 @@
     <string name="yv_bible_versions_heading">Versiones de la Biblia</string>
     <string name="yv_books_heading">Libros</string>
     <string name="yv_cancel">Cancelar</string>
+    <string name="yv_clear_search">Borrar búsqueda</string>
     <string name="yv_close">Cerca</string>
     <string name="yv_close_search_bar">Cerrar el campo de búsqueda</string>
     <string name="yv_copy">Copiar</string>
     <string name="yv_data_exchange_continue">Continuar</string>
     <string name="yv_data_exchange_highlights_explanation">YouVersion te pedirá que otorgues acceso antes de que se puedan guardar los resaltados.</string>
     <string name="yv_data_exchange_highlights_question">¿Permitir que esta aplicación guarde resaltados en YouVersion?</string>
+    <string name="yv_done">Listo</string>
     <string name="yv_error">Error</string>
     <string name="yv_font">Tipo de letra</string>
     <string name="yv_font_and_settings">Fuentes &amp; Configuración</string>

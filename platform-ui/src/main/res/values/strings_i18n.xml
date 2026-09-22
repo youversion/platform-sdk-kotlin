@@ -4,6 +4,7 @@
     <string name="yv_active_language_versions_header">%1$s Versions (%2$s)</string>
     <string name="yv_agree_and_download">Agree and Download</string>
     <string name="yv_all">All</string>
+    <string name="yv_alphabetical">Alphabetical</string>
     <string name="yv_back">Back</string>
     <string name="yv_back_button">Back</string>
     <string name="yv_bible_app">Bible App</string>
@@ -36,6 +37,7 @@
     <string name="yv_more_menu_aria_label">More</string>
     <string name="yv_next_chapter_aria_label">Next chapter</string>
     <string name="yv_no_bible_search_results">We\'re sorry, there are no Bible results for this search.</string>
+    <string name="yv_no_chapters_available">No chapters available</string>
     <string name="yv_no_versions_found">No versions found</string>
     <string name="yv_offline_connection_lost_message">We’re having difficulties with your connection.</string>
     <string name="yv_offline_download_agreement">Our agreement with the publisher of this Bible version requires us to share certain information with them in order to offer this version for offline use. By proceeding you agree to share your information and to allow the publisher to email you.</string>
@@ -48,6 +50,7 @@
     <string name="yv_placeholder_version_unavailable_icon_content_desc">Version unavailable</string>
     <string name="yv_previous_chapter_aria_label">Previous chapter</string>
     <string name="yv_regional">Regional</string>
+    <string name="yv_retry">Retry</string>
     <string name="yv_search">Search</string>
     <string name="yv_search_bible_versions">Search versions</string>
     <string name="yv_search_languages">Search languages</string>
@@ -86,6 +89,7 @@
     <string name="yv_sign_out_question">Are you sure you want to sign out from YouVersion?</string>
     <string name="yv_suggested">Suggested</string>
     <string name="yv_tab_votd">Verse of the Day</string>
+    <string name="yv_traditional">Traditional</string>
     <string name="yv_verse_of_the_day">Verse of the Day</string>
     <string name="yv_version_info_agree_and_download">Agree and Download</string>
     <string name="yv_version_info_maybe_later">Maybe Later</string>
