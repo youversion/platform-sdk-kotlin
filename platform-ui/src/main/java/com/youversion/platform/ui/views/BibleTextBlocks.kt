@@ -193,7 +193,8 @@ fun rememberBibleTextBlocksState(
  * it and a block can be scrolled to by its position.
  *
  * Until the load succeeds this is a single placeholder item instead. A non-null [focusedReference] draws the
- * verses it covers at full strength and dims everything else, the rest of the block holding them included.
+ * verses it covers at full strength and dims everything else, the rest of the block holding them included. One
+ * no block covers is ignored, since dimming every block would fade the chapter while pointing at nothing.
  */
 @PlatformInternalApi
 fun LazyListScope.bibleTextBlocks(
@@ -209,9 +210,13 @@ fun LazyListScope.bibleTextBlocks(
         return
     }
 
+    // A verse this chapter renders no block for cannot be focused, so the focus is dropped here rather than
+    // dimming every block on its behalf.
+    val coveredFocus = focusedReference?.takeIf { state.indexOfBlockContaining(it) != null }
+
     itemsIndexed(state.visibleBlocks) { index, block ->
-        val isFocused = focusedReference != null && block.covers(focusedReference)
-        val isDimmed = focusedReference != null && !isFocused
+        val isFocused = coveredFocus != null && block.covers(coveredFocus)
+        val isDimmed = coveredFocus != null && !isFocused
         // Both start undimmed so the dim is animated on even when the block is composed with the focus
         // already set, which is how the chapter arrives once a search result is chosen.
         val blockAlpha = remember { Animatable(1f) }
@@ -221,7 +226,7 @@ fun LazyListScope.bibleTextBlocks(
         // A block is a whole paragraph, which usually holds more verses than the one in focus, so the block
         // covering it is left at full strength and dims those others from the inside.
         val unfocusedAlpha = remember { Animatable(1f) }
-        val blockFocus = focusedReference.takeIf { isFocused }
+        val blockFocus = coveredFocus.takeIf { isFocused }
         // The reference is held until the fade has finished, so the verses it dimmed come back up rather
         // than snapping to full strength the moment the focus lifts.
         var fadingFocus by remember { mutableStateOf<BibleReference?>(null) }

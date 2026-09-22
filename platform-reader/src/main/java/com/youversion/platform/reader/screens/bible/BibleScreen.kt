@@ -257,11 +257,17 @@ internal fun BibleScreen(
         if (blocks.loadingPhase != BibleTextLoadingPhase.SUCCESS || !state.bibleReference.contains(target)) {
             return@LaunchedEffect
         }
-        blocks.indexOfBlockContaining(target)?.let { index ->
+        val index = blocks.indexOfBlockContaining(target)
+        if (index != null) {
             // Jumped to rather than animated, so the reference is simply where the chapter opens instead of
             // somewhere the list travels to from the top. Suspends until the item is placed, so the target is
             // consumed — and the chapter revealed — only once the verse is actually on screen.
             chapterListState.scrollToItem(CHAPTER_HEADER_ITEM_COUNT + index)
+        } else {
+            // The chapter renders no block for the verse, so there is nothing to point the reader at. Open it at
+            // the top rather than at wherever the list was left, and drop the focus that would dim all of it.
+            chapterListState.scrollToItem(0)
+            viewModel.onAction(BibleReaderViewModel.Action.ClearFocusedReference)
         }
         viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
     }

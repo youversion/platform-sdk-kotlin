@@ -1720,6 +1720,41 @@ class BibleScreenTest {
     }
 
     @Test
+    fun `a staged verse the chapter has no block for lifts the focus and opens the chapter at the top`() {
+        every { mockViewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached) } answers {
+            stateFlow.value = stateFlow.value.copy(scrollTargetReference = null)
+        }
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                scrollTargetReference = verseReference(40),
+                focusedReference = verseReference(40),
+            )
+        stubChapterOfVerses(60)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        stateFlow.value =
+            stateFlow.value.copy(
+                scrollTargetReference = verseReference(99),
+                focusedReference = verseReference(99),
+            )
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Verse 1").assertIsDisplayed()
+        verify { mockViewModel.onAction(BibleReaderViewModel.Action.ClearFocusedReference) }
+    }
+
+    @Test
     fun `a reference staged for the chapter on display scrolls to it without reloading`() {
         stateFlow.value =
             BibleReaderViewModel.State(
@@ -1854,6 +1889,31 @@ class BibleScreenTest {
                 .config[SemanticsProperties.Text]
                 .first()
         assertTrue(drawn.spanStyles.any { it.item.color.alpha < 1f })
+    }
+
+    @Test
+    fun `a focused verse the chapter renders no block for dims nothing`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                focusedReference = verseReference(99),
+            )
+        stubChapterOfVerses(3)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        assertTrue(composeTestRule.onAllNodesWithTag("dimmed_block").fetchSemanticsNodes().isEmpty())
+        assertTrue(composeTestRule.onAllNodesWithTag("focused_block").fetchSemanticsNodes().isEmpty())
     }
 
     @Test

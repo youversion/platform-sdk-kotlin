@@ -512,6 +512,17 @@ class BibleReaderViewModelActionTests {
         assertNull(viewModel.state.value.focusedReference)
     }
 
+    /** The reader lifts the focus when the chapter turns out to render no block for the verse. */
+    @Test
+    fun `a focus lifted before the sheet is down does not take when it closes`() {
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12)))
+
+        viewModel.onAction(BibleReaderViewModel.Action.ClearFocusedReference)
+        viewModel.onAction(BibleReaderViewModel.Action.CloseSearch)
+
+        assertNull(viewModel.state.value.focusedReference)
+    }
+
     @Test
     fun `a scroll the reader started itself focuses nothing when it lands`() {
         viewModel.onAction(BibleReaderViewModel.Action.ScrollToReference(verseReference(12)))

@@ -459,6 +459,9 @@ internal class BibleReaderViewModel(
     }
 
     private fun clearFocusedReference() {
+        // The staged focus goes with it: the reader clears the focus when the verse turns out not to be rendered,
+        // which can land before the search sheet has closed over the move that staged it.
+        pendingFocusedReference = null
         _state.update { it.copy(focusedReference = null) }
     }
 
