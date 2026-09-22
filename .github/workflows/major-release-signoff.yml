@@ -123,25 +123,36 @@ jobs:
       # Anchor at the tip of origin/main, not the PR's recorded base SHA, for
       # the same reason commitlint.yml does: the recorded base goes stale as
       # soon as main moves, which would pull already-merged commits into the
-      # analyzed range. Both checks must see the same range or they can
-      # disagree about whether this PR is a major.
+      # analyzed range. Both checks run the same script against the same refs,
+      # so they cannot disagree about whether this PR is a major.
       - name: Resolve current main
         id: main
         run: |
           set -euo pipefail
-          git fetch origin main:refs/remotes/origin/main
+          # `--tags`: the preview describes the latest tag reachable from main
+          # to get the version this PR would bump *from*. This job has the PR
+          # branch checked out, and a branch that forked before the last
+          # release reaches only an older tag — which would put a stale version
+          # into the signoff phrase an approver has to quote verbatim.
+          git fetch --tags origin main:refs/remotes/origin/main
           echo "sha=$(git rev-parse origin/main)" >> "$GITHUB_OUTPUT"
 
       - name: Compute release preview
         id: preview
         env:
-          BASE_SHA: ${{ steps.main.outputs.sha }}
+          MAIN_SHA: ${{ steps.main.outputs.sha }}
           HEAD_SHA: ${{ needs.context.outputs.head_sha }}
         run: |
           set -e
-          node scripts/preview-release.mjs --base "$BASE_SHA" --head "$HEAD_SHA" > preview.json
+          node scripts/preview-release.mjs --main "$MAIN_SHA" --head "$HEAD_SHA" > preview.json
           cat preview.json
-          RELEASE_TYPE=$(jq -r .release_type preview.json)
+          # `pr_release_type`, not `release_type`: signoff asks whether *this
+          # branch* breaks something. `release_type` spans the whole release
+          # window, so keying off it would demand a signoff from every PR open
+          # while an already-acknowledged breaking change sits unreleased on
+          # main. `next` is still the window's, because that is the version
+          # that ships — and when this PR is the major, the two agree.
+          RELEASE_TYPE=$(jq -r .pr_release_type preview.json)
           NEXT=$(jq -r .next preview.json)
           case "$RELEASE_TYPE" in
             major) IS_MAJOR=1 ;;

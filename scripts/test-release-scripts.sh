@@ -5,7 +5,7 @@
 # The release pipeline itself only runs on a manual dispatch, so without these
 # a broken helper would not be discovered until someone tried to ship.
 #
-# Two classes of test here:
+# Three classes of test here:
 #
 #   1. Pure argument/exit-code behaviour of the small .mjs helpers
 #      (release-validate, release-warn-version-jump, read-preview-field,
@@ -16,6 +16,10 @@
 #      preset *silently* if either `.releaserc.json`'s preset key or the
 #      installed conventional-changelog-conventionalcommits major is wrong, so
 #      only an end-to-end assertion catches it.
+#   3. scripts/preview-release.mjs against disposable git histories. The ranges
+#      it walks only misbehave in states this repo is rarely in — unreleased
+#      commits sitting on main, a branch that forked before the last release —
+#      so the test builds those states rather than waiting for them.
 #
 # Usage:
 #   bash scripts/test-release-scripts.sh
@@ -166,6 +170,85 @@ node scripts/prepend-changelog.mjs "$CL_TMP/notes.md" "$CL_TMP/empty.md" 2>/dev/
 assert_exit 0 "appends when there are no existing entries" grep -qF "## [3.0.0](x)" "$CL_TMP/empty.md"
 
 assert_exit 1 "missing args → usage error" node scripts/prepend-changelog.mjs "$CL_TMP/notes.md"
+
+echo
+echo "preview-release.mjs:"
+assert_exit 2 "no args → usage exit 2"                  node scripts/preview-release.mjs
+assert_exit 2 "--head alone → usage exit 2"             node scripts/preview-release.mjs --head main
+assert_exit 2 "--base and --main together → usage exit 2" node scripts/preview-release.mjs --base a --main b --head c
+
+# Disposable histories. The two range bugs these cover are invisible to a
+# grep-level assertion and to any test run against this repo's own history:
+# both need a main that carries unreleased commits, and a branch that forked
+# before the last release.
+PV_TMP=$(mktemp -d)
+trap 'rm -rf "$CL_TMP" "$PV_TMP"' EXIT
+
+pv_init() {
+  git init -q -b main "$1"
+  git -C "$1" config user.email release-test@example.com
+  git -C "$1" config user.name "Release Test"
+  git -C "$1" config commit.gpgsign false
+}
+pv_commit() { git -C "$1" commit -q --allow-empty --no-verify -m "$2"; }
+pv_field() {
+  node scripts/preview-release.mjs --repo "$1" --main "$2" --head "$3" 2>/dev/null \
+    | node scripts/read-preview-field.mjs --default none "$4"
+}
+
+# A fix PR sitting on top of a feat that is merged but unreleased. The release
+# dispatch analyzes 1.0.0 → main and computes a minor; a preview scoped to the
+# PR alone computes a patch and prints a version nobody will ever ship.
+UNREL="$PV_TMP/unreleased-on-main"
+pv_init "$UNREL"
+pv_commit "$UNREL" "chore(release): 1.0.0 [skip ci]"
+git -C "$UNREL" tag 1.0.0
+pv_commit "$UNREL" "feat: merged to main but not yet released"
+git -C "$UNREL" checkout -q -b pr-fix
+pv_commit "$UNREL" "fix: the only commit on this PR"
+
+assert_stdout_equals "1.1.0" "unreleased feat on main → PR preview is the release's minor" \
+  pv_field "$UNREL" main pr-fix next
+assert_stdout_equals "minor" "…and reports it as a minor" \
+  pv_field "$UNREL" main pr-fix release_type
+assert_stdout_equals "patch" "…while still reporting the PR's own patch separately" \
+  pv_field "$UNREL" main pr-fix pr_release_type
+assert_stdout_equals "1" "…and counting only this PR's commits as the PR's own" \
+  pv_field "$UNREL" main pr-fix pr_commit_count
+
+# A `feat!:` on the PR must read as major from both angles, so the signoff
+# check (which reads pr_release_type) and the comment agree.
+git -C "$UNREL" checkout -q -b pr-break main
+pv_commit "$UNREL" "feat!: remove the old entry point
+
+BREAKING CHANGE: the old entry point is gone."
+assert_stdout_equals "major" "a breaking change on the PR reads as major" \
+  pv_field "$UNREL" main pr-break pr_release_type
+assert_stdout_equals "2.0.0" "…and previews the major version" \
+  pv_field "$UNREL" main pr-break next
+
+# A branch that forked before the last release still reaches the older tag.
+# Describing the checked-out branch would bump from 1.0.0 and print 1.0.1 —
+# a version that shipped two releases ago.
+STALE="$PV_TMP/stale-branch"
+pv_init "$STALE"
+pv_commit "$STALE" "chore(release): 1.0.0 [skip ci]"
+git -C "$STALE" tag 1.0.0
+git -C "$STALE" checkout -q -b pr-stale
+pv_commit "$STALE" "fix: authored before 2.0.0 shipped"
+git -C "$STALE" checkout -q main
+pv_commit "$STALE" "feat: shipped in 2.0.0"
+pv_commit "$STALE" "chore(release): 2.0.0 [skip ci]"
+git -C "$STALE" tag 2.0.0
+# Leave the stale branch checked out, as the PR job does.
+git -C "$STALE" checkout -q pr-stale
+
+assert_stdout_equals "1.0.0" "the stale branch really does reach only the older tag" \
+  git -C "$STALE" describe --tags --abbrev=0
+assert_stdout_equals "2.0.0" "current is taken from main, not the stale branch" \
+  pv_field "$STALE" main pr-stale current
+assert_stdout_equals "2.0.1" "…so the preview bumps from the current release" \
+  pv_field "$STALE" main pr-stale next
 
 echo
 echo "release.sh wiring:"

@@ -84,11 +84,22 @@ The calculated version is computed for you in three places. Use whichever is at
 hand:
 
 - **On the pull request.** Every PR gets a Commit Lint comment showing the
-  version that would ship if it merged and nothing else landed first.
+  version that would ship if it merged and nothing else landed first. It
+  previews the whole window the dispatch covers — the latest tag through
+  current `main`, plus the PR's own commits — because commits can sit merged
+  and unreleased on `main` for a while. A fix PR on top of an unreleased `feat`
+  ships as a minor, not a patch, and the comment says so; it also reports what
+  the PR contributes on its own.
 - **Locally.**
   ```bash
   npm ci
-  node scripts/preview-release.mjs --base "$(git describe --tags --abbrev=0)" --head main
+  node scripts/preview-release.mjs --base "$(git describe --tags --abbrev=0 main)" --head main
+  ```
+  To preview a branch the way the PR comment does, pass `--main` instead of
+  `--base` — the script then resolves the tag itself and folds the branch into
+  the window:
+  ```bash
+  node scripts/preview-release.mjs --main main --head my-branch
   ```
 - **In the release run summary**, beside the chosen version — though by then
   you have already typed it.

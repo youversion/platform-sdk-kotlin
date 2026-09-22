@@ -16,7 +16,7 @@ on:
           recent merged PR's Commit Lint comment for the calculated value, or
           run locally:
             node scripts/preview-release.mjs \
-              --base $(git describe --tags --abbrev=0) --head main
+              --base $(git describe --tags --abbrev=0 main) --head main
           You can override the calculated value here — the workflow logs both
           side-by-side in the run summary for audit.
         required: true
