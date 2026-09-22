@@ -316,6 +316,7 @@ assert_stderr_contains "VERSION env var is required" "release.sh says why" env -
 assert_exit 1 "stamp-version.sh without a version → exit 1" bash scripts/stamp-version.sh
 assert_exit 2 "gradle-publish-wrapper.sh with no args → usage exit 2" bash scripts/gradle-publish-wrapper.sh
 assert_exit 2 "gradle-publish-wrapper.sh with one arg → usage exit 2" bash scripts/gradle-publish-wrapper.sh 2.2.0
+assert_exit 2 "gradle-publish-wrapper.sh without a group → usage exit 2" bash scripts/gradle-publish-wrapper.sh 2.2.0 platform-core
 
 echo
 if [ "$FAIL" -gt 0 ]; then

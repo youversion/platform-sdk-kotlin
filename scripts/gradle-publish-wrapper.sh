@@ -16,7 +16,7 @@
 #   1   other failure (transient or unclassified; retry is reasonable)
 #
 # Usage:
-#   scripts/gradle-publish-wrapper.sh <version> <module>
+#   scripts/gradle-publish-wrapper.sh <version> <module> <group>
 #
 # Required env (set by release.yml):
 #   ORG_GRADLE_PROJECT_mavenCentralUsername
@@ -26,13 +26,15 @@
 
 set -uo pipefail
 
-if [[ $# -ne 2 ]]; then
-    echo "usage: $0 <version> <module>" >&2
+if [[ $# -ne 3 ]]; then
+    echo "usage: $0 <version> <module> <group>" >&2
     exit 2
 fi
 
 VERSION="$1"
 MODULE="$2"
+GROUP="$3"
+GROUP_PATH="${GROUP//.//}"
 task=":${MODULE}:publishToMavenCentral"
 
 log_file=$(mktemp -t gradle-publish.XXXXXX.log)
@@ -55,12 +57,26 @@ fi
 # re-dispatch after a partially-successful run could never get past the modules
 # that did publish. Checked before the GPG patterns because an already-existing
 # component is unambiguous.
-if grep -E -i -q \
-    -e 'already exists' \
-    -e 'Component with package url .* already exists' \
-    "$log_file"; then
-    echo "==> ${MODULE} ${VERSION} is already on Maven Central — treating as success."
-    exit 0
+#
+# The log phrase is only the trigger; repo1 is the proof. A bare "already
+# exists" match is not enough, because Gradle emits that string for unrelated
+# configuration errors ("Cannot add task 'x' as a task with that name already
+# exists") and this grep runs over the whole log. Treating one of those as a
+# publish no-op would exit 0 here, and release.sh would cut a GitHub release for
+# a module that never reached Central.
+#
+# A 404 does not disprove the deployment — the Central Portal syncs to repo1 on
+# a lag of minutes — so an unconfirmed match exits 1 (retryable) rather than
+# claiming a publish it cannot see.
+if grep -E -i -q -e 'Component with package url .* already exists' "$log_file"; then
+    pom_url="https://repo1.maven.org/maven2/${GROUP_PATH}/${MODULE}/${VERSION}/${MODULE}-${VERSION}.pom"
+    if curl -fsS -I --max-time 30 "$pom_url" >/dev/null 2>&1; then
+        echo "==> ${MODULE} ${VERSION} is already on Maven Central — treating as success."
+        exit 0
+    fi
+    echo "==> Central reported the component exists, but ${pom_url} is not resolvable yet." >&2
+    echo "==> Not claiming success; retry once Central sync completes." >&2
+    exit 1
 fi
 
 # Classify the failure. Patterns are deliberately broad — we would rather

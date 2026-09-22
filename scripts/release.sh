@@ -76,6 +76,12 @@ cd "$(dirname "$0")/.."
 VERSION="${VERSION:-}"
 DRY_RUN="${DRY_RUN:-0}"
 PUBLISHABLE_MODULES="${PUBLISHABLE_MODULES:-platform-core,platform-ui,platform-reader}"
+# The groupId all three modules publish under. Declared here rather than read
+# back from each build.gradle.kts because the wrapper needs it to build a repo1
+# URL before any artifact exists. If a module ever publishes under a different
+# group, this stops being a single value and the loop below has to carry a
+# per-module group. See the `coordinates(...)` call in each module's build file.
+MAVEN_GROUP="${MAVEN_GROUP:-com.youversion.platform}"
 
 if [ -z "$VERSION" ]; then
   echo "❌ VERSION env var is required" >&2
@@ -347,7 +353,7 @@ for module in "${MODULES[@]}"; do
   [ -z "$module" ] && continue
   echo
   echo "--- $module ---"
-  bash scripts/gradle-publish-wrapper.sh "$VERSION" "$module"
+  bash scripts/gradle-publish-wrapper.sh "$VERSION" "$module" "$MAVEN_GROUP"
 done
 echo
 echo "  ✓ All modules published at $VERSION."
