@@ -258,9 +258,10 @@ internal fun BibleScreen(
             return@LaunchedEffect
         }
         blocks.indexOfBlockContaining(target)?.let { index ->
-            // Placed in the next measure pass rather than scrolled to, so the reference is simply where the
-            // chapter opens instead of somewhere the list travels to from the top.
-            chapterListState.requestScrollToItem(CHAPTER_HEADER_ITEM_COUNT + index)
+            // Jumped to rather than animated, so the reference is simply where the chapter opens instead of
+            // somewhere the list travels to from the top. Suspends until the item is placed, so the target is
+            // consumed — and the chapter revealed — only once the verse is actually on screen.
+            chapterListState.scrollToItem(CHAPTER_HEADER_ITEM_COUNT + index)
         }
         viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
     }
