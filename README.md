@@ -92,7 +92,7 @@ Great! Now that you know which modules you need, you can proceed with installati
 ```toml
 # gradle/libs.versions.toml
 [versions]
-youVersionPlatform = "2.1.2"
+youVersionPlatform = "2.1.3"
 
 [libraries]
 youversion-platform-core = { module = "com.youversion.platform:platform-core", version.ref = "youVersionPlatform" }
@@ -110,7 +110,7 @@ implementation(libs.youversion.platform.reader)
 ### Without Version Catalog
 
 ```kotlin
-val youVersionPlatform = "2.1.2"
+val youVersionPlatform = "2.1.3"
 implementation("com.youversion.platform:platform-core:$youVersionPlatform")
 implementation("com.youversion.platform:platform-ui:$youVersionPlatform")
 implementation("com.youversion.platform:platform-reader:$youVersionPlatform")
