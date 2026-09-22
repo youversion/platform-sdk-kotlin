@@ -22,8 +22,8 @@ learning because several of them look interchangeable and are not.
 |---|---|
 | **Chosen version** | What the operator types into the `version` input. **This is what ships.** |
 | **Calculated version** | What the commit analyzer computed from the commits since the last tag. Advisory; logged beside the chosen version for audit. |
-| **Fresh run** | No remote tag for that version yet. Commits, tags, pushes, publishes, releases. |
-| **Resume** | A remote tag for that version already exists. Auto-detected, not an input; picks up where the last run stopped. |
+| **Fresh run** | No remote tag for that version, and main does not already carry its release commit. Commits, tags, pushes, publishes, releases. |
+| **Resume** | A remote tag for that version already exists, or main already carries its `chore(release)` commit without a tag. Auto-detected, not an input; picks up where the last run stopped. |
 | **Rehearsal** | The `dry-run` input. Runs end-to-end up to the local release commit and tag, then stops. Never pushes, never publishes. |
 
 ## How It Works

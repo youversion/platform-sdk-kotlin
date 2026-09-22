@@ -181,6 +181,36 @@ else
   PASS=$((PASS + 1))
 fi
 
+# The remote tag is the sole resume key: main landing without it makes the next
+# dispatch build a duplicate release commit. Grep, since the push needs a remote.
+if grep -qE '^[[:space:]]*git push --atomic origin "HEAD:refs/heads/main" "refs/tags/\$VERSION"$' scripts/release.sh; then
+  echo "  ✓ scripts/release.sh pushes main + tag atomically on a fresh run"
+  PASS=$((PASS + 1))
+else
+  echo "  ✗ scripts/release.sh fresh-run push is not a single atomic push of main + tag"
+  FAIL=$((FAIL + 1))
+fi
+
+if grep -nE '^[[:space:]]*git push origin HEAD:(refs/heads/)?main[[:space:]]*$' scripts/release.sh >/dev/null; then
+  echo "  ✗ scripts/release.sh pushes main on its own — the tag must go with it"
+  grep -nE '^[[:space:]]*git push origin HEAD:(refs/heads/)?main[[:space:]]*$' scripts/release.sh
+  FAIL=$((FAIL + 1))
+else
+  echo "  ✓ scripts/release.sh never pushes main as a standalone operation"
+  PASS=$((PASS + 1))
+fi
+
+# Adoption keys off the subject release.sh itself writes; if one moves without
+# the other it stops firing and duplicate release commits come back.
+if grep -qF "printf 'chore(release): %s [skip ci]" scripts/release.sh \
+  && grep -qF 'chore(release): $VERSION [skip ci]" ]' scripts/release.sh; then
+  echo "  ✓ scripts/release.sh adopts an untagged release commit by its own subject"
+  PASS=$((PASS + 1))
+else
+  echo "  ✗ scripts/release.sh adoption branch and commit subject have drifted apart"
+  FAIL=$((FAIL + 1))
+fi
+
 for script in release.sh stamp-version.sh gradle-publish-wrapper.sh; do
   if bash -n "scripts/$script" 2>/dev/null; then
     echo "  ✓ scripts/$script parses"

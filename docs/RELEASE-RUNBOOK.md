@@ -36,6 +36,24 @@ Release is left alone. There is no separate preflight job and no `modules`
 input — the script re-derives what is left to do from the world's actual state
 each time it runs.
 
+## Release commit on main with no tag
+
+**Symptom:** the `release` job failed at or after the push step, and
+`git ls-remote origin refs/tags/<version>` is empty while `main` already
+carries a `chore(release): <version>` commit.
+
+**Fix:** re-dispatch with the same `version` input. `release.sh` detects that
+`main` already carries this version's release commit, adopts it, and pushes the
+missing tag — no second commit, no duplicate changelog entry.
+
+The fresh-run push is atomic (`git push --atomic`, main + tag in one
+transaction), so the pipeline cannot produce this state any more. It survives
+for remotes split by an older run or a hand push. Adoption matches on the
+commit subject, so it does not fire if commits have landed on `main` on top of
+the release commit; in that case tag it by hand at the release commit
+(`git tag <version> <sha> && git push origin <version>`) and re-dispatch, which
+then resumes normally.
+
 ## Upload transient failure
 
 **Symptom:** the `release` job fails with a network error, a 5xx from

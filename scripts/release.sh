@@ -25,8 +25,10 @@
 # Vocabulary (see RELEASING.md § Vocabulary):
 #   chosen version      what the operator typed; this is what ships
 #   calculated version  what the analyzer computed; advisory only
-#   fresh run           no remote tag for that version yet
-#   resume              remote tag already exists; auto-detected, not an input
+#   fresh run           no remote tag, and main does not already carry this
+#                       version's release commit
+#   resume              remote tag already exists, or main already carries this
+#                       version's release commit; auto-detected, not an input
 #   rehearsal           DRY_RUN=1; stops after the local commit + tag
 #
 # Fresh-run pre-conditions (enforced below):
@@ -40,9 +42,11 @@
 #
 # Resume mode (auto-detected): if tag $VERSION already exists on origin with a
 # tree whose gradle/libs.versions.toml is stamped to $VERSION, the script
-# treats this as a re-dispatch after a partial run. It checks out the tag,
-# regenerates the release notes, and proceeds to the idempotent post-tag steps
-# (push, publish, GitHub release), each of which detects and skips
+# treats this as a re-dispatch after a partial run. It also resumes when main
+# already carries this version's `chore(release)` commit but origin has no tag,
+# adopting that commit rather than building a second one. It checks out the
+# tag, regenerates the release notes, and proceeds to the idempotent post-tag
+# steps (push, publish, GitHub release), each of which detects and skips
 # already-completed work. See docs/RELEASE-RUNBOOK.md for failure-mode-by-
 # failure-mode recovery details.
 #
@@ -95,6 +99,12 @@ REMOTE_TAG_SHA=$(git ls-remote origin "refs/tags/$VERSION" 2>/dev/null | awk '{p
 RESUME=0
 if [ -n "$REMOTE_TAG_SHA" ]; then
   RESUME=1
+elif [ "$(git log -1 --format=%s HEAD)" = "chore(release): $VERSION [skip ci]" ]; then
+  # Split push: main landed, the tag did not. Subject match, not the version
+  # stamp — the stamp persists into every later commit.
+  echo "🔁 HEAD is already the $VERSION release commit with no remote tag — adopting it."
+  git rev-parse "refs/tags/$VERSION" >/dev/null 2>&1 || git tag "$VERSION" HEAD
+  RESUME=1
 fi
 
 if [ "$VALIDATION_CODE" -eq 11 ]; then
@@ -125,7 +135,11 @@ if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
     echo "| Chosen (input)    | **\`$VERSION\`**   |"
     if [ "$RESUME" = "1" ]; then
       echo
-      echo "> 🔁 **Resume** — tag \`$VERSION\` already exists on origin. Already-completed phases will be skipped."
+      if [ -n "$REMOTE_TAG_SHA" ]; then
+        echo "> 🔁 **Resume** — tag \`$VERSION\` already exists on origin. Already-completed phases will be skipped."
+      else
+        echo "> 🔁 **Resume** — main already carries the \`$VERSION\` release commit but origin has no tag. Adopting that commit; already-completed phases will be skipped."
+      fi
     fi
     if [ "$DRY_RUN" = "1" ]; then
       echo
@@ -152,7 +166,11 @@ fi
 # ---------------------------------------------------------------------------
 if [ "$RESUME" = "1" ]; then
   echo
-  echo "🔁 Resume: tag $VERSION already exists on origin at $REMOTE_TAG_SHA."
+  if [ -n "$REMOTE_TAG_SHA" ]; then
+    echo "🔁 Resume: tag $VERSION already exists on origin at $REMOTE_TAG_SHA."
+  else
+    echo "🔁 Resume: adopted the $VERSION release commit already on main."
+  fi
 
   if ! git rev-parse "refs/tags/$VERSION^{}" >/dev/null 2>&1; then
     git fetch origin "refs/tags/$VERSION:refs/tags/$VERSION"
@@ -281,35 +299,39 @@ if [ "$DRY_RUN" = "1" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Push (idempotent).
+# Push. The remote tag is the sole resume key, so on a fresh run main must
+# never land without it. Resume pushes whichever ref is still missing.
 # ---------------------------------------------------------------------------
 echo
 echo "Pushing main and tag $VERSION..."
 
-git fetch origin main 2>/dev/null || true
-ORIGIN_MAIN_SHA=$(git rev-parse origin/main 2>/dev/null || echo "")
-
 if [ "$RESUME" = "0" ]; then
-  git push origin HEAD:main
-elif [ "$ORIGIN_MAIN_SHA" = "$RELEASE_SHA" ]; then
-  echo "  ✓ origin/main already at $RELEASE_SHA — skipping main push."
-elif [ -n "$ORIGIN_MAIN_SHA" ] && git merge-base --is-ancestor "$RELEASE_SHA" "$ORIGIN_MAIN_SHA" 2>/dev/null; then
-  echo "  ✓ origin/main has advanced past the release commit — skipping main push."
+  git push --atomic origin "HEAD:refs/heads/main" "refs/tags/$VERSION"
+  echo "  ✓ Pushed main and tag $VERSION together."
 else
-  echo "❌ Resume: tag $VERSION at $RELEASE_SHA is not reachable from origin/main ($ORIGIN_MAIN_SHA)." >&2
-  echo "   Refusing to push from a detached state that doesn't descend from main. See docs/RELEASE-RUNBOOK.md." >&2
-  exit 1
-fi
+  git fetch origin main 2>/dev/null || true
+  ORIGIN_MAIN_SHA=$(git rev-parse origin/main 2>/dev/null || echo "")
 
-REMOTE_TAG_NOW=$(git ls-remote origin "refs/tags/$VERSION" 2>/dev/null | awk '{print $1}')
-if [ -z "$REMOTE_TAG_NOW" ]; then
-  git push origin "$VERSION"
-elif [ "$REMOTE_TAG_NOW" = "$RELEASE_SHA" ]; then
-  echo "  ✓ Tag $VERSION already at $RELEASE_SHA on origin — skipping tag push."
-else
-  echo "❌ Tag $VERSION on origin points at $REMOTE_TAG_NOW, but the local release commit is $RELEASE_SHA." >&2
-  echo "   Refusing to force-update tags. See docs/RELEASE-RUNBOOK.md." >&2
-  exit 1
+  if [ "$ORIGIN_MAIN_SHA" = "$RELEASE_SHA" ]; then
+    echo "  ✓ origin/main already at $RELEASE_SHA — skipping main push."
+  elif [ -n "$ORIGIN_MAIN_SHA" ] && git merge-base --is-ancestor "$RELEASE_SHA" "$ORIGIN_MAIN_SHA" 2>/dev/null; then
+    echo "  ✓ origin/main has advanced past the release commit — skipping main push."
+  else
+    echo "❌ Resume: tag $VERSION at $RELEASE_SHA is not reachable from origin/main ($ORIGIN_MAIN_SHA)." >&2
+    echo "   Refusing to push from a detached state that doesn't descend from main. See docs/RELEASE-RUNBOOK.md." >&2
+    exit 1
+  fi
+
+  REMOTE_TAG_NOW=$(git ls-remote origin "refs/tags/$VERSION" 2>/dev/null | awk '{print $1}')
+  if [ -z "$REMOTE_TAG_NOW" ]; then
+    git push origin "refs/tags/$VERSION"
+  elif [ "$REMOTE_TAG_NOW" = "$RELEASE_SHA" ]; then
+    echo "  ✓ Tag $VERSION already at $RELEASE_SHA on origin — skipping tag push."
+  else
+    echo "❌ Tag $VERSION on origin points at $REMOTE_TAG_NOW, but the local release commit is $RELEASE_SHA." >&2
+    echo "   Refusing to force-update tags. See docs/RELEASE-RUNBOOK.md." >&2
+    exit 1
+  fi
 fi
 
 # ---------------------------------------------------------------------------
