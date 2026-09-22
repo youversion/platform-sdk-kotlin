@@ -279,7 +279,10 @@ object BibleVersionRendering {
             stateUp.append(text, style, stateDown.textCategory)
         }
 
-        if (node.classes.contains("yv-vlbl") || node.classes.contains("vlbl")) {
+        if (node.classes.contains("yv-vlbl") ||
+            node.classes.contains("vlbl") ||
+            node.classes.contains("va")
+        ) {
             if (stateUp.rendering && stateIn.renderVerseNumbers && node.children.isNotEmpty()) {
                 val text = node.children.first().text
                 val maybeSpace = if (stateUp.isTextEmpty() || stateUp.endsWithSpace()) "" else " "
@@ -296,7 +299,7 @@ object BibleVersionRendering {
             if (stateUp.rendering) {
                 handleFootnoteNode(node, stateIn, parentStateDown, stateUp)
             }
-        } else if (node.classes.contains("rq") || (node.classes.contains("yv-n") && node.classes.contains("x"))) {
+        } else if (node.classes.contains("yv-n") && node.classes.contains("x")) {
             // Cross-reference, currently ignored
         } else {
             node.children.forEach { child ->

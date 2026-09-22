@@ -9,6 +9,32 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class BibleVersionRenderingFootnoteTests {
+    // ----- footnote paragraphs
+
+    @Test
+    fun `additional footnote paragraph starts on a new line`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="p">
+                        <span class="yv-v" v="1"></span>
+                        Some text
+                        <span class="yv-n f"><span class="fr">1:1</span><span class="ft">first paragraph</span><span class="fp">second paragraph</span></span>
+                    </div>
+                </div>
+                """.trimIndent()
+
+            val blocks =
+                renderBlocks(
+                    html,
+                    FULL_CHAPTER_REF,
+                    footnoteMode = BibleTextFootnoteMode.IMAGE,
+                )
+            val footnote = blocks.flatMap { it.footnotes }.first { it.text.contains("second paragraph") }
+            assertTrue(footnote.text.contains("first paragraph\nsecond paragraph"))
+        }
+
     // ----- footnote modes
 
     @Test

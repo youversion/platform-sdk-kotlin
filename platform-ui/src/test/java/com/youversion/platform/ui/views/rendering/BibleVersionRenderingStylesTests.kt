@@ -125,22 +125,50 @@ class BibleVersionRenderingStylesTests {
 
     @Test
     fun `interpretTextAttr sets italic font for italic classes`() {
-        listOf("tl", "it", "add", "fq", "fqa", "qs", "qt", "bk").forEach { className ->
+        listOf("tl", "it", "add", "em", "fq", "fqa", "qac", "qs", "qt", "bk", "sig", "litl")
+            .forEach { className ->
+                val stateDown = defaultStateDown()
+                interpretTextAttr(node(className), defaultStateIn(), stateDown, defaultStateUp())
+                assertEquals(
+                    BibleTextFontOption.FONT_100EM_ITALIC,
+                    stateDown.currentFont,
+                    "Expected italic font for class '$className'",
+                )
+            }
+    }
+
+    @Test
+    fun `interpretTextAttr sets bold italic font for bdit, fk, and fl classes`() {
+        listOf("bdit", "fk", "fl").forEach { className ->
             val stateDown = defaultStateDown()
             interpretTextAttr(node(className), defaultStateIn(), stateDown, defaultStateUp())
             assertEquals(
-                BibleTextFontOption.FONT_100EM_ITALIC,
+                BibleTextFontOption.FONT_100EM_500_ITALIC,
                 stateDown.currentFont,
-                "Expected italic font for class '$className'",
+                "Expected bold italic font for class '$className'",
             )
         }
     }
 
     @Test
-    fun `interpretTextAttr sets bold italic font for bdit class`() {
+    fun `interpretTextAttr sets smaller italic font for rq class`() {
         val stateDown = defaultStateDown()
-        interpretTextAttr(node("bdit"), defaultStateIn(), stateDown, defaultStateUp())
-        assertEquals(BibleTextFontOption.FONT_100EM_500_ITALIC, stateDown.currentFont)
+        interpretTextAttr(node("rq"), defaultStateIn(), stateDown, defaultStateUp())
+        assertEquals(BibleTextFontOption.FONT_083EM_ITALIC, stateDown.currentFont)
+    }
+
+    @Test
+    fun `interpretTextAttr sets bold font for bd class`() {
+        val stateDown = defaultStateDown()
+        interpretTextAttr(node("bd"), defaultStateIn(), stateDown, defaultStateUp())
+        assertEquals(BibleTextFontOption.FONT_100EM_700, stateDown.currentFont)
+    }
+
+    @Test
+    fun `interpretTextAttr resets to the plain font for pn class`() {
+        val stateDown = defaultStateDown(currentFont = BibleTextFontOption.FONT_100EM_ITALIC)
+        interpretTextAttr(node("pn"), defaultStateIn(), stateDown, defaultStateUp())
+        assertEquals(BibleTextFontOption.FONT_100EM, stateDown.currentFont)
     }
 
     @Test
@@ -456,10 +484,9 @@ class BibleVersionRenderingStylesTests {
     }
 
     @Test
-    fun `interpretBlockClasses sets medium centered styling for is, is1, and is2 classes`() {
+    fun `interpretBlockClasses sets medium centered styling for is and is2 classes`() {
         mapOf(
             "is" to (fontSize / 2).dp,
-            "is1" to (fontSize / 2).dp,
             "is2" to (fontSize / 3).dp,
         ).forEach { (className, expectedMarginTop) ->
             val stateDown = defaultStateDown()
@@ -470,6 +497,18 @@ class BibleVersionRenderingStylesTests {
             assertEquals(expectedMarginTop, stateDown.marginTop)
             assertIndents(stateUp, className, firstLineHeadIndent = 0, headIndent = 0)
         }
+    }
+
+    @Test
+    fun `interpretBlockClasses sets bold centered styling for is1 class`() {
+        val stateDown = defaultStateDown()
+        val stateUp = defaultStateUp()
+        callInterpretBlock(listOf("is1"), stateDown = stateDown, stateUp = stateUp)
+        assertEquals(BibleTextFontOption.FONT_117EM_700, stateDown.currentFont)
+        assertEquals(TextAlign.Center, stateDown.alignment)
+        assertEquals((fontSize / 2).dp, stateDown.marginTop)
+        assertEquals((0.50f * fontSize).dp, stateDown.marginBottom)
+        assertIndents(stateUp, "is1", firstLineHeadIndent = 0, headIndent = 0)
     }
 
     @Test
@@ -538,14 +577,16 @@ class BibleVersionRenderingStylesTests {
     }
 
     @Test
-    fun `interpretBlockClasses sets medium font and margin bottom for s1 class`() {
-        val stateDown = defaultStateDown()
-        val stateUp = defaultStateUp()
-        callInterpretBlock(listOf("s1"), stateDown = stateDown, stateUp = stateUp)
-        assertEquals(BibleTextFontOption.FONT_117EM_500, stateDown.currentFont)
-        assertEquals(0.dp, stateDown.marginTop)
-        assertEquals((0.25f * fontSize).dp, stateDown.marginBottom)
-        assertEquals(0, stateUp.headIndent)
+    fun `interpretBlockClasses sets medium font and margin bottom for s and s1 classes`() {
+        listOf("s", "s1").forEach { className ->
+            val stateDown = defaultStateDown()
+            val stateUp = defaultStateUp()
+            callInterpretBlock(listOf(className), stateDown = stateDown, stateUp = stateUp)
+            assertEquals(BibleTextFontOption.FONT_117EM_500, stateDown.currentFont)
+            assertEquals(0.dp, stateDown.marginTop)
+            assertEquals((0.25f * fontSize).dp, stateDown.marginBottom)
+            assertIndents(stateUp, className, firstLineHeadIndent = 0, headIndent = 0)
+        }
     }
 
     @Test
@@ -557,7 +598,7 @@ class BibleVersionRenderingStylesTests {
             assertEquals(BibleTextFontOption.FONT_100EM_500_ITALIC, stateDown.currentFont)
             assertEquals((0.5f * fontSize).dp, stateDown.marginTop)
             assertEquals((0.5f * fontSize).dp, stateDown.marginBottom)
-            assertEquals(0, stateUp.headIndent)
+            assertIndents(stateUp, className, firstLineHeadIndent = 0, headIndent = 0)
         }
     }
 
@@ -596,8 +637,8 @@ class BibleVersionRenderingStylesTests {
     }
 
     @Test
-    fun `interpretBlockClasses sets BOOK_TITLE styling for imt1, imte, and imte1 classes`() {
-        listOf("imt1", "imte", "imte1").forEach { className ->
+    fun `interpretBlockClasses sets BOOK_TITLE styling for imte and imte1 classes`() {
+        listOf("imte", "imte1").forEach { className ->
             val stateDown = defaultStateDown()
             callInterpretBlock(listOf(className), stateDown = stateDown)
             assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
@@ -607,47 +648,168 @@ class BibleVersionRenderingStylesTests {
     }
 
     @Test
-    fun `interpretBlockClasses sets italic BOOK_TITLE styling for imt2 and imte2 classes`() {
-        listOf("imt2", "imte2").forEach { className ->
-            val stateDown = defaultStateDown()
-            callInterpretBlock(listOf(className), stateDown = stateDown)
-            assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
-            assertEquals(BibleTextFontOption.FONT_100EM_ITALIC, stateDown.currentFont)
-            assertEquals(TextAlign.Center, stateDown.alignment)
-            assertEquals((fontSize / 2).dp, stateDown.marginTop)
+    fun `interpretBlockClasses sets italic BOOK_TITLE styling for imte2 class`() {
+        val stateDown = defaultStateDown()
+        callInterpretBlock(listOf("imte2"), stateDown = stateDown)
+        assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
+        assertEquals(BibleTextFontOption.FONT_100EM_ITALIC, stateDown.currentFont)
+        assertEquals(TextAlign.Center, stateDown.alignment)
+        assertEquals((fontSize / 2).dp, stateDown.marginTop)
+        assertEquals((0.25f * fontSize).dp, stateDown.marginBottom)
+    }
+
+    @Test
+    fun `interpretBlockClasses sets BOOK_TITLE styling for imt4 class`() {
+        val stateDown = defaultStateDown()
+        callInterpretBlock(listOf("imt4"), stateDown = stateDown)
+        assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
+        assertEquals(BibleTextFontOption.FONT_100EM_500, stateDown.currentFont)
+        assertEquals(TextAlign.Center, stateDown.alignment)
+        assertEquals((fontSize / 3).dp, stateDown.marginTop)
+    }
+
+    @Test
+    fun `interpretBlockClasses sets bold BOOK_TITLE styling for imt1 class`() {
+        val stateDown = defaultStateDown()
+        callInterpretBlock(listOf("imt1"), stateDown = stateDown)
+        assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
+        assertEquals(BibleTextFontOption.FONT_117EM_700, stateDown.currentFont)
+        assertEquals(TextAlign.Center, stateDown.alignment)
+        assertEquals(fontSize.dp, stateDown.marginTop)
+        assertEquals((0.25f * fontSize).dp, stateDown.marginBottom)
+    }
+
+    @Test
+    fun `interpretBlockClasses sets larger italic BOOK_TITLE styling for imt2 class`() {
+        val stateDown = defaultStateDown()
+        callInterpretBlock(listOf("imt2"), stateDown = stateDown)
+        assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
+        assertEquals(BibleTextFontOption.FONT_108EM_ITALIC, stateDown.currentFont)
+        assertEquals(TextAlign.Center, stateDown.alignment)
+        assertEquals((fontSize / 2).dp, stateDown.marginTop)
+        assertEquals((0.25f * fontSize).dp, stateDown.marginBottom)
+    }
+
+    @Test
+    fun `interpretBlockClasses sets plain BOOK_TITLE styling for imt3 class`() {
+        val stateDown = defaultStateDown()
+        callInterpretBlock(listOf("imt3"), stateDown = stateDown)
+        assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
+        assertEquals(BibleTextFontOption.FONT_100EM, stateDown.currentFont)
+        assertEquals(TextAlign.Center, stateDown.alignment)
+        assertEquals((0.15f * fontSize).dp, stateDown.marginTop)
+        assertEquals((0.15f * fontSize).dp, stateDown.marginBottom)
+    }
+
+    @Test
+    fun `interpretBlockClasses sets BOOK_TITLE styling for mt1 class`() {
+        val stateDown = defaultStateDown()
+        callInterpretBlock(listOf("mt1"), stateDown = stateDown)
+        assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
+        assertEquals(BibleTextFontOption.FONT_117EM_500, stateDown.currentFont)
+        assertEquals(TextAlign.Center, stateDown.alignment)
+        assertEquals((0.25f * fontSize).dp, stateDown.marginTop)
+        assertEquals((0.50f * fontSize).dp, stateDown.marginBottom)
+    }
+
+    @Test
+    fun `interpretBlockClasses sets italic BOOK_TITLE styling for mt2 class`() {
+        val stateDown = defaultStateDown()
+        callInterpretBlock(listOf("mt2"), stateDown = stateDown)
+        assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
+        assertEquals(BibleTextFontOption.FONT_117EM_500_ITALIC, stateDown.currentFont)
+        assertEquals(TextAlign.Center, stateDown.alignment)
+        assertEquals((0.25f * fontSize).dp, stateDown.marginBottom)
+    }
+
+    @Test
+    fun `interpretBlockClasses sets End alignment for cls class`() {
+        val stateDown = defaultStateDown()
+        callInterpretBlock(listOf("cls"), stateDown = stateDown)
+        assertEquals(TextAlign.End, stateDown.alignment)
+    }
+
+    @Test
+    fun `interpretBlockClasses sets indented italic styling for imq class`() {
+        val stateDown = defaultStateDown()
+        val stateUp = defaultStateUp()
+        callInterpretBlock(listOf("imq"), stateDown = stateDown, stateUp = stateUp)
+        assertEquals(BibleTextFontOption.FONT_100EM_ITALIC, stateDown.currentFont)
+        assertEquals(fontSize.dp, stateDown.marginTop)
+        assertEquals(fontSize.dp, stateDown.marginBottom)
+        assertIndents(stateUp, "imq", firstLineHeadIndent = 0, headIndent = 2)
+    }
+
+    @Test
+    fun `interpretBlockClasses sets first line indent and margin top for lh class`() {
+        val stateDown = defaultStateDown()
+        val stateUp = defaultStateUp()
+        callInterpretBlock(listOf("lh"), stateDown = stateDown, stateUp = stateUp)
+        assertEquals((0.50f * fontSize).dp, stateDown.marginTop)
+        assertIndents(stateUp, "lh", firstLineHeadIndent = 1, headIndent = 0)
+    }
+
+    @Test
+    fun `interpretBlockClasses sets head indent for li and lim classes`() {
+        listOf("li", "lim").forEach { className ->
+            val stateUp = defaultStateUp()
+            callInterpretBlock(listOf(className), stateUp = stateUp)
+            assertIndents(stateUp, className, firstLineHeadIndent = 0, headIndent = 2)
         }
     }
 
     @Test
-    fun `interpretBlockClasses sets BOOK_TITLE styling for imt3 and imt4 classes`() {
-        listOf("imt3", "imt4").forEach { className ->
-            val stateDown = defaultStateDown()
-            callInterpretBlock(listOf(className), stateDown = stateDown)
-            assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
-            assertEquals(BibleTextFontOption.FONT_100EM_500, stateDown.currentFont)
-            assertEquals(TextAlign.Center, stateDown.alignment)
-            assertEquals((fontSize / 3).dp, stateDown.marginTop)
-        }
+    fun `interpretBlockClasses sets first line indent and margins for po class`() {
+        val stateDown = defaultStateDown()
+        val stateUp = defaultStateUp()
+        callInterpretBlock(listOf("po"), stateDown = stateDown, stateUp = stateUp)
+        assertEquals((0.25f * fontSize).dp, stateDown.marginTop)
+        assertEquals((0.25f * fontSize).dp, stateDown.marginBottom)
+        assertIndents(stateUp, "po", firstLineHeadIndent = 1, headIndent = 0)
     }
 
     @Test
-    fun `interpretBlockClasses sets smaller italic font for r class`() {
+    fun `interpretBlockClasses sets centered italic font for r class`() {
         val stateDown = defaultStateDown()
         callInterpretBlock(listOf("r"), stateDown = stateDown)
-        assertEquals(BibleTextFontOption.FONT_076EM_ITALIC, stateDown.currentFont)
+        assertEquals(BibleTextFontOption.FONT_100EM_ITALIC, stateDown.currentFont)
+        assertEquals(TextAlign.Center, stateDown.alignment)
         assertEquals(0.dp, stateDown.marginTop)
+        assertEquals((0.25f * fontSize).dp, stateDown.marginBottom)
     }
 
     @Test
-    fun `interpretBlockClasses sets italic font for sr class`() {
+    fun `interpretBlockClasses sets medium italic font for r class alongside yv-h`() {
+        listOf(listOf("r", "yv-h"), listOf("yv-h", "r")).forEach { classes ->
+            val stateDown = defaultStateDown()
+            callInterpretBlock(classes, stateDown = stateDown)
+            assertEquals(
+                BibleTextFontOption.FONT_100EM_500_ITALIC,
+                stateDown.currentFont,
+                "Expected medium italic for classes $classes",
+            )
+        }
+    }
+
+    @Test
+    fun `interpretBlockClasses sets medium centered font for sr class`() {
         val stateDown = defaultStateDown()
         callInterpretBlock(listOf("sr"), stateDown = stateDown)
-        assertEquals(BibleTextFontOption.FONT_100EM_ITALIC, stateDown.currentFont)
+        assertEquals(BibleTextFontOption.FONT_100EM_500, stateDown.currentFont)
+        assertEquals(TextAlign.Center, stateDown.alignment)
+        assertEquals((0.25f * fontSize).dp, stateDown.marginBottom)
+    }
+
+    @Test
+    fun `interpretBlockClasses clears indents inherited from a sibling when centered`() {
+        val stateUp = defaultStateUp()
+        callInterpretBlock(listOf("li", "mt1"), stateUp = stateUp)
+        assertIndents(stateUp, "li mt1", firstLineHeadIndent = 0, headIndent = 0)
     }
 
     @Test
     fun `interpretBlockClasses does not change state for no-op classes`() {
-        listOf("b", "lh", "li", "lf", "po", "ior").forEach { className ->
+        listOf("b", "lf", "ior").forEach { className ->
             val stateDown = defaultStateDown()
             val stateUp = defaultStateUp()
             callInterpretBlock(listOf(className), stateDown = stateDown, stateUp = stateUp)
