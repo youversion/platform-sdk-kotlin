@@ -348,13 +348,45 @@ fi
 echo
 echo "Publishing modules: $PUBLISHABLE_MODULES"
 IFS=',' read -ra MODULES <<< "$PUBLISHABLE_MODULES"
+FAILED_MODULES=""
 for module in "${MODULES[@]}"; do
   module="${module// /}"
   [ -z "$module" ] && continue
   echo
   echo "--- $module ---"
-  bash scripts/gradle-publish-wrapper.sh "$VERSION" "$module" "$MAVEN_GROUP"
+  publish_status=0
+  bash scripts/gradle-publish-wrapper.sh "$VERSION" "$module" "$MAVEN_GROUP" || publish_status=$?
+
+  if [ "$publish_status" -eq 0 ]; then
+    continue
+  fi
+
+  if [ "$publish_status" -eq 42 ]; then
+    echo "❌ $module failed signing (exit 42) — not attempting the remaining modules." >&2
+    exit 42
+  fi
+
+  echo "⚠️  $module failed (exit $publish_status) — continuing with the remaining modules." >&2
+  FAILED_MODULES="${FAILED_MODULES:+$FAILED_MODULES }$module"
 done
+
+if [ -n "$FAILED_MODULES" ]; then
+  echo
+  echo "❌ Publish incomplete. Failed: $FAILED_MODULES" >&2
+  echo "   Re-dispatch with version $VERSION — resume skips whatever already reached Central." >&2
+  if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+    {
+      echo
+      echo "### ❌ Publish incomplete"
+      echo
+      echo "Failed to publish: \`$FAILED_MODULES\`"
+      echo
+      echo "Re-dispatch this workflow with version \`$VERSION\`. Resume mode skips the modules already on Central and retries only these."
+    } >> "$GITHUB_STEP_SUMMARY"
+  fi
+  exit 1
+fi
+
 echo
 echo "  ✓ All modules published at $VERSION."
 

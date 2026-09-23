@@ -318,6 +318,41 @@ assert_exit 2 "gradle-publish-wrapper.sh with no args → usage exit 2" bash scr
 assert_exit 2 "gradle-publish-wrapper.sh with one arg → usage exit 2" bash scripts/gradle-publish-wrapper.sh 2.2.0
 assert_exit 2 "gradle-publish-wrapper.sh without a group → usage exit 2" bash scripts/gradle-publish-wrapper.sh 2.2.0 platform-core
 
+central_re=$(sed -n "s/^CENTRAL_ALREADY_EXISTS_RE='\(.*\)'$/\1/p" scripts/gradle-publish-wrapper.sh)
+if [ -z "$central_re" ]; then
+  echo "  ✗ CENTRAL_ALREADY_EXISTS_RE not found in scripts/gradle-publish-wrapper.sh"
+  FAIL=$((FAIL + 1))
+else
+  central_real="  * Component with package url: 'pkg:maven/com.youversion.platform/platform-core@2.3.0?type=aar' already exists"
+  if printf '%s\n' "$central_real" | grep -E -i -q -e "$central_re"; then
+    echo "  ✓ already-exists pattern matches Central's real rejection message"
+    PASS=$((PASS + 1))
+  else
+    echo "  ✗ already-exists pattern does not match Central's real rejection message"
+    echo "      pattern: $central_re"
+    echo "      message: $central_real"
+    FAIL=$((FAIL + 1))
+  fi
+
+  central_decoy="> Cannot add task 'javaDocReleaseJar' as a task with that name already exists"
+  if printf '%s\n' "$central_decoy" | grep -E -i -q -e "$central_re"; then
+    echo "  ✗ already-exists pattern matches an unrelated Gradle 'already exists' error"
+    FAIL=$((FAIL + 1))
+  else
+    echo "  ✓ already-exists pattern ignores unrelated Gradle 'already exists' errors"
+    PASS=$((PASS + 1))
+  fi
+fi
+
+if grep -qF 'FAILED_MODULES="${FAILED_MODULES:+$FAILED_MODULES }$module"' scripts/release.sh \
+  && grep -qF 'exit 42' scripts/release.sh; then
+  echo "  ✓ scripts/release.sh collects per-module failures and fast-fails on signing"
+  PASS=$((PASS + 1))
+else
+  echo "  ✗ scripts/release.sh publish loop no longer collects per-module failures"
+  FAIL=$((FAIL + 1))
+fi
+
 echo
 if [ "$FAIL" -gt 0 ]; then
   echo "❌ $FAIL test(s) failed, $PASS passed"

@@ -40,9 +40,14 @@ task=":${MODULE}:publishToMavenCentral"
 log_file=$(mktemp -t gradle-publish.XXXXXX.log)
 trap 'rm -f "$log_file"' EXIT
 
-echo "==> ./gradlew ${task} -PsdkVersion=${VERSION}"
+CLOSE_TIMEOUT="${CENTRAL_CLOSE_TIMEOUT_SECONDS:-2700}"
+
+echo "==> ./gradlew ${task} -PsdkVersion=${VERSION} -PSONATYPE_CLOSE_TIMEOUT_SECONDS=${CLOSE_TIMEOUT}"
 set +e
-./gradlew "${task}" -PsdkVersion="${VERSION}" 2>&1 | tee "$log_file"
+./gradlew "${task}" \
+    -PsdkVersion="${VERSION}" \
+    -PSONATYPE_CLOSE_TIMEOUT_SECONDS="${CLOSE_TIMEOUT}" \
+    2>&1 | tee "$log_file"
 status=${PIPESTATUS[0]}
 set -e
 
@@ -68,7 +73,9 @@ fi
 # A 404 does not disprove the deployment — the Central Portal syncs to repo1 on
 # a lag of minutes — so an unconfirmed match exits 1 (retryable) rather than
 # claiming a publish it cannot see.
-if grep -E -i -q -e 'Component with package url .* already exists' "$log_file"; then
+CENTRAL_ALREADY_EXISTS_RE='Component with package url.* already exists'
+
+if grep -E -i -q -e "$CENTRAL_ALREADY_EXISTS_RE" "$log_file"; then
     pom_url="https://repo1.maven.org/maven2/${GROUP_PATH}/${MODULE}/${VERSION}/${MODULE}-${VERSION}.pom"
     if curl -fsS -I --max-time 30 "$pom_url" >/dev/null 2>&1; then
         echo "==> ${MODULE} ${VERSION} is already on Maven Central — treating as success."
