@@ -35,45 +35,77 @@ pom_url() {
     echo "https://repo1.maven.org/maven2/${GROUP_PATH}/$1/${VERSION}/$1-${VERSION}.pom"
 }
 
-is_on_central() {
-    curl -fsS -I --max-time 30 "$(pom_url "$1")" >/dev/null 2>&1
+# "repo1 said 404" and "we never reached repo1" are different answers, so this
+# reports the status code rather than curl's exit — mirrors is_resolvable in
+# poll-central-index.sh. Conflating them lets a network blip read as a clean
+# 404, which makes a published version look missing and fires the
+# partial-publish warning below over a release that is fine.
+central_status() {
+    local code
+    # curl writes %{http_code} itself — 000 when it never got a response — so
+    # the fallback is a separate test rather than a `|| echo 000` appended to
+    # the substitution, which would concatenate the two into 000000. The `||
+    # true` is what keeps a probe failure from being an error: the code is the
+    # answer here, not the exit status.
+    code=$(curl -sI -o /dev/null -w '%{http_code}' --max-time 30 "$(pom_url "$1")") || true
+    [[ -n "$code" ]] || code="000"
+    case "$code" in
+        200) echo present ;;
+        404) echo missing ;;
+        *)   echo unreachable ;;
+    esac
 }
 
 IFS=',' read -ra ALL_MODULES <<< "$MODULES_CSV"
 
+# A module whose state we could not read is published anyway: Central rejects a
+# coordinate that already exists, and the post-failure re-check settles it.
 PRESENT=()
-MISSING=()
+UNREACHABLE=()
+TO_PUBLISH=()
 for module in "${ALL_MODULES[@]}"; do
     module="${module// /}"
     [[ -z "$module" ]] && continue
-    if is_on_central "$module"; then
-        PRESENT+=("$module")
-    else
-        MISSING+=("$module")
-    fi
+    case "$(central_status "$module")" in
+        present)     PRESENT+=("$module") ;;
+        unreachable) UNREACHABLE+=("$module"); TO_PUBLISH+=("$module") ;;
+        *)           TO_PUBLISH+=("$module") ;;
+    esac
 done
 
-if [[ ${#MISSING[@]} -eq 0 ]]; then
+if [[ ${#TO_PUBLISH[@]} -eq 0 ]]; then
     echo "==> ${VERSION} is already on Maven Central for every module — nothing to publish."
     exit 0
 fi
 
-if [[ ${#PRESENT[@]} -gt 0 ]]; then
+if [[ ${#UNREACHABLE[@]} -gt 0 ]]; then
+    echo "==> WARNING: repo1 did not answer for: ${UNREACHABLE[*]}" >&2
+    echo "==> Their publish state is unknown, so this run cannot tell a partial release" >&2
+    echo "==> from a clean one. Attempting the publish and letting Central arbitrate." >&2
+elif [[ ${#PRESENT[@]} -gt 0 ]]; then
     echo "==> WARNING: ${VERSION} is already partially published." >&2
     echo "==>   on Central: ${PRESENT[*]}" >&2
-    echo "==>   missing:    ${MISSING[*]}" >&2
+    echo "==>   missing:    ${TO_PUBLISH[*]}" >&2
     echo "==> Central coordinates are immutable, so this version can no longer ship as one" >&2
     echo "==> deployment. Publishing the missing modules to restore version parity." >&2
 fi
 
 tasks=()
-for module in "${MISSING[@]}"; do
+for module in "${TO_PUBLISH[@]}"; do
     tasks+=(":${module}:publishToMavenCentral")
 done
 
 log_file=$(mktemp -t gradle-publish.XXXXXX.log)
 trap 'rm -f "$log_file"' EXIT
 
+# vanniktech 0.35.0 reads SONATYPE_CLOSE_TIMEOUT_SECONDS via
+# providers.gradleProperty, so -P satisfies it. It bounds the poll loop in
+# SonatypeCentralPortal.validateDeployment, which publishToMavenCentral runs on
+# the Portal path because validateDeployment defaults to true. Default is 900s;
+# platform-ui timed out at 15m35s under it while Central completed the
+# deployment anyway (5f21f0b). On expiry the plugin throws
+# "Deployment validation timed out after Ns", which matches none of the patterns
+# below, so the run exits 1 and the re-check above settles it on the retry.
 CLOSE_TIMEOUT="${CENTRAL_CLOSE_TIMEOUT_SECONDS:-2700}"
 
 echo "==> ./gradlew ${tasks[*]} -PsdkVersion=${VERSION} -PSONATYPE_CLOSE_TIMEOUT_SECONDS=${CLOSE_TIMEOUT}"
@@ -111,8 +143,8 @@ CENTRAL_ALREADY_EXISTS_RE='Component with package url.* already exists'
 
 if grep -E -i -q -e "$CENTRAL_ALREADY_EXISTS_RE" "$log_file"; then
     unresolved=()
-    for module in "${MISSING[@]}"; do
-        is_on_central "$module" || unresolved+=("$module")
+    for module in "${TO_PUBLISH[@]}"; do
+        [[ "$(central_status "$module")" == present ]] || unresolved+=("$module")
     done
     if [[ ${#unresolved[@]} -eq 0 ]]; then
         echo "==> ${VERSION} is already on Maven Central — treating as success."

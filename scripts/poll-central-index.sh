@@ -48,7 +48,13 @@ is_resolvable() {
     local module="$1"
     local url="${BASE_URL}/${GROUP_PATH}/${module}/${VERSION}/${module}-${VERSION}.pom"
     local code
-    code=$(curl -sI -o /dev/null -w '%{http_code}' --max-time 15 "$url" || echo "000")
+    # curl writes %{http_code} itself — 000 when it never got a response — so
+    # the fallback is a separate test rather than a `|| echo 000` appended to
+    # the substitution, which would concatenate the two into 000000. The `||
+    # true` is what keeps a probe failure from being an error: the code is the
+    # answer here, not the exit status.
+    code=$(curl -sI -o /dev/null -w '%{http_code}' --max-time 15 "$url") || true
+    [[ -n "$code" ]] || code="000"
     [[ "$code" == "200" ]]
 }
 

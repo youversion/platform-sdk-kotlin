@@ -81,6 +81,20 @@ assert_stderr_contains() {
   fi
 }
 
+assert_stderr_lacks() {
+  local needle=$1 label=$2
+  shift 2
+  local err
+  err=$("$@" 2>&1 >/dev/null)
+  if printf '%s' "$err" | grep -qF "$needle"; then
+    echo "  ✗ $label (stderr contained '$needle')"
+    echo "      stderr: $err"
+    FAIL=$((FAIL + 1))
+  else
+    echo "  ✓ $label"
+    PASS=$((PASS + 1))
+  fi
+}
 assert_stderr_empty() {
   local label=$1
   shift
@@ -490,40 +504,61 @@ WR_TMP=$(mktemp -d)
 trap 'rm -rf "$CL_TMP" "$PV_TMP" "$SV_TMP" "$WR_TMP"' EXIT
 mkdir -p "$WR_TMP/bin"
 
-# Answers the wrapper's HEAD on a repo1 .pom URL. A module counts as being on
-# Central iff it is listed in $CENTRAL_PRESENT; everything else 404s the way an
-# unpublished coordinate does.
+# Answers the wrapper's HEAD on a repo1 .pom URL with a status code, because
+# the wrapper reads %{http_code} rather than curl's exit. A module is 200 iff
+# it is listed in $CENTRAL_PRESENT or the deployment landed mid-run (below),
+# 000 iff listed in $CENTRAL_UNREACHABLE, and 404 otherwise.
 cat > "$WR_TMP/bin/curl" <<'EOF'
 #!/bin/bash
 url=${!#}
 module=$(printf '%s' "$url" | awk -F/ '{print $(NF-2)}')
 case ",${CENTRAL_PRESENT:-}," in
-  *",$module,"*) exit 0 ;;
+  *",$module,"*) echo 200; exit 0 ;;
 esac
-exit 22
+if [[ -n "${CENTRAL_LANDED_FILE:-}" && -f "$CENTRAL_LANDED_FILE" ]]; then
+  echo 200; exit 0
+fi
+case ",${CENTRAL_UNREACHABLE:-}," in
+  *",$module,"*) exit 6 ;;
+esac
+echo 404
 EOF
 chmod +x "$WR_TMP/bin/curl"
 
 # Replays a canned log and exit status, and records the task list it was handed
-# so the partial-publish path can be asserted on.
+# so the partial-publish path can be asserted on. Under $CENTRAL_LANDS it also
+# drops the marker the curl stub reads, modelling a deployment that Central
+# accepted while the local build was failing.
 cat > "$WR_TMP/gradlew" <<'EOF'
 #!/bin/bash
 printf '%s\n' "$*" > "$GRADLE_ARGS_FILE"
+[[ -n "${CENTRAL_LANDS:-}" ]] && : > "$CENTRAL_LANDED_FILE"
 printf '%s\n' "${GRADLE_LOG:-}"
 exit "${GRADLE_EXIT:-0}"
 EOF
 chmod +x "$WR_TMP/gradlew"
 
 WR_ARGS="$WR_TMP/gradle.args"
+WR_LANDED="$WR_TMP/central.landed"
 wr_run() {
   # wr_run <present-csv> <gradle-exit> <gradle-log> [modules-csv]
+  # $CENTRAL_LANDS and $CENTRAL_UNREACHABLE are set by the caller's environment.
   : > "$WR_ARGS"
+  rm -f "$WR_LANDED"
   ( cd "$WR_TMP" \
     && PATH="$WR_TMP/bin:$PATH" \
        CENTRAL_PRESENT="$1" GRADLE_EXIT="$2" GRADLE_LOG="$3" GRADLE_ARGS_FILE="$WR_ARGS" \
+       CENTRAL_LANDED_FILE="$WR_LANDED" \
        bash "$REPO_ROOT/scripts/gradle-publish-wrapper.sh" \
          2.3.0 "${4:-platform-core,platform-ui,platform-reader}" com.youversion.platform )
 }
+
+# The deployment reaches Central during the Gradle run — the pre-flight 404s
+# and the post-failure re-check 200s.
+wr_run_landing() { ( export CENTRAL_LANDS=1; wr_run "$@" ); }
+# repo1 does not answer for <unreachable-csv>; those modules are neither 200
+# nor 404.
+wr_run_unreachable() { ( export CENTRAL_UNREACHABLE="$1"; wr_run "${@:2}" ); }
 
 GPG_LOG='> Task :platform-core:signReleasePublication FAILED
 Could not read PGP secret key'
@@ -540,13 +575,26 @@ assert_exit 1 "unclassified failure → exit 1 (retryable)" \
   wr_run "" 1 "Connection reset by peer"
 assert_exit 1 "already-exists that repo1 cannot confirm → exit 1, not a claimed success" \
   wr_run "" 1 "$EXISTS_LOG"
-assert_exit 0 "already-exists confirmed by repo1 → exit 0" \
-  wr_run "platform-core,platform-ui,platform-reader" 1 "$EXISTS_LOG"
+# The branch a re-dispatch depends on: Central took the deployment, the local
+# build failed anyway, and the re-check now resolves what the pre-flight could
+# not see. Nothing else reaches the exit-0 arm — with every module already on
+# Central the pre-flight exits first and Gradle never runs.
+assert_exit 0 "already-exists confirmed by repo1 on the re-check → exit 0" \
+  wr_run_landing "" 1 "$EXISTS_LOG"
 # Gradle emits "already exists" for configuration errors too, and the wrapper
 # greps the whole log. Reading one as a Central no-op would exit 0 and let
 # release.sh cut a release for modules that never shipped.
 assert_exit 1 "unrelated Gradle 'already exists' error is not mistaken for a no-op" \
   wr_run "" 1 "$DECOY_LOG"
+
+# An unreadable repo1 is not a 404. Reading it as one makes a published module
+# look missing and announces a partial release over a run that may be clean.
+assert_stderr_contains "repo1 did not answer for: platform-ui" \
+  "repo1 not answering is reported as unknown, not as missing" \
+  wr_run_unreachable "platform-ui" "platform-core" 0 "BUILD SUCCESSFUL"
+assert_stderr_lacks "already partially published" \
+  "…and does not claim a partial release it cannot see" \
+  wr_run_unreachable "platform-ui" "platform-core" 0 "BUILD SUCCESSFUL"
 
 # Central coordinates are immutable, so a half-published version can only be
 # completed, never re-deployed: the Gradle invocation must cover the missing
