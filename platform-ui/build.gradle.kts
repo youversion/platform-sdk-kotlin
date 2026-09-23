@@ -94,7 +94,12 @@ mavenPublishing {
     coordinates(
         groupId = "com.youversion.platform",
         artifactId = "platform-ui",
-        version = libs.versions.youversionPlatform.get(),
+        // The release workflow passes -PsdkVersion so the published coordinate and the
+        // version stamped into the release commit cannot drift. Local builds fall back to
+        // the catalog. See RELEASING.md.
+        version =
+            (project.findProperty("sdkVersion") as? String)
+                ?: libs.versions.youversionPlatform.get(),
     )
 
     pom {

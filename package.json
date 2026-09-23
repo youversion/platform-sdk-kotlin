@@ -1,15 +1,23 @@
 {
+  "name": "platform-sdk-kotlin",
+  "version": "0.0.0-development",
   "private": true,
+  "description": "YouVersion Platform SDK for Kotlin",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:youversion/platform-sdk-kotlin.git"
+  },
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "commitlint": "commitlint --from=origin/main --to=HEAD --verbose"
   },
   "devDependencies": {
-    "semantic-release": "^24.0.0",
-    "@semantic-release/changelog": "^6.0.0",
-    "@semantic-release/exec": "^6.0.0",
-    "@semantic-release/git": "^10.0.0",
     "@commitlint/cli": "^19.0.0",
     "@commitlint/config-conventional": "^19.0.0",
-    "husky": "^9.0.0"
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/release-notes-generator": "^14.1.0",
+    "conventional-changelog-conventionalcommits": "^8.0.0",
+    "husky": "^9.0.0",
+    "semver": "^7.6.0"
   }
 }

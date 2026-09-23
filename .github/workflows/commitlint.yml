@@ -1,8 +1,27 @@
 name: Commitlint
 
+# Lints every commit on the PR against Conventional Commits, and — when the
+# lint passes — posts the version this PR would ship as, so the bump is visible
+# at review time rather than discovered at release time.
+#
+# The preview matters because releases are dispatched by hand with an explicit
+# version (see RELEASING.md). The number in this comment is what the operator
+# is expected to type. It is also where a `feat!:` shows up as a major before
+# anyone merges it.
+
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# A PR that gets three pushes in a minute should end up with one comment
+# reflecting the last push, not three jobs racing to upsert it.
+concurrency:
+  group: commitlint-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   commitlint:
@@ -17,6 +36,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -34,11 +54,259 @@ jobs:
           # Fetch main with full history (no --depth): a shallow origin/main has
           # no ancestors, so git cannot compute the merge-base and the lint range
           # re-walks every commit merged in from main instead of only this
-          # branch's new commits.
-          git fetch origin main:refs/remotes/origin/main
+          # branch's new commits. `--tags` because the release preview describes
+          # the latest tag reachable from main, which a refspec fetch alone is
+          # not guaranteed to bring along.
+          git fetch --tags origin main:refs/remotes/origin/main
           main_sha=$(git rev-parse origin/main)
           echo "sha=${main_sha}" >> "$GITHUB_OUTPUT"
           echo "Linting against origin/main = ${main_sha}"
 
-      - name: Lint commits
-        run: npx commitlint --from ${{ steps.main.outputs.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+      # Guards the release helpers themselves. The release pipeline only runs on
+      # a manual dispatch, so without this a broken helper would not surface
+      # until someone tried to ship. Includes the YPE-5781 bump-table assertion:
+      # the analyzer degrades to the angular preset silently if either the
+      # preset key or the installed preset major is wrong.
+      - name: Test release scripts
+        run: bash scripts/test-release-scripts.sh
+
+      # `set +e` and `exit 0`: a lint failure must still reach the comment step,
+      # which is the whole point of the comment. The job is failed at the end
+      # instead, after the author has been told what to fix.
+      - name: Lint commit messages
+        id: commitlint
+        run: |
+          set +e
+          npx commitlint \
+            --from "${{ steps.main.outputs.sha }}" \
+            --to "${{ github.event.pull_request.head.sha }}" \
+            --verbose > commitlint.log 2>&1
+          STATUS=$?
+          cat commitlint.log
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Compute release preview
+        id: preview
+        if: steps.commitlint.outputs.status == '0'
+        env:
+          MAIN_SHA: ${{ steps.main.outputs.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -e
+          # Direct call to `@semantic-release/commit-analyzer` via
+          # scripts/preview-release.mjs — not `semantic-release --dry-run`.
+          #
+          # Why: semantic-release's core `verifyAuth` step runs
+          # `git push --dry-run` to test push permission, and the
+          # `pull_request`-event `GITHUB_TOKEN` has `contents: read` only. That
+          # check aborts the lifecycle *before* `analyzeCommits` runs, producing
+          # a silent false-negative "no bump" preview. `--no-ci` skips the CI
+          # env check, not the auth verification; there is no flag for it.
+          #
+          # The analyzer module itself has no auth concerns, no env-ci, and no
+          # branch detection. Given a commit list and the same plugin config
+          # production uses (read from `.releaserc.json`), it deterministically
+          # returns the release type.
+          #
+          # If the analyzer errors, this step fails (set -e). A broken preview
+          # should be loud, not silent.
+          #
+          # `--main`, not `--base`: the number this comment prints is the one
+          # the operator types on the release dispatch, and the dispatch
+          # analyzes the latest tag through main — not this PR in isolation.
+          # A PR-only range under-reports whenever main already carries
+          # unreleased commits (a fix on top of an unreleased feat previews as
+          # a patch while the release computes a minor). The script reports the
+          # PR's own contribution separately, under the `pr_*` keys.
+          node scripts/preview-release.mjs \
+            --main "$MAIN_SHA" \
+            --head "$HEAD_SHA" \
+            > preview.json 2> analyzer.log
+          cat analyzer.log
+          cat preview.json
+
+          CURRENT=$(jq -r .current preview.json)
+          NEXT=$(jq -r .next preview.json)
+          RELEASE_TYPE=$(jq -r .release_type preview.json)
+          PR_RELEASE_TYPE=$(jq -r .pr_release_type preview.json)
+          COMMIT_COUNT=$(jq -r .commit_count preview.json)
+          PR_COMMIT_COUNT=$(jq -r .pr_commit_count preview.json)
+          # Derive NO_BUMP / IS_MAJOR from the release type rather than reading
+          # the script's `is_major` JSON field: `jq -r .is_major` stringifies
+          # the boolean as "true"/"false" while the comment step compares
+          # "1"/"0". The release type is canonical.
+          case "$RELEASE_TYPE" in
+            null)  NO_BUMP=1; IS_MAJOR=0 ;;
+            major) NO_BUMP=0; IS_MAJOR=1 ;;
+            *)     NO_BUMP=0; IS_MAJOR=0 ;;
+          esac
+          # The signoff check judges the branch, not the release window, so the
+          # major banner below keys off the PR's own contribution — otherwise a
+          # breaking change already merged to main would demand a signoff on
+          # every PR open at the time.
+          case "$PR_RELEASE_TYPE" in
+            major) PR_IS_MAJOR=1 ;;
+            *)     PR_IS_MAJOR=0 ;;
+          esac
+
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "release_type=$RELEASE_TYPE" >> "$GITHUB_OUTPUT"
+          echo "pr_release_type=$PR_RELEASE_TYPE" >> "$GITHUB_OUTPUT"
+          echo "commit_count=$COMMIT_COUNT" >> "$GITHUB_OUTPUT"
+          echo "pr_commit_count=$PR_COMMIT_COUNT" >> "$GITHUB_OUTPUT"
+          echo "is_major=$IS_MAJOR" >> "$GITHUB_OUTPUT"
+          echo "pr_is_major=$PR_IS_MAJOR" >> "$GITHUB_OUTPUT"
+          echo "no_bump=$NO_BUMP" >> "$GITHUB_OUTPUT"
+
+      - name: Build PR comment body
+        id: body
+        if: always()
+        env:
+          STATUS: ${{ steps.commitlint.outputs.status }}
+          CURRENT: ${{ steps.preview.outputs.current }}
+          NEXT: ${{ steps.preview.outputs.next }}
+          RELEASE_TYPE: ${{ steps.preview.outputs.release_type }}
+          PR_RELEASE_TYPE: ${{ steps.preview.outputs.pr_release_type }}
+          COMMIT_COUNT: ${{ steps.preview.outputs.commit_count }}
+          PR_COMMIT_COUNT: ${{ steps.preview.outputs.pr_commit_count }}
+          NO_BUMP: ${{ steps.preview.outputs.no_bump }}
+          IS_MAJOR: ${{ steps.preview.outputs.is_major }}
+          PR_IS_MAJOR: ${{ steps.preview.outputs.pr_is_major }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -e
+          MARKER='<!-- commit-lint-bot -->'
+
+          {
+            echo "$MARKER"
+            if [ "$STATUS" = "0" ]; then
+              echo '## ✅ Commit Lint: passed'
+              echo
+              echo 'All commit messages in this PR conform to [Conventional Commits](https://www.conventionalcommits.org/).'
+              echo
+              # The banner keys off the PR's own commits; the version keys off
+              # the whole release window. They can disagree — a patch PR on top
+              # of an unreleased breaking change ships as a major — and the
+              # scope note below says which is which.
+              if [ "${PR_IS_MAJOR:-0}" = "1" ]; then
+                echo "### 🚨🚨🚨 Major version bump detected — \`$CURRENT\` → \`$NEXT\` (MAJOR)"
+                echo
+                echo 'The analyzer classified one or more commits **on this PR** as a major bump — either a `feat!:` / `fix!:` shorthand or a `BREAKING CHANGE:` footer at start-of-line. If that is intentional, proceed. If it is prose accidentally tripping the parser, reword the offending commit body before merging; the analyzer log below identifies which commit triggered it.'
+                echo
+                echo 'The `major-release-signoff` check will ask a write-access collaborator to acknowledge this in a comment. That check is **advisory** — it reports a commit status but does not block merging. See [RELEASING.md](./RELEASING.md#major-version-signoff).'
+              elif [ "${NO_BUMP:-0}" = "1" ]; then
+                echo "### 📦 Release preview: \`$CURRENT\` (no bump)"
+                echo
+                echo 'Nothing in the window triggers a version bump. The next release dispatch would ship `'"$CURRENT"'` unchanged unless another PR lands first.'
+              else
+                BUMP_LABEL="${RELEASE_TYPE:-release}"
+                echo "### 📦 Release preview: \`$CURRENT\` → \`$NEXT\` ($BUMP_LABEL)"
+                echo
+                echo 'Once merged, this is the version to enter on the next **Actions → Release → Run workflow** dispatch.'
+              fi
+              echo
+              # Spell out the window. The dispatch analyzes the latest tag
+              # through main, so a preview scoped to this PR alone would be a
+              # different number than the one the operator types.
+              if [ -n "$PR_RELEASE_TYPE" ]; then
+                PR_CONTRIBUTION="on its own would be a \`$PR_RELEASE_TYPE\` bump"
+              else
+                PR_CONTRIBUTION="on its own would not bump the version"
+              fi
+              echo "<sub>Window: \`$CURRENT\` → \`main\` + this PR — ${COMMIT_COUNT:-?} commit(s), ${PR_COMMIT_COUNT:-?} of them from this PR. This PR $PR_CONTRIBUTION.</sub>"
+              if [ "${IS_MAJOR:-0}" = "1" ] && [ "${PR_IS_MAJOR:-0}" != "1" ]; then
+                echo
+                echo '> ℹ️ The major comes from a breaking change already on `main`, not from this PR. Its signoff belongs to the PR that introduced it.'
+              fi
+              echo
+              echo '<details><summary>Release analyzer output</summary>'
+              echo
+              echo '```'
+              tail -c 6000 analyzer.log 2>/dev/null || true
+              echo
+              echo '```'
+              echo '</details>'
+            else
+              echo '## ❌ Commit Lint: failed'
+              echo
+              echo 'One or more commit messages in this PR do not conform to [Conventional Commits](https://www.conventionalcommits.org/).'
+              echo 'This must be fixed before this PR can be merged.'
+              echo
+              echo '### commitlint output'
+              echo
+              echo '```'
+              cat commitlint.log
+              echo '```'
+              echo
+              echo '### How to fix'
+              echo
+              echo '1. Reword the offending commit(s) so the subject matches `type(scope): description`.'
+              echo '   - Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.'
+              echo '   - Breaking changes: append `!` after the type/scope, or add a `BREAKING CHANGE:` footer. Both bump the major.'
+              echo '2. Rewrite history on your branch:'
+              echo
+              echo '   ```bash'
+              echo '   # most recent commit'
+              echo '   git commit --amend'
+              echo '   # earlier commits'
+              echo "   git rebase -i origin/$BASE_REF"
+              echo '   git push --force-with-lease'
+              echo '   ```'
+              echo
+              echo 'See `commitlint.config.js` for the full ruleset.'
+            fi
+          } > comment.md
+          cat comment.md
+
+          # The summary is the one place the result is readable on every PR,
+          # including forks, whose runs cannot post the comment below.
+          cat comment.md >> "$GITHUB_STEP_SUMMARY"
+
+      # Upsert rather than append: one bot comment per PR, rewritten in place on
+      # every push, so the thread does not fill with stale previews.
+      #
+      # Same-repository heads only. CONTRIBUTING.md asks contributors to work
+      # from a fork, and a `pull_request` run whose head is a fork gets a
+      # read-only GITHUB_TOKEN regardless of the `permissions:` block above —
+      # the declared `pull-requests: write` cannot elevate it. Without this
+      # guard the step 403s and fails the job on every fork PR, even one whose
+      # lint and preview both passed. Fork authors read the same body in the
+      # job summary written above.
+      - name: Upsert PR comment
+        if: always() && github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('comment.md', 'utf8');
+            const marker = '<!-- commit-lint-bot -->';
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number, per_page: 100 }
+            );
+            const existing = comments.find(
+              (c) => c.user.type === 'Bot' && c.body && c.body.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+              core.info(`Updated comment ${existing.id}`);
+            } else {
+              const { data } = await github.rest.issues.createComment({
+                owner, repo, issue_number, body,
+              });
+              core.info(`Created comment ${data.id}`);
+            }
+
+      - name: Fail job if commitlint failed
+        if: steps.commitlint.outputs.status != '0'
+        run: |
+          echo "Commit lint failed — see the PR comment for details."
+          exit 1

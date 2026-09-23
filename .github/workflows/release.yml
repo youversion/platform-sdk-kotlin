@@ -1,30 +1,38 @@
 name: Release
 
+# Releases are dispatched by hand. There is no push trigger: the version that
+# ships is an explicit input, not something inferred from the commit window.
+#
+# `scripts/release.sh` does the work. It still uses the conventional-commit
+# analyzer and the release-notes generator, but as *libraries* — see the header
+# of that script, and RELEASING.md for the operator-facing account.
+
 on:
-  push:
-    branches:
-      - main
-      - beta
-      - alpha
-      - '[0-9]+.x'
   workflow_dispatch:
     inputs:
       version:
-        description: >-
-          Version to publish. Required for break-glass / re-dispatch flows when
-          the automatic semantic-release path failed partway. Must already be
-          tagged in git or supplied as the version semantic-release would have
-          chosen.
+        description: |
+          The version to publish (bare semver, e.g. 2.2.0). Look at the most
+          recent merged PR's Commit Lint comment for the calculated value, or
+          run locally:
+            node scripts/preview-release.mjs \
+              --base $(git describe --tags --abbrev=0 main) --head main
+          You can override the calculated value here — the workflow logs both
+          side-by-side in the run summary for audit.
         required: true
         type: string
-      modules:
-        description: >-
-          Comma-separated list of modules to consider for publishing. Defaults
-          to all three. Preflight will further narrow this to only the modules
-          that are not yet present on Maven Central.
+      dry-run:
+        description: "Rehearsal: run end-to-end up to the local release commit + tag, then stop. Skips push, publish, and the GitHub release."
         required: false
-        type: string
-        default: platform-core,platform-ui,platform-reader
+        type: boolean
+        default: false
+
+env:
+  # The modules published as a set. All three always ship on the same version —
+  # a consumer mixing 2.1.2 platform-core with 2.2.0 platform-ui is not a
+  # configuration we support. This is the single place that list is declared;
+  # scripts/release.sh reads it and publishes one module per Gradle invocation.
+  PUBLISHABLE_MODULES: platform-core,platform-ui,platform-reader
 
 permissions:
   contents: write
@@ -32,167 +40,76 @@ permissions:
   pull-requests: write
 
 jobs:
-  # Resolves the version we're about to (re)publish and whether it includes a
-  # BREAKING CHANGE. Downstream jobs use these outputs to choose the Gradle
-  # task list and the GitHub Environment to gate the publish behind.
-  compute-version:
-    name: Compute version
+  # A release is the one path that reaches consumers without a PR in front of
+  # it, so the test suite runs here even though it also ran on the PR that
+  # produced the commit being released.
+  test:
+    name: Test
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.resolve.outputs.version }}
-      modules: ${{ steps.resolve.outputs.modules }}
-      breaking: ${{ steps.resolve.outputs.breaking }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: main
       - uses: ./.github/actions/setup-release
-      - name: Resolve version and breaking-change flag
-        id: resolve
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DISPATCH_VERSION: ${{ inputs.version }}
-          DISPATCH_MODULES: ${{ inputs.modules }}
-        run: |
-          set -euo pipefail
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            version="${DISPATCH_VERSION}"
-            modules="${DISPATCH_MODULES}"
-          else
-            # Push trigger: ask semantic-release what it would publish.
-            dry_status=0
-            dry_output=$(npx semantic-release --dry-run 2>&1) || dry_status=$?
-            printf '%s\n' "$dry_output"
-            version=$(printf '%s' "$dry_output" | sed -n 's/.*The next release version is \([^ ]*\).*/\1/p' | head -1)
-            if [[ -z "$version" ]]; then
-              version=$(printf '%s' "$dry_output" | sed -n 's/.*Published release \([^ ]*\).*/\1/p' | head -1)
-            fi
-            if [[ -z "$version" ]]; then
-              # No version parsed. Only treat this as "no release needed" when the
-              # dry-run itself succeeded; a non-zero exit means a config error or
-              # plugin crash, which must fail loudly rather than silently skip.
-              if (( dry_status != 0 )); then
-                echo "::error::semantic-release --dry-run exited ${dry_status} without producing a version — treating as a failure, not 'no release needed'."
-                exit "$dry_status"
-              fi
-              echo "::notice::semantic-release dry-run did not produce a version — likely no release-triggering commits."
-              echo "version=" >> "$GITHUB_OUTPUT"
-              echo "modules=platform-core,platform-ui,platform-reader" >> "$GITHUB_OUTPUT"
-              echo "breaking=false" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            modules="platform-core,platform-ui,platform-reader"
-          fi
+      - name: Run tests
+        run: ./gradlew test
 
-          # Detect BREAKING CHANGE in the commit window. For dispatches we look
-          # back from HEAD to the last tag; for push events the dry-run already
-          # logs whether the bump was a major.
-          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          if [[ -n "$last_tag" ]]; then
-            log=$(git log --format='%B' "${last_tag}..HEAD")
-          else
-            log=$(git log --format='%B')
-          fi
-          if printf '%s' "$log" | grep -E -q '^(feat|fix)(\([^)]*\))?!:|BREAKING CHANGE:'; then
-            breaking=true
-          else
-            breaking=false
-          fi
-
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-          echo "modules=${modules}" >> "$GITHUB_OUTPUT"
-          echo "breaking=${breaking}" >> "$GITHUB_OUTPUT"
-          echo "Resolved: version=${version} modules=${modules} breaking=${breaking}"
-
-  # Probes Maven Central for the target version of each module so the publish
-  # job can short-circuit when re-dispatched after a successful (or partially
-  # successful) prior run. This is the AC#2 / AC#3 idempotency guarantee.
-  preflight:
-    name: Preflight (Maven Central presence)
+  release:
+    name: Release
+    needs: test
     runs-on: ubuntu-latest
-    needs: compute-version
-    if: needs.compute-version.outputs.version != ''
-    outputs:
-      missing_modules: ${{ steps.probe.outputs.missing_modules }}
-      all_present: ${{ steps.probe.outputs.all_present }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Probe Maven Central
-        id: probe
-        run: |
-          set -euo pipefail
-          modules_csv="${{ needs.compute-version.outputs.modules }}"
-          IFS=',' read -ra modules <<< "$modules_csv"
-          bash scripts/check-central-presence.sh "${{ needs.compute-version.outputs.version }}" "${modules[@]}"
-      - name: Write summary
-        if: always()
-        run: |
-          {
-            echo "### Preflight — \`${{ needs.compute-version.outputs.version }}\`"
-            echo
-            if [[ "${{ steps.probe.outputs.all_present }}" == "true" ]]; then
-              echo "All modules already on Maven Central. Publish step will be skipped."
-            else
-              echo "Modules to publish: \`${{ steps.probe.outputs.missing_modules }}\`"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
-
-  publish:
-    name: Publish
-    runs-on: ubuntu-latest
-    needs: [compute-version, preflight]
-    if: needs.compute-version.outputs.version != '' && needs.preflight.outputs.all_present != 'true'
-    # AC#9: BREAKING CHANGE releases route through a dedicated environment
-    # whose required reviewers gate the publish step. The non-breaking path
-    # continues to use the existing `production` environment.
-    #
-    # TODO: change the below line back to:
-    # environment: ${{ needs.compute-version.outputs.breaking == 'true' && 'production-breaking' || 'production' }}
-    environment: ${{ needs.compute-version.outputs.breaking == 'true' && 'production' || 'production' }}
-    env:
-      ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
-      ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
-      ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNINGKEY }}
-      ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNINGKEY_PASSWORD }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # Maven Central and GPG credentials are scoped to this environment, and its
+    # deployment-branch policy is what keeps a dispatch from a feature branch
+    # from reaching them. scripts/release.sh independently refuses to push when
+    # HEAD is not origin/main.
+    environment: production
     steps:
       - uses: actions/checkout@v4
         with:
+          # Full history: the analyzer walks back to the last tag, and
+          # release.sh compares HEAD against origin/main.
           fetch-depth: 0
-          ref: main
+          # The SSH key persists in the git remote so the release commit and
+          # tag can be pushed to `main` past the branch-protection ruleset.
           ssh-key: ${{ secrets.DEPLOY_KEY }}
-      - uses: ./.github/actions/setup-release
-      - name: Publish via semantic-release (push trigger)
-        if: github.event_name == 'push'
-        run: npx semantic-release
-      - name: Publish missing modules (workflow_dispatch)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          set -euo pipefail
-          missing="${{ needs.preflight.outputs.missing_modules }}"
-          IFS=',' read -ra modules <<< "$missing"
-          bash scripts/gradle-publish-wrapper.sh "${{ needs.compute-version.outputs.version }}" "${modules[@]}"
 
-  # Polls repo1.maven.org for each module until it is resolvable or the
-  # 30-minute deadline passes. Never fails the workflow — the runbook
-  # documents what to communicate during the indexing lag.
+      - uses: ./.github/actions/setup-release
+
+      - name: Setup Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin git@github.com:youversion/platform-sdk-kotlin.git
+
+      - name: Release
+        env:
+          VERSION: ${{ inputs.version }}
+          DRY_RUN: ${{ inputs.dry-run && '1' || '0' }}
+          # GH_TOKEN is what the `gh` CLI reads for `gh release create`.
+          # GITHUB_TOKEN is exported too for anything else expecting it.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNINGKEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNINGKEY_PASSWORD }}
+          GIT_AUTHOR_NAME: "github-actions[bot][release]"
+          GIT_AUTHOR_EMAIL: "github-actions[bot][release]@users.noreply.github.com"
+          GIT_COMMITTER_NAME: "github-actions[bot][release]"
+          GIT_COMMITTER_EMAIL: "github-actions[bot][release]@users.noreply.github.com"
+        run: bash scripts/release.sh
+
+  # Observes how long Maven Central's mirror takes to serve the new coordinates
+  # and writes a table to the run summary. Never fails the workflow: indexing
+  # lag is expected, and failing here would make every release look red after
+  # the artifacts are already immutable on Central.
   post-publish-verify:
     name: Post-publish verification
+    needs: release
     runs-on: ubuntu-latest
-    needs: [compute-version, preflight, publish]
-    if: always() && needs.compute-version.outputs.version != '' && needs.preflight.outputs.all_present != 'true' && needs.publish.result == 'success'
+    if: ${{ !inputs.dry-run }}
     steps:
       - uses: actions/checkout@v4
       - name: Wait for Maven Central propagation
         run: |
           set -euo pipefail
-          modules_csv="${{ needs.compute-version.outputs.modules }}"
-          IFS=',' read -ra modules <<< "$modules_csv"
-          bash scripts/poll-central-index.sh "${{ needs.compute-version.outputs.version }}" "${modules[@]}"
-      - name: Re-check presence
-        run: |
-          set -euo pipefail
-          modules_csv="${{ needs.compute-version.outputs.modules }}"
-          IFS=',' read -ra modules <<< "$modules_csv"
-          bash scripts/check-central-presence.sh "${{ needs.compute-version.outputs.version }}" "${modules[@]}"
+          IFS=',' read -ra modules <<< "${PUBLISHABLE_MODULES}"
+          bash scripts/poll-central-index.sh "${{ inputs.version }}" "${modules[@]}"
