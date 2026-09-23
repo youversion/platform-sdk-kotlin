@@ -340,48 +340,28 @@ else
   fi
 fi
 
-# ---------------------------------------------------------------------------
-# Publish to Maven Central, one module per wrapper invocation so each module's
-# outcome is classified independently. The wrapper treats an already-published
-# coordinate as success, which is what makes a resume survive this step.
-# ---------------------------------------------------------------------------
 echo
 echo "Publishing modules: $PUBLISHABLE_MODULES"
-IFS=',' read -ra MODULES <<< "$PUBLISHABLE_MODULES"
-FAILED_MODULES=""
-for module in "${MODULES[@]}"; do
-  module="${module// /}"
-  [ -z "$module" ] && continue
+publish_status=0
+bash scripts/gradle-publish-wrapper.sh "$VERSION" "$PUBLISHABLE_MODULES" "$MAVEN_GROUP" || publish_status=$?
+
+if [ "$publish_status" -eq 42 ]; then
+  echo "❌ Publish failed during signing (exit 42) — nothing was released." >&2
+  exit 42
+fi
+
+if [ "$publish_status" -ne 0 ]; then
   echo
-  echo "--- $module ---"
-  publish_status=0
-  bash scripts/gradle-publish-wrapper.sh "$VERSION" "$module" "$MAVEN_GROUP" || publish_status=$?
-
-  if [ "$publish_status" -eq 0 ]; then
-    continue
-  fi
-
-  if [ "$publish_status" -eq 42 ]; then
-    echo "❌ $module failed signing (exit 42) — not attempting the remaining modules." >&2
-    exit 42
-  fi
-
-  echo "⚠️  $module failed (exit $publish_status) — continuing with the remaining modules." >&2
-  FAILED_MODULES="${FAILED_MODULES:+$FAILED_MODULES }$module"
-done
-
-if [ -n "$FAILED_MODULES" ]; then
-  echo
-  echo "❌ Publish incomplete. Failed: $FAILED_MODULES" >&2
-  echo "   Re-dispatch with version $VERSION — resume skips whatever already reached Central." >&2
+  echo "❌ Publish failed (exit $publish_status)." >&2
+  echo "   Re-dispatch with version $VERSION to retry." >&2
   if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
     {
       echo
-      echo "### ❌ Publish incomplete"
+      echo "### ❌ Publish failed"
       echo
-      echo "Failed to publish: \`$FAILED_MODULES\`"
+      echo "\`$VERSION\` was not released. The deployment is atomic, so Central has either every module at this version or none of them."
       echo
-      echo "Re-dispatch this workflow with version \`$VERSION\`. Resume mode skips the modules already on Central and retries only these."
+      echo "Re-dispatch this workflow with version \`$VERSION\` to retry."
     } >> "$GITHUB_STEP_SUMMARY"
   fi
   exit 1

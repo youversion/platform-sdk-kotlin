@@ -14,15 +14,12 @@
 # artifacts can take hours or never appear in that index even when they are
 # fully resolvable.
 #
-# This script never fails the workflow on timeout. Indexing lag is expected
-# and the runbook documents what to tell consumers during the gap; failing
-# would make every release look red.
-#
 # Output contract:
 #   - Writes human-readable progress to stdout.
 #   - When $GITHUB_STEP_SUMMARY is set, appends a markdown table of per-module
 #     status plus the standard indexing-delay note.
-#   - Exit 0 always.
+#   - Exit 0 when every module resolves; exit 1 if any is still missing at the
+#     deadline.
 #
 # Usage:
 #   scripts/poll-central-index.sh <version> <module> [<module>...]
@@ -112,9 +109,19 @@ if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
         done
         echo
         if (( resolvable_count < ${#MODULES[@]} )); then
-            echo "_repo1.maven.org typically propagates a freshly released version within a few minutes, but can take up to ~30 minutes. Modules still showing ⏳ are expected to become resolvable shortly — see [docs/RELEASE-RUNBOOK.md](../blob/main/docs/RELEASE-RUNBOOK.md#stuck-released-not-indexed) for what to tell consumers in the meantime._"
+            echo "**\`${VERSION}\` did not become fully resolvable within $(( DEADLINE_SECONDS / 60 )) minutes.** The modules are released as a single deployment and pin each other at the same version, so a version that resolves for only some of them breaks consumers."
+            echo
+            echo "repo1.maven.org usually propagates within a few minutes but can take up to ~30. If Central Portal shows the deployment as RELEASED, this is mirror lag and the modules should appear shortly — see [docs/RELEASE-RUNBOOK.md](../blob/main/docs/RELEASE-RUNBOOK.md#stuck-released-not-indexed) for what to tell consumers in the meantime."
             echo
             echo "_Note: search.maven.org (the discovery index) is a separate, slower system and is not monitored here — consumers using Gradle/Maven dependency resolution only need repo1._"
         fi
     } >> "$GITHUB_STEP_SUMMARY"
+fi
+
+if (( resolvable_count < ${#MODULES[@]} )); then
+    echo
+    echo "❌ ${VERSION} is resolvable for only ${resolvable_count} of ${#MODULES[@]} modules after ${DEADLINE_SECONDS}s." >&2
+    echo "   The modules pin each other at the same version, so a partially resolvable version breaks consumers." >&2
+    echo "   See docs/RELEASE-RUNBOOK.md#stuck-released-not-indexed." >&2
+    exit 1
 fi

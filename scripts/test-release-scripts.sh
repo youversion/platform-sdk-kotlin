@@ -344,12 +344,39 @@ else
   fi
 fi
 
-if grep -qF 'FAILED_MODULES="${FAILED_MODULES:+$FAILED_MODULES }$module"' scripts/release.sh \
-  && grep -qF 'exit 42' scripts/release.sh; then
-  echo "  ✓ scripts/release.sh collects per-module failures and fast-fails on signing"
+wrapper_calls=$(grep -cF 'bash scripts/gradle-publish-wrapper.sh' scripts/release.sh)
+if [ "$wrapper_calls" = "1" ] \
+  && grep -qF 'bash scripts/gradle-publish-wrapper.sh "$VERSION" "$PUBLISHABLE_MODULES" "$MAVEN_GROUP"' scripts/release.sh; then
+  echo "  ✓ scripts/release.sh publishes every module in one wrapper invocation"
   PASS=$((PASS + 1))
 else
-  echo "  ✗ scripts/release.sh publish loop no longer collects per-module failures"
+  echo "  ✗ scripts/release.sh no longer publishes all modules in a single invocation ($wrapper_calls call(s))"
+  FAIL=$((FAIL + 1))
+fi
+
+if grep -qF 'exit 42' scripts/release.sh; then
+  echo "  ✓ scripts/release.sh still fast-fails on a signing failure"
+  PASS=$((PASS + 1))
+else
+  echo "  ✗ scripts/release.sh lost the exit-42 signing fast-fail"
+  FAIL=$((FAIL + 1))
+fi
+
+gradlew_calls=$(grep -cE '^\./gradlew ' scripts/gradle-publish-wrapper.sh)
+if [ "$gradlew_calls" = "1" ] && grep -qF '"${tasks[@]}"' scripts/gradle-publish-wrapper.sh; then
+  echo "  ✓ gradle-publish-wrapper.sh publishes all modules in one Gradle invocation"
+  PASS=$((PASS + 1))
+else
+  echo "  ✗ gradle-publish-wrapper.sh no longer uses a single Gradle invocation ($gradlew_calls found)"
+  FAIL=$((FAIL + 1))
+fi
+
+if grep -qF 'exit 1' scripts/poll-central-index.sh \
+  && grep -qF 'resolvable for only ${resolvable_count}' scripts/poll-central-index.sh; then
+  echo "  ✓ poll-central-index.sh fails when a module is still missing at the deadline"
+  PASS=$((PASS + 1))
+else
+  echo "  ✗ poll-central-index.sh no longer fails on a partially resolvable version"
   FAIL=$((FAIL + 1))
 fi
 

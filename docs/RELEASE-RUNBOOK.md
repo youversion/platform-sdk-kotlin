@@ -17,9 +17,10 @@ runs three sequential jobs:
    `production` environment, which is where the Maven Central and GPG
    credentials live. One script does everything: validate the version, generate
    notes, prepend the changelog, stamp the version, commit, tag, push, publish
-   each module, create the GitHub Release.
+   all modules as one deployment, create the GitHub Release.
 3. **post-publish-verify** — polls `repo1.maven.org` and writes an indexing
-   table to the run summary. Never fails the workflow.
+   table to the run summary. Fails the workflow if a module is still missing
+   when the 30-minute deadline elapses.
 
 Two properties matter for almost every recovery below.
 
@@ -28,10 +29,18 @@ inferred from the commits. The analyzer's calculated version is logged beside it
 for audit and nothing more. So "the pipeline picked the wrong version" is never
 the diagnosis — someone typed it.
 
+**Publishing is all-or-nothing.** `scripts/release.sh` calls the publish
+wrapper once with every module, so the publish plugin bundles all three into a
+single Central deployment: one upload, one validation, one release. A failed
+build drops the deployment. Central therefore has the version for every module
+or for none of them, which is what keeps the three coordinates in lockstep —
+they pin each other at the exact same version, and Gradle's highest-version-wins
+resolution would silently pair mismatched modules if one lagged behind.
+
 **Re-dispatching the same version is the primary recovery.**
 `scripts/release.sh` auto-detects resume from the presence of the remote tag,
 and every step after that point is idempotent: pushes that already landed are
-skipped, a module Central already has counts as success, an existing GitHub
+skipped, a version Central already has counts as success, an existing GitHub
 Release is left alone. There is no separate preflight job and no `modules`
 input — the script re-derives what is left to do from the world's actual state
 each time it runs.
@@ -62,8 +71,9 @@ then resumes normally.
 exits `1` (not `42`), and its message says a retry may help.
 
 **Fix:** re-dispatch with the same `version` input. The tag already exists, so
-the run resumes: it skips straight past the commit, tag and push, and publishes
-only what Central does not already have. No manual cleanup.
+the run resumes: it skips straight past the commit, tag and push, and retries
+the deployment. Nothing reached Central on the failed attempt — the plugin drops
+the deployment when the build fails — so there is no manual cleanup.
 
 ## Stuck released-not-indexed
 
@@ -73,8 +83,8 @@ for those `.pom` URLs.
 
 **Fix:** wait. Central Portal usually propagates to `repo1.maven.org` within
 minutes but can take up to ~30 minutes. The verify job polls for 30 minutes and
-never fails the workflow — it reports the current state and stops. If the wait
-exceeds 30 minutes:
+fails the run if any module is still missing at the deadline, because a version
+that resolves for only some modules breaks consumers. If the job goes red:
 
 1. Check
    [Central Portal → Publishing Deployments](https://central.sonatype.com/publishing/deployments).
@@ -112,19 +122,30 @@ are fixed — re-dispatching will fail the same way.
      production). Update `SIGNINGKEY_PASSWORD` too if the passphrase changed.
      These are environment secrets, not repository secrets — updating a
      repository secret of the same name will have no effect.
-3. **Re-dispatch** with the same `version`. The run resumes and publishes only
-   the modules Central is still missing.
+3. **Re-dispatch** with the same `version`. The run resumes and retries the
+   deployment.
 
 ## Partial publish across the three coordinates
 
 **Symptom:** only some of `platform-core`, `platform-ui`, `platform-reader`
-reached Central. Usually one module's signing or upload errored and the run
-stopped before the rest.
+reached Central at a given version.
 
-**Fix:** re-dispatch with the same `version`. The wrapper runs one Gradle
-invocation per module and classifies each independently, and Central's
-"component already exists" rejection is treated as **success**, not as an error
-to retry past — the coordinate being immutable is precisely what makes it done.
+This should no longer happen. All three modules ship in one deployment, and the
+wrapper refuses to start a split publish without saying so. Versions released
+before that change (2.3.0) can still be in this state.
+
+**Fix:** re-dispatch with the same `version`. The wrapper checks `repo1` for
+every module first:
+
+- **none present** — publishes all three as one deployment.
+- **all present** — nothing to do, exits success. This is what makes a resume
+  survive the publish step: Central's "component already exists" rejection is
+  **success**, not an error to retry past, because the coordinate being
+  immutable is precisely what makes it done.
+- **some present** — a legacy split. Central coordinates are immutable, so the
+  version can no longer ship as one deployment. The wrapper logs a loud warning
+  and publishes just the missing modules to restore parity.
+
 Safe to re-run repeatedly.
 
 ## Sonatype-vs-Central drift
