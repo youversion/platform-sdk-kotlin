@@ -32,6 +32,7 @@ import kotlin.test.assertTrue
 class BibleReaderViewModelActionTests {
     private val testDispatcher = UnconfinedTestDispatcher()
 
+    private lateinit var bibleReaderRepository: BibleReaderRepository
     private lateinit var userSettingsRepository: UserSettingsRepository
     private lateinit var bibleVersionRepository: BibleVersionRepository
     private lateinit var viewModel: BibleReaderViewModel
@@ -67,11 +68,44 @@ class BibleReaderViewModelActionTests {
             copyright = "Public Domain",
         )
 
+    private val versionWithExodusIntro =
+        BibleVersion(
+            id = 1,
+            abbreviation = "KJV",
+            books =
+                listOf(
+                    BibleBook(
+                        id = "GEN",
+                        title = "Genesis",
+                        fullTitle = null,
+                        abbreviation = null,
+                        canon = null,
+                        chapters = null,
+                        intro = null,
+                    ),
+                    BibleBook(
+                        id = "EXO",
+                        title = "Exodus",
+                        fullTitle = null,
+                        abbreviation = null,
+                        canon = null,
+                        chapters = null,
+                        intro =
+                            BibleBookIntro(
+                                id = "EXO.intro",
+                                passageId = "EXO.intro",
+                                title = "Introduction",
+                            ),
+                    ),
+                ),
+            copyright = "Public Domain",
+        )
+
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
 
-        val bibleReaderRepository = mockk<BibleReaderRepository>(relaxed = true)
+        bibleReaderRepository = mockk(relaxed = true)
         userSettingsRepository = mockk(relaxed = true)
         bibleVersionRepository = mockk(relaxed = true)
 
@@ -311,6 +345,32 @@ class BibleReaderViewModelActionTests {
         viewModel.onAction(BibleReaderViewModel.Action.ScrollToReference(verseReference(12)))
 
         viewModel.onHeaderSelectionChange(defaultReference.copy(chapter = 2))
+
+        assertNull(viewModel.state.value.scrollTargetReference)
+    }
+
+    @Test
+    fun `a scroll target does not survive a trip through the book intro`() {
+        viewModel.bibleVersion = versionWithGenesisIntro
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollToReference(verseReference(12)))
+
+        viewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter)
+        assertTrue(viewModel.state.value.isViewingIntro)
+        viewModel.onAction(BibleReaderViewModel.Action.GoToNextChapter)
+
+        assertNull(viewModel.state.value.scrollTargetReference)
+    }
+
+    @Test
+    fun `a scroll target does not survive a trip through the next book's intro`() {
+        viewModel.bibleVersion = versionWithExodusIntro
+        every { bibleReaderRepository.nextChapter(any(), any()) } returns
+            defaultReference.copy(bookUSFM = "EXO", chapter = 1)
+        viewModel.onAction(BibleReaderViewModel.Action.ScrollToReference(verseReference(12)))
+
+        viewModel.onAction(BibleReaderViewModel.Action.GoToNextChapter)
+        assertTrue(viewModel.state.value.isViewingIntro)
+        viewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter)
 
         assertNull(viewModel.state.value.scrollTargetReference)
     }

@@ -291,6 +291,7 @@ internal class BibleReaderViewModel(
                                         introBookUSFM = nextReference.bookUSFM,
                                         introPassageId = nextBook.intro?.passageId,
                                         focusedReference = null,
+                                        scrollTargetReference = null,
                                     )
                                 }
                             } else {
@@ -324,6 +325,7 @@ internal class BibleReaderViewModel(
                                 introBookUSFM = bibleReference.bookUSFM,
                                 introPassageId = currentBook.intro?.passageId,
                                 focusedReference = null,
+                                scrollTargetReference = null,
                             )
                         }
                     } else {
