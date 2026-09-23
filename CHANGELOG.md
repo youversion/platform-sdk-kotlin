@@ -1,3 +1,9 @@
+## [2.2.0](https://github.com/youversion/platform-sdk-kotlin/compare/2.1.3...2.2.0) (2026-09-23)
+
+### Features
+
+* **reader:** add search to the reader ([1674b2d](https://github.com/youversion/platform-sdk-kotlin/commit/1674b2dba8694c9efdf81e95ff2497082bc2a026))
+
 ## [2.1.3](https://github.com/youversion/platform-sdk-kotlin/compare/2.1.2...2.1.3) (2026-09-22)
 
 
