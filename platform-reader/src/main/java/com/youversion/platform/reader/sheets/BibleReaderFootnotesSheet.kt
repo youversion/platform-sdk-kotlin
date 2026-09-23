@@ -81,7 +81,7 @@ internal fun BibleReaderFootnotesSheet(
     ModalBottomSheet(
         sheetState = sheetState,
         onDismissRequest = onDismissRequest,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.background,
         dragHandle = {
             Box(
                 modifier =

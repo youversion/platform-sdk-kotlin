@@ -1,10 +1,13 @@
 package com.youversion.platform.reader.screens.bible
 
 import androidx.compose.material3.Text
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -13,6 +16,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -39,7 +43,9 @@ import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleTextCategory
 import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
+import io.mockk.clearMocks
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -53,6 +59,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
@@ -160,6 +167,85 @@ class BibleScreenTest {
                 any(),
             )
         } throws BibleVersionApiException(BibleVersionApiException.Reason.NOT_PERMITTED)
+    }
+
+    private fun verseReference(verse: Int) =
+        BibleReference(
+            versionId = defaultReference.versionId,
+            bookUSFM = defaultReference.bookUSFM,
+            chapter = defaultReference.chapter,
+            verse = verse,
+        )
+
+    /** Stubs the chapter as a single block, the way the platform renders verses that share a paragraph. */
+    private fun stubParagraphOf(vararg verses: Pair<String, Int>) {
+        coEvery { mockVersionRepository.version(any()) } returns testVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns
+            listOf(
+                BibleTextBlock(
+                    text =
+                        buildAnnotatedString {
+                            verses.forEach { (verseText, verse) ->
+                                val start = length
+                                append(verseText)
+                                addStringAnnotation(
+                                    tag = BibleReferenceAttribute.NAME,
+                                    annotation = "1:GEN:1:$verse",
+                                    start = start,
+                                    end = length,
+                                )
+                            }
+                        },
+                    chapter = 1,
+                    firstLineHeadIndent = 0,
+                    headIndent = 0,
+                    marginTop = 8.dp,
+                    marginBottom = 0.dp,
+                    alignment = TextAlign.Start,
+                    footnotes = emptyList(),
+                ),
+            )
+    }
+
+    private fun stubChapterOfVerses(verseCount: Int) {
+        coEvery { mockVersionRepository.version(any()) } returns testVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        } returns
+            (1..verseCount).map { verse ->
+                val verseText = "Verse $verse"
+                BibleTextBlock(
+                    text =
+                        buildAnnotatedString {
+                            append(verseText)
+                            addStringAnnotation(
+                                tag = BibleReferenceAttribute.NAME,
+                                annotation = "1:GEN:1:$verse",
+                                start = 0,
+                                end = verseText.length,
+                            )
+                        },
+                    chapter = 1,
+                    firstLineHeadIndent = 0,
+                    headIndent = 0,
+                    marginTop = 8.dp,
+                    marginBottom = 0.dp,
+                    alignment = TextAlign.Start,
+                    footnotes = emptyList(),
+                )
+            }
     }
 
     // region Book Name & Chapter Display
@@ -1352,6 +1438,79 @@ class BibleScreenTest {
         verify { mockViewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection) }
     }
 
+    /**
+     * Showing the sheet clears the selection once on its own, as the sheet settles open, so only what the tap
+     * itself dispatches is recorded.
+     */
+    private fun showSheetAndForgetItsOwnActions() {
+        composeTestRule.waitUntil {
+            composeTestRule
+                .onAllNodesWithContentDescription("Copy")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        composeTestRule.waitForIdle()
+        clearMocks(mockViewModel, answers = false, childMocks = false)
+    }
+
+    @Test
+    fun `a tap no verse took clears the selection`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+            )
+        stubVersionWithTappableVerse()
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+        showSheetAndForgetItsOwnActions()
+
+        composeTestRule.onNodeWithText("Genesis").performClick()
+        composeTestRule.waitForIdle()
+
+        verify { mockViewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection) }
+    }
+
+    /** The dismissing tap is read off the reader rather than the scrim so a second verse can still be added. */
+    @Test
+    fun `a tap on a verse adds to the selection rather than clearing it`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                showVerseActionSheet = true,
+                selectedVerses = setOf(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+            )
+        stubVersionWithTappableVerse()
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+        showSheetAndForgetItsOwnActions()
+
+        composeTestRule.onNodeWithText("In the beginning").performClick()
+        composeTestRule.waitForIdle()
+
+        verify { mockViewModel.onAction(match { it is BibleReaderViewModel.Action.OnVerseTap }) }
+        verify(exactly = 0) {
+            mockViewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection)
+        }
+    }
+
     // endregion
 
     // region Bottom Bar
@@ -1448,6 +1607,390 @@ class BibleScreenTest {
         composeTestRule.onNodeWithContentDescription("Next chapter").performClick()
 
         verify { mockViewModel.onAction(BibleReaderViewModel.Action.GoToNextChapter) }
+    }
+
+    // endregion
+
+    // region Scroll Target
+
+    @Test
+    fun `blocks far down a long chapter are not composed until scrolled to`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+            )
+        stubChapterOfVerses(60)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Verse 1").assertIsDisplayed()
+        assertTrue(composeTestRule.onAllNodesWithText("Verse 60").fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun `a reference staged before the chapter loads arrives scrolled to that verse`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                scrollTargetReference = verseReference(40),
+            )
+        stubChapterOfVerses(60)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Verse 40").assertIsDisplayed()
+        assertTrue(composeTestRule.onAllNodesWithText("Verse 1").fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun `the staged verse is consumed once and does not re-fire on recomposition`() {
+        every { mockViewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached) } answers {
+            stateFlow.value = stateFlow.value.copy(scrollTargetReference = null)
+        }
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                scrollTargetReference = verseReference(40),
+            )
+        stubChapterOfVerses(60)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        stateFlow.value = stateFlow.value.copy(selectedVerses = setOf(verseReference(2)))
+        composeTestRule.waitForIdle()
+
+        verify(exactly = 1) { mockViewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached) }
+    }
+
+    @Test
+    fun `a staged verse the loaded chapter has no block for is consumed rather than left staged`() {
+        every { mockViewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached) } answers {
+            stateFlow.value = stateFlow.value.copy(scrollTargetReference = null)
+        }
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                scrollTargetReference = verseReference(99),
+            )
+        stubChapterOfVerses(3)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        verify(exactly = 1) { mockViewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached) }
+    }
+
+    @Test
+    fun `a staged verse the chapter has no block for lifts the focus and opens the chapter at the top`() {
+        every { mockViewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached) } answers {
+            stateFlow.value = stateFlow.value.copy(scrollTargetReference = null)
+        }
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                scrollTargetReference = verseReference(40),
+                focusedReference = verseReference(40),
+            )
+        stubChapterOfVerses(60)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        stateFlow.value =
+            stateFlow.value.copy(
+                scrollTargetReference = verseReference(99),
+                focusedReference = verseReference(99),
+            )
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Verse 1").assertIsDisplayed()
+        verify { mockViewModel.onAction(BibleReaderViewModel.Action.ClearFocusedReference) }
+    }
+
+    @Test
+    fun `a reference staged for the chapter on display scrolls to it without reloading`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+            )
+        stubChapterOfVerses(60)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        stateFlow.value = stateFlow.value.copy(scrollTargetReference = verseReference(40))
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Verse 40").assertIsDisplayed()
+        coVerify(exactly = 1) {
+            BibleVersionRendering.textBlocks(
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+            )
+        }
+    }
+
+    // endregion
+
+    // region Focused Reference
+
+    @Test
+    fun `only the block covering the focused verse is left undimmed, asserted by tag since alpha is not observable`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                focusedReference = verseReference(2),
+            )
+        stubChapterOfVerses(3)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        assertEquals(1, composeTestRule.onAllNodesWithTag("focused_block").fetchSemanticsNodes().size)
+        assertEquals(2, composeTestRule.onAllNodesWithTag("dimmed_block").fetchSemanticsNodes().size)
+    }
+
+    @Test
+    fun `the verses sharing a block with the focused one are dimmed alongside the rest of the chapter`() {
+        val firstVerse = "Behold, I am coming soon! "
+        val secondVerse = "I am the Alpha and the Omega."
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                focusedReference = verseReference(2),
+            )
+        stubParagraphOf(firstVerse to 1, secondVerse to 2)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        val drawn =
+            composeTestRule
+                .onNodeWithText(firstVerse + secondVerse)
+                .fetchSemanticsNode()
+                .config[SemanticsProperties.Text]
+                .first()
+        val dimmed = drawn.spanStyles.filter { (it.item.color.alpha) < 1f }
+        assertEquals(listOf(0 to firstVerse.length), dimmed.map { it.start to it.end })
+    }
+
+    @Test
+    fun `the dim is still drawn a frame after the focus lifts, so it has one to fade out over`() {
+        val firstVerse = "Behold, I am coming soon! "
+        val secondVerse = "I am the Alpha and the Omega."
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                focusedReference = verseReference(2),
+            )
+        stubParagraphOf(firstVerse to 1, secondVerse to 2)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.mainClock.autoAdvance = false
+        stateFlow.value = stateFlow.value.copy(focusedReference = null)
+        repeat(2) { composeTestRule.mainClock.advanceTimeByFrame() }
+
+        val drawn =
+            composeTestRule
+                .onNodeWithText(firstVerse + secondVerse)
+                .fetchSemanticsNode()
+                .config[SemanticsProperties.Text]
+                .first()
+        assertTrue(drawn.spanStyles.any { it.item.color.alpha < 1f })
+    }
+
+    @Test
+    fun `a focused verse the chapter renders no block for dims nothing`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                focusedReference = verseReference(99),
+            )
+        stubChapterOfVerses(3)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        assertTrue(composeTestRule.onAllNodesWithTag("dimmed_block").fetchSemanticsNodes().isEmpty())
+        assertTrue(composeTestRule.onAllNodesWithTag("focused_block").fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun `no block is dimmed while nothing is focused`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+            )
+        stubChapterOfVerses(3)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        assertTrue(composeTestRule.onAllNodesWithTag("dimmed_block").fetchSemanticsNodes().isEmpty())
+        assertTrue(composeTestRule.onAllNodesWithTag("focused_block").fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun `a deliberate drag lifts the focus`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                focusedReference = verseReference(2),
+            )
+        stubChapterOfVerses(60)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNode(hasScrollToIndexAction()).performTouchInput { swipeUp() }
+        composeTestRule.waitForIdle()
+
+        verify { mockViewModel.onAction(BibleReaderViewModel.Action.ClearFocusedReference) }
+    }
+
+    @Test
+    fun `the scroll that delivers the reader to the verse does not lift the focus`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                scrollTargetReference = verseReference(40),
+                focusedReference = verseReference(40),
+            )
+        stubChapterOfVerses(60)
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Verse 40").assertIsDisplayed()
+        verify(exactly = 0) { mockViewModel.onAction(BibleReaderViewModel.Action.ClearFocusedReference) }
     }
 
     // endregion

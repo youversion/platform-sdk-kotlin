@@ -26,7 +26,7 @@ data class ReaderColorScheme(
     val readerTextPrimaryColor: Color
         get() = foreground
     val readerTextMutedColor: Color
-        get() = borderSecondaryColor
+        get() = if (isDark) DarkTextMutedColor else LightTextMutedColor
 
     /**
      * The opacity that highlight colors are drawn at under this scheme.

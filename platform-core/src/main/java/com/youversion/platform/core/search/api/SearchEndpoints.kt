@@ -14,32 +14,19 @@ import com.youversion.platform.core.search.models.SearchTopic
 import com.youversion.platform.core.search.models.SearchUserIntent
 import com.youversion.platform.core.search.models.TopicSearchResults
 import com.youversion.platform.core.search.models.VerseSearchResults
+import com.youversion.platform.core.utilities.graphemeClusterCount
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLBuilder
 import io.ktor.http.path
-import java.text.BreakIterator
 import java.util.IllformedLocaleException
 import java.util.Locale
 
 internal object SearchEndpoints : SearchApi {
     private val httpClient: HttpClient
         get() = PlatformCoreKoinComponent.httpClient
-
-    /**
-     * Counts what a reader perceives as characters, not UTF-16 code units; `length` is not equivalent.
-     * Pinned to [Locale.ROOT] so a query is accepted or rejected identically on every device.
-     */
-    private val String.graphemeClusterCount: Int
-        get() {
-            val iterator = BreakIterator.getCharacterInstance(Locale.ROOT)
-            iterator.setText(this)
-            var count = 0
-            while (iterator.next() != BreakIterator.DONE) count++
-            return count
-        }
 
     fun searchQueriesUrl(
         languageRanges: List<String>,

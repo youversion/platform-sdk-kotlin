@@ -6,13 +6,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import com.youversion.platform.reader.R
+import com.youversion.platform.ui.R as UiR
 
 /**
  * Asks a signed-in reader to allow this app to save highlights before the browser grant flow opens.
  *
  * Extracted as its own composable to match the reader's other confirmation dialogs rather than being inlined, and
- * because its copy lives in the reader string resources.
+ * because its copy is shared UI vocabulary owned by platform-ui.
  *
  * @param onConfirm Called when the reader agrees to continue to the grant flow.
  * @param onDismiss Called when the reader declines or dismisses the dialog.
@@ -26,19 +26,19 @@ internal fun DataExchangeConfirmationDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = stringResource(R.string.data_exchange_highlights_question),
+                text = stringResource(UiR.string.data_exchange_highlights_question),
                 style = MaterialTheme.typography.titleLarge,
             )
         },
-        text = { Text(stringResource(R.string.data_exchange_highlights_explanation)) },
+        text = { Text(stringResource(UiR.string.data_exchange_highlights_explanation)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.data_exchange_continue))
+                Text(stringResource(UiR.string.data_exchange_continue))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(UiR.string.cancel))
             }
         },
     )

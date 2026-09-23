@@ -21,6 +21,7 @@ import androidx.compose.material3.BottomAppBarScrollBehavior
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -37,7 +38,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import com.youversion.platform.reader.R
 import com.youversion.platform.reader.components.PassageSelectionState.Companion.Saver
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
+import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import kotlin.math.abs
 
@@ -63,6 +64,7 @@ internal fun BibleReaderPassageSelection(
     scrollBehavior: PassageSelectionScrollBehavior? = null,
 ) {
     val alpha = 1f - (scrollBehavior?.state?.collapsedFraction ?: 0f)
+    val readerColors = MaterialTheme.readerColorScheme
     Box(
         modifier =
             Modifier
@@ -71,10 +73,10 @@ internal fun BibleReaderPassageSelection(
                     this.radius = 48f
 
                     this.offset = Offset(0f, 0f)
-                    this.color = Color.Black.copy(alpha = alpha * 0.2f)
+                    this.color = readerColors.dropShadowColor.copy(alpha = alpha * 0.5f)
                 }.clip(CircleShape)
                 .background(
-                    color = BibleReaderTheme.colorScheme.canvasPrimary,
+                    color = readerColors.readerCanvasPrimaryColor,
                     shape = CircleShape,
                 ).clickable(
                     indication = ripple(),
@@ -102,14 +104,14 @@ internal fun BibleReaderPassageSelection(
             Icon(
                 imageVector = Icons.Filled.ChevronLeft,
                 contentDescription = stringResource(R.string.previous_chapter_content_desc),
-                tint = BibleReaderTheme.colorScheme.textPrimary,
+                tint = readerColors.readerTextPrimaryColor,
             )
         }
 
         Text(
             text = bookAndChapter,
             style = BibleReaderTheme.typography.buttonLabelL,
-            color = BibleReaderTheme.colorScheme.textPrimary,
+            color = readerColors.readerTextPrimaryColor,
             modifier = Modifier.align(Alignment.Center),
         )
         IconButton(
@@ -123,7 +125,7 @@ internal fun BibleReaderPassageSelection(
             Icon(
                 imageVector = Icons.Filled.ChevronRight,
                 contentDescription = stringResource(R.string.next_chapter_content_desc),
-                tint = BibleReaderTheme.colorScheme.textPrimary,
+                tint = readerColors.readerTextPrimaryColor,
             )
         }
     }
