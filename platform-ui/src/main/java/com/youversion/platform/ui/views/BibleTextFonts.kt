@@ -10,12 +10,16 @@ import androidx.compose.ui.unit.sp
 
 internal enum class BibleTextFontOption {
     FONT_076EM_ITALIC,
+    FONT_083EM_ITALIC,
     FONT_100EM,
     FONT_100EM_ITALIC,
     FONT_100EM_500,
     FONT_100EM_500_ITALIC,
+    FONT_100EM_700,
+    FONT_108EM_ITALIC,
     FONT_117EM_500,
     FONT_117EM_500_ITALIC,
+    FONT_117EM_700,
     FOOTNOTE,
     VERSE_NUM_FONT,
 }
@@ -32,6 +36,8 @@ data class BibleTextFonts(
         mapOf(
             BibleTextFontOption.FONT_076EM_ITALIC to
                 SpanStyle(fontFamily = fontFamily, fontSize = baseSize * 0.76, fontStyle = FontStyle.Italic),
+            BibleTextFontOption.FONT_083EM_ITALIC to
+                SpanStyle(fontFamily = fontFamily, fontSize = baseSize * 0.83, fontStyle = FontStyle.Italic),
             BibleTextFontOption.FONT_100EM to
                 SpanStyle(fontFamily = fontFamily, fontSize = baseSize),
             BibleTextFontOption.FONT_100EM_ITALIC to
@@ -45,6 +51,10 @@ data class BibleTextFonts(
                     fontWeight = FontWeight.Medium,
                     fontStyle = FontStyle.Italic,
                 ),
+            BibleTextFontOption.FONT_100EM_700 to
+                SpanStyle(fontFamily = fontFamily, fontSize = baseSize, fontWeight = FontWeight.Bold),
+            BibleTextFontOption.FONT_108EM_ITALIC to
+                SpanStyle(fontFamily = fontFamily, fontSize = baseSize * 1.08, fontStyle = FontStyle.Italic),
             BibleTextFontOption.FONT_117EM_500 to
                 SpanStyle(fontFamily = fontFamily, fontSize = baseSize * 1.17, fontWeight = FontWeight.Medium),
             BibleTextFontOption.FONT_117EM_500_ITALIC to
@@ -54,6 +64,8 @@ data class BibleTextFonts(
                     fontWeight = FontWeight.Medium,
                     fontStyle = FontStyle.Italic,
                 ),
+            BibleTextFontOption.FONT_117EM_700 to
+                SpanStyle(fontFamily = fontFamily, fontSize = baseSize * 1.17, fontWeight = FontWeight.Bold),
             BibleTextFontOption.FOOTNOTE to
                 SpanStyle(fontFamily = fontFamily, fontSize = baseSize * 0.8),
             BibleTextFontOption.VERSE_NUM_FONT to

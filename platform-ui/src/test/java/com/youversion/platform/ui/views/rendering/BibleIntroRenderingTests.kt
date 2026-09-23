@@ -253,6 +253,20 @@ class BibleIntroRenderingTests {
         }
 
     @Test
+    fun `intro blocks have a leading title when the intro opens with a marked-up book title`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="yv-h mt1"><span>Matthew</span></div>
+                    <div class="p">Intro paragraph text.</div>
+                </div>
+                """.trimIndent()
+
+            assertTrue(renderIntroBlocks(html).hasLeadingBookTitle())
+        }
+
+    @Test
     fun `intro blocks have no leading title when the intro opens with a section heading`() =
         runTest {
             listOf("is1", "iot", "yv-h s1").forEach { className ->

@@ -7,6 +7,7 @@ import com.youversion.platform.core.bibles.data.CachedBibleContent
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.ui.views.BibleTextFontOption
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
 import kotlinx.coroutines.test.runTest
 import java.util.concurrent.atomic.AtomicInteger
@@ -307,6 +308,86 @@ class BibleVersionRenderingTests {
             val allText = blocks.joinToString("") { it.text.text }
             assertFalse(allText.contains("Chapter One"))
             assertTrue(allText.contains("Verse text."))
+        }
+
+    // ----- quotation references and alternate verse numbers
+
+    @Test
+    fun `rq quotation reference renders inline in smaller italic`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="p">
+                        <span class="yv-v" v="1"></span>
+                        Verse text.
+                        <span class="rq">Gen 1:1</span>
+                    </div>
+                </div>
+                """.trimIndent()
+
+            val blocks = renderBlocks(html, FULL_CHAPTER_REF)
+            val block = blocks.first { it.text.text.contains("Gen 1:1") }
+            val start = block.text.text.indexOf("Gen 1:1")
+            val expected = RENDERING_TEST_FONTS.styleFor(BibleTextFontOption.FONT_083EM_ITALIC)
+            assertTrue(
+                block.text.spanStyles.any { span ->
+                    span.start <= start &&
+                        span.end >= start + "Gen 1:1".length &&
+                        span.item.fontSize == expected.fontSize &&
+                        span.item.fontStyle == expected.fontStyle
+                },
+            )
+        }
+
+    @Test
+    fun `va alternate verse number renders as a verse label`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="p">
+                        <span class="yv-v" v="1"></span>
+                        <span class="va">7</span>
+                        Verse text.
+                    </div>
+                </div>
+                """.trimIndent()
+
+            val blocks = renderBlocks(html, FULL_CHAPTER_REF)
+            val block = blocks.first { it.text.text.contains("Verse text.") }
+            val labels =
+                block.text
+                    .getStringAnnotations(
+                        tag = BibleTextCategoryAttribute.NAME,
+                        start = 0,
+                        end = block.text.length,
+                    ).filter { it.item == BibleTextCategory.VERSE_LABEL.name }
+            assertTrue(
+                labels.any {
+                    block.text.text
+                        .substring(it.start, it.end)
+                        .contains("7")
+                },
+            )
+        }
+
+    @Test
+    fun `va alternate verse number is omitted when verse numbers are off`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="p">
+                        <span class="yv-v" v="1"></span>
+                        <span class="va">7</span>
+                        Verse text.
+                    </div>
+                </div>
+                """.trimIndent()
+
+            val blocks = renderBlocks(html, FULL_CHAPTER_REF, renderVerseNumbers = false)
+            assertFalse(blocks.joinToString("") { it.text.text }.contains("7"))
         }
 
     // ----- cache invalidation

@@ -90,6 +90,13 @@ Held on the device for offline reading because someone asked for it. Distinct fr
 incidental and may be discarded at any time; only downloads live in the SDK's persistent store.
 _Avoid_: saved, offline copy, legacy cache
 
+**Book title**:
+A title naming the book itself — a major title (`mt`) or introduction title (`imt`) — as opposed to a
+section heading naming a part of it. Carried on rendered text as `BibleTextCategory.BOOK_TITLE`, and
+load-bearing rather than cosmetic: a host uses it to suppress a heading of its own that would
+otherwise duplicate the passage's. The Swift SDK does not draw this distinction and calls both a header.
+_Avoid_: header, heading, major title
+
 ### Highlights
 
 **Highlight**:

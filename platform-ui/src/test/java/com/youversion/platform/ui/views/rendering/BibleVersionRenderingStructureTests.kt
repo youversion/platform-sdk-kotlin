@@ -41,27 +41,6 @@ class BibleVersionRenderingStructureTests {
     // ----- cross-references
 
     @Test
-    fun `cross-references with rq class are ignored`() =
-        runTest {
-            val html =
-                """
-                <div>
-                    <div class="p">
-                        <span class="yv-v" v="1"></span>
-                        Some text
-                        <span class="rq">cross-ref content</span>
-                        more text.
-                    </div>
-                </div>
-                """.trimIndent()
-
-            val blocks = renderBlocks(html, FULL_CHAPTER_REF)
-            val allText = blocks.joinToString("") { it.text.text }
-            assertFalse(allText.contains("cross-ref content"))
-            assertTrue(allText.contains("Some text"))
-        }
-
-    @Test
     fun `cross-references with yv-n and x class are ignored`() =
         runTest {
             val html =
