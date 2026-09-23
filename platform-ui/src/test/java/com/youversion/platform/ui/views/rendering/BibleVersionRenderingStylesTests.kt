@@ -851,10 +851,16 @@ class BibleVersionRenderingStylesTests {
     }
 
     @Test
-    fun `interpretBlockClasses sets BOOK_TITLE category for yv-h with imt sibling`() {
-        val stateDown = defaultStateDown()
-        callInterpretBlock(listOf("yv-h", "imt"), stateDown = stateDown)
-        assertEquals(BibleTextCategory.BOOK_TITLE, stateDown.textCategory)
+    fun `interpretBlockClasses sets BOOK_TITLE category for yv-h with title sibling`() {
+        listOf("imt", "mt", "mt1").forEach { className ->
+            val stateDown = defaultStateDown()
+            callInterpretBlock(listOf("yv-h", className), stateDown = stateDown)
+            assertEquals(
+                BibleTextCategory.BOOK_TITLE,
+                stateDown.textCategory,
+                "Expected BOOK_TITLE for title sibling class '$className'",
+            )
+        }
     }
 
     @Test

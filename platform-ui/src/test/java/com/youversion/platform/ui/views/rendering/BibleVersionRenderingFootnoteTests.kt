@@ -35,6 +35,30 @@ class BibleVersionRenderingFootnoteTests {
             assertTrue(footnote.text.contains("first paragraph\nsecond paragraph"))
         }
 
+    @Test
+    fun `additional footnote paragraph starts on a new line in INLINE mode`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="p">
+                        <span class="yv-v" v="1"></span>
+                        Some text
+                        <span class="yv-n f"><span class="fr">1:1</span><span class="ft">first paragraph</span><span class="fp">second paragraph</span></span>
+                    </div>
+                </div>
+                """.trimIndent()
+
+            val blocks =
+                renderBlocks(
+                    html,
+                    FULL_CHAPTER_REF,
+                    footnoteMode = BibleTextFootnoteMode.INLINE,
+                )
+            val allText = blocks.joinToString("") { it.text.text }
+            assertTrue(allText.contains("first paragraph\nsecond paragraph"))
+        }
+
     // ----- footnote modes
 
     @Test

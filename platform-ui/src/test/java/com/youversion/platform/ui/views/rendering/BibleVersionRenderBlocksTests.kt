@@ -49,6 +49,11 @@ class BibleVersionRenderBlocksTests {
         )
     }
 
+    private fun BibleTextBlock.hasCategory(category: BibleTextCategory): Boolean =
+        text
+            .getStringAnnotations(BibleTextCategoryAttribute.NAME, 0, text.length)
+            .any { it.item == category.name }
+
     @Test
     fun `p and related classes produce first line indent`() =
         runTest {
@@ -147,6 +152,40 @@ class BibleVersionRenderBlocksTests {
             assertIndents(block, "qm", firstLineHeadIndent = 0, headIndent = 0)
         }
 
+    @Test
+    fun `li and lim classes produce head indent`() =
+        runTest {
+            listOf("li", "lim").forEach { className ->
+                val block = renderSingleBlock(className, "List item text.")
+                assertIndents(block, className, firstLineHeadIndent = 0, headIndent = 2)
+            }
+        }
+
+    @Test
+    fun `lh class produces first line indent and margin top`() =
+        runTest {
+            val block = renderSingleBlock("lh", "List header text.")
+            assertIndents(block, "lh", firstLineHeadIndent = 1, headIndent = 0)
+            assertTrue(block.marginTop.value > 0)
+        }
+
+    @Test
+    fun `po class produces first line indent and margins`() =
+        runTest {
+            val block = renderSingleBlock("po", "Letter opening.")
+            assertIndents(block, "po", firstLineHeadIndent = 1, headIndent = 0)
+            assertTrue(block.marginTop.value > 0)
+            assertTrue(block.marginBottom.value > 0)
+        }
+
+    @Test
+    fun `imq class produces head indent and italic font`() =
+        runTest {
+            val block = renderSingleBlock("imq", "Quoted intro text.")
+            assertIndents(block, "imq", firstLineHeadIndent = 0, headIndent = 2)
+            assertTrue(block.text.spanStyles.any { it.item.fontStyle == FontStyle.Italic })
+        }
+
     // ----- alignment
 
     @Test
@@ -197,6 +236,13 @@ class BibleVersionRenderBlocksTests {
             }
         }
 
+    @Test
+    fun `cls class produces end alignment`() =
+        runTest {
+            val block = renderSingleBlock("cls", "Closing text.")
+            assertEquals(TextAlign.End, block.alignment)
+        }
+
     // ----- margins
 
     @Test
@@ -217,6 +263,15 @@ class BibleVersionRenderBlocksTests {
             val headerBlock = blocks.first { it.text.text.contains("Section Title") }
             assertEquals(0.dp, headerBlock.marginTop)
             assertTrue(headerBlock.marginBottom.value > 0)
+        }
+
+    @Test
+    fun `s class produces medium font and margin bottom`() =
+        runTest {
+            val block = renderSingleBlock("s", "Section Title.")
+            assertTrue(block.marginBottom.value > 0)
+            assertIndents(block, "s", firstLineHeadIndent = 0, headIndent = 0)
+            assertTrue(block.text.spanStyles.any { it.item.fontWeight == FontWeight.Medium })
         }
 
     // ----- font styles
@@ -338,5 +393,25 @@ class BibleVersionRenderBlocksTests {
                     it.item.color.alpha < 1f && it.item.color.alpha > 0f
                 },
             )
+        }
+
+    // ----- book titles
+
+    @Test
+    fun `mt1 class produces a centered book title`() =
+        runTest {
+            val block = renderSingleBlock("mt1", "Book Title.")
+            assertEquals(TextAlign.Center, block.alignment)
+            assertTrue(block.hasCategory(BibleTextCategory.BOOK_TITLE))
+            assertTrue(block.text.spanStyles.any { it.item.fontWeight == FontWeight.Medium })
+        }
+
+    @Test
+    fun `mt2 class produces a centered italic book title`() =
+        runTest {
+            val block = renderSingleBlock("mt2", "Book Subtitle.")
+            assertEquals(TextAlign.Center, block.alignment)
+            assertTrue(block.hasCategory(BibleTextCategory.BOOK_TITLE))
+            assertTrue(block.text.spanStyles.any { it.item.fontStyle == FontStyle.Italic })
         }
 }
