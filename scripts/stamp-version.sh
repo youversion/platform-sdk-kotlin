@@ -49,8 +49,9 @@ sed_inplace() {
 
 echo "Stamping version $VERSION..."
 
-# `[^"]*` rather than `.*`: a greedy `.*` would swallow everything up to the
-# LAST quote on the line, which eats a trailing comment such as `# .get()`.
+# `[^"]*` rather than `.*`: a greedy `.*` runs to the LAST quote on the line, so
+# anything quoted after the version — a trailing comment carrying quotes, a
+# second occurrence on the same line — would be swallowed along with it.
 sed_inplace "s/youversionPlatform = \"[^\"]*\"/youversionPlatform = \"$VERSION\"/" "$CATALOG"
 sed_inplace "s/youVersionPlatform = \"[^\"]*\"/youVersionPlatform = \"$VERSION\"/g" "$README"
 
