@@ -10,6 +10,7 @@ import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
 import io.ktor.client.engine.mock.MockEngine
+import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.test.runTest
 import java.util.Locale
 import kotlin.concurrent.atomics.AtomicInt
@@ -19,6 +20,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class LanguageRepositoryTest : YouVersionPlatformTest {
     private lateinit var memoryCache: BibleVersionCache
@@ -140,6 +142,27 @@ class LanguageRepositoryTest : YouVersionPlatformTest {
             bibleVersionRepository.permittedVersionsListing()
 
             assertEquals(listOf("en", "de"), repository.suggestedLanguageTags())
+        }
+
+    @Test
+    fun `test suggestedLanguageTags falls back to US when the locale names no country`() =
+        runTest {
+            Locale.setDefault(Locale.forLanguageTag("en"))
+
+            MockEngine { request ->
+                when (request.url.encodedPath) {
+                    "/v1/bibles" -> respondJson("""{"data": []}""")
+                    "/v1/languages" -> {
+                        assertEquals("US", request.url.parameters["country"])
+                        respondJson("""{"data": [{"id": "en", "language": "en"}]}""")
+                    }
+                    else -> error("Unexpected path: ${request.url.encodedPath}")
+                }
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+
+            assertEquals(listOf("en"), repository.suggestedLanguageTags())
         }
 
     @OptIn(ExperimentalAtomicApi::class)
@@ -307,5 +330,147 @@ class LanguageRepositoryTest : YouVersionPlatformTest {
             repository.loadLanguageNames(null)
 
             assertEquals(1, requestCount.load())
+        }
+
+    // ----- Accept-Language negotiation
+
+    @Test
+    fun `test suggestedLanguages sends the device locale as Accept-Language`() =
+        runTest {
+            Locale.setDefault(Locale.forLanguageTag("es-MX"))
+
+            MockEngine { request ->
+                assertEquals("es-MX, es;q=0.9", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.suggestedLanguages("MX")
+        }
+
+    @Test
+    fun `test languages sends the device locale as Accept-Language`() =
+        runTest {
+            Locale.setDefault(Locale.forLanguageTag("es-MX"))
+
+            MockEngine { request ->
+                assertEquals("es-MX, es;q=0.9", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.languages()
+        }
+
+    @Test
+    fun `test Accept-Language preserves script and region and falls back to script`() =
+        runTest {
+            Locale.setDefault(Locale.forLanguageTag("zh-Hant-TW"))
+
+            MockEngine { request ->
+                assertEquals("zh-Hant-TW, zh-Hant;q=0.9", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.suggestedLanguages("TW")
+        }
+
+    @Test
+    fun `test Accept-Language keeps the script in the fallback range`() =
+        runTest {
+            Locale.setDefault(Locale.forLanguageTag("sr-Latn-RS"))
+
+            MockEngine { request ->
+                assertEquals("sr-Latn-RS, sr-Latn;q=0.9", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.languages()
+        }
+
+    @Test
+    fun `test Accept-Language falls back to the base language when the locale has no script`() =
+        runTest {
+            Locale.setDefault(Locale.FRANCE)
+
+            MockEngine { request ->
+                assertEquals("fr-FR, fr;q=0.9", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.languages()
+        }
+
+    @Test
+    fun `test Accept-Language has no fallback when the locale names only a language`() =
+        runTest {
+            Locale.setDefault(Locale.forLanguageTag("en"))
+
+            MockEngine { request ->
+                assertEquals("en", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.languages()
+        }
+
+    @Test
+    fun `test Accept-Language normalizes a legacy language code`() =
+        runTest {
+            Locale.setDefault(Locale("iw", "IL"))
+
+            MockEngine { request ->
+                assertEquals("he-IL, he;q=0.9", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.languages()
+        }
+
+    @Test
+    fun `test Accept-Language drops an ill-formed region`() =
+        runTest {
+            Locale.setDefault(Locale("en", "USA"))
+
+            MockEngine { request ->
+                assertEquals("en", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.languages()
+        }
+
+    @Test
+    fun `test Accept-Language is omitted when the locale has no language`() =
+        runTest {
+            Locale.setDefault(Locale.ROOT)
+
+            MockEngine { request ->
+                assertNull(request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.languages()
+        }
+
+    @Test
+    fun `test Accept-Language is omitted when the locale names only a country`() =
+        runTest {
+            Locale.setDefault(Locale("", "US"))
+
+            MockEngine { request ->
+                assertNull(request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.languages()
         }
 }

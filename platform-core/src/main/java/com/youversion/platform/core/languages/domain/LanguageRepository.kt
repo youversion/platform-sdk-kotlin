@@ -13,9 +13,23 @@ class LanguageRepository(
     private val bibleVersionRepository: BibleVersionRepository,
 ) {
     private val localeCountryCode: String
-        get() = Locale.getDefault().country ?: "US"
+        get() = Locale.getDefault().country.takeIf { it.isNotEmpty() } ?: "US"
     private val localeLanguageCode: String
-        get() = Locale.getDefault().language ?: "en"
+        get() = Locale.getDefault().language
+
+    /** The device's language preference as BCP 47 ranges, most specific first, or empty when it names no language. */
+    private val languageRanges: List<String>
+        get() {
+            val locale = Locale.forLanguageTag(Locale.getDefault().toLanguageTag())
+            if (locale.language.isEmpty()) return emptyList()
+            val subtags = listOf(locale.language, locale.script, locale.country).filter { it.isNotEmpty() }
+
+            val primary = subtags.joinToString("-")
+            return when (subtags.size) {
+                1 -> listOf(primary)
+                else -> listOf(primary, subtags.dropLast(1).joinToString("-"))
+            }
+        }
 
     /**
      * Returns a list of languages based on the given country.
@@ -26,6 +40,7 @@ class LanguageRepository(
             .languages(
                 country = country,
                 fields = listOf(Language.CodingKey.LANGUAGE, Language.CodingKey.DISPLAY_NAMES),
+                languageRanges = languageRanges,
             ).data
 
     /**
@@ -36,6 +51,7 @@ class LanguageRepository(
             .languages
             .languages(
                 fields = listOf(Language.CodingKey.LANGUAGE, Language.CodingKey.DISPLAY_NAMES),
+                languageRanges = languageRanges,
             ).data
 
     /**

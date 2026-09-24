@@ -12,6 +12,7 @@ import com.youversion.platform.helpers.testInvalidResponse
 import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.runTest
@@ -169,5 +170,83 @@ class LanguagesApiTests : YouVersionPlatformTest {
     fun `test languages throws invalid response if cannot parse`() =
         testInvalidResponse {
             YouVersionApi.languages.languages(country = "US")
+        }
+
+    @Test
+    fun `test languages sends the language range as an Accept-Language header`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals("/v1/languages?country=MX", request.url.encodedPathAndQuery)
+                assertEquals("es-MX", request.headers[HttpHeaders.AcceptLanguage])
+                assertEquals("app", request.headers["x-yvp-app-key"])
+                assertTrue { request.headers["x-yvp-sdk"]?.startsWith("KotlinSDK=") == true }
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            YouVersionApi.languages.languages(country = "MX", languageRanges = listOf("es-MX"))
+        }
+
+    @Test
+    fun `test languages sends the language range on an unfiltered request`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals("/v1/languages", request.url.encodedPathAndQuery)
+                assertEquals("es-MX", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            YouVersionApi.languages.languages(languageRanges = listOf("es-MX"))
+        }
+
+    @Test
+    fun `test languages preserves script and region subtags and weights each range by position`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals("zh-Hant-TW, zh-Hant;q=0.9, zh;q=0.8", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            YouVersionApi.languages.languages(languageRanges = listOf("zh-Hant-TW", "zh-Hant", "zh"))
+        }
+
+    @Test
+    fun `test languages keeps quality values descending by sending only the first ten language ranges`() =
+        runTest {
+            val expected =
+                "l0, l1;q=0.9, l2;q=0.8, l3;q=0.7, l4;q=0.6, l5;q=0.5, l6;q=0.4, l7;q=0.3, l8;q=0.2, l9;q=0.1"
+            MockEngine { request ->
+                assertEquals(expected, request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            YouVersionApi.languages.languages(languageRanges = List(15) { "l$it" })
+        }
+
+    @Test
+    fun `test languages omits the Accept-Language header when no language range is given`() =
+        runTest {
+            MockEngine { request ->
+                assertNull(request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            YouVersionApi.languages.languages(languageRanges = emptyList())
+        }
+
+    @Test
+    fun `test languages omits blank language ranges from the Accept-Language header`() =
+        runTest {
+            MockEngine { request ->
+                assertNull(request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            YouVersionApi.languages.languages(languageRanges = listOf("   "))
         }
 }

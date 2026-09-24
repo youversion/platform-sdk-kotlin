@@ -11,6 +11,8 @@ import com.youversion.platform.core.languages.models.Language
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.path
 
@@ -37,13 +39,30 @@ internal object LanguagesEndpoints : LanguagesApi {
         fields: List<String>?,
         perPage: Int?,
         pageToken: String?,
+        languageRanges: List<String>,
     ): PaginatedResponse<Language> =
         httpClient
-            .get(languagesUrl(country, fields, perPage, pageToken))
-            .let {
+            .get(languagesUrl(country, fields, perPage, pageToken)) {
+                acceptLanguage(languageRanges)?.let { header(HttpHeaders.AcceptLanguage, it) }
+            }.let {
                 when (it.status) {
                     HttpStatusCode.NoContent -> PaginatedResponse(emptyList())
                     else -> parsePaginatedResponse(it)
                 }
             }
+
+    private fun acceptLanguage(languageRanges: List<String>): String? =
+        languageRanges
+            .filter { it.isNotBlank() }
+            .take(MAX_RANGES)
+            .mapIndexed { index, range ->
+                when (index) {
+                    0 -> range
+                    else -> "$range;q=0.${MAX_RANGES - index}"
+                }
+            }.joinToString(", ")
+            .takeIf { it.isNotEmpty() }
 }
+
+/** Ranges past the tenth have no distinct quality value left below them, so they are dropped. */
+private const val MAX_RANGES = 10
