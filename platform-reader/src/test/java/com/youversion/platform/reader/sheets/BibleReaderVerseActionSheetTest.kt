@@ -155,13 +155,13 @@ class BibleReaderVerseActionSheetTest {
         var removedHex: String? = null
 
         renderSheet(
-            colorsToRemove = listOf(HighlightColor.Cyan),
+            colorsToRemove = listOf(HighlightColor.Blue),
             onRemoveHighlight = { removedHex = it },
         )
 
-        composeTestRule.onNodeWithContentDescription("Remove cyan highlight").performClick()
+        composeTestRule.onNodeWithContentDescription("Remove blue highlight").performClick()
 
-        assertEquals(HighlightColor.Cyan.hexColor, removedHex)
+        assertEquals(HighlightColor.Blue.hexColor, removedHex)
     }
 
     @Test
