@@ -144,6 +144,27 @@ class LanguageRepositoryTest : YouVersionPlatformTest {
             assertEquals(listOf("en", "de"), repository.suggestedLanguageTags())
         }
 
+    @Test
+    fun `test suggestedLanguageTags falls back to US when the locale names no country`() =
+        runTest {
+            Locale.setDefault(Locale.forLanguageTag("en"))
+
+            MockEngine { request ->
+                when (request.url.encodedPath) {
+                    "/v1/bibles" -> respondJson("""{"data": []}""")
+                    "/v1/languages" -> {
+                        assertEquals("US", request.url.parameters["country"])
+                        respondJson("""{"data": [{"id": "en", "language": "en"}]}""")
+                    }
+                    else -> error("Unexpected path: ${request.url.encodedPath}")
+                }
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+
+            assertEquals(listOf("en"), repository.suggestedLanguageTags())
+        }
+
     @OptIn(ExperimentalAtomicApi::class)
     @Test
     fun `test suggestedLanguageTags is cached on second call`() =
@@ -429,6 +450,20 @@ class LanguageRepositoryTest : YouVersionPlatformTest {
     fun `test Accept-Language is omitted when the locale has no language`() =
         runTest {
             Locale.setDefault(Locale.ROOT)
+
+            MockEngine { request ->
+                assertNull(request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            repository.languages()
+        }
+
+    @Test
+    fun `test Accept-Language is omitted when the locale names only a country`() =
+        runTest {
+            Locale.setDefault(Locale("", "US"))
 
             MockEngine { request ->
                 assertNull(request.headers[HttpHeaders.AcceptLanguage])
