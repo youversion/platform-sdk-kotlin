@@ -122,6 +122,57 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     }
 
     @Test
+    fun `isPermittedByVersionIdFilters accepts any id when no id filters are configured`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey")
+
+            assertTrue(isPermittedByVersionIdFilters(206))
+        }
+    }
+
+    @Test
+    fun `isPermittedByVersionIdFilters rejects an id in excludedVersionIds`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey", excludedVersionIds = setOf(206))
+
+            assertFalse(isPermittedByVersionIdFilters(206))
+            assertTrue(isPermittedByVersionIdFilters(111))
+        }
+    }
+
+    @Test
+    fun `isPermittedByVersionIdFilters rejects an id absent from permittedVersionIds`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey", permittedVersionIds = setOf(111))
+
+            assertFalse(isPermittedByVersionIdFilters(206))
+            assertTrue(isPermittedByVersionIdFilters(111))
+        }
+    }
+
+    @Test
+    fun `isPermittedByVersionIdFilters lets excludedVersionIds overrule permittedVersionIds`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(
+                appKey = "appKey",
+                permittedVersionIds = setOf(111, 206),
+                excludedVersionIds = setOf(206),
+            )
+
+            assertFalse(isPermittedByVersionIdFilters(206))
+        }
+    }
+
+    @Test
+    fun `isPermittedByVersionIdFilters ignores permittedLanguageTags`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(appKey = "appKey", permittedLanguageTags = setOf("en"))
+
+            assertTrue(isPermittedByVersionIdFilters(206))
+        }
+    }
+
+    @Test
     fun `appName and signInPromptMessage default to null`() {
         with(YouVersionPlatformConfiguration) {
             configure(appKey = "appKey")

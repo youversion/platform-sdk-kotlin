@@ -5,6 +5,7 @@ import androidx.annotation.RestrictTo
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.YouVersionPlatformConfiguration.configure
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfiguredException
@@ -104,6 +105,24 @@ object YouVersionPlatformConfiguration {
 
     val isSignedIn: Boolean
         get() = accessToken != null
+
+    /**
+     * Whether a Bible version with this [versionId] satisfies [excludedVersionIds] and
+     * [permittedVersionIds]. Synchronous, so it is usable offline and before anything is fetched.
+     *
+     * This is only the id half of a permitted version: [permittedLanguageTags] needs the version's
+     * `languageTag`, which is only available from a suspending lookup. Callers that can suspend should
+     * filter against
+     * [com.youversion.platform.core.bibles.domain.BibleVersionRepository.permittedVersionsListing] instead.
+     */
+    @PlatformInternalApi
+    fun isPermittedByVersionIdFilters(versionId: Int): Boolean {
+        if (versionId in excludedVersionIds) return false
+        permittedVersionIds?.let { permittedIds ->
+            if (versionId !in permittedIds) return false
+        }
+        return true
+    }
 
     fun configure(
         context: Context,
