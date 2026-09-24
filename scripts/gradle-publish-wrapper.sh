@@ -1,22 +1,17 @@
 #!/usr/bin/env bash
 #
-# gradle-publish-wrapper.sh — runs `./gradlew publishToMavenCentral` for ONE
-# module and classifies the outcome so the caller can fast-fail on
-# unrecoverable conditions (expired GPG key, missing passphrase) instead of
-# retrying errors that will never succeed.
-#
-# One module per invocation is deliberate. A single Gradle run publishing all
-# three modules produces one interleaved log, so a real signing failure on one
-# module and an already-published no-op on another are indistinguishable. The
-# caller (scripts/release.sh) loops.
+# gradle-publish-wrapper.sh — publishes the SDK's modules to Maven Central and
+# classifies the outcome so the caller can fast-fail on unrecoverable
+# conditions (expired GPG key, missing passphrase) instead of retrying errors
+# that will never succeed.
 #
 # Exit codes:
-#   0   publish succeeded, or the coordinate is already on Maven Central
+#   0   publish succeeded, or every coordinate is already on Maven Central
 #   42  GPG signing failure — KEY/PASSPHRASE/EXPIRED. Retry will not help; see runbook.
 #   1   other failure (transient or unclassified; retry is reasonable)
 #
 # Usage:
-#   scripts/gradle-publish-wrapper.sh <version> <module> <group>
+#   scripts/gradle-publish-wrapper.sh <version> <modules-csv> <group>
 #
 # Required env (set by release.yml):
 #   ORG_GRADLE_PROJECT_mavenCentralUsername
@@ -27,22 +22,98 @@
 set -uo pipefail
 
 if [[ $# -ne 3 ]]; then
-    echo "usage: $0 <version> <module> <group>" >&2
+    echo "usage: $0 <version> <modules-csv> <group>" >&2
     exit 2
 fi
 
 VERSION="$1"
-MODULE="$2"
+MODULES_CSV="$2"
 GROUP="$3"
 GROUP_PATH="${GROUP//.//}"
-task=":${MODULE}:publishToMavenCentral"
+
+pom_url() {
+    echo "https://repo1.maven.org/maven2/${GROUP_PATH}/$1/${VERSION}/$1-${VERSION}.pom"
+}
+
+# "repo1 said 404" and "we never reached repo1" are different answers, so this
+# reports the status code rather than curl's exit — mirrors is_resolvable in
+# poll-central-index.sh. Conflating them lets a network blip read as a clean
+# 404, which makes a published version look missing and fires the
+# partial-publish warning below over a release that is fine.
+central_status() {
+    local code
+    # curl writes %{http_code} itself — 000 when it never got a response — so
+    # the fallback is a separate test rather than a `|| echo 000` appended to
+    # the substitution, which would concatenate the two into 000000. The `||
+    # true` is what keeps a probe failure from being an error: the code is the
+    # answer here, not the exit status.
+    code=$(curl -sI -o /dev/null -w '%{http_code}' --max-time 30 "$(pom_url "$1")") || true
+    [[ -n "$code" ]] || code="000"
+    case "$code" in
+        200) echo present ;;
+        404) echo missing ;;
+        *)   echo unreachable ;;
+    esac
+}
+
+IFS=',' read -ra ALL_MODULES <<< "$MODULES_CSV"
+
+# A module whose state we could not read is published anyway: Central rejects a
+# coordinate that already exists, and the post-failure re-check settles it.
+PRESENT=()
+UNREACHABLE=()
+TO_PUBLISH=()
+for module in "${ALL_MODULES[@]}"; do
+    module="${module// /}"
+    [[ -z "$module" ]] && continue
+    case "$(central_status "$module")" in
+        present)     PRESENT+=("$module") ;;
+        unreachable) UNREACHABLE+=("$module"); TO_PUBLISH+=("$module") ;;
+        *)           TO_PUBLISH+=("$module") ;;
+    esac
+done
+
+if [[ ${#TO_PUBLISH[@]} -eq 0 ]]; then
+    echo "==> ${VERSION} is already on Maven Central for every module — nothing to publish."
+    exit 0
+fi
+
+if [[ ${#UNREACHABLE[@]} -gt 0 ]]; then
+    echo "==> WARNING: repo1 did not answer for: ${UNREACHABLE[*]}" >&2
+    echo "==> Their publish state is unknown, so this run cannot tell a partial release" >&2
+    echo "==> from a clean one. Attempting the publish and letting Central arbitrate." >&2
+elif [[ ${#PRESENT[@]} -gt 0 ]]; then
+    echo "==> WARNING: ${VERSION} is already partially published." >&2
+    echo "==>   on Central: ${PRESENT[*]}" >&2
+    echo "==>   missing:    ${TO_PUBLISH[*]}" >&2
+    echo "==> Central coordinates are immutable, so this version can no longer ship as one" >&2
+    echo "==> deployment. Publishing the missing modules to restore version parity." >&2
+fi
+
+tasks=()
+for module in "${TO_PUBLISH[@]}"; do
+    tasks+=(":${module}:publishToMavenCentral")
+done
 
 log_file=$(mktemp -t gradle-publish.XXXXXX.log)
 trap 'rm -f "$log_file"' EXIT
 
-echo "==> ./gradlew ${task} -PsdkVersion=${VERSION}"
+# vanniktech 0.35.0 reads SONATYPE_CLOSE_TIMEOUT_SECONDS via
+# providers.gradleProperty, so -P satisfies it. It bounds the poll loop in
+# SonatypeCentralPortal.validateDeployment, which publishToMavenCentral runs on
+# the Portal path because validateDeployment defaults to true. Default is 900s;
+# platform-ui timed out at 15m35s under it while Central completed the
+# deployment anyway (5f21f0b). On expiry the plugin throws
+# "Deployment validation timed out after Ns", which matches none of the patterns
+# below, so the run exits 1 and the re-check above settles it on the retry.
+CLOSE_TIMEOUT="${CENTRAL_CLOSE_TIMEOUT_SECONDS:-2700}"
+
+echo "==> ./gradlew ${tasks[*]} -PsdkVersion=${VERSION} -PSONATYPE_CLOSE_TIMEOUT_SECONDS=${CLOSE_TIMEOUT}"
 set +e
-./gradlew "${task}" -PsdkVersion="${VERSION}" 2>&1 | tee "$log_file"
+./gradlew "${tasks[@]}" \
+    -PsdkVersion="${VERSION}" \
+    -PSONATYPE_CLOSE_TIMEOUT_SECONDS="${CLOSE_TIMEOUT}" \
+    2>&1 | tee "$log_file"
 status=${PIPESTATUS[0]}
 set -e
 
@@ -52,29 +123,34 @@ if (( status == 0 )); then
 fi
 
 # Maven Central is immutable: a coordinate that already exists cannot be
-# republished, and the rejection means the artifact this run wanted to ship is
+# republished, and the rejection means the artifacts this run wanted to ship are
 # already there. That is the desired end state, so it is success — otherwise a
-# re-dispatch after a partially-successful run could never get past the modules
-# that did publish. Checked before the GPG patterns because an already-existing
-# component is unambiguous.
+# re-dispatch after a deployment that reached Central but timed out locally
+# could never get past it. Checked before the GPG patterns because an
+# already-existing component is unambiguous.
 #
 # The log phrase is only the trigger; repo1 is the proof. A bare "already
 # exists" match is not enough, because Gradle emits that string for unrelated
 # configuration errors ("Cannot add task 'x' as a task with that name already
 # exists") and this grep runs over the whole log. Treating one of those as a
 # publish no-op would exit 0 here, and release.sh would cut a GitHub release for
-# a module that never reached Central.
+# modules that never reached Central.
 #
 # A 404 does not disprove the deployment — the Central Portal syncs to repo1 on
 # a lag of minutes — so an unconfirmed match exits 1 (retryable) rather than
 # claiming a publish it cannot see.
-if grep -E -i -q -e 'Component with package url .* already exists' "$log_file"; then
-    pom_url="https://repo1.maven.org/maven2/${GROUP_PATH}/${MODULE}/${VERSION}/${MODULE}-${VERSION}.pom"
-    if curl -fsS -I --max-time 30 "$pom_url" >/dev/null 2>&1; then
-        echo "==> ${MODULE} ${VERSION} is already on Maven Central — treating as success."
+CENTRAL_ALREADY_EXISTS_RE='Component with package url.* already exists'
+
+if grep -E -i -q -e "$CENTRAL_ALREADY_EXISTS_RE" "$log_file"; then
+    unresolved=()
+    for module in "${TO_PUBLISH[@]}"; do
+        [[ "$(central_status "$module")" == present ]] || unresolved+=("$module")
+    done
+    if [[ ${#unresolved[@]} -eq 0 ]]; then
+        echo "==> ${VERSION} is already on Maven Central — treating as success."
         exit 0
     fi
-    echo "==> Central reported the component exists, but ${pom_url} is not resolvable yet." >&2
+    echo "==> Central reported the components exist, but these are not resolvable yet: ${unresolved[*]}" >&2
     echo "==> Not claiming success; retry once Central sync completes." >&2
     exit 1
 fi

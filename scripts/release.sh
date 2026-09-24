@@ -340,21 +340,33 @@ else
   fi
 fi
 
-# ---------------------------------------------------------------------------
-# Publish to Maven Central, one module per wrapper invocation so each module's
-# outcome is classified independently. The wrapper treats an already-published
-# coordinate as success, which is what makes a resume survive this step.
-# ---------------------------------------------------------------------------
 echo
 echo "Publishing modules: $PUBLISHABLE_MODULES"
-IFS=',' read -ra MODULES <<< "$PUBLISHABLE_MODULES"
-for module in "${MODULES[@]}"; do
-  module="${module// /}"
-  [ -z "$module" ] && continue
+publish_status=0
+bash scripts/gradle-publish-wrapper.sh "$VERSION" "$PUBLISHABLE_MODULES" "$MAVEN_GROUP" || publish_status=$?
+
+if [ "$publish_status" -eq 42 ]; then
+  echo "❌ Publish failed during signing (exit 42) — nothing was released." >&2
+  exit 42
+fi
+
+if [ "$publish_status" -ne 0 ]; then
   echo
-  echo "--- $module ---"
-  bash scripts/gradle-publish-wrapper.sh "$VERSION" "$module" "$MAVEN_GROUP"
-done
+  echo "❌ Publish failed (exit $publish_status)." >&2
+  echo "   Re-dispatch with version $VERSION to retry." >&2
+  if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+    {
+      echo
+      echo "### ❌ Publish failed"
+      echo
+      echo "\`$VERSION\` was not released. The deployment is atomic, so Central has either every module at this version or none of them."
+      echo
+      echo "Re-dispatch this workflow with version \`$VERSION\` to retry."
+    } >> "$GITHUB_STEP_SUMMARY"
+  fi
+  exit 1
+fi
+
 echo
 echo "  ✓ All modules published at $VERSION."
 

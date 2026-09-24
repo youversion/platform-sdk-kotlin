@@ -48,14 +48,16 @@ learning because several of them look interchangeable and are not.
      install snippets ([`scripts/stamp-version.sh`](scripts/stamp-version.sh));
    - commits `chore(release): <version> [skip ci]` and tags it;
    - pushes the commit and tag to `main` over the deploy key;
-   - publishes each module in `PUBLISHABLE_MODULES` to Maven Central, one Gradle
-     invocation per module
+   - publishes every module in `PUBLISHABLE_MODULES` to Maven Central in a
+     single Gradle invocation, which the publish plugin bundles into one
+     deployment — all modules are released or none are
      ([`scripts/gradle-publish-wrapper.sh`](scripts/gradle-publish-wrapper.sh));
    - creates the GitHub Release from the generated notes.
 4. The **post-publish-verify** job polls `repo1.maven.org` for up to 30 minutes
    and writes a table to the run summary showing when each coordinate became
-   resolvable. It never fails the workflow — mirror lag is expected, and by that
-   point the artifacts are already immutable on Central.
+   resolvable. Lag inside the deadline passes; a module still missing when the
+   deadline elapses fails the run, because a version that resolves for only some
+   of the modules breaks consumers.
 
 All three modules always ship on the same version. `PUBLISHABLE_MODULES` in
 [`.github/workflows/release.yml`](.github/workflows/release.yml) is the single
@@ -231,13 +233,14 @@ VERSION=2.2.0 DRY_RUN=1 bash scripts/release.sh
 ## Resuming a partial release
 
 If a release fails after the tag was pushed — the network dropped mid-upload,
-one module's signing errored, the job timed out — **re-dispatch with the same
-version**. Resume is auto-detected, not an input: `release.sh` sees the existing
+signing errored, the job timed out — **re-dispatch with the same version**.
+Nothing partial is left behind: the deployment is dropped when the build fails,
+so Central has the version for all modules or for none. Resume is auto-detected, not an input: `release.sh` sees the existing
 remote tag and picks up from there.
 
 It first verifies that the tag's tree is actually stamped to that version, and
 aborts if not, rather than healing a tag someone moved by hand. Then every
-remaining step is idempotent: pushes that already landed are skipped, a module
+remaining step is idempotent: pushes that already landed are skipped, a version
 Maven Central already has counts as success, and an existing GitHub Release is
 left alone.
 

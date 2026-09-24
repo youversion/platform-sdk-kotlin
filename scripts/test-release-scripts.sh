@@ -5,21 +5,41 @@
 # The release pipeline itself only runs on a manual dispatch, so without these
 # a broken helper would not be discovered until someone tried to ship.
 #
-# Three classes of test here:
+# Seven classes of test here, in the order they run:
 #
-#   1. Pure argument/exit-code behaviour of the small .mjs helpers
-#      (release-validate, release-warn-version-jump, read-preview-field,
-#      prepend-changelog). Cheap, and they are the pieces that decide whether
-#      a release is allowed to proceed.
-#   2. The commit-analyzer bump table (scripts/assert-bump-table.mjs). This is
+#   1. The commit-analyzer bump table (scripts/assert-bump-table.mjs). This is
 #      the YPE-5781 regression guard: the analyzer degrades to the angular
 #      preset *silently* if either `.releaserc.json`'s preset key or the
 #      installed conventional-changelog-conventionalcommits major is wrong, so
 #      only an end-to-end assertion catches it.
+#   2. Pure argument/exit-code behaviour of the small .mjs helpers
+#      (release-validate, release-warn-version-jump, read-preview-field,
+#      prepend-changelog). Cheap, and they are the pieces that decide whether
+#      a release is allowed to proceed.
 #   3. scripts/preview-release.mjs against disposable git histories. The ranges
 #      it walks only misbehave in states this repo is rarely in — unreleased
 #      commits sitting on main, a branch that forked before the last release —
 #      so the test builds those states rather than waiting for them.
+#   4. scripts/release.sh's wiring, read as source text. These guard shape
+#      rather than behaviour — validation stays in testable .mjs files, and
+#      main is only ever pushed together with its tag — and the push itself
+#      needs a remote, so grep is the honest seam here.
+#   5. scripts/stamp-version.sh against disposable copies of the two files it
+#      rewrites. It is the only release script that edits committed content,
+#      and what it writes is what consumers resolve and copy/paste, so the test
+#      runs it rather than reading its sed expressions.
+#   6. scripts/gradle-publish-wrapper.sh against a stubbed ./gradlew and curl.
+#      Its 0/42/1 exit codes are what release.sh branches on, and every branch
+#      fires only on a Gradle log this repo never produces deliberately, so the
+#      test replays those logs instead.
+#   7. scripts/release.sh's post-tag steps against a disposable origin, with
+#      the publish wrapper and gh stubbed. Covers the one outcome here that
+#      consumers see and that cannot be walked back: a GitHub release cut for a
+#      version that never reached Central.
+#
+# Classes 6 and 7 stub rather than grep on purpose. A source-text assertion
+# cannot tell whether the failure paths still wire together, and the release
+# pipeline is only ever exercised for real by shipping.
 #
 # Usage:
 #   bash scripts/test-release-scripts.sh
@@ -27,6 +47,7 @@
 set -uo pipefail
 
 cd "$(dirname "$0")/.."
+REPO_ROOT=$PWD
 
 PASS=0
 FAIL=0
@@ -60,6 +81,20 @@ assert_stderr_contains() {
   fi
 }
 
+assert_stderr_lacks() {
+  local needle=$1 label=$2
+  shift 2
+  local err
+  err=$("$@" 2>&1 >/dev/null)
+  if printf '%s' "$err" | grep -qF "$needle"; then
+    echo "  ✗ $label (stderr contained '$needle')"
+    echo "      stderr: $err"
+    FAIL=$((FAIL + 1))
+  else
+    echo "  ✓ $label"
+    PASS=$((PASS + 1))
+  fi
+}
 assert_stderr_empty() {
   local label=$1
   shift
@@ -317,6 +352,345 @@ assert_exit 1 "stamp-version.sh without a version → exit 1" bash scripts/stamp
 assert_exit 2 "gradle-publish-wrapper.sh with no args → usage exit 2" bash scripts/gradle-publish-wrapper.sh
 assert_exit 2 "gradle-publish-wrapper.sh with one arg → usage exit 2" bash scripts/gradle-publish-wrapper.sh 2.2.0
 assert_exit 2 "gradle-publish-wrapper.sh without a group → usage exit 2" bash scripts/gradle-publish-wrapper.sh 2.2.0 platform-core
+
+central_re=$(sed -n "s/^CENTRAL_ALREADY_EXISTS_RE='\(.*\)'$/\1/p" scripts/gradle-publish-wrapper.sh)
+if [ -z "$central_re" ]; then
+  echo "  ✗ CENTRAL_ALREADY_EXISTS_RE not found in scripts/gradle-publish-wrapper.sh"
+  FAIL=$((FAIL + 1))
+else
+  central_real="  * Component with package url: 'pkg:maven/com.youversion.platform/platform-core@2.3.0?type=aar' already exists"
+  if printf '%s\n' "$central_real" | grep -E -i -q -e "$central_re"; then
+    echo "  ✓ already-exists pattern matches Central's real rejection message"
+    PASS=$((PASS + 1))
+  else
+    echo "  ✗ already-exists pattern does not match Central's real rejection message"
+    echo "      pattern: $central_re"
+    echo "      message: $central_real"
+    FAIL=$((FAIL + 1))
+  fi
+
+  central_decoy="> Cannot add task 'javaDocReleaseJar' as a task with that name already exists"
+  if printf '%s\n' "$central_decoy" | grep -E -i -q -e "$central_re"; then
+    echo "  ✗ already-exists pattern matches an unrelated Gradle 'already exists' error"
+    FAIL=$((FAIL + 1))
+  else
+    echo "  ✓ already-exists pattern ignores unrelated Gradle 'already exists' errors"
+    PASS=$((PASS + 1))
+  fi
+fi
+
+wrapper_calls=$(grep -cF 'bash scripts/gradle-publish-wrapper.sh' scripts/release.sh)
+if [ "$wrapper_calls" = "1" ] \
+  && grep -qF 'bash scripts/gradle-publish-wrapper.sh "$VERSION" "$PUBLISHABLE_MODULES" "$MAVEN_GROUP"' scripts/release.sh; then
+  echo "  ✓ scripts/release.sh publishes every module in one wrapper invocation"
+  PASS=$((PASS + 1))
+else
+  echo "  ✗ scripts/release.sh no longer publishes all modules in a single invocation ($wrapper_calls call(s))"
+  FAIL=$((FAIL + 1))
+fi
+
+gradlew_calls=$(grep -cE '^\./gradlew ' scripts/gradle-publish-wrapper.sh)
+if [ "$gradlew_calls" = "1" ] && grep -qF '"${tasks[@]}"' scripts/gradle-publish-wrapper.sh; then
+  echo "  ✓ gradle-publish-wrapper.sh publishes all modules in one Gradle invocation"
+  PASS=$((PASS + 1))
+else
+  echo "  ✗ gradle-publish-wrapper.sh no longer uses a single Gradle invocation ($gradlew_calls found)"
+  FAIL=$((FAIL + 1))
+fi
+
+if grep -qF 'exit 1' scripts/poll-central-index.sh \
+  && grep -qF 'resolvable for only ${resolvable_count}' scripts/poll-central-index.sh; then
+  echo "  ✓ poll-central-index.sh fails when a module is still missing at the deadline"
+  PASS=$((PASS + 1))
+else
+  echo "  ✗ poll-central-index.sh no longer fails on a partially resolvable version"
+  FAIL=$((FAIL + 1))
+fi
+
+echo
+echo "stamp-version.sh:"
+# Runs the real script against disposable copies of the two files it rewrites.
+# This is the only release script that mutates committed content, and a bad
+# stamp is what consumers resolve: the catalog line is the coordinate the three
+# modules publish under, and the README lines are the snippets people paste.
+SV_TMP=$(mktemp -d)
+trap 'rm -rf "$CL_TMP" "$PV_TMP" "$SV_TMP"' EXIT
+SV_N=0
+
+# The catalog line carries a trailing `# .get()` comment and the README holds
+# the version twice, in two different snippet forms — both are properties of
+# the real files that the sed expressions have to survive.
+sv_new() {
+  SV_N=$((SV_N + 1))
+  SV_DIR="$SV_TMP/case$SV_N"
+  mkdir -p "$SV_DIR/gradle" "$SV_DIR/scripts"
+  cp scripts/stamp-version.sh "$SV_DIR/scripts/"
+  printf '[versions]\nyouversionPlatform = "2.0.0" # .get()\nagp = "8.5.0"\n' \
+    > "$SV_DIR/gradle/libs.versions.toml"
+  printf 'youVersionPlatform = "2.0.0"\n\nval youVersionPlatform = "2.0.0"\n' \
+    > "$SV_DIR/README.md"
+}
+sv_stamp() { ( cd "$SV_DIR" && bash scripts/stamp-version.sh "$@" ); }
+sv_catalog_line() { grep 'youversionPlatform = ' "$SV_DIR/gradle/libs.versions.toml"; }
+sv_readme_count() { grep -c "youVersionPlatform = \"$1\"" "$SV_DIR/README.md" | tr -d ' '; }
+
+sv_new
+assert_exit 0 "stamps a fresh version" sv_stamp 3.1.0
+# A greedy `.*` instead of `[^"]*` would swallow the trailing comment here.
+assert_stdout_equals 'youversionPlatform = "3.1.0" # .get()' \
+  "…rewrites the catalog without eating the trailing comment" sv_catalog_line
+assert_stdout_equals "2" "…rewrites every README occurrence" sv_readme_count 3.1.0
+assert_exit 1 "…and leaves no occurrence on the old version" \
+  grep -qF 'youVersionPlatform = "2.0.0"' "$SV_DIR/README.md"
+assert_exit 0 "…leaving unrelated catalog versions alone" \
+  grep -qF 'agp = "8.5.0"' "$SV_DIR/gradle/libs.versions.toml"
+
+# release.sh re-runs the stamp on a resumed release, so a second run against an
+# already-stamped tree must be a no-op rather than a corruption.
+SV_BEFORE=$(cat "$SV_DIR/gradle/libs.versions.toml" "$SV_DIR/README.md")
+assert_exit 0 "re-stamping the same version succeeds" sv_stamp 3.1.0
+assert_stdout_equals "$SV_BEFORE" "…and changes nothing" \
+  cat "$SV_DIR/gradle/libs.versions.toml" "$SV_DIR/README.md"
+assert_exit 0 "stamping a newer version over a stamped tree succeeds" sv_stamp 3.2.0
+assert_stdout_equals 'youversionPlatform = "3.2.0" # .get()' \
+  "…and moves the catalog on" sv_catalog_line
+
+# Both sed expressions are written defensively for lines the current files do
+# not have: `[^"]*` rather than `.*` matters only when a later quote sits on the
+# line, and `/g` only when one line carries two occurrences. Neither choice can
+# regress noticeably until such a line is added, which is what this case is.
+sv_new
+printf '[versions]\nyouversionPlatform = "2.0.0" # pinned; see "runbook"\n' \
+  > "$SV_DIR/gradle/libs.versions.toml"
+printf 'youVersionPlatform = "2.0.0" and youVersionPlatform = "2.0.0"\n' \
+  > "$SV_DIR/README.md"
+assert_exit 0 "stamps lines carrying extra quotes and repeats" sv_stamp 3.1.0
+assert_stdout_equals 'youversionPlatform = "3.1.0" # pinned; see "runbook"' \
+  "…without swallowing the rest of the catalog line" sv_catalog_line
+assert_stdout_equals 'youVersionPlatform = "3.1.0" and youVersionPlatform = "3.1.0"' \
+  "…rewriting both occurrences on a single README line" cat "$SV_DIR/README.md"
+
+# The verification branches below exist so a drifted snippet fails the release
+# instead of shipping a stale version to consumers. Each needs a tree the
+# sed expressions cannot fully rewrite.
+sv_new
+printf '[versions]\nagp = "8.5.0"\n' > "$SV_DIR/gradle/libs.versions.toml"
+assert_exit 1 "catalog without the version key → exit 1" sv_stamp 3.1.0
+assert_stderr_contains "Failed to stamp version into" "…and says the catalog is the problem" sv_stamp 3.1.0
+
+sv_new
+printf 'youVersionPlatform = "2.0.0"\n\nyouVersionPlatform = "\n' > "$SV_DIR/README.md"
+assert_exit 1 "a README occurrence the stamp could not rewrite → exit 1" sv_stamp 3.1.0
+assert_stderr_contains "lines but only" "…and reports the mismatch" sv_stamp 3.1.0
+
+sv_new
+printf 'No install snippet here.\n' > "$SV_DIR/README.md"
+assert_exit 1 "README with no version snippet → exit 1" sv_stamp 3.1.0
+assert_stderr_contains "no 'youVersionPlatform" "…and says the snippet is missing" sv_stamp 3.1.0
+
+sv_new
+rm "$SV_DIR/README.md"
+assert_exit 1 "missing README → exit 1" sv_stamp 3.1.0
+assert_stderr_contains "README.md not found" "…and names the missing file" sv_stamp 3.1.0
+
+sv_new
+rm "$SV_DIR/gradle/libs.versions.toml"
+assert_exit 1 "missing catalog → exit 1" sv_stamp 3.1.0
+assert_stderr_contains "libs.versions.toml not found" "…and names the missing file" sv_stamp 3.1.0
+
+echo
+echo "gradle-publish-wrapper.sh outcome classification:"
+WR_TMP=$(mktemp -d)
+trap 'rm -rf "$CL_TMP" "$PV_TMP" "$SV_TMP" "$WR_TMP"' EXIT
+mkdir -p "$WR_TMP/bin"
+
+# Answers the wrapper's HEAD on a repo1 .pom URL with a status code, because
+# the wrapper reads %{http_code} rather than curl's exit. A module is 200 iff
+# it is listed in $CENTRAL_PRESENT or the deployment landed mid-run (below),
+# 000 iff listed in $CENTRAL_UNREACHABLE, and 404 otherwise.
+cat > "$WR_TMP/bin/curl" <<'EOF'
+#!/bin/bash
+url=${!#}
+module=$(printf '%s' "$url" | awk -F/ '{print $(NF-2)}')
+case ",${CENTRAL_PRESENT:-}," in
+  *",$module,"*) echo 200; exit 0 ;;
+esac
+if [[ -n "${CENTRAL_LANDED_FILE:-}" && -f "$CENTRAL_LANDED_FILE" ]]; then
+  echo 200; exit 0
+fi
+case ",${CENTRAL_UNREACHABLE:-}," in
+  *",$module,"*) exit 6 ;;
+esac
+echo 404
+EOF
+chmod +x "$WR_TMP/bin/curl"
+
+# Replays a canned log and exit status, and records the task list it was handed
+# so the partial-publish path can be asserted on. Under $CENTRAL_LANDS it also
+# drops the marker the curl stub reads, modelling a deployment that Central
+# accepted while the local build was failing.
+cat > "$WR_TMP/gradlew" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" > "$GRADLE_ARGS_FILE"
+[[ -n "${CENTRAL_LANDS:-}" ]] && : > "$CENTRAL_LANDED_FILE"
+printf '%s\n' "${GRADLE_LOG:-}"
+exit "${GRADLE_EXIT:-0}"
+EOF
+chmod +x "$WR_TMP/gradlew"
+
+WR_ARGS="$WR_TMP/gradle.args"
+WR_LANDED="$WR_TMP/central.landed"
+wr_run() {
+  # wr_run <present-csv> <gradle-exit> <gradle-log> [modules-csv]
+  # $CENTRAL_LANDS and $CENTRAL_UNREACHABLE are set by the caller's environment.
+  : > "$WR_ARGS"
+  rm -f "$WR_LANDED"
+  ( cd "$WR_TMP" \
+    && PATH="$WR_TMP/bin:$PATH" \
+       CENTRAL_PRESENT="$1" GRADLE_EXIT="$2" GRADLE_LOG="$3" GRADLE_ARGS_FILE="$WR_ARGS" \
+       CENTRAL_LANDED_FILE="$WR_LANDED" \
+       bash "$REPO_ROOT/scripts/gradle-publish-wrapper.sh" \
+         2.3.0 "${4:-platform-core,platform-ui,platform-reader}" com.youversion.platform )
+}
+
+# The deployment reaches Central during the Gradle run — the pre-flight 404s
+# and the post-failure re-check 200s.
+wr_run_landing() { ( export CENTRAL_LANDS=1; wr_run "$@" ); }
+# repo1 does not answer for <unreachable-csv>; those modules are neither 200
+# nor 404.
+wr_run_unreachable() { ( export CENTRAL_UNREACHABLE="$1"; wr_run "${@:2}" ); }
+
+GPG_LOG='> Task :platform-core:signReleasePublication FAILED
+Could not read PGP secret key'
+EXISTS_LOG="  * Component with package url: 'pkg:maven/com.youversion.platform/platform-core@2.3.0?type=aar' already exists"
+DECOY_LOG="> Cannot add task 'javaDocReleaseJar' as a task with that name already exists"
+
+assert_exit 0 "every module already on Central → exit 0 without publishing" \
+  wr_run "platform-core,platform-ui,platform-reader" 99 "should not run"
+assert_exit 0 "publish succeeds → exit 0" \
+  wr_run "" 0 "BUILD SUCCESSFUL"
+assert_exit 42 "signing failure → exit 42 (fast-fail, no retry)" \
+  wr_run "" 1 "$GPG_LOG"
+assert_exit 1 "unclassified failure → exit 1 (retryable)" \
+  wr_run "" 1 "Connection reset by peer"
+assert_exit 1 "already-exists that repo1 cannot confirm → exit 1, not a claimed success" \
+  wr_run "" 1 "$EXISTS_LOG"
+# The branch a re-dispatch depends on: Central took the deployment, the local
+# build failed anyway, and the re-check now resolves what the pre-flight could
+# not see. Nothing else reaches the exit-0 arm — with every module already on
+# Central the pre-flight exits first and Gradle never runs.
+assert_exit 0 "already-exists confirmed by repo1 on the re-check → exit 0" \
+  wr_run_landing "" 1 "$EXISTS_LOG"
+# Gradle emits "already exists" for configuration errors too, and the wrapper
+# greps the whole log. Reading one as a Central no-op would exit 0 and let
+# release.sh cut a release for modules that never shipped.
+assert_exit 1 "unrelated Gradle 'already exists' error is not mistaken for a no-op" \
+  wr_run "" 1 "$DECOY_LOG"
+
+# An unreadable repo1 is not a 404. Reading it as one makes a published module
+# look missing and announces a partial release over a run that may be clean.
+assert_stderr_contains "repo1 did not answer for: platform-ui" \
+  "repo1 not answering is reported as unknown, not as missing" \
+  wr_run_unreachable "platform-ui" "platform-core" 0 "BUILD SUCCESSFUL"
+assert_stderr_lacks "already partially published" \
+  "…and does not claim a partial release it cannot see" \
+  wr_run_unreachable "platform-ui" "platform-core" 0 "BUILD SUCCESSFUL"
+
+# Central coordinates are immutable, so a half-published version can only be
+# completed, never re-deployed: the Gradle invocation must cover the missing
+# modules and nothing else.
+wr_run "platform-core" 0 "BUILD SUCCESSFUL" >/dev/null 2>&1
+assert_stdout_equals \
+  ":platform-ui:publishToMavenCentral :platform-reader:publishToMavenCentral" \
+  "partial publish targets only the modules missing from Central" \
+  awk '{print $1, $2}' "$WR_ARGS"
+
+echo
+echo "release.sh publish-outcome handling:"
+# Resume mode, because it is the path a re-dispatch actually takes and it
+# reaches the publish step without a buildable tree. $VERSION deliberately
+# equals the existing tag — that is what release.sh keys resume detection off.
+RS_TMP=$(mktemp -d)
+trap 'rm -rf "$CL_TMP" "$PV_TMP" "$SV_TMP" "$WR_TMP" "$RS_TMP"' EXIT
+RS_ORIGIN="$RS_TMP/origin.git"
+git init -q --bare -b main "$RS_ORIGIN"
+
+rs_seed="$RS_TMP/seed"
+git init -q -b main "$rs_seed"
+git -C "$rs_seed" config user.email release-test@example.com
+git -C "$rs_seed" config user.name "Release Test"
+git -C "$rs_seed" config commit.gpgsign false
+mkdir -p "$rs_seed/gradle" "$rs_seed/scripts"
+# The real orchestrator, plus the two helpers whose exit codes it branches on.
+cp scripts/release.sh scripts/release-validate.mjs scripts/read-preview-field.mjs \
+  "$rs_seed/scripts/"
+# Notes generation is stubbed: it needs the changelog toolchain and is covered
+# by the prepend-changelog tests above. preview-release.mjs and
+# release-warn-version-jump.mjs are left absent on purpose — release.sh must
+# survive their failure, and their absence is what proves it does.
+printf 'console.log("## 2.0.0\\n\\n* stub note");\n' > "$rs_seed/scripts/generate-release-notes.mjs"
+cat > "$rs_seed/scripts/gradle-publish-wrapper.sh" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" > "$PUBLISH_ARGS_FILE"
+exit "${STUB_PUBLISH_EXIT:-0}"
+EOF
+printf 'youversionPlatform = "1.0.0"\n' > "$rs_seed/gradle/libs.versions.toml"
+git -C "$rs_seed" add -A
+git -C "$rs_seed" commit -q --no-verify -m "feat: initial"
+git -C "$rs_seed" tag 1.0.0
+printf 'youversionPlatform = "2.0.0"\n' > "$rs_seed/gradle/libs.versions.toml"
+git -C "$rs_seed" commit -q --no-verify -am "chore(release): 2.0.0 [skip ci]"
+git -C "$rs_seed" tag 2.0.0
+git -C "$rs_seed" push -q "$RS_ORIGIN" main --tags
+
+mkdir -p "$RS_TMP/bin"
+cat > "$RS_TMP/bin/gh" <<'EOF'
+#!/bin/bash
+printf '%s\n' "$*" >> "$GH_LOG"
+if [ "${1:-} ${2:-}" = "release view" ]; then exit "${GH_VIEW_EXIT:-1}"; fi
+exit 0
+EOF
+chmod +x "$RS_TMP/bin/gh"
+
+RS_RUN=0
+rs_run() {
+  # rs_run <wrapper-exit> [gh-release-view-exit]; sets $RS_GH_LOG and $RS_PUB_ARGS
+  RS_RUN=$((RS_RUN + 1))
+  local dir="$RS_TMP/run$RS_RUN"
+  git clone -q "$RS_ORIGIN" "$dir"
+  git -C "$dir" config user.email release-test@example.com
+  git -C "$dir" config user.name "Release Test"
+  git -C "$dir" config commit.gpgsign false
+  # release-validate.mjs imports semver; the clone resolves it through here.
+  ln -s "$REPO_ROOT/node_modules" "$dir/node_modules"
+  RS_GH_LOG="$RS_TMP/gh$RS_RUN.log"
+  RS_PUB_ARGS="$RS_TMP/publish$RS_RUN.args"
+  : > "$RS_GH_LOG"
+  : > "$RS_PUB_ARGS"
+  ( cd "$dir" \
+    && PATH="$RS_TMP/bin:$PATH" \
+       VERSION=2.0.0 \
+       STUB_PUBLISH_EXIT="$1" GH_VIEW_EXIT="${2:-1}" \
+       GH_LOG="$RS_GH_LOG" PUBLISH_ARGS_FILE="$RS_PUB_ARGS" \
+       bash scripts/release.sh )
+}
+
+assert_exit 0 "publish succeeds → release.sh exits 0" rs_run 0
+assert_exit 0 "…and creates the GitHub release" grep -qF "release create 2.0.0" "$RS_GH_LOG"
+assert_stdout_equals "2.0.0 platform-core,platform-ui,platform-reader com.youversion.platform" \
+  "…having published every module in one wrapper call" cat "$RS_PUB_ARGS"
+
+# The pair below is the point of this whole section: a GitHub release for a
+# version that is not on Central is the one outcome here consumers see and that
+# cannot be walked back.
+assert_exit 42 "signing failure (42) propagates out of release.sh" rs_run 42
+assert_exit 1 "…and cuts no GitHub release" grep -qF "release create" "$RS_GH_LOG"
+
+assert_exit 1 "retryable publish failure (1) → release.sh exits 1" rs_run 1
+assert_exit 1 "…and cuts no GitHub release" grep -qF "release create" "$RS_GH_LOG"
+
+assert_exit 0 "an existing GitHub release is left alone" rs_run 0 0
+assert_exit 1 "…so release create is never called twice" grep -qF "release create" "$RS_GH_LOG"
 
 echo
 if [ "$FAIL" -gt 0 ]; then
