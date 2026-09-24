@@ -33,5 +33,5 @@ internal val DarkButtonContrastColor = Color(0xFFEDEBEB)
 internal val LightTextInvertedColor = ReaderWhiteColor
 internal val DarkTextInvertedColor = ReaderBlackColor
 
-internal val LightWordsOfChristColor = Color(0xFFFF3D4D)
-internal val DarkWordsOfChristColor = Color(0xFFF04C59)
+internal val LightWordsOfChristColor = Color(0xFF94000C)
+internal val DarkWordsOfChristColor = Color(0xFFE4BFC2)

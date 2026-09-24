@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +33,7 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
+import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleTextCategory
 import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
@@ -73,6 +75,7 @@ fun BibleIntroText(
     var isVersionRightToLeft by remember { mutableStateOf(false) }
     val versionRepository: BibleVersionRepository = PlatformKoinGraph.koinApplication.koin.get()
     val introRepository: BibleIntroRepository = PlatformKoinGraph.koinApplication.koin.get()
+    val wordsOfChristColor = textOptions.resolvedWordsOfChristColor(MaterialTheme.readerColorScheme)
 
     LaunchedEffect(loadingPhase) {
         onStateChange(loadingPhase)
@@ -89,7 +92,7 @@ fun BibleIntroText(
         blocks = emptyList()
     }
 
-    LaunchedEffect(versionId, bookUSFM, passageId, textOptions) {
+    LaunchedEffect(versionId, bookUSFM, passageId, textOptions, wordsOfChristColor) {
         loadingPhase = BibleTextLoadingPhase.LOADING
         try {
             val version = versionRepository.version(versionId)
@@ -105,7 +108,7 @@ fun BibleIntroText(
                     footnoteMode = textOptions.footnoteMode,
                     footnoteMarker = textOptions.footnoteMarker,
                     textColor = textOptions.textColor ?: Color.Unspecified,
-                    wocColor = textOptions.wocColor,
+                    wocColor = wordsOfChristColor,
                     fonts = BibleTextFonts(fontFamily = textOptions.fontFamily, baseSize = textOptions.fontSize),
                 )
 
