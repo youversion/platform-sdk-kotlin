@@ -4,11 +4,18 @@
     <string name="yv_active_language_versions_header">%1$s Versions (%2$s)</string>
     <string name="yv_agree_and_download">Agree and Download</string>
     <string name="yv_all">All</string>
+    <string name="yv_all_languages_heading">All Languages</string>
+    <string name="yv_all_languages_tab">All (%1$s)</string>
+    <string name="yv_all_versions_heading">All Versions</string>
     <string name="yv_alphabetical">Alphabetical</string>
     <string name="yv_back">Back</string>
     <string name="yv_back_button">Back</string>
+    <string name="yv_back_to_bible_versions_aria_label">Back to Bible versions</string>
     <string name="yv_bible_app">Bible App</string>
     <string name="yv_bible_card_unavailable_reference">This passage is unavailable in the selected Bible version.</string>
+    <string name="yv_bible_search_clear_aria_label">Clear search</string>
+    <string name="yv_bible_search_recent_heading">Recent Searches</string>
+    <string name="yv_bible_search_trending_heading">Trending Searches</string>
     <string name="yv_bible_version_details_content_desc">Bible Version Details</string>
     <string name="yv_bible_version_load_error">Error loading Bible version</string>
     <string name="yv_bible_versions_heading">Bible Versions</string>
@@ -38,6 +45,8 @@
     <string name="yv_next_chapter_aria_label">Next chapter</string>
     <string name="yv_no_bible_search_results">We\'re sorry, there are no Bible results for this search.</string>
     <string name="yv_no_chapters_available">No chapters available</string>
+    <string name="yv_no_language_search_results">We\'re sorry, there are no results for this search.</string>
+    <string name="yv_no_regional_languages_available">No regional languages available</string>
     <string name="yv_no_versions_found">No versions found</string>
     <string name="yv_offline_connection_lost_message">We’re having difficulties with your connection.</string>
     <string name="yv_offline_download_agreement">Our agreement with the publisher of this Bible version requires us to share certain information with them in order to offer this version for offline use. By proceeding you agree to share your information and to allow the publisher to email you.</string>
@@ -49,6 +58,7 @@
     <string name="yv_placeholder_version_unavailable">Your previously selected Bible version is unavailable. Please switch to another one.</string>
     <string name="yv_placeholder_version_unavailable_icon_content_desc">Version unavailable</string>
     <string name="yv_previous_chapter_aria_label">Previous chapter</string>
+    <string name="yv_recently_used_versions_heading">Recently Used Versions</string>
     <string name="yv_regional">Regional</string>
     <string name="yv_retry">Retry</string>
     <string name="yv_search">Search</string>
