@@ -54,13 +54,15 @@ internal object LanguagesEndpoints : LanguagesApi {
     private fun acceptLanguage(languageRanges: List<String>): String? =
         languageRanges
             .filter { it.isNotBlank() }
+            .take(MAX_RANGES)
             .mapIndexed { index, range ->
                 when (index) {
                     0 -> range
-                    else -> "$range;q=0.${(QUALITY_TENTHS - index).coerceAtLeast(1)}"
+                    else -> "$range;q=0.${MAX_RANGES - index}"
                 }
             }.joinToString(", ")
             .takeIf { it.isNotEmpty() }
 }
 
-private const val QUALITY_TENTHS = 10
+/** Ranges past the tenth have no distinct quality value left below them, so they are dropped. */
+private const val MAX_RANGES = 10

@@ -213,6 +213,20 @@ class LanguagesApiTests : YouVersionPlatformTest {
         }
 
     @Test
+    fun `test languages keeps quality values descending by sending only the first ten language ranges`() =
+        runTest {
+            val expected =
+                "l0, l1;q=0.9, l2;q=0.8, l3;q=0.7, l4;q=0.6, l5;q=0.5, l6;q=0.4, l7;q=0.3, l8;q=0.2, l9;q=0.1"
+            MockEngine { request ->
+                assertEquals(expected, request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            YouVersionApi.languages.languages(languageRanges = List(15) { "l$it" })
+        }
+
+    @Test
     fun `test languages omits the Accept-Language header when no language range is given`() =
         runTest {
             MockEngine { request ->
