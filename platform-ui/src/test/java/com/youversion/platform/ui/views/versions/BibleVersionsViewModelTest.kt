@@ -202,6 +202,40 @@ class BibleVersionsViewModelTest {
         }
 
     @Test
+    fun `loadVersion falls back when initialVersionId is absent from permittedVersionIds`() =
+        runTest(testDispatcher) {
+            configureFilters(permittedVersionIds = setOf(88))
+            val permitted = BibleVersion(id = 88, abbreviation = "P", languageTag = "en")
+            every { bibleVersionRepository.downloadedVersions } returns listOf(88)
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(permitted)
+            coEvery { bibleVersionRepository.version(id = 88) } returns permitted
+
+            var received: BibleVersion? = null
+            createViewModel(initialVersionId = 42, onVersionChange = { received = it })
+            advanceUntilIdle()
+
+            assertEquals(permitted, received)
+            coVerify(exactly = 0) { bibleVersionRepository.version(id = 42) }
+        }
+
+    @Test
+    fun `loadVersion falls back when the initial version is in a language that is not permitted`() =
+        runTest(testDispatcher) {
+            configureFilters(permittedLanguageTags = setOf("en"))
+            val permitted = BibleVersion(id = 88, abbreviation = "P", languageTag = "en")
+            every { bibleVersionRepository.downloadedVersions } returns listOf(88)
+            coEvery { bibleVersionRepository.permittedVersionsListing() } returns listOf(permitted)
+            coEvery { bibleVersionRepository.version(id = 42) } returns spanishVersion
+            coEvery { bibleVersionRepository.version(id = 88) } returns permitted
+
+            var received: BibleVersion? = null
+            createViewModel(initialVersionId = 42, onVersionChange = { received = it })
+            advanceUntilIdle()
+
+            assertEquals(permitted, received)
+        }
+
+    @Test
     fun `selectFallbackVersion skips downloaded versions in excludedVersionIds`() =
         runTest(testDispatcher) {
             configureFilters(excludedVersionIds = setOf(77))

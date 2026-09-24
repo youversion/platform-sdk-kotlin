@@ -6,6 +6,7 @@ import co.touchlab.kermit.Logger
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
+import com.youversion.platform.core.bibles.domain.isPermittedByConfiguration
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.languages.domain.LanguageRepository
@@ -42,7 +43,7 @@ class BibleVersionsViewModel(
 
     private suspend fun loadVersion(versionId: Int?) {
         var loadedVersion: BibleVersion? = null
-        if (versionId != null && versionId !in YouVersionPlatformConfiguration.excludedVersionIds) {
+        if (versionId != null && YouVersionPlatformConfiguration.isPermittedByVersionIdFilters(versionId)) {
             try {
                 loadedVersion = bibleVersionRepository.version(id = versionId)
             } catch (e: CancellationException) {
@@ -51,7 +52,7 @@ class BibleVersionsViewModel(
                 Logger.e("Error loading default version", e)
             }
         }
-        if (loadedVersion != null) {
+        if (loadedVersion != null && loadedVersion.isPermittedByConfiguration()) {
             setCurrentVersion(loadedVersion)
         } else {
             selectFallbackVersion()
@@ -85,7 +86,7 @@ class BibleVersionsViewModel(
     private suspend fun acceptableFallbackVersionId(): Int? {
         val downloads =
             bibleVersionRepository.downloadedVersions
-                .filter { it !in YouVersionPlatformConfiguration.excludedVersionIds }
+                .filter { YouVersionPlatformConfiguration.isPermittedByVersionIdFilters(it) }
         val hasAllowlistFilters =
             YouVersionPlatformConfiguration.permittedLanguageTags != null ||
                 YouVersionPlatformConfiguration.permittedVersionIds != null

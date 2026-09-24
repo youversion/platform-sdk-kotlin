@@ -1,6 +1,7 @@
 package com.youversion.platform.reader.domain
 
 import com.youversion.platform.core.BibleDefaults
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleBook
@@ -12,6 +13,7 @@ import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
@@ -136,6 +138,100 @@ class BibleReaderRepositoryTest {
             BibleReference(versionId = BibleDefaults.VERSION_ID, bookUSFM = "JHN", chapter = 1),
             result,
         )
+    }
+
+    @Test
+    fun `produceBibleReference ignores lastBibleReference whose version is excluded`() {
+        configureIdFilters(excludedVersionIds = setOf(2))
+        val bibleVersionRepository = mockk<BibleVersionRepository>()
+        every { bibleVersionRepository.downloadedVersions } returns listOf(55)
+        val repository =
+            createRepository(
+                storage = storageHolding(savedReference(versionId = 2)),
+                bibleVersionRepository = bibleVersionRepository,
+            )
+
+        assertEquals(
+            BibleReference(versionId = 55, bookUSFM = "JHN", chapter = 1),
+            repository.produceBibleReference(null),
+        )
+    }
+
+    @Test
+    fun `produceBibleReference ignores lastBibleReference whose version is not in permittedVersionIds`() {
+        configureIdFilters(permittedVersionIds = setOf(55))
+        val bibleVersionRepository = mockk<BibleVersionRepository>()
+        every { bibleVersionRepository.downloadedVersions } returns listOf(55)
+        val repository =
+            createRepository(
+                storage = storageHolding(savedReference(versionId = 2)),
+                bibleVersionRepository = bibleVersionRepository,
+            )
+
+        assertEquals(
+            BibleReference(versionId = 55, bookUSFM = "JHN", chapter = 1),
+            repository.produceBibleReference(null),
+        )
+    }
+
+    @Test
+    fun `produceBibleReference returns lastBibleReference when its version is permitted`() {
+        configureIdFilters(permittedVersionIds = setOf(2), excludedVersionIds = setOf(3))
+        val saved = savedReference(versionId = 2)
+        val repository = createRepository(storage = storageHolding(saved))
+
+        assertEquals(saved, repository.produceBibleReference(null))
+    }
+
+    @Test
+    fun `produceBibleReference skips downloaded versions that are excluded`() {
+        configureIdFilters(excludedVersionIds = setOf(99))
+        val bibleVersionRepository = mockk<BibleVersionRepository>()
+        every { bibleVersionRepository.downloadedVersions } returns listOf(99, 100)
+        val repository =
+            createRepository(storage = storageHolding(null), bibleVersionRepository = bibleVersionRepository)
+
+        assertEquals(
+            BibleReference(versionId = 100, bookUSFM = "JHN", chapter = 1),
+            repository.produceBibleReference(null),
+        )
+    }
+
+    @Test
+    fun `produceBibleReference skips downloaded versions not in permittedVersionIds`() {
+        configureIdFilters(permittedVersionIds = setOf(100))
+        val bibleVersionRepository = mockk<BibleVersionRepository>()
+        every { bibleVersionRepository.downloadedVersions } returns listOf(99, 100)
+        val repository =
+            createRepository(storage = storageHolding(null), bibleVersionRepository = bibleVersionRepository)
+
+        assertEquals(
+            BibleReference(versionId = 100, bookUSFM = "JHN", chapter = 1),
+            repository.produceBibleReference(null),
+        )
+    }
+
+    @Test
+    fun `produceBibleReference falls back to BibleDefaults version when every downloaded version is filtered out`() {
+        configureIdFilters(excludedVersionIds = setOf(99))
+        val bibleVersionRepository = mockk<BibleVersionRepository>()
+        every { bibleVersionRepository.downloadedVersions } returns listOf(99)
+        val repository =
+            createRepository(storage = storageHolding(null), bibleVersionRepository = bibleVersionRepository)
+
+        assertEquals(
+            BibleReference(versionId = BibleDefaults.VERSION_ID, bookUSFM = "JHN", chapter = 1),
+            repository.produceBibleReference(null),
+        )
+    }
+
+    @Test
+    fun `produceBibleReference returns the provided reference even when its version is excluded`() {
+        configureIdFilters(excludedVersionIds = setOf(7))
+        val repository = createRepository()
+        val reference = BibleReference(versionId = 7, bookUSFM = "JHN", chapter = 3)
+
+        assertEquals(reference, repository.produceBibleReference(reference))
     }
 
     @Test
@@ -526,6 +622,30 @@ class BibleReaderRepositoryTest {
             isRemoval = false,
             sessionId = sessionId,
         )
+
+    /**
+     * Stubs only the id filters on the configuration singleton. Calling the real `configure` would need a Context and
+     * would start Koin, which these tests otherwise do without.
+     */
+    private fun configureIdFilters(
+        permittedVersionIds: Set<Int>? = null,
+        excludedVersionIds: Set<Int> = emptySet(),
+    ) {
+        mockkObject(YouVersionPlatformConfiguration)
+        every { YouVersionPlatformConfiguration.permittedVersionIds } returns permittedVersionIds
+        every { YouVersionPlatformConfiguration.excludedVersionIds } returns excludedVersionIds
+    }
+
+    private fun savedReference(versionId: Int): BibleReference =
+        BibleReference(versionId = versionId, bookUSFM = "PSA", chapter = 23)
+
+    private fun storageHolding(reference: BibleReference?): Storage {
+        val storage = mockk<Storage>()
+        every { storage.getStringOrNull(STORAGE_KEY_BIBLE_READER_REFERENCE) } returns
+            reference?.let { Json.encodeToString(it) }
+        every { storage.putString(any(), any()) } just Runs
+        return storage
+    }
 
     private fun createRepository(
         storage: Storage = mockk(relaxed = true),

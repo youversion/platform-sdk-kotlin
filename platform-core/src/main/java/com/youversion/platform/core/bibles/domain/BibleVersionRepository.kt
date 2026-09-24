@@ -5,6 +5,7 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.api.BiblesEndpoints
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.utilities.InFlightTasks
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
@@ -191,13 +192,11 @@ class BibleVersionRepository(
  * "no restriction" on that dimension; an exclusion always wins over
  * [YouVersionPlatformConfiguration.permittedVersionIds].
  */
-private fun BibleVersion.isPermittedByConfiguration(): Boolean {
-    if (id in YouVersionPlatformConfiguration.excludedVersionIds) return false
+@PlatformInternalApi
+fun BibleVersion.isPermittedByConfiguration(): Boolean {
+    if (!YouVersionPlatformConfiguration.isPermittedByVersionIdFilters(id)) return false
     YouVersionPlatformConfiguration.permittedLanguageTags?.let { permittedTags ->
         if (languageTag == null || languageTag !in permittedTags) return false
-    }
-    YouVersionPlatformConfiguration.permittedVersionIds?.let { permittedIds ->
-        if (id !in permittedIds) return false
     }
     return true
 }

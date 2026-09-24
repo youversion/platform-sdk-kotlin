@@ -145,15 +145,24 @@ internal class BibleReaderRepository(
 
     /**
      * Always produces a valid BibleReference based on what is available.
+     *
+     * The saved reference and the downloaded versions are only used when their version satisfies the
+     * configured version id filters. A [bibleReference] supplied by the caller is always honored, as is
+     * [BibleDefaults.VERSION_ID] as the last resort when nothing else is available.
      */
     fun produceBibleReference(bibleReference: BibleReference?): BibleReference =
         bibleReference // Always use the provided reference if available
-            ?: lastBibleReference // If no provided reference, use the last saved reference
+            // If no provided reference, use the last saved reference
+            ?: lastBibleReference?.takeIf {
+                YouVersionPlatformConfiguration.isPermittedByVersionIdFilters(it.versionId)
+            }
             ?: run {
                 // Fallback to John 1. Attempt to use the first downloaded version.
                 // If no versions have been downloaded, use BSB.
                 val downloadedVersions = bibleVersionRepository.downloadedVersions
-                val versionId = downloadedVersions.firstOrNull() ?: BibleDefaults.VERSION_ID
+                val versionId =
+                    downloadedVersions.firstOrNull { YouVersionPlatformConfiguration.isPermittedByVersionIdFilters(it) }
+                        ?: BibleDefaults.VERSION_ID
                 BibleReference(
                     versionId = versionId,
                     bookUSFM = "JHN",
