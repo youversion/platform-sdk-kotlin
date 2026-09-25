@@ -1322,7 +1322,7 @@ class BibleScreenTest {
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
-        composeTestRule.onNodeWithContentDescription("Copy").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Copy").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Share").performScrollTo().assertIsDisplayed()
     }
 
@@ -1426,7 +1426,7 @@ class BibleScreenTest {
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
-        composeTestRule.onNodeWithContentDescription("Copy").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Copy").performScrollTo().assertIsDisplayed()
 
         composeTestRule.onNodeWithTag("verse_action_sheet").performTouchInput {
             swipeDown(startY = 0f, endY = height.toFloat())

@@ -1,6 +1,6 @@
 package com.youversion.platform.reader.sheets
 
-import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -9,6 +9,7 @@ import androidx.compose.ui.test.performClick
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.Charcoal
 import com.youversion.platform.ui.theme.PureWhite
+import com.youversion.platform.ui.theme.TrueBlack
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -183,11 +184,41 @@ class BibleReaderVerseActionSheetTest {
     }
 
     @Test
-    fun `swatchColor composites the dimmed color over the reader background on a dark theme`() {
+    fun `swatchColor mixes the palette color into the reader background on a dark theme`() {
         val swatchColor = HighlightColor.Yellow.swatchColor(Charcoal)
-        val dimmed = HighlightColor.Yellow.color.copy(alpha = Charcoal.highlightAlpha)
 
         assertEquals(1f, swatchColor.alpha)
-        assertEquals(dimmed.compositeOver(Charcoal.background), swatchColor)
+        assertEquals((255f * 0.2f + 43f * 0.8f) / 255f, swatchColor.red, absoluteTolerance = 0.005f)
+        assertEquals((236f * 0.2f + 48f * 0.8f) / 255f, swatchColor.green, absoluteTolerance = 0.005f)
+        assertEquals((91f * 0.2f + 49f * 0.8f) / 255f, swatchColor.blue, absoluteTolerance = 0.005f)
+    }
+
+    @Test
+    fun `swatchColor lets more of the palette color through on the black theme`() {
+        val swatchColor = HighlightColor.Yellow.swatchColor(TrueBlack)
+
+        assertEquals((255f * 0.25f + 18f * 0.75f) / 255f, swatchColor.red, absoluteTolerance = 0.005f)
+        assertEquals((236f * 0.25f + 18f * 0.75f) / 255f, swatchColor.green, absoluteTolerance = 0.005f)
+        assertEquals((91f * 0.25f + 18f * 0.75f) / 255f, swatchColor.blue, absoluteTolerance = 0.005f)
+    }
+
+    // ----- Palette
+
+    @Test
+    fun `the palette offers the six default highlight colors`() {
+        assertEquals(
+            listOf("ffec5b", "b4ffc1", "bbf4ff", "ffdca7", "ffcff8", "dfdcff"),
+            HighlightColor.entries.map { it.hexColor },
+        )
+    }
+
+    @Test
+    fun `each palette entry renders the color it stores`() {
+        HighlightColor.entries.forEach { highlightColor ->
+            assertEquals(
+                Color(0xFF000000L or highlightColor.hexColor.toLong(radix = 16)),
+                highlightColor.color,
+            )
+        }
     }
 }

@@ -73,4 +73,5 @@ val TrueBlack =
     darkReaderColorScheme(
         background = Color(0xFF121212),
         foreground = Color.White,
+        highlightMixRatio = 0.25f,
     )

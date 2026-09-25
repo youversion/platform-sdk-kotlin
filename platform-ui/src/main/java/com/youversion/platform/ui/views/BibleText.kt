@@ -34,6 +34,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -57,6 +58,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.theme.ReaderColorScheme
 import com.youversion.platform.ui.theme.UntitledSerif
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
@@ -83,7 +85,13 @@ data class BibleTextOptions(
     val lineSpacingFraction: Float? = null,
     val paragraphSpacing: TextUnit? = null,
     val textColor: Color? = null,
-    val wocColor: Color = Color(0xFFF04C59), // YouVersion red
+    /**
+     * The Words of Christ color; [Color.Unspecified] means the reader theme supplies it.
+     *
+     * Unset is spelled with the sentinel rather than null, unlike the nullable colors around it,
+     * to keep the property binary compatible for consumers compiled against an earlier release.
+     */
+    val wocColor: Color = Color.Unspecified,
     val renderHeadlines: Boolean = true,
     val renderVerseNumbers: Boolean = true,
     val footnoteMode: BibleTextFootnoteMode = BibleTextFootnoteMode.NONE,
@@ -126,6 +134,10 @@ data class BibleTextOptions(
     /** Extra leading in the same units as [fontSize], used to pad a block's bottom margin. */
     internal val extraLeading: Float
         get() = fontSize.value * (lineSpacingFraction ?: DEFAULT_LINE_SPACING_FRACTION)
+
+    /** [wocColor] when it is set, otherwise the Words of Christ color [readerColorScheme] supplies. */
+    internal fun resolvedWordsOfChristColor(readerColorScheme: ReaderColorScheme): Color =
+        wocColor.takeIf { it.isSpecified } ?: readerColorScheme.wordsOfChristColor
 
     companion object {
         /** Extra leading applied when [lineSpacingFraction] is unset. */
@@ -279,22 +291,22 @@ internal fun AnnotatedString.dimmedOutside(
 
 /**
  * Resolves the cached highlights overlapping [reference] into the colors to draw behind the text,
- * applying [highlightAlpha] so that a dark reader theme dims them instead of letting them overwhelm
- * the text they sit behind.
+ * mixing each one into [readerColorScheme] so that a dark reader theme tones them down instead of
+ * letting them overwhelm the text they sit behind.
  *
  * Highlights whose stored color is not valid hex are dropped.
  */
 internal fun highlightColorsForReference(
     cachedHighlights: List<BibleHighlight>,
     reference: BibleReference,
-    highlightAlpha: Float,
+    readerColorScheme: ReaderColorScheme,
 ): Map<BibleReference, Color> =
     cachedHighlights
         .asSequence()
         .filter { it.bibleReference.overlaps(reference) }
         .mapNotNull { cached ->
             cached.hexColor.toHighlightColorOrNull()?.let { color ->
-                cached.bibleReference to color.copy(alpha = highlightAlpha)
+                cached.bibleReference to readerColorScheme.mixedHighlightColor(color)
             }
         }.toMap()
 
@@ -355,6 +367,10 @@ internal fun highlightLineSpan(
 /**
  * Parses a `#RRGGBB` or `#AARRGGBB` hex string (as stored on [com.youversion.platform.core.highlights.models.BibleHighlight.hexColor])
  * into a Compose [Color], or returns null when the string is not valid hex. Six-digit values are treated as fully opaque.
+ *
+ * An eight-digit value parses with its alpha, but every highlight goes through
+ * [ReaderColorScheme.mixedHighlightColor] before it is painted, which drops that alpha. So the alpha
+ * survives parsing and never reaches the page.
  */
 internal fun String.toHighlightColorOrNull(): Color? {
     val hex = removePrefix("#")

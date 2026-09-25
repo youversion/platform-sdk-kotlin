@@ -123,17 +123,18 @@ fun rememberBibleTextBlocksState(
         hadHighlightsAccess = hasHighlightsAccess
     }
 
-    val highlightAlpha = MaterialTheme.readerColorScheme.highlightAlpha
+    val readerColorScheme = MaterialTheme.readerColorScheme
+    val wordsOfChristColor = textOptions.resolvedWordsOfChristColor(readerColorScheme)
     val highlights =
-        remember(cachedHighlights, reference, highlightAlpha, hasHighlightsAccess) {
+        remember(cachedHighlights, reference, readerColorScheme, hasHighlightsAccess) {
             if (hasHighlightsAccess) {
-                highlightColorsForReference(cachedHighlights, reference, highlightAlpha)
+                highlightColorsForReference(cachedHighlights, reference, readerColorScheme)
             } else {
                 emptyMap()
             }
         }
 
-    LaunchedEffect(reference, textOptions) {
+    LaunchedEffect(reference, textOptions, wordsOfChristColor) {
         loadingPhase = BibleTextLoadingPhase.LOADING
         try {
             isVersionRightToLeft = versionRepository.version(reference.versionId).isRightToLeft
@@ -147,7 +148,7 @@ fun rememberBibleTextBlocksState(
                     renderHeadlines = textOptions.renderHeadlines,
                     footnoteMarker = textOptions.footnoteMarker,
                     textColor = textOptions.textColor ?: Color.Unspecified,
-                    wocColor = textOptions.wocColor,
+                    wocColor = wordsOfChristColor,
                     fonts = BibleTextFonts(fontFamily = textOptions.fontFamily, baseSize = textOptions.fontSize),
                 )
 

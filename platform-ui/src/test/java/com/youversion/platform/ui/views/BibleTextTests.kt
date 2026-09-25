@@ -42,6 +42,7 @@ import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.ui.theme.Charcoal
 import com.youversion.platform.ui.theme.PureWhite
+import com.youversion.platform.ui.theme.TrueBlack
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import com.youversion.platform.ui.views.rendering.BibleTextCategory
@@ -63,7 +64,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
-import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -1549,6 +1549,30 @@ class BibleTextTests {
         assertEquals(Color.Blue, ranges.first { it.first == 3 until 6 }.second)
     }
 
+    @Test
+    fun `resolvedWordsOfChristColor falls back to the light theme color when wocColor is unspecified`() {
+        assertEquals(
+            Color(0xFF94000C),
+            BibleTextOptions().resolvedWordsOfChristColor(PureWhite),
+        )
+    }
+
+    @Test
+    fun `resolvedWordsOfChristColor falls back to the dark theme color when wocColor is unspecified`() {
+        assertEquals(
+            Color(0xFFE4BFC2),
+            BibleTextOptions().resolvedWordsOfChristColor(Charcoal),
+        )
+    }
+
+    @Test
+    fun `resolvedWordsOfChristColor keeps an explicit wocColor on either theme`() {
+        val options = BibleTextOptions(wocColor = Color.Red)
+
+        assertEquals(Color.Red, options.resolvedWordsOfChristColor(PureWhite))
+        assertEquals(Color.Red, options.resolvedWordsOfChristColor(Charcoal))
+    }
+
     private fun cachedHighlight(
         verse: Int,
         hexColor: String,
@@ -1558,54 +1582,106 @@ class BibleTextTests {
     )
 
     @Test
-    fun `highlightColorsForReference keeps highlights at full strength on a light theme`() {
+    fun `highlightColorsForReference leaves highlights unmixed on a light theme`() {
         val colors =
             highlightColorsForReference(
-                cachedHighlights = listOf(cachedHighlight(verse = 1, hexColor = "#fffe00")),
+                cachedHighlights = listOf(cachedHighlight(verse = 1, hexColor = "#ffec5b")),
                 reference = chapterReference,
-                highlightAlpha = PureWhite.highlightAlpha,
+                readerColorScheme = PureWhite,
             )
 
-        assertEquals(Color(0xFFFFFE00), colors.values.single())
+        assertEquals(Color(0xFFFFEC5B), colors.values.single())
     }
 
     @Test
-    fun `highlightColorsForReference dims highlights on a dark theme without shifting their hue`() {
+    fun `highlightColorsForReference mixes highlights into the background on a dark theme`() {
         val colors =
             highlightColorsForReference(
-                cachedHighlights = listOf(cachedHighlight(verse = 1, hexColor = "#fffe00")),
+                cachedHighlights = listOf(cachedHighlight(verse = 1, hexColor = "#ffec5b")),
                 reference = chapterReference,
-                highlightAlpha = Charcoal.highlightAlpha,
+                readerColorScheme = Charcoal,
             )
 
-        val dimmed = colors.values.single()
-        val palette = Color(0xFFFFFE00)
-        assertEquals(
-            0.3f,
-            dimmed.alpha,
-            absoluteTolerance = 0.01f,
-            message = "Compose quantizes the stored alpha to 8 bits, so 0.3f round-trips as 77/255",
-        )
-        assertEquals(palette.red, dimmed.red)
-        assertEquals(palette.green, dimmed.green)
-        assertEquals(palette.blue, dimmed.blue)
+        val mixed = colors.values.single()
+        assertEquals(1f, mixed.alpha)
+        assertEquals((255f * 0.2f + 43f * 0.8f) / 255f, mixed.red, absoluteTolerance = 0.005f)
+        assertEquals((236f * 0.2f + 48f * 0.8f) / 255f, mixed.green, absoluteTolerance = 0.005f)
+        assertEquals((91f * 0.2f + 49f * 0.8f) / 255f, mixed.blue, absoluteTolerance = 0.005f)
     }
 
     @Test
-    fun `highlightColorsForReference dims each verse independently and keeps them distinguishable`() {
+    fun `highlightColorsForReference lets more of the highlight through on the black theme`() {
+        val colors =
+            highlightColorsForReference(
+                cachedHighlights = listOf(cachedHighlight(verse = 1, hexColor = "#ffec5b")),
+                reference = chapterReference,
+                readerColorScheme = TrueBlack,
+            )
+
+        val mixed = colors.values.single()
+        assertEquals((255f * 0.25f + 18f * 0.75f) / 255f, mixed.red, absoluteTolerance = 0.005f)
+        assertEquals((236f * 0.25f + 18f * 0.75f) / 255f, mixed.green, absoluteTolerance = 0.005f)
+        assertEquals((91f * 0.25f + 18f * 0.75f) / 255f, mixed.blue, absoluteTolerance = 0.005f)
+    }
+
+    @Test
+    fun `highlightColorsForReference mixes colors that are not in the default palette`() {
+        val colors =
+            highlightColorsForReference(
+                cachedHighlights = listOf(cachedHighlight(verse = 1, hexColor = "#3366ff")),
+                reference = chapterReference,
+                readerColorScheme = Charcoal,
+            )
+
+        val mixed = colors.values.single()
+        assertEquals((51f * 0.2f + 43f * 0.8f) / 255f, mixed.red, absoluteTolerance = 0.005f)
+        assertEquals((102f * 0.2f + 48f * 0.8f) / 255f, mixed.green, absoluteTolerance = 0.005f)
+        assertEquals((255f * 0.2f + 49f * 0.8f) / 255f, mixed.blue, absoluteTolerance = 0.005f)
+    }
+
+    @Test
+    fun `highlightColorsForReference drops the alpha of an eight digit color on a light theme`() {
+        val colors =
+            highlightColorsForReference(
+                cachedHighlights = listOf(cachedHighlight(verse = 1, hexColor = "#80ff0000")),
+                reference = chapterReference,
+                readerColorScheme = PureWhite,
+            )
+
+        assertEquals(Color(0xFFFF0000), colors.values.single())
+    }
+
+    @Test
+    fun `highlightColorsForReference mixes an eight digit color at the full ratio on a dark theme`() {
+        val colors =
+            highlightColorsForReference(
+                cachedHighlights = listOf(cachedHighlight(verse = 1, hexColor = "#80ff0000")),
+                reference = chapterReference,
+                readerColorScheme = Charcoal,
+            )
+
+        val mixed = colors.values.single()
+        assertEquals(1f, mixed.alpha)
+        assertEquals((255f * 0.2f + 43f * 0.8f) / 255f, mixed.red, absoluteTolerance = 0.005f)
+        assertEquals((0f * 0.2f + 48f * 0.8f) / 255f, mixed.green, absoluteTolerance = 0.005f)
+        assertEquals((0f * 0.2f + 49f * 0.8f) / 255f, mixed.blue, absoluteTolerance = 0.005f)
+    }
+
+    @Test
+    fun `highlightColorsForReference mixes each verse independently and keeps them distinguishable`() {
         val colors =
             highlightColorsForReference(
                 cachedHighlights =
                     listOf(
-                        cachedHighlight(verse = 1, hexColor = "#fffe00"),
-                        cachedHighlight(verse = 2, hexColor = "#5dff79"),
+                        cachedHighlight(verse = 1, hexColor = "#ffec5b"),
+                        cachedHighlight(verse = 2, hexColor = "#b4ffc1"),
                     ),
                 reference = chapterReference,
-                highlightAlpha = Charcoal.highlightAlpha,
+                readerColorScheme = Charcoal,
             )
 
         assertEquals(2, colors.size)
-        assertTrue(colors.values.all { abs(it.alpha - 0.3f) < 0.01f })
+        assertTrue(colors.values.all { it.alpha == 1f })
         assertEquals(2, colors.values.toSet().size)
     }
 

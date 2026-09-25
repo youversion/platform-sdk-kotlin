@@ -27,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -129,9 +128,8 @@ private fun HighlightColorPicker(
 /**
  * A single swatch in the highlight color picker.
  *
- * The swatch is composited over the reader background so it shows the color the highlight will
- * actually be on the page; the dimmed color on its own would read differently against the sheet
- * behind it.
+ * The swatch is mixed into the reader background so it shows the color the highlight will actually
+ * be on the page; the palette color on its own would read differently against the sheet behind it.
  */
 @Composable
 private fun HighlightColorButton(
@@ -181,13 +179,11 @@ private fun HighlightColorButton(
 
 /**
  * Resolves the palette color of this highlight into the color its picker swatch is filled with,
- * dimming it to the scheme's highlight opacity and compositing it over the reader background so the
- * swatch shows the color the highlight will actually be on the page.
+ * mixing it into the reader background the same way the verse fill is so the swatch shows the color
+ * the highlight will actually be on the page.
  */
 internal fun HighlightColor.swatchColor(readerColorScheme: ReaderColorScheme): Color =
-    color
-        .copy(alpha = readerColorScheme.highlightAlpha)
-        .compositeOver(readerColorScheme.background)
+    readerColorScheme.mixedHighlightColor(color)
 
 @Composable
 private fun VerseActionButton(

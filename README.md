@@ -433,12 +433,12 @@ Apps using only `platform-core` can read and write highlights directly through `
 val highlights = YouVersionApi.highlights.highlights(versionId = 111, passageId = "JHN.3")
 
 // Create, recolor, and remove a highlight on a single verse
-YouVersionApi.highlights.createHighlight(versionId = 111, passageId = "JHN.3.16", color = "fffe00")
-YouVersionApi.highlights.updateHighlight(versionId = 111, passageId = "JHN.3.16", color = "5dff79")
+YouVersionApi.highlights.createHighlight(versionId = 111, passageId = "JHN.3.16", color = "ffec5b")
+YouVersionApi.highlights.updateHighlight(versionId = 111, passageId = "JHN.3.16", color = "b4ffc1")
 YouVersionApi.highlights.deleteHighlight(versionId = 111, passageId = "JHN.3.16")
 ```
 
-Colors are hex strings without a leading `#`. The palette the reader offers is `fffe00` (yellow), `5dff79` (green), `00d6ff` (cyan), `ffc66f` (orange), and `ff95ef` (pink), matching the Swift SDK.
+Colors are hex strings without a leading `#`. The palette the reader offers is `ffec5b` (yellow), `b4ffc1` (green), `bbf4ff` (blue), `ffdca7` (orange), `ffcff8` (pink), and `dfdcff` (purple). The reader mixes whichever color it is given — palette or not — into the active theme background before drawing it, so highlights stay legible on the dark themes.
 
 All four calls throw `YouVersionNetworkException` with reason `NOT_PERMITTED` when the user has not granted highlights access; that request will not succeed on retry. The read call also throws `MISSING_AUTHENTICATION` when the request was unauthenticated, which a sign-in or token refresh may resolve. The create, update, and delete calls report an unauthenticated request as a `false` return instead of throwing, so check their `Boolean` result too — `false` means the write did not happen.
 
