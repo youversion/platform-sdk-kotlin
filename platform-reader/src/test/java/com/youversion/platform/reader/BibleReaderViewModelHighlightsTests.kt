@@ -483,14 +483,14 @@ class BibleReaderViewModelHighlightsTests {
     @Test
     fun `different colors across selected verses are each removable and all remain recolorable`() {
         highlight(verseOne, HighlightColor.Yellow.hexColor)
-        highlight(verseTwo, HighlightColor.Cyan.hexColor)
+        highlight(verseTwo, HighlightColor.Blue.hexColor)
         selectVerses(verseOne, verseTwo)
 
         assertTrue(viewModel.isColorPresentOnAnySelectedVerses(HighlightColor.Yellow.hexColor))
-        assertTrue(viewModel.isColorPresentOnAnySelectedVerses(HighlightColor.Cyan.hexColor))
+        assertTrue(viewModel.isColorPresentOnAnySelectedVerses(HighlightColor.Blue.hexColor))
 
         assertFalse(viewModel.isColorPresentOnAllSelectedVerses(HighlightColor.Yellow.hexColor))
-        assertFalse(viewModel.isColorPresentOnAllSelectedVerses(HighlightColor.Cyan.hexColor))
+        assertFalse(viewModel.isColorPresentOnAllSelectedVerses(HighlightColor.Blue.hexColor))
 
         assertFalse(viewModel.isColorPresentOnAnySelectedVerses(HighlightColor.Pink.hexColor))
     }

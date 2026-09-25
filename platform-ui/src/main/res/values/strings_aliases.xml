@@ -4,11 +4,18 @@
     <string name="active_language_versions_header">@string/yv_active_language_versions_header</string>
     <string name="agree_and_download">@string/yv_agree_and_download</string>
     <string name="all">@string/yv_all</string>
+    <string name="all_languages_heading">@string/yv_all_languages_heading</string>
+    <string name="all_languages_tab">@string/yv_all_languages_tab</string>
+    <string name="all_versions_heading">@string/yv_all_versions_heading</string>
     <string name="alphabetical">@string/yv_alphabetical</string>
     <string name="back">@string/yv_back</string>
     <string name="back_button">@string/yv_back_button</string>
+    <string name="back_to_bible_versions_aria_label">@string/yv_back_to_bible_versions_aria_label</string>
     <string name="bible_app">@string/yv_bible_app</string>
     <string name="bible_card_unavailable_reference">@string/yv_bible_card_unavailable_reference</string>
+    <string name="bible_search_clear_aria_label">@string/yv_bible_search_clear_aria_label</string>
+    <string name="bible_search_recent_heading">@string/yv_bible_search_recent_heading</string>
+    <string name="bible_search_trending_heading">@string/yv_bible_search_trending_heading</string>
     <string name="bible_version_details_content_desc">@string/yv_bible_version_details_content_desc</string>
     <string name="bible_version_load_error">@string/yv_bible_version_load_error</string>
     <string name="bible_versions_heading">@string/yv_bible_versions_heading</string>
@@ -38,6 +45,8 @@
     <string name="next_chapter_aria_label">@string/yv_next_chapter_aria_label</string>
     <string name="no_bible_search_results">@string/yv_no_bible_search_results</string>
     <string name="no_chapters_available">@string/yv_no_chapters_available</string>
+    <string name="no_language_search_results">@string/yv_no_language_search_results</string>
+    <string name="no_regional_languages_available">@string/yv_no_regional_languages_available</string>
     <string name="no_versions_found">@string/yv_no_versions_found</string>
     <string name="offline_connection_lost_message">@string/yv_offline_connection_lost_message</string>
     <string name="offline_download_agreement">@string/yv_offline_download_agreement</string>
@@ -49,6 +58,7 @@
     <string name="placeholder_version_unavailable">@string/yv_placeholder_version_unavailable</string>
     <string name="placeholder_version_unavailable_icon_content_desc">@string/yv_placeholder_version_unavailable_icon_content_desc</string>
     <string name="previous_chapter_aria_label">@string/yv_previous_chapter_aria_label</string>
+    <string name="recently_used_versions_heading">@string/yv_recently_used_versions_heading</string>
     <string name="regional">@string/yv_regional</string>
     <string name="retry">@string/yv_retry</string>
     <string name="search">@string/yv_search</string>

@@ -19,7 +19,7 @@ internal enum class HighlightColor(
 ) {
     Yellow(Color(0xFFFFFE00), "fffe00", R.string.highlight_color_yellow),
     Green(Color(0xFF5DFF79), "5dff79", R.string.highlight_color_green),
-    Cyan(Color(0xFF00D6FF), "00d6ff", R.string.highlight_color_cyan),
+    Blue(Color(0xFF00D6FF), "00d6ff", R.string.highlight_color_blue),
     Orange(Color(0xFFFFC66F), "ffc66f", R.string.highlight_color_orange),
     Pink(Color(0xFFFF95EF), "ff95ef", R.string.highlight_color_pink),
 }
