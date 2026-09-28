@@ -4,12 +4,12 @@ import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
-import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.search.models.SearchQuery
+import com.youversion.platform.reader.domain.SearchRepository
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -30,6 +30,8 @@ private const val SUGGESTION_DEBOUNCE_MILLIS = 300L
 /** The language range asked for on behalf of a version that declares no language of its own. */
 private const val ANY_LANGUAGE_RANGE = "*"
 
+private const val MAX_TRENDING_QUERIES = 3
+
 /** Owns everything about a search run from the reader, scoped to the reader composable that creates it. */
 internal class BibleReaderSearchViewModel : ViewModel() {
     private val _state = MutableStateFlow(State())
@@ -47,6 +49,11 @@ internal class BibleReaderSearchViewModel : ViewModel() {
      */
     @VisibleForTesting
     internal var bibleChapterRepository: () -> BibleChapterRepository = {
+        PlatformKoinGraph.koinApplication.koin.get()
+    }
+
+    @VisibleForTesting
+    internal var searchRepository: () -> SearchRepository = {
         PlatformKoinGraph.koinApplication.koin.get()
     }
 
@@ -101,12 +108,19 @@ internal class BibleReaderSearchViewModel : ViewModel() {
     private fun clearSuggestedQueries() {
         suggestedQueriesJob?.cancel()
         suggestedQueriesJob = null
-        _state.update { it.copy(suggestedQueries = emptyList(), isLoadingSuggestedQueries = false) }
+        _state.update {
+            it.copy(
+                suggestedQueries = emptyList(),
+                trendingQueries = emptyList(),
+                recentQueries = emptyList(),
+                isLoadingSuggestedQueries = false,
+            )
+        }
     }
 
     /**
-     * Offers the reader somewhere to start: what others are searching for while the field is empty, and what the
-     * platform makes of what they have entered once it is not.
+     * Offers the reader somewhere to start: what they and others have searched for while the field is empty, and
+     * what the platform makes of what they have entered once it is not.
      *
      * A reader who has typed nothing is not made to wait, but one mid-word is: the ask is held back until they have
      * stopped, and every keystroke cancels the job the one before it started, so a query is asked about once.
@@ -123,6 +137,17 @@ internal class BibleReaderSearchViewModel : ViewModel() {
                 ?.languageTag
                 ?.takeIf { it.isNotBlank() } ?: ANY_LANGUAGE_RANGE
 
+        _state.update {
+            it.copy(
+                recentQueries =
+                    if (query.isEmpty()) {
+                        searchRepository().recentSearches.map { text -> SearchQuery(text, source = null) }
+                    } else {
+                        emptyList()
+                    },
+            )
+        }
+
         suggestedQueriesJob =
             viewModelScope.launch {
                 try {
@@ -130,22 +155,24 @@ internal class BibleReaderSearchViewModel : ViewModel() {
 
                     _state.update { it.copy(isLoadingSuggestedQueries = true) }
 
-                    val queries =
-                        if (query.isEmpty()) {
-                            YouVersionApi.search.trendingQueries(languageRanges = listOf(languageRange))
-                        } else {
-                            YouVersionApi.search.suggestedQueries(
-                                query = query,
-                                languageRanges = listOf(languageRange),
-                            )
-                        }
-
-                    _state.update { it.copy(suggestedQueries = queries, isLoadingSuggestedQueries = false) }
+                    if (query.isEmpty()) {
+                        val queries = searchRepository().trendingQueries(languageRange).take(MAX_TRENDING_QUERIES)
+                        _state.update { it.copy(trendingQueries = queries, isLoadingSuggestedQueries = false) }
+                    } else {
+                        val queries = searchRepository().suggestedQueries(query, languageRange)
+                        _state.update { it.copy(suggestedQueries = queries, isLoadingSuggestedQueries = false) }
+                    }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     Logger.e("Error offering queries alongside \"$query\"", e)
-                    _state.update { it.copy(suggestedQueries = emptyList(), isLoadingSuggestedQueries = false) }
+                    _state.update {
+                        it.copy(
+                            suggestedQueries = emptyList(),
+                            trendingQueries = emptyList(),
+                            isLoadingSuggestedQueries = false,
+                        )
+                    }
                 }
             }
     }
@@ -161,6 +188,7 @@ internal class BibleReaderSearchViewModel : ViewModel() {
         }
 
         clearSuggestedQueries()
+        searchRepository().recordRecentSearch(query)
 
         // A completed status means the results for this exact query and version are still on
         // screen, since changing either returns the status to idle. Asking again would only buy
@@ -173,7 +201,7 @@ internal class BibleReaderSearchViewModel : ViewModel() {
         searchJob =
             viewModelScope.launch {
                 try {
-                    val found = YouVersionApi.search.verses(query = query, bibleId = version.id)
+                    val found = searchRepository().verses(query = query, bibleId = version.id)
                     _state.update {
                         it.copy(
                             status = SearchStatus.COMPLETED,
@@ -214,7 +242,7 @@ internal class BibleReaderSearchViewModel : ViewModel() {
             viewModelScope.launch {
                 try {
                     val found =
-                        YouVersionApi.search.verses(
+                        searchRepository().verses(
                             query = query,
                             bibleId = version.id,
                             pageToken = pageToken,
@@ -290,6 +318,8 @@ internal class BibleReaderSearchViewModel : ViewModel() {
         val isLoadingNextPage: Boolean = false,
         val hasNextPageLoadError: Boolean = false,
         val suggestedQueries: List<SearchQuery> = emptyList(),
+        val trendingQueries: List<SearchQuery> = emptyList(),
+        val recentQueries: List<SearchQuery> = emptyList(),
         val isLoadingSuggestedQueries: Boolean = false,
     )
 

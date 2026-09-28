@@ -11,6 +11,7 @@ import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
+import com.youversion.platform.reader.domain.SearchRepository
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import io.mockk.every
@@ -116,6 +117,16 @@ class PlatformReaderKoinModuleTest {
 
         val first = koin.get<ShareManager>()
         val second = koin.get<ShareManager>()
+
+        assertNotSame(first, second)
+    }
+
+    @Test
+    fun `SearchRepository resolves as factory with new instance each time`() {
+        val koin = createKoin()
+
+        val first = koin.get<SearchRepository>()
+        val second = koin.get<SearchRepository>()
 
         assertNotSame(first, second)
     }

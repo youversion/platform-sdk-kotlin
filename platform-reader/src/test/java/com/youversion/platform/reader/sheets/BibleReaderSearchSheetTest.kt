@@ -69,6 +69,8 @@ class BibleReaderSearchSheetTest {
         isLoadingNextPage: Boolean = false,
         hasNextPageLoadError: Boolean = false,
         suggestedQueries: List<SearchQuery> = emptyList(),
+        trendingQueries: List<SearchQuery> = emptyList(),
+        recentQueries: List<SearchQuery> = emptyList(),
         isLoadingSuggestedQueries: Boolean = false,
     ) {
         loadingNextPage.value = isLoadingNextPage
@@ -95,6 +97,8 @@ class BibleReaderSearchSheetTest {
                             isLoadingNextPage = loadingNextPage.value,
                             hasNextPageLoadError = nextPageLoadError.value,
                             suggestedQueries = suggestedQueries,
+                            trendingQueries = trendingQueries,
+                            recentQueries = recentQueries,
                             isLoadingSuggestedQueries = isLoadingSuggestedQueries,
                         ),
                 )
@@ -373,6 +377,56 @@ class BibleReaderSearchSheetTest {
     }
 
     @Test
+    fun `recent and trending searches are each listed under their own heading`() {
+        renderSheet(recentQueries = listOf(love), trendingQueries = listOf(peace))
+
+        composeTestRule.onNodeWithText(RECENT_HEADING).assertIsDisplayed()
+        composeTestRule.onNodeWithText(love.text).assertIsDisplayed()
+        composeTestRule.onNodeWithText(TRENDING_HEADING).assertIsDisplayed()
+        composeTestRule.onNodeWithText(peace.text).assertIsDisplayed()
+    }
+
+    @Test
+    fun `trending searches are listed above recent searches`() {
+        renderSheet(recentQueries = listOf(love), trendingQueries = listOf(peace))
+
+        val trendingTop = composeTestRule.onNodeWithText(TRENDING_HEADING).getUnclippedBoundsInRoot().top
+        val recentTop = composeTestRule.onNodeWithText(RECENT_HEADING).getUnclippedBoundsInRoot().top
+
+        assertTrue(trendingTop < recentTop)
+    }
+
+    @Test
+    fun `a section with nothing in it has no heading`() {
+        renderSheet(trendingQueries = listOf(peace))
+
+        composeTestRule.onNodeWithText(RECENT_HEADING).assertDoesNotExist()
+        composeTestRule.onNodeWithText(TRENDING_HEADING).assertIsDisplayed()
+    }
+
+    @Test
+    fun `typed suggestions are listed without a heading`() {
+        renderSheet(suggestedQueries = listOf(love))
+
+        composeTestRule.onNodeWithText(RECENT_HEADING).assertDoesNotExist()
+        composeTestRule.onNodeWithText(TRENDING_HEADING).assertDoesNotExist()
+    }
+
+    @Test
+    fun `a recent search is taken up as the search and drops the keyboard`() {
+        var taken: SearchQuery? = null
+        renderSheet(
+            onSelectSuggestedQuery = { taken = it },
+            recentQueries = listOf(love),
+        )
+
+        composeTestRule.onNodeWithText(love.text).performClick()
+
+        assertEquals(love, taken)
+        composeTestRule.onNode(hasSetTextAction()).assertIsNotFocused()
+    }
+
+    @Test
     fun `a fetch of the queries on offer is announced`() {
         renderSheet(isLoadingSuggestedQueries = true)
 
@@ -432,6 +486,8 @@ class BibleReaderSearchSheetTest {
 
         const val FAILURE_MESSAGE = "Error"
         const val EMPTY_MESSAGE = "We're sorry, there are no Bible results for this search."
+        const val RECENT_HEADING = "Recent Searches"
+        const val TRENDING_HEADING = "Trending Searches"
 
         const val JOHN_3_16_TEXT = "For God so loved the world"
 

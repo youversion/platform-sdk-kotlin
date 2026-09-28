@@ -1,5 +1,6 @@
 package com.youversion.platform.reader.sheets
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,10 +17,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
@@ -59,6 +63,7 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.reader.BibleReaderSearchViewModel.SearchStatus
 import com.youversion.platform.reader.BibleReaderSearchViewModel.State
+import com.youversion.platform.reader.icons.Trending
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.Cream
 import com.youversion.platform.ui.theme.readerColorScheme
@@ -198,7 +203,9 @@ internal fun BibleReaderSearchSheet(
             when (state.status) {
                 SearchStatus.IDLE ->
                     SuggestedQueries(
-                        queries = state.suggestedQueries,
+                        recentQueries = state.recentQueries,
+                        trendingQueries = state.trendingQueries,
+                        suggestedQueries = state.suggestedQueries,
                         isLoading = state.isLoadingSuggestedQueries,
                         onSelectSuggestedQuery = onSelectSuggestedQuery,
                     )
@@ -412,19 +419,25 @@ private fun NextPageRetry(onLoadNextPage: () -> Unit) {
 }
 
 /**
- * Somewhere for a reader who has not searched yet to start: what other readers are searching while the field is
- * empty, and what the platform makes of what has been entered once it is not.
+ * Somewhere for a reader who has not searched yet to start: what they and other readers have searched for while the
+ * field is empty, each under its own heading, and what the platform makes of what has been entered once it is not.
  *
  * Taking one up drops the keyboard first, so the results it runs are on screen rather than behind it. The icon on
  * each row is decorative, the query itself being what the row says.
  */
 @Composable
 private fun SuggestedQueries(
-    queries: List<SearchQuery>,
+    recentQueries: List<SearchQuery>,
+    trendingQueries: List<SearchQuery>,
+    suggestedQueries: List<SearchQuery>,
     isLoading: Boolean,
     onSelectSuggestedQuery: (SearchQuery) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
+    val onSelect: (SearchQuery) -> Unit = {
+        focusManager.clearFocus()
+        onSelectSuggestedQuery(it)
+    }
 
     LazyColumn(
         contentPadding = PaddingValues(vertical = 8.dp),
@@ -434,36 +447,98 @@ private fun SuggestedQueries(
                 .padding(horizontal = 20.dp)
                 .testTag(SEARCH_SUGGESTED_QUERIES_TEST_TAG),
     ) {
-        items(queries) { query ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            focusManager.clearFocus()
-                            onSelectSuggestedQuery(query)
-                        }.padding(vertical = 14.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                    tint = MaterialTheme.readerColorScheme.readerTextMutedColor,
-                    modifier = Modifier.size(20.dp),
-                )
-
-                Text(
-                    text = query.text,
-                    style = BibleReaderTheme.typography.paragraphL,
-                    color = MaterialTheme.readerColorScheme.readerTextPrimaryColor,
-                )
-            }
-        }
+        querySection(
+            heading = UiR.string.bible_search_trending_heading,
+            queries = trendingQueries,
+            icon = Trending,
+            onSelect = onSelect,
+        )
+        querySection(
+            heading = UiR.string.bible_search_recent_heading,
+            queries = recentQueries,
+            icon = Icons.Default.History,
+            onSelect = onSelect,
+        )
+        querySection(
+            heading = null,
+            queries = suggestedQueries,
+            icon = Icons.Default.Search,
+            onSelect = onSelect,
+        )
 
         if (isLoading) {
             item { InlineSearchingIndicator() }
         }
+    }
+}
+
+private fun LazyListScope.querySection(
+    @StringRes heading: Int?,
+    queries: List<SearchQuery>,
+    icon: ImageVector,
+    onSelect: (SearchQuery) -> Unit,
+) {
+    if (queries.isEmpty()) return
+
+    if (heading != null) {
+        item {
+            Text(
+                text = stringResource(heading),
+                style = BibleReaderTheme.typography.headerS,
+                color = MaterialTheme.readerColorScheme.readerTextPrimaryColor,
+                modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
+            )
+        }
+    }
+    items(queries) { query ->
+        QueryRow(query = query, icon = icon, onSelect = onSelect)
+    }
+}
+
+@Composable
+private fun QueryRow(
+    query: SearchQuery,
+    icon: ImageVector,
+    onSelect: (SearchQuery) -> Unit,
+) {
+    val readerColorScheme = MaterialTheme.readerColorScheme
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable { onSelect(query) }
+                .padding(vertical = 14.dp),
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier =
+                Modifier
+                    .size(36.dp)
+                    .background(
+                        color = readerColorScheme.surfaceTertiaryColor,
+                        shape = CircleShape,
+                    ),
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint =
+                    if (readerColorScheme.isDark) {
+                        readerColorScheme.readerTextMutedColor
+                    } else {
+                        readerColorScheme.readerTextPrimaryColor
+                    },
+                modifier = Modifier.size(24.dp),
+            )
+        }
+
+        Text(
+            text = query.text,
+            style = BibleReaderTheme.typography.paragraphL,
+            color = readerColorScheme.readerTextPrimaryColor,
+        )
     }
 }
 

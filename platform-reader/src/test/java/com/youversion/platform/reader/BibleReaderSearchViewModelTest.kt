@@ -5,11 +5,13 @@ import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.domain.Storage
 import com.youversion.platform.core.search.api.SearchApi
 import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.core.search.models.VerseSearchResults
 import com.youversion.platform.reader.BibleReaderSearchViewModel.Action
 import com.youversion.platform.reader.BibleReaderSearchViewModel.SearchStatus
+import com.youversion.platform.reader.domain.SearchRepository
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -18,6 +20,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.spyk
 import io.mockk.unmockkObject
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -46,6 +49,17 @@ class BibleReaderSearchViewModelTest {
     private val searchApi = mockk<SearchApi>()
     private val viewModel = BibleReaderSearchViewModel()
 
+    private val savedStorage = mutableMapOf<String, String?>()
+    private val searchRepository =
+        spyk(
+            SearchRepository(
+                mockk<Storage> {
+                    every { getStringOrNull(any()) } answers { savedStorage[firstArg()] }
+                    every { putString(any(), any()) } answers { savedStorage[firstArg()] = secondArg() }
+                },
+            ),
+        )
+
     /**
      * The only cache holding the chapter, so every read of it is a chapter the repository had to go and get rather
      * than one it already had in memory.
@@ -70,6 +84,7 @@ class BibleReaderSearchViewModelTest {
                 persistentCache = chapterSource,
             )
         viewModel.bibleChapterRepository = { chapterRepository }
+        viewModel.searchRepository = { searchRepository }
     }
 
     @AfterTest
@@ -613,7 +628,80 @@ class BibleReaderSearchViewModelTest {
             viewModel.onAction(Action.OpenSearch(kjv))
             runCurrent()
 
-            assertEquals(listOf(love, peace), viewModel.state.value.suggestedQueries)
+            assertEquals(listOf(love, peace), viewModel.state.value.trendingQueries)
+            assertEquals(emptyList(), viewModel.state.value.suggestedQueries)
+        }
+
+    @Test
+    fun `only the top three trending searches are offered`() =
+        runTest(testDispatcher) {
+            val hope = SearchQuery("hope", source = null)
+            val joy = SearchQuery("joy", source = null)
+            stubTrending(listOf(love, peace, hope, joy))
+
+            viewModel.onAction(Action.OpenSearch(kjv))
+            runCurrent()
+
+            assertEquals(listOf(love, peace, hope), viewModel.state.value.trendingQueries)
+        }
+
+    @Test
+    fun `opening the sheet offers the reader's own recent searches without waiting`() {
+        searchRepository.recordRecentSearch("peace")
+        searchRepository.recordRecentSearch("love")
+
+        viewModel.onAction(Action.OpenSearch(kjv))
+
+        assertEquals(listOf(love, peace), viewModel.state.value.recentQueries)
+    }
+
+    @Test
+    fun `recent searches are taken away while typing and offered again once the field is cleared`() =
+        runTest(testDispatcher) {
+            searchRepository.recordRecentSearch("love")
+            viewModel.onAction(Action.OpenSearch(kjv))
+
+            viewModel.onAction(Action.SetQuery("pea"))
+            assertEquals(emptyList(), viewModel.state.value.recentQueries)
+
+            viewModel.onAction(Action.SetQuery(""))
+            assertEquals(listOf(love), viewModel.state.value.recentQueries)
+        }
+
+    @Test
+    fun `a submitted search is remembered as recent`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316))
+            viewModel.onAction(Action.OpenSearch(kjv))
+
+            submit(" love ")
+
+            verify(exactly = 1) { searchRepository.recordRecentSearch("love") }
+            assertEquals(listOf("love"), searchRepository.recentSearches)
+        }
+
+    @Test
+    fun `a tapped query is remembered as recent`() =
+        runTest(testDispatcher) {
+            stubTrending(listOf(love, peace))
+            stubSearch(listOf(john316))
+            viewModel.onAction(Action.OpenSearch(kjv))
+            runCurrent()
+
+            viewModel.onAction(Action.SelectSuggestedQuery(peace))
+            advanceUntilIdle()
+
+            assertEquals(listOf("peace"), searchRepository.recentSearches)
+        }
+
+    @Test
+    fun `an empty submit is not remembered`() =
+        runTest(testDispatcher) {
+            viewModel.onAction(Action.OpenSearch(kjv))
+
+            submit("   ")
+
+            verify(exactly = 0) { searchRepository.recordRecentSearch(any()) }
         }
 
     @Test
@@ -696,7 +784,7 @@ class BibleReaderSearchViewModelTest {
             viewModel.onAction(Action.OpenSearch(kjv))
             advanceUntilIdle()
 
-            assertEquals(emptyList(), viewModel.state.value.suggestedQueries)
+            assertEquals(emptyList(), viewModel.state.value.trendingQueries)
             assertFalse(viewModel.state.value.isLoadingSuggestedQueries)
             assertEquals(SearchStatus.IDLE, viewModel.state.value.status)
         }
@@ -731,6 +819,8 @@ class BibleReaderSearchViewModelTest {
             submit("love")
 
             assertEquals(emptyList(), viewModel.state.value.suggestedQueries)
+            assertEquals(emptyList(), viewModel.state.value.trendingQueries)
+            assertEquals(emptyList(), viewModel.state.value.recentQueries)
         }
 
     @Test
