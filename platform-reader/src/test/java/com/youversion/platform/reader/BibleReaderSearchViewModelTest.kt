@@ -4,12 +4,14 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.data.BibleVersionMemoryCache
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.domain.Storage
 import com.youversion.platform.core.search.api.SearchApi
 import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.core.search.models.VerseSearchResults
 import com.youversion.platform.reader.BibleReaderSearchViewModel.Action
+import com.youversion.platform.reader.BibleReaderSearchViewModel.CanonFilter
 import com.youversion.platform.reader.BibleReaderSearchViewModel.SearchStatus
 import com.youversion.platform.reader.domain.SearchRepository
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
@@ -839,6 +841,39 @@ class BibleReaderSearchViewModelTest {
             assertEquals(SearchStatus.COMPLETED, viewModel.state.value.status)
         }
 
+    @Test
+    fun `every result is listed while the filter is on both`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316, psalm231, tobit11))
+            viewModel.onAction(Action.OpenSearch(kjvWithBooks))
+            submit("love")
+
+            assertEquals(listOf(john316, psalm231, tobit11), viewModel.state.value.filteredResults)
+        }
+
+    @Test
+    fun `each testament filter lists only the results from its own books`() =
+        runTest(testDispatcher) {
+            stubSearch(listOf(john316, psalm231, tobit11))
+            viewModel.onAction(Action.OpenSearch(kjvWithBooks))
+            submit("love")
+
+            viewModel.onAction(Action.SetCanonFilter(CanonFilter.OLD_TESTAMENT))
+            assertEquals(listOf(psalm231), viewModel.state.value.filteredResults)
+
+            viewModel.onAction(Action.SetCanonFilter(CanonFilter.NEW_TESTAMENT))
+            assertEquals(listOf(john316), viewModel.state.value.filteredResults)
+        }
+
+    @Test
+    fun `OpenSearch puts the filter back to both`() {
+        viewModel.onAction(Action.SetCanonFilter(CanonFilter.NEW_TESTAMENT))
+
+        viewModel.onAction(Action.OpenSearch(kjvWithBooks))
+
+        assertEquals(CanonFilter.BOTH, viewModel.state.value.canonFilter)
+    }
+
     /** Types [query] and submits it, then drains whatever search that started. */
     private fun submit(query: String) {
         viewModel.onAction(Action.SetQuery(query))
@@ -926,6 +961,24 @@ class BibleReaderSearchViewModelTest {
         val john31 = BibleReference(versionId = 1, bookUSFM = "JHN", chapter = 3, verse = 1)
         val john316 = BibleReference(versionId = 1, bookUSFM = "JHN", chapter = 3, verse = 16)
         val psalm231 = BibleReference(versionId = 1, bookUSFM = "PSA", chapter = 23, verse = 1)
+        val tobit11 = BibleReference(versionId = 1, bookUSFM = "TOB", chapter = 1, verse = 1)
+
+        val kjvWithBooks =
+            BibleVersion(
+                id = 1,
+                abbreviation = "KJV",
+                books =
+                    listOf(
+                        book("JHN", "new_testament"),
+                        book("PSA", "old_testament"),
+                        book("TOB", "deuterocanon"),
+                    ),
+            )
+
+        fun book(
+            id: String,
+            canon: String,
+        ) = BibleBook(id = id, title = null, fullTitle = null, abbreviation = null, canon = canon, chapters = null)
 
         val john3Html =
             """

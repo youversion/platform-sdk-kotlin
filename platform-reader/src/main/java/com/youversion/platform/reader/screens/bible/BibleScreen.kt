@@ -596,6 +596,9 @@ internal fun BibleScreen(
                                         BibleReaderSearchViewModel.Action.SelectSuggestedQuery(query),
                                     )
                                 },
+                                onCanonFilterChange = { filter ->
+                                    searchViewModel.onAction(BibleReaderSearchViewModel.Action.SetCanonFilter(filter))
+                                },
                                 state = searchState,
                             )
                         }

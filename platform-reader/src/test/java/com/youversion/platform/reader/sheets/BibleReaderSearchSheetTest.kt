@@ -27,6 +27,7 @@ import com.youversion.platform.core.bibles.models.BibleChapter
 import com.youversion.platform.core.bibles.models.BibleVerse
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.search.models.SearchQuery
+import com.youversion.platform.reader.BibleReaderSearchViewModel.CanonFilter
 import com.youversion.platform.reader.BibleReaderSearchViewModel.SearchStatus
 import com.youversion.platform.reader.BibleReaderSearchViewModel.State
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
@@ -62,6 +63,7 @@ class BibleReaderSearchSheetTest {
         onSelectResult: (BibleReference) -> Unit = {},
         onLoadNextPage: () -> Unit = {},
         onSelectSuggestedQuery: (SearchQuery) -> Unit = {},
+        onCanonFilterChange: (CanonFilter) -> Unit = {},
         results: List<BibleReference> = emptyList(),
         searchVersion: BibleVersion? = kjv,
         status: SearchStatus = SearchStatus.IDLE,
@@ -72,6 +74,7 @@ class BibleReaderSearchSheetTest {
         trendingQueries: List<SearchQuery> = emptyList(),
         recentQueries: List<SearchQuery> = emptyList(),
         isLoadingSuggestedQueries: Boolean = false,
+        canonFilter: CanonFilter = CanonFilter.BOTH,
     ) {
         loadingNextPage.value = isLoadingNextPage
         nextPageLoadError.value = hasNextPageLoadError
@@ -86,6 +89,7 @@ class BibleReaderSearchSheetTest {
                     onSelectResult = onSelectResult,
                     onLoadNextPage = onLoadNextPage,
                     onSelectSuggestedQuery = onSelectSuggestedQuery,
+                    onCanonFilterChange = onCanonFilterChange,
                     state =
                         State(
                             query = query.value,
@@ -100,6 +104,7 @@ class BibleReaderSearchSheetTest {
                             trendingQueries = trendingQueries,
                             recentQueries = recentQueries,
                             isLoadingSuggestedQueries = isLoadingSuggestedQueries,
+                            canonFilter = canonFilter,
                         ),
                 )
             }
@@ -331,6 +336,74 @@ class BibleReaderSearchSheetTest {
         renderSheet(status = SearchStatus.COMPLETED)
 
         composeTestRule.onNodeWithText(EMPTY_MESSAGE).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Filters").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the filters are hidden until Filters is tapped`() {
+        renderSheet(results = listOf(john316), status = SearchStatus.COMPLETED)
+
+        composeTestRule.onNodeWithText("Old Testament").assertDoesNotExist()
+
+        composeTestRule.onNodeWithText("Filters").performClick()
+
+        composeTestRule.onNodeWithText("Old Testament").assertIsDisplayed()
+        composeTestRule.onNodeWithText("New Testament").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Both").assertIsDisplayed()
+    }
+
+    @Test
+    fun `tapping a filter reports it`() {
+        var chosen: CanonFilter? = null
+        renderSheet(
+            onCanonFilterChange = { chosen = it },
+            results = listOf(john316),
+            status = SearchStatus.COMPLETED,
+        )
+
+        composeTestRule.onNodeWithText("Filters").performClick()
+        composeTestRule.onNodeWithText("Old Testament").performClick()
+
+        assertEquals(CanonFilter.OLD_TESTAMENT, chosen)
+    }
+
+    @Test
+    fun `only the results from the chosen testament are listed`() {
+        renderSheet(
+            results = listOf(john316, psalm231),
+            status = SearchStatus.COMPLETED,
+            canonFilter = CanonFilter.OLD_TESTAMENT,
+        )
+
+        composeTestRule.onNodeWithText("PSALMS 23:1").assertIsDisplayed()
+        composeTestRule.onNodeWithText("JOHN 3:16").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a filter that leaves nothing with no page coming says so and keeps the filters`() {
+        renderSheet(
+            results = listOf(psalm231),
+            status = SearchStatus.COMPLETED,
+            canonFilter = CanonFilter.NEW_TESTAMENT,
+        )
+
+        composeTestRule.onNodeWithTag(SEARCH_MESSAGE_TEST_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Filters").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a filter that leaves nothing asks for the next page while one is coming`() {
+        var asked = false
+        renderSheet(
+            onLoadNextPage = { asked = true },
+            results = listOf(psalm231),
+            status = SearchStatus.COMPLETED,
+            nextPageToken = "next",
+            canonFilter = CanonFilter.NEW_TESTAMENT,
+        )
+
+        composeTestRule.waitUntil { asked }
+        composeTestRule.onNodeWithTag(SEARCH_MESSAGE_TEST_TAG).assertDoesNotExist()
     }
 
     @Test

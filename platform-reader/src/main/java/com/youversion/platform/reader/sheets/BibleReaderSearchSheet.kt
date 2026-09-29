@@ -3,6 +3,7 @@ package com.youversion.platform.reader.sheets
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,9 +21,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
@@ -30,6 +33,8 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,14 +45,18 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
@@ -61,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.search.models.SearchQuery
+import com.youversion.platform.reader.BibleReaderSearchViewModel.CanonFilter
 import com.youversion.platform.reader.BibleReaderSearchViewModel.SearchStatus
 import com.youversion.platform.reader.BibleReaderSearchViewModel.State
 import com.youversion.platform.reader.icons.Trending
@@ -108,6 +118,7 @@ internal fun BibleReaderSearchSheet(
     onSelectResult: (BibleReference) -> Unit,
     onLoadNextPage: () -> Unit,
     onSelectSuggestedQuery: (SearchQuery) -> Unit,
+    onCanonFilterChange: (CanonFilter) -> Unit,
     state: State,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -225,17 +236,29 @@ internal fun BibleReaderSearchSheet(
                             message = stringResource(UiR.string.no_bible_search_results),
                         )
                     } else {
-                        SearchResults(
-                            results = state.results,
-                            resultTextByPassageId = state.resultTextByPassageId,
-                            searchVersion = state.searchVersion,
-                            nextPageToken = state.nextPageToken,
-                            isLoadingNextPage = state.isLoadingNextPage,
-                            hasNextPageLoadError = state.hasNextPageLoadError,
-                            onRequestResultText = onRequestResultText,
-                            onSelectResult = selectResult,
-                            onLoadNextPage = onLoadNextPage,
+                        ResultsHeader(
+                            canonFilter = state.canonFilter,
+                            onCanonFilterChange = onCanonFilterChange,
                         )
+
+                        if (state.filteredResults.isEmpty() && state.nextPageToken.isNullOrEmpty()) {
+                            SearchMessage(
+                                imageVector = Icons.Default.Search,
+                                message = stringResource(UiR.string.no_bible_search_results),
+                            )
+                        } else {
+                            SearchResults(
+                                results = state.filteredResults,
+                                resultTextByPassageId = state.resultTextByPassageId,
+                                searchVersion = state.searchVersion,
+                                nextPageToken = state.nextPageToken,
+                                isLoadingNextPage = state.isLoadingNextPage,
+                                hasNextPageLoadError = state.hasNextPageLoadError,
+                                onRequestResultText = onRequestResultText,
+                                onSelectResult = selectResult,
+                                onLoadNextPage = onLoadNextPage,
+                            )
+                        }
                     }
             }
         }
@@ -294,6 +317,96 @@ private fun SearchMessage(
         )
     }
 }
+
+/** The heading over the results, with the filters that narrow them shown and hidden beneath it. */
+@Composable
+private fun ResultsHeader(
+    canonFilter: CanonFilter,
+    onCanonFilterChange: (CanonFilter) -> Unit,
+) {
+    var showsFilters by rememberSaveable { mutableStateOf(false) }
+    val readerColorScheme = MaterialTheme.readerColorScheme
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 20.dp, end = 8.dp, top = 8.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(UiR.string.bible_search_bible_heading),
+                style = BibleReaderTheme.typography.headerS,
+                color = readerColorScheme.readerTextPrimaryColor,
+                modifier = Modifier.weight(1f),
+            )
+
+            TextButton(
+                onClick = { showsFilters = !showsFilters },
+                colors = ButtonDefaults.textButtonColors(contentColor = readerColorScheme.readerTextPrimaryColor),
+            ) {
+                Text(
+                    text = stringResource(UiR.string.bible_search_filters_button),
+                    style = BibleReaderTheme.typography.buttonLabelM,
+                )
+                Icon(
+                    imageVector = Icons.Default.FilterList,
+                    contentDescription = null,
+                    modifier =
+                        Modifier
+                            .padding(start = 8.dp)
+                            .size(18.dp)
+                            .graphicsLayer { scaleY = if (showsFilters) -1f else 1f },
+                )
+            }
+        }
+
+        if (showsFilters) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+            ) {
+                CanonFilter.entries.forEach { filter ->
+                    val selected = filter == canonFilter
+                    FilterChip(
+                        selected = selected,
+                        onClick = { onCanonFilterChange(filter) },
+                        label = {
+                            Text(
+                                text = stringResource(filter.label),
+                                style = BibleReaderTheme.typography.buttonLabelM,
+                            )
+                        },
+                        shape = CircleShape,
+                        colors =
+                            FilterChipDefaults.filterChipColors(
+                                labelColor = readerColorScheme.readerTextPrimaryColor,
+                                selectedContainerColor = readerColorScheme.buttonSecondaryColor,
+                                selectedLabelColor = readerColorScheme.readerTextPrimaryColor,
+                            ),
+                        border =
+                            FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = selected,
+                                borderColor = readerColorScheme.borderSecondaryColor,
+                                selectedBorderWidth = 0.dp,
+                            ),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@get:StringRes
+private val CanonFilter.label: Int
+    get() =
+        when (this) {
+            CanonFilter.OLD_TESTAMENT -> UiR.string.bible_search_filter_old_testament
+            CanonFilter.NEW_TESTAMENT -> UiR.string.bible_search_filter_new_testament
+            CanonFilter.BOTH -> UiR.string.bible_search_filter_both
+        }
 
 /**
  * The results, paged from the list's own scroll state: once the last row on screen is within
@@ -619,6 +732,7 @@ private fun Preview_BibleReaderSearchSheet() {
             onSelectResult = {},
             onLoadNextPage = {},
             onSelectSuggestedQuery = {},
+            onCanonFilterChange = {},
             state = State(),
         )
     }

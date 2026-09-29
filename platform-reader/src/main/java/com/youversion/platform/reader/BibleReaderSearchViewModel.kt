@@ -67,6 +67,7 @@ internal class BibleReaderSearchViewModel : ViewModel() {
                             query = "",
                             status = SearchStatus.IDLE,
                             searchVersion = action.bibleVersion,
+                            canonFilter = CanonFilter.BOTH,
                         ).withoutResults()
                 }
                 updateSuggestedQueries()
@@ -90,6 +91,8 @@ internal class BibleReaderSearchViewModel : ViewModel() {
             is Action.LoadResultText -> loadResultText(action.reference)
 
             is Action.LoadNextPage -> loadNextPage()
+
+            is Action.SetCanonFilter -> _state.update { it.copy(canonFilter = action.filter) }
         }
     }
 
@@ -306,6 +309,14 @@ internal class BibleReaderSearchViewModel : ViewModel() {
 
     enum class SearchStatus { IDLE, SEARCHING, COMPLETED, FAILED }
 
+    enum class CanonFilter(
+        val canon: String?,
+    ) {
+        OLD_TESTAMENT("old_testament"),
+        NEW_TESTAMENT("new_testament"),
+        BOTH(null),
+    }
+
     // ----- State
     data class State(
         val query: String = "",
@@ -321,7 +332,15 @@ internal class BibleReaderSearchViewModel : ViewModel() {
         val trendingQueries: List<SearchQuery> = emptyList(),
         val recentQueries: List<SearchQuery> = emptyList(),
         val isLoadingSuggestedQueries: Boolean = false,
-    )
+        val canonFilter: CanonFilter = CanonFilter.BOTH,
+    ) {
+        val filteredResults: List<BibleReference>
+            get() =
+                when (canonFilter.canon) {
+                    null -> results
+                    else -> results.filter { searchVersion?.book(it.bookUSFM)?.canon == canonFilter.canon }
+                }
+    }
 
     /**
      * The state with the last run's results, their text, the identity they were fetched under and everywhere paging
@@ -364,5 +383,10 @@ internal class BibleReaderSearchViewModel : ViewModel() {
 
         /** Ask for the page that follows the results already listed, which the list does as its end nears. */
         data object LoadNextPage : Action
+
+        /** Show only the results from [filter]'s part of the Bible. */
+        data class SetCanonFilter(
+            val filter: CanonFilter,
+        ) : Action
     }
 }
