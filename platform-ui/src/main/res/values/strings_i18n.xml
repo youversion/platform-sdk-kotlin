@@ -13,7 +13,12 @@
     <string name="yv_back_to_bible_versions_aria_label">Back to Bible versions</string>
     <string name="yv_bible_app">Bible App</string>
     <string name="yv_bible_card_unavailable_reference">This passage is unavailable in the selected Bible version.</string>
+    <string name="yv_bible_search_bible_heading">Bible</string>
     <string name="yv_bible_search_clear_aria_label">Clear search</string>
+    <string name="yv_bible_search_filter_both">Both</string>
+    <string name="yv_bible_search_filter_new_testament">New Testament</string>
+    <string name="yv_bible_search_filter_old_testament">Old Testament</string>
+    <string name="yv_bible_search_filters_button">Filters</string>
     <string name="yv_bible_search_recent_heading">Recent Searches</string>
     <string name="yv_bible_search_trending_heading">Trending Searches</string>
     <string name="yv_bible_version_details_content_desc">Bible Version Details</string>
@@ -21,6 +26,7 @@
     <string name="yv_bible_versions_heading">Bible Versions</string>
     <string name="yv_books_heading">Books</string>
     <string name="yv_cancel">Cancel</string>
+    <string name="yv_change_line_spacing_aria_label">Change line spacing</string>
     <string name="yv_clear_search">Clear search</string>
     <string name="yv_close">Close</string>
     <string name="yv_close_search_bar">Close the search input</string>
@@ -28,12 +34,15 @@
     <string name="yv_data_exchange_continue">Continue</string>
     <string name="yv_data_exchange_highlights_explanation">YouVersion will ask you to grant access before highlights can be saved.</string>
     <string name="yv_data_exchange_highlights_question">Allow this app to save highlights with YouVersion?</string>
+    <string name="yv_decrease_font_size_aria_label">Decrease font size</string>
     <string name="yv_done">Done</string>
     <string name="yv_error">Error</string>
     <string name="yv_font">Font</string>
     <string name="yv_font_and_settings">Fonts &amp; Settings</string>
     <string name="yv_footnote_content_desc">Footnote</string>
     <string name="yv_full_chapter">Full Chapter</string>
+    <string name="yv_increase_font_size_aria_label">Increase font size</string>
+    <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Language</string>
     <string name="yv_language_label">Language</string>
     <string name="yv_language_tab_all">All</string>
@@ -100,6 +109,7 @@
     <string name="yv_suggested">Suggested</string>
     <string name="yv_tab_votd">Verse of the Day</string>
     <string name="yv_traditional">Traditional</string>
+    <string name="yv_untitled_serif_font_name">Untitled Serif</string>
     <string name="yv_verse_of_the_day">Verse of the Day</string>
     <string name="yv_version_info_agree_and_download">Agree and Download</string>
     <string name="yv_version_info_maybe_later">Maybe Later</string>
