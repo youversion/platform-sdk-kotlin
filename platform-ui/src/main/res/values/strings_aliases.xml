@@ -13,7 +13,12 @@
     <string name="back_to_bible_versions_aria_label">@string/yv_back_to_bible_versions_aria_label</string>
     <string name="bible_app">@string/yv_bible_app</string>
     <string name="bible_card_unavailable_reference">@string/yv_bible_card_unavailable_reference</string>
+    <string name="bible_search_bible_heading">@string/yv_bible_search_bible_heading</string>
     <string name="bible_search_clear_aria_label">@string/yv_bible_search_clear_aria_label</string>
+    <string name="bible_search_filter_both">@string/yv_bible_search_filter_both</string>
+    <string name="bible_search_filter_new_testament">@string/yv_bible_search_filter_new_testament</string>
+    <string name="bible_search_filter_old_testament">@string/yv_bible_search_filter_old_testament</string>
+    <string name="bible_search_filters_button">@string/yv_bible_search_filters_button</string>
     <string name="bible_search_recent_heading">@string/yv_bible_search_recent_heading</string>
     <string name="bible_search_trending_heading">@string/yv_bible_search_trending_heading</string>
     <string name="bible_version_details_content_desc">@string/yv_bible_version_details_content_desc</string>
@@ -21,6 +26,7 @@
     <string name="bible_versions_heading">@string/yv_bible_versions_heading</string>
     <string name="books_heading">@string/yv_books_heading</string>
     <string name="cancel">@string/yv_cancel</string>
+    <string name="change_line_spacing_aria_label">@string/yv_change_line_spacing_aria_label</string>
     <string name="clear_search">@string/yv_clear_search</string>
     <string name="close">@string/yv_close</string>
     <string name="close_search_bar">@string/yv_close_search_bar</string>
@@ -28,12 +34,15 @@
     <string name="data_exchange_continue">@string/yv_data_exchange_continue</string>
     <string name="data_exchange_highlights_explanation">@string/yv_data_exchange_highlights_explanation</string>
     <string name="data_exchange_highlights_question">@string/yv_data_exchange_highlights_question</string>
+    <string name="decrease_font_size_aria_label">@string/yv_decrease_font_size_aria_label</string>
     <string name="done">@string/yv_done</string>
     <string name="error">@string/yv_error</string>
     <string name="font">@string/yv_font</string>
     <string name="font_and_settings">@string/yv_font_and_settings</string>
     <string name="footnote_content_desc">@string/yv_footnote_content_desc</string>
     <string name="full_chapter">@string/yv_full_chapter</string>
+    <string name="increase_font_size_aria_label">@string/yv_increase_font_size_aria_label</string>
+    <string name="inter_font_name">@string/yv_inter_font_name</string>
     <string name="language">@string/yv_language</string>
     <string name="language_label">@string/yv_language_label</string>
     <string name="language_tab_all">@string/yv_language_tab_all</string>
@@ -100,6 +109,7 @@
     <string name="suggested">@string/yv_suggested</string>
     <string name="tab_votd">@string/yv_tab_votd</string>
     <string name="traditional">@string/yv_traditional</string>
+    <string name="untitled_serif_font_name">@string/yv_untitled_serif_font_name</string>
     <string name="verse_of_the_day">@string/yv_verse_of_the_day</string>
     <string name="version_info_agree_and_download">@string/yv_version_info_agree_and_download</string>
     <string name="version_info_maybe_later">@string/yv_version_info_maybe_later</string>
