@@ -309,12 +309,19 @@ internal class BibleReaderSearchViewModel : ViewModel() {
 
     enum class SearchStatus { IDLE, SEARCHING, COMPLETED, FAILED }
 
-    enum class CanonFilter(
-        val canon: String?,
-    ) {
-        OLD_TESTAMENT("old_testament"),
-        NEW_TESTAMENT("new_testament"),
-        BOTH(null),
+    enum class CanonFilter {
+        OLD_TESTAMENT,
+        NEW_TESTAMENT,
+        BOTH,
+        ;
+
+        val canon: String?
+            get() =
+                when (this) {
+                    OLD_TESTAMENT -> "old_testament"
+                    NEW_TESTAMENT -> "new_testament"
+                    BOTH -> null
+                }
     }
 
     // ----- State
