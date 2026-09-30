@@ -51,11 +51,34 @@ jobs:
             }
 
             const prNumber = parseInt(fs.readFileSync('./coverage/pr-number', 'utf8'));
+            if (!Number.isInteger(prNumber) || prNumber <= 0) {
+              core.setFailed('Invalid PR number in coverage artifact');
+              return;
+            }
+            // The artifact names the PR, so confirm it is the one this Test run built.
+            const run = context.payload.workflow_run;
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            if (pr.head.sha !== run.head_sha || pr.head.repo?.full_name !== run.head_repository?.full_name) {
+              core.setFailed(`PR #${prNumber} does not match the Test run's head commit`);
+              return;
+            }
             const overall = lineCoverage('./coverage/build/reports/kover/report.xml');
 
             const rows = [];
             const violations = [];
-            const modules = fs.readdirSync('./coverage').filter((d) => d.startsWith('platform-')).sort();
+            // Artifact contents come from the PR, so render them only as inert code.
+            function codeBlock(text) {
+              const clipped = text.length > 2000 ? `${text.slice(0, 2000)}…` : text;
+              const longestRun = Math.max(0, ...(clipped.match(/`+/g) || []).map((run) => run.length));
+              const fence = '`'.repeat(Math.max(3, longestRun + 1));
+              return `${fence}\n${clipped}\n${fence}`;
+            }
+
+            const modules = fs.readdirSync('./coverage').filter((d) => /^platform-[a-z0-9-]+$/.test(d)).sort();
             for (const module of modules) {
               const reportDir = path.join('./coverage', module, 'build/reports/kover');
               const errorFile = path.join(reportDir, 'verify.err');
@@ -63,12 +86,12 @@ jobs:
               const error = verified ? fs.readFileSync(errorFile, 'utf8').trim() : '';
               const status = !verified ? '❔' : error ? '❌' : '✅';
               rows.push(`| ${module} | ${lineCoverage(path.join(reportDir, 'report.xml'))}% | ${status} |`);
-              if (error) violations.push(`- **${module}**: ${error}`);
+              if (error) violations.push(`**${module}**\n\n${codeBlock(error)}`);
             }
 
             let body = `## Code Coverage Report\n\n**Overall Line Coverage:** ${overall}%\n\n`;
             body += `| Module | Line Coverage | Threshold |\n|---|---|---|\n${rows.join('\n')}\n\n`;
-            if (violations.length > 0) body += `${violations.join('\n')}\n\n`;
+            if (violations.length > 0) body += `${violations.join('\n\n')}\n\n`;
             body += '_Generated from Kover XML report._';
 
             // Delete previous coverage comments
