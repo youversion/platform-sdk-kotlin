@@ -3,6 +3,8 @@ import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.gradle.spotless.SpotlessPlugin
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import kotlinx.kover.gradle.plugin.KoverGradlePlugin
+import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
+import kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
@@ -12,7 +14,7 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.kotlin.serialization) apply false
-    alias(libs.plugins.kover) apply false
+    alias(libs.plugins.kover)
     alias(libs.plugins.maven.publish) apply false
     alias(libs.plugins.spotless) apply false
     alias(libs.plugins.binary.compatibility.validator)
@@ -46,6 +48,12 @@ tasks.register<VerifyNoHardcodedUiStringsTask>("verifyNoHardcodedUiStrings") {
 // deliberately do not, so that they compile against the same surface a consumer sees.
 val sdkModulePaths = setOf(":platform-core", ":platform-ui", ":platform-reader")
 
+// Merges the SDK modules' coverage into one report at `build/reports/kover/report.xml`. The sample
+// app has no tests, so it is left out.
+dependencies {
+    sdkModulePaths.forEach { kover(project(it)) }
+}
+
 subprojects {
     tasks.matching { it.name == "check" }.configureEach {
         dependsOn(rootProject.tasks.named("verifyNoHardcodedUiStrings"))
@@ -59,6 +67,11 @@ subprojects {
 
     // Provides running test coverage using `./gradlew kover[Html|Xml]Report`.
     apply<KoverGradlePlugin>()
+    if (path in sdkModulePaths) {
+        configure<KoverProjectExtension> {
+            reports.verify.rule { minBound(85, CoverageUnit.LINE) }
+        }
+    }
 
     // Provides code formatting of kotlin code using `./gradlew spotless[Check|Apply]`
     apply<SpotlessPlugin>()
