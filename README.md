@@ -459,7 +459,7 @@ All four calls throw `YouVersionNetworkException` with reason `NOT_PERMITTED` wh
 
 Apps building their own search UI can call the search endpoints directly through `YouVersionApi.search`, which is part of `platform-core`. All calls are suspend functions and need only a configured app key — the user does not have to be signed in.
 
-Several calls take `languageRanges`: [BCP 47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) tags such as `"en-US"`, or `"*"` for any language, in order of preference. The platform answers in the first language it supports.
+Several calls take `languageRanges`: [BCP 47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) tags such as `"en"` or `"es"`, or `"*"` for any language, in order of preference. The platform answers in the first language it supports.
 
 #### Suggested and Trending Queries
 
