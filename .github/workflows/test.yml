@@ -45,5 +45,5 @@ jobs:
         with:
           name: coverage-data
           path: |
-            **/build/reports/kover/report.xml
+            build/reports/kover/report.xml
             pr-number

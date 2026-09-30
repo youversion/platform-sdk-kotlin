@@ -39,9 +39,8 @@ jobs:
       - name: Calculate coverage percentage
         id: coverage
         run: |
-          # Find the Kover XML report
-          REPORT_FILE=$(find . -path "*/build/reports/kover/report.xml" | head -1)
-          if [ -z "$REPORT_FILE" ]; then
+          REPORT_FILE=build/reports/kover/report.xml
+          if [ ! -f "$REPORT_FILE" ]; then
             echo "No Kover report found" >&2
             exit 1
           fi

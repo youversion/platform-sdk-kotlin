@@ -12,7 +12,7 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.kotlin.serialization) apply false
-    alias(libs.plugins.kover) apply false
+    alias(libs.plugins.kover)
     alias(libs.plugins.maven.publish) apply false
     alias(libs.plugins.spotless) apply false
     alias(libs.plugins.binary.compatibility.validator)
@@ -45,6 +45,12 @@ tasks.register<VerifyNoHardcodedUiStringsTask>("verifyNoHardcodedUiStrings") {
 // The SDK's own modules opt in to each other's @PlatformInternalApi declarations. Sample apps
 // deliberately do not, so that they compile against the same surface a consumer sees.
 val sdkModulePaths = setOf(":platform-core", ":platform-ui", ":platform-reader")
+
+// Merges the SDK modules' coverage into one report at `build/reports/kover/report.xml`. The sample
+// app has no tests, so it is left out.
+dependencies {
+    sdkModulePaths.forEach { kover(project(it)) }
+}
 
 subprojects {
     tasks.matching { it.name == "check" }.configureEach {

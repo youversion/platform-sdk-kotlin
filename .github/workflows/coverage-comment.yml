@@ -27,9 +27,8 @@ jobs:
         run: |
           echo "PR_NUMBER=$(cat ./coverage/pr-number)" >> $GITHUB_ENV
 
-          # Find the Kover XML report
-          REPORT_FILE=$(find ./coverage -name "report.xml" | head -1)
-          if [ -z "$REPORT_FILE" ]; then
+          REPORT_FILE=./coverage/build/reports/kover/report.xml
+          if [ ! -f "$REPORT_FILE" ]; then
             echo "No Kover report found"
             echo "COVERAGE=unknown" >> $GITHUB_ENV
             exit 0
