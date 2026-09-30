@@ -324,7 +324,8 @@ private fun ResultsHeader(
     canonFilter: CanonFilter,
     onCanonFilterChange: (CanonFilter) -> Unit,
 ) {
-    var showsFilters by rememberSaveable { mutableStateOf(false) }
+    // Open on a filter that is already narrowing the results, so results cut short are never left unexplained.
+    var showsFilters by rememberSaveable { mutableStateOf(canonFilter != CanonFilter.BOTH) }
     val readerColorScheme = MaterialTheme.readerColorScheme
 
     Column(

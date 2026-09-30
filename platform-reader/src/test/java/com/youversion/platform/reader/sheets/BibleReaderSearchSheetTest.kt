@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.filter
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
@@ -350,6 +351,17 @@ class BibleReaderSearchSheetTest {
         composeTestRule.onNodeWithText("Old Testament").assertIsDisplayed()
         composeTestRule.onNodeWithText("New Testament").assertIsDisplayed()
         composeTestRule.onNodeWithText("Both").assertIsDisplayed()
+    }
+
+    @Test
+    fun `results narrowed by a filter are listed with the filters open on it`() {
+        renderSheet(
+            results = listOf(john316, psalm231),
+            status = SearchStatus.COMPLETED,
+            canonFilter = CanonFilter.OLD_TESTAMENT,
+        )
+
+        composeTestRule.onNodeWithText("Old Testament").assertIsSelected()
     }
 
     @Test
