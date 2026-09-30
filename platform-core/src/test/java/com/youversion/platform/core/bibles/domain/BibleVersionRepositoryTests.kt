@@ -891,6 +891,46 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
         }
 
     @Test
+    fun `test fullVersions merges every page before deduplicating and sorting`() =
+        runTest {
+            MockEngine { request ->
+                when (request.url.parameters["page_token"]) {
+                    null -> respondJson(FULL_VERSIONS_PAGE_1_JSON)
+                    "p2" -> respondJson(FULL_VERSIONS_PAGE_2_JSON)
+                    else -> throw IllegalArgumentException("Unexpected page token: ${request.url}")
+                }
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val versions = repository.fullVersions("en")
+
+            assertEquals(listOf(3, 2, 1), versions.map { it.id })
+            assertEquals(listOf("Bible A", "Bible B", "Bible C"), versions.map { it.title })
+        }
+
+    @OptIn(ExperimentalAtomicApi::class)
+    @Test
+    fun `test fullVersions does not cache a partial listing when a later page fails`() =
+        runTest {
+            val firstPageRequests = AtomicInt(0)
+            MockEngine { request ->
+                when (request.url.parameters["page_token"]) {
+                    null -> {
+                        firstPageRequests.incrementAndFetch()
+                        respondJson(FULL_VERSIONS_PAGE_1_JSON)
+                    }
+                    else -> respond("", HttpStatusCode.InternalServerError)
+                }
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            assertFailsWith<YouVersionNetworkException> { repository.fullVersions("en") }
+            assertFailsWith<YouVersionNetworkException> { repository.fullVersions("en") }
+
+            assertEquals(2, firstPageRequests.load())
+        }
+
+    @Test
     fun `test fullVersions falls back to title when localizedTitle is absent`() =
         runTest {
             MockEngine { _ ->
@@ -1136,6 +1176,25 @@ private const val FULL_VERSIONS_JSON = """
         {"id": 1, "title": "Bible B"},
         {"id": 1, "title": "Duplicate id"},
         {"id": 2, "title": "Bible A"}
+    ]
+}
+"""
+
+private const val FULL_VERSIONS_PAGE_1_JSON = """
+{
+    "data": [
+        {"id": 1, "title": "Bible C"},
+        {"id": 2, "title": "Bible B"}
+    ],
+    "next_page_token": "p2"
+}
+"""
+
+private const val FULL_VERSIONS_PAGE_2_JSON = """
+{
+    "data": [
+        {"id": 3, "title": "Bible A"},
+        {"id": 1, "title": "Duplicate id"}
     ]
 }
 """
