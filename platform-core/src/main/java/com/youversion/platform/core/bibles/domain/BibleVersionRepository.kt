@@ -2,6 +2,7 @@ package com.youversion.platform.core.bibles.domain
 
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.api.fetchAllPages
 import com.youversion.platform.core.bibles.api.BiblesEndpoints
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -157,12 +158,14 @@ class BibleVersionRepository(
         fullVersionsMutex.withLock {
             versionsInLanguage[languageTag]?.let { return@withLock it }
 
-            // There is currently no language with more than 99 versions so ignore pagination for now
             val unsortedVersions =
-                YouVersionApi.bible
-                    .versions(languageCode = languageTag, pageSize = 99)
-                    .data
-                    .filter { it.isPermittedByConfiguration() }
+                fetchAllPages { pageToken ->
+                    YouVersionApi.bible.versions(
+                        languageCode = languageTag,
+                        pageSize = 99,
+                        pageToken = pageToken,
+                    )
+                }.filter { it.isPermittedByConfiguration() }
 
             fun comparableString(bibleVersion: BibleVersion): String =
                 bibleVersion.localizedTitle ?: bibleVersion.title ?: bibleVersion.localizedAbbreviation
