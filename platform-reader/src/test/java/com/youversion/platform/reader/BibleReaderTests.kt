@@ -80,6 +80,16 @@ class BibleReaderTests {
             id = 2,
             abbreviation = "NIV",
             title = "New International Version",
+            languageTag = "en",
+            bookCodes = listOf("GEN"),
+            books = listOf(genesis),
+        )
+
+    private val rvr =
+        BibleVersion(
+            id = 3,
+            abbreviation = "RVR1960",
+            title = "Reina-Valera 1960",
             languageTag = "es",
             bookCodes = listOf("GEN"),
             books = listOf(genesis),
@@ -89,8 +99,9 @@ class BibleReaderTests {
         mockk<BibleVersionRepository>(relaxed = true) {
             coEvery { version(1) } returns version
             coEvery { version(2) } returns niv
-            coEvery { permittedVersionsListing() } returns listOf(version, niv)
-            coEvery { fullVersions(any()) } returns listOf(version, niv)
+            coEvery { permittedVersionsListing() } returns listOf(version, niv, rvr)
+            coEvery { fullVersions("en") } returns listOf(version, niv)
+            coEvery { fullVersions("es") } returns listOf(rvr)
         }
 
     private val languageRepository =
@@ -225,6 +236,8 @@ class BibleReaderTests {
         composeTestRule.onNodeWithText("Select a Language").assertDoesNotExist()
         composeTestRule.onNodeWithText("Bible Versions").assertIsDisplayed()
         composeTestRule.onNodeWithText("Spanish").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Reina-Valera 1960").assertIsDisplayed()
+        composeTestRule.onNodeWithText("New International Version").assertDoesNotExist()
     }
 
     @Test
