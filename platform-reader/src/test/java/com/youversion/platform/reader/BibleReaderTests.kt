@@ -186,6 +186,33 @@ class BibleReaderTests {
     }
 
     @Test
+    fun `back from versions returns to the reader`() {
+        setReaderContent()
+
+        composeTestRule.onNodeWithText("KJV").performClick()
+        composeTestRule.onNodeWithText("Bible Versions").assertIsDisplayed()
+
+        composeTestRule.onNodeWithContentDescription("Back").performClick()
+
+        composeTestRule.onNodeWithText("Bible Versions").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Genesis 1").assertIsDisplayed()
+    }
+
+    @Test
+    fun `back from languages returns to versions`() {
+        setReaderContent()
+
+        composeTestRule.onNodeWithText("KJV").performClick()
+        composeTestRule.onNodeWithText("Language").performClick()
+        composeTestRule.onNodeWithText("Select a Language").assertIsDisplayed()
+
+        composeTestRule.onNodeWithContentDescription("Back").performClick()
+
+        composeTestRule.onNodeWithText("Select a Language").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Bible Versions").assertIsDisplayed()
+    }
+
+    @Test
     fun `choosing a language returns to versions for that language`() {
         setReaderContent()
 
