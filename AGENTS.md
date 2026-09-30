@@ -98,6 +98,9 @@ Reading highlights requires both a signed-in user and `HIGHLIGHTS`; `BibleText` 
 ./gradlew koverXmlReport
 # Reports in: build/reports/kover/
 
+# Per-module line coverage threshold check
+./gradlew koverVerify
+
 # Public API validation (published modules only; sample app is excluded)
 ./gradlew apiCheck   # fails if the code no longer matches <module>/api/<module>.api
 ./gradlew apiDump    # re-records the dump after an intentional API change

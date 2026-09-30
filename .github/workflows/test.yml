@@ -35,15 +35,24 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Tests with Coverage
+        id: tests
         run: ./gradlew koverXmlReport
 
+      - name: Verify per-module coverage thresholds
+        run: ./gradlew koverVerify --continue
+
       - name: Save PR number
+        if: ${{ !cancelled() && steps.tests.outcome == 'success' }}
         run: echo ${{ github.event.number }} > pr-number
 
+      # Uploaded even when a threshold fails, so the PR comment can show which module fell short.
       - name: Upload coverage data
+        if: ${{ !cancelled() && steps.tests.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: coverage-data
           path: |
             build/reports/kover/report.xml
+            platform-*/build/reports/kover/report.xml
+            platform-*/build/reports/kover/verify.err
             pr-number

@@ -3,6 +3,8 @@ import com.diffplug.gradle.spotless.SpotlessExtension
 import com.diffplug.gradle.spotless.SpotlessPlugin
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import kotlinx.kover.gradle.plugin.KoverGradlePlugin
+import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
+import kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
@@ -65,6 +67,11 @@ subprojects {
 
     // Provides running test coverage using `./gradlew kover[Html|Xml]Report`.
     apply<KoverGradlePlugin>()
+    if (path in sdkModulePaths) {
+        configure<KoverProjectExtension> {
+            reports.verify.rule { minBound(85, CoverageUnit.LINE) }
+        }
+    }
 
     // Provides code formatting of kotlin code using `./gradlew spotless[Check|Apply]`
     apply<SpotlessPlugin>()

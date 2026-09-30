@@ -45,9 +45,9 @@ jobs:
             exit 1
           fi
 
-          # Parse JaCoCo XML format: sum INSTRUCTION covered/missed across all counters
+          # Parse JaCoCo XML format: sum LINE covered/missed across all counters
           COVERAGE=$(awk -F'"' '
-            /<counter type="INSTRUCTION"/ {
+            /<counter type="LINE"/ {
               for (i=1; i<=NF; i++) {
                 if ($(i) ~ /missed=/) missed += $(i+1)
                 if ($(i) ~ /covered=/) covered += $(i+1)
