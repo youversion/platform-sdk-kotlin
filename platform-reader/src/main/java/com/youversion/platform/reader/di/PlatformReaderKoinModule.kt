@@ -3,6 +3,7 @@ package com.youversion.platform.reader.di
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
+import com.youversion.platform.reader.domain.SearchRepository
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.ui.di.PlatformUIKoinModule
@@ -18,6 +19,7 @@ internal val PlatformReaderKoinModule =
         factoryOf(::UserSettingsRepository)
         factoryOf(::CopyManager)
         factoryOf(::ShareManager)
+        factoryOf(::SearchRepository)
 
         // View Models
         factory { params ->

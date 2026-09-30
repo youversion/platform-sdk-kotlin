@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.filter
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
@@ -27,6 +28,7 @@ import com.youversion.platform.core.bibles.models.BibleChapter
 import com.youversion.platform.core.bibles.models.BibleVerse
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.search.models.SearchQuery
+import com.youversion.platform.reader.BibleReaderSearchViewModel.CanonFilter
 import com.youversion.platform.reader.BibleReaderSearchViewModel.SearchStatus
 import com.youversion.platform.reader.BibleReaderSearchViewModel.State
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
@@ -62,6 +64,7 @@ class BibleReaderSearchSheetTest {
         onSelectResult: (BibleReference) -> Unit = {},
         onLoadNextPage: () -> Unit = {},
         onSelectSuggestedQuery: (SearchQuery) -> Unit = {},
+        onCanonFilterChange: (CanonFilter) -> Unit = {},
         results: List<BibleReference> = emptyList(),
         searchVersion: BibleVersion? = kjv,
         status: SearchStatus = SearchStatus.IDLE,
@@ -69,7 +72,10 @@ class BibleReaderSearchSheetTest {
         isLoadingNextPage: Boolean = false,
         hasNextPageLoadError: Boolean = false,
         suggestedQueries: List<SearchQuery> = emptyList(),
+        trendingQueries: List<SearchQuery> = emptyList(),
+        recentQueries: List<SearchQuery> = emptyList(),
         isLoadingSuggestedQueries: Boolean = false,
+        canonFilter: CanonFilter = CanonFilter.BOTH,
     ) {
         loadingNextPage.value = isLoadingNextPage
         nextPageLoadError.value = hasNextPageLoadError
@@ -84,6 +90,7 @@ class BibleReaderSearchSheetTest {
                     onSelectResult = onSelectResult,
                     onLoadNextPage = onLoadNextPage,
                     onSelectSuggestedQuery = onSelectSuggestedQuery,
+                    onCanonFilterChange = onCanonFilterChange,
                     state =
                         State(
                             query = query.value,
@@ -95,7 +102,10 @@ class BibleReaderSearchSheetTest {
                             isLoadingNextPage = loadingNextPage.value,
                             hasNextPageLoadError = nextPageLoadError.value,
                             suggestedQueries = suggestedQueries,
+                            trendingQueries = trendingQueries,
+                            recentQueries = recentQueries,
                             isLoadingSuggestedQueries = isLoadingSuggestedQueries,
+                            canonFilter = canonFilter,
                         ),
                 )
             }
@@ -327,6 +337,85 @@ class BibleReaderSearchSheetTest {
         renderSheet(status = SearchStatus.COMPLETED)
 
         composeTestRule.onNodeWithText(EMPTY_MESSAGE).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Filters").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the filters are hidden until Filters is tapped`() {
+        renderSheet(results = listOf(john316), status = SearchStatus.COMPLETED)
+
+        composeTestRule.onNodeWithText("Old Testament").assertDoesNotExist()
+
+        composeTestRule.onNodeWithText("Filters").performClick()
+
+        composeTestRule.onNodeWithText("Old Testament").assertIsDisplayed()
+        composeTestRule.onNodeWithText("New Testament").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Both").assertIsDisplayed()
+    }
+
+    @Test
+    fun `results narrowed by a filter are listed with the filters open on it`() {
+        renderSheet(
+            results = listOf(john316, psalm231),
+            status = SearchStatus.COMPLETED,
+            canonFilter = CanonFilter.OLD_TESTAMENT,
+        )
+
+        composeTestRule.onNodeWithText("Old Testament").assertIsSelected()
+    }
+
+    @Test
+    fun `tapping a filter reports it`() {
+        var chosen: CanonFilter? = null
+        renderSheet(
+            onCanonFilterChange = { chosen = it },
+            results = listOf(john316),
+            status = SearchStatus.COMPLETED,
+        )
+
+        composeTestRule.onNodeWithText("Filters").performClick()
+        composeTestRule.onNodeWithText("Old Testament").performClick()
+
+        assertEquals(CanonFilter.OLD_TESTAMENT, chosen)
+    }
+
+    @Test
+    fun `only the results from the chosen testament are listed`() {
+        renderSheet(
+            results = listOf(john316, psalm231),
+            status = SearchStatus.COMPLETED,
+            canonFilter = CanonFilter.OLD_TESTAMENT,
+        )
+
+        composeTestRule.onNodeWithText("PSALMS 23:1").assertIsDisplayed()
+        composeTestRule.onNodeWithText("JOHN 3:16").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a filter that leaves nothing with no page coming says so and keeps the filters`() {
+        renderSheet(
+            results = listOf(psalm231),
+            status = SearchStatus.COMPLETED,
+            canonFilter = CanonFilter.NEW_TESTAMENT,
+        )
+
+        composeTestRule.onNodeWithTag(SEARCH_MESSAGE_TEST_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Filters").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a filter that leaves nothing asks for the next page while one is coming`() {
+        var asked = false
+        renderSheet(
+            onLoadNextPage = { asked = true },
+            results = listOf(psalm231),
+            status = SearchStatus.COMPLETED,
+            nextPageToken = "next",
+            canonFilter = CanonFilter.NEW_TESTAMENT,
+        )
+
+        composeTestRule.waitUntil { asked }
+        composeTestRule.onNodeWithTag(SEARCH_MESSAGE_TEST_TAG).assertDoesNotExist()
     }
 
     @Test
@@ -364,6 +453,56 @@ class BibleReaderSearchSheetTest {
         renderSheet(
             onSelectSuggestedQuery = { taken = it },
             suggestedQueries = listOf(love, peace),
+        )
+
+        composeTestRule.onNodeWithText(love.text).performClick()
+
+        assertEquals(love, taken)
+        composeTestRule.onNode(hasSetTextAction()).assertIsNotFocused()
+    }
+
+    @Test
+    fun `recent and trending searches are each listed under their own heading`() {
+        renderSheet(recentQueries = listOf(love), trendingQueries = listOf(peace))
+
+        composeTestRule.onNodeWithText(RECENT_HEADING).assertIsDisplayed()
+        composeTestRule.onNodeWithText(love.text).assertIsDisplayed()
+        composeTestRule.onNodeWithText(TRENDING_HEADING).assertIsDisplayed()
+        composeTestRule.onNodeWithText(peace.text).assertIsDisplayed()
+    }
+
+    @Test
+    fun `trending searches are listed above recent searches`() {
+        renderSheet(recentQueries = listOf(love), trendingQueries = listOf(peace))
+
+        val trendingTop = composeTestRule.onNodeWithText(TRENDING_HEADING).getUnclippedBoundsInRoot().top
+        val recentTop = composeTestRule.onNodeWithText(RECENT_HEADING).getUnclippedBoundsInRoot().top
+
+        assertTrue(trendingTop < recentTop)
+    }
+
+    @Test
+    fun `a section with nothing in it has no heading`() {
+        renderSheet(trendingQueries = listOf(peace))
+
+        composeTestRule.onNodeWithText(RECENT_HEADING).assertDoesNotExist()
+        composeTestRule.onNodeWithText(TRENDING_HEADING).assertIsDisplayed()
+    }
+
+    @Test
+    fun `typed suggestions are listed without a heading`() {
+        renderSheet(suggestedQueries = listOf(love))
+
+        composeTestRule.onNodeWithText(RECENT_HEADING).assertDoesNotExist()
+        composeTestRule.onNodeWithText(TRENDING_HEADING).assertDoesNotExist()
+    }
+
+    @Test
+    fun `a recent search is taken up as the search and drops the keyboard`() {
+        var taken: SearchQuery? = null
+        renderSheet(
+            onSelectSuggestedQuery = { taken = it },
+            recentQueries = listOf(love),
         )
 
         composeTestRule.onNodeWithText(love.text).performClick()
@@ -432,6 +571,8 @@ class BibleReaderSearchSheetTest {
 
         const val FAILURE_MESSAGE = "Error"
         const val EMPTY_MESSAGE = "We're sorry, there are no Bible results for this search."
+        const val RECENT_HEADING = "Recent Searches"
+        const val TRENDING_HEADING = "Trending Searches"
 
         const val JOHN_3_16_TEXT = "For God so loved the world"
 
