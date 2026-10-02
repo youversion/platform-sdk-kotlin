@@ -25,6 +25,7 @@ currently not available.
   - [Displaying Verse of the Day](#displaying-verse-of-the-day)
   - [Authentication](#authentication)
   - [Highlights](#highlights)
+  - [Search API](#search-api)
 - [Sample App](#sample-app)
 - [For Different Use Cases](#-for-different-use-cases)
 - [Development Setup](#development-setup)
@@ -38,6 +39,7 @@ currently not available.
 ## Features
 - 📖 **Scripture Display** - Easy-to-use Jetpack Compose components for displaying Bible verses, chapters, and passages with `BibleText`
 - 📕 **Bible Reader** - A complete Bible reading experience inside your app with `BibleReader`
+- 🔍 **Search** - Built-in search in `BibleReader`, plus API access to verse and topic search and to suggested and trending queries
 - 🖍️ **Highlights** - The signed-in user's YouVersion highlights are rendered in `BibleText` and can be created, recolored, and removed from the reader
 - 🔐 **User Authentication** - Seamless "Sign In with YouVersion" integration using `SignInWithYouVersionButton`, with a top-level toggle to disable all sign-in UI
 - 🌅 **Verse of the Day** - Built-in `VerseOfTheDay` component and API access to VOTD data
@@ -204,6 +206,17 @@ BibleReader(
 ```
 
 To offer your own fonts in the reader's font settings sheet, or to render a bottom bar beneath the reader, pass `fontDefinitionProvider` and `bottomBar`.
+
+#### Search
+
+`BibleReader` includes search with nothing to configure. The magnifying glass in the reader header opens a full-height search sheet:
+
+- Before the user types, the sheet offers trending queries and their most recent searches. Recent searches are kept on the device.
+- As the user types, it offers suggested queries.
+- Submitting a query searches the version being read. Results load more pages as the user scrolls, and can be narrowed to the Old or New Testament.
+- Tapping a result navigates to that verse and dims the rest of the chapter around it until the user scrolls or taps.
+
+Trending and suggested queries are in the language of the version being read, when the version declares one. To build your own search UI instead, see the [Search API](#search-api).
 
 #### Disabling Sign-In
 
@@ -441,6 +454,94 @@ YouVersionApi.highlights.deleteHighlight(versionId = 111, passageId = "JHN.3.16"
 Colors are hex strings without a leading `#`. The palette the reader offers is `ffec5b` (yellow), `b4ffc1` (green), `bbf4ff` (blue), `ffdca7` (orange), `ffcff8` (pink), and `dfdcff` (purple). The reader mixes whichever color it is given — palette or not — into the active theme background before drawing it, so highlights stay legible on the dark themes.
 
 All four calls throw `YouVersionNetworkException` with reason `NOT_PERMITTED` when the user has not granted highlights access; that request will not succeed on retry. The read call also throws `MISSING_AUTHENTICATION` when the request was unauthenticated, which a sign-in or token refresh may resolve. The create, update, and delete calls report an unauthenticated request as a `false` return instead of throwing, so check their `Boolean` result too — `false` means the write did not happen.
+
+### Search API
+
+Apps building their own search UI can call the search endpoints directly through `YouVersionApi.search`, which is part of `platform-core`. All calls are suspend functions and need only a configured app key — the user does not have to be signed in.
+
+Several calls take `languageRanges`: [BCP 47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) tags such as `"en"` or `"es"`, or `"*"` for any language, in order of preference. The platform answers in the first language it supports.
+
+#### Suggested and Trending Queries
+
+```kotlin
+// Queries many readers are running right now, to offer before the user has typed anything
+val trending = YouVersionApi.search.trendingQueries(languageRanges = listOf("en"))
+
+// Queries matching what the user has typed so far
+val suggested = YouVersionApi.search.suggestedQueries(query = "love one", languageRanges = listOf("en"))
+
+suggested.forEach { println(it.text) }
+```
+
+Both return an empty list when the platform has nothing to offer.
+
+#### Verses
+
+```kotlin
+val firstPage = YouVersionApi.search.verses(query = "love your neighbor", bibleId = 3034)
+firstPage.references.forEach { reference ->
+    // Each result is a single-verse BibleReference, ready to pass to BibleText
+}
+
+val secondPage =
+    firstPage.nextPageToken?.let { token ->
+        YouVersionApi.search.verses(query = "love your neighbor", bibleId = 3034, pageToken = token)
+    }
+```
+
+`bibleId` is the same Bible version id the rest of the SDK calls `versionId`. Results come back in rank order, a page at a time: pass `pageSize` (1–99) to choose how many, and repeat the search with the previous page's `nextPageToken` to continue. `nextPageToken` is `null` on the last page.
+
+Alongside the references, the results carry:
+
+- `userIntent` — what the platform inferred the user is looking for, when it names one. See [User Intent](#user-intent).
+- `didYouMean` — alternative spellings offered alongside results for the query as written.
+- `searchInsteadFor` — present only when the platform corrected the query and searched for the correction. It holds the user's original wording, so you can offer to search for that instead.
+
+#### Topics
+
+```kotlin
+val results = YouVersionApi.search.topics(query = "anxiety", languageRanges = listOf("en"))
+results.topics.forEach { topic ->
+    println("${topic.text}: ${topic.subtopics.joinToString()}")
+}
+```
+
+Topic results do not page — there is no page token and no total count. They carry `didYouMean` and `searchInsteadFor` like verse results.
+
+#### Unified Search
+
+`unified` returns verses and topics from a single request:
+
+```kotlin
+val results =
+    YouVersionApi.search.unified(
+        query = "peace",
+        bibleId = 3034,
+        languageRanges = listOf("en"),
+        fields = listOf("verses", "topics"),
+    )
+```
+
+`fields` names the kinds of result to return — `"verses"`, `"topics"`, or both; leave it empty for every kind. Ask only for the kinds you display. Unified results do not page.
+
+#### User Intent
+
+`verses` and `unified` accept a `userIntent` to help rank results, and report the intent the platform inferred. `SearchUserIntent` names `reference`, `text`, `topical`, and `unknown`, but the set is open: the platform may return an intent this version of the SDK does not name, and it arrives intact in `rawValue` rather than failing the search. A `when` over it therefore needs an `else` branch:
+
+```kotlin
+val heading =
+    when (results.userIntent) {
+        SearchUserIntent.reference -> "Passages"
+        SearchUserIntent.topical -> "Topics"
+        else -> "Results"
+    }
+```
+
+#### Search Error Handling
+
+- Invalid arguments throw `IllegalArgumentException` before any request is made. A `query` must be 1–100 grapheme clusters (characters as the user sees them, so an emoji counts as one) for `verses`, `topics`, and `unified`, and non-empty for `suggestedQueries`. `bibleId` must be greater than zero, `pageSize` between 1 and 99, and each `languageRanges` entry a well-formed tag or `"*"`, with at least one given.
+- A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `CANNOT_DOWNLOAD` for any other error response, and `INVALID_RESPONSE` when the response cannot be read.
+- A response with no content (HTTP 204) is handled differently by endpoint. `trendingQueries` and `suggestedQueries` return an empty list, while `verses`, `topics`, and `unified` throw `YouVersionNetworkException` with reason `INVALID_RESPONSE` rather than reporting no matches.
 
 ## Sample App
 
