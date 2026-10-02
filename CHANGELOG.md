@@ -1,3 +1,16 @@
+## [2.5.0](https://github.com/youversion/platform-sdk-kotlin/compare/2.4.0...2.5.0) (2026-10-02)
+
+### Features
+
+* **reader:** recent and trending searches in the search sheet ([28108f9](https://github.com/youversion/platform-sdk-kotlin/commit/28108f9170370089eb17f6a0e4533380cd933853))
+* **ui:** six default highlight colors mixed into the reader theme ([47b5ab3](https://github.com/youversion/platform-sdk-kotlin/commit/47b5ab31b98e1e96fe644fb2c514ab138aabde1b)), closes [#AARRGGBB](https://github.com/youversion/platform-sdk-kotlin/issues/AARRGGBB)
+
+### Bug Fixes
+
+* **core:** fetch every page of versions in fullVersions ([1d39343](https://github.com/youversion/platform-sdk-kotlin/commit/1d39343216766895383b9ff26bf5fb1a9496b238))
+* **i18n:** sync kotlin localization from platform-localization ([c45cb2d](https://github.com/youversion/platform-sdk-kotlin/commit/c45cb2d3cc6705dd66703136cb88fd24c59b3a85))
+* **i18n:** sync kotlin localization from platform-localization ([1fe9cee](https://github.com/youversion/platform-sdk-kotlin/commit/1fe9cee6bde7494658a10bb6ff5587cadd082dc5))
+
 ## [2.4.0](https://github.com/youversion/platform-sdk-kotlin/compare/2.3.0...2.4.0) (2026-09-24)
 
 ### Features
