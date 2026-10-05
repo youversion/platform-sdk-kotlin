@@ -18,6 +18,7 @@ currently not available.
   - [Which Modules Do I Need?](#which-modules-do-i-need)
   - [With Version Catalog](#with-version-catalog)
   - [Without Version Catalog](#without-version-catalog)
+  - [Mixed Versions](#mixed-versions)
 - [Getting Started](#getting-started)
 - [Usage](#usage)
   - [Displaying Scripture](#displaying-scripture)
@@ -121,6 +122,39 @@ implementation(platform("com.youversion.platform:platform-bom:$youVersionPlatfor
 implementation("com.youversion.platform:platform-core")
 implementation("com.youversion.platform:platform-ui")
 implementation("com.youversion.platform:platform-reader")
+```
+
+### Mixed Versions
+
+If your build asks for more than one version of the SDK modules — for example, another library brings in a newer `platform-core` — Gradle moves every module up to the newest version requested. Run `./gradlew :app:dependencies` to see where that happened; an upgraded module shows as `platform-ui:2.1.0 -> 2.5.0`.
+
+To have the build fail instead, add this to your app's `build.gradle.kts`. It only checks the SDK's modules, so other libraries still resolve as usual:
+
+```kotlin
+configurations.configureEach {
+    incoming.afterResolve {
+        val upgraded = resolutionResult.allDependencies
+            .filterIsInstance<ResolvedDependencyResult>()
+            .mapNotNull {
+                val requested = it.requested
+                val selected = it.selected.moduleVersion?.version
+                if (requested is ModuleComponentSelector &&
+                    requested.group == "com.youversion.platform" &&
+                    requested.version.isNotEmpty() &&
+                    requested.version != selected
+                ) {
+                    "  ${requested.displayName} -> $selected"
+                } else {
+                    null
+                }
+            }.distinct()
+        if (upgraded.isNotEmpty()) {
+            throw GradleException(
+                "YouVersion Platform SDK modules were moved to a different version:\n" + upgraded.joinToString("\n"),
+            )
+        }
+    }
+}
 ```
 
 ## Getting Started
