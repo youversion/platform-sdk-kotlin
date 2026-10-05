@@ -89,6 +89,8 @@ You will need `platform-reader`, `platform-ui`, and `platform-core`.
 
 Great! Now that you know which modules you need, you can proceed with installation.
 
+The modules always ship together on the same version. Declare `platform-bom` with the version once and list the modules you need without one; the BOM keeps them aligned.
+
 ### With Version Catalog
 
 ```toml
@@ -97,13 +99,15 @@ Great! Now that you know which modules you need, you can proceed with installati
 youVersionPlatform = "2.5.0"
 
 [libraries]
-youversion-platform-core = { module = "com.youversion.platform:platform-core", version.ref = "youVersionPlatform" }
-youversion-platform-ui = { module = "com.youversion.platform:platform-ui", version.ref = "youVersionPlatform" }
-youversion-platform-reader = { module = "com.youversion.platform:platform-reader", version.ref = "youVersionPlatform" }
+youversion-platform-bom = { module = "com.youversion.platform:platform-bom", version.ref = "youVersionPlatform" }
+youversion-platform-core = { module = "com.youversion.platform:platform-core" }
+youversion-platform-ui = { module = "com.youversion.platform:platform-ui" }
+youversion-platform-reader = { module = "com.youversion.platform:platform-reader" }
 ```
 
 ```kotlin
 // app/build.gradle.kts
+implementation(platform(libs.youversion.platform.bom))
 implementation(libs.youversion.platform.core)
 implementation(libs.youversion.platform.ui)
 implementation(libs.youversion.platform.reader)
@@ -113,9 +117,10 @@ implementation(libs.youversion.platform.reader)
 
 ```kotlin
 val youVersionPlatform = "2.5.0"
-implementation("com.youversion.platform:platform-core:$youVersionPlatform")
-implementation("com.youversion.platform:platform-ui:$youVersionPlatform")
-implementation("com.youversion.platform:platform-reader:$youVersionPlatform")
+implementation(platform("com.youversion.platform:platform-bom:$youVersionPlatform"))
+implementation("com.youversion.platform:platform-core")
+implementation("com.youversion.platform:platform-ui")
+implementation("com.youversion.platform:platform-reader")
 ```
 
 ## Getting Started

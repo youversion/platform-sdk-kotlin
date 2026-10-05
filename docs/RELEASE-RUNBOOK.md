@@ -30,10 +30,10 @@ for audit and nothing more. So "the pipeline picked the wrong version" is never
 the diagnosis — someone typed it.
 
 **Publishing is all-or-nothing.** `scripts/release.sh` calls the publish
-wrapper once with every module, so the publish plugin bundles all three into a
+wrapper once with every module, so the publish plugin bundles them all into a
 single Central deployment: one upload, one validation, one release. A failed
 build drops the deployment. Central therefore has the version for every module
-or for none of them, which is what keeps the three coordinates in lockstep —
+or for none of them, which is what keeps the coordinates in lockstep —
 they pin each other at the exact same version, and Gradle's highest-version-wins
 resolution would silently pair mismatched modules if one lagged behind.
 
@@ -125,19 +125,19 @@ are fixed — re-dispatching will fail the same way.
 3. **Re-dispatch** with the same `version`. The run resumes and retries the
    deployment.
 
-## Partial publish across the three coordinates
+## Partial publish across the coordinates
 
-**Symptom:** only some of `platform-core`, `platform-ui`, `platform-reader`
+**Symptom:** only some of `platform-core`, `platform-ui`, `platform-reader`, `platform-bom`
 reached Central at a given version.
 
-This should no longer happen. All three modules ship in one deployment, and the
+This should no longer happen. All modules ship in one deployment, and the
 wrapper refuses to start a split publish without saying so. Versions released
 before that change (2.3.0) can still be in this state.
 
 **Fix:** re-dispatch with the same `version`. The wrapper checks `repo1` for
 every module first:
 
-- **none present** — publishes all three as one deployment.
+- **none present** — publishes them all as one deployment.
 - **all present** — nothing to do, exits success. This is what makes a resume
   survive the publish step: Central's "component already exists" rejection is
   **success**, not an error to retry past, because the coordinate being
@@ -181,7 +181,7 @@ Check first — the answer decides everything:
 curl -sI "https://repo1.maven.org/maven2/com/youversion/platform/platform-core/<version>/platform-core-<version>.pom" | head -1
 ```
 
-If it is a 404 on all three modules:
+If it is a 404 on every module:
 
 ```bash
 git tag -d <version>

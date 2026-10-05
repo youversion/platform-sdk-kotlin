@@ -65,8 +65,11 @@ subprojects {
         }
     }
 
-    // Provides running test coverage using `./gradlew kover[Html|Xml]Report`.
-    apply<KoverGradlePlugin>()
+    // Provides running test coverage using `./gradlew kover[Html|Xml]Report`. The BOM has no code
+    // to cover, and would otherwise show as an empty row in the PR coverage comment.
+    if (path != ":platform-bom") {
+        apply<KoverGradlePlugin>()
+    }
     if (path in sdkModulePaths) {
         configure<KoverProjectExtension> {
             reports.verify.rule { minBound(85, CoverageUnit.LINE) }

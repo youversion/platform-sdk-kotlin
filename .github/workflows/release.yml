@@ -28,11 +28,12 @@ on:
         default: false
 
 env:
-  # The modules published as a set. All three always ship on the same version —
+  # The modules published as a set. They always ship on the same version —
   # a consumer mixing 2.1.2 platform-core with 2.2.0 platform-ui is not a
-  # configuration we support. This is the single place that list is declared;
+  # configuration we support, and platform-bom pins the others to its own
+  # version so Gradle resolves them together. This is the single place that list is declared;
   # scripts/release.sh reads it and publishes the whole set in one invocation.
-  PUBLISHABLE_MODULES: platform-core,platform-ui,platform-reader
+  PUBLISHABLE_MODULES: platform-core,platform-ui,platform-reader,platform-bom
 
 permissions:
   contents: write
