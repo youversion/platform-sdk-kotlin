@@ -2,7 +2,7 @@
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_banner_dismiss_content_description">关闭</string>
-    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_icon">离线</string>
     <string name="yv_banner_offline_message">你的连接出现问题。请在联网时才下载圣经译本。</string>
     <string name="yv_banner_version_unavailable_icon">译本不可用</string>
     <string name="yv_banner_version_unavailable_message">你之前选择的圣经译本不可用。请切换到其他译本。</string>
@@ -10,9 +10,11 @@
     <string name="yv_font_selected_check">字体已选中标记</string>
     <string name="yv_font_settings_label">字体</string>
     <string name="yv_footnote_header_label">脚注</string>
+    <string name="yv_highlight_color_blue">蓝色</string>
     <string name="yv_highlight_color_green">绿色</string>
     <string name="yv_highlight_color_orange">橙色</string>
     <string name="yv_highlight_color_pink">粉红色</string>
+    <string name="yv_highlight_color_purple">紫色</string>
     <string name="yv_highlight_color_yellow">黄色</string>
     <string name="yv_intro_chapter_label">简介</string>
     <string name="yv_language_content_desc">语言</string>

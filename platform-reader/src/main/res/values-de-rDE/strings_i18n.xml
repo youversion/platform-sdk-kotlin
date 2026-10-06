@@ -10,9 +10,11 @@
     <string name="yv_font_selected_check">Häkchen für ausgewählte Schriftart</string>
     <string name="yv_font_settings_label">Schriftart</string>
     <string name="yv_footnote_header_label">Fußnote</string>
+    <string name="yv_highlight_color_blue">blau</string>
     <string name="yv_highlight_color_green">Grün</string>
     <string name="yv_highlight_color_orange">Orange</string>
     <string name="yv_highlight_color_pink">Pink</string>
+    <string name="yv_highlight_color_purple">lila</string>
     <string name="yv_highlight_color_yellow">Gelb</string>
     <string name="yv_intro_chapter_label">Einführung</string>
     <string name="yv_language_content_desc">Sprache</string>

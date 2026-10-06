@@ -2,7 +2,7 @@
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_banner_dismiss_content_description">Mèchié</string>
-    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_icon">Offlaịnụ</string>
     <string name="yv_banner_offline_message">Anyị nà-ènwé nsogbu na njikọ ịntanetị gị. Biko budata ụdị-nsụgharị Akwụkwọ Nsọ mgbe ị nọ n\'ịntanetị.</string>
     <string name="yv_banner_version_unavailable_icon">Ụdị Nsụgharị Adịghị</string>
     <string name="yv_banner_version_unavailable_message">Ụdị nsụgharị Akwụkwọ Nsọ ị họpụtarà na mbụ adịghị adị. Biko gbanwee gaa na ọzọ.</string>
@@ -10,9 +10,11 @@
     <string name="yv_font_selected_check">Ihe-eji-àmá fọntù ahọrọlà</string>
     <string name="yv_font_settings_label">Fọntù</string>
     <string name="yv_footnote_header_label">Edide dị́ n\'ala ala</string>
+    <string name="yv_highlight_color_blue">anụnụ-anụnụ</string>
     <string name="yv_highlight_color_green">akwụkwọ-ndụ</string>
     <string name="yv_highlight_color_orange">òròmá</string>
     <string name="yv_highlight_color_pink">pink</string>
+    <string name="yv_highlight_color_purple">pọpụl</string>
     <string name="yv_highlight_color_yellow">odo odo </string>
     <string name="yv_intro_chapter_label">Mmalite</string>
     <string name="yv_language_content_desc">Asụsụ</string>
