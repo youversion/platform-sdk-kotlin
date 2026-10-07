@@ -137,7 +137,7 @@ internal class BibleReaderSearchViewModel : ViewModel() {
             _state.value.searchVersion
                 ?.languageTag
                 ?.takeIf { it.isNotBlank() }
-                ?: Locale.getDefault().stripExtensions().toLanguageTag()
+                ?: Locale(Locale.getDefault().language).toLanguageTag()
 
         _state.update {
             it.copy(

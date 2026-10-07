@@ -753,7 +753,7 @@ class BibleReaderSearchViewModelTest {
         }
 
     @Test
-    fun `a version that declares no language of its own takes suggestions in the device's language`() =
+    fun `a version with no language of its own takes suggestions in the device's language, without a region`() =
         runTest(testDispatcher) {
             val deviceLocale = Locale.getDefault()
             Locale.setDefault(Locale.forLanguageTag("pt-BR-u-mu-celsius"))
@@ -764,7 +764,7 @@ class BibleReaderSearchViewModelTest {
                 Locale.setDefault(deviceLocale)
             }
 
-            coVerify { searchApi.trendingQueries(languageRanges = listOf("pt-BR")) }
+            coVerify { searchApi.trendingQueries(languageRanges = listOf("pt")) }
         }
 
     @Test

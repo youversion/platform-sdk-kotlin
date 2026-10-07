@@ -135,8 +135,8 @@ Note that _reference_ alone is ambiguous near search, where it is also the name 
 meaning "this reader is looking for a specific address rather than for text or a topic."
 
 **Language range**:
-A reader's language preference, written as a BCP 47 language tag such as `en-US`. Search calls
-do not accept `*`. Several may be given, and their order is their order of preference.
+A reader's language preference, written as a BCP 47 language tag such as `en`. Search calls
+do not accept `*`, and match no language for a tag with a region such as `en-US`. Several may be given, and their order is their order of preference.
 _Avoid_: locale, language code, language filter
 
 **Fields**:
