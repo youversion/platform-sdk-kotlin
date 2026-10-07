@@ -50,7 +50,7 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 ## Kotlin
 
 - Follow https://developer.android.com/kotlin/style-guide. Do not make whitespace-only changes.
-- Prefer suspend functions. A function that returns a value is a noun phrase and does not start with "get", "load", or "request".
+- Prefer suspend functions. An asynchronous function that returns a value is a noun phrase and does not start with "get", "load", or "request".
 - Document new non-private functions. Do not add inline comments inside functions, and do not delete existing ones.
 - Use the strictest access. Prefer `val`. Properties come before functions. Do not leave unused code or commented-out code.
 - A Boolean starts with "is", "has", "should", "shows", or "showing". A non-Boolean name ends with its type, as in `shadowColor`.
