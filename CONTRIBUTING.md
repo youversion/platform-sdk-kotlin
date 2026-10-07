@@ -55,6 +55,46 @@ complete, verify that the project builds.
 ./gradlew build
 ```
 
+Point Gradle at your Android SDK with a `sdk.dir` entry in `local.properties` at the project root (the file is gitignored), or set the `ANDROID_HOME` environment variable.
+
+### Gradle commands
+
+Command-line tasks complement the IDE workflow above. Public API checks and Spotless are documented in later sections.
+
+```bash
+# Clean build
+./gradlew clean build
+
+# Build a specific module
+./gradlew :platform-core:build
+./gradlew :platform-ui:build
+./gradlew :platform-reader:build
+
+# Run all tests
+./gradlew test
+
+# Run tests for a specific module
+./gradlew :platform-core:test
+./gradlew :platform-core:testDebugUnitTest
+
+# Run a single test class or method
+./gradlew :platform-core:test --tests "com.youversion.platform.core.api.bible.BibleVersionsApiTests"
+./gradlew :platform-core:test --tests "com.youversion.platform.core.api.bible.BibleVersionsApiTests.testVersionsAPI"
+
+# Coverage: HTML report for local review (see also Writing Tests)
+./gradlew koverHtmlReport
+
+# Coverage: XML report and per-module threshold checks (CI-style)
+./gradlew koverXmlReport
+./gradlew koverVerify
+# Reports under build/reports/kover/
+
+# Sample app on a connected emulator or device
+./gradlew :examples:sample-android:installDebug
+./gradlew :examples:sample-android:installRelease
+./gradlew :examples:sample-android:uninstallDebug
+```
+
 ### Sample App
 
 The library includes a sample app under `examples/sample-android` which is used to demo and test functionality in the
@@ -122,6 +162,39 @@ The project is structured into several modules:
 - **examples/sample-android**
    - Sample Android app which demos using all of the components together.
 
+#### Gradle and module dependencies
+
+Inter-module dependencies use Gradle's type-safe project accessors (enabled in `settings.gradle.kts` via `TYPESAFE_PROJECT_ACCESSORS`). Shared library and plugin versions live in the version catalog at `gradle/libs.versions.toml`.
+
+### Branches
+
+Every change — including documentation, tooling, and small fixes — belongs on a branch named after its Jira ticket. Merge into `main` only through a pull request; do not push directly to `main`.
+
+**Branch naming:** `<JIRA-TICKET>-<kebab-description>`
+
+- Examples: `YPE-5957-trim-agents-md`, `YPE-2293-swift-sdk-add-x-yvp-sdk-http-header-for-version-reporting`, `BA-1204-plans-update`
+- Put the ticket prefix first. Do not use an initials prefix or a `feature/` prefix.
+- If there is no ticket yet, create one in Jira before you start work.
+
+**Standard workflow:**
+
+1. Create a branch from `main`.
+2. Make your changes on that branch.
+3. Open a pull request into `main`. The PR title should match the first line of the commit message.
+
+**Epic branches** (work that spans multiple sub-tickets):
+
+1. Create an epic branch from `main`: `<EPIC-TICKET>-<kebab-description>` (for example, `YPE-1900-offline-search`).
+2. Create task branches from the epic branch: `<TASK-TICKET>-<kebab-description>`.
+3. Open pull requests from task branches into the epic branch.
+4. When the epic is complete, open one pull request from the epic branch into `main`.
+
+**Bringing `main` into an epic or task branch:**
+
+- Merge `main` into the epic branch first.
+- Then merge the updated epic branch into the task branch.
+- Do not merge `main` directly into a task branch.
+
 ### Pull Requests
 
 Contributions are made using GitHub [pull requests](https://help.github.com/en/articles/about-pull-requests):
@@ -134,6 +207,7 @@ Contributions are made using GitHub [pull requests](https://help.github.com/en/a
 5. If the contribution requires updates to documentation (be it updating existing contents or creating new one), please include the changes in your PR.
 6. Make sure any code contributed is covered by tests, no existing tests are broken and code is formatted.
 7. All PRs are checked for failing tests and code formatting.
+8. When you open a PR, set the assignee to the email from `git config user.email` when possible.
 
 ### Writing Tests
 Tests should be in the same module and package as the code they are testing. Follow existing patterns
