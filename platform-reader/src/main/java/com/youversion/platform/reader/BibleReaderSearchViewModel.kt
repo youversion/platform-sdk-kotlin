@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Locale
 import java.util.UUID
 
 /**
@@ -26,9 +27,6 @@ import java.util.UUID
  * against once rather than against every keystroke on the way to it.
  */
 private const val SUGGESTION_DEBOUNCE_MILLIS = 300L
-
-/** The language range asked for on behalf of a version that declares no language of its own. */
-private const val ANY_LANGUAGE_RANGE = "*"
 
 private const val MAX_TRENDING_QUERIES = 3
 
@@ -138,7 +136,13 @@ internal class BibleReaderSearchViewModel : ViewModel() {
         val languageRange =
             _state.value.searchVersion
                 ?.languageTag
-                ?.takeIf { it.isNotBlank() } ?: ANY_LANGUAGE_RANGE
+                ?.takeIf { it.isNotBlank() }
+                ?: Locale
+                    .Builder()
+                    .setLocale(Locale.getDefault())
+                    .clearExtensions()
+                    .build()
+                    .toLanguageTag()
 
         _state.update {
             it.copy(

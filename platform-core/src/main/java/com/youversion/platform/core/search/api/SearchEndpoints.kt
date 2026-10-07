@@ -200,12 +200,11 @@ internal object SearchEndpoints : SearchApi {
     private fun requireValidLanguageRanges(languageRanges: List<String>) {
         require(languageRanges.isNotEmpty()) { "languageRanges must not be empty" }
         require(languageRanges.all(::isValidLanguageRange)) {
-            "languageRanges must each be a well-formed BCP 47 language tag, or \"*\""
+            "languageRanges must each be a well-formed BCP 47 language tag"
         }
     }
 
     private fun isValidLanguageRange(languageRange: String): Boolean {
-        if (languageRange == "*") return true
         if (languageRange.isEmpty()) return false
         return try {
             Locale.Builder().setLanguageTag(languageRange)

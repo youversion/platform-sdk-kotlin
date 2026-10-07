@@ -72,7 +72,7 @@ class SearchApiTests : YouVersionPlatformTest {
             MockEngine { request ->
                 assertEquals(HttpMethod.Get, request.method)
                 assertEquals(
-                    "/v1/search-queries?language_ranges%5B%5D=%2A&trending=true",
+                    "/v1/search-queries?language_ranges%5B%5D=en&trending=true",
                     request.url.encodedPathAndQuery,
                 )
                 respondJson(
@@ -87,7 +87,7 @@ class SearchApiTests : YouVersionPlatformTest {
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
-            val queries = YouVersionApi.search.trendingQueries(languageRanges = listOf("*"))
+            val queries = YouVersionApi.search.trendingQueries(languageRanges = listOf("en"))
 
             assertEquals(1, queries.size)
             assertEquals("peace", queries[0].text)
@@ -155,13 +155,32 @@ class SearchApiTests : YouVersionPlatformTest {
         }
 
     @Test
+    fun `test every call taking language ranges rejects a bare any-language range`() =
+        runTest {
+            startNoRequestExpected()
+            val languageRanges = listOf("en", "*")
+            assertFailsWith<IllegalArgumentException> {
+                YouVersionApi.search.suggestedQueries(query = "love", languageRanges = languageRanges)
+            }
+            assertFailsWith<IllegalArgumentException> {
+                YouVersionApi.search.trendingQueries(languageRanges = languageRanges)
+            }
+            assertFailsWith<IllegalArgumentException> {
+                YouVersionApi.search.topics(query = "love", languageRanges = languageRanges)
+            }
+            assertFailsWith<IllegalArgumentException> {
+                YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = languageRanges)
+            }
+        }
+
+    @Test
     fun `test suggested queries accepts every well-formed language range`() =
         runTest {
             MockEngine { respondJson("""{ "data": [] }""") }
                 .also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
-            listOf("en", "en-US", "es-419", "zh-Hant-TW", "de-CH-1901", "en-x-private", "*").forEach { languageRange ->
+            listOf("en", "en-US", "es-419", "zh-Hant-TW", "de-CH-1901", "en-x-private").forEach { languageRange ->
                 YouVersionApi.search.suggestedQueries(query = "love", languageRanges = listOf(languageRange))
             }
         }
@@ -369,7 +388,7 @@ class SearchApiTests : YouVersionPlatformTest {
             MockEngine { request ->
                 assertEquals(HttpMethod.Get, request.method)
                 assertEquals(
-                    "/v1/search-topics?query=faif&language_ranges%5B%5D=en-US&language_ranges%5B%5D=%2A",
+                    "/v1/search-topics?query=faif&language_ranges%5B%5D=en-US&language_ranges%5B%5D=es",
                     request.url.encodedPathAndQuery,
                 )
                 respondJson(
@@ -387,7 +406,7 @@ class SearchApiTests : YouVersionPlatformTest {
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
-            val results = YouVersionApi.search.topics(query = "faif", languageRanges = listOf("en-US", "*"))
+            val results = YouVersionApi.search.topics(query = "faif", languageRanges = listOf("en-US", "es"))
 
             assertEquals(
                 listOf(
@@ -419,7 +438,7 @@ class SearchApiTests : YouVersionPlatformTest {
                 assertEquals(HttpMethod.Get, request.method)
                 assertEquals(
                     "/v1/search-unified?query=faif&bible_id=111" +
-                        "&language_ranges%5B%5D=en-US&language_ranges%5B%5D=%2A" +
+                        "&language_ranges%5B%5D=en-US&language_ranges%5B%5D=es" +
                         "&user_intent=topical&fields%5B%5D=verses&fields%5B%5D=topics",
                     request.url.encodedPathAndQuery,
                 )
@@ -447,7 +466,7 @@ class SearchApiTests : YouVersionPlatformTest {
                 YouVersionApi.search.unified(
                     query = "faif",
                     bibleId = 111,
-                    languageRanges = listOf("en-US", "*"),
+                    languageRanges = listOf("en-US", "es"),
                     userIntent = SearchUserIntent.topical,
                     fields = listOf("verses", "topics"),
                 )

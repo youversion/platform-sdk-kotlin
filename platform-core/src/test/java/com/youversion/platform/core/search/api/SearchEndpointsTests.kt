@@ -17,10 +17,10 @@ class SearchEndpointsTests {
     fun `test suggested queries url repeats every language range`() {
         assertEquals(
             "https://api.youversion.com/v1/search-queries" +
-                "?language_ranges%5B%5D=en-US&language_ranges%5B%5D=es-419&language_ranges%5B%5D=%2A" +
+                "?language_ranges%5B%5D=en-US&language_ranges%5B%5D=es-419" +
                 "&query=love",
             SearchEndpoints.searchQueriesUrl(
-                languageRanges = listOf("en-US", "es-419", "*"),
+                languageRanges = listOf("en-US", "es-419"),
                 query = "love",
             ),
         )
@@ -29,8 +29,8 @@ class SearchEndpointsTests {
     @Test
     fun `test trending queries url sends the trending flag and no query`() {
         assertEquals(
-            "https://api.youversion.com/v1/search-queries?language_ranges%5B%5D=%2A&trending=true",
-            SearchEndpoints.searchQueriesUrl(languageRanges = listOf("*"), isTrending = true),
+            "https://api.youversion.com/v1/search-queries?language_ranges%5B%5D=en&trending=true",
+            SearchEndpoints.searchQueriesUrl(languageRanges = listOf("en"), isTrending = true),
         )
     }
 
@@ -61,8 +61,8 @@ class SearchEndpointsTests {
     fun `test topic search url repeats every language range`() {
         assertEquals(
             "https://api.youversion.com/v1/search-topics" +
-                "?query=faif&language_ranges%5B%5D=en-US&language_ranges%5B%5D=%2A",
-            SearchEndpoints.searchTopicsUrl(query = "faif", languageRanges = listOf("en-US", "*")),
+                "?query=faif&language_ranges%5B%5D=en-US&language_ranges%5B%5D=es",
+            SearchEndpoints.searchTopicsUrl(query = "faif", languageRanges = listOf("en-US", "es")),
         )
     }
 
@@ -71,13 +71,13 @@ class SearchEndpointsTests {
         assertEquals(
             "https://api.youversion.com/v1/search-unified" +
                 "?query=love&bible_id=111" +
-                "&language_ranges%5B%5D=en-US&language_ranges%5B%5D=%2A" +
+                "&language_ranges%5B%5D=en-US&language_ranges%5B%5D=es" +
                 "&user_intent=topical" +
                 "&fields%5B%5D=verses&fields%5B%5D=topics",
             SearchEndpoints.searchUnifiedUrl(
                 query = "love",
                 bibleId = 111,
-                languageRanges = listOf("en-US", "*"),
+                languageRanges = listOf("en-US", "es"),
                 userIntent = SearchUserIntent.topical,
                 fields = listOf("verses", "topics"),
             ),
