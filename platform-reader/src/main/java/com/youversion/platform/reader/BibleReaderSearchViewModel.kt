@@ -137,12 +137,7 @@ internal class BibleReaderSearchViewModel : ViewModel() {
             _state.value.searchVersion
                 ?.languageTag
                 ?.takeIf { it.isNotBlank() }
-                ?: Locale
-                    .Builder()
-                    .setLocale(Locale.getDefault())
-                    .clearExtensions()
-                    .build()
-                    .toLanguageTag()
+                ?: Locale.getDefault().stripExtensions().toLanguageTag()
 
         _state.update {
             it.copy(

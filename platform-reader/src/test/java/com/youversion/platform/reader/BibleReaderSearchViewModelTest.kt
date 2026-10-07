@@ -768,6 +768,21 @@ class BibleReaderSearchViewModelTest {
         }
 
     @Test
+    fun `a device locale with an ill-formed region still takes suggestions in the device's language`() =
+        runTest(testDispatcher) {
+            val deviceLocale = Locale.getDefault()
+            Locale.setDefault(Locale("en", "USA"))
+            try {
+                viewModel.onAction(Action.OpenSearch(kjv))
+                runCurrent()
+            } finally {
+                Locale.setDefault(deviceLocale)
+            }
+
+            coVerify { searchApi.trendingQueries(languageRanges = listOf("en")) }
+        }
+
+    @Test
     fun `suggestions are announced while they are being fetched`() =
         runTest(testDispatcher) {
             coEvery { searchApi.trendingQueries(languageRanges = any()) } coAnswers {
