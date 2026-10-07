@@ -459,7 +459,7 @@ All four calls throw `YouVersionNetworkException` with reason `NOT_PERMITTED` wh
 
 Apps building their own search UI can call the search endpoints directly through `YouVersionApi.search`, which is part of `platform-core`. All calls are suspend functions and need only a configured app key — the user does not have to be signed in.
 
-Several calls take `languageRanges`: [BCP 47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) tags such as `"en"` or `"es"`, or `"*"` for any language, in order of preference. The platform answers in the first language it supports.
+Several calls take `languageRanges`: [BCP 47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) tags such as `"en"` or `"es"`, in order of preference. The platform answers in the first language it supports.
 
 #### Suggested and Trending Queries
 
@@ -539,7 +539,7 @@ val heading =
 
 #### Search Error Handling
 
-- Invalid arguments throw `IllegalArgumentException` before any request is made. A `query` must be 1–100 grapheme clusters (characters as the user sees them, so an emoji counts as one) for `verses`, `topics`, and `unified`, and non-empty for `suggestedQueries`. `bibleId` must be greater than zero, `pageSize` between 1 and 99, and each `languageRanges` entry a well-formed tag or `"*"`, with at least one given.
+- Invalid arguments throw `IllegalArgumentException` before any request is made. A `query` must be 1–100 grapheme clusters (characters as the user sees them, so an emoji counts as one) for `verses`, `topics`, and `unified`, and non-empty for `suggestedQueries`. `bibleId` must be greater than zero, `pageSize` between 1 and 99, and each `languageRanges` entry a well-formed tag (`"*"` is not accepted), with at least one given.
 - A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `CANNOT_DOWNLOAD` for any other error response, and `INVALID_RESPONSE` when the response cannot be read.
 - A response with no content (HTTP 204) is handled differently by endpoint. `trendingQueries` and `suggestedQueries` return an empty list, while `verses`, `topics`, and `unified` throw `YouVersionNetworkException` with reason `INVALID_RESPONSE` rather than reporting no matches.
 

@@ -13,11 +13,11 @@ interface SearchApi {
      * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
      *
      * @param query The text the reader has typed so far. It must not be empty, and has no upper length bound.
-     * @param languageRanges Canonical BCP 47 tags such as `en-US`, or `*` for any language, in preference order.
-     *     It must not be empty.
+     * @param languageRanges Canonical BCP 47 language codes such as `en`, in preference order. It must not be empty,
+     *     a range with a region such as `en-US` matches no language, and `*` is not accepted.
      * @return The suggested [SearchQuery]s, empty if the platform has none to offer.
      * @throws IllegalArgumentException if [query] is empty, or [languageRanges] is empty or holds a range that is
-     *     neither `*` nor a well-formed BCP 47 tag.
+     *     not a well-formed BCP 47 tag.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
     suspend fun suggestedQueries(
@@ -30,10 +30,10 @@ interface SearchApi {
      *
      * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
      *
-     * @param languageRanges Canonical BCP 47 tags such as `en-US`, or `*` for any language, in preference order.
-     *     It must not be empty.
+     * @param languageRanges Canonical BCP 47 language codes such as `en`, in preference order. It must not be empty,
+     *     a range with a region such as `en-US` matches no language, and `*` is not accepted.
      * @return The trending [SearchQuery]s, empty if the platform has none to offer.
-     * @throws IllegalArgumentException if [languageRanges] is empty or holds a range that is neither `*` nor a
+     * @throws IllegalArgumentException if [languageRanges] is empty or holds a range that is not a
      *     well-formed BCP 47 tag.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
@@ -72,11 +72,11 @@ interface SearchApi {
      * A response carrying no content fails rather than returning no results.
      *
      * @param query The text to search for. It must be between 1 and 100 grapheme clusters.
-     * @param languageRanges Canonical BCP 47 tags such as `en-US`, or `*` for any language, in preference order.
-     *     It must not be empty.
+     * @param languageRanges Canonical BCP 47 language codes such as `en`, in preference order. It must not be empty,
+     *     a range with a region such as `en-US` matches no language, and `*` is not accepted.
      * @return The matching [TopicSearchResults]. Topic results do not page.
      * @throws IllegalArgumentException if [query] is outside the range stated above, or [languageRanges] is empty
-     *     or holds a range that is neither `*` nor a well-formed BCP 47 tag.
+     *     or holds a range that is not a well-formed BCP 47 tag.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
     suspend fun topics(
@@ -95,14 +95,14 @@ interface SearchApi {
      *
      * @param query The text to search for. It must be between 1 and 100 grapheme clusters.
      * @param bibleId The identifier of the Bible version to search. It must be greater than zero.
-     * @param languageRanges Canonical BCP 47 tags such as `en-US`, or `*` for any language, in preference order.
-     *     It must not be empty.
+     * @param languageRanges Canonical BCP 47 language codes such as `en`, in preference order. It must not be empty,
+     *     a range with a region such as `en-US` matches no language, and `*` is not accepted.
      * @param userIntent The kind of thing the reader is believed to be looking for, used to rank the results.
      * @param fields The kinds of result to return — `verses`, `topics`, or both. Empty asks for every kind. Name
      *     only the kinds you will display, so you are not paying for results you discard.
      * @return The matching [SearchResults]. Unified results do not page.
      * @throws IllegalArgumentException if [query] or [bibleId] is outside the range stated above, or
-     *     [languageRanges] is empty or holds a range that is neither `*` nor a well-formed BCP 47 tag.
+     *     [languageRanges] is empty or holds a range that is not a well-formed BCP 47 tag.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
     suspend fun unified(

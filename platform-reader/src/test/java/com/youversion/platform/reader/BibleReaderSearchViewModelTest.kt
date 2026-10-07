@@ -36,6 +36,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.util.Locale
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -752,12 +753,33 @@ class BibleReaderSearchViewModelTest {
         }
 
     @Test
-    fun `a version that declares no language of its own takes suggestions in any language`() =
+    fun `a version with no language of its own takes suggestions in the device's language, without a region`() =
         runTest(testDispatcher) {
-            viewModel.onAction(Action.OpenSearch(kjv))
-            runCurrent()
+            val deviceLocale = Locale.getDefault()
+            Locale.setDefault(Locale.forLanguageTag("pt-BR-u-mu-celsius"))
+            try {
+                viewModel.onAction(Action.OpenSearch(kjv))
+                runCurrent()
+            } finally {
+                Locale.setDefault(deviceLocale)
+            }
 
-            coVerify { searchApi.trendingQueries(languageRanges = listOf("*")) }
+            coVerify { searchApi.trendingQueries(languageRanges = listOf("pt")) }
+        }
+
+    @Test
+    fun `a device locale with an ill-formed region still takes suggestions in the device's language`() =
+        runTest(testDispatcher) {
+            val deviceLocale = Locale.getDefault()
+            Locale.setDefault(Locale("en", "USA"))
+            try {
+                viewModel.onAction(Action.OpenSearch(kjv))
+                runCurrent()
+            } finally {
+                Locale.setDefault(deviceLocale)
+            }
+
+            coVerify { searchApi.trendingQueries(languageRanges = listOf("en")) }
         }
 
     @Test
