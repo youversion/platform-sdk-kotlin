@@ -57,9 +57,13 @@ complete, verify that the project builds.
 
 Point Gradle at your Android SDK with a `sdk.dir` entry in `local.properties` at the project root (the file is gitignored), or set the `ANDROID_HOME` environment variable.
 
+### Gradle and module dependencies
+
+Inter-module dependencies use Gradle's type-safe project accessors (enabled in `settings.gradle.kts` via `TYPESAFE_PROJECT_ACCESSORS`). Shared library and plugin versions live in the version catalog at `gradle/libs.versions.toml`.
+
 ### Gradle commands
 
-Command-line tasks complement the IDE workflow above. Public API checks and Spotless are documented in later sections.
+Command-line tasks complement the IDE workflow above. Public API checks and Spotless are documented in later sections. Use `testDebugUnitTest` when filtering with `--tests`.
 
 ```bash
 # Clean build
@@ -78,11 +82,8 @@ Command-line tasks complement the IDE workflow above. Public API checks and Spot
 ./gradlew :platform-core:testDebugUnitTest
 
 # Run a single test class or method
-./gradlew :platform-core:test --tests "com.youversion.platform.core.api.bible.BibleVersionsApiTests"
-./gradlew :platform-core:test --tests "com.youversion.platform.core.api.bible.BibleVersionsApiTests.testVersionsAPI"
-
-# Coverage: HTML report for local review (see also Writing Tests)
-./gradlew koverHtmlReport
+./gradlew :platform-core:testDebugUnitTest --tests "com.youversion.platform.core.bibles.api.BiblesApiVersionsTests"
+./gradlew :platform-core:testDebugUnitTest --tests "com.youversion.platform.core.bibles.api.BiblesApiVersionsTests.test versions success returns decoded version metadata"
 
 # Coverage: XML report and per-module threshold checks (CI-style)
 ./gradlew koverXmlReport
@@ -162,19 +163,15 @@ The project is structured into several modules:
 - **examples/sample-android**
    - Sample Android app which demos using all of the components together.
 
-#### Gradle and module dependencies
-
-Inter-module dependencies use Gradle's type-safe project accessors (enabled in `settings.gradle.kts` via `TYPESAFE_PROJECT_ACCESSORS`). Shared library and plugin versions live in the version catalog at `gradle/libs.versions.toml`.
-
 ### Branches
 
 Every change — including documentation, tooling, and small fixes — belongs on a branch named after its Jira ticket. Merge into `main` only through a pull request; do not push directly to `main`.
 
 **Branch naming:** `<JIRA-TICKET>-<kebab-description>`
 
-- Examples: `YPE-5957-trim-agents-md`, `YPE-2293-swift-sdk-add-x-yvp-sdk-http-header-for-version-reporting`, `BA-1204-plans-update`
+- Examples: `YPE-2293-swift-sdk-add-x-yvp-sdk-http-header-for-version-reporting`, `BA-1204-plans-update`, `BA-5678-bibles-cache-cleanup`
 - Put the ticket prefix first. Do not use an initials prefix or a `feature/` prefix.
-- If there is no ticket yet, create one in Jira before you start work.
+- Maintainers: if there is no ticket yet, create one in Jira before you start work. Outside contributors: open a GitHub issue instead; a maintainer can attach a ticket when they pick it up.
 
 **Standard workflow:**
 
@@ -207,7 +204,7 @@ Contributions are made using GitHub [pull requests](https://help.github.com/en/a
 5. If the contribution requires updates to documentation (be it updating existing contents or creating new one), please include the changes in your PR.
 6. Make sure any code contributed is covered by tests, no existing tests are broken and code is formatted.
 7. All PRs are checked for failing tests and code formatting.
-8. When you open a PR, set the assignee to the email from `git config user.email` when possible.
+8. When you open a PR, assign yourself if you can.
 
 ### Writing Tests
 Tests should be in the same module and package as the code they are testing. Follow existing patterns
