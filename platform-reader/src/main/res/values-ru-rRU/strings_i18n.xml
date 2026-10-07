@@ -10,9 +10,11 @@
     <string name="yv_font_selected_check">Галочка выбранного шрифта</string>
     <string name="yv_font_settings_label">Шрифт</string>
     <string name="yv_footnote_header_label">Сноска</string>
+    <string name="yv_highlight_color_blue">синий</string>
     <string name="yv_highlight_color_green">зелёный</string>
     <string name="yv_highlight_color_orange">оранжевый</string>
     <string name="yv_highlight_color_pink">розовый</string>
+    <string name="yv_highlight_color_purple">фиолетовый</string>
     <string name="yv_highlight_color_yellow">жёлтый</string>
     <string name="yv_intro_chapter_label">Введение</string>
     <string name="yv_language_content_desc">Язык</string>

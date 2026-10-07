@@ -2,7 +2,7 @@
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_banner_dismiss_content_description">關閉</string>
-    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_icon">離線</string>
     <string name="yv_banner_offline_message">我們與你的連線出現了問題。請於在線時下載聖經譯本。</string>
     <string name="yv_banner_version_unavailable_icon">譯本不可用</string>
     <string name="yv_banner_version_unavailable_message">你先前選擇的聖經譯本無法使用。請切換至其他譯本。</string>
@@ -10,9 +10,11 @@
     <string name="yv_font_selected_check">已選擇字體的勾選標記</string>
     <string name="yv_font_settings_label">字體</string>
     <string name="yv_footnote_header_label">註腳</string>
+    <string name="yv_highlight_color_blue">藍色</string>
     <string name="yv_highlight_color_green">綠色</string>
     <string name="yv_highlight_color_orange">橙色</string>
     <string name="yv_highlight_color_pink">粉紅色</string>
+    <string name="yv_highlight_color_purple">紫色</string>
     <string name="yv_highlight_color_yellow">黃色</string>
     <string name="yv_intro_chapter_label">簡介</string>
     <string name="yv_language_content_desc">語言</string>

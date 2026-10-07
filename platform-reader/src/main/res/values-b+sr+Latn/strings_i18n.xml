@@ -10,9 +10,11 @@
     <string name="yv_font_selected_check">Kvačica za izabrani font</string>
     <string name="yv_font_settings_label">Font</string>
     <string name="yv_footnote_header_label">Fusnota</string>
+    <string name="yv_highlight_color_blue">plavo</string>
     <string name="yv_highlight_color_green">zeleno</string>
     <string name="yv_highlight_color_orange">narandžasto</string>
     <string name="yv_highlight_color_pink">roze</string>
+    <string name="yv_highlight_color_purple">ljubičasto</string>
     <string name="yv_highlight_color_yellow">žuto</string>
     <string name="yv_intro_chapter_label">Uvod</string>
     <string name="yv_language_content_desc">Jezik</string>

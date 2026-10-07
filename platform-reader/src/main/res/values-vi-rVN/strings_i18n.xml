@@ -2,7 +2,7 @@
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_banner_dismiss_content_description">Đóng</string>
-    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_icon">Ngoại tuyến</string>
     <string name="yv_banner_offline_message">Chúng tôi đang gặp sự cố với kết nối của bạn. Vui lòng tải xuống một phiên bản Kinh Thánh khi bạn trực tuyến.</string>
     <string name="yv_banner_version_unavailable_icon">Phiên bản không khả dụng</string>
     <string name="yv_banner_version_unavailable_message">Phiên bản Kinh Thánh bạn đã chọn trước đó không khả dụng. Vui lòng chuyển sang phiên bản khác.</string>
@@ -10,9 +10,11 @@
     <string name="yv_font_selected_check">Dấu kiểm phông chữ đã chọn</string>
     <string name="yv_font_settings_label">Phông chữ</string>
     <string name="yv_footnote_header_label">Chú thích cuối trang</string>
+    <string name="yv_highlight_color_blue">xanh dương</string>
     <string name="yv_highlight_color_green">xanh lá</string>
     <string name="yv_highlight_color_orange">cam</string>
     <string name="yv_highlight_color_pink">hồng</string>
+    <string name="yv_highlight_color_purple">tím</string>
     <string name="yv_highlight_color_yellow">vàng</string>
     <string name="yv_intro_chapter_label">Giới thiệu</string>
     <string name="yv_language_content_desc">Ngôn ngữ</string>

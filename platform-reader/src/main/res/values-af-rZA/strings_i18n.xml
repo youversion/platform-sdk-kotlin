@@ -2,7 +2,7 @@
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_banner_dismiss_content_description">Sluit</string>
-    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_icon">Vanlyn</string>
     <string name="yv_banner_offline_message">Ons ondervind probleme met jou verbinding. Laai asseblief \'n Bybelweergawe af wanneer jy aanlyn is.</string>
     <string name="yv_banner_version_unavailable_icon">Weergawe nie beskikbaar nie</string>
     <string name="yv_banner_version_unavailable_message">Die Bybelweergawe wat jy voorheen gekies het, is nie beskikbaar nie. Kies asseblief \'n ander weergawe.</string>
@@ -10,9 +10,11 @@
     <string name="yv_font_selected_check">Kontroleer geselekteerde lettertipe</string>
     <string name="yv_font_settings_label">Lettertipe</string>
     <string name="yv_footnote_header_label">Voetnota</string>
+    <string name="yv_highlight_color_blue">blou</string>
     <string name="yv_highlight_color_green">groen</string>
     <string name="yv_highlight_color_orange">oranje</string>
     <string name="yv_highlight_color_pink">pienk</string>
+    <string name="yv_highlight_color_purple">pers</string>
     <string name="yv_highlight_color_yellow">geel</string>
     <string name="yv_intro_chapter_label">Inleiding</string>
     <string name="yv_language_content_desc">Taal</string>

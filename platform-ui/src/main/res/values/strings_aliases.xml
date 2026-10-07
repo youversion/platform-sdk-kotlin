@@ -41,6 +41,7 @@
     <string name="font_and_settings">@string/yv_font_and_settings</string>
     <string name="footnote_content_desc">@string/yv_footnote_content_desc</string>
     <string name="full_chapter">@string/yv_full_chapter</string>
+    <string name="generic_request_error_body">@string/yv_generic_request_error_body</string>
     <string name="increase_font_size_aria_label">@string/yv_increase_font_size_aria_label</string>
     <string name="inter_font_name">@string/yv_inter_font_name</string>
     <string name="language">@string/yv_language</string>

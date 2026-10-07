@@ -10,9 +10,11 @@
     <string name="yv_font_selected_check">Zaškrtnutí vybraného písma</string>
     <string name="yv_font_settings_label">Písmo</string>
     <string name="yv_footnote_header_label">Poznámka pod čarou</string>
+    <string name="yv_highlight_color_blue">modrá</string>
     <string name="yv_highlight_color_green">zelená</string>
     <string name="yv_highlight_color_orange">oranžová</string>
     <string name="yv_highlight_color_pink">růžová</string>
+    <string name="yv_highlight_color_purple">fialová</string>
     <string name="yv_highlight_color_yellow">žlutá</string>
     <string name="yv_intro_chapter_label">Úvod</string>
     <string name="yv_language_content_desc">Jazyk</string>

@@ -2,7 +2,7 @@
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_banner_dismiss_content_description">Kapat</string>
-    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_icon">Çevrimdışı</string>
     <string name="yv_banner_offline_message">Bağlantınızda sorun yaşıyoruz. Lütfen çevrimiçiyken bir Kutsal Kitap versiyonu indirin.</string>
     <string name="yv_banner_version_unavailable_icon">Sürüm kullanılamıyor</string>
     <string name="yv_banner_version_unavailable_message">Daha önce seçtiğiniz Kutsal Kitap çeviri versiyonu kullanılamıyor. Lütfen başka bir versiyona geçin.</string>
@@ -10,9 +10,11 @@
     <string name="yv_font_selected_check">Yazı Tipi seçildi</string>
     <string name="yv_font_settings_label">Yazı Tipi</string>
     <string name="yv_footnote_header_label">Dipnot</string>
+    <string name="yv_highlight_color_blue">mavi</string>
     <string name="yv_highlight_color_green">yeşil</string>
     <string name="yv_highlight_color_orange">turuncu</string>
     <string name="yv_highlight_color_pink">pembe</string>
+    <string name="yv_highlight_color_purple">mor</string>
     <string name="yv_highlight_color_yellow">sarı</string>
     <string name="yv_intro_chapter_label">Giriş</string>
     <string name="yv_language_content_desc">Dil</string>
