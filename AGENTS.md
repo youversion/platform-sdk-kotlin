@@ -1,205 +1,59 @@
 # Agent instructions for `platform-sdk-kotlin`
 
-This is a public repo, living at https://github.com/youversion/platform-sdk-kotlin
+Public Android library at https://github.com/youversion/platform-sdk-kotlin. Third-party apps integrate YouVersion Bible text through API helpers and Jetpack Compose, up to a drop-in `BibleReader`. Multiplatform is not available.
+Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
+`CONTEXT.md` is the glossary. Use each defined term's canonical name, not a wording listed under `_Avoid_`.
 
-It provides an SDK for third-party apps to integrate Bible text services from YouVersion on Android. It's designed to be distributed as a library dependency.
+## Read these, do not copy them
 
-The SDK includes API access helpers, convenience classes and methods for working with Bible text, and Jetpack Compose components to make displaying scripture easy — up to a complete drop-in `BibleReader`. Multiplatform support is not currently available.
+- Setup, build, tests, sample app, formatting, and public API dumps: CONTRIBUTING.md
+- Versions and publishing: RELEASING.md
+- Failed release recovery: docs/RELEASE-RUNBOOK.md
+- CI: the `.github/workflows` directory
+- User-facing strings: docs/localization-guardrails.md
+- Reader classpath split: platform-reader/build.gradle.kts
 
-## Documentation
+## Modules
 
-In addition to the README.md in this repo, more official documentation is at https://developers.youversion.com/sdks/kotlin
+- `platform-core`: Bible, VOTD, Highlights, Languages, Users, Data Exchange, and Organizations clients; `YouVersionPlatformConfiguration`; highlights domain; Koin; models. No UI.
+- `platform-ui`: Compose components plus `rememberSignIn`, `rememberDataExchange`, and `SignInWithYouVersionActivity`. Depends on `platform-core`.
+- `platform-reader`: main entry for apps. `api()` on `platform-core` because `BibleReader` takes a `BibleReference`. `implementation` on `platform-ui` because `platform-ui` never appears in public signatures.
+- `examples/sample-android` demonstrates the SDK.
+- Flow: `platform-core` ← `platform-ui` ← `platform-reader` ← `sample-android`.
 
-`CONTEXT.md` at the repo root is the glossary of domain terms this SDK exposes. Consult it when naming things in code, comments, or docs: use the canonical term for a concept it defines, and not the wordings listed under `_Avoid_`.
+## Initialization
 
-## Module Architecture
-
-The project uses a multi-module architecture with clear separation of concerns:
-
-- **platform-core**: Core SDK logic containing:
-  - API clients (Bible, VOTD, Highlights, Languages, Users, Data Exchange, Organizations)
-  - Configuration management (`YouVersionPlatformConfiguration`)
-  - Highlights domain layer (`BibleHighlightsRepository`, `BibleHighlightCache`) — offline-first queue and process-wide cache backing the highlight UI
-  - Koin-based dependency injection
-  - Data models and utilities
-  - No UI dependencies
-
-- **platform-ui**: UI components library (Jetpack Compose):
-  - Reusable Compose UI components
-  - Sign-in and data exchange permission flows (`rememberSignIn`, `rememberDataExchange`, `SignInWithYouVersionActivity`)
-  - Depends on `platform-core`
-
-- **platform-reader**: High-level reader functionality:
-  - Combines `platform-core` + `platform-ui`
-  - Re-exposes `platform-core` via `api()`, since `BibleReader` takes a `BibleReference`
-  - Depends on `platform-ui` via `implementation`: it backs the reader's internals but
-    never appears in its public signatures, so it stays off the consumer's compile classpath
-  - Intended as the main entry point for consumer apps
-
-- **examples/sample-android**: Sample Android app demonstrating SDK usage
-
-**Dependency Flow**: `platform-core` ← `platform-ui` ← `platform-reader` ← `sample-android`
-
-## SDK Initialization Pattern
-
-The SDK uses a singleton configuration pattern with Koin DI:
-
-1. Apps must call `YouVersionPlatformConfiguration.configure()` with an `appKey` in `Application.onCreate()`
-2. This initializes Koin context (`startYouVersionPlatform()`)
-3. Koin provides: `HttpClient` (Ktor), `Store` (SharedPreferences), `Logger`
-4. Access SDK via `YouVersionApi` object (contains `bible`, `dataExchange`, `highlights`, `languages`, `organizations`, `users`, `votd` APIs)
-5. All API calls are suspend functions using Kotlin coroutines
-
-**Key Files**:
+- Apps call `YouVersionPlatformConfiguration.configure()` with an `appKey` from `Application.onCreate()`, which starts Koin (`startYouVersionPlatform()`).
+- Koin provides `HttpClient` (Ktor), `Store` (SharedPreferences), and `Logger`.
+- Call sites use `YouVersionApi` (`bible`, `dataExchange`, `highlights`, `languages`, `organizations`, `users`, `votd`). Every API method is a suspend function.
 - Configuration: `platform-core/src/main/java/com/youversion/platform/core/YouVersionPlatformConfiguration.kt`
-- DI Setup: `platform-core/src/main/java/com/youversion/platform/core/utilities/koin/`
-- API Entry: `platform-core/src/main/java/com/youversion/platform/core/api/YouVersionApi.kt`
+- DI: `platform-core/src/main/java/com/youversion/platform/core/utilities/koin/`
+- API entry: `platform-core/src/main/java/com/youversion/platform/core/api/YouVersionApi.kt`
 - Highlights domain: `platform-core/src/main/java/com/youversion/platform/core/highlights/domain/`
 
 ## Permissions
 
-Permissions are `SignInWithYouVersionPermission` values (`OPENID`, `PROFILE`, `EMAIL`, `HIGHLIGHTS`). Four things to know before changing permission-related code:
+- Values are `SignInWithYouVersionPermission`: `OPENID`, `PROFILE`, `EMAIL`, `HIGHLIGHTS`.
+- A grant cannot be revoked from the app. Do not design a flow that loses a permission.
+- A signed-out user grants inside `rememberSignIn`. A signed-in user grants through `rememberDataExchange`, which needs an access token or `dataExchangeToken()` throws `MISSING_AUTHENTICATION`. Both return on `youversionauth://callback`, handled by `SignInWithYouVersionActivity`.
+- Grants follow the session. `configure()` and `saveAuthData()` drop stored grants when the tokens they are given name a different session, and `configure()` does not fill omitted tokens from storage in that case. Compare each given token with its own stored counterpart.
+- A data-exchange grant belongs to the session that requested it. `DataExchangeHandler` records that session before opening the browser, and `persistGrantedPermissions` drops the grant if another user is signed in when it returns. A grant that returns after process death has no recorded session and is kept.
+- Highlights load only for a signed-in user who has `HIGHLIGHTS`. `BibleText` skips the fetch when either is missing.
 
-- **Granted permissions are irrevocable from the app's side.** There is no revoke API; don't design flows around losing a permission.
-- **There are two grant routes, and both matter.** A signed-out user grants during sign-in (`rememberSignIn` with the permission in the requested set). A signed-in user grants incrementally via the data exchange flow (`rememberDataExchange`), which requires an existing access token — `dataExchangeToken()` throws `MISSING_AUTHENTICATION` without one. Both return through the same `youversionauth://callback` deep link, handled by `SignInWithYouVersionActivity`.
-- **Granted permissions follow the session, not storage.** `configure()` and `saveAuthData()` both drop the stored grants when the tokens they are given name a different session than the one stored, so one user cannot inherit another's. `configure()` likewise stops filling in tokens the caller left out from storage in that case — mixing them would report one user while requests carried another's token. It compares each token it is given against its own stored counterpart, rather than comparing one session id against another: a caller can pass a partial set, and an id built from a partial set never matches one built from a full set however well the tokens agree. A host managing its own tokens is the usual caller, and usually passes no ID token.
-- **A data exchange grant belongs to the session that asked for it.** `DataExchangeHandler` records the session before opening the browser, and both callback routes persist through `DataExchangeHandler.persistGrantedPermissions`, which drops the grant when a different user is signed in by the time it returns — a host app driving its own account switching can replace the session while the permission page is open. A grant returning after process death has no recorded session to compare against and is kept.
+## Branches
 
-Reading highlights requires both a signed-in user and `HIGHLIGHTS`; `BibleText` skips the fetch entirely when either is missing rather than issuing a request that would be refused.
+- Every change, including docs and tooling, is a `<JIRA-TICKET>-<kebab-description>` branch. Merge to `main` only through a pull request. No initials prefix and no `feature/` prefix.
+- The pull request title matches the first line of the commit message.
+- A multi-ticket feature uses an epic branch from `main`, task branches from that epic branch, task pull requests into the epic branch, then one pull request from the epic branch to `main`.
+- Bring `main` in by merging it into the epic branch first, then merge that epic branch into the task branch.
 
-## Build Commands
+## Kotlin
 
-```bash
-# Full build (all modules + tests + lint + coverage)
-./gradlew build
-
-# Clean build
-./gradlew clean build
-
-# Build specific module
-./gradlew :platform-core:build
-./gradlew :platform-ui:build
-./gradlew :platform-reader:build
-
-# Run all tests
-./gradlew test
-
-# Run tests for specific module
-./gradlew :platform-core:test
-./gradlew :platform-core:testDebugUnitTest
-
-# Run single test class
-./gradlew :platform-core:test --tests "com.youversion.platform.core.api.bible.BibleVersionsApiTests"
-
-# Run single test method
-./gradlew :platform-core:test --tests "com.youversion.platform.core.api.bible.BibleVersionsApiTests.testVersionsAPI"
-
-# Code coverage report
-./gradlew koverXmlReport
-# Reports in: build/reports/kover/
-
-# Per-module line coverage threshold check
-./gradlew koverVerify
-
-# Public API validation (published modules only; sample app is excluded)
-./gradlew apiCheck   # fails if the code no longer matches <module>/api/<module>.api
-./gradlew apiDump    # re-records the dump after an intentional API change
-```
-
-**Note**: `apiDump` output is committed. An intentional API change ships with its updated `.api` file; an
-unintentional one shows up as a CI failure rather than a silent break for apps on a released version.
-
-## Code Formatting
-
-This project enforces formatting via Spotless + ktlint:
-
-```bash
-# Check formatting
-./gradlew spotlessCheck
-
-# Auto-format all code
-./gradlew spotlessApply
-```
-
-**Note**: `spotlessApply` runs automatically during compilation.
-
-## Sample App
-
-```bash
-# Install on connected emulator/device
-./gradlew :examples:sample-android:installDebug
-
-# Install release build
-./gradlew :examples:sample-android:installRelease
-
-# Uninstall
-./gradlew :examples:sample-android:uninstallDebug
-```
-
-**Important**: The sample app requires a valid YouVersion API key in `examples/sample-android/src/main/java/com/youversion/platform/MainApplication.kt`. The placeholder uses `TODO()` to force replacement before running.
-
-## Dependency Management
-
-- Uses Gradle version catalogs: `gradle/libs.versions.toml`
-- Type-safe project accessors enabled for inter-module dependencies
-
-## Local Setup
-
-Create `local.properties` in project root (gitignored):
-```properties
-sdk.dir=/path/to/your/Android/sdk
-```
-
-Or set `ANDROID_HOME` environment variable.
-
-## Git Branching Process
-
-**⚠️ IMPORTANT: Every change goes on a branch, every branch is named after its Jira ticket, and every merge into `main` goes through a pull request. No direct edits or pushes to `main`.**
-
-**Branch naming**: `<JIRA-TICKET>-<kebab-description>`
-
-- Examples: `YPE-2293-swift-sdk-add-x-yvp-sdk-http-header-for-version-reporting`, `BA-1204-plans-update`, `BA-5678-bibles-cache-cleanup`
-- The ticket prefix comes first; no initials prefix, no `feature/` prefix.
-- Every branch — including doc-only edits, tooling changes, and small fixes — must have a Jira ticket and follow this pattern. If there's no ticket, create one before starting work.
-
-**Standard workflow**:
-1. Create the branch from `main`.
-2. Make changes on the branch.
-3. Open a PR back to `main`. PR title matches the first line of the commit message.
-
-**Feature branches** (for large tasks or risky changes spanning multiple sub-tickets):
-1. Create the feature branch from `main` using the parent epic's ticket: `<EPIC-TICKET>-<kebab-description>` (e.g., `YPE-1900-offline-search`).
-2. Create task branches off the feature branch using each sub-ticket: `<TASK-TICKET>-<kebab-description>`.
-3. Open PRs from task branches targeting the feature branch.
-4. Open a final PR from the feature branch to `main` once the feature is complete.
-
-**Updating feature branches with changes from `main`**:
-- Merge `main` into the feature branch first.
-- Then merge the updated feature branch into the task branch.
-- Never merge `main` directly into a task branch.
-
-## Code style and conventions
-
-- Use GitHub to create pull requests (PRs).
-- PR titles should always be the same as the first line of the commit message.
-- When creating PRs, try to use the git config user email as the assignee.
-- Prefer idiomatic, industry standard Kotlin style. Follow https://developer.android.com/kotlin/style-guide.
-- Don't make whitespace-only changes.
-- Prefer suspend functions over callback-based APIs.
-- Asynchronous functions with return values should have names that are noun phrases describing the return value rather than verb phrases and should never begin with "get", "load", or "request".
-- Don't add inline comments inside functions, but don't delete existing inline comments.
-- Add documentation comments to new, non-private functions.
-- Make access controls on properties and functions as strict as they can be (private, internal, protected, etc).
-- Prefer to make properties immutable (val over var).
-- Avoid abbreviations; prefer clarity over brevity.
-- For Booleans, ensure that they start with a helping verb like “is”, “has”, or “should”. “shows” and “showing” are also acceptable prefixes.
-- Non-boolean entities should end with a word that indicates their data type (ex. “shadowColor” rather than “colorShadow” for a Color).
-- Do not prepend “this.” when it is unnecessary.
-- Properties should be listed before all functions.
-- Classes should not be marked open unless they are intended to be subclassed.
-- Prefer data class or value class over open classes when possible.
-- Don’t leave unused code.
-- Do not leave commented out code in place.
-- Avoid abbreviations.
-- Class, object, interface, and enum entity names should always be in PascalCase.
-- Property and function names should always be in camelCase.
+- Follow https://developer.android.com/kotlin/style-guide. Do not make whitespace-only changes.
+- Prefer suspend functions. A function that returns a value is a noun phrase and does not start with "get", "load", or "request".
+- Document new non-private functions. Do not add inline comments inside functions, and do not delete existing ones.
+- Use the strictest access. Prefer `val`. Properties come before functions. Do not leave unused code or commented-out code.
+- A Boolean starts with "is", "has", "should", "shows", or "showing". A non-Boolean name ends with its type, as in `shadowColor`.
+- Do not write an unnecessary `this.`. A class is `open` only when it is subclassed. Prefer a data class or a value class.
+- Types are PascalCase. Properties and functions are camelCase. Avoid abbreviations.
+- Internal catalog: `gradle/libs.versions.toml`. Local SDK path: `local.properties` `sdk.dir`, or `ANDROID_HOME`.
