@@ -21,6 +21,33 @@
       ],
       "severity": "high",
       "enabled": true
+    },
+    {
+      "id": "agents-md-index-contract",
+      "rule": "AGENTS.md is an index of 100 lines or fewer. Flag a change that names a workflow file (the substring .yml), mentions CLAUDE.md, pastes localization policy instead of the single pointer to docs/localization-guardrails.md, or says platform-reader depends on both platform-core and platform-ui with api(). The split stays api() for platform-core and implementation for platform-ui.",
+      "scope": [
+        "AGENTS.md"
+      ],
+      "severity": "low",
+      "enabled": true
+    },
+    {
+      "id": "reader-core-api-ui-implementation",
+      "rule": "platform-reader declares api(projects.platformCore) because BibleReader takes a BibleReference, and implementation(projects.platformUi) because platform-ui does not appear in public signatures. Flag a change that uses implementation for platform-core or api for platform-ui.",
+      "scope": [
+        "platform-reader/build.gradle.kts"
+      ],
+      "severity": "low",
+      "enabled": true
+    },
+    {
+      "id": "permission-grant-not-revoked",
+      "rule": "A grant cannot be revoked while the same user stays signed in. Flag a new grantedPermissionValues = emptySet() (or a helper that does that) outside the three existing clears: configure when !keepsStoredSession (line 211), saveAuthData when the tokens name a different session (line 312), and clearAuthData on sign-out (line 374). Do not flag completePermissionGrant when it returns false because the recorded session no longer matches.",
+      "scope": [
+        "platform-core/src/main/java/com/youversion/platform/core/YouVersionPlatformConfiguration.kt"
+      ],
+      "severity": "low",
+      "enabled": true
     }
   ],
   "ignorePatterns": [

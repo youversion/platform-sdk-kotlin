@@ -7,6 +7,10 @@
         "platform-ui/**",
         "platform-reader/**"
       ]
+    },
+    {
+      "path": "AGENTS.md",
+      "description": "Agent index for this SDK. Localization policy lives in docs/localization-guardrails.md."
     }
   ]
 }

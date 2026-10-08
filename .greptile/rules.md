@@ -36,3 +36,21 @@ Add or change keys in **platform-localization**, then sync into this repo.
 
 - Full policy: `docs/localization-guardrails.md`
 - Local check: `./gradlew verifyNoHardcodedUiStrings`
+
+## agents-md-index-contract
+
+Advisory. This comment does not block merge.
+
+`AGENTS.md` is an index of 100 lines or fewer. Flag a change that names a workflow file (the substring `.yml`), mentions `CLAUDE.md`, pastes localization policy instead of the single pointer to `docs/localization-guardrails.md`, or says `platform-reader` depends on both `platform-core` and `platform-ui` with `api()`. The split stays `api()` for `platform-core` and `implementation` for `platform-ui`.
+
+## reader-core-api-ui-implementation
+
+Advisory. This comment does not block merge.
+
+`platform-reader` declares `api(projects.platformCore)` because `BibleReader` takes a `BibleReference`, and `implementation(projects.platformUi)` because `platform-ui` does not appear in public signatures. Flag a change that uses `implementation` for `platform-core` or `api` for `platform-ui`.
+
+## permission-grant-not-revoked
+
+Advisory. This comment does not block merge.
+
+A grant cannot be revoked while the same user stays signed in. Flag a new `grantedPermissionValues = emptySet()` (or a helper that does that) outside the three existing clears: `configure` when `!keepsStoredSession` (line 211), `saveAuthData` when the tokens name a different session (line 312), and `clearAuthData` on sign-out (line 374). Do not flag `completePermissionGrant` when it returns false because the recorded session no longer matches.
