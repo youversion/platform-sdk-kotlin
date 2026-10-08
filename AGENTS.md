@@ -14,7 +14,7 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 
 ## Modules
 
-- `platform-core`: Bible, VOTD, Highlights, Languages, Users, Data Exchange, and Organizations clients; `YouVersionPlatformConfiguration`; highlights domain (`BibleHighlightsRepository` offline-first queue, `BibleHighlightCache` process-wide cache for the highlight UI); Koin; models. No UI.
+- `platform-core`: Bible, VOTD, Highlights, Languages, Users, Data Exchange, Organizations, and Search clients; `YouVersionPlatformConfiguration`; highlights domain (`BibleHighlightsRepository` offline-first queue, `BibleHighlightCache` process-wide cache for the highlight UI); Koin; models. No UI.
 - `platform-ui`: Compose components plus `rememberSignIn`, `rememberDataExchange`, and `SignInWithYouVersionActivity`. Depends on `platform-core`.
 - `platform-reader`: main entry for apps. `api()` on `platform-core` because `BibleReader` takes a `BibleReference`. `implementation` on `platform-ui` because `platform-ui` never appears in public signatures.
 - `platform-bom`: bill of materials that constrains `platform-core`, `platform-ui`, and `platform-reader` to one version. Each SDK module depends on it via `api(platform(...))`.
@@ -25,7 +25,7 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 
 - Apps call `YouVersionPlatformConfiguration.configure()` with an `appKey` from `Application.onCreate()`, which starts Koin (`startYouVersionPlatform()`).
 - Koin provides `HttpClient` (Ktor), `Store` (SharedPreferences), and `Logger`.
-- Call sites use `YouVersionApi` (`bible`, `dataExchange`, `highlights`, `languages`, `organizations`, `users`, `votd`). Every API method is a suspend function.
+- Call sites use `YouVersionApi` (`bible`, `dataExchange`, `highlights`, `languages`, `organizations`, `search`, `users`, `votd`). Network calls are suspend functions.
 - Configuration: `platform-core/src/main/java/com/youversion/platform/core/YouVersionPlatformConfiguration.kt`
 - DI: `platform-core/src/main/java/com/youversion/platform/core/utilities/koin/`
 - API entry: `platform-core/src/main/java/com/youversion/platform/core/api/YouVersionApi.kt`
@@ -36,8 +36,18 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 - Values are `SignInWithYouVersionPermission`: `OPENID`, `PROFILE`, `EMAIL`, `HIGHLIGHTS`.
 - A grant cannot be revoked from the app. Do not design a flow that loses a permission.
 - A signed-out user grants inside `rememberSignIn`. A signed-in user grants through `rememberDataExchange`, which needs an access token or `dataExchangeToken()` throws `MISSING_AUTHENTICATION`. Both return on `youversionauth://callback`, handled by `SignInWithYouVersionActivity`.
-- Grants follow the session. `configure()` and `saveAuthData()` drop stored grants when the tokens they are given name a different session, and `configure()` does not fill omitted tokens from storage in that case. `configure()` compares each given token with its own stored counterpart rather than comparing session ids: an id built from a partial token set never matches one built from a full set, and a host managing its own tokens usually passes no ID token.
-- A data-exchange grant belongs to the session that requested it. `DataExchangeHandler` records that session before opening the browser. Both callback routes, `SignInWithYouVersionActivity` and `DataExchangeHandler`, save through `DataExchangeHandler.persistGrantedPermissions`, which drops the grant if another user is signed in when it returns — a host driving its own account switching can replace the session while the permission page is open. A grant that returns after process death has no recorded session and is kept.
+- Grants follow the session.
+- `configure()` and `saveAuthData()` drop stored grants when the given tokens name a different session.
+- `configure()` does not fill omitted tokens from storage in that case.
+- `configure()` compares each given token with its own stored counterpart rather than comparing session ids.
+- An id built from a partial token set never matches one built from a full set.
+- A host managing its own tokens usually passes no ID token.
+- A data-exchange grant belongs to the session that requested it.
+- `DataExchangeHandler` records that session before opening the browser.
+- Both callback routes save through `DataExchangeHandler.persistGrantedPermissions`.
+- That save drops the grant if another user is signed in when it returns.
+- A host driving its own account switching can replace the session while the permission page is open.
+- A grant that returns after process death has no recorded session and is kept.
 - Highlights load only for a signed-in user who has `HIGHLIGHTS`. `BibleText` skips the fetch when either is missing.
 
 ## Kotlin

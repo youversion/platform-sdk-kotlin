@@ -143,8 +143,7 @@ PR number is used when the branch has no ticket key, for example
 SHA is recorded separately in the workflow summary.
 
 This initial bridge produces an App Live build only. It does not run the Hinqa
-corpus or upload to App Automate. Ported from the same bridge in
-`platform-sdk-swift` (YPE-3011); when one changes, check the other.
+corpus or upload to App Automate.
 
 ### Project Structure
 
