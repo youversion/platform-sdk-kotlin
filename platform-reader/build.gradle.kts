@@ -55,6 +55,8 @@ android {
 }
 
 dependencies {
+    api(platform(projects.platformBom))
+
     // api(): these types appear in platform-reader's public signatures, so consumers need
     // them on their compile classpath. Everything else stays implementation.
     api(projects.platformCore) // BibleReader(bibleReference: BibleReference?)

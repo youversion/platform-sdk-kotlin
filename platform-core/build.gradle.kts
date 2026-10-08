@@ -57,6 +57,8 @@ android {
 }
 
 dependencies {
+    api(platform(projects.platformBom))
+
     // api(): these types appear in platform-core's public signatures, so consumers need
     // them on their compile classpath. Everything else stays implementation.
     api(libs.koin.core) // PlatformKoinGraph.koinApplication, start(List<Module>)

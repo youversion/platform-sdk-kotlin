@@ -18,6 +18,7 @@ currently not available.
   - [Which Modules Do I Need?](#which-modules-do-i-need)
   - [With Version Catalog](#with-version-catalog)
   - [Without Version Catalog](#without-version-catalog)
+  - [Mixed Versions](#mixed-versions)
 - [Getting Started](#getting-started)
 - [Usage](#usage)
   - [Displaying Scripture](#displaying-scripture)
@@ -89,21 +90,25 @@ You will need `platform-reader`, `platform-ui`, and `platform-core`.
 
 Great! Now that you know which modules you need, you can proceed with installation.
 
+The modules always ship together on the same version. Declare `platform-bom` with the version once and list the modules you need without one; the BOM keeps them aligned.
+
 ### With Version Catalog
 
 ```toml
 # gradle/libs.versions.toml
 [versions]
-youVersionPlatform = "2.5.0"
+youVersionPlatform = "2.6.0"
 
 [libraries]
-youversion-platform-core = { module = "com.youversion.platform:platform-core", version.ref = "youVersionPlatform" }
-youversion-platform-ui = { module = "com.youversion.platform:platform-ui", version.ref = "youVersionPlatform" }
-youversion-platform-reader = { module = "com.youversion.platform:platform-reader", version.ref = "youVersionPlatform" }
+youversion-platform-bom = { module = "com.youversion.platform:platform-bom", version.ref = "youVersionPlatform" }
+youversion-platform-core = { module = "com.youversion.platform:platform-core" }
+youversion-platform-ui = { module = "com.youversion.platform:platform-ui" }
+youversion-platform-reader = { module = "com.youversion.platform:platform-reader" }
 ```
 
 ```kotlin
 // app/build.gradle.kts
+implementation(platform(libs.youversion.platform.bom))
 implementation(libs.youversion.platform.core)
 implementation(libs.youversion.platform.ui)
 implementation(libs.youversion.platform.reader)
@@ -112,11 +117,16 @@ implementation(libs.youversion.platform.reader)
 ### Without Version Catalog
 
 ```kotlin
-val youVersionPlatform = "2.5.0"
-implementation("com.youversion.platform:platform-core:$youVersionPlatform")
-implementation("com.youversion.platform:platform-ui:$youVersionPlatform")
-implementation("com.youversion.platform:platform-reader:$youVersionPlatform")
+val youVersionPlatform = "2.6.0"
+implementation(platform("com.youversion.platform:platform-bom:$youVersionPlatform"))
+implementation("com.youversion.platform:platform-core")
+implementation("com.youversion.platform:platform-ui")
+implementation("com.youversion.platform:platform-reader")
 ```
+
+### Mixed Versions
+
+If your build asks for more than one version of the SDK modules — for example, another library brings in a newer `platform-core` — Gradle moves every module up to the newest version requested. Run `./gradlew :app:dependencies` to see where that happened; an upgraded module shows as `platform-ui:2.1.0 -> 2.6.0`.
 
 ## Getting Started
 

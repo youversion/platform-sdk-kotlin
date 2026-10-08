@@ -59,10 +59,14 @@ learning because several of them look interchangeable and are not.
    deadline elapses fails the run, because a version that resolves for only some
    of the modules breaks consumers.
 
-All three modules always ship on the same version. `PUBLISHABLE_MODULES` in
+All modules always ship on the same version. `PUBLISHABLE_MODULES` in
 [`.github/workflows/release.yml`](.github/workflows/release.yml) is the single
 place that list is declared. A consumer mixing `2.1.2` `platform-core` with
-`2.2.0` `platform-ui` is not a configuration we support.
+`2.2.0` `platform-ui` is not a configuration we support, and from the first
+release that ships `platform-bom` Gradle prevents it: every module depends on
+the BOM, which pins the others to its version. A new published module needs
+adding both to `PUBLISHABLE_MODULES` and to the constraints in
+`platform-bom/build.gradle.kts`.
 
 ### How the version reaches the artifacts
 
@@ -78,7 +82,7 @@ property does two things:
 
 There is no "restore to Dev" commit after a release.
 `gradle/libs.versions.toml` holds the last released version by design — it is
-what the README snippets and the three `coordinates(...)` calls resolve to.
+what the README snippets and the `coordinates(...)` calls resolve to.
 
 ## Choosing the version
 

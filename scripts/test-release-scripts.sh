@@ -677,7 +677,7 @@ rs_run() {
 
 assert_exit 0 "publish succeeds → release.sh exits 0" rs_run 0
 assert_exit 0 "…and creates the GitHub release" grep -qF "release create 2.0.0" "$RS_GH_LOG"
-assert_stdout_equals "2.0.0 platform-core,platform-ui,platform-reader com.youversion.platform" \
+assert_stdout_equals "2.0.0 platform-core,platform-ui,platform-reader,platform-bom com.youversion.platform" \
   "…having published every module in one wrapper call" cat "$RS_PUB_ARGS"
 
 # The pair below is the point of this whole section: a GitHub release for a
