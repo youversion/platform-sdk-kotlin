@@ -11,7 +11,6 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 - Failed release recovery: docs/RELEASE-RUNBOOK.md
 - CI: the `.github/workflows` directory
 - User-facing strings: docs/localization-guardrails.md
-- Reader classpath split: platform-reader/build.gradle.kts
 
 ## Modules
 
