@@ -119,6 +119,8 @@ The project is structured into several modules:
    - UI components library (Jetpack Compose) which provide the building blocks for rendering Bible content.
 - **platform-reader**
    - High-level reader functionality which uses `platform-core` and `platform-ui` to provide a complete `BibleReader` experience.
+- **platform-bom**
+   - Bill of materials that keeps every published module on the same version.
 - **examples/sample-android**
    - Sample Android app which demos using all of the components together.
 

@@ -36,6 +36,11 @@ The project uses a multi-module architecture with clear separation of concerns:
     never appears in its public signatures, so it stays off the consumer's compile classpath
   - Intended as the main entry point for consumer apps
 
+- **platform-bom**: Bill of materials (`java-platform`):
+  - Constrains `platform-core`, `platform-ui`, and `platform-reader` to its own version
+  - Each SDK module depends on it via `api(platform(...))`, so a consumer that names
+    mixed versions still resolves every module to one version
+
 - **examples/sample-android**: Sample Android app demonstrating SDK usage
 
 **Dependency Flow**: `platform-core` ← `platform-ui` ← `platform-reader` ← `sample-android`

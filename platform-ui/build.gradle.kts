@@ -54,6 +54,8 @@ android {
 }
 
 dependencies {
+    api(platform(projects.platformBom))
+
     // api(): these types appear in platform-ui's public signatures, so consumers need
     // them on their compile classpath. Everything else stays implementation.
     api(projects.platformCore) // BibleText(BibleReference), BibleCard(BibleVersion), rememberSignIn()
