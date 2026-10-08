@@ -35,14 +35,14 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 - Values are `SignInWithYouVersionPermission`: `OPENID`, `PROFILE`, `EMAIL`, `HIGHLIGHTS`.
 - A grant cannot be revoked from the app. Do not design a flow that loses a permission.
 - A signed-out user grants inside `rememberSignIn`. A signed-in user grants through `rememberDataExchange`, which needs an access token or `dataExchangeToken()` throws `MISSING_AUTHENTICATION`. Both return on `youversionauth://callback`, handled by `SignInWithYouVersionActivity`.
-- Grants follow the session. `configure()` and `saveAuthData()` drop stored grants when the tokens they are given name a different session, and `configure()` does not fill omitted tokens from storage in that case. Compare each given token with its own stored counterpart rather than session ids: a partial token set never matches a full-set id, and a host managing its own tokens usually passes no ID token.
-- A data-exchange grant belongs to the session that requested it. `DataExchangeHandler` records that session before opening the browser, and `persistGrantedPermissions` drops the grant if another user is signed in when it returns — a host driving its own account switching can replace the session while the permission page is open. A grant that returns after process death has no recorded session and is kept.
+- Grants follow the session. `configure()` and `saveAuthData()` drop stored grants when the tokens they are given name a different session, and `configure()` does not fill omitted tokens from storage in that case. `configure()` compares each given token with its own stored counterpart rather than comparing session ids: an id built from a partial token set never matches one built from a full set, and a host managing its own tokens usually passes no ID token.
+- A data-exchange grant belongs to the session that requested it. `DataExchangeHandler` records that session before opening the browser. Both callback routes, `SignInWithYouVersionActivity` and `DataExchangeHandler`, save through `DataExchangeHandler.persistGrantedPermissions`, which drops the grant if another user is signed in when it returns — a host driving its own account switching can replace the session while the permission page is open. A grant that returns after process death has no recorded session and is kept.
 - Highlights load only for a signed-in user who has `HIGHLIGHTS`. `BibleText` skips the fetch when either is missing.
 
 ## Kotlin
 
 - Follow https://developer.android.com/kotlin/style-guide. Do not make whitespace-only changes.
-- Prefer suspend functions. An asynchronous function that returns a value is a noun phrase and does not start with "get", "load", or "request".
+- Prefer suspend functions over callback-based APIs. An asynchronous function that returns a value is a noun phrase and does not start with "get", "load", or "request".
 - Document new non-private functions. Do not add inline comments inside functions, and do not delete existing ones.
 - Use the strictest access. Prefer `val`. Properties come before functions. Do not leave unused code or commented-out code.
 - A Boolean starts with "is", "has", "should", "shows", or "showing". A non-Boolean name ends with its type, as in `shadowColor`.
