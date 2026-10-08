@@ -97,7 +97,7 @@ The modules always ship together on the same version. Declare `platform-bom` wit
 ```toml
 # gradle/libs.versions.toml
 [versions]
-youVersionPlatform = "2.5.0"
+youVersionPlatform = "2.6.0"
 
 [libraries]
 youversion-platform-bom = { module = "com.youversion.platform:platform-bom", version.ref = "youVersionPlatform" }
@@ -117,7 +117,7 @@ implementation(libs.youversion.platform.reader)
 ### Without Version Catalog
 
 ```kotlin
-val youVersionPlatform = "2.5.0"
+val youVersionPlatform = "2.6.0"
 implementation(platform("com.youversion.platform:platform-bom:$youVersionPlatform"))
 implementation("com.youversion.platform:platform-core")
 implementation("com.youversion.platform:platform-ui")
@@ -126,7 +126,7 @@ implementation("com.youversion.platform:platform-reader")
 
 ### Mixed Versions
 
-If your build asks for more than one version of the SDK modules — for example, another library brings in a newer `platform-core` — Gradle moves every module up to the newest version requested. Run `./gradlew :app:dependencies` to see where that happened; an upgraded module shows as `platform-ui:2.1.0 -> 2.5.0`.
+If your build asks for more than one version of the SDK modules — for example, another library brings in a newer `platform-core` — Gradle moves every module up to the newest version requested. Run `./gradlew :app:dependencies` to see where that happened; an upgraded module shows as `platform-ui:2.1.0 -> 2.6.0`.
 
 ## Getting Started
 
