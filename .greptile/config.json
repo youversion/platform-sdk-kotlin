@@ -42,9 +42,9 @@
     },
     {
       "id": "permission-grant-not-revoked",
-      "rule": "A grant cannot be revoked while the same user stays signed in. Flag a new clear of grantedPermissionValues outside the three existing sites: configure when !keepsStoredSession, saveAuthData when the tokens name a different session, and clearAuthData on sign-out. Do not flag completePermissionGrant when it returns false because the recorded session no longer matches.",
+      "rule": "A grant cannot be revoked while the same user stays signed in. Flag a new clear of grantedPermissionValues outside the three existing sites: configure when !keepsStoredSession, saveAuthData when the tokens name a different session, and clearAuthData on sign-out.",
       "scope": [
-        "platform-core/src/main/java/com/youversion/platform/core/YouVersionPlatformConfiguration.kt"
+        "platform-core/src/main/**/*.kt"
       ],
       "severity": "low",
       "enabled": true

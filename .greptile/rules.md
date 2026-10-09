@@ -51,4 +51,4 @@ These rules are **advisory** in Greptile PR review. No merge gate enforces them.
 
 ## Permission grants are not revoked
 
-A grant cannot be revoked while the same user stays signed in. Flag a new clear of `grantedPermissionValues` outside the three existing sites: `configure` when `!keepsStoredSession`, `saveAuthData` when the tokens name a different session, and `clearAuthData` on sign-out. Do not flag `completePermissionGrant` when it returns false because the recorded session no longer matches.
+A grant cannot be revoked while the same user stays signed in. Flag a new clear of `grantedPermissionValues` outside the three existing sites: `configure` when `!keepsStoredSession`, `saveAuthData` when the tokens name a different session, and `clearAuthData` on sign-out.
