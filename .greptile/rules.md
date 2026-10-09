@@ -36,3 +36,19 @@ Add or change keys in **platform-localization**, then sync into this repo.
 
 - Full policy: `docs/localization-guardrails.md`
 - Local check: `./gradlew verifyNoHardcodedUiStrings`
+
+# SDK conventions
+
+These rules are **advisory** in Greptile PR review. No merge gate enforces them.
+
+## AGENTS.md index contract
+
+`AGENTS.md` is an index of 100 lines or fewer. The workflow-name ban and the `CLAUDE.md` ban come from [YPE-5957](https://lifechurch.atlassian.net/browse/YPE-5957). That ticket's check rejects the substring `.yml`, and the ticket forbids mentioning `CLAUDE.md`. Flag a change that does either, pastes localization policy instead of the single pointer to `docs/localization-guardrails.md`, or says `platform-reader` depends on both `platform-core` and `platform-ui` with `api()`. The split stays `api()` for `platform-core` and `implementation` for `platform-ui`.
+
+## platform-reader dependency split
+
+`platform-reader` declares `api(projects.platformCore)` because `BibleReader` takes a `BibleReference`, and `implementation(projects.platformUi)` because `platform-ui` does not appear in public signatures. Flag a change that uses `implementation` for `platform-core` or `api` for `platform-ui`.
+
+## Permission grants are not revoked
+
+A grant cannot be revoked while the same user stays signed in. Flag a new clear of `grantedPermissionValues` outside the three existing sites: `configure` when `!keepsStoredSession`, `saveAuthData` when the tokens name a different session, and `clearAuthData` on sign-out.
