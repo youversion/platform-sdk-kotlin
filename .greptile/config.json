@@ -24,7 +24,7 @@
     },
     {
       "id": "agents-md-index-contract",
-      "rule": "AGENTS.md is an index of 100 lines or fewer. Flag a change that names a workflow file (the substring .yml), mentions CLAUDE.md, pastes localization policy instead of the single pointer to docs/localization-guardrails.md, or says platform-reader depends on both platform-core and platform-ui with api(). The split stays api() for platform-core and implementation for platform-ui.",
+      "rule": "AGENTS.md is an index of 100 lines or fewer. The workflow-name ban and the CLAUDE.md ban come from YPE-5957 (https://lifechurch.atlassian.net/browse/YPE-5957). That ticket's check rejects the substring .yml, and the ticket forbids mentioning CLAUDE.md. Flag a change that does either, pastes localization policy instead of the single pointer to docs/localization-guardrails.md, or says platform-reader depends on both platform-core and platform-ui with api(). The split stays api() for platform-core and implementation for platform-ui.",
       "scope": [
         "AGENTS.md"
       ],
