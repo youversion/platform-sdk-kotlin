@@ -2,7 +2,7 @@
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_banner_dismiss_content_description">Закрити</string>
-    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_icon">Офлайн</string>
     <string name="yv_banner_offline_message">Виникли проблеми з вашим з\'єднанням. Будь ласка, завантажте переклад Біблії, коли будете онлайн.</string>
     <string name="yv_banner_version_unavailable_icon">Переклад недоступний</string>
     <string name="yv_banner_version_unavailable_message">Раніше вибраний переклад Біблії недоступний. Будь ласка, перейдіть на інший.</string>
@@ -10,9 +10,11 @@
     <string name="yv_font_selected_check">Позначка вибраного шрифту</string>
     <string name="yv_font_settings_label">Шрифт</string>
     <string name="yv_footnote_header_label">Виноска</string>
+    <string name="yv_highlight_color_blue">синій</string>
     <string name="yv_highlight_color_green">зелений</string>
     <string name="yv_highlight_color_orange">помаранчевий</string>
     <string name="yv_highlight_color_pink">рожевий</string>
+    <string name="yv_highlight_color_purple">фіолетовий</string>
     <string name="yv_highlight_color_yellow">жовтий</string>
     <string name="yv_intro_chapter_label">Вступ</string>
     <string name="yv_language_content_desc">Мова</string>

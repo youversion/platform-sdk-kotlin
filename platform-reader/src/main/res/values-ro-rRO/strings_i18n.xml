@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">Închide</string>
+    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_message">Sunt ceva dificultăți cu conexiunea ta. Te rugăm să descarci o versiune a Bibliei când ești conectat.</string>
+    <string name="yv_banner_version_unavailable_icon">Versiune indisponibilă</string>
+    <string name="yv_banner_version_unavailable_message">Versiunea Bibliei selectată anterior nu este disponibilă. Te rugăm să alegi o altă versiune.</string>
+    <string name="yv_book_chapter_picker_title">Cărți</string>
+    <string name="yv_font_selected_check">Verificare font selectat</string>
+    <string name="yv_font_settings_label">Font</string>
+    <string name="yv_footnote_header_label">Notă de subsol</string>
+    <string name="yv_highlight_color_blue">albastru</string>
+    <string name="yv_highlight_color_green">verde</string>
+    <string name="yv_highlight_color_orange">portocaliu</string>
+    <string name="yv_highlight_color_pink">roz</string>
+    <string name="yv_highlight_color_purple">mov</string>
+    <string name="yv_highlight_color_yellow">galben</string>
+    <string name="yv_intro_chapter_label">Introducere</string>
+    <string name="yv_language_content_desc">Limbă</string>
+    <string name="yv_line_spacing_label">Spațiere între rânduri</string>
+    <string name="yv_next_chapter_content_desc">Capitolul următor</string>
+    <string name="yv_previous_chapter_content_desc">Capitolul anterior</string>
+    <string name="yv_reader_menu_font_settings">Font &amp; Setări</string>
+    <string name="yv_reader_menu_sign_in">Conectare</string>
+    <string name="yv_reader_menu_sign_out">Deconectare</string>
+    <string name="yv_theme_selected">Selectat</string>
+    <string name="yv_verse_action_add_highlight">Adaugă evidențiere %1$s</string>
+    <string name="yv_verse_action_copy">Copiați</string>
+    <string name="yv_verse_action_remove_highlight">Elimină evidențierea %1$s</string>
+    <string name="yv_verse_action_share">Distribuie</string>
+</resources>

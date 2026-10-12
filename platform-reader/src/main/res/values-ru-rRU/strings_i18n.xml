@@ -2,7 +2,7 @@
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_banner_dismiss_content_description">Закрыть</string>
-    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_icon">Офлайн</string>
     <string name="yv_banner_offline_message">У нас возникли проблемы с вашим подключением. Пожалуйста, скачайте перевод Библии, когда будете в сети.</string>
     <string name="yv_banner_version_unavailable_icon">Перевод недоступен</string>
     <string name="yv_banner_version_unavailable_message">Ранее выбранный перевод Библии недоступен. Пожалуйста, переключитесь на другой.</string>

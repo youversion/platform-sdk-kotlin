@@ -41,6 +41,7 @@
     <string name="yv_font_and_settings">字型 &amp; 設定</string>
     <string name="yv_footnote_content_desc">註腳</string>
     <string name="yv_full_chapter">完整章節</string>
+    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
     <string name="yv_increase_font_size_aria_label">增大字體大小</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">語言</string>

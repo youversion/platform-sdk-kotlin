@@ -41,6 +41,7 @@
     <string name="yv_font_and_settings">Lettertipes &amp; instellings</string>
     <string name="yv_footnote_content_desc">Voetnota</string>
     <string name="yv_full_chapter">Volledige hoofstuk</string>
+    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
     <string name="yv_increase_font_size_aria_label">Vergroot lettertipe</string>
     <string name="yv_inter_font_name">Inter-lettertipe</string>
     <string name="yv_language">Taal</string>
@@ -95,10 +96,10 @@
     <string name="yv_sign_out">Teken uit</string>
     <string name="yv_sign_out_cancel_button_text">Kanselleer</string>
     <string name="yv_sign_out_confirm_button_text">Teken uit</string>
-    <string name="yv_sign_out_confirmation_message">Is jy seker jy wil by YouVersion afmeld? Jy sal weer moet aanmeld om toegang tot jou kleurmerke te kry.</string>
+    <string name="yv_sign_out_confirmation_message">Is jy seker jy wil by YouVersion uitteken? Jy sal weer moet aanteken om toegang tot jou kleurmerke te kry.</string>
     <string name="yv_sign_out_confirmation_title">Teken uit</string>
     <string name="yv_sign_out_explanation">Jy sal weer moet aanteken om toegang tot jou kleurmerke te kry.</string>
-    <string name="yv_sign_out_of_you_version">Meld af by &lt;bold&gt;%1$s&lt;/bold&gt;</string>
+    <string name="yv_sign_out_of_you_version">Teken uit by &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">Meld tog af</string>
     <string name="yv_sign_out_pending_highlights_confirm_button_text">Teken wel uit</string>
     <string name="yv_sign_out_pending_highlights_explanation">Sommige van jou hoogtepunte is nog nie gestoor nie, en hulle sal verlore gaan as jy uitmelú. Wil jy nogsteeds uitmeld?</string>
@@ -122,5 +123,5 @@
     <string name="yv_versions_statistics">%1$s weergawes in %2$s tale</string>
     <string name="yv_widget_bible_app">Bybeltoep</string>
     <string name="yv_widget_copyright">Kopiereg</string>
-    <string name="yv_youversion_logo">YouVersion-logo</string>
+    <string name="yv_youversion_logo">YouVersion-embleem</string>
 </resources>
