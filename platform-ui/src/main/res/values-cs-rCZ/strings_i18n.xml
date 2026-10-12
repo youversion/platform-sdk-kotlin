@@ -41,6 +41,7 @@
     <string name="yv_font_and_settings">Fonty &amp; Nastavení</string>
     <string name="yv_footnote_content_desc">Poznámka pod čarou</string>
     <string name="yv_full_chapter">Celá kapitola</string>
+    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
     <string name="yv_increase_font_size_aria_label">Zvětšit velikost písma</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Jazyk</string>

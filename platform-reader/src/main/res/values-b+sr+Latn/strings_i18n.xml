@@ -2,7 +2,7 @@
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_banner_dismiss_content_description">Zatvoriti</string>
-    <string name="yv_banner_offline_icon">Offline</string>
+    <string name="yv_banner_offline_icon">Van mreže</string>
     <string name="yv_banner_offline_message">Imamo poteškoća sa vašom vezom. Preuzmite prevod Biblije kada budete na mreži.</string>
     <string name="yv_banner_version_unavailable_icon">Prevod nije dostupan</string>
     <string name="yv_banner_version_unavailable_message">Prethodno odabran prevod Biblije nije dostupan. Molimo, izaberite drugi prevod.</string>
