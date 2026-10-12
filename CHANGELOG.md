@@ -1,3 +1,15 @@
+## [2.6.0](https://github.com/youversion/platform-sdk-kotlin/compare/2.5.0...2.6.0) (2026-10-12)
+
+### Features
+
+* **build:** publish platform-bom to keep SDK module versions aligned ([bd33092](https://github.com/youversion/platform-sdk-kotlin/commit/bd33092bfc5bba079d835f9aad2ebd4e3f248ae5))
+
+### Bug Fixes
+
+* **core:** reject a bare "*" in search languageRanges ([14d072c](https://github.com/youversion/platform-sdk-kotlin/commit/14d072c26e27f719f68783565e3843befd926bc7))
+* **i18n:** sync kotlin localization from platform-localization ([d83a9aa](https://github.com/youversion/platform-sdk-kotlin/commit/d83a9aaf617a2221a6a7bf54bf6baaa25184a325))
+* **i18n:** sync kotlin localization from platform-localization ([#211](https://github.com/youversion/platform-sdk-kotlin/issues/211)) ([5859589](https://github.com/youversion/platform-sdk-kotlin/commit/58595898170e1060e3a9a3102302deb9dce5648e))
+
 ## [2.5.0](https://github.com/youversion/platform-sdk-kotlin/compare/2.4.0...2.5.0) (2026-10-02)
 
 ### Features
