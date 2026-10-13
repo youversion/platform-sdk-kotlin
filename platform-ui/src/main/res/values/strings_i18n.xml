@@ -39,6 +39,7 @@
     <string name="yv_error">Error</string>
     <string name="yv_font">Font</string>
     <string name="yv_font_and_settings">Fonts &amp; Settings</string>
+    <string name="yv_footnote_aria_label">Footnote</string>
     <string name="yv_footnote_content_desc">Footnote</string>
     <string name="yv_full_chapter">Full Chapter</string>
     <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
