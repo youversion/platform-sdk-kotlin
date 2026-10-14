@@ -2,6 +2,7 @@ package com.youversion.platform.core.search.api
 
 import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.fields
+import com.youversion.platform.core.api.languageRanges
 import com.youversion.platform.core.api.pageSize
 import com.youversion.platform.core.api.pageToken
 import com.youversion.platform.core.api.parameter
@@ -19,7 +20,6 @@ import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.URLBuilder
 import io.ktor.http.path
 import java.util.IllformedLocaleException
 import java.util.Locale
@@ -212,9 +212,5 @@ internal object SearchEndpoints : SearchApi {
         } catch (_: IllformedLocaleException) {
             false
         }
-    }
-
-    private fun URLBuilder.languageRanges(languageRanges: List<String>) {
-        languageRanges.forEach { languageRange -> parameters.append("language_ranges[]", languageRange) }
     }
 }
