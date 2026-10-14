@@ -37,4 +37,9 @@ internal fun URLBuilder.fields(fields: List<String>? = null) {
     }
 }
 
+/** Appends each range as its own `language_ranges[]` parameter, in order. Empty appends nothing. */
+internal fun URLBuilder.languageRanges(languageRanges: List<String>) {
+    languageRanges.forEach { languageRange -> parameters.append("language_ranges[]", languageRange) }
+}
+
 internal fun URLBuilder.pageToken(pageToken: String?): Unit = parameter("page_token", pageToken)
