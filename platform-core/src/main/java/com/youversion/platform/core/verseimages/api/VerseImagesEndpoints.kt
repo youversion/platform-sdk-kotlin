@@ -19,6 +19,10 @@ internal object VerseImagesEndpoints : VerseImagesApi {
     private val httpClient: HttpClient
         get() = PlatformCoreKoinComponent.httpClient
 
+    /**
+     * The list URL. Each argument left `null` or empty is omitted. Arguments are not checked here; [verseImages]
+     * checks them.
+     */
     fun verseImagesUrl(
         passageId: String? = null,
         languageRanges: List<String> = emptyList(),
@@ -33,6 +37,10 @@ internal object VerseImagesEndpoints : VerseImagesApi {
             pageToken(pageToken)
         }
 
+    /**
+     * The single-image URL, with [imageId] encoded as one path segment. It is not checked here; [verseImage] checks
+     * it.
+     */
     fun verseImageUrl(imageId: String): String =
         buildYouVersionUrlString {
             path("/v1/images")
