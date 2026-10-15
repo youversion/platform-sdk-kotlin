@@ -20,4 +20,22 @@ data class SearchResults(
     val didYouMean: List<String>,
     val searchInsteadFor: String?,
     val images: List<SearchImage> = emptyList(),
-)
+) {
+    @Deprecated("Binary compatibility with 2.6.0; removed in 3.0.0", level = DeprecationLevel.HIDDEN)
+    constructor(
+        references: List<BibleReference>,
+        topics: List<SearchTopic>,
+        userIntent: SearchUserIntent?,
+        didYouMean: List<String>,
+        searchInsteadFor: String?,
+    ) : this(references, topics, userIntent, didYouMean, searchInsteadFor, emptyList())
+
+    @Deprecated("Binary compatibility with 2.6.0; removed in 3.0.0", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        references: List<BibleReference> = this.references,
+        topics: List<SearchTopic> = this.topics,
+        userIntent: SearchUserIntent? = this.userIntent,
+        didYouMean: List<String> = this.didYouMean,
+        searchInsteadFor: String? = this.searchInsteadFor,
+    ): SearchResults = copy(references, topics, userIntent, didYouMean, searchInsteadFor, images)
+}
