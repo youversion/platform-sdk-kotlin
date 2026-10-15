@@ -10,6 +10,7 @@ import com.youversion.platform.core.api.parseApiBody
 import com.youversion.platform.core.api.parseApiResponse
 import com.youversion.platform.core.api.requireValidPageSize
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.search.models.SearchImage
 import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.core.search.models.SearchResults
 import com.youversion.platform.core.search.models.SearchTopic
@@ -22,6 +23,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.path
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import java.util.IllformedLocaleException
 import java.util.Locale
 
@@ -155,6 +158,7 @@ internal object SearchEndpoints : SearchApi {
             userIntent = response.userIntent?.let(::SearchUserIntent),
             didYouMean = response.didYouMean,
             searchInsteadFor = response.searchInsteadFor,
+            images = response.images.orEmpty().mapNotNull { it?.searchImage() },
         )
     }
 
@@ -193,6 +197,15 @@ internal object SearchEndpoints : SearchApi {
 
     private fun TopicSearchResultResponse.searchTopic(): SearchTopic =
         SearchTopic(id = id, text = text, subtopics = subtopics)
+
+    private fun ImageSearchResultResponse.searchImage(): SearchImage? {
+        val id = id.nonBlankString() ?: return null
+        val passageId = passageId.nonBlankString() ?: return null
+        return SearchImage(id = id, passageId = passageId)
+    }
+
+    private fun JsonElement?.nonBlankString(): String? =
+        (this as? JsonPrimitive)?.takeIf { it.isString }?.content?.takeIf { it.isNotBlank() }
 
     private fun requireValidQueryLength(query: String) {
         require(query.graphemeClusterCount in 1..100) { "query must be between 1 and 100 grapheme clusters" }

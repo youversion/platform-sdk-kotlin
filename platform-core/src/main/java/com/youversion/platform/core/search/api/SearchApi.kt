@@ -85,21 +85,21 @@ interface SearchApi {
     ): TopicSearchResults
 
     /**
-     * Retrieves both the scripture in the Bible version identified by [bibleId] and the topics matching [query], in a
-     * single round trip.
+     * Retrieves the scripture in the Bible version identified by [bibleId], the topics and the images matching [query],
+     * in a single round trip.
      *
      * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
      *
-     * A response carrying no content fails rather than returning no results, and a result that does not name a book,
-     * chapter and verse is dropped.
+     * A response carrying no content fails rather than returning no results, a verse result that does not name a
+     * book, chapter and verse is dropped, and an image result that does not name an id and a passage is dropped.
      *
      * @param query The text to search for. It must be between 1 and 100 grapheme clusters.
      * @param bibleId The identifier of the Bible version to search. It must be greater than zero.
      * @param languageRanges Canonical BCP 47 language codes such as `en`, in preference order. It must not be empty,
      *     a range with a region such as `en-US` matches no language, and `*` is not accepted.
      * @param userIntent The kind of thing the reader is believed to be looking for, used to rank the results.
-     * @param fields The kinds of result to return — `verses`, `topics`, or both. Empty asks for every kind. Name
-     *     only the kinds you will display, so you are not paying for results you discard.
+     * @param fields The kinds of result to return — any of `verses`, `topics` and `images`. Empty asks for every
+     *     kind. Name only the kinds you will display, so you are not paying for results you discard.
      * @return The matching [SearchResults]. Unified results do not page.
      * @throws IllegalArgumentException if [query] or [bibleId] is outside the range stated above, or
      *     [languageRanges] is empty or holds a range that is not a well-formed BCP 47 tag.
