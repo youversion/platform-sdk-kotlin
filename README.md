@@ -528,7 +528,7 @@ val results =
         query = "peace",
         bibleId = 3034,
         languageRanges = listOf("en"),
-        fields = listOf("verses", "images"),
+        fields = listOf("verses", "topics", "images"),
     )
 ```
 
