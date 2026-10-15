@@ -8,6 +8,7 @@ import com.youversion.platform.core.api.pageToken
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.api.parseApiBody
 import com.youversion.platform.core.api.parsePaginatedResponse
+import com.youversion.platform.core.api.requireValidPageSize
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import com.youversion.platform.core.verseimages.models.VerseImage
 import io.ktor.client.HttpClient
@@ -20,8 +21,8 @@ internal object VerseImagesEndpoints : VerseImagesApi {
         get() = PlatformCoreKoinComponent.httpClient
 
     /**
-     * The list URL. Each argument left `null` or empty is omitted. Arguments are not checked here; [verseImages]
-     * checks them.
+     * The list URL. Each argument left `null` is omitted, as is an empty [languageRanges]. Arguments are not checked
+     * here; [verseImages] checks them.
      */
     fun verseImagesUrl(
         passageId: String? = null,
@@ -53,14 +54,16 @@ internal object VerseImagesEndpoints : VerseImagesApi {
         pageSize: Int?,
         pageToken: String?,
     ): PaginatedResponse<VerseImage> {
-        pageSize?.let { require(it in 1..99) { "pageSize must be between 1 and 99" } }
+        passageId?.let { require(it.isNotBlank()) { "passageId must not be blank" } }
+        requireValidPageSize(pageSize)
+        pageToken?.let { require(it.isNotBlank()) { "pageToken must not be blank" } }
         return parsePaginatedResponse(
             httpClient.get(verseImagesUrl(passageId, languageRanges, pageSize, pageToken)),
         )
     }
 
     override suspend fun verseImage(imageId: String): VerseImage {
-        require(imageId.isNotEmpty()) { "imageId must not be empty" }
+        require(imageId.isNotBlank()) { "imageId must not be blank" }
         return parseApiBody(httpClient.get(verseImageUrl(imageId)))
     }
 }

@@ -43,3 +43,7 @@ internal fun URLBuilder.languageRanges(languageRanges: List<String>) {
 }
 
 internal fun URLBuilder.pageToken(pageToken: String?): Unit = parameter("page_token", pageToken)
+
+internal fun requireValidPageSize(pageSize: Int?) {
+    pageSize?.let { require(it in 1..99) { "pageSize must be between 1 and 99" } }
+}

@@ -12,14 +12,17 @@ interface VerseImagesApi {
      * A filter that matches nothing returns an empty page rather than failing.
      *
      * @param passageId A single verse or verse range, such as `JHN.3.16` or `1CO.13.4-7`, to return only the art
-     *     illustrating it. A whole chapter such as `JHN.3` is not accepted and fails the request.
+     *     illustrating it. A whole chapter such as `JHN.3` is not accepted and fails the request. It must not be
+     *     blank.
      * @param languageRanges BCP 47 language ranges in preference order, to return only art in those languages. `*`
      *     matches every language. Empty applies no language filter.
      * @param pageSize The number of images to return. When supplied, it must be between 1 and 99.
-     * @param pageToken A [PaginatedResponse.nextPageToken] from an earlier call, to continue where it left off.
+     * @param pageToken A [PaginatedResponse.nextPageToken] from an earlier call, to continue where it left off. It
+     *     must not be blank.
      * @return The matching [VerseImage]s. [PaginatedResponse.totalSize] is known only when [passageId] is supplied,
      *     and is `null` otherwise.
-     * @throws IllegalArgumentException if [pageSize] is outside the range stated above.
+     * @throws IllegalArgumentException if [passageId] or [pageToken] is blank, or [pageSize] is outside the range
+     *     stated above.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
     suspend fun verseImages(
@@ -35,9 +38,9 @@ interface VerseImagesApi {
      * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
      *
      * @param imageId The opaque identifier of the image, such as a [VerseImage.id] from an earlier call. It must not
-     *     be empty.
+     *     be blank.
      * @return The [VerseImage] the identifier names.
-     * @throws IllegalArgumentException if [imageId] is empty.
+     * @throws IllegalArgumentException if [imageId] is blank.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
     suspend fun verseImage(imageId: String): VerseImage
