@@ -37,11 +37,11 @@ and returned results for the correction. The inverse of _Did you mean_: here the
 the correction, and the original is what is being offered.
 
 **Unified search**:
-A single search returning both verses and topics together, rather than either kind alone.
+A single search returning verses, topics, and images together, rather than one kind alone.
 _Avoid_: combined search, search results, everything search
 
 **Result kind**:
-A category of search result — verses or topics — that a unified search can be narrowed to.
+A category of search result — verses, topics, or images — that a unified search can be narrowed to.
 Distinct from the sparse selection of properties the rest of this SDK calls _fields_, although the
 platform happens to spell both the same way. Narrowing result kinds asks for fewer kinds of thing;
 selecting fields asks for less of each thing.

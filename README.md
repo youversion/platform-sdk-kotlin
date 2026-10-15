@@ -40,7 +40,7 @@ currently not available.
 ## Features
 - 📖 **Scripture Display** - Easy-to-use Jetpack Compose components for displaying Bible verses, chapters, and passages with `BibleText`
 - 📕 **Bible Reader** - A complete Bible reading experience inside your app with `BibleReader`
-- 🔍 **Search** - Built-in search in `BibleReader`, plus API access to verse and topic search and to suggested and trending queries
+- 🔍 **Search** - Built-in search in `BibleReader`, plus API access to verse, topic, and image search and to suggested and trending queries
 - 🖍️ **Highlights** - The signed-in user's YouVersion highlights are rendered in `BibleText` and can be created, recolored, and removed from the reader
 - 🔐 **User Authentication** - Seamless "Sign In with YouVersion" integration using `SignInWithYouVersionButton`, with a top-level toggle to disable all sign-in UI
 - 🌅 **Verse of the Day** - Built-in `VerseOfTheDay` component and API access to VOTD data
@@ -520,7 +520,7 @@ Topic results do not page — there is no page token and no total count. They ca
 
 #### Unified Search
 
-`unified` returns verses and topics from a single request:
+`unified` returns verses, topics, and images from a single request:
 
 ```kotlin
 val results =
@@ -528,11 +528,13 @@ val results =
         query = "peace",
         bibleId = 3034,
         languageRanges = listOf("en"),
-        fields = listOf("verses", "topics"),
+        fields = listOf("verses", "images"),
     )
 ```
 
-`fields` names the kinds of result to return — `"verses"`, `"topics"`, or both; leave it empty for every kind. Ask only for the kinds you display. Unified results do not page.
+`fields` names the kinds of result to return — any of `"verses"`, `"topics"`, and `"images"`; leave it empty for every kind. Ask only for the kinds you display. Unified results do not page.
+
+Each `SearchImage` carries only an opaque `id` and the `passageId` it illustrates — a single verse or a verse range such as `"1CO.13.4-7"`. `images` is empty wherever the platform does not yet offer image results.
 
 #### User Intent
 

@@ -4,6 +4,7 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.search.models.SearchImage
 import com.youversion.platform.core.search.models.SearchTopic
 import com.youversion.platform.core.search.models.SearchUserIntent
 import com.youversion.platform.helpers.YouVersionPlatformTest
@@ -439,7 +440,7 @@ class SearchApiTests : YouVersionPlatformTest {
                 assertEquals(
                     "/v1/search-unified?query=faif&bible_id=111" +
                         "&language_ranges%5B%5D=en-US&language_ranges%5B%5D=es" +
-                        "&user_intent=topical&fields%5B%5D=verses&fields%5B%5D=topics",
+                        "&user_intent=topical&fields%5B%5D=verses&fields%5B%5D=topics&fields%5B%5D=images",
                     request.url.encodedPathAndQuery,
                 )
                 respondJson(
@@ -452,6 +453,10 @@ class SearchApiTests : YouVersionPlatformTest {
                         "topics": [
                             { "id": 42, "text": "Faith", "subtopics": ["trust", "belief"] },
                             { "id": null, "text": "Love", "subtopics": [] }
+                        ],
+                        "images": [
+                            { "id": "img-1", "passage_id": "HEB.11.1" },
+                            { "id": "img-2", "passage_id": "1CO.13.4-7" }
                         ],
                         "user_intent": "topical",
                         "did_you_mean": ["faith"],
@@ -468,7 +473,7 @@ class SearchApiTests : YouVersionPlatformTest {
                     bibleId = 111,
                     languageRanges = listOf("en-US", "es"),
                     userIntent = SearchUserIntent.topical,
-                    fields = listOf("verses", "topics"),
+                    fields = listOf("verses", "topics", "images"),
                 )
 
             assertEquals(
@@ -484,6 +489,13 @@ class SearchApiTests : YouVersionPlatformTest {
                     SearchTopic(id = null, text = "Love", subtopics = emptyList()),
                 ),
                 results.topics,
+            )
+            assertEquals(
+                listOf(
+                    SearchImage(id = "img-1", passageId = "HEB.11.1"),
+                    SearchImage(id = "img-2", passageId = "1CO.13.4-7"),
+                ),
+                results.images,
             )
             assertEquals(SearchUserIntent.topical, results.userIntent)
             assertEquals(listOf("faith"), results.didYouMean)
@@ -507,6 +519,53 @@ class SearchApiTests : YouVersionPlatformTest {
             assertTrue { results.references.isEmpty() && results.topics.isEmpty() }
             assertNull(results.userIntent)
             assertNull(results.searchInsteadFor)
+        }
+
+    @Test
+    fun `test unified search returns images alone when only images are asked for`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals(
+                    "/v1/search-unified?query=love&bible_id=111&language_ranges%5B%5D=en" +
+                        "&user_intent=unknown&fields%5B%5D=images",
+                    request.url.encodedPathAndQuery,
+                )
+                respondJson(
+                    """
+                    {
+                        "verses": [],
+                        "topics": [],
+                        "images": [{ "id": "img-1", "passage_id": "JHN.3.16" }],
+                        "did_you_mean": []
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results =
+                YouVersionApi.search.unified(
+                    query = "love",
+                    bibleId = 111,
+                    languageRanges = listOf("en"),
+                    fields = listOf("images"),
+                )
+
+            assertEquals(emptyList(), results.references)
+            assertEquals(emptyList(), results.topics)
+            assertEquals(listOf(SearchImage(id = "img-1", passageId = "JHN.3.16")), results.images)
+        }
+
+    @Test
+    fun `test unified search returns no images when the platform omits them`() =
+        runTest {
+            MockEngine { respondJson("""{ "verses": [], "topics": [], "did_you_mean": [] }""") }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
+
+            assertEquals(emptyList(), results.images)
         }
 
     @Test

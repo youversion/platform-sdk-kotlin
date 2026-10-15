@@ -995,6 +995,19 @@ public final class com/youversion/platform/core/search/api/SearchApi$DefaultImpl
 	public static synthetic fun verses$default (Lcom/youversion/platform/core/search/api/SearchApi;Ljava/lang/String;ILcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
+public final class com/youversion/platform/core/search/models/SearchImage {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/search/models/SearchImage;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/search/models/SearchImage;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/search/models/SearchImage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getPassageId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/youversion/platform/core/search/models/SearchQuery {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
@@ -1009,16 +1022,19 @@ public final class com/youversion/platform/core/search/models/SearchQuery {
 }
 
 public final class com/youversion/platform/core/search/models/SearchResults {
-	public fun <init> (Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;)V
+	public fun <init> (Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
 	public final fun component2 ()Ljava/util/List;
 	public final fun component3 ()Lcom/youversion/platform/core/search/models/SearchUserIntent;
 	public final fun component4 ()Ljava/util/List;
 	public final fun component5 ()Ljava/lang/String;
-	public final fun copy (Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;)Lcom/youversion/platform/core/search/models/SearchResults;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/search/models/SearchResults;Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/search/models/SearchResults;
+	public final fun component6 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;Ljava/util/List;)Lcom/youversion/platform/core/search/models/SearchResults;
+	public static synthetic fun copy$default (Lcom/youversion/platform/core/search/models/SearchResults;Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/youversion/platform/core/search/models/SearchResults;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDidYouMean ()Ljava/util/List;
+	public final fun getImages ()Ljava/util/List;
 	public final fun getReferences ()Ljava/util/List;
 	public final fun getSearchInsteadFor ()Ljava/lang/String;
 	public final fun getTopics ()Ljava/util/List;
