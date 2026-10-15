@@ -8,6 +8,7 @@ import com.youversion.platform.core.api.pageToken
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.api.parseApiBody
 import com.youversion.platform.core.api.parseApiResponse
+import com.youversion.platform.core.api.requireValidPageSize
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.core.search.models.SearchResults
@@ -102,7 +103,7 @@ internal object SearchEndpoints : SearchApi {
     ): VerseSearchResults {
         requireValidQueryLength(query)
         require(bibleId > 0) { "bibleId must be greater than zero" }
-        pageSize?.let { require(it in 1..99) { "pageSize must be between 1 and 99" } }
+        requireValidPageSize(pageSize)
 
         val response =
             parseApiBody<VerseSearchResponse>(

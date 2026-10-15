@@ -19,7 +19,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import kotlin.test.fail
 
 class VerseImagesApiTests : YouVersionPlatformTest {
@@ -93,7 +92,7 @@ class VerseImagesApiTests : YouVersionPlatformTest {
             YouVersionPlatformConfiguration.configure(appKey = "app")
             val response = YouVersionApi.verseImages.verseImages(passageId = "JHN.3.16")
 
-            assertTrue(response.data.isEmpty())
+            assertEquals(emptyList(), response.data)
             assertNull(response.totalSize)
             assertNull(response.nextPageToken)
         }
@@ -150,11 +149,39 @@ class VerseImagesApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test verse image rejects an empty image id`() =
+    fun `test verse images accepts a page size of ninety nine`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals("/v1/images?page_size=99", request.url.encodedPathAndQuery)
+                respondJson("""{"data": []}""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            YouVersionApi.verseImages.verseImages(pageSize = 99)
+        }
+
+    @Test
+    fun `test verse images rejects a blank passage id or page token`() =
         runTest {
             startNoRequestExpected()
-            assertFailsWith<IllegalArgumentException> {
-                YouVersionApi.verseImages.verseImage(imageId = "")
+            listOf("", " ").forEach { blank ->
+                assertFailsWith<IllegalArgumentException>("expected passageId \"$blank\" to be rejected") {
+                    YouVersionApi.verseImages.verseImages(passageId = blank)
+                }
+                assertFailsWith<IllegalArgumentException>("expected pageToken \"$blank\" to be rejected") {
+                    YouVersionApi.verseImages.verseImages(pageToken = blank)
+                }
+            }
+        }
+
+    @Test
+    fun `test verse image rejects a blank image id`() =
+        runTest {
+            startNoRequestExpected()
+            listOf("", " ").forEach { blank ->
+                assertFailsWith<IllegalArgumentException>("expected imageId \"$blank\" to be rejected") {
+                    YouVersionApi.verseImages.verseImage(imageId = blank)
+                }
             }
         }
 

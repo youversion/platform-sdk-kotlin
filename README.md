@@ -597,7 +597,7 @@ A `VerseImage` is metadata only; load the picture itself from `imageUrl` with yo
 
 #### Verse Images Error Handling
 
-- Invalid arguments throw `IllegalArgumentException` before any request is made: `pageSize` must be between 1 and 99, and `imageId` must not be empty.
+- Invalid arguments throw `IllegalArgumentException` before any request is made: `passageId`, `pageToken`, and `imageId` must not be blank, and `pageSize` must be between 1 and 99.
 - A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `CANNOT_DOWNLOAD` for any other error response — including a chapter-level `passageId` — and `INVALID_RESPONSE` when the response cannot be read.
 
 ## Sample App
