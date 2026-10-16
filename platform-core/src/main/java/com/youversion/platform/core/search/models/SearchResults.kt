@@ -13,29 +13,22 @@ import com.youversion.platform.core.bibles.domain.BibleReference
  *     searched for the correction instead.
  * @property images The matching images, in rank order.
  */
-data class SearchResults(
-    val references: List<BibleReference>,
-    val topics: List<SearchTopic>,
-    val userIntent: SearchUserIntent?,
-    val didYouMean: List<String>,
-    val searchInsteadFor: String?,
-    val images: List<SearchImage> = emptyList(),
-) {
-    @Deprecated("Binary compatibility with 2.6.0; removed in 3.0.0", level = DeprecationLevel.HIDDEN)
+data class SearchResults
+    @JvmOverloads
     constructor(
-        references: List<BibleReference>,
-        topics: List<SearchTopic>,
-        userIntent: SearchUserIntent?,
-        didYouMean: List<String>,
-        searchInsteadFor: String?,
-    ) : this(references, topics, userIntent, didYouMean, searchInsteadFor, emptyList())
-
-    @Deprecated("Binary compatibility with 2.6.0; removed in 3.0.0", level = DeprecationLevel.HIDDEN)
-    fun copy(
-        references: List<BibleReference> = this.references,
-        topics: List<SearchTopic> = this.topics,
-        userIntent: SearchUserIntent? = this.userIntent,
-        didYouMean: List<String> = this.didYouMean,
-        searchInsteadFor: String? = this.searchInsteadFor,
-    ): SearchResults = copy(references, topics, userIntent, didYouMean, searchInsteadFor, images)
-}
+        val references: List<BibleReference>,
+        val topics: List<SearchTopic>,
+        val userIntent: SearchUserIntent?,
+        val didYouMean: List<String>,
+        val searchInsteadFor: String?,
+        val images: List<SearchImage> = emptyList(),
+    ) {
+        @Deprecated("Binary compatibility with 2.6.0; removed in 3.0.0", level = DeprecationLevel.HIDDEN)
+        fun copy(
+            references: List<BibleReference> = this.references,
+            topics: List<SearchTopic> = this.topics,
+            userIntent: SearchUserIntent? = this.userIntent,
+            didYouMean: List<String> = this.didYouMean,
+            searchInsteadFor: String? = this.searchInsteadFor,
+        ): SearchResults = copy(references, topics, userIntent, didYouMean, searchInsteadFor, images)
+    }

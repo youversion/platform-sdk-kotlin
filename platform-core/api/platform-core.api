@@ -1022,7 +1022,7 @@ public final class com/youversion/platform/core/search/models/SearchQuery {
 }
 
 public final class com/youversion/platform/core/search/models/SearchResults {
-	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;)V
+	public fun <init> (Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;)V
 	public fun <init> (Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;Ljava/util/List;)V
 	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
