@@ -3,7 +3,7 @@ package com.youversion.platform.core.search.models
 import com.youversion.platform.core.bibles.domain.BibleReference
 
 /**
- * The scripture and topics matching a unified search. Unified results do not page.
+ * The scripture, topics and images matching a unified search. Unified results do not page.
  *
  * @property references The matching references, in rank order.
  * @property topics The matching topics, in rank order.
@@ -18,4 +18,22 @@ data class SearchResults(
     val userIntent: SearchUserIntent?,
     val didYouMean: List<String>,
     val searchInsteadFor: String?,
-)
+) {
+    /**
+     * The matching images, in rank order. Empty when the platform does not offer image results.
+     * Not carried over by [copy] and not compared by [equals].
+     */
+    var images: List<SearchImage> = emptyList()
+        private set
+
+    constructor(
+        references: List<BibleReference>,
+        topics: List<SearchTopic>,
+        userIntent: SearchUserIntent?,
+        didYouMean: List<String>,
+        searchInsteadFor: String?,
+        images: List<SearchImage>,
+    ) : this(references, topics, userIntent, didYouMean, searchInsteadFor) {
+        this.images = images
+    }
+}

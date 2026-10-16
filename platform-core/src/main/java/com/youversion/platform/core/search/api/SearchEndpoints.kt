@@ -8,6 +8,7 @@ import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.api.parseApiBody
 import com.youversion.platform.core.api.parseApiResponse
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.search.models.SearchImage
 import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.core.search.models.SearchResults
 import com.youversion.platform.core.search.models.SearchTopic
@@ -154,6 +155,7 @@ internal object SearchEndpoints : SearchApi {
             userIntent = response.userIntent?.let(::SearchUserIntent),
             didYouMean = response.didYouMean,
             searchInsteadFor = response.searchInsteadFor,
+            images = response.images.mapNotNull { it.searchImage() },
         )
     }
 
@@ -192,6 +194,10 @@ internal object SearchEndpoints : SearchApi {
 
     private fun TopicSearchResultResponse.searchTopic(): SearchTopic =
         SearchTopic(id = id, text = text, subtopics = subtopics)
+
+    private fun ImageSearchResultResponse.searchImage(): SearchImage? {
+        return SearchImage(id = id ?: return null, passageId = passageId ?: return null)
+    }
 
     private fun requireValidQueryLength(query: String) {
         require(query.graphemeClusterCount in 1..100) { "query must be between 1 and 100 grapheme clusters" }
