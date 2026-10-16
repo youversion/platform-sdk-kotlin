@@ -155,7 +155,7 @@ internal object SearchEndpoints : SearchApi {
             userIntent = response.userIntent?.let(::SearchUserIntent),
             didYouMean = response.didYouMean,
             searchInsteadFor = response.searchInsteadFor,
-            images = response.images.map { it.searchImage() },
+            images = response.images.mapNotNull { it.searchImage() },
         )
     }
 
@@ -195,7 +195,9 @@ internal object SearchEndpoints : SearchApi {
     private fun TopicSearchResultResponse.searchTopic(): SearchTopic =
         SearchTopic(id = id, text = text, subtopics = subtopics)
 
-    private fun ImageSearchResultResponse.searchImage(): SearchImage = SearchImage(id = id, passageId = passageId)
+    private fun ImageSearchResultResponse.searchImage(): SearchImage? {
+        return SearchImage(id = id ?: return null, passageId = passageId ?: return null)
+    }
 
     private fun requireValidQueryLength(query: String) {
         require(query.graphemeClusterCount in 1..100) { "query must be between 1 and 100 grapheme clusters" }

@@ -90,8 +90,8 @@ interface SearchApi {
      *
      * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
      *
-     * A response carrying no content fails rather than returning no results, and a result that does not name a book,
-     * chapter and verse is dropped.
+     * A response carrying no content fails rather than returning no results, a verse result that does not name a
+     * book, chapter and verse is dropped, and an image result that does not name an id and a passage is dropped.
      *
      * @param query The text to search for. It must be between 1 and 100 grapheme clusters.
      * @param bibleId The identifier of the Bible version to search. It must be greater than zero.

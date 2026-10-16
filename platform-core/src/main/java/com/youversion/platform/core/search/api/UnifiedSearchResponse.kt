@@ -17,8 +17,9 @@ internal data class UnifiedSearchResponse(
     @SerialName("search_instead_for") val searchInsteadFor: String? = null,
 )
 
+/** Fields are nullable so a malformed image is dropped rather than failing the whole search. */
 @Serializable
 internal data class ImageSearchResultResponse(
-    @SerialName("id") val id: String,
-    @SerialName("passage_id") val passageId: String,
+    @SerialName("id") val id: String? = null,
+    @SerialName("passage_id") val passageId: String? = null,
 )

@@ -4,7 +4,6 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.bibles.domain.BibleReference
-import com.youversion.platform.core.search.models.SearchImage
 import com.youversion.platform.core.search.models.SearchTopic
 import com.youversion.platform.core.search.models.SearchUserIntent
 import com.youversion.platform.helpers.YouVersionPlatformTest
@@ -491,11 +490,8 @@ class SearchApiTests : YouVersionPlatformTest {
                 results.topics,
             )
             assertEquals(
-                listOf(
-                    SearchImage(id = "img-1", passageId = "HEB.11.1"),
-                    SearchImage(id = "img-2", passageId = "1CO.13.4-7"),
-                ),
-                results.images,
+                listOf("img-1" to "HEB.11.1", "img-2" to "1CO.13.4-7"),
+                results.images.map { it.id to it.passageId },
             )
             assertEquals(SearchUserIntent.topical, results.userIntent)
             assertEquals(listOf("faith"), results.didYouMean)
@@ -553,7 +549,7 @@ class SearchApiTests : YouVersionPlatformTest {
 
             assertEquals(emptyList(), results.references)
             assertEquals(emptyList(), results.topics)
-            assertEquals(listOf(SearchImage(id = "img-1", passageId = "JHN.3.16")), results.images)
+            assertEquals(listOf("img-1" to "JHN.3.16"), results.images.map { it.id to it.passageId })
         }
 
     @Test
@@ -566,6 +562,33 @@ class SearchApiTests : YouVersionPlatformTest {
             val results = YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
 
             assertEquals(emptyList(), results.images)
+        }
+
+    @Test
+    fun `test unified search drops a malformed image and keeps its well formed siblings`() =
+        runTest {
+            MockEngine {
+                respondJson(
+                    """
+                    {
+                        "verses": [{ "reference": "JHN.3.16" }],
+                        "topics": [],
+                        "images": [
+                            { "id": "img-1" },
+                            { "id": null, "passage_id": "ROM.8.28" },
+                            { "id": "img-3", "passage_id": "1CO.13.4-7" }
+                        ],
+                        "did_you_mean": []
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
+
+            assertEquals(listOf("img-3" to "1CO.13.4-7"), results.images.map { it.id to it.passageId })
+            assertEquals(listOf("JHN.3.16"), results.references.map { it.asUSFM })
         }
 
     @Test

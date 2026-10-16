@@ -40,7 +40,7 @@ currently not available.
 ## Features
 - 📖 **Scripture Display** - Easy-to-use Jetpack Compose components for displaying Bible verses, chapters, and passages with `BibleText`
 - 📕 **Bible Reader** - A complete Bible reading experience inside your app with `BibleReader`
-- 🔍 **Search** - Built-in search in `BibleReader`, plus API access to verse, topic, and image search and to suggested and trending queries
+- 🔍 **Search** - Built-in search in `BibleReader`, plus API access to verse and topic search, unified search (verses, topics, and images in one request), and suggested and trending queries
 - 🖍️ **Highlights** - The signed-in user's YouVersion highlights are rendered in `BibleText` and can be created, recolored, and removed from the reader
 - 🔐 **User Authentication** - Seamless "Sign In with YouVersion" integration using `SignInWithYouVersionButton`, with a top-level toggle to disable all sign-in UI
 - 🌅 **Verse of the Day** - Built-in `VerseOfTheDay` component and API access to VOTD data
