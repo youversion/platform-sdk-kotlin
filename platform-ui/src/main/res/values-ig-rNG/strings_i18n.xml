@@ -39,9 +39,10 @@
     <string name="yv_error">Mperi</string>
     <string name="yv_font">Fọntù</string>
     <string name="yv_font_and_settings">Fọntù-Gasị &amp; Ntọala-Gasị</string>
+    <string name="yv_footnote_aria_label">Edide dị́ n\'ala ala</string>
     <string name="yv_footnote_content_desc">Edide dị́ n\'ala ala</string>
     <string name="yv_full_chapter">Isiakwụkwọ Zuru Ezu</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">Arịrịọ a enweghị ike imezu ugbu a.</string>
     <string name="yv_increase_font_size_aria_label">Bàwányé nha fọntù</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Asụsụ</string>

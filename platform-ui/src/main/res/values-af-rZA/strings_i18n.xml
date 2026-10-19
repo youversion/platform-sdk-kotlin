@@ -15,9 +15,9 @@
     <string name="yv_bible_card_unavailable_reference">Hierdie gedeelte is nie in die gekose Bybelweergawe beskikbaar nie.</string>
     <string name="yv_bible_search_bible_heading">Die Bybel</string>
     <string name="yv_bible_search_clear_aria_label">Vee soektog uit</string>
-    <string name="yv_bible_search_filter_both">Both</string>
-    <string name="yv_bible_search_filter_new_testament">New Testament</string>
-    <string name="yv_bible_search_filter_old_testament">Old Testament</string>
+    <string name="yv_bible_search_filter_both">Beide</string>
+    <string name="yv_bible_search_filter_new_testament">Nuwe Testament</string>
+    <string name="yv_bible_search_filter_old_testament">Ou Testament</string>
     <string name="yv_bible_search_filters_button">Filters</string>
     <string name="yv_bible_search_recent_heading">Onlangse soektogte</string>
     <string name="yv_bible_search_trending_heading">Gewilde soektogte</string>
@@ -39,9 +39,10 @@
     <string name="yv_error">Fout</string>
     <string name="yv_font">Lettertipe</string>
     <string name="yv_font_and_settings">Lettertipes &amp; instellings</string>
+    <string name="yv_footnote_aria_label">Voetnota</string>
     <string name="yv_footnote_content_desc">Voetnota</string>
     <string name="yv_full_chapter">Volledige hoofstuk</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">Hierdie versoek kan nie op die oomblik verwerk word nie.</string>
     <string name="yv_increase_font_size_aria_label">Vergroot lettertipe</string>
     <string name="yv_inter_font_name">Inter-lettertipe</string>
     <string name="yv_language">Taal</string>

@@ -15,9 +15,9 @@
     <string name="yv_bible_card_unavailable_reference">Dit gedeelte is niet beschikbaar in de geselecteerde Bijbelvertaling.</string>
     <string name="yv_bible_search_bible_heading">Bijbel</string>
     <string name="yv_bible_search_clear_aria_label">Zoekopdracht wissen</string>
-    <string name="yv_bible_search_filter_both">Both</string>
-    <string name="yv_bible_search_filter_new_testament">New Testament</string>
-    <string name="yv_bible_search_filter_old_testament">Old Testament</string>
+    <string name="yv_bible_search_filter_both">Beide</string>
+    <string name="yv_bible_search_filter_new_testament">Nieuwe Testament</string>
+    <string name="yv_bible_search_filter_old_testament">Oude Testament</string>
     <string name="yv_bible_search_filters_button">Filters</string>
     <string name="yv_bible_search_recent_heading">Recente zoekopdrachten</string>
     <string name="yv_bible_search_trending_heading">Populaire zoekopdrachten</string>
@@ -39,9 +39,10 @@
     <string name="yv_error">Fout</string>
     <string name="yv_font">Lettertype</string>
     <string name="yv_font_and_settings">Lettertypen &amp; Instellingen</string>
+    <string name="yv_footnote_aria_label">Voetnoot</string>
     <string name="yv_footnote_content_desc">Voetnoot</string>
     <string name="yv_full_chapter">Volledig hoofdstuk</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">Dit verzoek kan nu niet worden voltooid.</string>
     <string name="yv_increase_font_size_aria_label">Lettergrootte vergroten</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Taal</string>

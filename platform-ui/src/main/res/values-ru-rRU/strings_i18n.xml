@@ -15,10 +15,10 @@
     <string name="yv_bible_card_unavailable_reference">В выбранном переводе Библии данный отрывок недоступен.</string>
     <string name="yv_bible_search_bible_heading">Библия</string>
     <string name="yv_bible_search_clear_aria_label">Очистить поиск</string>
-    <string name="yv_bible_search_filter_both">Both</string>
-    <string name="yv_bible_search_filter_new_testament">New Testament</string>
-    <string name="yv_bible_search_filter_old_testament">Old Testament</string>
-    <string name="yv_bible_search_filters_button">Filters</string>
+    <string name="yv_bible_search_filter_both">Оба</string>
+    <string name="yv_bible_search_filter_new_testament">Новый Завет</string>
+    <string name="yv_bible_search_filter_old_testament">Ветхий Завет</string>
+    <string name="yv_bible_search_filters_button">Фильтры</string>
     <string name="yv_bible_search_recent_heading">Недавние запросы</string>
     <string name="yv_bible_search_trending_heading">Популярные запросы</string>
     <string name="yv_bible_version_details_content_desc">Сведения о переводе Библии</string>
@@ -39,9 +39,10 @@
     <string name="yv_error">Ошибка</string>
     <string name="yv_font">Шрифт</string>
     <string name="yv_font_and_settings">Шрифты и настройки</string>
+    <string name="yv_footnote_aria_label">Сноска</string>
     <string name="yv_footnote_content_desc">Сноска</string>
     <string name="yv_full_chapter">Глава полностью</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">Этот запрос сейчас невозможно выполнить.</string>
     <string name="yv_increase_font_size_aria_label">Увеличить размер шрифта</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Язык</string>

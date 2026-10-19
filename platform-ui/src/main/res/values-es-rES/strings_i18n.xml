@@ -15,10 +15,10 @@
     <string name="yv_bible_card_unavailable_reference">Este pasaje no está disponible en la versión de la Biblia seleccionada.</string>
     <string name="yv_bible_search_bible_heading">Biblia</string>
     <string name="yv_bible_search_clear_aria_label">Borrar búsqueda</string>
-    <string name="yv_bible_search_filter_both">Both</string>
-    <string name="yv_bible_search_filter_new_testament">New Testament</string>
-    <string name="yv_bible_search_filter_old_testament">Old Testament</string>
-    <string name="yv_bible_search_filters_button">Filters</string>
+    <string name="yv_bible_search_filter_both">Ambos</string>
+    <string name="yv_bible_search_filter_new_testament">Nuevo Testamento</string>
+    <string name="yv_bible_search_filter_old_testament">Antiguo Testamento</string>
+    <string name="yv_bible_search_filters_button">Filtros</string>
     <string name="yv_bible_search_recent_heading">Búsquedas recientes</string>
     <string name="yv_bible_search_trending_heading">Búsquedas en tendencia</string>
     <string name="yv_bible_version_details_content_desc">Detalles de la versión de la Biblia</string>
@@ -39,9 +39,10 @@
     <string name="yv_error">Error</string>
     <string name="yv_font">Fuente</string>
     <string name="yv_font_and_settings">Fuentes &amp; Configuración</string>
+    <string name="yv_footnote_aria_label">Nota al pie</string>
     <string name="yv_footnote_content_desc">Nota al pie</string>
     <string name="yv_full_chapter">Capítulo completo</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">Esta solicitud no se puede completar en este momento.</string>
     <string name="yv_increase_font_size_aria_label">Aumentar tamaño de fuente</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Idioma</string>

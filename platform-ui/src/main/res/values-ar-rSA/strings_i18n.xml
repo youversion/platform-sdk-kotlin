@@ -15,10 +15,10 @@
     <string name="yv_bible_card_unavailable_reference">هذا المقطع غير متوفر في نسخة الكتاب المقدس المختارة.</string>
     <string name="yv_bible_search_bible_heading">الكتاب المقدس</string>
     <string name="yv_bible_search_clear_aria_label">مسح البحث</string>
-    <string name="yv_bible_search_filter_both">Both</string>
-    <string name="yv_bible_search_filter_new_testament">New Testament</string>
-    <string name="yv_bible_search_filter_old_testament">Old Testament</string>
-    <string name="yv_bible_search_filters_button">Filters</string>
+    <string name="yv_bible_search_filter_both">كلاهما</string>
+    <string name="yv_bible_search_filter_new_testament">العهد الجديد</string>
+    <string name="yv_bible_search_filter_old_testament">العهد القديم</string>
+    <string name="yv_bible_search_filters_button">عوامل التصفية</string>
     <string name="yv_bible_search_recent_heading">عمليات البحث الأخيرة</string>
     <string name="yv_bible_search_trending_heading">عمليات البحث الرائجة</string>
     <string name="yv_bible_version_details_content_desc">تفاصيل إصدار الكتاب المقدس</string>
@@ -39,9 +39,10 @@
     <string name="yv_error">خطأ</string>
     <string name="yv_font">الخط</string>
     <string name="yv_font_and_settings">الخطوط &amp; الإعدادات</string>
+    <string name="yv_footnote_aria_label">حاشية</string>
     <string name="yv_footnote_content_desc">حاشية</string>
     <string name="yv_full_chapter">الإصحاح الكامل</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">تعذّر إكمال هذا الطلب في الوقت الحالي.</string>
     <string name="yv_increase_font_size_aria_label">تكبير حجم الخط</string>
     <string name="yv_inter_font_name">إدخال</string>
     <string name="yv_language">اللغة</string>

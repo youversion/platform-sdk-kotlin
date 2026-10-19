@@ -15,10 +15,10 @@
     <string name="yv_bible_card_unavailable_reference">Đoạn văn này không có trong phiên bản Kinh Thánh đã chọn.</string>
     <string name="yv_bible_search_bible_heading">Kinh Thánh</string>
     <string name="yv_bible_search_clear_aria_label">Xóa tìm kiếm</string>
-    <string name="yv_bible_search_filter_both">Both</string>
-    <string name="yv_bible_search_filter_new_testament">New Testament</string>
-    <string name="yv_bible_search_filter_old_testament">Old Testament</string>
-    <string name="yv_bible_search_filters_button">Filters</string>
+    <string name="yv_bible_search_filter_both">Cả hai</string>
+    <string name="yv_bible_search_filter_new_testament">Tân Ước</string>
+    <string name="yv_bible_search_filter_old_testament">Cựu Ước</string>
+    <string name="yv_bible_search_filters_button">Bộ lọc</string>
     <string name="yv_bible_search_recent_heading">Tìm kiếm gần đây</string>
     <string name="yv_bible_search_trending_heading">Tìm kiếm thịnh hành</string>
     <string name="yv_bible_version_details_content_desc">Chi tiết phiên bản Kinh Thánh</string>
@@ -39,9 +39,10 @@
     <string name="yv_error">Lỗi</string>
     <string name="yv_font">Phông chữ</string>
     <string name="yv_font_and_settings">Phông chữ &amp; Cài đặt</string>
+    <string name="yv_footnote_aria_label">Chú thích</string>
     <string name="yv_footnote_content_desc">Chú thích</string>
     <string name="yv_full_chapter">Toàn bộ chương</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">Hiện không thể hoàn tất yêu cầu này.</string>
     <string name="yv_increase_font_size_aria_label">Tăng cỡ chữ</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Ngôn ngữ</string>

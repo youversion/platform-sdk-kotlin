@@ -39,6 +39,7 @@
     <string name="yv_error">Eroare</string>
     <string name="yv_font">Font</string>
     <string name="yv_font_and_settings">Fonturi &amp; Setări</string>
+    <string name="yv_footnote_aria_label">Notă de subsol</string>
     <string name="yv_footnote_content_desc">Notă de subsol</string>
     <string name="yv_full_chapter">Capitol Complet</string>
     <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>

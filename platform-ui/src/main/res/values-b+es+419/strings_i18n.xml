@@ -39,6 +39,7 @@
     <string name="yv_error">Error</string>
     <string name="yv_font">Tipo de letra</string>
     <string name="yv_font_and_settings">Fuentes &amp; Configuración</string>
+    <string name="yv_footnote_aria_label">Nota al pie</string>
     <string name="yv_footnote_content_desc">Nota al pie</string>
     <string name="yv_full_chapter">Capítulo completo</string>
     <string name="yv_generic_request_error_body">Esta solicitud no se puede completar en este momento.</string>

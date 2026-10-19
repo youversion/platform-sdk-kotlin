@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synced from platform-localization dist/android — do not edit manually -->
+<resources>
+    <string name="yv_banner_dismiss_content_description">閉じる</string>
+    <string name="yv_banner_offline_icon">オフライン</string>
+    <string name="yv_banner_offline_message">接続に問題が発生しています。オンラインのときに聖書の訳をダウンロードしてください。</string>
+    <string name="yv_banner_version_unavailable_icon">聖書の訳が利用不可</string>
+    <string name="yv_banner_version_unavailable_message">以前に選択した聖書の訳は利用できません。別の訳に切り替えてください。</string>
+    <string name="yv_book_chapter_picker_title">書物</string>
+    <string name="yv_font_selected_check">フォント選択チェック</string>
+    <string name="yv_font_settings_label">フォント</string>
+    <string name="yv_footnote_header_label">脚注</string>
+    <string name="yv_highlight_color_blue">青</string>
+    <string name="yv_highlight_color_green">緑</string>
+    <string name="yv_highlight_color_orange">オレンジ</string>
+    <string name="yv_highlight_color_pink">ピンク</string>
+    <string name="yv_highlight_color_purple">紫</string>
+    <string name="yv_highlight_color_yellow">黄色</string>
+    <string name="yv_intro_chapter_label">はじめに</string>
+    <string name="yv_language_content_desc">言語</string>
+    <string name="yv_line_spacing_label">行間隔</string>
+    <string name="yv_next_chapter_content_desc">次の章</string>
+    <string name="yv_previous_chapter_content_desc">前の章</string>
+    <string name="yv_reader_menu_font_settings">フォント &amp; 設定</string>
+    <string name="yv_reader_menu_sign_in">サインイン</string>
+    <string name="yv_reader_menu_sign_out">サインアウト</string>
+    <string name="yv_theme_selected">選択済み</string>
+    <string name="yv_verse_action_add_highlight">%1$s ハイライトを追加</string>
+    <string name="yv_verse_action_copy">コピー</string>
+    <string name="yv_verse_action_remove_highlight">%1$s ハイライトを削除</string>
+    <string name="yv_verse_action_share">共有</string>
+</resources>
