@@ -21,6 +21,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +39,7 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
@@ -51,6 +53,7 @@ import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -484,6 +487,8 @@ internal fun BibleTextBlock(
     highlights: Map<BibleReference, Color>,
     focusedReference: BibleReference? = null,
     unfocusedAlpha: Float = 1f,
+    layoutState: BibleTextLayoutState? = null,
+    blockIndex: Int,
     onClick: (position: Offset, layoutResult: TextLayoutResult) -> Unit,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -492,6 +497,15 @@ internal fun BibleTextBlock(
     val marginTop = if (isFirstBlock) 0.dp else maxOf(0.dp, block.marginTop - previousMarginBottom)
     val marginBottom =
         block.marginBottom + textOptions.extraLeading.dp + (textOptions.paragraphSpacing ?: 0.sp).value.dp
+    val startPadding = (8 * block.headIndent).dp
+    val origin =
+        with(LocalDensity.current) {
+            val x = if (LocalLayoutDirection.current == LayoutDirection.Ltr) startPadding.toPx() else 0f
+            Offset(x, marginTop.toPx())
+        }
+    DisposableEffect(layoutState, blockIndex) {
+        onDispose { layoutState?.remove(blockIndex, textLayoutResult) }
+    }
 
     val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
 
@@ -546,7 +560,7 @@ internal fun BibleTextBlock(
         modifier =
             Modifier
                 .padding(
-                    start = (8 * block.headIndent).dp,
+                    start = startPadding,
                     top = marginTop,
                     bottom = marginBottom,
                 ).fillMaxWidth()
@@ -565,6 +579,7 @@ internal fun BibleTextBlock(
                 },
         onTextLayout = { result ->
             textLayoutResult = result
+            layoutState?.place(blockIndex, PlacedBlock(block.text, result, origin))
         },
         inlineContent = textOptions.inlineContentMap,
     )

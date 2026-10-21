@@ -92,6 +92,7 @@ import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.SignInWithYouVersionPromptSheet
 import com.youversion.platform.ui.views.bibleTextBlocks
 import com.youversion.platform.ui.views.rememberBibleTextBlocksState
+import com.youversion.platform.ui.views.rememberBibleTextLayoutState
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 
@@ -238,6 +239,7 @@ internal fun BibleScreen(
         } else {
             rememberBibleTextBlocksState(reference = state.bibleReference, textOptions = bibleTextOptions)
         }
+    val chapterLayout = chapterBlocks?.let { rememberBibleTextLayoutState(it) }
     val loadingPhase = chapterBlocks?.loadingPhase ?: introLoadingPhase
     val chapterListState = rememberLazyListState()
 
@@ -251,19 +253,17 @@ internal fun BibleScreen(
     LaunchedEffect(state.scrollTargetReference, chapterBlocks?.loadingPhase) {
         val target = state.scrollTargetReference ?: return@LaunchedEffect
         val blocks = chapterBlocks ?: return@LaunchedEffect
+        val layout = chapterLayout ?: return@LaunchedEffect
         // A target the load never reached is left staged rather than consumed. A chapter that failed renders no
         // verses, so a later successful reload of it is the search result finally landing, not a scroll back to
         // somewhere the reader had moved on from; moving off the chapter drops the target in the view model.
         if (blocks.loadingPhase != BibleTextLoadingPhase.SUCCESS || !state.bibleReference.contains(target)) {
             return@LaunchedEffect
         }
-        val index = blocks.indexOfBlockContaining(target)
-        if (index != null) {
-            // Jumped to rather than animated, so the reference is simply where the chapter opens instead of
-            // somewhere the list travels to from the top. Suspends until the item is placed, so the target is
-            // consumed — and the chapter revealed — only once the verse is actually on screen.
-            chapterListState.scrollToItem(CHAPTER_HEADER_ITEM_COUNT + index)
-        } else {
+        // Jumped to rather than animated, so the reference is simply where the chapter opens instead of
+        // somewhere the list travels to from the top. Suspends until the item is placed, so the target is
+        // consumed — and the chapter revealed — only once the verse is actually on screen.
+        if (!layout.scrollToVerse(chapterListState, target, leadingItemCount = CHAPTER_HEADER_ITEM_COUNT)) {
             // The chapter renders no block for the verse, so there is nothing to point the reader at. Open it at
             // the top rather than at wherever the list was left, and drop the focus that would dim all of it.
             chapterListState.scrollToItem(0)
@@ -486,6 +486,7 @@ internal fun BibleScreen(
                                         textOptions = bibleTextOptions,
                                         selectedVerses = state.selectedVerses,
                                         focusedReference = state.focusedReference,
+                                        layoutState = chapterLayout,
                                         onVerseTap = { reference, _ ->
                                             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(reference))
                                         },
