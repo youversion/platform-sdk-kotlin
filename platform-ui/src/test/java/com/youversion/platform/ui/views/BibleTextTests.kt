@@ -1,10 +1,16 @@
 package com.youversion.platform.ui.views
 
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -15,10 +21,12 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
@@ -55,6 +63,7 @@ import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -603,6 +612,48 @@ class BibleTextTests {
         assertTrue(statesForSecondReference.all { it.indexOfBlockContaining(testReference) == null })
     }
 
+    private fun loadedState(vararg blocks: BibleTextBlock): BibleTextBlocksState {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns blocks.toList()
+
+        lateinit var state: BibleTextBlocksState
+        composeTestRule.setContent {
+            state = rememberBibleTextBlocksState(reference = chapterReference)
+        }
+        composeTestRule.waitForIdle()
+        return state
+    }
+
+    @Test
+    fun `a range is found in the first block holding any verse of it`() {
+        val state =
+            loadedState(
+                annotatedBlock("In the beginning", referenceAnnotation = "1:GEN:1:1"),
+                annotatedBlock("And the earth", referenceAnnotation = "1:GEN:1:2"),
+                annotatedBlock("And God said", referenceAnnotation = "1:GEN:1:3"),
+            )
+
+        val verses2to3 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verseStart = 2, verseEnd = 3)
+
+        assertEquals(1, state.indexOfBlockContaining(verses2to3))
+    }
+
+    @Test
+    fun `a verse split across blocks is found in the first of them`() {
+        val state =
+            loadedState(
+                annotatedBlock("In the beginning", referenceAnnotation = "1:GEN:1:1"),
+                annotatedBlock("And the earth", referenceAnnotation = "1:GEN:1:2"),
+                annotatedBlock("was without form", referenceAnnotation = "1:GEN:1:2"),
+            )
+
+        val verse2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
+
+        assertEquals(1, state.indexOfBlockContaining(verse2))
+    }
+
     // endregion
 
     // region Verse Tap
@@ -1081,6 +1132,39 @@ class BibleTextTests {
         }
     }
 
+    @Test
+    fun `changing the font size keeps the reader on the paragraph they were reading`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } coAnswers {
+            delay(100)
+            (1..40).map { annotatedBlock("Verse $it", referenceAnnotation = "1:GEN:1:$it") }
+        }
+
+        var fontSize by mutableStateOf(16.sp)
+        lateinit var listState: LazyListState
+        composeTestRule.setContent {
+            val state =
+                rememberBibleTextBlocksState(
+                    reference = chapterReference,
+                    textOptions = BibleTextOptions(fontSize = fontSize),
+                )
+            listState = rememberLazyListState()
+            LazyColumn(state = listState, modifier = Modifier.height(200.dp)) {
+                bibleTextBlocks(state = state, textOptions = BibleTextOptions(fontSize = fontSize))
+            }
+        }
+        composeTestRule.mainClock.advanceTimeBy(200)
+        composeTestRule.onNode(hasScrollToIndexAction()).performScrollToIndex(20)
+        assertEquals(20, listState.firstVisibleItemIndex)
+
+        fontSize = 24.sp
+        composeTestRule.mainClock.advanceTimeBy(200)
+
+        assertEquals(20, listState.firstVisibleItemIndex)
+    }
+
     // endregion
 
     // region Verse Tap Non-Annotated
@@ -1455,6 +1539,83 @@ class BibleTextTests {
             listOf(AnnotatedString.Range(SpanStyle(color = Color.Red), 0, text.length)),
             dimmed.spanStyles,
         )
+    }
+
+    // endregion
+
+    // region Verse Bounds
+
+    private val longVerse = "In the beginning God created the heaven and the earth, and all that is in them. "
+    private val shortVerse = "Light. "
+    private val lastVerse = "And the earth was without form, and void; and darkness was upon the face of the deep."
+    private val paragraphText = longVerse + shortVerse + lastVerse
+
+    private fun verse(number: Int) = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = number)
+
+    /** A one-line opening paragraph, then the paragraph under test, which sits below a 24dp top margin. */
+    private fun setContentWithParagraph(height: Dp = 2000.dp): BibleTextLayoutState {
+        val start = longVerse.length
+        val end = start + shortVerse.length
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns
+            listOf(
+                annotatedBlock("Opening", marginTop = 0.dp),
+                annotatedBlock("", marginTop = 24.dp).copy(
+                    text =
+                        referenceAnnotatedString(
+                            paragraphText,
+                            listOf(
+                                Triple("1:GEN:1:1", 0, start),
+                                Triple("1:GEN:1:2", start, end),
+                                Triple("1:GEN:1:3", end, paragraphText.length),
+                            ),
+                        ),
+                ),
+            )
+
+        lateinit var layoutState: BibleTextLayoutState
+        composeTestRule.setContent {
+            val state = rememberBibleTextBlocksState(reference = chapterReference)
+            layoutState = rememberBibleTextLayoutState(state)
+            LazyColumn(modifier = Modifier.width(200.dp).height(height)) {
+                bibleTextBlocks(state = state, textOptions = BibleTextOptions(), layoutState = layoutState)
+            }
+        }
+        composeTestRule.waitForIdle()
+        return layoutState
+    }
+
+    private fun paragraphLayout(): TextLayoutResult {
+        val layoutResults = mutableListOf<TextLayoutResult>()
+        composeTestRule
+            .onNodeWithText(paragraphText)
+            .fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult]
+            .action
+            ?.invoke(layoutResults)
+        return layoutResults.first()
+    }
+
+    @Test
+    fun `a verse is bounded by its lines, offset by where its paragraph sits in the item`() {
+        val layoutState = setContentWithParagraph()
+        val layout = paragraphLayout()
+        val line = layout.getLineForOffset(longVerse.length)
+        val marginTop = with(composeTestRule.density) { 24.dp.toPx() }
+
+        val bounds = layoutState.verseBounds(verse(2))
+
+        assertEquals(marginTop + layout.getLineTop(line), bounds?.top)
+        assertEquals(marginTop + layout.getLineBottom(line), bounds?.bottom)
+    }
+
+    @Test
+    fun `a verse whose paragraph is not composed has no bounds`() {
+        val layoutState = setContentWithParagraph(height = 1.dp)
+
+        assertNull(layoutState.verseBounds(verse(2)))
     }
 
     // endregion
