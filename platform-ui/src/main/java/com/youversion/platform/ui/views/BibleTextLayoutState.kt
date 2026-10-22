@@ -89,9 +89,8 @@ private fun PlacedBlock.boundsOf(reference: BibleReference): Rect? {
     val lastLine = layout.getLineForOffset(last)
     val (left, right) =
         if (firstLine == lastLine) {
-            val start = layout.getBoundingBox(first)
-            val end = layout.getBoundingBox(last)
-            minOf(start.left, end.left) to maxOf(start.right, end.right)
+            val box = layout.getPathForRange(first, last + 1).getBounds()
+            box.left to box.right
         } else {
             0f to layout.size.width.toFloat()
         }
