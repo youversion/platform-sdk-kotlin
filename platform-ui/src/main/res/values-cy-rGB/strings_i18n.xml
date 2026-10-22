@@ -15,10 +15,10 @@
     <string name="yv_bible_card_unavailable_reference">Mae\'r darn hwn yn anhygyrch yn y fersiwn Beibl a ddewiswyd.</string>
     <string name="yv_bible_search_bible_heading">Beibl</string>
     <string name="yv_bible_search_clear_aria_label">Clirio chwilio</string>
-    <string name="yv_bible_search_filter_both">Both</string>
-    <string name="yv_bible_search_filter_new_testament">New Testament</string>
-    <string name="yv_bible_search_filter_old_testament">Old Testament</string>
-    <string name="yv_bible_search_filters_button">Filters</string>
+    <string name="yv_bible_search_filter_both">Y Ddau</string>
+    <string name="yv_bible_search_filter_new_testament">Y Testament Newydd</string>
+    <string name="yv_bible_search_filter_old_testament">Yr Hen Destament</string>
+    <string name="yv_bible_search_filters_button">Hidlyddion</string>
     <string name="yv_bible_search_recent_heading">Chwiliadau Diweddar</string>
     <string name="yv_bible_search_trending_heading">Chwiliadau Poblogaidd</string>
     <string name="yv_bible_version_details_content_desc">Manylion Fersiwn y Beibl</string>
@@ -39,9 +39,10 @@
     <string name="yv_error">Gwall</string>
     <string name="yv_font">Ffont</string>
     <string name="yv_font_and_settings">Ffontiau &amp; Gosodiadau</string>
+    <string name="yv_footnote_aria_label">Troednodyn</string>
     <string name="yv_footnote_content_desc">Troednodyn</string>
     <string name="yv_full_chapter">Pennod Lawn</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">Does dim modd cwblhau\'r cais hwn ar hyn o bryd.</string>
     <string name="yv_increase_font_size_aria_label">Cynyddu maint y ffont</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Iaith</string>

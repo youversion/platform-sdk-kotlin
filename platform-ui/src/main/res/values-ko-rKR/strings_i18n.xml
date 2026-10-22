@@ -39,6 +39,7 @@
     <string name="yv_error">오류</string>
     <string name="yv_font">글꼴</string>
     <string name="yv_font_and_settings">글꼴 &amp; 설정</string>
+    <string name="yv_footnote_aria_label">각주</string>
     <string name="yv_footnote_content_desc">각주</string>
     <string name="yv_full_chapter">전체 장</string>
     <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>

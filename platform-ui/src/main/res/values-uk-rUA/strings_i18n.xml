@@ -15,10 +15,10 @@
     <string name="yv_bible_card_unavailable_reference">Цей уривок недоступний у вибраному перекладі Біблії.</string>
     <string name="yv_bible_search_bible_heading">Біблія</string>
     <string name="yv_bible_search_clear_aria_label">Очистити пошук</string>
-    <string name="yv_bible_search_filter_both">Both</string>
-    <string name="yv_bible_search_filter_new_testament">New Testament</string>
-    <string name="yv_bible_search_filter_old_testament">Old Testament</string>
-    <string name="yv_bible_search_filters_button">Filters</string>
+    <string name="yv_bible_search_filter_both">Обидва</string>
+    <string name="yv_bible_search_filter_new_testament">Новий Заповіт</string>
+    <string name="yv_bible_search_filter_old_testament">Старий Заповіт</string>
+    <string name="yv_bible_search_filters_button">Фільтри</string>
     <string name="yv_bible_search_recent_heading">Останні пошуки</string>
     <string name="yv_bible_search_trending_heading">Популярні пошуки</string>
     <string name="yv_bible_version_details_content_desc">Відомості про переклади Біблії</string>
@@ -39,9 +39,10 @@
     <string name="yv_error">Помилка</string>
     <string name="yv_font">Шрифт</string>
     <string name="yv_font_and_settings">Шрифти &amp; Налаштування</string>
+    <string name="yv_footnote_aria_label">Виноска</string>
     <string name="yv_footnote_content_desc">Виноска</string>
     <string name="yv_full_chapter">Повний розділ</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">Наразі неможливо виконати цей запит.</string>
     <string name="yv_increase_font_size_aria_label">Збільшити розмір шрифту</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Мова</string>

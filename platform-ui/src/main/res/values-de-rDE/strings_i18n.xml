@@ -15,10 +15,10 @@
     <string name="yv_bible_card_unavailable_reference">Diese Passage ist in der ausgewählten Bibelversion nicht verfügbar.</string>
     <string name="yv_bible_search_bible_heading">Bibel</string>
     <string name="yv_bible_search_clear_aria_label">Suche löschen</string>
-    <string name="yv_bible_search_filter_both">Both</string>
-    <string name="yv_bible_search_filter_new_testament">New Testament</string>
-    <string name="yv_bible_search_filter_old_testament">Old Testament</string>
-    <string name="yv_bible_search_filters_button">Filters</string>
+    <string name="yv_bible_search_filter_both">Beides</string>
+    <string name="yv_bible_search_filter_new_testament">Neues Testament</string>
+    <string name="yv_bible_search_filter_old_testament">Altes Testament</string>
+    <string name="yv_bible_search_filters_button">Filter</string>
     <string name="yv_bible_search_recent_heading">Letzte Suchanfragen</string>
     <string name="yv_bible_search_trending_heading">Beliebte Suchanfragen</string>
     <string name="yv_bible_version_details_content_desc">Details der Bibelübersetzung</string>
@@ -39,9 +39,10 @@
     <string name="yv_error">Fehler</string>
     <string name="yv_font">Schriftart</string>
     <string name="yv_font_and_settings">Schriftarten &amp; Einstellungen</string>
+    <string name="yv_footnote_aria_label">Fußnote</string>
     <string name="yv_footnote_content_desc">Fußnote</string>
     <string name="yv_full_chapter">Vollständiges Kapitel</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">Diese Anfrage kann momentan nicht durchgeführt werden.</string>
     <string name="yv_increase_font_size_aria_label">Schriftgröße vergrößern</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Sprache</string>
@@ -58,7 +59,7 @@
     <string name="yv_no_language_search_results">Es tut uns leid, für diese Suche gibt es keine Ergebnisse.</string>
     <string name="yv_no_regional_languages_available">Keine regionalen Sprachen verfügbar</string>
     <string name="yv_no_versions_found">Keine Versionen gefunden</string>
-    <string name="yv_offline_connection_lost_message">Es gibt Schwierigkeiten mit deiner Internet-Verbindung.</string>
+    <string name="yv_offline_connection_lost_message">Deine Internet-Verbindung scheint gerade instabil zu sein.</string>
     <string name="yv_offline_download_agreement">Unsere Vereinbarung mit dem Herausgeber dieser Bibelausgabe erfordert, dass wir bestimmte Informationen an ihn weitergeben, um diese Ausgabe für die Offline-Nutzung anbieten zu können. Wenn du fortfährst, erklärst du dich damit einverstanden, deine Daten weiterzugeben und dem Herausgeber zu gestatten, dir E-Mails zu senden.</string>
     <string name="yv_offline_download_tagline">Jederzeit und überall lesen – auch offline</string>
     <string name="yv_ok">OK</string>

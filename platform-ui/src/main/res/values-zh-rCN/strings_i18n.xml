@@ -15,10 +15,10 @@
     <string name="yv_bible_card_unavailable_reference">此段落在所选圣经译本中不可用。</string>
     <string name="yv_bible_search_bible_heading">圣经</string>
     <string name="yv_bible_search_clear_aria_label">清除搜索</string>
-    <string name="yv_bible_search_filter_both">Both</string>
-    <string name="yv_bible_search_filter_new_testament">New Testament</string>
-    <string name="yv_bible_search_filter_old_testament">Old Testament</string>
-    <string name="yv_bible_search_filters_button">Filters</string>
+    <string name="yv_bible_search_filter_both">两者</string>
+    <string name="yv_bible_search_filter_new_testament">新约</string>
+    <string name="yv_bible_search_filter_old_testament">旧约</string>
+    <string name="yv_bible_search_filters_button">筛选</string>
     <string name="yv_bible_search_recent_heading">最近搜索</string>
     <string name="yv_bible_search_trending_heading">热门搜索</string>
     <string name="yv_bible_version_details_content_desc">圣经版本详情</string>
@@ -39,9 +39,10 @@
     <string name="yv_error">错误</string>
     <string name="yv_font">字体</string>
     <string name="yv_font_and_settings">字体 &amp; 设置</string>
+    <string name="yv_footnote_aria_label">脚注</string>
     <string name="yv_footnote_content_desc">脚注</string>
     <string name="yv_full_chapter">完整章节</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">当前无法完成此请求。</string>
     <string name="yv_increase_font_size_aria_label">增大字体大小</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">语言</string>

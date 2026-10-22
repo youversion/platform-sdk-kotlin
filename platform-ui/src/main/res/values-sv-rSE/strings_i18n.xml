@@ -39,6 +39,7 @@
     <string name="yv_error">Fel</string>
     <string name="yv_font">Teckensnitt</string>
     <string name="yv_font_and_settings">Typsnitt &amp; Inställningar</string>
+    <string name="yv_footnote_aria_label">Fotnot</string>
     <string name="yv_footnote_content_desc">Fotnot</string>
     <string name="yv_full_chapter">Hela kapitlet</string>
     <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>

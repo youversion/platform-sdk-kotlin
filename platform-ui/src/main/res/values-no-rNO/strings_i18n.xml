@@ -39,9 +39,10 @@
     <string name="yv_error">Feil</string>
     <string name="yv_font">Skrift</string>
     <string name="yv_font_and_settings">Skrifttyper og innstillinger</string>
+    <string name="yv_footnote_aria_label">Fotnote</string>
     <string name="yv_footnote_content_desc">Fotnote</string>
     <string name="yv_full_chapter">Les hele kapittelet</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">Denne forespørselen kan ikke fullføres akkurat nå.</string>
     <string name="yv_increase_font_size_aria_label">Øk skriftstørrelse</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Språk</string>

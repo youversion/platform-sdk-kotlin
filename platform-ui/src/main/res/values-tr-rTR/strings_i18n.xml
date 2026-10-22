@@ -15,10 +15,10 @@
     <string name="yv_bible_card_unavailable_reference">Bu pasaj seçilen Kutsal Kitap çeviri sürümünde mevcut değildir.</string>
     <string name="yv_bible_search_bible_heading">Kutsal Kitap</string>
     <string name="yv_bible_search_clear_aria_label">Aramayı temizle</string>
-    <string name="yv_bible_search_filter_both">Both</string>
-    <string name="yv_bible_search_filter_new_testament">New Testament</string>
-    <string name="yv_bible_search_filter_old_testament">Old Testament</string>
-    <string name="yv_bible_search_filters_button">Filters</string>
+    <string name="yv_bible_search_filter_both">İkisi de</string>
+    <string name="yv_bible_search_filter_new_testament">Yeni Antlaşma</string>
+    <string name="yv_bible_search_filter_old_testament">Eski Antlaşma</string>
+    <string name="yv_bible_search_filters_button">Filtreler</string>
     <string name="yv_bible_search_recent_heading">Son Aramalar</string>
     <string name="yv_bible_search_trending_heading">Popüler Aramalar</string>
     <string name="yv_bible_version_details_content_desc">Kutsal Kitap Sürümü Ayrıntıları</string>
@@ -39,9 +39,10 @@
     <string name="yv_error">Hata</string>
     <string name="yv_font">Yazı Tipi</string>
     <string name="yv_font_and_settings">Yazı Tipleri ve Ayarlar</string>
+    <string name="yv_footnote_aria_label">Dipnot</string>
     <string name="yv_footnote_content_desc">Dipnot</string>
     <string name="yv_full_chapter">Tam Bölüm</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">Bu istek şu anda tamamlanamıyor.</string>
     <string name="yv_increase_font_size_aria_label">Yazı tipi boyutunu artır</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Dil</string>

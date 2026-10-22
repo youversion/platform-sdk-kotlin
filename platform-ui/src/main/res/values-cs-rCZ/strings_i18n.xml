@@ -39,6 +39,7 @@
     <string name="yv_error">Chyba</string>
     <string name="yv_font">Písmo</string>
     <string name="yv_font_and_settings">Fonty &amp; Nastavení</string>
+    <string name="yv_footnote_aria_label">Poznámka pod čarou</string>
     <string name="yv_footnote_content_desc">Poznámka pod čarou</string>
     <string name="yv_full_chapter">Celá kapitola</string>
     <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
