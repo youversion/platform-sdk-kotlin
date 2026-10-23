@@ -1249,16 +1249,6 @@ public final class com/youversion/platform/core/verseimages/api/VerseImagesApi$D
 public final class com/youversion/platform/core/verseimages/models/VerseImage {
 	public static final field Companion Lcom/youversion/platform/core/verseimages/models/VerseImage$Companion;
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IID)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun component4 ()Ljava/lang/String;
-	public final fun component5 ()Ljava/lang/String;
-	public final fun component6 ()I
-	public final fun component7 ()I
-	public final fun component8 ()D
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IID)Lcom/youversion/platform/core/verseimages/models/VerseImage;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/verseimages/models/VerseImage;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIDILjava/lang/Object;)Lcom/youversion/platform/core/verseimages/models/VerseImage;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAspectRatio ()D
 	public final fun getAttribution ()Ljava/lang/String;
