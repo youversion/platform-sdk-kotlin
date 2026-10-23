@@ -6,4 +6,7 @@ import org.gradle.kotlin.dsl.getByType
 internal val Project.libs: VersionCatalog
     get() = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
+/**
+ * Returns the alias's `requiredVersion`, throwing if the alias is missing.
+ */
 internal fun VersionCatalog.version(alias: String): String = findVersion(alias).get().requiredVersion
