@@ -9,8 +9,19 @@ class PublishingConventionPlugin : Plugin<Project> {
             pluginManager.apply("com.vanniktech.maven.publish")
 
             // Common Maven publishing settings. Each module declares its own `mavenPublishing` block for
-            // its coordinates and POM name/description.
+            // its artifactId and POM name/description.
             extensions.configure<MavenPublishBaseExtension> {
+                coordinates(
+                    groupId = "com.youversion.platform",
+                    // The release workflow passes -PsdkVersion so the published coordinate and the
+                    // version stamped into the release commit cannot drift. Local builds fall back to
+                    // the catalog. See RELEASING.md.
+                    version =
+                        providers
+                            .gradleProperty("sdkVersion")
+                            .getOrElse(libs.version("youversionPlatform")),
+                )
+
                 publishToMavenCentral(
                     // After Central Portal validates the build, automatically release it to Maven Central
                     // This prevents the need to manually push the publish button in Central Portal.

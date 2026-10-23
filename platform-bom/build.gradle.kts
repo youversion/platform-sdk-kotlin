@@ -15,16 +15,7 @@ dependencies {
 }
 
 mavenPublishing {
-    coordinates(
-        groupId = "com.youversion.platform",
-        artifactId = "platform-bom",
-        // The release workflow passes -PsdkVersion so the published coordinate and the
-        // version stamped into the release commit cannot drift. Local builds fall back to
-        // the catalog. See RELEASING.md.
-        version =
-            (project.findProperty("sdkVersion") as? String)
-                ?: libs.versions.youversionPlatform.get(),
-    )
+    coordinates(artifactId = "platform-bom")
 
     pom {
         name = "YouVersion Platform SDK - BOM"
