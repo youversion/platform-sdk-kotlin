@@ -1,32 +1,14 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    id("youversion.android.library")
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.maven.publish)
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_11
-    }
+    id("youversion.publishing")
+    id("youversion.spotless")
 }
 
 android {
     namespace = "com.youversion.platform.reader"
-    compileSdk =
-        libs.versions.compileSdk
-            .get()
-            .toInt()
-
     defaultConfig {
-        minSdk =
-            libs.versions.minSdk
-                .get()
-                .toInt()
-
         consumerProguardFiles("consumer-rules.pro")
         vectorDrawables.useSupportLibrary = true
     }
@@ -44,10 +26,6 @@ android {
         unitTests {
             isIncludeAndroidResources = true
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
         compose = true

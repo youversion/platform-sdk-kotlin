@@ -1,31 +1,13 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    id("youversion.android.library")
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.maven.publish)
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_11
-    }
+    id("youversion.publishing")
+    id("youversion.spotless")
 }
 
 android {
     namespace = "com.youversion.platform.core"
-    compileSdk =
-        libs.versions.compileSdk
-            .get()
-            .toInt()
-
     defaultConfig {
-        minSdk =
-            libs.versions.minSdk
-                .get()
-                .toInt()
-
         consumerProguardFiles("consumer-rules.pro")
 
         val sdkVersion = (project.findProperty("sdkVersion") as? String) ?: "Dev"
@@ -49,10 +31,6 @@ android {
         unitTests {
             isIncludeAndroidResources = true
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
 }
 
