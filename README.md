@@ -27,6 +27,7 @@ currently not available.
   - [Authentication](#authentication)
   - [Highlights](#highlights)
   - [Search API](#search-api)
+  - [Verse Images API](#verse-images-api)
 - [Sample App](#sample-app)
 - [For Different Use Cases](#-for-different-use-cases)
 - [Development Setup](#development-setup)
@@ -41,6 +42,7 @@ currently not available.
 - 📖 **Scripture Display** - Easy-to-use Jetpack Compose components for displaying Bible verses, chapters, and passages with `BibleText`
 - 📕 **Bible Reader** - A complete Bible reading experience inside your app with `BibleReader`
 - 🔍 **Search** - Built-in search in `BibleReader`, plus API access to verse and topic search and to suggested and trending queries
+- 🖼️ **Verse Images** - API access to verse art, filtered by passage and language
 - 🖍️ **Highlights** - The signed-in user's YouVersion highlights are rendered in `BibleText` and can be created, recolored, and removed from the reader
 - 🔐 **User Authentication** - Seamless "Sign In with YouVersion" integration using `SignInWithYouVersionButton`, with a top-level toggle to disable all sign-in UI
 - 🌅 **Verse of the Day** - Built-in `VerseOfTheDay` component and API access to VOTD data
@@ -552,6 +554,51 @@ val heading =
 - Invalid arguments throw `IllegalArgumentException` before any request is made. A `query` must be 1–100 grapheme clusters (characters as the user sees them, so an emoji counts as one) for `verses`, `topics`, and `unified`, and non-empty for `suggestedQueries`. `bibleId` must be greater than zero, `pageSize` between 1 and 99, and each `languageRanges` entry a well-formed tag (`"*"` is not accepted), with at least one given.
 - A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `CANNOT_DOWNLOAD` for any other error response, and `INVALID_RESPONSE` when the response cannot be read.
 - A response with no content (HTTP 204) is handled differently by endpoint. `trendingQueries` and `suggestedQueries` return an empty list, while `verses`, `topics`, and `unified` throw `YouVersionNetworkException` with reason `INVALID_RESPONSE` rather than reporting no matches.
+
+### Verse Images API
+
+Verse art — images featuring the text of a verse or verse range — is available through `YouVersionApi.verseImages`, which is part of `platform-core`. Both calls are suspend functions and need only a configured app key — the user does not have to be signed in.
+
+#### Listing Images
+
+```kotlin
+val firstPage =
+    YouVersionApi.verseImages.verseImages(
+        passageId = "JHN.3.16",
+        languageRanges = listOf("en"),
+    )
+firstPage.data.forEach { image ->
+    println("${image.imageUrl} (${image.attribution})")
+}
+
+val secondPage =
+    firstPage.nextPageToken?.let { token ->
+        YouVersionApi.verseImages.verseImages(passageId = "JHN.3.16", languageRanges = listOf("en"), pageToken = token)
+    }
+```
+
+Every filter is optional:
+
+- `passageId` — a single verse (`"JHN.3.16"`) or verse range (`"1CO.13.4-7"`). A whole chapter such as `"JHN.3"` is not accepted.
+- `languageRanges` — [BCP 47](https://www.rfc-editor.org/rfc/bcp/bcp47.txt) ranges in order of preference; `"*"` matches every language. Leave it empty for no language filter.
+- `pageSize` (1–99) and `pageToken` page through the results the same way as verse search. `totalSize` is reported only when `passageId` is given.
+
+A filter that matches nothing returns an empty page rather than failing.
+
+#### Fetching One Image
+
+```kotlin
+val image = YouVersionApi.verseImages.verseImage(imageId = savedImageId)
+```
+
+#### Displaying an Image
+
+A `VerseImage` is metadata only; load the picture itself from `imageUrl` with your image loader of choice. Append `?size=thumb`, `?size=card`, or `?size=full` to `imageUrl` for a resized rendition. `width`, `height`, and `aspectRatio` describe the original, so you can reserve the right amount of space before it loads. Show `attribution` alongside the image.
+
+#### Verse Images Error Handling
+
+- Invalid arguments throw `IllegalArgumentException` before any request is made: `passageId`, `pageToken`, and `imageId` must not be blank, and `pageSize` must be between 1 and 99.
+- A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `CANNOT_DOWNLOAD` for any other error response — including a chapter-level `passageId` — and `INVALID_RESPONSE` when the response cannot be read.
 
 ## Sample App
 

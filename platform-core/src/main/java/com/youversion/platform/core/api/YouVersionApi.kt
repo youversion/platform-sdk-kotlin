@@ -16,6 +16,8 @@ import com.youversion.platform.core.search.api.SearchEndpoints
 import com.youversion.platform.core.users.api.UsersApi
 import com.youversion.platform.core.users.api.UsersEndpoints
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.verseimages.api.VerseImagesApi
+import com.youversion.platform.core.verseimages.api.VerseImagesEndpoints
 import com.youversion.platform.core.votd.api.VotdApi
 import com.youversion.platform.core.votd.api.VotdEndpoints
 import kotlinx.coroutines.CancellationException
@@ -32,6 +34,7 @@ object YouVersionApi {
     val organizations: OrganizationsApi = OrganizationsEndpoints
     val search: SearchApi = SearchEndpoints
     val users: UsersApi = UsersEndpoints
+    val verseImages: VerseImagesApi = VerseImagesEndpoints
     val votd: VotdApi = VotdEndpoints
 
     val isSignedIn: Boolean
