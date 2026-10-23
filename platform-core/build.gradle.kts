@@ -1,58 +1,17 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    id("youversion.sdk.library")
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.maven.publish)
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_11
-    }
 }
 
 android {
     namespace = "com.youversion.platform.core"
-    compileSdk =
-        libs.versions.compileSdk
-            .get()
-            .toInt()
-
     defaultConfig {
-        minSdk =
-            libs.versions.minSdk
-                .get()
-                .toInt()
-
-        consumerProguardFiles("consumer-rules.pro")
-
-        val sdkVersion = (project.findProperty("sdkVersion") as? String) ?: "Dev"
+        val sdkVersion = providers.gradleProperty("sdkVersion").getOrElse("Dev")
         buildConfigField("String", "SDK_VERSION", "\"$sdkVersion\"")
     }
 
     buildFeatures {
         buildConfig = true
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
-        }
-    }
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
 }
 
@@ -84,16 +43,7 @@ dependencies {
 }
 
 mavenPublishing {
-    coordinates(
-        groupId = "com.youversion.platform",
-        artifactId = "platform-core",
-        // The release workflow passes -PsdkVersion so the published coordinate and the
-        // version stamped into the release commit cannot drift. Local builds fall back to
-        // the catalog. See RELEASING.md.
-        version =
-            (project.findProperty("sdkVersion") as? String)
-                ?: libs.versions.youversionPlatform.get(),
-    )
+    coordinates(artifactId = "platform-core")
 
     pom {
         name = "YouVersion Platform SDK - Core"
