@@ -1,32 +1,14 @@
 plugins {
-    id("youversion.android.library")
+    id("youversion.sdk.library")
     alias(libs.plugins.kotlin.compose)
-    id("youversion.publishing")
-    id("youversion.spotless")
 }
 
 android {
     namespace = "com.youversion.platform.ui"
     defaultConfig {
-        consumerProguardFiles("consumer-rules.pro")
         vectorDrawables {
             // evenOdd support on API < 24
             useSupportLibrary = true
-        }
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
-        }
-    }
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
         }
     }
 }
@@ -71,16 +53,7 @@ dependencies {
 }
 
 mavenPublishing {
-    coordinates(
-        groupId = "com.youversion.platform",
-        artifactId = "platform-ui",
-        // The release workflow passes -PsdkVersion so the published coordinate and the
-        // version stamped into the release commit cannot drift. Local builds fall back to
-        // the catalog. See RELEASING.md.
-        version =
-            (project.findProperty("sdkVersion") as? String)
-                ?: libs.versions.youversionPlatform.get(),
-    )
+    coordinates(artifactId = "platform-ui")
 
     pom {
         name = "YouVersion Platform SDK - UI"

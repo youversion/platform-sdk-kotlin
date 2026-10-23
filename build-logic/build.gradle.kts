@@ -26,9 +26,17 @@ gradlePlugin {
             id = "youversion.android.library"
             implementationClass = "AndroidLibraryConventionPlugin"
         }
+        register("sdkLibrary") {
+            id = "youversion.sdk.library"
+            implementationClass = "SdkLibraryConventionPlugin"
+        }
         register("publishing") {
             id = "youversion.publishing"
             implementationClass = "PublishingConventionPlugin"
+        }
+        register("hardcodedUiStrings") {
+            id = "youversion.hardcoded-ui-strings"
+            implementationClass = "HardcodedUiStringsConventionPlugin"
         }
         register("spotless") {
             id = "youversion.spotless"

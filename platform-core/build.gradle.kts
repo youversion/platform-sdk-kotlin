@@ -1,36 +1,17 @@
 plugins {
-    id("youversion.android.library")
+    id("youversion.sdk.library")
     alias(libs.plugins.kotlin.serialization)
-    id("youversion.publishing")
-    id("youversion.spotless")
 }
 
 android {
     namespace = "com.youversion.platform.core"
     defaultConfig {
-        consumerProguardFiles("consumer-rules.pro")
-
-        val sdkVersion = (project.findProperty("sdkVersion") as? String) ?: "Dev"
+        val sdkVersion = providers.gradleProperty("sdkVersion").getOrElse("Dev")
         buildConfigField("String", "SDK_VERSION", "\"$sdkVersion\"")
     }
 
     buildFeatures {
         buildConfig = true
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
-        }
-    }
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-        }
     }
 }
 
@@ -62,16 +43,7 @@ dependencies {
 }
 
 mavenPublishing {
-    coordinates(
-        groupId = "com.youversion.platform",
-        artifactId = "platform-core",
-        // The release workflow passes -PsdkVersion so the published coordinate and the
-        // version stamped into the release commit cannot drift. Local builds fall back to
-        // the catalog. See RELEASING.md.
-        version =
-            (project.findProperty("sdkVersion") as? String)
-                ?: libs.versions.youversionPlatform.get(),
-    )
+    coordinates(artifactId = "platform-core")
 
     pom {
         name = "YouVersion Platform SDK - Core"

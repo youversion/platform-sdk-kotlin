@@ -1,32 +1,15 @@
 plugins {
-    id("youversion.android.library")
+    id("youversion.sdk.library")
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-    id("youversion.publishing")
-    id("youversion.spotless")
 }
 
 android {
     namespace = "com.youversion.platform.reader"
     defaultConfig {
-        consumerProguardFiles("consumer-rules.pro")
         vectorDrawables.useSupportLibrary = true
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
-        }
-    }
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-        }
-    }
     buildFeatures {
         compose = true
     }
@@ -71,16 +54,7 @@ dependencies {
 }
 
 mavenPublishing {
-    coordinates(
-        groupId = "com.youversion.platform",
-        artifactId = "platform-reader",
-        // The release workflow passes -PsdkVersion so the published coordinate and the
-        // version stamped into the release commit cannot drift. Local builds fall back to
-        // the catalog. See RELEASING.md.
-        version =
-            (project.findProperty("sdkVersion") as? String)
-                ?: libs.versions.youversionPlatform.get(),
-    )
+    coordinates(artifactId = "platform-reader")
 
     pom {
         name = "YouVersion Platform SDK - Reader"

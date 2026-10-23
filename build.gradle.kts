@@ -9,8 +9,7 @@ plugins {
     alias(libs.plugins.maven.publish) apply false
     alias(libs.plugins.spotless) apply false
     alias(libs.plugins.binary.compatibility.validator)
-    // Puts build-logic on the root build's classpath, for VerifyNoHardcodedUiStringsTask below.
-    id("youversion.android.library") apply false
+    id("youversion.hardcoded-ui-strings")
 }
 
 // Records the public API of the published modules in `<module>/api/<module>.api`, so that a change
@@ -22,19 +21,6 @@ apiValidation {
     // @PlatformInternalApi is an ERROR-level opt-in: consumers are not allowed to link against
     // what it marks, so those declarations are left out of the dump and stay free to change.
     nonPublicMarkers += "com.youversion.platform.core.di.PlatformInternalApi"
-}
-
-tasks.register<VerifyNoHardcodedUiStringsTask>("verifyNoHardcodedUiStrings") {
-    val modules = listOf("platform-ui", "platform-reader")
-    moduleNames.set(modules)
-    kotlinSources.setFrom(
-        modules.map { module ->
-            fileTree(layout.projectDirectory.dir("$module/src/main")) {
-                include("**/*.kt")
-            }
-        },
-    )
-    resultFile.set(layout.buildDirectory.file("verifyNoHardcodedUiStrings/result.txt"))
 }
 
 // Merges the SDK modules' coverage into one report at `build/reports/kover/report.xml`. The sample
