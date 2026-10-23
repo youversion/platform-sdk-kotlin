@@ -1,6 +1,7 @@
 plugins {
     `java-platform`
-    alias(libs.plugins.maven.publish)
+    id("youversion.publishing")
+    id("youversion.spotless")
 }
 
 // Pins every SDK module to this BOM's version. Each module also depends on the BOM, so a
