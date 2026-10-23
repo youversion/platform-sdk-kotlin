@@ -11,6 +11,8 @@ import com.youversion.platform.core.bibles.domain.BibleReference
  * @property didYouMean Alternative spellings offered alongside results for the query as written.
  * @property searchInsteadFor The original wording, present only when the platform corrected the query and
  *     searched for the correction instead.
+ * @property images The matching images, in rank order. Empty when the platform does not offer image results.
+ *     [copy] does not carry them over, so a copy of results with images is not equal to the original.
  */
 data class SearchResults(
     val references: List<BibleReference>,
@@ -19,10 +21,6 @@ data class SearchResults(
     val didYouMean: List<String>,
     val searchInsteadFor: String?,
 ) {
-    /**
-     * The matching images, in rank order. Empty when the platform does not offer image results.
-     * Not carried over by [copy].
-     */
     var images: List<SearchImage> = emptyList()
         private set
 

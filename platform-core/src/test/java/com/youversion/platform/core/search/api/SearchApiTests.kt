@@ -4,6 +4,7 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.search.models.SearchImage
 import com.youversion.platform.core.search.models.SearchTopic
 import com.youversion.platform.core.search.models.SearchUserIntent
 import com.youversion.platform.helpers.YouVersionPlatformTest
@@ -490,8 +491,11 @@ class SearchApiTests : YouVersionPlatformTest {
                 results.topics,
             )
             assertEquals(
-                listOf("img-1" to "HEB.11.1", "img-2" to "1CO.13.4-7"),
-                results.images.map { it.id to it.passageId },
+                listOf(
+                    SearchImage(id = "img-1", passageId = "HEB.11.1"),
+                    SearchImage(id = "img-2", passageId = "1CO.13.4-7"),
+                ),
+                results.images,
             )
             assertEquals(SearchUserIntent.topical, results.userIntent)
             assertEquals(listOf("faith"), results.didYouMean)
@@ -549,7 +553,7 @@ class SearchApiTests : YouVersionPlatformTest {
 
             assertEquals(emptyList(), results.references)
             assertEquals(emptyList(), results.topics)
-            assertEquals(listOf("img-1" to "JHN.3.16"), results.images.map { it.id to it.passageId })
+            assertEquals(listOf(SearchImage(id = "img-1", passageId = "JHN.3.16")), results.images)
         }
 
     @Test
@@ -580,6 +584,8 @@ class SearchApiTests : YouVersionPlatformTest {
                             { "id": "img-4", "passage_id": " " },
                             { "id": 5, "passage_id": "PSA.23.1" },
                             null,
+                            "img-6",
+                            ["img-7", "JHN.1.1"],
                             { "id": "img-3", "passage_id": "1CO.13.4-7" }
                         ],
                         "did_you_mean": []
@@ -591,7 +597,23 @@ class SearchApiTests : YouVersionPlatformTest {
             YouVersionPlatformConfiguration.configure(appKey = "app")
             val results = YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
 
-            assertEquals(listOf("img-3" to "1CO.13.4-7"), results.images.map { it.id to it.passageId })
+            assertEquals(listOf(SearchImage(id = "img-3", passageId = "1CO.13.4-7")), results.images)
+            assertEquals(listOf("JHN.3.16"), results.references.map { it.asUSFM })
+        }
+
+    @Test
+    fun `test unified search returns no images when the platform sends a non list`() =
+        runTest {
+            MockEngine {
+                respondJson(
+                    """{ "verses": [{ "reference": "JHN.3.16" }], "topics": [], "images": {}, "did_you_mean": [] }""",
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
+
+            assertEquals(emptyList(), results.images)
             assertEquals(listOf("JHN.3.16"), results.references.map { it.asUSFM })
         }
 

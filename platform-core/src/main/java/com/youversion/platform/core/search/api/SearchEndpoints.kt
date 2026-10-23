@@ -23,7 +23,9 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.path
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.IllformedLocaleException
 import java.util.Locale
@@ -158,7 +160,7 @@ internal object SearchEndpoints : SearchApi {
             userIntent = response.userIntent?.let(::SearchUserIntent),
             didYouMean = response.didYouMean,
             searchInsteadFor = response.searchInsteadFor,
-            images = response.images.orEmpty().mapNotNull { it?.searchImage() },
+            images = (response.images as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.searchImage() },
         )
     }
 
@@ -198,9 +200,9 @@ internal object SearchEndpoints : SearchApi {
     private fun TopicSearchResultResponse.searchTopic(): SearchTopic =
         SearchTopic(id = id, text = text, subtopics = subtopics)
 
-    private fun ImageSearchResultResponse.searchImage(): SearchImage? {
-        val id = id.nonBlankString() ?: return null
-        val passageId = passageId.nonBlankString() ?: return null
+    private fun JsonObject.searchImage(): SearchImage? {
+        val id = this["id"].nonBlankString() ?: return null
+        val passageId = this["passage_id"].nonBlankString() ?: return null
         return SearchImage(id = id, passageId = passageId)
     }
 

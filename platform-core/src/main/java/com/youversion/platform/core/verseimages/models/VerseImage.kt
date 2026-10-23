@@ -38,7 +38,7 @@ class VerseImage(
             languageTag == other.languageTag &&
             width == other.width &&
             height == other.height &&
-            aspectRatio == other.aspectRatio
+            aspectRatio.compareTo(other.aspectRatio) == 0
     }
 
     override fun hashCode(): Int {
