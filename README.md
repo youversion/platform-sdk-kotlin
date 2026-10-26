@@ -99,7 +99,7 @@ The modules always ship together on the same version. Declare `platform-bom` wit
 ```toml
 # gradle/libs.versions.toml
 [versions]
-youVersionPlatform = "2.6.0"
+youVersionPlatform = "2.7.0"
 
 [libraries]
 youversion-platform-bom = { module = "com.youversion.platform:platform-bom", version.ref = "youVersionPlatform" }
@@ -119,7 +119,7 @@ implementation(libs.youversion.platform.reader)
 ### Without Version Catalog
 
 ```kotlin
-val youVersionPlatform = "2.6.0"
+val youVersionPlatform = "2.7.0"
 implementation(platform("com.youversion.platform:platform-bom:$youVersionPlatform"))
 implementation("com.youversion.platform:platform-core")
 implementation("com.youversion.platform:platform-ui")

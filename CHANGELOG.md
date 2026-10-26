@@ -1,3 +1,15 @@
+## [2.7.0](https://github.com/youversion/platform-sdk-kotlin/compare/2.6.0...2.7.0) (2026-10-26)
+
+### Features
+
+* **core:** add verse images API ([841b76e](https://github.com/youversion/platform-sdk-kotlin/commit/841b76e243b2218a9e77987dd2f94676116e4504))
+* **core:** return images from unified search ([7b12c77](https://github.com/youversion/platform-sdk-kotlin/commit/7b12c77928bc9589c3dd07b6eccb74589b8092a3))
+
+### Bug Fixes
+
+* **core:** honor wildcard Search language ranges ([2331c28](https://github.com/youversion/platform-sdk-kotlin/commit/2331c28d82fb8c47aae46753d92d93f12171d129))
+* **i18n:** sync kotlin localization from platform-localization ([4de202b](https://github.com/youversion/platform-sdk-kotlin/commit/4de202b05e556a90593aaf4d9c73bb69678af891))
+
 ## [2.6.0](https://github.com/youversion/platform-sdk-kotlin/compare/2.5.0...2.6.0) (2026-10-12)
 
 ### Features
