@@ -3,8 +3,6 @@ package com.youversion.platform.ui.views
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -63,7 +61,6 @@ import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -74,6 +71,7 @@ import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -1133,36 +1131,25 @@ class BibleTextTests {
     }
 
     @Test
-    fun `changing the font size keeps the reader on the paragraph they were reading`() {
+    fun `a restyle that fails keeps the chapter as it was`() {
         coEvery { mockVersionRepository.version(any()) } returns ltrVersion
         coEvery {
             BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
-        } coAnswers {
-            delay(100)
-            (1..40).map { annotatedBlock("Verse $it", referenceAnnotation = "1:GEN:1:$it") }
-        }
+        } returns listOf(annotatedBlock("Text content")) andThenThrows RuntimeException("offline")
 
         var fontSize by mutableStateOf(16.sp)
-        lateinit var listState: LazyListState
+        lateinit var state: BibleTextBlocksState
         composeTestRule.setContent {
-            val state =
-                rememberBibleTextBlocksState(
-                    reference = chapterReference,
-                    textOptions = BibleTextOptions(fontSize = fontSize),
-                )
-            listState = rememberLazyListState()
-            LazyColumn(state = listState, modifier = Modifier.height(200.dp)) {
-                bibleTextBlocks(state = state, textOptions = BibleTextOptions(fontSize = fontSize))
-            }
+            state = rememberBibleTextBlocksState(chapterReference, BibleTextOptions(fontSize = fontSize))
+            LazyColumn { bibleTextBlocks(state = state) }
         }
-        composeTestRule.mainClock.advanceTimeBy(200)
-        composeTestRule.onNode(hasScrollToIndexAction()).performScrollToIndex(20)
-        assertEquals(20, listState.firstVisibleItemIndex)
+        composeTestRule.waitForIdle()
 
         fontSize = 24.sp
-        composeTestRule.mainClock.advanceTimeBy(200)
+        composeTestRule.waitForIdle()
 
-        assertEquals(20, listState.firstVisibleItemIndex)
+        assertEquals(BibleTextLoadingPhase.SUCCESS, state.loadingPhase)
+        composeTestRule.onNodeWithText("Text content").assertExists()
     }
 
     // endregion
@@ -1553,16 +1540,22 @@ class BibleTextTests {
     private fun verse(number: Int) = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = number)
 
     /** A one-line opening paragraph, then the paragraph under test, which sits below a 24dp top margin. */
-    private fun setContentWithParagraph(height: Dp = 2000.dp): BibleTextLayoutState {
+    private fun setContentWithParagraph(
+        height: Dp = 2000.dp,
+        headIndent: Int = 0,
+        layoutDirection: LayoutDirection = LayoutDirection.Ltr,
+        reference: () -> BibleReference = { chapterReference },
+    ): BibleTextLayoutState {
         val start = longVerse.length
         val end = start + shortVerse.length
         coEvery { mockVersionRepository.version(any()) } returns ltrVersion
         coEvery {
             BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
-        } returns
+        } coAnswers {
+            if (arg<BibleReference>(1) != chapterReference) return@coAnswers listOf(annotatedBlock("Other chapter"))
             listOf(
                 annotatedBlock("Opening", marginTop = 0.dp),
-                annotatedBlock("", marginTop = 24.dp).copy(
+                annotatedBlock("", marginTop = 24.dp, headIndent = headIndent).copy(
                     text =
                         referenceAnnotatedString(
                             paragraphText,
@@ -1574,13 +1567,16 @@ class BibleTextTests {
                         ),
                 ),
             )
+        }
 
         lateinit var layoutState: BibleTextLayoutState
         composeTestRule.setContent {
-            val state = rememberBibleTextBlocksState(reference = chapterReference)
-            layoutState = rememberBibleTextLayoutState(state)
-            LazyColumn(modifier = Modifier.width(200.dp).height(height)) {
-                bibleTextBlocks(state = state, textOptions = BibleTextOptions(), layoutState = layoutState)
+            CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+                val state = rememberBibleTextBlocksState(reference = reference())
+                layoutState = rememberBibleTextLayoutState(state)
+                LazyColumn(modifier = Modifier.width(200.dp).height(height)) {
+                    bibleTextBlocks(state = state, layoutState = layoutState)
+                }
             }
         }
         composeTestRule.waitForIdle()
@@ -1614,6 +1610,33 @@ class BibleTextTests {
     @Test
     fun `a verse whose paragraph is not composed has no bounds`() {
         val layoutState = setContentWithParagraph(height = 1.dp)
+
+        assertNull(layoutState.verseBounds(verse(2)))
+    }
+
+    @Test
+    fun `an indented paragraph's bounds start after the indent left to right`() {
+        val layoutState = setContentWithParagraph(headIndent = 2)
+        val indent = with(composeTestRule.density) { 16.dp.toPx() }
+
+        assertEquals(indent, layoutState.verseBounds(verse(1))?.left)
+    }
+
+    @Test
+    fun `an indented paragraph's bounds start at the edge right to left`() {
+        val layoutState = setContentWithParagraph(headIndent = 2, layoutDirection = LayoutDirection.Rtl)
+
+        assertEquals(0f, layoutState.verseBounds(verse(1))?.left)
+    }
+
+    @Test
+    fun `changing chapter forgets the bounds of the chapter left`() {
+        var reference by mutableStateOf(chapterReference)
+        val layoutState = setContentWithParagraph(reference = { reference })
+        assertNotNull(layoutState.verseBounds(verse(2)))
+
+        reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2)
+        composeTestRule.waitForIdle()
 
         assertNull(layoutState.verseBounds(verse(2)))
     }

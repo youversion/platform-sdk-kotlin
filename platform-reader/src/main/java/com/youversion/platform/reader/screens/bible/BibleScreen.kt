@@ -272,6 +272,10 @@ internal fun BibleScreen(
         viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
     }
 
+    LaunchedEffect(chapterLayout) {
+        chapterLayout?.keepReadingPosition(chapterListState, leadingItemCount = CHAPTER_HEADER_ITEM_COUNT)
+    }
+
     LaunchedEffect(chapterListState) {
         chapterListState.interactionSource.interactions
             .filterIsInstance<DragInteraction.Start>()
@@ -483,7 +487,6 @@ internal fun BibleScreen(
                                 if (chapterBlocks != null) {
                                     bibleTextBlocks(
                                         state = chapterBlocks,
-                                        textOptions = bibleTextOptions,
                                         selectedVerses = state.selectedVerses,
                                         focusedReference = state.focusedReference,
                                         layoutState = chapterLayout,

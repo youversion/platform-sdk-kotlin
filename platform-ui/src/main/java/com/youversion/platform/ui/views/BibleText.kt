@@ -222,7 +222,7 @@ fun BibleText(
                 BibleBlockContent(
                     visibleBlocks = blocksState.visibleBlocks,
                     index = index,
-                    textOptions = textOptions,
+                    textOptions = blocksState.textOptions,
                     selectedVerses = selectedVerses,
                     highlights = blocksState.highlights,
                     onVerseTap = onVerseTap,
@@ -480,6 +480,7 @@ private fun DrawScope.drawSelectionUnderlines(
 @Composable
 internal fun BibleTextBlock(
     block: BibleTextBlock,
+    blockIndex: Int,
     textOptions: BibleTextOptions,
     isFirstBlock: Boolean,
     previousMarginBottom: Dp,
@@ -488,7 +489,6 @@ internal fun BibleTextBlock(
     focusedReference: BibleReference? = null,
     unfocusedAlpha: Float = 1f,
     layoutState: BibleTextLayoutState? = null,
-    blockIndex: Int,
     onClick: (position: Offset, layoutResult: TextLayoutResult) -> Unit,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }

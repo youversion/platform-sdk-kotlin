@@ -57,6 +57,8 @@ class BibleTextBlocksState internal constructor(
     /** How far the load named by the state's reference has got. */
     val loadingPhase: BibleTextLoadingPhase,
     internal val blocks: List<BibleTextBlock>,
+    /** The options [blocks] were styled with, which they are drawn with until a restyle replaces them. */
+    internal val textOptions: BibleTextOptions,
     internal val highlights: Map<BibleReference, Color>,
     internal val horizontalAlignment: Alignment.Horizontal,
 ) {
@@ -100,6 +102,7 @@ fun rememberBibleTextBlocksState(
     // a frame later when the effect runs. Held across that frame, the state would offer the chapter just left as
     // this reference's blocks, and report the success that loading it was.
     var blocks by remember(reference) { mutableStateOf<List<BibleTextBlock>>(emptyList()) }
+    var styledOptions by remember(reference) { mutableStateOf(textOptions) }
     var loadingPhase by remember(reference) { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
     var isVersionRightToLeft by remember { mutableStateOf(false) }
     val versionRepository: BibleVersionRepository = PlatformKoinGraph.koinApplication.koin.get()
@@ -145,7 +148,14 @@ fun rememberBibleTextBlocksState(
         }
 
     LaunchedEffect(reference, textOptions, wordsOfChristColor) {
+        // A restyle that fails leaves the chapter as it was styled, rather than swapping text that loaded fine
+        // for an error.
         val isRestyling = loadingPhase == BibleTextLoadingPhase.SUCCESS
+
+        fun fail(phase: BibleTextLoadingPhase) {
+            if (!isRestyling) loadingPhase = phase
+        }
+
         if (!isRestyling) loadingPhase = BibleTextLoadingPhase.LOADING
         try {
             isVersionRightToLeft = versionRepository.version(reference.versionId).isRightToLeft
@@ -165,18 +175,19 @@ fun rememberBibleTextBlocksState(
 
             if (loadedBlocks != null) {
                 blocks = loadedBlocks
+                styledOptions = textOptions
                 loadingPhase = BibleTextLoadingPhase.SUCCESS
             } else {
-                loadingPhase = BibleTextLoadingPhase.FAILED
+                fail(BibleTextLoadingPhase.FAILED)
             }
         } catch (_: BibleVersionApiException) {
-            loadingPhase = BibleTextLoadingPhase.NOT_PERMITTED
+            fail(BibleTextLoadingPhase.NOT_PERMITTED)
         } catch (e: CancellationException) {
-            if (!isRestyling) loadingPhase = BibleTextLoadingPhase.INACTIVE
+            fail(BibleTextLoadingPhase.INACTIVE)
             throw e
         } catch (e: Exception) {
             println("loadBlocks unexpected error: $e")
-            loadingPhase = BibleTextLoadingPhase.FAILED
+            fail(BibleTextLoadingPhase.FAILED)
         }
     }
 
@@ -190,10 +201,11 @@ fun rememberBibleTextBlocksState(
             else -> Alignment.Start
         }
 
-    return remember(loadingPhase, blocks, highlights, horizontalAlignment) {
+    return remember(loadingPhase, blocks, styledOptions, highlights, horizontalAlignment) {
         BibleTextBlocksState(
             loadingPhase = loadingPhase,
             blocks = blocks,
+            textOptions = styledOptions,
             highlights = highlights,
             horizontalAlignment = horizontalAlignment,
         )
@@ -211,7 +223,6 @@ fun rememberBibleTextBlocksState(
 @PlatformInternalApi
 fun LazyListScope.bibleTextBlocks(
     state: BibleTextBlocksState,
-    textOptions: BibleTextOptions,
     selectedVerses: Set<BibleReference> = emptySet(),
     focusedReference: BibleReference? = null,
     layoutState: BibleTextLayoutState? = null,
@@ -227,6 +238,8 @@ fun LazyListScope.bibleTextBlocks(
     // dimming every block on its behalf.
     val coveredFocus = focusedReference?.takeIf { state.indexOfBlockContaining(it) != null }
 
+    // Keyed by position: no reader option changes how many blocks a chapter has, so a restyle keeps each index on
+    // the same block. A setting that adds or drops blocks, such as headings, would need stable keys here.
     itemsIndexed(state.visibleBlocks) { index, block ->
         val isFocused = coveredFocus != null && block.covers(coveredFocus)
         val isDimmed = coveredFocus != null && !isFocused
@@ -264,7 +277,7 @@ fun LazyListScope.bibleTextBlocks(
             BibleBlockContent(
                 visibleBlocks = state.visibleBlocks,
                 index = index,
-                textOptions = textOptions,
+                textOptions = state.textOptions,
                 selectedVerses = selectedVerses,
                 highlights = state.highlights,
                 focusedReference = fadingFocus,
@@ -303,6 +316,7 @@ internal fun BibleBlockContent(
     if (block.rows.isEmpty()) {
         BibleTextBlock(
             block = block,
+            blockIndex = index,
             textOptions = textOptions,
             isFirstBlock = index == 0,
             previousMarginBottom = if (index == 0) 0.dp else visibleBlocks[index - 1].marginBottom,
@@ -311,7 +325,6 @@ internal fun BibleBlockContent(
             focusedReference = focusedReference,
             unfocusedAlpha = unfocusedAlpha,
             layoutState = layoutState,
-            blockIndex = index,
             onClick = { localPosition, textLayoutResult ->
                 coroutineScope.launch {
                     val characterIndex = textLayoutResult.getOffsetForPosition(localPosition)
@@ -376,15 +389,16 @@ internal fun BibleBlockContent(
     }
 }
 
-private fun BibleTextBlock.verses(): List<BibleReference> {
+private fun BibleTextBlock.verses(): Sequence<BibleReference> {
     val texts = if (rows.isEmpty()) listOf(text) else rows.flatten()
-    return texts.flatMap { candidate ->
+    return texts.asSequence().flatMap { candidate ->
         candidate
             .getStringAnnotations(
                 tag = BibleReferenceAttribute.NAME,
                 start = 0,
                 end = candidate.length,
-            ).map { BibleReference.fromAnnotation(it.item) }
+            ).asSequence()
+            .map { BibleReference.fromAnnotation(it.item) }
     }
 }
 
