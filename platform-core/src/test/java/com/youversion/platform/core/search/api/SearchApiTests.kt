@@ -133,45 +133,72 @@ class SearchApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test suggested queries rejects an empty language range list`() =
+    fun `test every call taking language ranges rejects an empty list`() =
         runTest {
             startNoRequestExpected()
             assertFailsWith<IllegalArgumentException> {
                 YouVersionApi.search.suggestedQueries(query = "love", languageRanges = emptyList())
             }
+            assertFailsWith<IllegalArgumentException> {
+                YouVersionApi.search.trendingQueries(languageRanges = emptyList())
+            }
+            assertFailsWith<IllegalArgumentException> {
+                YouVersionApi.search.topics(query = "love", languageRanges = emptyList())
+            }
+            assertFailsWith<IllegalArgumentException> {
+                YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = emptyList())
+            }
         }
 
     @Test
-    fun `test suggested queries rejects a malformed language range`() =
+    fun `test every call taking language ranges rejects malformed ranges even with a wildcard`() =
         runTest {
             startNoRequestExpected()
-            listOf("", "en_US", "en-", "-US", "abcdefghi", "en-US!", "en-a", "en-x").forEach { languageRange ->
-                assertFailsWith<IllegalArgumentException>("expected $languageRange to be rejected") {
-                    YouVersionApi.search.suggestedQueries(
-                        query = "love",
-                        languageRanges = listOf("en", languageRange),
-                    )
+            listOf("", " ", "en_US", "en-", "-US", "abcdefghi", "en-US!", "en-a", "en-x", "en-*", "*-US", " *", "* ")
+                .forEach { languageRange ->
+                    val languageRanges = listOf("*", languageRange)
+                    assertFailsWith<IllegalArgumentException>("expected $languageRange to be rejected") {
+                        YouVersionApi.search.suggestedQueries(
+                            query = "love",
+                            languageRanges = languageRanges,
+                        )
+                    }
+                    assertFailsWith<IllegalArgumentException>("expected $languageRange to be rejected") {
+                        YouVersionApi.search.trendingQueries(languageRanges = languageRanges)
+                    }
+                    assertFailsWith<IllegalArgumentException>("expected $languageRange to be rejected") {
+                        YouVersionApi.search.topics(query = "love", languageRanges = languageRanges)
+                    }
+                    assertFailsWith<IllegalArgumentException>("expected $languageRange to be rejected") {
+                        YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = languageRanges)
+                    }
                 }
-            }
         }
 
     @Test
-    fun `test every call taking language ranges rejects a bare any-language range`() =
+    fun `test every call taking language ranges forwards wildcard ranges unchanged`() =
         runTest {
-            startNoRequestExpected()
-            val languageRanges = listOf("en", "*")
-            assertFailsWith<IllegalArgumentException> {
+            var expectedLanguageRanges = listOf("*")
+            val engine =
+                MockEngine { request ->
+                    assertEquals(expectedLanguageRanges, request.url.parameters.getAll("language_ranges[]"))
+                    when (request.url.encodedPath) {
+                        "/v1/search-queries" -> respondJson("""{ "data": [] }""")
+                        "/v1/search-topics" -> respondJson("""{ "topics": [], "did_you_mean": [] }""")
+                        "/v1/search-unified" -> respondJson("""{ "verses": [], "topics": [], "did_you_mean": [] }""")
+                        else -> fail("Unexpected Search endpoint: ${request.url}")
+                    }
+                }.also { startYouVersionPlatformTest(it) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            listOf(listOf("*"), listOf("en-US", "*", "es")).forEach { languageRanges ->
+                expectedLanguageRanges = languageRanges
                 YouVersionApi.search.suggestedQueries(query = "love", languageRanges = languageRanges)
-            }
-            assertFailsWith<IllegalArgumentException> {
                 YouVersionApi.search.trendingQueries(languageRanges = languageRanges)
-            }
-            assertFailsWith<IllegalArgumentException> {
                 YouVersionApi.search.topics(query = "love", languageRanges = languageRanges)
-            }
-            assertFailsWith<IllegalArgumentException> {
                 YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = languageRanges)
             }
+            assertEquals(8, engine.requestHistory.size)
         }
 
     @Test
