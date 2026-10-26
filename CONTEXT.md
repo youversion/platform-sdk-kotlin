@@ -136,7 +136,7 @@ meaning "this reader is looking for a specific address rather than for text or a
 
 **Language range**:
 A reader's language preference, written as a BCP 47 language tag such as `en`. Search calls
-do not accept `*`, and match no language for a tag with a region such as `en-US`. Several may be given, and their order is their order of preference.
+accept `*` to request all languages, and match no language for a tag with a region such as `en-US`. Several may be given, and their order is their order of preference.
 _Avoid_: locale, language code, language filter
 
 **Fields**:
