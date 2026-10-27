@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -66,8 +67,10 @@ import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -78,6 +81,7 @@ import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import kotlin.math.ceil
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -1287,6 +1291,113 @@ class BibleTextTests {
             composeTestRule.mainClock.advanceTimeByFrame()
             assertEquals(readingFrom, lineAtTop(), "the reader moved on frame $frame")
         }
+    }
+
+    @Test
+    fun `shrinking the font from the top pixel of a line in a block with a fractional margin keeps that line`() {
+        val blockText = (1..60).joinToString("\n") { "Verse $it" }
+        var loads = 0
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } coAnswers {
+            if (loads++ > 0) delay(100)
+            listOf(
+                annotatedBlock("Opening", referenceAnnotation = "1:GEN:1:1"),
+                annotatedBlock(blockText, referenceAnnotation = "1:GEN:1:2", marginTop = 12.375.dp),
+            )
+        }
+
+        var fontSize by mutableStateOf(18.sp)
+        lateinit var listState: LazyListState
+        lateinit var scope: CoroutineScope
+        composeTestRule.setContent {
+            val state = rememberBibleTextBlocksState(chapterReference, BibleTextOptions(fontSize = fontSize))
+            val layoutState = rememberBibleTextLayoutState(state)
+            listState = rememberLazyListState()
+            scope = rememberCoroutineScope()
+            LaunchedEffect(layoutState) { layoutState.keepReadingPosition(listState, leadingItemCount = 1) }
+            LazyColumn(state = listState, modifier = Modifier.width(200.dp).height(200.dp)) {
+                item { Spacer(Modifier.height(50.dp)) }
+                bibleTextBlocks(state = state, layoutState = layoutState)
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        val marginTop = with(composeTestRule.density) { 12.375.dp.roundToPx() }
+
+        fun lineAtTop(): Int {
+            assertEquals(2, listState.firstVisibleItemIndex)
+            val layout = textLayout(blockText)
+            return layout.getLineStart(
+                layout.getLineForVerticalPosition((listState.firstVisibleItemScrollOffset - marginTop).toFloat()),
+            )
+        }
+
+        val topPixel = ceil(marginTop + textLayout(blockText).getLineTop(10)).toInt()
+        composeTestRule.runOnIdle { scope.launch { listState.scrollToItem(2, topPixel) } }
+        composeTestRule.waitForIdle()
+        val readingFrom = lineAtTop()
+
+        composeTestRule.mainClock.autoAdvance = false
+        fontSize = 15.sp
+        repeat(30) { frame ->
+            composeTestRule.mainClock.advanceTimeByFrame()
+            assertEquals(readingFrom, lineAtTop(), "the reader moved on frame $frame")
+        }
+    }
+
+    @Test
+    fun `scrolling away as a restyle lands does not pull the reader back when they return to that block`() {
+        val firstText = (1..15).joinToString("\n") { "Verse $it" }
+        val secondText = (1..60).joinToString("\n") { "Line $it" }
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } answers {
+            listOf(
+                annotatedBlock(firstText, referenceAnnotation = "1:GEN:1:1"),
+                annotatedBlock(secondText, referenceAnnotation = "1:GEN:1:2"),
+            )
+        }
+
+        var fontSize by mutableStateOf(16.sp)
+        var firstLoad: AnnotatedString? = null
+        var scrolledAway = false
+        lateinit var listState: LazyListState
+        lateinit var scope: CoroutineScope
+        composeTestRule.setContent {
+            val state = rememberBibleTextBlocksState(chapterReference, BibleTextOptions(fontSize = fontSize))
+            val layoutState = rememberBibleTextLayoutState(state)
+            listState = rememberLazyListState()
+            scope = rememberCoroutineScope()
+            val loaded = state.visibleBlocks.firstOrNull()?.text
+            if (firstLoad == null) {
+                firstLoad = loaded
+            } else if (loaded != null && loaded !== firstLoad && !scrolledAway) {
+                scrolledAway = true
+                listState.requestScrollToItem(1)
+            }
+            LaunchedEffect(layoutState) { layoutState.keepReadingPosition(listState, leadingItemCount = 0) }
+            LazyColumn(state = listState, modifier = Modifier.width(200.dp).height(200.dp)) {
+                bibleTextBlocks(state = state, layoutState = layoutState)
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        val lineTop = ceil(textLayout(firstText).getLineTop(10)).toInt()
+        composeTestRule.runOnIdle { scope.launch { listState.scrollToItem(0, lineTop) } }
+        composeTestRule.waitForIdle()
+
+        fontSize = 18.sp
+        composeTestRule.waitForIdle()
+        assertEquals(1, listState.firstVisibleItemIndex)
+
+        composeTestRule.runOnIdle { scope.launch { listState.scrollToItem(0) } }
+        composeTestRule.waitForIdle()
+
+        assertEquals(0, listState.firstVisibleItemIndex)
+        assertEquals(0, listState.firstVisibleItemScrollOffset)
     }
 
     // endregion

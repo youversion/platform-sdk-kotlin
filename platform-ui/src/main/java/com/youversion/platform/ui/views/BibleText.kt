@@ -505,8 +505,8 @@ internal fun BibleTextBlock(
     val startPadding = (8 * block.headIndent).dp
     val origin =
         with(LocalDensity.current) {
-            val x = if (LocalLayoutDirection.current == LayoutDirection.Ltr) startPadding.toPx() else 0f
-            Offset(x, marginTop.toPx())
+            val x = if (LocalLayoutDirection.current == LayoutDirection.Ltr) startPadding.roundToPx() else 0
+            Offset(x.toFloat(), marginTop.roundToPx().toFloat())
         }
     DisposableEffect(layoutState, blockIndex) {
         onDispose { layoutState?.remove(blockIndex, textLayoutResult) }

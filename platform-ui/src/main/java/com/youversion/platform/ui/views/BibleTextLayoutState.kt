@@ -16,8 +16,8 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlin.math.ceil
 
 /**
  * Where the verses of the blocks [bibleTextBlocks] has on screen were laid out, so a host can find a verse within
@@ -105,6 +105,10 @@ class BibleTextLayoutState internal constructor(
         )
     }
 
+    /**
+     * Scrolls back to [anchor] once its block is laid out with the restyled text, unless the list has been laid out
+     * without that block on screen, since the reader has then scrolled away from it.
+     */
     private suspend fun restore(
         anchor: ReadingAnchor,
         blocks: List<BibleTextBlock>,
@@ -112,17 +116,21 @@ class BibleTextLayoutState internal constructor(
         leadingItemCount: Int,
     ) {
         val block = blocks.getOrNull(anchor.blockIndex)?.takeIf { it.text.text == anchor.text } ?: return
-        val placed =
-            snapshotFlow { placedBlocks[anchor.blockIndex]?.takeIf { it.text === block.text } }.filterNotNull().first()
+        val itemIndex = leadingItemCount + anchor.blockIndex
+        val (placed, _) =
+            snapshotFlow {
+                val placed = placedBlocks[anchor.blockIndex]?.takeIf { it.text === block.text }
+                placed to listState.layoutInfo.visibleItemsInfo.any { it.index == itemIndex }
+            }.first { (placed, isVisible) -> placed != null || !isVisible }
+        placed ?: return
         val layout = placed.layout
         val line = layout.getLineForOffset(anchor.offset)
-        val lineTop = layout.getLineTop(line)
-        val lineHeight = layout.getLineBottom(line) - lineTop
-        val offsetIntoLine = (anchor.fractionIntoLine * lineHeight).coerceIn(0f, maxOf(0f, lineHeight - 1f))
-        listState.scrollToItem(
-            leadingItemCount + anchor.blockIndex,
-            (placed.origin.y + lineTop + offsetIntoLine).toInt(),
-        )
+        val top = placed.origin.y + layout.getLineTop(line)
+        val bottom = placed.origin.y + layout.getLineBottom(line)
+        val target = top + anchor.fractionIntoLine * (bottom - top)
+        val firstPixel = ceil(top).toInt()
+        val lastPixel = maxOf(firstPixel, ceil(bottom).toInt() - 1)
+        listState.scrollToItem(itemIndex, target.toInt().coerceIn(firstPixel, lastPixel))
     }
 
     /** Records where block [blockIndex] was last laid out, replacing what was known of it. */
