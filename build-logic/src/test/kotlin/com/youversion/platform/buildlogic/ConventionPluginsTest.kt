@@ -73,6 +73,13 @@ class ConventionPluginsTest {
             write("local.properties", "sdk.dir=${File(sdkDir).invariantSeparatorsPath}")
         }
         write(
+            "gradle.properties",
+            """
+            android.builtInKotlin=false
+            android.newDsl=false
+            """.trimIndent(),
+        )
+        write(
             "build.gradle.kts",
             """
             plugins {
