@@ -95,8 +95,11 @@ class LanguageRepositoryTest : YouVersionPlatformTest {
         runTest {
             MockEngine { request ->
                 when (request.url.encodedPath) {
-                    "/v1/bibles" -> respondJson("""{"data": [{"id": 1, "language_tag": "en"}]}""")
-                    "/v1/languages" ->
+                    "/v1/bibles" -> {
+                        respondJson("""{"data": [{"id": 1, "language_tag": "en"}]}""")
+                    }
+
+                    "/v1/languages" -> {
                         respondJson(
                             """
                             {
@@ -107,7 +110,11 @@ class LanguageRepositoryTest : YouVersionPlatformTest {
                             }
                             """.trimIndent(),
                         )
-                    else -> error("Unexpected path: ${request.url.encodedPath}")
+                    }
+
+                    else -> {
+                        error("Unexpected path: ${request.url.encodedPath}")
+                    }
                 }
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
@@ -122,8 +129,11 @@ class LanguageRepositoryTest : YouVersionPlatformTest {
         runTest {
             MockEngine { request ->
                 when (request.url.encodedPath) {
-                    "/v1/bibles" -> respondJson("""{"data": []}""")
-                    "/v1/languages" ->
+                    "/v1/bibles" -> {
+                        respondJson("""{"data": []}""")
+                    }
+
+                    "/v1/languages" -> {
                         respondJson(
                             """
                             {
@@ -134,7 +144,11 @@ class LanguageRepositoryTest : YouVersionPlatformTest {
                             }
                             """.trimIndent(),
                         )
-                    else -> error("Unexpected path: ${request.url.encodedPath}")
+                    }
+
+                    else -> {
+                        error("Unexpected path: ${request.url.encodedPath}")
+                    }
                 }
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
@@ -151,12 +165,18 @@ class LanguageRepositoryTest : YouVersionPlatformTest {
 
             MockEngine { request ->
                 when (request.url.encodedPath) {
-                    "/v1/bibles" -> respondJson("""{"data": []}""")
+                    "/v1/bibles" -> {
+                        respondJson("""{"data": []}""")
+                    }
+
                     "/v1/languages" -> {
                         assertEquals("US", request.url.parameters["country"])
                         respondJson("""{"data": [{"id": "en", "language": "en"}]}""")
                     }
-                    else -> error("Unexpected path: ${request.url.encodedPath}")
+
+                    else -> {
+                        error("Unexpected path: ${request.url.encodedPath}")
+                    }
                 }
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
@@ -177,11 +197,15 @@ class LanguageRepositoryTest : YouVersionPlatformTest {
                         languagesRequestCount.incrementAndFetch()
                         respondJson("""{"data": [{"id": "en", "language": "en"}]}""")
                     }
+
                     "/v1/bibles" -> {
                         biblesRequestCount.incrementAndFetch()
                         respondJson("""{"data": [{"id": 1, "language_tag": "en"}]}""")
                     }
-                    else -> error("Unexpected path: ${request.url.encodedPath}")
+
+                    else -> {
+                        error("Unexpected path: ${request.url.encodedPath}")
+                    }
                 }
             }.also { engine -> startYouVersionPlatformTest(engine) }
 

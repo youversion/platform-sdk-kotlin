@@ -275,8 +275,13 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
                         respondJson(FixtureLoader().loadFixtureString("bible_206"))
                     }
 
-                    "/v1/bibles/206/index" -> respondJson(FixtureLoader().loadFixtureString("bible_206_index"))
-                    else -> throw IllegalArgumentException("Unexpected request path: ${request.url.encodedPath}")
+                    "/v1/bibles/206/index" -> {
+                        respondJson(FixtureLoader().loadFixtureString("bible_206_index"))
+                    }
+
+                    else -> {
+                        throw IllegalArgumentException("Unexpected request path: ${request.url.encodedPath}")
+                    }
                 }
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
@@ -919,7 +924,10 @@ class BibleVersionRepositoryTests : YouVersionPlatformTest {
                         firstPageRequests.incrementAndFetch()
                         respondJson(FULL_VERSIONS_PAGE_1_JSON)
                     }
-                    else -> respond("", HttpStatusCode.InternalServerError)
+
+                    else -> {
+                        respond("", HttpStatusCode.InternalServerError)
+                    }
                 }
             }.also { engine -> startYouVersionPlatformTest(engine) }
 

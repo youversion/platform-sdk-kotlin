@@ -11,8 +11,8 @@ targetSdk = "36" # .get()
 # Tooling
 agp = "9.4.1"
 kotlin = "2.4.20"
-spotless = "8.1.0"
-ktlint = "1.7.1" # .get()
+spotless = "8.10.3"
+ktlint = "1.8.0" # .get()
 kover = "0.9.11"
 mavenPublish = "0.37.0"
 binaryCompatibilityValidator = "0.18.2"

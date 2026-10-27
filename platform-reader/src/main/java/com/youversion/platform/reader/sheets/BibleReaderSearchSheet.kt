@@ -212,7 +212,7 @@ internal fun BibleReaderSearchSheet(
             HorizontalDivider()
 
             when (state.status) {
-                SearchStatus.IDLE ->
+                SearchStatus.IDLE -> {
                     SuggestedQueries(
                         recentQueries = state.recentQueries,
                         trendingQueries = state.trendingQueries,
@@ -220,16 +220,20 @@ internal fun BibleReaderSearchSheet(
                         isLoading = state.isLoadingSuggestedQueries,
                         onSelectSuggestedQuery = onSelectSuggestedQuery,
                     )
+                }
 
-                SearchStatus.SEARCHING -> SearchingIndicator()
+                SearchStatus.SEARCHING -> {
+                    SearchingIndicator()
+                }
 
-                SearchStatus.FAILED ->
+                SearchStatus.FAILED -> {
                     SearchMessage(
                         imageVector = Icons.Default.Warning,
                         message = stringResource(UiR.string.error),
                     )
+                }
 
-                SearchStatus.COMPLETED ->
+                SearchStatus.COMPLETED -> {
                     if (state.results.isEmpty()) {
                         SearchMessage(
                             imageVector = Icons.Default.Search,
@@ -260,6 +264,7 @@ internal fun BibleReaderSearchSheet(
                             )
                         }
                     }
+                }
             }
         }
     }
