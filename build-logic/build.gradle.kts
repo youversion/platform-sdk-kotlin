@@ -4,7 +4,7 @@ plugins {
 
 // The plugins below are applied by the convention plugins, so build-logic compiles against them.
 // compileOnly keeps their versions owned by the root build's `plugins {}` block.
-fun Provider<PluginDependency>.marker() = get().let { "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version.requiredVersion}" }
+private fun Provider<PluginDependency>.marker() = get().let { "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version.requiredVersion}" }
 
 dependencies {
     compileOnly(libs.plugins.android.library.marker())
