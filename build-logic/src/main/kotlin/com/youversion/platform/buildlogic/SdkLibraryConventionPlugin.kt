@@ -12,6 +12,10 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
  *
  * SDK modules opt in to each other's `@PlatformInternalApi` declarations. Sample apps deliberately do not,
  * so that they compile against the same surface a consumer sees.
+ *
+ * `check` depends on the root project's `verifyNoHardcodedUiStrings`, which scans `platform-ui` and
+ * `platform-reader` from the root so the scan runs once per build. Only SDK modules wire it in;
+ * `platform-bom` and the sample app have no UI strings of their own to guard.
  */
 class SdkLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
