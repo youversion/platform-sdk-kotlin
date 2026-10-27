@@ -13,6 +13,7 @@ class HardcodedUiStringsConventionPlugin : Plugin<Project> {
             tasks.register<VerifyNoHardcodedUiStringsTask>("verifyNoHardcodedUiStrings") {
                 val modules = listOf("platform-ui", "platform-reader")
                 moduleNames.set(modules)
+                projectRoot.set(layout.projectDirectory)
                 kotlinSources.setFrom(
                     modules.map { module ->
                         fileTree(layout.projectDirectory.dir("$module/src/main")) {
