@@ -1,23 +1,39 @@
 plugins {
     `kotlin-dsl`
+    alias(libs.plugins.spotless)
 }
 
 // The plugins below are applied by the convention plugins, so build-logic compiles against them.
 // compileOnly keeps their versions owned by the root build's `plugins {}` block.
-private fun Provider<PluginDependency>.marker() = get().let { "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version.requiredVersion}" }
+private fun Provider<PluginDependency>.marker() =
+    get().let { "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version.requiredVersion}" }
 
 dependencies {
-    compileOnly(libs.plugins.android.library.marker())
-    compileOnly(libs.plugins.kotlin.android.marker())
-    compileOnly(libs.plugins.kover.marker())
-    compileOnly(libs.plugins.maven.publish.marker())
-    compileOnly(libs.plugins.spotless.marker())
+    listOf(
+        libs.plugins.android.library,
+        libs.plugins.kotlin.android,
+        libs.plugins.kover,
+        libs.plugins.maven.publish,
+        libs.plugins.spotless,
+    ).forEach { compileOnly(it.marker()) }
 
     testImplementation(libs.junit)
 }
 
 tasks.test {
     useJUnit()
+}
+
+spotless {
+    kotlin {
+        target("src/**/*.kt")
+        ktlint(libs.versions.ktlint.get())
+    }
+
+    kotlinGradle {
+        target("*.kts")
+        ktlint(libs.versions.ktlint.get())
+    }
 }
 
 gradlePlugin {

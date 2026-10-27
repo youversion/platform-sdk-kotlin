@@ -36,3 +36,6 @@ jobs:
 
       - name: Run Spotless Check
         run: ./gradlew spotlessCheck
+
+      - name: Run build-logic Spotless Check
+        run: ./gradlew -p build-logic spotlessCheck
