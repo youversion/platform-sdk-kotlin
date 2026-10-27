@@ -73,8 +73,10 @@ adding both to `PUBLISHABLE_MODULES` and to the constraints in
 The workflow passes the chosen version to Gradle as `-PsdkVersion`. That single
 property does two things:
 
-- It is the **published coordinate** — each module's `coordinates(...)` call
-  reads it, falling back to `libs.versions.youversionPlatform` for local builds.
+- It is the **published coordinate** — the `youversion.publishing` convention
+  plugin in `build-logic` reads it, falling back to
+  `libs.versions.youversionPlatform` for local builds. Each module's own
+  `coordinates(...)` call only sets its artifactId.
 - It is baked into `platform-core`'s `BuildConfig.SDK_VERSION`, which every SDK
   request sends as an `x-yvp-sdk: KotlinSDK={version}` header so the data team
   can attribute traffic. Outside a release build the property is unset and the
@@ -82,7 +84,7 @@ property does two things:
 
 There is no "restore to Dev" commit after a release.
 `gradle/libs.versions.toml` holds the last released version by design — it is
-what the README snippets and the `coordinates(...)` calls resolve to.
+what the README snippets and the `youversion.publishing` plugin resolve to.
 
 ## Choosing the version
 

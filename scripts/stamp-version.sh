@@ -3,8 +3,9 @@
 #
 # Targets:
 #   gradle/libs.versions.toml  `youversionPlatform = "..."`  — the version the
-#                              SDK modules publish under (see each module's
-#                              `coordinates(...)` call).
+#                              SDK modules publish under (see the
+#                              `youversion.publishing` convention plugin in
+#                              build-logic).
 #   README.md                  `youVersionPlatform = "..."`  — the install
 #                              snippets consumers copy/paste. Both the version
 #                              catalog snippet and the plain-Gradle snippet.

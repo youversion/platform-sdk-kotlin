@@ -59,7 +59,7 @@
 #
 # There is no "restore to Dev" commit. `gradle/libs.versions.toml` holds the
 # last released version by design (it is what the README snippets and the
-# `coordinates(...)` calls resolve to), and `BuildConfig.SDK_VERSION`
+# `youversion.publishing` plugin resolve to), and `BuildConfig.SDK_VERSION`
 # comes from `-PsdkVersion`, which is unset outside a release build and so
 # falls back to "Dev" on its own.
 #
@@ -80,7 +80,7 @@ PUBLISHABLE_MODULES="${PUBLISHABLE_MODULES:-platform-core,platform-ui,platform-r
 # back from each build.gradle.kts because the wrapper needs it to build a repo1
 # URL before any artifact exists. If a module ever publishes under a different
 # group, this stops being a single value and the loop below has to carry a
-# per-module group. See the `coordinates(...)` call in each module's build file.
+# per-module group. See the `youversion.publishing` convention plugin in build-logic.
 MAVEN_GROUP="${MAVEN_GROUP:-com.youversion.platform}"
 
 if [ -z "$VERSION" ]; then
