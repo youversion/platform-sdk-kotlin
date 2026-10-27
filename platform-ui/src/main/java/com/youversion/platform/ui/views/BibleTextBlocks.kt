@@ -66,7 +66,7 @@ class BibleTextBlocksState internal constructor(
     // items the chapter emits, which is what makes a block addressable as a scroll target.
     internal val visibleBlocks: List<BibleTextBlock> = blocks.filter { it.isVisible }
 
-    // Each verse the chapter tags, mapped to the first block holding it.
+    /** Each verse the chapter tags, mapped to the first block holding it. */
     private val firstBlockByVerse: Map<BibleReference, Int> by lazy {
         buildMap {
             visibleBlocks.forEachIndexed { index, block ->
@@ -99,6 +99,10 @@ class BibleTextBlocksState internal constructor(
  * A change of [textOptions] once the chapter has loaded is a restyle: the chapter keeps its current blocks and
  * [BibleTextLoadingPhase.SUCCESS] until the restyled ones arrive, and a restyle that fails leaves the chapter as it
  * was styled rather than swapping text that loaded fine for an error.
+ *
+ * A change of [reference] unloads the chapter in the composition that made it, rather than a frame later when the
+ * load starts. Held across that frame, the state would offer the chapter just left as this reference's blocks, and
+ * report the success that loading it was.
  */
 @PlatformInternalApi
 @Composable
@@ -106,9 +110,6 @@ fun rememberBibleTextBlocksState(
     reference: BibleReference,
     textOptions: BibleTextOptions = BibleTextOptions(),
 ): BibleTextBlocksState {
-    // Keyed to the reference so a change of chapter is unloaded from the composition that made it, rather than from
-    // a frame later when the effect runs. Held across that frame, the state would offer the chapter just left as
-    // this reference's blocks, and report the success that loading it was.
     var blocks by remember(reference) { mutableStateOf<List<BibleTextBlock>>(emptyList()) }
     var styledOptions by remember(reference) { mutableStateOf(textOptions) }
     var loadingPhase by remember(reference) { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
