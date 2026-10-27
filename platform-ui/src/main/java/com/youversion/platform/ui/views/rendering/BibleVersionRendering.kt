@@ -329,7 +329,10 @@ object BibleVersionRendering {
 
         val marker =
             when (stateIn.footnoteMode) {
-                BibleTextFootnoteMode.IMAGE -> ImageFootnoteMarker
+                BibleTextFootnoteMode.IMAGE -> {
+                    ImageFootnoteMarker
+                }
+
                 BibleTextFootnoteMode.LETTERS -> {
                     val style =
                         stateIn.fonts.styleFor(BibleTextFontOption.FOOTNOTE).copy(
@@ -346,7 +349,9 @@ object BibleVersionRendering {
                     }
                 }
 
-                else -> stateIn.footnoteMarker
+                else -> {
+                    stateIn.footnoteMarker
+                }
             }
 
         if (stateIn.footnoteMode != BibleTextFootnoteMode.INLINE && marker != null) {

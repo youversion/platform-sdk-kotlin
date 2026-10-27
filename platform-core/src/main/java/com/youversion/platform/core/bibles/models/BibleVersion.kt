@@ -103,10 +103,17 @@ data class BibleVersion(
         val chapterUrl = "$prefix$book.${reference.chapter}.$version"
 
         return when {
-            verseEnd == WHOLE_CHAPTER_VERSE_END || verseStart == null -> chapterUrl
-            reference.isRange ->
+            verseEnd == WHOLE_CHAPTER_VERSE_END || verseStart == null -> {
+                chapterUrl
+            }
+
+            reference.isRange -> {
                 "$prefix$book.${reference.chapter}.$verseStart-$verseEnd.$version"
-            else -> "$prefix$book.${reference.chapter}.$verseStart.$version"
+            }
+
+            else -> {
+                "$prefix$book.${reference.chapter}.$verseStart.$version"
+            }
         }
     }
 

@@ -79,18 +79,26 @@ internal class BibleReaderSearchViewModel : ViewModel() {
                 updateSuggestedQueries()
             }
 
-            is Action.Submit -> search()
+            is Action.Submit -> {
+                search()
+            }
 
             is Action.SelectSuggestedQuery -> {
                 onAction(Action.SetQuery(action.query.text))
                 search()
             }
 
-            is Action.LoadResultText -> loadResultText(action.reference)
+            is Action.LoadResultText -> {
+                loadResultText(action.reference)
+            }
 
-            is Action.LoadNextPage -> loadNextPage()
+            is Action.LoadNextPage -> {
+                loadNextPage()
+            }
 
-            is Action.SetCanonFilter -> _state.update { it.copy(canonFilter = action.filter) }
+            is Action.SetCanonFilter -> {
+                _state.update { it.copy(canonFilter = action.filter) }
+            }
         }
     }
 

@@ -505,11 +505,15 @@ internal class BibleReaderViewModel(
                 highlightRequest = request
                 _state.update { it.copy(shouldStartSignIn = true) }
             }
+
             !hasHighlightsPermission() -> {
                 highlightRequest = request
                 _state.update { it.copy(showDataExchangeConfirmation = true) }
             }
-            else -> applyHighlight(request)
+
+            else -> {
+                applyHighlight(request)
+            }
         }
     }
 
