@@ -1,3 +1,5 @@
+package com.youversion.platform.buildlogic
+
 import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
 import kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension
 import org.gradle.api.Plugin

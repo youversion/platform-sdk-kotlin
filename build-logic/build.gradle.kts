@@ -24,23 +24,23 @@ gradlePlugin {
     plugins {
         register("androidLibrary") {
             id = "youversion.android.library"
-            implementationClass = "AndroidLibraryConventionPlugin"
+            implementationClass = "com.youversion.platform.buildlogic.AndroidLibraryConventionPlugin"
         }
         register("sdkLibrary") {
             id = "youversion.sdk.library"
-            implementationClass = "SdkLibraryConventionPlugin"
+            implementationClass = "com.youversion.platform.buildlogic.SdkLibraryConventionPlugin"
         }
         register("publishing") {
             id = "youversion.publishing"
-            implementationClass = "PublishingConventionPlugin"
+            implementationClass = "com.youversion.platform.buildlogic.PublishingConventionPlugin"
         }
         register("hardcodedUiStrings") {
             id = "youversion.hardcoded-ui-strings"
-            implementationClass = "HardcodedUiStringsConventionPlugin"
+            implementationClass = "com.youversion.platform.buildlogic.HardcodedUiStringsConventionPlugin"
         }
         register("spotless") {
             id = "youversion.spotless"
-            implementationClass = "SpotlessConventionPlugin"
+            implementationClass = "com.youversion.platform.buildlogic.SpotlessConventionPlugin"
         }
     }
 }

@@ -1,3 +1,5 @@
+package com.youversion.platform.buildlogic
+
 import java.io.File
 
 data class HardcodedStringViolation(

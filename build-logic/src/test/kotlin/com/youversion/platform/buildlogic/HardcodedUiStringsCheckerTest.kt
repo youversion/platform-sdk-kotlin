@@ -1,3 +1,5 @@
+package com.youversion.platform.buildlogic
+
 import java.io.File
 import kotlin.io.path.createTempDirectory
 import org.junit.After

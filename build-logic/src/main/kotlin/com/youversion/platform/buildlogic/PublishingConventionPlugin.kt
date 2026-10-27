@@ -1,3 +1,5 @@
+package com.youversion.platform.buildlogic
+
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
