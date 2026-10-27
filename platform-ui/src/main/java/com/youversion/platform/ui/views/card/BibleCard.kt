@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -101,7 +102,7 @@ fun BibleCard(
         rememberKoinModules { listOf(PlatformUIKoinModule) }
 
         val context = LocalContext.current
-        val versionLoadError = stringResource(R.string.bible_version_load_error)
+        val versionLoadError by rememberUpdatedState(stringResource(R.string.bible_version_load_error))
 
         val viewModelKey = rememberSaveable { UUID.randomUUID().toString() }
         val viewModel: BibleCardViewModel =
