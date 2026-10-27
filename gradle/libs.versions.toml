@@ -9,12 +9,12 @@ minSdk = "23" # .get()
 targetSdk = "36" # .get()
 
 # Tooling
-agp = "8.13.2"
-kotlin = "2.2.21"
+agp = "9.4.1"
+kotlin = "2.4.20"
 spotless = "8.1.0"
 ktlint = "1.7.1" # .get()
-kover = "0.9.4"
-mavenPublish = "0.35.0"
+kover = "0.9.11"
+mavenPublish = "0.37.0"
 binaryCompatibilityValidator = "0.18.2"
 androidXBrowser = "1.9.0"
 
