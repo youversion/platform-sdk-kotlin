@@ -20,7 +20,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                     minSdk = libs.version("minSdk").toInt()
                     consumerProguardFiles("consumer-rules.pro")
                 }
-                buildTypes.getByName("release") {
+                buildTypes.named("release").configure {
                     isMinifyEnabled = false
                     proguardFiles(
                         getDefaultProguardFile("proguard-android-optimize.txt"),
