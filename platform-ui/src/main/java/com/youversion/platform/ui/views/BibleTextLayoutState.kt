@@ -78,6 +78,10 @@ class BibleTextLayoutState internal constructor(
         }
     }
 
+    /**
+     * Where the reader is in [blocks], or [current] while the block at the top is still laid out with text a restyle
+     * has since replaced, since that layout cannot tell where the reader is yet.
+     */
     private fun readingAnchor(
         blocks: List<BibleTextBlock>,
         listState: LazyListState,
@@ -87,15 +91,17 @@ class BibleTextLayoutState internal constructor(
         val index = listState.firstVisibleItemIndex - leadingItemCount
         val block = blocks.getOrNull(index) ?: return null
         val placed = placedBlocks[index] ?: return null
-        // Laid out with text a restyle has since replaced, the block cannot tell where the reader is yet.
         if (placed.text !== block.text) return current
+        val layout = placed.layout
         val y = listState.firstVisibleItemScrollOffset - placed.origin.y
-        val line = placed.layout.getLineForVerticalPosition(y)
+        val line = layout.getLineForVerticalPosition(y)
+        val lineHeight = layout.getLineBottom(line) - layout.getLineTop(line)
+        val fractionIntoLine = if (lineHeight > 0f) (y - layout.getLineTop(line)) / lineHeight else 0f
         return ReadingAnchor(
             index,
             block.text.text,
-            placed.layout.getLineStart(line),
-            y - placed.layout.getLineTop(line),
+            layout.getLineStart(line),
+            fractionIntoLine.coerceIn(0f, 1f),
         )
     }
 
@@ -106,11 +112,17 @@ class BibleTextLayoutState internal constructor(
         leadingItemCount: Int,
     ) {
         val block = blocks.getOrNull(anchor.blockIndex)?.takeIf { it.text.text == anchor.text } ?: return
-        listState.scrollToItem(leadingItemCount + anchor.blockIndex)
         val placed =
             snapshotFlow { placedBlocks[anchor.blockIndex]?.takeIf { it.text === block.text } }.filterNotNull().first()
-        val lineTop = placed.layout.getLineTop(placed.layout.getLineForOffset(anchor.offset))
-        listState.scrollBy(placed.origin.y + lineTop + anchor.offsetIntoLine)
+        val layout = placed.layout
+        val line = layout.getLineForOffset(anchor.offset)
+        val lineTop = layout.getLineTop(line)
+        val lineHeight = layout.getLineBottom(line) - lineTop
+        val offsetIntoLine = (anchor.fractionIntoLine * lineHeight).coerceIn(0f, maxOf(0f, lineHeight - 1f))
+        listState.scrollToItem(
+            leadingItemCount + anchor.blockIndex,
+            (placed.origin.y + lineTop + offsetIntoLine).toInt(),
+        )
     }
 
     /** Records where block [blockIndex] was last laid out, replacing what was known of it. */
@@ -138,12 +150,15 @@ fun rememberBibleTextLayoutState(blocksState: BibleTextBlocksState): BibleTextLa
     return remember { BibleTextLayoutState(currentBlocksState) }
 }
 
-/** The character starting the line at the top of the list, and how far into that line the list was scrolled. */
+/**
+ * The character starting the line at the top of the list, and how far into that line the list was scrolled, as a
+ * fraction of the line's height so it carries over to a line of another height.
+ */
 private class ReadingAnchor(
     val blockIndex: Int,
     val text: String,
     val offset: Int,
-    val offsetIntoLine: Float,
+    val fractionIntoLine: Float,
 )
 
 /** A block's text as last laid out, with [origin] being where the text starts within its list item. */

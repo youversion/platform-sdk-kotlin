@@ -1668,7 +1668,7 @@ class BibleScreenTest {
     }
 
     @Test
-    fun `a staged verse deep in a long paragraph is scrolled to, not just the paragraph holding it`() {
+    fun `a staged verse deep in a long block is scrolled to, not just the block holding it`() {
         stateFlow.value =
             BibleReaderViewModel.State(
                 bibleReference = defaultReference,
@@ -1689,13 +1689,13 @@ class BibleScreenTest {
         composeTestRule.waitForIdle()
 
         val listTop = composeTestRule.onNode(hasScrollToIndexAction()).getUnclippedBoundsInRoot().top
-        val paragraph = composeTestRule.onNodeWithText("Verse 40", substring = true)
+        val block = composeTestRule.onNodeWithText("Verse 40", substring = true)
         val layouts = mutableListOf<TextLayoutResult>()
-        paragraph.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        block.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
         val layout = layouts.single()
         val verseLine = layout.getLineForOffset(layout.layoutInput.text.indexOf("Verse 40"))
         val verseTop =
-            paragraph.getUnclippedBoundsInRoot().top +
+            block.getUnclippedBoundsInRoot().top +
                 with(composeTestRule.density) { layout.getLineTop(verseLine).toDp() }
         assertTrue(
             (verseTop - listTop).value.absoluteValue < 1f,

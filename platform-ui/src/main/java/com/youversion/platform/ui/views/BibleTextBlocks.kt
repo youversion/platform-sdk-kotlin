@@ -81,8 +81,12 @@ class BibleTextBlocksState internal constructor(
      */
     internal fun indexOfBlockContaining(reference: BibleReference): Int? {
         if (loadingPhase != BibleTextLoadingPhase.SUCCESS) return null
-        return firstBlockByVerse[reference]
-            ?: firstBlockByVerse.filterKeys { it.overlaps(reference) }.values.minOrNull()
+        firstBlockByVerse[reference]?.let { return it }
+        var lowestIndex: Int? = null
+        for ((verse, index) in firstBlockByVerse) {
+            if (verse.overlaps(reference) && (lowestIndex == null || index < lowestIndex)) lowestIndex = index
+        }
+        return lowestIndex
     }
 }
 
@@ -91,6 +95,10 @@ class BibleTextBlocksState internal constructor(
  *
  * The returned state is replaced whenever the load moves on, so read it during composition rather than holding on
  * to a copy of it.
+ *
+ * A change of [textOptions] once the chapter has loaded is a restyle: the chapter keeps its current blocks and
+ * [BibleTextLoadingPhase.SUCCESS] until the restyled ones arrive, and a restyle that fails leaves the chapter as it
+ * was styled rather than swapping text that loaded fine for an error.
  */
 @PlatformInternalApi
 @Composable
@@ -148,8 +156,6 @@ fun rememberBibleTextBlocksState(
         }
 
     LaunchedEffect(reference, textOptions, wordsOfChristColor) {
-        // A restyle that fails leaves the chapter as it was styled, rather than swapping text that loaded fine
-        // for an error.
         val isRestyling = loadingPhase == BibleTextLoadingPhase.SUCCESS
 
         fun fail(phase: BibleTextLoadingPhase) {
@@ -219,6 +225,9 @@ fun rememberBibleTextBlocksState(
  * Until the load succeeds this is a single placeholder item instead. A non-null [focusedReference] draws the
  * verses it covers at full strength and dims everything else, the rest of the block holding them included. One
  * no block covers is ignored, since dimming every block would fade the chapter while pointing at nothing.
+ *
+ * Blocks are keyed by position: no reader option changes how many blocks a chapter has, so a restyle keeps each
+ * index on the same block. A setting that adds or drops blocks, such as headings, would need stable keys.
  */
 @PlatformInternalApi
 fun LazyListScope.bibleTextBlocks(
@@ -238,8 +247,6 @@ fun LazyListScope.bibleTextBlocks(
     // dimming every block on its behalf.
     val coveredFocus = focusedReference?.takeIf { state.indexOfBlockContaining(it) != null }
 
-    // Keyed by position: no reader option changes how many blocks a chapter has, so a restyle keeps each index on
-    // the same block. A setting that adds or drops blocks, such as headings, would need stable keys here.
     itemsIndexed(state.visibleBlocks) { index, block ->
         val isFocused = coveredFocus != null && block.covers(coveredFocus)
         val isDimmed = coveredFocus != null && !isFocused

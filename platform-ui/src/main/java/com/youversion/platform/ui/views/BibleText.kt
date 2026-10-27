@@ -176,6 +176,11 @@ enum class BibleTextLoadingPhase {
 /**
  * Renders the chapter, or the passage within it, named by [reference].
  *
+ * Changing [textOptions] once the chapter has loaded restyles it in place: the current text stays on screen and
+ * the phase stays [BibleTextLoadingPhase.SUCCESS], without passing through [BibleTextLoadingPhase.LOADING], until
+ * the restyled text arrives. A restyle that fails keeps the chapter as it was styled and stays
+ * [BibleTextLoadingPhase.SUCCESS].
+ *
  * @param reference The passage to render.
  * @param textOptions Text styling options (font family, font size, line spacing, etc.).
  * @param selectedVerses The verses to draw as selected.
