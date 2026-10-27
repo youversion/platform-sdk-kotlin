@@ -101,6 +101,7 @@ fun BibleCard(
         rememberKoinModules { listOf(PlatformUIKoinModule) }
 
         val context = LocalContext.current
+        val versionLoadError = stringResource(R.string.bible_version_load_error)
 
         val viewModelKey = rememberSaveable { UUID.randomUUID().toString() }
         val viewModel: BibleCardViewModel =
@@ -113,7 +114,7 @@ fun BibleCard(
                     Toast
                         .makeText(
                             context,
-                            context.getString(R.string.bible_version_load_error),
+                            versionLoadError,
                             Toast.LENGTH_LONG,
                         ).show()
                 }
