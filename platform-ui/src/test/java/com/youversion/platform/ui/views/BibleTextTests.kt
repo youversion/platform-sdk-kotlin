@@ -3,7 +3,10 @@ package com.youversion.platform.ui.views
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,6 +64,7 @@ import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -1152,6 +1156,86 @@ class BibleTextTests {
         composeTestRule.onNodeWithText("Text content").assertExists()
     }
 
+    @Test
+    fun `changing the font size keeps the reader on the paragraph they were reading`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } coAnswers {
+            delay(100)
+            (1..40).map { annotatedBlock("Verse $it", referenceAnnotation = "1:GEN:1:$it") }
+        }
+
+        var fontSize by mutableStateOf(16.sp)
+        lateinit var listState: LazyListState
+        composeTestRule.setContent {
+            val state = rememberBibleTextBlocksState(chapterReference, BibleTextOptions(fontSize = fontSize))
+            listState = rememberLazyListState()
+            LazyColumn(state = listState, modifier = Modifier.height(200.dp)) {
+                bibleTextBlocks(state = state)
+            }
+        }
+        composeTestRule.mainClock.advanceTimeBy(200)
+        composeTestRule.onNode(hasScrollToIndexAction()).performScrollToIndex(20)
+        assertEquals(20, listState.firstVisibleItemIndex)
+
+        fontSize = 24.sp
+        composeTestRule.mainClock.advanceTimeBy(200)
+
+        assertEquals(20, listState.firstVisibleItemIndex)
+    }
+
+    @Test
+    fun `changing the font size keeps the reader on the line they were reading, during and after the restyle`() {
+        val paragraph = (1..60).joinToString("\n") { "Verse $it" }
+        var loads = 0
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } coAnswers {
+            if (loads++ > 0) delay(100)
+            listOf(annotatedBlock(paragraph, referenceAnnotation = "1:GEN:1:1"))
+        }
+
+        var fontSize by mutableStateOf(16.sp)
+        lateinit var listState: LazyListState
+        composeTestRule.setContent {
+            val state = rememberBibleTextBlocksState(chapterReference, BibleTextOptions(fontSize = fontSize))
+            val layoutState = rememberBibleTextLayoutState(state)
+            listState = rememberLazyListState()
+            LaunchedEffect(layoutState) { layoutState.keepReadingPosition(listState, leadingItemCount = 0) }
+            LazyColumn(state = listState, modifier = Modifier.width(200.dp).height(200.dp)) {
+                bibleTextBlocks(state = state, layoutState = layoutState)
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        fun lineAtTop(): Int {
+            val layout = textLayout(paragraph)
+            return layout.getLineStart(
+                layout.getLineForVerticalPosition(listState.firstVisibleItemScrollOffset.toFloat()),
+            )
+        }
+
+        val initial = textLayout(paragraph)
+        val midLine = initial.getLineTop(10) + (initial.getLineBottom(10) - initial.getLineTop(10)) / 2
+        composeTestRule.runOnIdle { listState.dispatchRawDelta(midLine) }
+        composeTestRule.waitForIdle()
+        assertEquals(0, listState.firstVisibleItemIndex)
+        assertTrue(listState.firstVisibleItemScrollOffset > 0)
+        val readingFrom = lineAtTop()
+
+        composeTestRule.mainClock.autoAdvance = false
+        fontSize = 24.sp
+        composeTestRule.mainClock.advanceTimeBy(50)
+        assertEquals(readingFrom, lineAtTop(), "the reader moved while the restyle was loading")
+
+        composeTestRule.mainClock.autoAdvance = true
+        composeTestRule.mainClock.advanceTimeBy(200)
+        composeTestRule.waitForIdle()
+        assertEquals(readingFrom, lineAtTop(), "the reader moved once the restyle landed")
+    }
+
     // endregion
 
     // region Verse Tap Non-Annotated
@@ -1583,10 +1667,10 @@ class BibleTextTests {
         return layoutState
     }
 
-    private fun paragraphLayout(): TextLayoutResult {
+    private fun textLayout(text: String): TextLayoutResult {
         val layoutResults = mutableListOf<TextLayoutResult>()
         composeTestRule
-            .onNodeWithText(paragraphText)
+            .onNodeWithText(text)
             .fetchSemanticsNode()
             .config[SemanticsActions.GetTextLayoutResult]
             .action
@@ -1597,7 +1681,7 @@ class BibleTextTests {
     @Test
     fun `a verse is bounded by its lines, offset by where its paragraph sits in the item`() {
         val layoutState = setContentWithParagraph()
-        val layout = paragraphLayout()
+        val layout = textLayout(paragraphText)
         val line = layout.getLineForOffset(longVerse.length)
         val marginTop = with(composeTestRule.density) { 24.dp.toPx() }
 
