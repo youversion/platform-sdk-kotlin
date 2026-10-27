@@ -69,6 +69,9 @@ class ConventionPluginsTest {
 
     private fun writeSdkLibraryFixture() {
         writeSettings("sdk")
+        System.getProperty("androidSdkDir")?.let { sdkDir ->
+            write("local.properties", "sdk.dir=${File(sdkDir).invariantSeparatorsPath}")
+        }
         write(
             "build.gradle.kts",
             """

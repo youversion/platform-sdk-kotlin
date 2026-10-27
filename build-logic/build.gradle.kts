@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     `kotlin-dsl`
     alias(libs.plugins.spotless)
@@ -39,6 +41,13 @@ tasks.test {
             .file("../gradle/libs.versions.toml")
             .asFile.absolutePath,
     )
+    providers
+        .fileContents(layout.projectDirectory.file("../local.properties"))
+        .asText
+        .map { Properties().apply { load(it.reader()) }.getProperty("sdk.dir").orEmpty() }
+        .orNull
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { systemProperty("androidSdkDir", it) }
 }
 
 spotless {
