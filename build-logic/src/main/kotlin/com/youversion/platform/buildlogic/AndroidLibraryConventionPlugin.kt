@@ -11,6 +11,13 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 /**
  * Applies the Android library and Kotlin plugins with the SDK's shared SDK levels and JVM 11 toolchain.
+ *
+ * - Kotlin language/API version 2.2 and kotlin-stdlib 2.2.0 in the POMs, so consumers on a Kotlin 2.2
+ *   compiler can read the SDK's metadata.
+ * - The Kotlin module name keeps its pre-2.4 form; Kotlin 2.4 prefixes the project group, which renames
+ *   every mangled internal symbol in the API dumps.
+ * - Unit tests target minSdk; AGP 9 defaults them to compileSdk, and Robolectric's SDK 36 sandbox
+ *   needs Java 21.
  */
 class AndroidLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -37,7 +44,6 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                 }
                 testOptions {
                     unitTests.isIncludeAndroidResources = true
-                    // AGP 9 defaults this to compileSdk, and Robolectric's SDK 36 sandbox needs Java 21.
                     targetSdk = libs.version("minSdk").toInt()
                 }
             }
@@ -45,15 +51,10 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             extensions.configure<KotlinAndroidProjectExtension> {
                 compilerOptions {
                     jvmTarget.set(JvmTarget.JVM_11)
-                    // Consumers may build with a Kotlin 2.2 compiler, which cannot read metadata or
-                    // stdlib APIs from a newer language version.
                     languageVersion.set(KotlinVersion.KOTLIN_2_2)
                     apiVersion.set(KotlinVersion.KOTLIN_2_2)
                 }
-                // Keeps the published POMs from requiring a kotlin-stdlib newer than consumers' compilers.
                 coreLibrariesVersion = "2.2.0"
-                // Kotlin 2.4 prefixes the module name with the project group, which renames every
-                // mangled internal symbol recorded in the API dumps.
                 this.target.compilations.configureEach {
                     val moduleName = "${project.name}_$compilationName"
                     compileTaskProvider.configure { compilerOptions.moduleName.set(moduleName) }
