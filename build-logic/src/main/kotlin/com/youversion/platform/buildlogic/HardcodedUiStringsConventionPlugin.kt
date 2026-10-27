@@ -4,6 +4,9 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.register
 
+/**
+ * Registers `verifyNoHardcodedUiStrings` on the root project, scanning `platform-ui` and `platform-reader`.
+ */
 class HardcodedUiStringsConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {

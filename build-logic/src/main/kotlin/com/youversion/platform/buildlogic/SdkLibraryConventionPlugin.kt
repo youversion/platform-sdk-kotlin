@@ -7,6 +7,12 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 
+/**
+ * Configures a published SDK module: Android library, publishing, formatting, and an 85% line-coverage floor.
+ *
+ * SDK modules opt in to each other's `@PlatformInternalApi` declarations. Sample apps deliberately do not,
+ * so that they compile against the same surface a consumer sees.
+ */
 class SdkLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
@@ -16,8 +22,6 @@ class SdkLibraryConventionPlugin : Plugin<Project> {
             pluginManager.apply("org.jetbrains.kotlinx.kover")
 
             extensions.configure<KotlinAndroidProjectExtension> {
-                // The SDK's own modules opt in to each other's @PlatformInternalApi declarations. Sample apps
-                // deliberately do not, so that they compile against the same surface a consumer sees.
                 compilerOptions.optIn.add("com.youversion.platform.core.di.PlatformInternalApi")
             }
 

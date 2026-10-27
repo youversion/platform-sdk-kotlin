@@ -5,30 +5,32 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 
+/**
+ * Applies the common Maven Central publishing settings. Each module declares its own `mavenPublishing`
+ * block for its artifactId and POM name/description.
+ *
+ * The version comes from `-PsdkVersion`, which the release workflow passes so the published coordinate
+ * and the version stamped into the release commit cannot drift. Local builds fall back to the catalog's
+ * `youversionPlatform`. See RELEASING.md.
+ *
+ * Releases are published with `automaticRelease`, so a build that passes Central Portal validation is
+ * released without pressing the publish button in Central Portal.
+ */
 class PublishingConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             pluginManager.apply("com.vanniktech.maven.publish")
 
-            // Common Maven publishing settings. Each module declares its own `mavenPublishing` block for
-            // its artifactId and POM name/description.
             extensions.configure<MavenPublishBaseExtension> {
                 coordinates(
                     groupId = "com.youversion.platform",
-                    // The release workflow passes -PsdkVersion so the published coordinate and the
-                    // version stamped into the release commit cannot drift. Local builds fall back to
-                    // the catalog. See RELEASING.md.
                     version =
                         providers
                             .gradleProperty("sdkVersion")
                             .getOrElse(libs.version("youversionPlatform")),
                 )
 
-                publishToMavenCentral(
-                    // After Central Portal validates the build, automatically release it to Maven Central
-                    // This prevents the need to manually push the publish button in Central Portal.
-                    automaticRelease = true,
-                )
+                publishToMavenCentral(automaticRelease = true)
                 signAllPublications()
 
                 pom {

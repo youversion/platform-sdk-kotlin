@@ -7,6 +7,9 @@ import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+/**
+ * Formats Kotlin sources and build scripts with ktlint. Outside CI, compiling also runs `spotlessApply`.
+ */
 class SpotlessConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
@@ -29,7 +32,6 @@ class SpotlessConventionPlugin : Plugin<Project> {
                 }
             }
 
-            // Automatically formats code during local compilation.
             if (!providers.environmentVariable("CI").isPresent) {
                 tasks.withType<KotlinCompile>().configureEach {
                     finalizedBy("spotlessApply")
