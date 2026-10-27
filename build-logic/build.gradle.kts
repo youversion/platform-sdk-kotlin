@@ -8,6 +8,9 @@ plugins {
 private fun Provider<PluginDependency>.marker() =
     get().let { "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version.requiredVersion}" }
 
+// TestKit only injects build-logic's runtime classpath, so the plugins it applies are added for the tests.
+val testPluginClasspath: Configuration by configurations.creating
+
 dependencies {
     listOf(
         libs.plugins.android.library,
@@ -15,13 +18,27 @@ dependencies {
         libs.plugins.kover,
         libs.plugins.maven.publish,
         libs.plugins.spotless,
-    ).forEach { compileOnly(it.marker()) }
+    ).forEach {
+        compileOnly(it.marker())
+        testPluginClasspath(it.marker())
+    }
 
     testImplementation(libs.junit)
+    testImplementation(gradleTestKit())
+}
+
+tasks.pluginUnderTestMetadata {
+    pluginClasspath.from(testPluginClasspath)
 }
 
 tasks.test {
     useJUnit()
+    systemProperty(
+        "versionCatalog",
+        layout.projectDirectory
+            .file("../gradle/libs.versions.toml")
+            .asFile.absolutePath,
+    )
 }
 
 spotless {

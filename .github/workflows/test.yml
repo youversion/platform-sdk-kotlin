@@ -34,6 +34,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Run build-logic tests
+        run: ./gradlew -p build-logic test
+
       - name: Run Tests with Coverage
         id: tests
         run: ./gradlew koverXmlReport
