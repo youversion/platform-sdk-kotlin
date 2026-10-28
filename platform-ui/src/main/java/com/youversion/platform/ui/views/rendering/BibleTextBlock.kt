@@ -46,7 +46,7 @@ enum class BibleTextCategory {
 
 /** Whether the block renders as anything; an empty one is skipped rather than laid out. */
 internal val BibleTextBlock.isVisible: Boolean
-    get() = text.isNotBlank() || rows.isNotEmpty()
+    get() = text.any { !it.isWhitespace() || it == '\u00A0' } || rows.isNotEmpty()
 
 /**
  * Whether the passage opens with a book title of its own, which a host would otherwise duplicate

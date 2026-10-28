@@ -643,6 +643,15 @@ object BibleVersionRendering {
                 )
             }
         }
+        if (node.classes.contains("b") &&
+            stateUp.rendering &&
+            node.children.all { it.type == BibleTextNodeType.TEXT && it.text.isBlank() }
+        ) {
+            stateUp.clearText()
+            stateUp.textBuilder.withStyle(stateIn.fonts.styleFor(BibleTextFontOption.FONT_100EM)) {
+                append(" ")
+            }
+        }
         if (!stateUp.isTextEmpty()) {
             resultBlocks.add(
                 createBlock(

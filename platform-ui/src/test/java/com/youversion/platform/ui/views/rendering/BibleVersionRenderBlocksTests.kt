@@ -5,6 +5,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.youversion.platform.core.bibles.domain.BibleReference
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -57,10 +58,17 @@ class BibleVersionRenderBlocksTests {
     @Test
     fun `p and related classes produce first line indent`() =
         runTest {
-            listOf("p", "ip", "imi").forEach { className ->
+            listOf("p", "ip").forEach { className ->
                 val block = renderSingleBlock(className, "Indented paragraph.")
                 assertIndents(block, className, firstLineHeadIndent = 1, headIndent = 0)
             }
+        }
+
+    @Test
+    fun `imi class produces head indent`() =
+        runTest {
+            val block = renderSingleBlock("imi", "Indented paragraph.")
+            assertIndents(block, "imi", firstLineHeadIndent = 0, headIndent = 2)
         }
 
     @Test
@@ -325,7 +333,7 @@ class BibleVersionRenderBlocksTests {
         }
 
     @Test
-    fun `iot class applies medium font weight`() =
+    fun `iot class applies bold font weight`() =
         runTest {
             val html =
                 """
@@ -340,9 +348,9 @@ class BibleVersionRenderBlocksTests {
             val blocks = renderBlocks(html, FULL_CHAPTER_REF)
             val block = blocks.first { it.text.text.contains("Outline Title") }
             val titleStart = block.text.text.indexOf("Outline Title")
-            val mediumStyles =
+            val boldStyles =
                 block.text.spanStyles.filter { it.start <= titleStart && it.end > titleStart }
-            assertTrue(mediumStyles.any { it.item.fontWeight == FontWeight.Medium })
+            assertTrue(boldStyles.any { it.item.fontWeight == FontWeight.Bold })
         }
 
     // ----- words of Christ
@@ -413,5 +421,43 @@ class BibleVersionRenderBlocksTests {
             assertEquals(TextAlign.Center, block.alignment)
             assertTrue(block.hasCategory(BibleTextCategory.BOOK_TITLE))
             assertTrue(block.text.spanStyles.any { it.item.fontStyle == FontStyle.Italic })
+        }
+
+    // ----- stanza breaks
+
+    @Test
+    fun `empty stanza breaks produce unlinked blank lines`() =
+        runTest {
+            val html = "<div><div class=\"b\"></div><div class=\"b\"> \n </div></div>"
+            val blocks = renderBlocks(html, FULL_CHAPTER_REF)
+            assertEquals(2, blocks.size)
+            blocks.forEach { block ->
+                assertEquals("\u00A0", block.text.text)
+                assertTrue(block.isVisible)
+                assertTrue(
+                    block.text
+                        .getStringAnnotations(BibleReferenceAttribute.NAME, 0, block.text.length)
+                        .isEmpty(),
+                )
+            }
+        }
+
+    @Test
+    fun `stanza break preserves text and respects verse range`() =
+        runTest {
+            val html =
+                "<div><div class=\"b\"></div><div class=\"b\"><span class=\"yv-v\" v=\"1\"></span>First verse.</div>" +
+                    "<div class=\"b\"></div><div class=\"p\"><span class=\"yv-v\" v=\"2\"></span>Second verse.</div>" +
+                    "<div class=\"b\"></div></div>"
+            val chapterBlocks = renderBlocks(html, FULL_CHAPTER_REF)
+            assertTrue(chapterBlocks.any { it.text.text == "First verse." })
+
+            val selectedBlocks =
+                renderBlocks(
+                    html,
+                    BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verseStart = 2, verseEnd = 2),
+                )
+            assertTrue(selectedBlocks.none { it.text.text.contains("First verse.") })
+            assertEquals("Second verse.", selectedBlocks.first().text.text)
         }
 }

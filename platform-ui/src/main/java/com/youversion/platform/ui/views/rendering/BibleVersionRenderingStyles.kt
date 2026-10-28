@@ -24,12 +24,12 @@ internal fun interpretTextAttr(
 
             "nd", "sc" -> stateDown.smallcaps = true
 
-            "tl", "it", "add", "em", "fq", "fqa", "qac", "qs", "qt", "bk", "sig", "litl" ->
+            "tl", "it", "add", "em", "fq", "fqa", "qac", "qs", "qt", "bk", "sig", "litl", "sls", "iqt" ->
                 stateDown.currentFont = BibleTextFontOption.FONT_100EM_ITALIC
 
             "rq" -> stateDown.currentFont = BibleTextFontOption.FONT_083EM_ITALIC
 
-            "bd" -> stateDown.currentFont = BibleTextFontOption.FONT_100EM_700
+            "bd", "k" -> stateDown.currentFont = BibleTextFontOption.FONT_100EM_700
 
             "pn" -> stateDown.currentFont = BibleTextFontOption.FONT_100EM
 
@@ -91,6 +91,17 @@ internal fun interpretBlockClasses(
 
     for (c in classes) {
         when (c) {
+            "b" -> {}
+
+            "cd" -> {
+                stateDown.currentFont =
+                    if (classes.contains("yv-h")) {
+                        BibleTextFontOption.FONT_100EM_500_ITALIC
+                    } else {
+                        BibleTextFontOption.FONT_100EM_ITALIC
+                    }
+            }
+
             "cl" -> {
                 stateDown.alignment = TextAlign.Center
                 stateDown.currentFont = BibleTextFontOption.FONT_117EM_500
@@ -111,6 +122,12 @@ internal fun interpretBlockClasses(
             "iex" -> {
                 stateUp.firstLineHeadIndent = 1
                 stateUp.headIndent = 0
+            }
+
+            "imi" -> {
+                stateDown.marginBottom = (0.60f * fontSize).dp
+                stateUp.firstLineHeadIndent = 0
+                stateUp.headIndent = 2
             }
 
             "imq" -> {
@@ -151,7 +168,57 @@ internal fun interpretBlockClasses(
                 stateDown.marginBottom = (0.15f * fontSize).dp
             }
 
+            "imt4" -> {
+                stateDown.textCategory = BibleTextCategory.BOOK_TITLE
+                stateDown.currentFont = BibleTextFontOption.FONT_100EM_ITALIC
+                stateDown.alignment = TextAlign.Center
+                stateDown.marginTop = (0.15f * fontSize).dp
+                stateDown.marginBottom = (0.15f * fontSize).dp
+            }
+
+            "imte", "imte1" -> {
+                stateDown.textCategory = BibleTextCategory.BOOK_TITLE
+                stateDown.currentFont = BibleTextFontOption.FONT_100EM_700
+                stateDown.alignment = TextAlign.Center
+                stateDown.marginTop = fontSize.dp
+                stateDown.marginBottom = (0.25f * fontSize).dp
+            }
+
+            "imte2" -> {
+                stateDown.textCategory = BibleTextCategory.BOOK_TITLE
+                stateDown.currentFont = BibleTextFontOption.FONT_100EM_ITALIC
+                stateDown.alignment = TextAlign.Center
+                stateDown.marginTop = (0.50f * fontSize).dp
+                stateDown.marginBottom = (0.15f * fontSize).dp
+            }
+
+            "io", "io1" -> stateUp.headIndent = 2
+
+            "io2" -> stateUp.headIndent = 3
+
+            "io3" -> stateUp.headIndent = 4
+
+            "io4" -> stateUp.headIndent = 5
+
             "ior" -> {}
+
+            "iot" -> {
+                stateDown.currentFont = BibleTextFontOption.FONT_100EM_700
+                stateDown.alignment = TextAlign.Center
+                stateDown.marginTop = (0.50f * fontSize).dp
+                stateDown.marginBottom = (0.50f * fontSize).dp
+            }
+
+            "ipq" -> {
+                stateDown.currentFont = BibleTextFontOption.FONT_100EM_ITALIC
+                stateUp.firstLineHeadIndent = 1
+                stateUp.headIndent = 2
+            }
+
+            "ipr" -> {
+                stateDown.currentFont = BibleTextFontOption.FONT_100EM_ITALIC
+                stateDown.alignment = TextAlign.End
+            }
 
             "is" -> {
                 stateDown.currentFont = BibleTextFontOption.FONT_100EM_500
@@ -165,6 +232,15 @@ internal fun interpretBlockClasses(
                 stateDown.marginTop = (fontSize / 2).dp
                 stateDown.marginBottom = (0.50f * fontSize).dp
             }
+
+            "is2" -> {
+                stateDown.currentFont = BibleTextFontOption.FONT_100EM_700
+                stateDown.alignment = TextAlign.Center
+                stateDown.marginTop = (0.50f * fontSize).dp
+                stateDown.marginBottom = (0.50f * fontSize).dp
+            }
+
+            "lf" -> {}
 
             "lh" -> {
                 stateDown.marginTop = (0.50f * fontSize).dp
@@ -196,7 +272,7 @@ internal fun interpretBlockClasses(
                 stateUp.headIndent = 8
             }
 
-            "lim" -> {
+            "lim", "lim1" -> {
                 stateUp.firstLineHeadIndent = 0
                 stateUp.headIndent = 2
             }
@@ -241,7 +317,7 @@ internal fun interpretBlockClasses(
                 stateDown.marginTop = (0.50f * fontSize).dp
             }
 
-            "mt1" -> {
+            "mt", "mt1" -> {
                 stateDown.textCategory = BibleTextCategory.BOOK_TITLE
                 stateDown.currentFont = BibleTextFontOption.FONT_117EM_500
                 stateDown.alignment = TextAlign.Center
@@ -315,6 +391,8 @@ internal fun interpretBlockClasses(
                 stateUp.firstLineHeadIndent = 1
             }
 
+            "pr" -> stateDown.alignment = TextAlign.End
+
             "qa" -> {
                 stateDown.currentFont = BibleTextFontOption.FONT_117EM_500_ITALIC
                 stateDown.marginBottom = (0.50f * fontSize).dp
@@ -328,6 +406,8 @@ internal fun interpretBlockClasses(
                 stateDown.marginBottom = 0.dp
                 stateDown.marginTop = 0.dp
             }
+
+            "qd" -> stateDown.currentFont = BibleTextFontOption.FONT_100EM_ITALIC
 
             "qm" -> {
                 stateDown.marginBottom = (0.50f * fontSize).dp
@@ -443,59 +523,6 @@ internal fun interpretBlockClasses(
                     stateUp.rendering = false
                 }
             }
-
-            // The tags below here are not yet adjusted for our new
-            // typography standards; they may or may not reflect the new way.
-            "imi" -> {
-                stateDown.marginBottom = (0.60f * fontSize).dp
-                stateUp.firstLineHeadIndent = 1
-                stateUp.headIndent = 0
-            }
-
-            "pr" -> stateDown.alignment = TextAlign.End
-
-            "iot" -> {
-                stateDown.currentFont = BibleTextFontOption.FONT_100EM_500
-                stateDown.alignment = TextAlign.Center
-                stateDown.marginTop = (fontSize / 3).dp
-            }
-
-            "is2" -> {
-                stateDown.currentFont = BibleTextFontOption.FONT_100EM_500
-                stateDown.alignment = TextAlign.Center
-                stateDown.marginTop = (fontSize / 3).dp
-                stateUp.firstLineHeadIndent = 0
-                stateUp.headIndent = 0
-            }
-
-            "io", "io1" -> stateUp.headIndent = 2
-
-            "io2" -> stateUp.headIndent = 3
-
-            "io3", "io4" -> stateUp.headIndent = 4
-
-            "imte", "imte1" -> {
-                stateDown.textCategory = BibleTextCategory.BOOK_TITLE
-                stateDown.currentFont = BibleTextFontOption.FONT_100EM_500
-                stateDown.alignment = TextAlign.Center
-            }
-
-            "imte2" -> {
-                stateDown.textCategory = BibleTextCategory.BOOK_TITLE
-                stateDown.currentFont = BibleTextFontOption.FONT_100EM_ITALIC
-                stateDown.alignment = TextAlign.Center
-                stateDown.marginTop = (fontSize / 2).dp
-                stateDown.marginBottom = (0.25f * fontSize).dp
-            }
-
-            "imt4" -> {
-                stateDown.textCategory = BibleTextCategory.BOOK_TITLE
-                stateDown.currentFont = BibleTextFontOption.FONT_100EM_500
-                stateDown.alignment = TextAlign.Center
-                stateDown.marginTop = (fontSize / 3).dp
-            }
-
-            "b", "lf" -> {}
 
             else -> assertionFailed("interpretBlockClasses: unexpected class: ", c)
         }
