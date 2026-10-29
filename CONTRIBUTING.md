@@ -54,6 +54,9 @@ complete, verify that the project builds.
 ```bash
 # Tests and lint for every module. Coverage reports are under Writing Tests.
 ./gradlew build
+
+# build-logic is an included build, so the root tasks don't reach it
+./gradlew -p build-logic test
 ```
 
 Point Gradle at your Android SDK with a `sdk.dir` entry in `local.properties` at the project root (the file is gitignored), or set the `ANDROID_HOME` environment variable.
@@ -77,6 +80,7 @@ Command-line tasks complement the IDE workflow above. Public API checks and Spot
 
 # Run all tests
 ./gradlew test
+./gradlew -p build-logic test
 
 # Run tests for a specific module
 ./gradlew :platform-core:test
@@ -255,12 +259,16 @@ unless all checks pass.
 To check if your code is formatted correctly:
 ```bash
 ./gradlew spotlessCheck
+./gradlew -p build-logic spotlessCheck
 ```
 
 To automatically format your code:
 ```bash
 ./gradlew spotlessApply
+./gradlew -p build-logic spotlessApply
 ```
+
+`build-logic` is an included build, so the root `spotlessCheck` doesn't reach it. CI runs both.
 
 The `spotlessApply` action will automatically run locally during compilation.
 

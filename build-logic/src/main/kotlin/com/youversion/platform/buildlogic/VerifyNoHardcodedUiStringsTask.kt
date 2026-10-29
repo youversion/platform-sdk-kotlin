@@ -1,10 +1,14 @@
+package com.youversion.platform.buildlogic
+
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
@@ -13,6 +17,9 @@ import org.gradle.api.tasks.TaskAction
 abstract class VerifyNoHardcodedUiStringsTask : DefaultTask() {
     @get:Input
     abstract val moduleNames: ListProperty<String>
+
+    @get:Internal
+    abstract val projectRoot: DirectoryProperty
 
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -33,7 +40,7 @@ abstract class VerifyNoHardcodedUiStringsTask : DefaultTask() {
 
         val checker =
             HardcodedUiStringsChecker(
-                projectRoot = project.rootDir,
+                projectRoot = projectRoot.get().asFile,
                 moduleNames = moduleNames.get(),
             )
 

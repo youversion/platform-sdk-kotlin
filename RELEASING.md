@@ -64,17 +64,25 @@ All modules always ship on the same version. `PUBLISHABLE_MODULES` in
 place that list is declared. A consumer mixing `2.1.2` `platform-core` with
 `2.2.0` `platform-ui` is not a configuration we support, and from the first
 release that ships `platform-bom` Gradle prevents it: every module depends on
-the BOM, which pins the others to its version. A new published module needs
-adding both to `PUBLISHABLE_MODULES` and to the constraints in
-`platform-bom/build.gradle.kts`.
+the BOM, which pins the others to its version. A new published module needs:
+
+- adding to `PUBLISHABLE_MODULES` and to the constraints in
+  `platform-bom/build.gradle.kts`;
+- the convention plugin that publishes it: Android SDK modules apply
+  `id("youversion.sdk.library")`, and non-Android published modules (like the
+  BOM) apply `id("youversion.publishing")`. That plugin supplies the group,
+  version, Maven Central publishing, signing and the shared POM;
+- a `coordinates(...)` call that only sets its artifactId.
 
 ### How the version reaches the artifacts
 
 The workflow passes the chosen version to Gradle as `-PsdkVersion`. That single
 property does two things:
 
-- It is the **published coordinate** — each module's `coordinates(...)` call
-  reads it, falling back to `libs.versions.youversionPlatform` for local builds.
+- It is the **published coordinate** — the `youversion.publishing` convention
+  plugin in `build-logic` reads it, falling back to
+  `libs.versions.youversionPlatform` for local builds. Each module's own
+  `coordinates(...)` call only sets its artifactId.
 - It is baked into `platform-core`'s `BuildConfig.SDK_VERSION`, which every SDK
   request sends as an `x-yvp-sdk: KotlinSDK={version}` header so the data team
   can attribute traffic. Outside a release build the property is unset and the
@@ -82,7 +90,7 @@ property does two things:
 
 There is no "restore to Dev" commit after a release.
 `gradle/libs.versions.toml` holds the last released version by design — it is
-what the README snippets and the `coordinates(...)` calls resolve to.
+what the README snippets and the `youversion.publishing` plugin resolve to.
 
 ## Choosing the version
 

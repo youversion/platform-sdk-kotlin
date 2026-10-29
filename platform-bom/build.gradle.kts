@@ -1,6 +1,7 @@
 plugins {
     `java-platform`
-    alias(libs.plugins.maven.publish)
+    id("youversion.publishing")
+    id("youversion.spotless")
 }
 
 // Pins every SDK module to this BOM's version. Each module also depends on the BOM, so a
@@ -14,16 +15,7 @@ dependencies {
 }
 
 mavenPublishing {
-    coordinates(
-        groupId = "com.youversion.platform",
-        artifactId = "platform-bom",
-        // The release workflow passes -PsdkVersion so the published coordinate and the
-        // version stamped into the release commit cannot drift. Local builds fall back to
-        // the catalog. See RELEASING.md.
-        version =
-            (project.findProperty("sdkVersion") as? String)
-                ?: libs.versions.youversionPlatform.get(),
-    )
+    coordinates(artifactId = "platform-bom")
 
     pom {
         name = "YouVersion Platform SDK - BOM"

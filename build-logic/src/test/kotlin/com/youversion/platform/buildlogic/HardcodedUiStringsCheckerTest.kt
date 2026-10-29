@@ -1,9 +1,11 @@
-import java.io.File
-import kotlin.io.path.createTempDirectory
+package com.youversion.platform.buildlogic
+
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
+import kotlin.io.path.createTempDirectory
 
 class HardcodedUiStringsCheckerTest {
     private val tempRoots = mutableListOf<File>()
