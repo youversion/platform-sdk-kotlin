@@ -91,7 +91,7 @@ internal fun interpretBlockClasses(
 
     for (c in classes) {
         when (c) {
-            "b" -> {}
+            "b", "ib" -> {}
 
             "cd" -> {
                 stateDown.currentFont =

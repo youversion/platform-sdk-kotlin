@@ -44,9 +44,18 @@ enum class BibleTextCategory {
     BOOK_TITLE,
 }
 
-/** Whether the block renders as anything; an empty one is skipped rather than laid out. */
+internal const val NO_BREAK_SPACE = '\u00A0'
+
+/**
+ * Whether the block renders as anything; an empty one is skipped rather than laid out, while a blank line held
+ * open by a non-breaking space is kept.
+ */
 internal val BibleTextBlock.isVisible: Boolean
-    get() = text.any { !it.isWhitespace() || it == '\u00A0' } || rows.isNotEmpty()
+    get() = text.any { !it.isWhitespace() || it == NO_BREAK_SPACE } || rows.isNotEmpty()
+
+/** Whether the block renders only as a blank line, such as a stanza break. */
+internal val BibleTextBlock.isBlankLine: Boolean
+    get() = isVisible && rows.isEmpty() && text.isBlank()
 
 /**
  * Whether the passage opens with a book title of its own, which a host would otherwise duplicate
@@ -55,10 +64,11 @@ internal val BibleTextBlock.isVisible: Boolean
  * Section headings such as an intro's Outline or Introduction do not count: they name a section
  * rather than the book, so a host heading above them is not a duplicate. Blocks that render as
  * nothing are skipped, so a title hidden by
- * [com.youversion.platform.ui.views.BibleTextOptions.renderHeadlines] does not count either.
+ * [com.youversion.platform.ui.views.BibleTextOptions.renderHeadlines] does not count either. Blank lines are
+ * skipped too, so a stanza break above the title does not hide it.
  */
 internal fun List<BibleTextBlock>.hasLeadingBookTitle(): Boolean {
-    val leadingBlock = firstOrNull { it.isVisible } ?: return false
+    val leadingBlock = firstOrNull { it.isVisible && !it.isBlankLine } ?: return false
     return leadingBlock.rows.isEmpty() &&
         leadingBlock.text
             .getStringAnnotations(

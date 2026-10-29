@@ -217,7 +217,8 @@ object BibleVersionRendering {
                     resultBlocks = resultBlocks,
                 )
             }
-            resultBlocks
+            // Verse-range rendering stays on past the last selected verse until the next verse starts.
+            resultBlocks.dropLastWhile { it.isBlankLine }
         }
 
     private fun traceLog(
@@ -643,13 +644,13 @@ object BibleVersionRendering {
                 )
             }
         }
-        if (node.classes.contains("b") &&
+        if ((node.classes.contains("b") || node.classes.contains("ib")) &&
             stateUp.rendering &&
             node.children.all { it.type == BibleTextNodeType.TEXT && it.text.isBlank() }
         ) {
             stateUp.clearText()
             stateUp.textBuilder.withStyle(stateIn.fonts.styleFor(BibleTextFontOption.FONT_100EM)) {
-                append(" ")
+                append(NO_BREAK_SPACE)
             }
         }
         if (!stateUp.isTextEmpty()) {

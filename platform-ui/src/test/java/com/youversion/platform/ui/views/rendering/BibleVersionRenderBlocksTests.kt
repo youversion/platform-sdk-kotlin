@@ -1,6 +1,7 @@
 package com.youversion.platform.ui.views.rendering
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -9,6 +10,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class BibleVersionRenderBlocksTests {
@@ -428,19 +430,48 @@ class BibleVersionRenderBlocksTests {
     @Test
     fun `empty stanza breaks produce unlinked blank lines`() =
         runTest {
-            val html = "<div><div class=\"b\"></div><div class=\"b\"> \n </div></div>"
-            val blocks = renderBlocks(html, FULL_CHAPTER_REF)
-            assertEquals(2, blocks.size)
-            blocks.forEach { block ->
-                assertEquals("\u00A0", block.text.text)
-                assertTrue(block.isVisible)
-                assertTrue(
-                    block.text
-                        .getStringAnnotations(BibleReferenceAttribute.NAME, 0, block.text.length)
-                        .isEmpty(),
-                )
+            listOf("b", "ib").forEach { className ->
+                val html =
+                    "<div><div class=\"$className\"></div><div class=\"$className\"> \n </div>" +
+                        "<div class=\"p\">Text.</div></div>"
+                val blocks = renderBlocks(html, FULL_CHAPTER_REF)
+                assertEquals(3, blocks.size, className)
+                blocks.take(2).forEach { block ->
+                    assertEquals(NO_BREAK_SPACE.toString(), block.text.text, className)
+                    assertTrue(block.isVisible, className)
+                    assertTrue(block.isBlankLine, className)
+                    assertTrue(
+                        block.text
+                            .getStringAnnotations(BibleReferenceAttribute.NAME, 0, block.text.length)
+                            .isEmpty(),
+                        className,
+                    )
+                }
             }
         }
+
+    @Test
+    fun `blank text is not visible but a non-breaking space is`() {
+        fun block(text: String) =
+            BibleTextBlock(
+                text = AnnotatedString(text),
+                chapter = 1,
+                firstLineHeadIndent = 0,
+                headIndent = 0,
+                marginTop = 0.dp,
+                marginBottom = 0.dp,
+                alignment = TextAlign.Start,
+                footnotes = emptyList(),
+            )
+
+        assertFalse(block("").isVisible)
+        assertFalse(block(" \n ").isVisible)
+        assertFalse(block(" \n ").isBlankLine)
+        assertTrue(block(NO_BREAK_SPACE.toString()).isVisible)
+        assertTrue(block(NO_BREAK_SPACE.toString()).isBlankLine)
+        assertTrue(block("Text").isVisible)
+        assertFalse(block("Text").isBlankLine)
+    }
 
     @Test
     fun `stanza break preserves text and respects verse range`() =
@@ -457,7 +488,6 @@ class BibleVersionRenderBlocksTests {
                     html,
                     BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verseStart = 2, verseEnd = 2),
                 )
-            assertTrue(selectedBlocks.none { it.text.text.contains("First verse.") })
-            assertEquals("Second verse.", selectedBlocks.first().text.text)
+            assertEquals(listOf("Second verse."), selectedBlocks.map { it.text.text })
         }
 }
