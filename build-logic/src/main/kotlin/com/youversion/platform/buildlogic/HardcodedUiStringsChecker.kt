@@ -2,14 +2,14 @@ package com.youversion.platform.buildlogic
 
 import java.io.File
 
-data class HardcodedStringViolation(
+internal data class HardcodedStringViolation(
     val relativePath: String,
     val lineNumber: Int,
     val lineContent: String,
     val stringLiteral: String,
 )
 
-class HardcodedUiStringsChecker(
+internal class HardcodedUiStringsChecker(
     private val projectRoot: File,
     private val moduleNames: List<String> = listOf("platform-ui", "platform-reader"),
 ) {
