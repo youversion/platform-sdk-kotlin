@@ -136,6 +136,9 @@ object BibleVersionRendering {
 
     /**
      * Formats Bible data into styled AnnotatedString blocks for Compose.
+     *
+     * Trailing blank lines are dropped, since verse-range rendering stays on past the last
+     * selected verse until the next verse starts.
      */
     suspend fun textBlocks(
         bibleChapterRepository: BibleChapterRepository,
@@ -217,7 +220,6 @@ object BibleVersionRendering {
                     resultBlocks = resultBlocks,
                 )
             }
-            // Verse-range rendering stays on past the last selected verse until the next verse starts.
             resultBlocks.dropLastWhile { it.isBlankLine }
         }
 

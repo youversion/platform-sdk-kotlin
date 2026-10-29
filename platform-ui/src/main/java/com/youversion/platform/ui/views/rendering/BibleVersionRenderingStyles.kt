@@ -95,7 +95,7 @@ internal fun interpretBlockClasses(
 
             "cd" -> {
                 stateDown.currentFont =
-                    if (classes.contains("yv-h")) {
+                    if (classes.contains("yv-h") || classes.contains("yvh")) {
                         BibleTextFontOption.FONT_100EM_500_ITALIC
                     } else {
                         BibleTextFontOption.FONT_100EM_ITALIC
@@ -471,7 +471,7 @@ internal fun interpretBlockClasses(
 
             "r" -> {
                 stateDown.currentFont =
-                    if (classes.contains("yv-h")) {
+                    if (classes.contains("yv-h") || classes.contains("yvh")) {
                         BibleTextFontOption.FONT_100EM_500_ITALIC
                     } else {
                         BibleTextFontOption.FONT_100EM_ITALIC
