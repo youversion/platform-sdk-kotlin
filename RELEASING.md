@@ -64,9 +64,15 @@ All modules always ship on the same version. `PUBLISHABLE_MODULES` in
 place that list is declared. A consumer mixing `2.1.2` `platform-core` with
 `2.2.0` `platform-ui` is not a configuration we support, and from the first
 release that ships `platform-bom` Gradle prevents it: every module depends on
-the BOM, which pins the others to its version. A new published module needs
-adding both to `PUBLISHABLE_MODULES` and to the constraints in
-`platform-bom/build.gradle.kts`.
+the BOM, which pins the others to its version. A new published module needs:
+
+- adding to `PUBLISHABLE_MODULES` and to the constraints in
+  `platform-bom/build.gradle.kts`;
+- the convention plugin that publishes it: Android SDK modules apply
+  `id("youversion.sdk.library")`, and non-Android published modules (like the
+  BOM) apply `id("youversion.publishing")`. That plugin supplies the group,
+  version, Maven Central publishing, signing and the shared POM;
+- a `coordinates(...)` call that only sets its artifactId.
 
 ### How the version reaches the artifacts
 
