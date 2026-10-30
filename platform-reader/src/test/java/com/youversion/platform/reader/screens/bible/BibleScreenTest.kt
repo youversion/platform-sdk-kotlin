@@ -1,9 +1,11 @@
 package com.youversion.platform.reader.screens.bible
 
 import androidx.compose.material3.Text
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -14,10 +16,12 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -59,6 +63,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
+import kotlin.math.absoluteValue
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -1660,6 +1665,42 @@ class BibleScreenTest {
 
         composeTestRule.onNodeWithText("Verse 40").assertIsDisplayed()
         assertTrue(composeTestRule.onAllNodesWithText("Verse 1").fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun `a staged verse deep in a long block is scrolled to, not just the block holding it`() {
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = testVersion,
+                scrollTargetReference = verseReference(40),
+            )
+        stubParagraphOf(*(1..60).map { "Verse $it\n" to it }.toTypedArray())
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        val listTop = composeTestRule.onNode(hasScrollToIndexAction()).getUnclippedBoundsInRoot().top
+        val block = composeTestRule.onNodeWithText("Verse 40", substring = true)
+        val layouts = mutableListOf<TextLayoutResult>()
+        block.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        val layout = layouts.single()
+        val verseLine = layout.getLineForOffset(layout.layoutInput.text.indexOf("Verse 40"))
+        val verseTop =
+            block.getUnclippedBoundsInRoot().top +
+                with(composeTestRule.density) { layout.getLineTop(verseLine).toDp() }
+        assertTrue(
+            (verseTop - listTop).value.absoluteValue < 1f,
+            "verse 40's line should sit at the list's top ($listTop), but it sits at $verseTop",
+        )
     }
 
     @Test

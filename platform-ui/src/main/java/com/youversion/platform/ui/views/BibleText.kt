@@ -21,6 +21,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +39,7 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
@@ -51,6 +53,7 @@ import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -173,6 +176,11 @@ enum class BibleTextLoadingPhase {
 /**
  * Renders the chapter, or the passage within it, named by [reference].
  *
+ * Changing [textOptions] once the chapter has loaded restyles it in place: the current text stays on screen and
+ * the phase stays [BibleTextLoadingPhase.SUCCESS], without passing through [BibleTextLoadingPhase.LOADING], until
+ * the restyled text arrives. A restyle that fails keeps the chapter as it was styled and stays
+ * [BibleTextLoadingPhase.SUCCESS].
+ *
  * @param reference The passage to render.
  * @param textOptions Text styling options (font family, font size, line spacing, etc.).
  * @param selectedVerses The verses to draw as selected.
@@ -219,7 +227,7 @@ fun BibleText(
                 BibleBlockContent(
                     visibleBlocks = blocksState.visibleBlocks,
                     index = index,
-                    textOptions = textOptions,
+                    textOptions = blocksState.textOptions,
                     selectedVerses = selectedVerses,
                     highlights = blocksState.highlights,
                     onVerseTap = onVerseTap,
@@ -477,6 +485,7 @@ private fun DrawScope.drawSelectionUnderlines(
 @Composable
 internal fun BibleTextBlock(
     block: BibleTextBlock,
+    blockIndex: Int,
     textOptions: BibleTextOptions,
     isFirstBlock: Boolean,
     previousMarginBottom: Dp,
@@ -484,6 +493,7 @@ internal fun BibleTextBlock(
     highlights: Map<BibleReference, Color>,
     focusedReference: BibleReference? = null,
     unfocusedAlpha: Float = 1f,
+    layoutState: BibleTextLayoutState? = null,
     onClick: (position: Offset, layoutResult: TextLayoutResult) -> Unit,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -492,6 +502,15 @@ internal fun BibleTextBlock(
     val marginTop = if (isFirstBlock) 0.dp else maxOf(0.dp, block.marginTop - previousMarginBottom)
     val marginBottom =
         block.marginBottom + textOptions.extraLeading.dp + (textOptions.paragraphSpacing ?: 0.sp).value.dp
+    val startPadding = (8 * block.headIndent).dp
+    val origin =
+        with(LocalDensity.current) {
+            val x = if (LocalLayoutDirection.current == LayoutDirection.Ltr) startPadding.roundToPx() else 0
+            Offset(x.toFloat(), marginTop.roundToPx().toFloat())
+        }
+    DisposableEffect(layoutState, blockIndex) {
+        onDispose { layoutState?.remove(blockIndex, textLayoutResult) }
+    }
 
     val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
 
@@ -546,7 +565,7 @@ internal fun BibleTextBlock(
         modifier =
             Modifier
                 .padding(
-                    start = (8 * block.headIndent).dp,
+                    start = startPadding,
                     top = marginTop,
                     bottom = marginBottom,
                 ).fillMaxWidth()
@@ -565,6 +584,7 @@ internal fun BibleTextBlock(
                 },
         onTextLayout = { result ->
             textLayoutResult = result
+            layoutState?.place(blockIndex, PlacedBlock(block.text, result, origin))
         },
         inlineContent = textOptions.inlineContentMap,
     )

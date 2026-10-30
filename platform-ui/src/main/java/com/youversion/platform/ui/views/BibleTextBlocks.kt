@@ -57,6 +57,8 @@ class BibleTextBlocksState internal constructor(
     /** How far the load named by the state's reference has got. */
     val loadingPhase: BibleTextLoadingPhase,
     internal val blocks: List<BibleTextBlock>,
+    /** The options [blocks] were styled with, which they are drawn with until a restyle replaces them. */
+    internal val textOptions: BibleTextOptions,
     internal val highlights: Map<BibleReference, Color>,
     internal val horizontalAlignment: Alignment.Horizontal,
 ) {
@@ -64,13 +66,27 @@ class BibleTextBlocksState internal constructor(
     // items the chapter emits, which is what makes a block addressable as a scroll target.
     internal val visibleBlocks: List<BibleTextBlock> = blocks.filter { it.isVisible }
 
+    /** Each verse the chapter tags, mapped to the first block holding it. */
+    private val firstBlockByVerse: Map<BibleReference, Int> by lazy {
+        buildMap {
+            visibleBlocks.forEachIndexed { index, block ->
+                block.verses().forEach { verse -> getOrPut(verse) { index } }
+            }
+        }
+    }
+
     /**
      * The position among the emitted blocks of the first one covering [reference], or null when no block does —
      * including while the chapter is still loading.
      */
-    fun indexOfBlockContaining(reference: BibleReference): Int? {
+    internal fun indexOfBlockContaining(reference: BibleReference): Int? {
         if (loadingPhase != BibleTextLoadingPhase.SUCCESS) return null
-        return visibleBlocks.indexOfFirst { it.covers(reference) }.takeIf { it >= 0 }
+        firstBlockByVerse[reference]?.let { return it }
+        var lowestIndex: Int? = null
+        for ((verse, index) in firstBlockByVerse) {
+            if (verse.overlaps(reference) && (lowestIndex == null || index < lowestIndex)) lowestIndex = index
+        }
+        return lowestIndex
     }
 }
 
@@ -79,6 +95,14 @@ class BibleTextBlocksState internal constructor(
  *
  * The returned state is replaced whenever the load moves on, so read it during composition rather than holding on
  * to a copy of it.
+ *
+ * A change of [textOptions] once the chapter has loaded is a restyle: the chapter keeps its current blocks and
+ * [BibleTextLoadingPhase.SUCCESS] until the restyled ones arrive, and a restyle that fails leaves the chapter as it
+ * was styled rather than swapping text that loaded fine for an error.
+ *
+ * A change of [reference] unloads the chapter in the composition that made it, rather than a frame later when the
+ * load starts. Held across that frame, the state would offer the chapter just left as this reference's blocks, and
+ * report the success that loading it was.
  */
 @PlatformInternalApi
 @Composable
@@ -86,11 +110,9 @@ fun rememberBibleTextBlocksState(
     reference: BibleReference,
     textOptions: BibleTextOptions = BibleTextOptions(),
 ): BibleTextBlocksState {
-    // Keyed to the load below so a change of input is unloaded from the composition that made it, rather than from
-    // a frame later when the effect runs. Held across that frame, the state would offer the chapter just left as
-    // this reference's blocks, and report the success that loading it was.
-    var blocks by remember(reference, textOptions) { mutableStateOf<List<BibleTextBlock>>(emptyList()) }
-    var loadingPhase by remember(reference, textOptions) { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
+    var blocks by remember(reference) { mutableStateOf<List<BibleTextBlock>>(emptyList()) }
+    var styledOptions by remember(reference) { mutableStateOf(textOptions) }
+    var loadingPhase by remember(reference) { mutableStateOf(BibleTextLoadingPhase.INACTIVE) }
     var isVersionRightToLeft by remember { mutableStateOf(false) }
     val versionRepository: BibleVersionRepository = PlatformKoinGraph.koinApplication.koin.get()
     val chapterRepository: BibleChapterRepository = PlatformKoinGraph.koinApplication.koin.get()
@@ -135,7 +157,13 @@ fun rememberBibleTextBlocksState(
         }
 
     LaunchedEffect(reference, textOptions, wordsOfChristColor) {
-        loadingPhase = BibleTextLoadingPhase.LOADING
+        val isRestyling = loadingPhase == BibleTextLoadingPhase.SUCCESS
+
+        fun fail(phase: BibleTextLoadingPhase) {
+            if (!isRestyling) loadingPhase = phase
+        }
+
+        if (!isRestyling) loadingPhase = BibleTextLoadingPhase.LOADING
         try {
             isVersionRightToLeft = versionRepository.version(reference.versionId).isRightToLeft
 
@@ -154,18 +182,19 @@ fun rememberBibleTextBlocksState(
 
             if (loadedBlocks != null) {
                 blocks = loadedBlocks
+                styledOptions = textOptions
                 loadingPhase = BibleTextLoadingPhase.SUCCESS
             } else {
-                loadingPhase = BibleTextLoadingPhase.FAILED
+                fail(BibleTextLoadingPhase.FAILED)
             }
         } catch (_: BibleVersionApiException) {
-            loadingPhase = BibleTextLoadingPhase.NOT_PERMITTED
+            fail(BibleTextLoadingPhase.NOT_PERMITTED)
         } catch (e: CancellationException) {
-            loadingPhase = BibleTextLoadingPhase.INACTIVE
+            fail(BibleTextLoadingPhase.INACTIVE)
             throw e
         } catch (e: Exception) {
             println("loadBlocks unexpected error: $e")
-            loadingPhase = BibleTextLoadingPhase.FAILED
+            fail(BibleTextLoadingPhase.FAILED)
         }
     }
 
@@ -179,10 +208,11 @@ fun rememberBibleTextBlocksState(
             else -> Alignment.Start
         }
 
-    return remember(loadingPhase, blocks, highlights, horizontalAlignment) {
+    return remember(loadingPhase, blocks, styledOptions, highlights, horizontalAlignment) {
         BibleTextBlocksState(
             loadingPhase = loadingPhase,
             blocks = blocks,
+            textOptions = styledOptions,
             highlights = highlights,
             horizontalAlignment = horizontalAlignment,
         )
@@ -191,18 +221,21 @@ fun rememberBibleTextBlocksState(
 
 /**
  * Emits the chapter held by [state] as one item per block, so a host's own header and footer can share a list with
- * it and a block can be scrolled to by its position.
+ * it. A [layoutState] given here learns where each verse was laid out, so the host can scroll to one.
  *
  * Until the load succeeds this is a single placeholder item instead. A non-null [focusedReference] draws the
  * verses it covers at full strength and dims everything else, the rest of the block holding them included. One
  * no block covers is ignored, since dimming every block would fade the chapter while pointing at nothing.
+ *
+ * Blocks are keyed by position: no reader option changes how many blocks a chapter has, so a restyle keeps each
+ * index on the same block. A setting that adds or drops blocks, such as headings, would need stable keys.
  */
 @PlatformInternalApi
 fun LazyListScope.bibleTextBlocks(
     state: BibleTextBlocksState,
-    textOptions: BibleTextOptions,
     selectedVerses: Set<BibleReference> = emptySet(),
     focusedReference: BibleReference? = null,
+    layoutState: BibleTextLayoutState? = null,
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)? = null,
     onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)? = null,
 ) {
@@ -252,11 +285,12 @@ fun LazyListScope.bibleTextBlocks(
             BibleBlockContent(
                 visibleBlocks = state.visibleBlocks,
                 index = index,
-                textOptions = textOptions,
+                textOptions = state.textOptions,
                 selectedVerses = selectedVerses,
                 highlights = state.highlights,
                 focusedReference = fadingFocus,
                 unfocusedAlpha = unfocusedAlpha.value,
+                layoutState = layoutState,
                 onVerseTap = onVerseTap,
                 onFootnoteTap = onFootnoteTap,
             )
@@ -280,6 +314,7 @@ internal fun BibleBlockContent(
     highlights: Map<BibleReference, Color>,
     focusedReference: BibleReference? = null,
     unfocusedAlpha: Float = 1f,
+    layoutState: BibleTextLayoutState? = null,
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)?,
     onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)?,
 ) {
@@ -289,6 +324,7 @@ internal fun BibleBlockContent(
     if (block.rows.isEmpty()) {
         BibleTextBlock(
             block = block,
+            blockIndex = index,
             textOptions = textOptions,
             isFirstBlock = index == 0,
             previousMarginBottom = if (index == 0) 0.dp else visibleBlocks[index - 1].marginBottom,
@@ -296,6 +332,7 @@ internal fun BibleBlockContent(
             highlights = highlights,
             focusedReference = focusedReference,
             unfocusedAlpha = unfocusedAlpha,
+            layoutState = layoutState,
             onClick = { localPosition, textLayoutResult ->
                 coroutineScope.launch {
                     val characterIndex = textLayoutResult.getOffsetForPosition(localPosition)
@@ -360,17 +397,20 @@ internal fun BibleBlockContent(
     }
 }
 
-private fun BibleTextBlock.covers(reference: BibleReference): Boolean {
+private fun BibleTextBlock.verses(): Sequence<BibleReference> {
     val texts = if (rows.isEmpty()) listOf(text) else rows.flatten()
-    return texts.any { candidate ->
+    return texts.asSequence().flatMap { candidate ->
         candidate
             .getStringAnnotations(
                 tag = BibleReferenceAttribute.NAME,
                 start = 0,
                 end = candidate.length,
-            ).any { BibleReference.fromAnnotation(it.item).overlaps(reference) }
+            ).asSequence()
+            .map { BibleReference.fromAnnotation(it.item) }
     }
 }
+
+private fun BibleTextBlock.covers(reference: BibleReference): Boolean = verses().any { it.overlaps(reference) }
 
 private const val DIMMED_BLOCK_ALPHA = 0.4f
 
