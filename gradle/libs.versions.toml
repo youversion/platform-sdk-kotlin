@@ -9,8 +9,9 @@ minSdk = "23" # .get()
 targetSdk = "36" # .get()
 
 # Tooling
-agp = "9.4.1"
-kotlin = "2.4.20"
+agp = "9.3.1"
+kotlin = "2.4.21"
+kotlinStdlibFloor = "2.2.0" # .get()
 spotless = "8.10.3"
 ktlint = "1.8.0" # .get()
 kover = "0.9.11"
