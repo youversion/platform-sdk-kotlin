@@ -10,6 +10,7 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 - Versions and publishing: RELEASING.md
 - Failed release recovery: docs/RELEASE-RUNBOOK.md
 - CI: the `.github/workflows` directory
+- JDK 21 for Gradle; oldest-consumer build in `examples/consumer-baseline`: CONTRIBUTING.md
 - User-facing strings: docs/localization-guardrails.md
 
 ## Modules

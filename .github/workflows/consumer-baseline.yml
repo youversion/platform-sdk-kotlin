@@ -1,0 +1,44 @@
+name: Consumer Baseline
+
+on: [pull_request]
+
+jobs:
+  consumer-baseline:
+    name: Build Oldest Supported Consumer
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew examples/consumer-baseline/gradlew
+
+      - name: Publish SDK to Maven Local
+        run: ./gradlew publishToMavenLocal -PsdkVersion=0.0.0-SNAPSHOT
+
+      - name: Assemble consumer baseline
+        working-directory: examples/consumer-baseline
+        run: ./gradlew :app:assembleDebug
+
+      # A Kotlin 2.2 compiler reads 2.3 metadata but not 2.4, so the SDK's transitive stdlib must stay below 2.4.
+      - name: Verify kotlin-stdlib stays below 2.4
+        working-directory: examples/consumer-baseline
+        run: |
+          version=$(./gradlew -q :app:dependencyInsight --dependency org.jetbrains.kotlin:kotlin-stdlib --configuration debugRuntimeClasspath \
+            | sed -n 's/^org\.jetbrains\.kotlin:kotlin-stdlib:\([0-9.]*\).*/\1/p' | head -n 1)
+          echo "Resolved kotlin-stdlib $version"
+          case "$version" in
+            2.2.*|2.3.*) ;;
+            *) echo "::error::kotlin-stdlib resolved to '$version'; Kotlin 2.2 consumers need 2.3.x or lower"; exit 1 ;;
+          esac

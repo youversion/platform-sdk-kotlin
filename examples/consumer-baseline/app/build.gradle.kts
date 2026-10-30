@@ -37,5 +37,6 @@ dependencies {
     implementation(platform(libs.youversion.platform.bom))
     implementation(libs.youversion.platform.core)
     implementation(libs.youversion.platform.reader)
+    implementation(libs.youversion.platform.ui)
     implementation(libs.androidx.activity.compose)
 }
