@@ -196,6 +196,14 @@ class BibleVersionRenderBlocksTests {
             assertTrue(block.text.spanStyles.any { it.item.fontStyle == FontStyle.Italic })
         }
 
+    @Test
+    fun `ipq class produces first line and head indent and italic font`() =
+        runTest {
+            val block = renderSingleBlock("ipq", "Quoted intro paragraph.")
+            assertIndents(block, "ipq", firstLineHeadIndent = 1, headIndent = 2)
+            assertTrue(block.text.spanStyles.any { it.item.fontStyle == FontStyle.Italic })
+        }
+
     // ----- alignment
 
     @Test
@@ -251,6 +259,14 @@ class BibleVersionRenderBlocksTests {
         runTest {
             val block = renderSingleBlock("cls", "Closing text.")
             assertEquals(TextAlign.End, block.alignment)
+        }
+
+    @Test
+    fun `ipr class produces end alignment and italic font`() =
+        runTest {
+            val block = renderSingleBlock("ipr", "Right aligned intro text.")
+            assertEquals(TextAlign.End, block.alignment)
+            assertTrue(block.text.spanStyles.any { it.item.fontStyle == FontStyle.Italic })
         }
 
     // ----- margins
@@ -330,6 +346,92 @@ class BibleVersionRenderBlocksTests {
             assertTrue(
                 italicStyles.any {
                     it.item.fontStyle == FontStyle.Italic
+                },
+            )
+        }
+
+    @Test
+    fun `k class applies bold font weight`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="p">
+                        <span class="yv-v" v="1"></span>
+                        Normal <span class="k">keyword</span> end.
+                    </div>
+                </div>
+                """.trimIndent()
+
+            val blocks = renderBlocks(html, FULL_CHAPTER_REF)
+            val block = blocks.first { it.text.text.contains("keyword") }
+            val keywordStart = block.text.text.indexOf("keyword")
+            val keywordStyles =
+                block.text.spanStyles.filter { it.start <= keywordStart && it.end > keywordStart }
+            assertTrue(keywordStyles.any { it.item.fontWeight == FontWeight.Bold })
+        }
+
+    @Test
+    fun `sls and iqt classes apply italic font style`() =
+        runTest {
+            listOf("sls", "iqt").forEach { className ->
+                val html =
+                    """
+                    <div>
+                        <div class="p">
+                            <span class="yv-v" v="1"></span>
+                            Normal <span class="$className">styled text</span> end.
+                        </div>
+                    </div>
+                    """.trimIndent()
+
+                val blocks = renderBlocks(html, FULL_CHAPTER_REF)
+                val block = blocks.first { it.text.text.contains("styled text") }
+                val styledStart = block.text.text.indexOf("styled text")
+                val styledStyles =
+                    block.text.spanStyles.filter { it.start <= styledStart && it.end > styledStart }
+                assertTrue(
+                    styledStyles.any { it.item.fontStyle == FontStyle.Italic },
+                    "Expected italic font style for class '$className'",
+                )
+            }
+        }
+
+    @Test
+    fun `cd and qd classes apply italic font style`() =
+        runTest {
+            listOf("cd", "qd").forEach { className ->
+                val block = renderSingleBlock(className, "Description text.")
+                assertTrue(
+                    block.text.spanStyles.any { it.item.fontStyle == FontStyle.Italic },
+                    "Expected italic font style for class '$className'",
+                )
+                assertFalse(
+                    block.text.spanStyles.any { it.item.fontWeight == FontWeight.Medium },
+                    "Expected regular weight for class '$className'",
+                )
+            }
+        }
+
+    @Test
+    fun `cd header applies medium italic font`() =
+        runTest {
+            val html =
+                """
+                <div>
+                    <div class="yv-h cd"><span>Header description</span></div>
+                    <div class="p">
+                        <span class="yv-v" v="1"></span>
+                        Verse text.
+                    </div>
+                </div>
+                """.trimIndent()
+
+            val blocks = renderBlocks(html, FULL_CHAPTER_REF)
+            val block = blocks.first { it.text.text.contains("Header description") }
+            assertTrue(
+                block.text.spanStyles.any {
+                    it.item.fontStyle == FontStyle.Italic && it.item.fontWeight == FontWeight.Medium
                 },
             )
         }
@@ -425,6 +527,42 @@ class BibleVersionRenderBlocksTests {
             assertTrue(block.text.spanStyles.any { it.item.fontStyle == FontStyle.Italic })
         }
 
+    @Test
+    fun `imt4 class produces a centered italic book title with small margins`() =
+        runTest {
+            val block = renderSingleBlock("imt4", "Intro Title.")
+            val margin = (0.15f * RENDERING_TEST_FONTS.baseSize.value).dp
+            assertEquals(TextAlign.Center, block.alignment)
+            assertTrue(block.hasCategory(BibleTextCategory.BOOK_TITLE))
+            assertTrue(block.text.spanStyles.any { it.item.fontStyle == FontStyle.Italic })
+            assertEquals(margin, block.marginTop)
+            assertEquals(margin, block.marginBottom)
+        }
+
+    @Test
+    fun `imte and imte1 classes produce a centered bold book title with margins`() =
+        runTest {
+            listOf("imte", "imte1").forEach { className ->
+                val block = renderSingleBlock(className, "Intro Ending.")
+                val fontSize = RENDERING_TEST_FONTS.baseSize.value
+                assertEquals(TextAlign.Center, block.alignment, "Expected center alignment for class '$className'")
+                assertTrue(
+                    block.hasCategory(BibleTextCategory.BOOK_TITLE),
+                    "Expected book title for class '$className'",
+                )
+                assertTrue(
+                    block.text.spanStyles.any { it.item.fontWeight == FontWeight.Bold },
+                    "Expected bold font weight for class '$className'",
+                )
+                assertEquals(fontSize.dp, block.marginTop, "Expected 1em margin top for class '$className'")
+                assertEquals(
+                    (0.25f * fontSize).dp,
+                    block.marginBottom,
+                    "Expected 0.25em margin bottom for class '$className'",
+                )
+            }
+        }
+
     // ----- stanza breaks
 
     @Test
@@ -477,7 +615,16 @@ class BibleVersionRenderBlocksTests {
                     "<div class=\"b\"></div><div class=\"p\"><span class=\"yv-v\" v=\"2\"></span>Second verse.</div>" +
                     "<div class=\"b\"></div></div>"
             val chapterBlocks = renderBlocks(html, FULL_CHAPTER_REF)
-            assertTrue(chapterBlocks.any { it.text.text == "First verse." })
+            assertEquals(
+                listOf(
+                    NO_BREAK_SPACE.toString(),
+                    "First verse.",
+                    NO_BREAK_SPACE.toString(),
+                    "Second verse.",
+                    NO_BREAK_SPACE.toString(),
+                ),
+                chapterBlocks.map { it.text.text },
+            )
 
             val selectedBlocks =
                 renderBlocks(
