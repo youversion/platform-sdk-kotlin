@@ -52,7 +52,9 @@ currently not available.
 ## Requirements
 
 - Android 6.0+ (API 23)
+- compileSdk 36+
 - Android Studio Narwhal+
+- Android Gradle Plugin 8.9.1+
 - Kotlin 2.2.0+
 - A YouVersion Platform API key ([Register here](https://platform.youversion.com/))
 
