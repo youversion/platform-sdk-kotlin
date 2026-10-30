@@ -82,7 +82,7 @@ internal fun interpretTextAttr(
 }
 
 /**
- * Applies the agreed phase 3 block style for each class in [classes].
+ * Applies the block style for each class in [classes].
  */
 internal fun interpretBlockClasses(
     classes: List<String>,
