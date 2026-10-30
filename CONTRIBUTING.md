@@ -61,6 +61,8 @@ complete, verify that the project builds.
 
 Point Gradle at your Android SDK with a `sdk.dir` entry in `local.properties` at the project root (the file is gitignored), or set the `ANDROID_HOME` environment variable.
 
+Run Gradle on JDK 21. Unit tests run Robolectric against compileSdk 36, which needs JDK 21; Android Studio's bundled JDK works.
+
 ### Gradle and module dependencies
 
 Inter-module dependencies use Gradle's type-safe project accessors (enabled in `settings.gradle.kts` via `TYPESAFE_PROJECT_ACCESSORS`). Shared library and plugin versions live in the version catalog at `gradle/libs.versions.toml`.
