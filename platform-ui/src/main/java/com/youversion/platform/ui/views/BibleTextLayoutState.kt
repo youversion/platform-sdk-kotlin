@@ -1,8 +1,8 @@
 package com.youversion.platform.ui.views
 
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
@@ -15,8 +15,11 @@ import androidx.compose.ui.text.TextLayoutResult
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
 import kotlin.math.ceil
 
 /**
@@ -28,6 +31,7 @@ import kotlin.math.ceil
  * laid out.
  */
 @PlatformInternalApi
+@Stable
 class BibleTextLayoutState internal constructor(
     private val blocksState: State<BibleTextBlocksState>,
 ) {
@@ -57,14 +61,18 @@ class BibleTextLayoutState internal constructor(
         leadingItemCount: Int,
     ): Boolean {
         val index = blocksState.value.indexOfBlockContaining(reference) ?: return false
-        listState.scrollToItem(leadingItemCount + index)
-        verseBounds(reference)?.let { listState.scrollBy(it.top) }
+        val itemIndex = leadingItemCount + index
+        listState.scrollToItem(itemIndex)
+        verseBounds(reference)?.let { listState.scrollToItem(itemIndex, ceil(it.top).toInt()) }
         return true
     }
 
     /**
      * Keeps the line at the top of [listState] in place when the chapter is restyled, which would otherwise reflow the
      * block holding it and leave the reader on another line. Runs until cancelled.
+     *
+     * The reader's place is held as the block's position in the chapter plus its text, so a restyle that adds or
+     * drops blocks before it, such as toggling headings, is not followed and leaves the list where it was.
      */
     suspend fun keepReadingPosition(
         listState: LazyListState,
@@ -107,7 +115,8 @@ class BibleTextLayoutState internal constructor(
 
     /**
      * Scrolls back to [anchor] once its block is laid out with the restyled text, unless the list has been laid out
-     * without that block on screen, since the reader has then scrolled away from it.
+     * without that block on screen, since the reader has then scrolled away from it. A scroll by the reader at that
+     * moment wins, and the restore is dropped rather than ending [keepReadingPosition].
      */
     private suspend fun restore(
         anchor: ReadingAnchor,
@@ -130,7 +139,11 @@ class BibleTextLayoutState internal constructor(
         val target = top + anchor.fractionIntoLine * (bottom - top)
         val firstPixel = ceil(top).toInt()
         val lastPixel = maxOf(firstPixel, ceil(bottom).toInt() - 1)
-        listState.scrollToItem(itemIndex, target.toInt().coerceIn(firstPixel, lastPixel))
+        try {
+            listState.scrollToItem(itemIndex, target.toInt().coerceIn(firstPixel, lastPixel))
+        } catch (e: CancellationException) {
+            if (!currentCoroutineContext().isActive) throw e
+        }
     }
 
     /** Records where block [blockIndex] was last laid out, replacing what was known of it. */
