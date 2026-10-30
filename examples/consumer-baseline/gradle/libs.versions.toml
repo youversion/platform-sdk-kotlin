@@ -11,6 +11,7 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 youversion-platform-bom = { module = "com.youversion.platform:platform-bom", version.ref = "youversionPlatform" }
 youversion-platform-core = { module = "com.youversion.platform:platform-core" }
 youversion-platform-reader = { module = "com.youversion.platform:platform-reader" }
+youversion-platform-ui = { module = "com.youversion.platform:platform-ui" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
