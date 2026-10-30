@@ -569,7 +569,7 @@ class BibleVersionRenderBlocksTests {
     fun `empty stanza breaks produce unlinked blank lines`() =
         runTest {
             val html =
-                "<div><div class=\"b\"></div><div class=\"b\"> \n </div><div class=\"p\">Text.</div></div>"
+                "<div><div class=\"b\"></div><div class=\"b\">\u00A0</div><div class=\"p\">Text.</div></div>"
             val blocks = renderBlocks(html, FULL_CHAPTER_REF)
             assertEquals(3, blocks.size)
             blocks.take(2).forEach { block ->
