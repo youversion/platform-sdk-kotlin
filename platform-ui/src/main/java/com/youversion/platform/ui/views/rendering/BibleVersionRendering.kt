@@ -136,9 +136,6 @@ object BibleVersionRendering {
 
     /**
      * Formats Bible data into styled AnnotatedString blocks for Compose.
-     *
-     * Trailing blank lines are dropped, since verse-range rendering stays on past the last
-     * selected verse until the next verse starts.
      */
     suspend fun textBlocks(
         bibleChapterRepository: BibleChapterRepository,
@@ -220,7 +217,7 @@ object BibleVersionRendering {
                     resultBlocks = resultBlocks,
                 )
             }
-            resultBlocks.dropLastWhile { it.isBlankLine }
+            resultBlocks
         }
 
     private fun traceLog(
@@ -646,7 +643,7 @@ object BibleVersionRendering {
                 )
             }
         }
-        if ((node.classes.contains("b") || node.classes.contains("ib")) &&
+        if (node.classes.contains("b") &&
             stateUp.rendering &&
             node.children.all { it.type == BibleTextNodeType.TEXT && it.text.isBlank() }
         ) {

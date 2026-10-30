@@ -430,23 +430,19 @@ class BibleVersionRenderBlocksTests {
     @Test
     fun `empty stanza breaks produce unlinked blank lines`() =
         runTest {
-            listOf("b", "ib").forEach { className ->
-                val html =
-                    "<div><div class=\"$className\"></div><div class=\"$className\"> \n </div>" +
-                        "<div class=\"p\">Text.</div></div>"
-                val blocks = renderBlocks(html, FULL_CHAPTER_REF)
-                assertEquals(3, blocks.size, className)
-                blocks.take(2).forEach { block ->
-                    assertEquals(NO_BREAK_SPACE.toString(), block.text.text, className)
-                    assertTrue(block.isVisible, className)
-                    assertTrue(block.isBlankLine, className)
-                    assertTrue(
-                        block.text
-                            .getStringAnnotations(BibleReferenceAttribute.NAME, 0, block.text.length)
-                            .isEmpty(),
-                        className,
-                    )
-                }
+            val html =
+                "<div><div class=\"b\"></div><div class=\"b\"> \n </div><div class=\"p\">Text.</div></div>"
+            val blocks = renderBlocks(html, FULL_CHAPTER_REF)
+            assertEquals(3, blocks.size)
+            blocks.take(2).forEach { block ->
+                assertEquals(NO_BREAK_SPACE.toString(), block.text.text)
+                assertTrue(block.isVisible)
+                assertTrue(block.isBlankLine)
+                assertTrue(
+                    block.text
+                        .getStringAnnotations(BibleReferenceAttribute.NAME, 0, block.text.length)
+                        .isEmpty(),
+                )
             }
         }
 
@@ -488,6 +484,6 @@ class BibleVersionRenderBlocksTests {
                     html,
                     BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 1, verseStart = 2, verseEnd = 2),
                 )
-            assertEquals(listOf("Second verse."), selectedBlocks.map { it.text.text })
+            assertEquals(listOf("Second verse.", NO_BREAK_SPACE.toString()), selectedBlocks.map { it.text.text })
         }
 }
