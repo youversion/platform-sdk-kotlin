@@ -53,6 +53,48 @@ class ConventionPluginsTest {
         assertTrue(output, output.contains("expected minimum is 85"))
     }
 
+    @Test
+    fun androidLibrary_compilesForKotlin22Consumers() {
+        writeSdkLibraryFixture()
+        File(projectDir, "sdk/build.gradle.kts").appendText(
+            """
+
+            tasks.register("printKotlinOptions") {
+                val compile = tasks.named<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>("compileReleaseKotlin")
+                val languageVersion = compile.flatMap { it.compilerOptions.languageVersion }
+                val apiVersion = compile.flatMap { it.compilerOptions.apiVersion }
+                val moduleName = compile.flatMap { it.compilerOptions.moduleName }
+                doLast {
+                    println("languageVersion=${'$'}{languageVersion.get().version}")
+                    println("apiVersion=${'$'}{apiVersion.get().version}")
+                    println("moduleName=${'$'}{moduleName.get()}")
+                }
+            }
+            """.trimIndent(),
+        )
+
+        val output = build(":sdk:printKotlinOptions").output
+
+        assertTrue(output, output.contains("languageVersion=2.2"))
+        assertTrue(output, output.contains("apiVersion=2.2"))
+        assertTrue(output, output.contains("moduleName=sdk_release"))
+    }
+
+    @Test
+    fun androidLibrary_publishesStdlibFloorInPom() {
+        writeSdkLibraryFixture()
+
+        build(":sdk:generatePomFileForMavenPublication")
+        val pom = File(projectDir, "sdk/build/publications/maven/pom-default.xml").readText()
+
+        assertTrue(
+            pom,
+            Regex(
+                "<artifactId>kotlin-stdlib</artifactId>\\s*<version>${catalogVersion("kotlinStdlibFloor")}</version>",
+            ).containsMatchIn(pom),
+        )
+    }
+
     private fun writePublishingFixture() {
         writeSettings("lib")
         write("build.gradle.kts", "")
@@ -73,6 +115,13 @@ class ConventionPluginsTest {
             write("local.properties", "sdk.dir=${File(sdkDir).invariantSeparatorsPath}")
         }
         write(
+            "gradle.properties",
+            """
+            android.builtInKotlin=false
+            android.newDsl=false
+            """.trimIndent(),
+        )
+        write(
             "build.gradle.kts",
             """
             plugins {
@@ -89,6 +138,10 @@ class ConventionPluginsTest {
 
             android {
                 namespace = "com.youversion.platform.fixture"
+            }
+
+            mavenPublishing {
+                coordinates(artifactId = "sdk")
             }
             """.trimIndent(),
         )

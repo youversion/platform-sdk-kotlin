@@ -269,15 +269,21 @@ class UsersEndpointsTests : YouVersionPlatformTest {
             val mockEngine =
                 MockEngine { request ->
                     when {
-                        request.url.encodedPath.contains("/auth/callback") ->
+                        request.url.encodedPath.contains("/auth/callback") -> {
                             respond(
                                 "",
                                 HttpStatusCode.Found,
                                 headersOf("Location", "https://redirect.example.com?code=$TEST_AUTH_CODE"),
                             )
-                        request.url.encodedPath.contains("/auth/token") ->
+                        }
+
+                        request.url.encodedPath.contains("/auth/token") -> {
                             respondJson(tokenResponseJson)
-                        else -> respond("", HttpStatusCode.OK)
+                        }
+
+                        else -> {
+                            respond("", HttpStatusCode.OK)
+                        }
                     }
                 }
             stopYouVersionPlatformTest()
@@ -318,15 +324,21 @@ class UsersEndpointsTests : YouVersionPlatformTest {
             val mockEngine =
                 MockEngine { request ->
                     when {
-                        request.url.encodedPath.contains("/auth/callback") ->
+                        request.url.encodedPath.contains("/auth/callback") -> {
                             respond(
                                 "",
                                 HttpStatusCode.Found,
                                 headersOf("Location", "https://redirect.example.com?code=$TEST_AUTH_CODE"),
                             )
-                        request.url.encodedPath.contains("/auth/token") ->
+                        }
+
+                        request.url.encodedPath.contains("/auth/token") -> {
                             respondJson(tokenResponseJson)
-                        else -> respond("", HttpStatusCode.OK)
+                        }
+
+                        else -> {
+                            respond("", HttpStatusCode.OK)
+                        }
                     }
                 }
             stopYouVersionPlatformTest()
@@ -421,13 +433,17 @@ class UsersEndpointsTests : YouVersionPlatformTest {
             val mockEngine =
                 MockEngine { request ->
                     when {
-                        request.url.encodedPath.contains("/auth/callback") ->
+                        request.url.encodedPath.contains("/auth/callback") -> {
                             respond(
                                 "",
                                 HttpStatusCode.Found,
                                 headersOf("Location", "https://redirect.example.com?nocode=here"),
                             )
-                        else -> respond("", HttpStatusCode.OK)
+                        }
+
+                        else -> {
+                            respond("", HttpStatusCode.OK)
+                        }
                     }
                 }
             stopYouVersionPlatformTest()
@@ -459,15 +475,21 @@ class UsersEndpointsTests : YouVersionPlatformTest {
             val mockEngine =
                 MockEngine { request ->
                     when {
-                        request.url.encodedPath.contains("/auth/callback") ->
+                        request.url.encodedPath.contains("/auth/callback") -> {
                             respond(
                                 "",
                                 HttpStatusCode.Found,
                                 headersOf("Location", "https://redirect.example.com?code=$TEST_AUTH_CODE"),
                             )
-                        request.url.encodedPath.contains("/auth/token") ->
+                        }
+
+                        request.url.encodedPath.contains("/auth/token") -> {
                             respondJson(tokenResponseJson)
-                        else -> respond("", HttpStatusCode.OK)
+                        }
+
+                        else -> {
+                            respond("", HttpStatusCode.OK)
+                        }
                     }
                 }
             stopYouVersionPlatformTest()
@@ -499,15 +521,21 @@ class UsersEndpointsTests : YouVersionPlatformTest {
             val mockEngine =
                 MockEngine { request ->
                     when {
-                        request.url.encodedPath.contains("/auth/callback") ->
+                        request.url.encodedPath.contains("/auth/callback") -> {
                             respond(
                                 "",
                                 HttpStatusCode.Found,
                                 headersOf("Location", "https://redirect.example.com?code=$TEST_AUTH_CODE"),
                             )
-                        request.url.encodedPath.contains("/auth/token") ->
+                        }
+
+                        request.url.encodedPath.contains("/auth/token") -> {
                             respondJson(tokenResponseJson)
-                        else -> respond("", HttpStatusCode.OK)
+                        }
+
+                        else -> {
+                            respond("", HttpStatusCode.OK)
+                        }
                     }
                 }
             stopYouVersionPlatformTest()

@@ -6,10 +6,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -519,7 +521,7 @@ class BibleIntroTextTests {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("*").performClick()
+        composeTestRule.onNodeWithText("*").performTouchInput { click(centerLeft) }
         composeTestRule.waitForIdle()
 
         assertNotNull(tappedFootnotes)
@@ -560,7 +562,7 @@ class BibleIntroTextTests {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("†").performClick()
+        composeTestRule.onNodeWithText("†").performTouchInput { click(centerLeft) }
         composeTestRule.waitForIdle()
 
         assertNotNull(tappedFootnotes)

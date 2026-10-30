@@ -1,0 +1,19 @@
+[versions]
+agp = "8.9.1"
+kotlin = "2.2.0"
+compileSdk = "36"
+minSdk = "23"
+youversionPlatform = "0.0.0-SNAPSHOT"
+activityCompose = "1.10.1"
+
+[libraries]
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+youversion-platform-bom = { module = "com.youversion.platform:platform-bom", version.ref = "youversionPlatform" }
+youversion-platform-core = { module = "com.youversion.platform:platform-core" }
+youversion-platform-reader = { module = "com.youversion.platform:platform-reader" }
+youversion-platform-ui = { module = "com.youversion.platform:platform-ui" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

@@ -61,6 +61,8 @@ complete, verify that the project builds.
 
 Point Gradle at your Android SDK with a `sdk.dir` entry in `local.properties` at the project root (the file is gitignored), or set the `ANDROID_HOME` environment variable.
 
+Run Gradle on JDK 21. Unit tests run Robolectric against compileSdk 36, which needs JDK 21; Android Studio's bundled JDK works.
+
 ### Gradle and module dependencies
 
 Inter-module dependencies use Gradle's type-safe project accessors (enabled in `settings.gradle.kts` via `TYPESAFE_PROJECT_ACCESSORS`). Shared library and plugin versions live in the version catalog at `gradle/libs.versions.toml`.
@@ -101,6 +103,17 @@ Command-line tasks complement the IDE workflow above. Public API checks and Spot
 The library includes a sample app under `examples/sample-android` which is used to demo and test functionality in the
 SDK. It requires a valid YouVersion API key to be added to `examples/sample-android/src/main/java/com/youversion/platform/MainApplication.kt`. 
 If a key is not provided, the sample app will crash on launch.
+
+### Consumer Baseline
+
+`examples/consumer-baseline` is a standalone build that consumes the SDK the way the oldest supported app would (Kotlin 2.2.0, AGP 8.9.1). It resolves the SDK from Maven Local, so publish first:
+
+```bash
+./gradlew publishToMavenLocal -PsdkVersion=0.0.0-SNAPSHOT
+./gradlew -p examples/consumer-baseline :app:assembleDebug
+```
+
+CI runs the same build and fails if `kotlin-stdlib` resolves to 2.4 or newer, which a Kotlin 2.2 compiler can't read.
 
 #### Device builds on BrowserStack
 

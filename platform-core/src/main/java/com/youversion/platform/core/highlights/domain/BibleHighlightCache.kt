@@ -214,6 +214,7 @@ internal class BibleHighlightCache {
                                 CachedHighlightState.LOCAL_PENDING_CREATE,
                                 CachedHighlightState.LOCAL_PENDING_DELETE,
                                 -> CachedHighlightState.LOCAL_PENDING_CREATE
+
                                 else -> CachedHighlightState.LOCAL_PENDING_UPDATE
                             }
                         this[index] =
@@ -304,15 +305,18 @@ internal class BibleHighlightCache {
                                 it.state != CachedHighlightState.REMOTE_SYNCED
                         }
                     when {
-                        localIndex == -1 ->
+                        localIndex == -1 -> {
                             add(
                                 CachedHighlight(
                                     highlight = highlight,
                                     state = CachedHighlightState.REMOTE_SYNCED,
                                 ),
                             )
-                        this[localIndex].state == CachedHighlightState.LOCAL_PENDING_CREATE ->
+                        }
+
+                        this[localIndex].state == CachedHighlightState.LOCAL_PENDING_CREATE -> {
                             this[localIndex] = this[localIndex].copy(state = CachedHighlightState.LOCAL_PENDING_UPDATE)
+                        }
                     }
                 }
             }
@@ -344,12 +348,21 @@ internal class BibleHighlightCache {
                 when {
                     cached.highlight.bibleReference !in referenceSet ||
                         cached.state == CachedHighlightState.REMOTE_SYNCED ||
-                        cached.state == CachedHighlightState.LOCAL_PENDING_DELETE -> cached
-                    !cached.lastModifiedAt.after(notModifiedAfter) ->
+                        cached.state == CachedHighlightState.LOCAL_PENDING_DELETE -> {
+                        cached
+                    }
+
+                    !cached.lastModifiedAt.after(notModifiedAfter) -> {
                         cached.copy(state = CachedHighlightState.REMOTE_SYNCED)
-                    cached.state == CachedHighlightState.LOCAL_PENDING_CREATE ->
+                    }
+
+                    cached.state == CachedHighlightState.LOCAL_PENDING_CREATE -> {
                         cached.copy(state = CachedHighlightState.LOCAL_PENDING_UPDATE)
-                    else -> cached
+                    }
+
+                    else -> {
+                        cached
+                    }
                 }
             }
         }
@@ -373,11 +386,21 @@ internal class BibleHighlightCache {
         _highlights.update { current ->
             current.map { cached ->
                 when {
-                    cached.highlight.bibleReference !in referenceSet -> cached
-                    cached.state == CachedHighlightState.LOCAL_PENDING_DELETE ->
+                    cached.highlight.bibleReference !in referenceSet -> {
+                        cached
+                    }
+
+                    cached.state == CachedHighlightState.LOCAL_PENDING_DELETE -> {
                         cached.copy(clearsAfterLoadSequence = boundary)
-                    cached.state == CachedHighlightState.LOCAL_PENDING_CREATE -> cached
-                    else -> cached.copy(state = CachedHighlightState.LOCAL_PENDING_CREATE)
+                    }
+
+                    cached.state == CachedHighlightState.LOCAL_PENDING_CREATE -> {
+                        cached
+                    }
+
+                    else -> {
+                        cached.copy(state = CachedHighlightState.LOCAL_PENDING_CREATE)
+                    }
                 }
             }
         }

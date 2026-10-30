@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasScrollToIndexAction
@@ -32,6 +33,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
@@ -702,7 +704,7 @@ class BibleTextTests {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("In the beginning").performClick()
+        composeTestRule.onNodeWithText("In the beginning").performTouchInput { click(centerLeft) }
         composeTestRule.waitForIdle()
 
         assertTrue(tappedReference != null)
@@ -815,7 +817,7 @@ class BibleTextTests {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Selah").performClick()
+        composeTestRule.onNodeWithText("Selah").performTouchInput { click(centerLeft) }
         composeTestRule.waitForIdle()
 
         assertTrue(tappedReference != null)
@@ -1605,7 +1607,7 @@ class BibleTextTests {
         }
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("※").performClick()
+        composeTestRule.onNodeWithText("※").performTouchInput { click(centerLeft) }
         composeTestRule.waitForIdle()
 
         assertTrue(tappedReference != null)
