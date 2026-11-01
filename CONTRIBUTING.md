@@ -153,7 +153,7 @@ corpus or upload to App Automate.
 
 ### Consumer Baseline
 
-`examples/consumer-baseline` is a standalone build that consumes the SDK the way the oldest supported app would (Kotlin 2.2.0, AGP 8.9.1). It resolves the SDK from Maven Local, so publish first:
+`examples/consumer-baseline` is a standalone build that consumes the SDK the way the oldest supported app would (Kotlin 2.2.0, AGP 8.13.2). It resolves the SDK from Maven Local, so publish first:
 
 ```bash
 ./gradlew publishToMavenLocal -PsdkVersion=0.0.0-SNAPSHOT
