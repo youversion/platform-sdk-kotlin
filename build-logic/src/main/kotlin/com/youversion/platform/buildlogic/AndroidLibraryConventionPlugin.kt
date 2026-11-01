@@ -13,8 +13,9 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
  * Applies the Android library and Kotlin plugins with the SDK's shared SDK levels, compiling Java and
  * Kotlin to JVM 11 bytecode on whatever JDK runs the build.
  *
- * - Kotlin language/API version 2.2, so consumers on a Kotlin 2.2 compiler can read the SDK's metadata.
- * - kotlin-stdlib 2.2.0 as the stdlib dependency published in the POMs.
+ * - Kotlin language/API version follows `kotlinStdlibFloor`, so consumers on that Kotlin compiler can
+ *   read the SDK's metadata.
+ * - kotlin-stdlib at `kotlinStdlibFloor` as the stdlib dependency published in the POMs.
  * - The Kotlin module name keeps its pre-2.4 form; Kotlin 2.4 prefixes the project group, which renames
  *   every mangled internal symbol in the API dumps.
  * - Unit tests run against compileSdk, so Robolectric's SDK 36 sandbox needs JDK 21. The sandbox reads
@@ -50,12 +51,14 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             }
 
             extensions.configure<KotlinAndroidProjectExtension> {
+                val stdlibFloor = libs.version("kotlinStdlibFloor")
+                val floorLanguageVersion = KotlinVersion.fromVersion(stdlibFloor.substringBeforeLast('.'))
                 compilerOptions {
                     jvmTarget.set(JvmTarget.JVM_11)
-                    languageVersion.set(KotlinVersion.KOTLIN_2_2)
-                    apiVersion.set(KotlinVersion.KOTLIN_2_2)
+                    languageVersion.set(floorLanguageVersion)
+                    apiVersion.set(floorLanguageVersion)
                 }
-                coreLibrariesVersion = libs.version("kotlinStdlibFloor")
+                coreLibrariesVersion = stdlibFloor
                 this.target.compilations.configureEach {
                     val moduleName = "${project.name}_$compilationName"
                     compileTaskProvider.configure { compilerOptions.moduleName.set(moduleName) }

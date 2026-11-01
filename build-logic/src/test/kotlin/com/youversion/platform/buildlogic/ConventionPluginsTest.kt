@@ -55,7 +55,7 @@ class ConventionPluginsTest {
 
     /** Checks the release Kotlin compile targets Kotlin 2.2 consumers and keeps the pre-2.4 module name. */
     @Test
-    fun androidLibrary_compilesForKotlin22Consumers() {
+    fun androidLibrary_compilesForFloorKotlinConsumers() {
         writeSdkLibraryFixture()
         File(projectDir, "sdk/build.gradle.kts").appendText(
             """
@@ -75,9 +75,10 @@ class ConventionPluginsTest {
         )
 
         val output = build(":sdk:printKotlinOptions").output
+        val floorLanguageVersion = catalogVersion("kotlinStdlibFloor").substringBeforeLast('.')
 
-        assertTrue(output, output.contains("languageVersion=2.2"))
-        assertTrue(output, output.contains("apiVersion=2.2"))
+        assertTrue(output, output.contains("languageVersion=$floorLanguageVersion"))
+        assertTrue(output, output.contains("apiVersion=$floorLanguageVersion"))
         assertTrue(output, output.contains("moduleName=sdk_release"))
     }
 
