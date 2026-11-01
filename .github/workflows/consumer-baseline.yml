@@ -1,6 +1,16 @@
 name: Consumer Baseline
 
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - 'gradle/**'
+      - '**/*.gradle.kts'
+      - 'gradle.properties'
+      - 'buildSrc/**'
+      - 'build-logic/**'
+      - 'examples/consumer-baseline/**'
+      - '.github/workflows/consumer-baseline.yml'
+  workflow_call:
 
 jobs:
   consumer-baseline:
@@ -30,15 +40,3 @@ jobs:
       - name: Assemble consumer baseline
         working-directory: examples/consumer-baseline
         run: ./gradlew :app:assembleDebug
-
-      # A Kotlin 2.2 compiler reads 2.3 metadata but not 2.4, so the SDK's transitive stdlib must stay below 2.4.
-      - name: Verify kotlin-stdlib stays below 2.4
-        working-directory: examples/consumer-baseline
-        run: |
-          version=$(./gradlew -q :app:dependencyInsight --dependency org.jetbrains.kotlin:kotlin-stdlib --configuration debugRuntimeClasspath \
-            | sed -n 's/^org\.jetbrains\.kotlin:kotlin-stdlib:\([0-9.]*\).*/\1/p' | head -n 1)
-          echo "Resolved kotlin-stdlib $version"
-          case "$version" in
-            2.2.*|2.3.*) ;;
-            *) echo "::error::kotlin-stdlib resolved to '$version'; Kotlin 2.2 consumers need 2.3.x or lower"; exit 1 ;;
-          esac

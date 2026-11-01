@@ -53,9 +53,15 @@ jobs:
       - name: Run tests
         run: ./gradlew test
 
+  consumer-baseline:
+    name: Consumer Baseline
+    permissions:
+      contents: read
+    uses: ./.github/workflows/consumer-baseline.yml
+
   release:
     name: Release
-    needs: test
+    needs: [test, consumer-baseline]
     runs-on: ubuntu-latest
     # Maven Central and GPG credentials are scoped to this environment, and its
     # deployment-branch policy is what keeps a dispatch from a feature branch
