@@ -160,7 +160,15 @@ corpus or upload to App Automate.
 ./examples/consumer-baseline/gradlew -p examples/consumer-baseline :app:assembleDebug
 ```
 
-CI runs the same build and fails if `kotlin-stdlib` resolves to 2.4 or newer, which a Kotlin 2.2 compiler can't read.
+CI runs the same build on PRs that change the build, and before every release.
+
+#### Raising the consumer floor
+
+The baseline's version catalog is the source of truth for the oldest toolchain we support. When raising it, update these together in one PR:
+
+1. `examples/consumer-baseline/gradle/libs.versions.toml`: `kotlin`, `agp`, `compileSdk`, `minSdk`. Regenerate the baseline's wrapper to the minimum Gradle version that AGP release requires.
+2. README **Requirements**.
+3. `gradle/libs.versions.toml`: `kotlinStdlibFloor` (it also sets the SDK's Kotlin language and API version), `compileSdk` (AGP stamps it into our AARs as the consumer's minimum) and `minSdk`.
 
 ### Project Structure
 

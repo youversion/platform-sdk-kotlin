@@ -1,3 +1,4 @@
+# The oldest toolchain the SDK supports, not a recommendation. Raising it: see CONTRIBUTING.md.
 [versions]
 agp = "8.9.1"
 kotlin = "2.2.0"
