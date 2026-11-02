@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.BottomAppBarScrollBehavior
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -102,7 +102,7 @@ internal fun BibleReaderPassageSelection(
                     .align(Alignment.CenterStart),
         ) {
             Icon(
-                imageVector = Icons.Filled.ChevronLeft,
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                 contentDescription = stringResource(R.string.previous_chapter_content_desc),
                 tint = readerColors.readerTextPrimaryColor,
             )
@@ -123,7 +123,7 @@ internal fun BibleReaderPassageSelection(
                     .align(Alignment.CenterEnd),
         ) {
             Icon(
-                imageVector = Icons.Filled.ChevronRight,
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = stringResource(R.string.next_chapter_content_desc),
                 tint = readerColors.readerTextPrimaryColor,
             )
