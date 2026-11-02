@@ -1,10 +1,12 @@
 package com.youversion.platform.ui.views
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getBoundsInRoot
@@ -13,7 +15,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -41,6 +45,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -297,26 +303,47 @@ class BibleIntroTextTests {
 
     // endregion
 
-    // region RTL/LTR Alignment
+    // region Text Direction
 
-    @Test
-    fun `LTR system with RTL version aligns to End`() {
-        assertEquals(Alignment.End, mainColumnAlignment(LayoutDirection.Ltr, isVersionRightToLeft = true))
+    private fun paragraphDirection(
+        version: BibleVersion,
+        text: String,
+    ): ResolvedTextDirection {
+        coEvery { mockVersionRepository.version(any()) } returns version
+        coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
+        coEvery {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns listOf(annotatedBlock(text))
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                BibleIntroText(1, "GEN", "INTRO")
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        val layoutResults = mutableListOf<TextLayoutResult>()
+        composeTestRule
+            .onNodeWithText(text)
+            .fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult]
+            .action
+            ?.invoke(layoutResults)
+        return layoutResults.first().getParagraphDirection(0)
     }
 
     @Test
-    fun `LTR system with LTR version aligns to Start`() {
-        assertEquals(Alignment.Start, mainColumnAlignment(LayoutDirection.Ltr, isVersionRightToLeft = false))
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a right-to-left version renders a paragraph starting with Latin text right to left`() {
+        assertEquals(ResolvedTextDirection.Rtl, paragraphDirection(rtlVersion, "Selah שלום"))
     }
 
     @Test
-    fun `RTL system with RTL version aligns to Start`() {
-        assertEquals(Alignment.Start, mainColumnAlignment(LayoutDirection.Rtl, isVersionRightToLeft = true))
-    }
-
-    @Test
-    fun `RTL system with LTR version aligns to End`() {
-        assertEquals(Alignment.End, mainColumnAlignment(LayoutDirection.Rtl, isVersionRightToLeft = false))
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a left-to-right version renders a paragraph starting with Hebrew text left to right`() {
+        assertEquals(ResolvedTextDirection.Ltr, paragraphDirection(ltrVersion, "שלום Selah"))
     }
 
     // endregion

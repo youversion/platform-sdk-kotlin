@@ -24,6 +24,7 @@ class BibleReaderIntroFootnotesSheetTest {
                 BibleReaderIntroFootnotesSheet(
                     onDismissRequest = onDismissRequest,
                     footnotes = footnotes,
+                    isVersionRightToLeft = false,
                 )
             }
         }

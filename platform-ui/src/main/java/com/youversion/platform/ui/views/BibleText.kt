@@ -222,17 +222,19 @@ fun BibleText(
     if (blocksState.loadingPhase != BibleTextLoadingPhase.SUCCESS) {
         placeholder(blocksState.loadingPhase)
     } else {
-        Column(horizontalAlignment = blocksState.horizontalAlignment) {
-            blocksState.visibleBlocks.indices.forEach { index ->
-                BibleBlockContent(
-                    visibleBlocks = blocksState.visibleBlocks,
-                    index = index,
-                    textOptions = blocksState.textOptions,
-                    selectedVerses = selectedVerses,
-                    highlights = blocksState.highlights,
-                    onVerseTap = onVerseTap,
-                    onFootnoteTap = onFootnoteTap,
-                )
+        ProvideVersionDirection(isRightToLeft = blocksState.isVersionRightToLeft) {
+            Column {
+                blocksState.visibleBlocks.indices.forEach { index ->
+                    BibleBlockContent(
+                        visibleBlocks = blocksState.visibleBlocks,
+                        index = index,
+                        textOptions = blocksState.textOptions,
+                        selectedVerses = selectedVerses,
+                        highlights = blocksState.highlights,
+                        onVerseTap = onVerseTap,
+                        onFootnoteTap = onFootnoteTap,
+                    )
+                }
             }
         }
     }

@@ -655,6 +655,7 @@ internal fun BibleScreen(
                         BibleReaderIntroFootnotesSheet(
                             onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CloseIntroFootnotes) },
                             footnotes = state.introFootnotes,
+                            isVersionRightToLeft = state.bibleVersion?.isRightToLeft == true,
                         )
                     }
                 }

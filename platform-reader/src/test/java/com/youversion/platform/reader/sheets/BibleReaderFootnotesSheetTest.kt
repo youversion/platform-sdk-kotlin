@@ -171,7 +171,7 @@ class BibleReaderFootnotesSheetTest {
     private fun renderFootnotes(footnotes: List<AnnotatedString>) {
         composeTestRule.setContent {
             BibleReaderMaterialTheme {
-                Footnotes(footnotes = footnotes)
+                Footnotes(footnotes = footnotes, isVersionRightToLeft = false)
             }
         }
     }
