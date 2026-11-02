@@ -1,10 +1,12 @@
 package com.youversion.platform.ui.views
 
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
@@ -33,6 +35,7 @@ import com.youversion.platform.ui.views.rendering.BibleTextCategory
 import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
@@ -344,6 +347,30 @@ class BibleIntroTextTests {
     @Config(sdk = [34])
     fun `a left-to-right version renders a paragraph starting with Hebrew text left to right`() {
         assertEquals(ResolvedTextDirection.Ltr, paragraphDirection(ltrVersion, "שלום Selah"))
+    }
+
+    // endregion
+
+    // region Text Color
+
+    @Test
+    fun `renders in the theme's content color when no text color is set`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
+        coEvery {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns listOf(annotatedBlock("Intro"))
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalContentColor provides Color.Magenta) {
+                BibleIntroText(1, "GEN", "INTRO")
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        coVerify {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), Color.Magenta, any(), any())
+        }
     }
 
     // endregion

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -2461,6 +2462,29 @@ class BibleTextTests {
 
         assertEquals(20f to 380f, ltr)
         assertEquals(20f to 380f, rtl)
+    }
+
+    // endregion
+
+    // region Text Color
+
+    @Test
+    fun `renders in the theme's content color when no text color is set`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns listOf(annotatedBlock("In the beginning"))
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalContentColor provides Color.Magenta) {
+                BibleText(reference = testReference)
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        coVerify {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), Color.Magenta, any(), any())
+        }
     }
 
     // endregion

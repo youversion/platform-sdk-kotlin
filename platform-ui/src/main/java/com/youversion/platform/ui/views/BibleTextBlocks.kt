@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -144,6 +145,7 @@ fun rememberBibleTextBlocksState(
 
     val readerColorScheme = MaterialTheme.readerColorScheme
     val wordsOfChristColor = textOptions.resolvedWordsOfChristColor(readerColorScheme)
+    val textColor = textOptions.textColor ?: LocalContentColor.current
     val highlights =
         remember(cachedHighlights, reference, readerColorScheme, hasHighlightsAccess) {
             if (hasHighlightsAccess) {
@@ -153,7 +155,7 @@ fun rememberBibleTextBlocksState(
             }
         }
 
-    LaunchedEffect(reference, textOptions, wordsOfChristColor) {
+    LaunchedEffect(reference, textOptions, wordsOfChristColor, textColor) {
         val isRestyling = loadingPhase == BibleTextLoadingPhase.SUCCESS
 
         fun fail(phase: BibleTextLoadingPhase) {
@@ -172,7 +174,7 @@ fun rememberBibleTextBlocksState(
                     footnoteMode = textOptions.footnoteMode,
                     renderHeadlines = textOptions.renderHeadlines,
                     footnoteMarker = textOptions.footnoteMarker,
-                    textColor = textOptions.textColor ?: Color.Unspecified,
+                    textColor = textColor,
                     wocColor = wordsOfChristColor,
                     fonts = BibleTextFonts(fontFamily = textOptions.fontFamily, baseSize = textOptions.fontSize),
                 )
