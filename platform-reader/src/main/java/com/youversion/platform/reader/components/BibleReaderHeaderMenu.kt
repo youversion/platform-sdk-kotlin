@@ -12,10 +12,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import com.youversion.platform.reader.R
+import com.youversion.platform.reader.icons.MoreIcon
 
 @Composable
 internal fun BibleReaderHeaderDropdownMenu(
@@ -34,7 +33,7 @@ internal fun BibleReaderHeaderDropdownMenu(
             expanded = !expanded
         }) {
             Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.ic_pending),
+                imageVector = MoreIcon,
                 contentDescription = stringResource(R.string.reader_menu_font_settings),
             )
         }

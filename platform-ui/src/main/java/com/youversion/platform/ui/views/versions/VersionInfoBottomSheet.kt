@@ -24,9 +24,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -35,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.organizations.models.Organization
+import com.youversion.platform.ui.icons.LanguageIcon
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.Charcoal
 import com.youversion.platform.ui.theme.UntitledSerif
@@ -226,7 +225,7 @@ private fun VersionWebsite(
                     ).padding(vertical = 8.dp),
         ) {
             Icon(
-                imageVector = ImageVector.vectorResource(UiR.drawable.ic_material_language),
+                imageVector = LanguageIcon,
                 contentDescription = null,
             )
 

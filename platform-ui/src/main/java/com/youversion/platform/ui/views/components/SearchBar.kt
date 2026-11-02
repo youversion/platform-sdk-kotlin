@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.utilities.graphemeClusterCount
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.icons.ClearSearchIcon
 import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
@@ -111,7 +112,7 @@ fun SearchBar(
                 if (showsClearButton && query.isNotEmpty()) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
-                        imageVector = ClearSearch,
+                        imageVector = ClearSearchIcon,
                         contentDescription = clearButtonContentDescription,
                         tint = MaterialTheme.readerColorScheme.readerTextMutedColor,
                         modifier =

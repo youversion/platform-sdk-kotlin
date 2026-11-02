@@ -17,11 +17,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.icons.ChevronForwardIcon
+import com.youversion.platform.ui.icons.LanguageIcon
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
 @Composable
@@ -47,7 +47,7 @@ internal fun LanguageSelector(
                 ).padding(16.dp),
     ) {
         Icon(
-            imageVector = ImageVector.vectorResource(R.drawable.ic_material_language),
+            imageVector = LanguageIcon,
             contentDescription = null,
         )
         Spacer(modifier = Modifier.width(16.dp))
@@ -63,7 +63,7 @@ internal fun LanguageSelector(
         )
         Spacer(modifier = Modifier.width(4.dp))
         Icon(
-            imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_forward),
+            imageVector = ChevronForwardIcon,
             contentDescription = null,
             modifier = Modifier.size(18.dp),
         )

@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import com.youversion.platform.ui.R
+import com.youversion.platform.R
 
 @Composable
 fun SampleBottomBar(

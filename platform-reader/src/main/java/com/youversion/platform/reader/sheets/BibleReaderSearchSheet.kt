@@ -73,7 +73,7 @@ import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.reader.BibleReaderSearchViewModel.CanonFilter
 import com.youversion.platform.reader.BibleReaderSearchViewModel.SearchStatus
 import com.youversion.platform.reader.BibleReaderSearchViewModel.State
-import com.youversion.platform.reader.icons.Trending
+import com.youversion.platform.reader.icons.TrendingIcon
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.Cream
 import com.youversion.platform.ui.theme.readerColorScheme
@@ -564,7 +564,7 @@ private fun SuggestedQueries(
         querySection(
             heading = UiR.string.bible_search_trending_heading,
             queries = trendingQueries,
-            icon = Trending,
+            icon = TrendingIcon,
             onSelect = onSelect,
         )
         querySection(
