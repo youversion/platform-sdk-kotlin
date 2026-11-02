@@ -101,6 +101,7 @@ internal fun BibleReaderBanner(
                 imageVector = icon.icon,
                 contentDescription = icon.contentDescription,
                 modifier = Modifier.size(20.dp),
+                tint = BibleReaderTheme.colorScheme.textPrimary,
             )
             Spacer(modifier = Modifier.width(24.dp))
             Text(
@@ -117,6 +118,7 @@ internal fun BibleReaderBanner(
                     imageVector = Icons.Default.Close,
                     contentDescription = stringResource(R.string.banner_dismiss_content_description),
                     modifier = Modifier.size(16.dp),
+                    tint = BibleReaderTheme.colorScheme.textPrimary,
                 )
             }
         }
