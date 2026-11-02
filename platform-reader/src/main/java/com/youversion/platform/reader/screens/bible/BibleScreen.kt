@@ -228,6 +228,7 @@ internal fun BibleScreen(
             fontFamily = state.fontFamily,
             fontSize = state.fontSize,
             lineSpacingFraction = state.lineSpacingFraction,
+            textColor = MaterialTheme.colorScheme.onBackground,
             footnoteMode = BibleTextFootnoteMode.IMAGE,
         )
     val introPassageId = state.introPassageId
