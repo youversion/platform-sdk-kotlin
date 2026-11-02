@@ -15,6 +15,7 @@ internal val ChevronForwardIcon: ImageVector by lazy(LazyThreadSafetyMode.NONE) 
             defaultHeight = 24.dp,
             viewportWidth = 960f,
             viewportHeight = 960f,
+            autoMirror = true,
         ).apply {
             path(fill = SolidColor(Color.White)) {
                 moveTo(504f, 480f)
