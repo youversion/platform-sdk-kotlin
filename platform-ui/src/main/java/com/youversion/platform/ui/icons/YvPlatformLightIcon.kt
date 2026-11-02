@@ -15,7 +15,6 @@ internal val YvPlatformLightIcon: ImageVector by lazy(LazyThreadSafetyMode.NONE)
             defaultHeight = 20.dp,
             viewportWidth = 238f,
             viewportHeight = 20f,
-            autoMirror = true,
         ).apply {
             path(fill = SolidColor(Color(0xFF121212))) {
                 moveTo(32.73f, 14.2f)
