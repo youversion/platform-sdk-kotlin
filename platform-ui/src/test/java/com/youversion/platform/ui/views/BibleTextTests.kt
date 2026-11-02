@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -38,6 +39,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.ResolvedTextDirection
@@ -2484,6 +2486,28 @@ class BibleTextTests {
 
         coVerify {
             BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), Color.Magenta, any(), any())
+        }
+    }
+
+    @Test
+    fun `renders in the inherited text style's color over the content color when no text color is set`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns listOf(annotatedBlock("In the beginning"))
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalContentColor provides Color.Magenta,
+                LocalTextStyle provides TextStyle(color = Color.Cyan),
+            ) {
+                BibleText(reference = testReference)
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        coVerify {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), Color.Cyan, any(), any())
         }
     }
 

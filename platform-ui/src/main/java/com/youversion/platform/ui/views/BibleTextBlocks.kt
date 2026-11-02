@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -145,7 +144,7 @@ fun rememberBibleTextBlocksState(
 
     val readerColorScheme = MaterialTheme.readerColorScheme
     val wordsOfChristColor = textOptions.resolvedWordsOfChristColor(readerColorScheme)
-    val textColor = textOptions.textColor ?: LocalContentColor.current
+    val textColor = textOptions.resolvedTextColor()
     val highlights =
         remember(cachedHighlights, reference, readerColorScheme, hasHighlightsAccess) {
             if (hasHighlightsAccess) {

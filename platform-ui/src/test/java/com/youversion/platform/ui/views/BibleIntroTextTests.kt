@@ -1,6 +1,7 @@
 package com.youversion.platform.ui.views
 
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -18,6 +19,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.text.style.TextAlign
@@ -370,6 +372,29 @@ class BibleIntroTextTests {
 
         coVerify {
             BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), Color.Magenta, any(), any())
+        }
+    }
+
+    @Test
+    fun `renders in the inherited text style's color over the content color when no text color is set`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
+        coEvery {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns listOf(annotatedBlock("Intro"))
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalContentColor provides Color.Magenta,
+                LocalTextStyle provides TextStyle(color = Color.Cyan),
+            ) {
+                BibleIntroText(1, "GEN", "INTRO")
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        coVerify {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), Color.Cyan, any(), any())
         }
     }
 

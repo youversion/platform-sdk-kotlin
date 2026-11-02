@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -75,7 +74,7 @@ fun BibleIntroText(
     val versionRepository: BibleVersionRepository = PlatformKoinGraph.koinApplication.koin.get()
     val introRepository: BibleIntroRepository = PlatformKoinGraph.koinApplication.koin.get()
     val wordsOfChristColor = textOptions.resolvedWordsOfChristColor(MaterialTheme.readerColorScheme)
-    val textColor = textOptions.textColor ?: LocalContentColor.current
+    val textColor = textOptions.resolvedTextColor()
 
     LaunchedEffect(loadingPhase) {
         onStateChange(loadingPhase)

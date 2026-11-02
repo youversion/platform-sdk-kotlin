@@ -36,6 +36,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -141,6 +142,11 @@ data class BibleTextOptions(
     /** [wocColor] when it is set, otherwise the Words of Christ color [readerColorScheme] supplies. */
     internal fun resolvedWordsOfChristColor(readerColorScheme: ReaderColorScheme): Color =
         wocColor.takeIf { it.isSpecified } ?: readerColorScheme.wordsOfChristColor
+
+    /** [textColor] when it is set, otherwise the color a [Text] with no color of its own draws in. */
+    @Composable
+    internal fun resolvedTextColor(): Color =
+        textColor ?: LocalTextStyle.current.color.takeOrElse { LocalContentColor.current }
 
     companion object {
         /** Extra leading applied when [lineSpacingFraction] is unset. */
@@ -521,7 +527,7 @@ internal fun BibleTextBlock(
             block.text.selectedCharacterRanges(selectedVerses)
         }
 
-    val textColor = textOptions.textColor ?: LocalContentColor.current
+    val textColor = textOptions.resolvedTextColor()
 
     val focusedRanges =
         remember(block.text, focusedReference) {
@@ -671,7 +677,7 @@ private fun BibleTableCell(
 ) {
     var cellLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
-    val textColor = textOptions.textColor ?: LocalContentColor.current
+    val textColor = textOptions.resolvedTextColor()
     val selectedRanges =
         remember(cellText, selectedVerses) {
             cellText.selectedCharacterRanges(selectedVerses)
