@@ -69,13 +69,13 @@
     <string name="yv_placeholder_version_unavailable">Nid yw\'r fersiwn Beibl a ddewiswyd gen ti yn flaenorol ar gael. Newidia i un arall.</string>
     <string name="yv_placeholder_version_unavailable_icon_content_desc">Fersiwn ddim ar gael</string>
     <string name="yv_previous_chapter_aria_label">Pennod flaenorol</string>
-    <string name="yv_recently_used_versions_heading">Fersiynau a Ddefnyddiwyd yn Ddiweddar</string>
+    <string name="yv_recently_used_versions_heading">Fersiynau Diweddar</string>
     <string name="yv_regional">Rhanbarthol</string>
     <string name="yv_retry">Ailgeisio</string>
     <string name="yv_search">Chwilio</string>
     <string name="yv_search_bible_versions">Chwilio fersiynau</string>
-    <string name="yv_search_languages">Chwilio ieithoedd</string>
-    <string name="yv_search_versions">Chwilio fersiynau</string>
+    <string name="yv_search_languages">Chwilio Ieithoedd</string>
+    <string name="yv_search_versions">Chwilio Fersiynau</string>
     <string name="yv_select_language">Dewisa Iaith</string>
     <string name="yv_select_language_title">Dewisa Iaith</string>
     <string name="yv_share">Rhannu</string>

@@ -69,13 +69,13 @@
     <string name="yv_placeholder_version_unavailable">إصدار الكتاب المقدس الذي حددته سابقاً غير متاح. يرجى التبديل إلى إصدار آخر.</string>
     <string name="yv_placeholder_version_unavailable_icon_content_desc">الإصدار غير متوفر</string>
     <string name="yv_previous_chapter_aria_label">الإصحاح السابق</string>
-    <string name="yv_recently_used_versions_heading">الإصدارات المستخدمة مؤخراً</string>
+    <string name="yv_recently_used_versions_heading">النسخ الأخيرة</string>
     <string name="yv_regional">إقليمي</string>
     <string name="yv_retry">إعادة المحاولة</string>
     <string name="yv_search">بحث</string>
     <string name="yv_search_bible_versions">البحث في الإصدارات</string>
     <string name="yv_search_languages">البحث في اللغات</string>
-    <string name="yv_search_versions">البحث في الإصدارات</string>
+    <string name="yv_search_versions">البحث في النسخ</string>
     <string name="yv_select_language">اختر لغة</string>
     <string name="yv_select_language_title">اختر لغة</string>
     <string name="yv_share">شارك</string>
