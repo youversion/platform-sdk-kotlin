@@ -42,7 +42,7 @@
     <string name="yv_footnote_aria_label">Edide dị́ n\'ala ala</string>
     <string name="yv_footnote_content_desc">Edide dị́ n\'ala ala</string>
     <string name="yv_full_chapter">Isiakwụkwọ Zuru Ezu</string>
-    <string name="yv_generic_request_error_body">Arịrịọ a enweghị ike imezu ugbu a.</string>
+    <string name="yv_generic_request_error_body">Ènweghị ike imezù arịrịọ a ugbu a.</string>
     <string name="yv_increase_font_size_aria_label">Bàwányé nha fọntù</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Asụsụ</string>
@@ -69,13 +69,13 @@
     <string name="yv_placeholder_version_unavailable">Ụdị nsụgharị Akwụkwọ Nsọ ị họpụtarà na mbụ adịghị adị. Biko gbanwee gaa na ọzọ.</string>
     <string name="yv_placeholder_version_unavailable_icon_content_desc">Ụdị Nsụgharị Adịghị</string>
     <string name="yv_previous_chapter_aria_label">Isi nke gara aga</string>
-    <string name="yv_recently_used_versions_heading">Ụdị-Nsụgharị-Gasị Éjìrì Mee Ihe N\'oge Na-Adịbeghị Anya</string>
+    <string name="yv_recently_used_versions_heading">Ụdị Nsụgharị Gasị Éjìrì Mee Ihe N\'Oge Na-Adịbeghị Anya</string>
     <string name="yv_regional">Nke Mpaghara</string>
     <string name="yv_retry">Nwaa Ọzọ</string>
     <string name="yv_search">Chọọ-Ihe</string>
     <string name="yv_search_bible_versions">Chọọ ụdị-nsụgharị-gasị</string>
-    <string name="yv_search_languages">Chọọ asụsụ gasị</string>
-    <string name="yv_search_versions">Chọọ ụdị-nsụgharị-gasị</string>
+    <string name="yv_search_languages">Chọọ Asụsụ Gasị</string>
+    <string name="yv_search_versions">Chọọ Ụdị-Nsụgharị-Gasị</string>
     <string name="yv_select_language">Họrọ Asụsụ</string>
     <string name="yv_select_language_title">Họrọ Asụsụ</string>
     <string name="yv_share">Kekọrịta</string>

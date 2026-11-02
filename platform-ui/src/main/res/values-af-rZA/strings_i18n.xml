@@ -69,13 +69,13 @@
     <string name="yv_placeholder_version_unavailable">Die Bybelweergawe wat jy voorheen gekies het, is nie beskikbaar nie. Kies asseblief \'n ander weergawe.</string>
     <string name="yv_placeholder_version_unavailable_icon_content_desc">Weergawe nie beskikbaar nie</string>
     <string name="yv_previous_chapter_aria_label">Vorige hoofstuk</string>
-    <string name="yv_recently_used_versions_heading">Onlangs gebruikte weergawes</string>
+    <string name="yv_recently_used_versions_heading">Onlangse weergawes</string>
     <string name="yv_regional">Streekstale</string>
     <string name="yv_retry">Probeer weer</string>
     <string name="yv_search">Soek</string>
     <string name="yv_search_bible_versions">Deursoek weergawes</string>
-    <string name="yv_search_languages">Soek tale</string>
-    <string name="yv_search_versions">Deursoek weergawes</string>
+    <string name="yv_search_languages">Soek vir tale</string>
+    <string name="yv_search_versions">Soek vir weergawes</string>
     <string name="yv_select_language">Kies \'n taal</string>
     <string name="yv_select_language_title">Kies \'n taal</string>
     <string name="yv_share">Deel</string>

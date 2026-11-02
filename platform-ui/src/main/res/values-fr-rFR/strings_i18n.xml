@@ -69,7 +69,7 @@
     <string name="yv_placeholder_version_unavailable">La version de la Bible précédemment sélectionnée n\'est pas disponible. Veuillez en choisir une autre.</string>
     <string name="yv_placeholder_version_unavailable_icon_content_desc">Version non disponible</string>
     <string name="yv_previous_chapter_aria_label">Chapitre précédent</string>
-    <string name="yv_recently_used_versions_heading">Versions récemment utilisées</string>
+    <string name="yv_recently_used_versions_heading">Versions récentes</string>
     <string name="yv_regional">Régional</string>
     <string name="yv_retry">Réessayer</string>
     <string name="yv_search">Rechercher</string>

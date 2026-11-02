@@ -69,13 +69,13 @@
     <string name="yv_placeholder_version_unavailable">Phiên bản Kinh Thánh bạn đã chọn trước đó không khả dụng. Vui lòng chuyển sang phiên bản khác.</string>
     <string name="yv_placeholder_version_unavailable_icon_content_desc">Phiên bản không khả dụng</string>
     <string name="yv_previous_chapter_aria_label">Chương trước</string>
-    <string name="yv_recently_used_versions_heading">Các phiên bản đã dùng gần đây</string>
+    <string name="yv_recently_used_versions_heading">Bản Dịch Gần Đây</string>
     <string name="yv_regional">Khu vực</string>
     <string name="yv_retry">Thử lại</string>
     <string name="yv_search">Tìm kiếm</string>
     <string name="yv_search_bible_versions">Tìm kiếm phiên bản</string>
-    <string name="yv_search_languages">Tìm kiếm ngôn ngữ</string>
-    <string name="yv_search_versions">Tìm kiếm phiên bản</string>
+    <string name="yv_search_languages">Tìm Kiếm Ngôn Ngữ</string>
+    <string name="yv_search_versions">Tìm Kiếm Bản Dịch</string>
     <string name="yv_select_language">Chọn ngôn ngữ</string>
     <string name="yv_select_language_title">Chọn ngôn ngữ</string>
     <string name="yv_share">Chia sẻ</string>

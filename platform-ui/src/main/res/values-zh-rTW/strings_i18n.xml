@@ -42,7 +42,7 @@
     <string name="yv_footnote_aria_label">備註</string>
     <string name="yv_footnote_content_desc">備註</string>
     <string name="yv_full_chapter">完整章節</string>
-    <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_generic_request_error_body">目前無法處理此需求。</string>
     <string name="yv_increase_font_size_aria_label">增大字體大小</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">語言</string>
@@ -69,13 +69,13 @@
     <string name="yv_placeholder_version_unavailable">你先前選擇的聖經譯本無法使用。請切換至其他譯本。</string>
     <string name="yv_placeholder_version_unavailable_icon_content_desc">譯本無法使用</string>
     <string name="yv_previous_chapter_aria_label">上一章</string>
-    <string name="yv_recently_used_versions_heading">最近使用的譯本</string>
+    <string name="yv_recently_used_versions_heading">Recent Versions</string>
     <string name="yv_regional">地區</string>
     <string name="yv_retry">重試</string>
     <string name="yv_search">搜尋</string>
     <string name="yv_search_bible_versions">搜尋版本</string>
-    <string name="yv_search_languages">搜尋語言</string>
-    <string name="yv_search_versions">搜尋版本</string>
+    <string name="yv_search_languages">Search Languages</string>
+    <string name="yv_search_versions">Search Versions</string>
     <string name="yv_select_language">選擇語言</string>
     <string name="yv_select_language_title">選擇語言</string>
     <string name="yv_share">分享</string>
