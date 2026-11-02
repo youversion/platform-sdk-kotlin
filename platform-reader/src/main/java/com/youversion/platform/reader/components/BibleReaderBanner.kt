@@ -24,10 +24,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.youversion.platform.reader.R
+import com.youversion.platform.reader.icons.SyncIcon
+import com.youversion.platform.reader.icons.WifiExclamationIcon
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.R as UiR
@@ -60,14 +60,14 @@ internal fun BibleReaderBanner(
             when (bannerType) {
                 BibleReaderBannerType.OFFLINE -> {
                     BannerIcon(
-                        icon = ImageVector.vectorResource(R.drawable.ic_wifi_exclamation),
+                        icon = WifiExclamationIcon,
                         contentDescription = stringResource(UiR.string.placeholder_offline_icon_content_desc),
                     )
                 }
 
                 BibleReaderBannerType.VERSION_UNAVAILABLE -> {
                     BannerIcon(
-                        icon = ImageVector.vectorResource(R.drawable.ic_sync),
+                        icon = SyncIcon,
                         contentDescription =
                             stringResource(
                                 UiR.string.placeholder_version_unavailable_icon_content_desc,

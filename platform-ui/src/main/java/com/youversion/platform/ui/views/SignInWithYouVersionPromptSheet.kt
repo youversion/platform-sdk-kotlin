@@ -21,10 +21,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -35,6 +33,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.icons.YvPlatformDarkIcon
+import com.youversion.platform.ui.icons.YvPlatformLightIcon
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.fonts.AktivGrotesk
 import com.youversion.platform.ui.theme.readerColorScheme
@@ -93,13 +93,11 @@ public fun SignInWithYouVersionPromptSheet(
 
             Image(
                 imageVector =
-                    ImageVector.vectorResource(
-                        if (MaterialTheme.readerColorScheme.isDark) {
-                            R.drawable.yv_platform_dm
-                        } else {
-                            R.drawable.yv_platform_lm
-                        },
-                    ),
+                    if (MaterialTheme.readerColorScheme.isDark) {
+                        YvPlatformDarkIcon
+                    } else {
+                        YvPlatformLightIcon
+                    },
                 contentDescription = null,
                 modifier = Modifier.height(20.dp),
             )

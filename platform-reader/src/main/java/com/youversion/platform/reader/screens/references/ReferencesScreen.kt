@@ -35,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,6 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.reader.R
+import com.youversion.platform.reader.icons.InfoIcon
 import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.views.components.BibleReaderTopAppBar
 import com.youversion.platform.ui.views.components.SearchBar
@@ -209,7 +209,7 @@ private fun IntroCell(onClick: () -> Unit) {
                 ),
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_i_icon),
+            imageVector = InfoIcon,
             contentDescription = stringResource(R.string.intro_chapter_label),
             modifier = Modifier.size(24.dp),
         )
