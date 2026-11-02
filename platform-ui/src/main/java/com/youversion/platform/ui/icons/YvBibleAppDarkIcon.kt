@@ -20,7 +20,6 @@ internal val YvBibleAppDarkIcon: ImageVector by lazy(LazyThreadSafetyMode.NONE) 
             defaultHeight = 24.dp,
             viewportWidth = 106f,
             viewportHeight = 24f,
-            autoMirror = true,
         ).apply {
             path(fill = SolidColor(Color(0xFFFEF5EB))) {
                 moveTo(90.86f, 8.84f)
