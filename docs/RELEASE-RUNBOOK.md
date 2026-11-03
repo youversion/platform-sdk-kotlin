@@ -9,16 +9,21 @@ pipeline. The day-to-day "how releases work" doc is
 A release is a **manual dispatch**: **Actions → Release → Run workflow**, on
 `main`, with the version typed into the `version` input. There is no push
 trigger. [`.github/workflows/release.yml`](../.github/workflows/release.yml)
-runs three sequential jobs:
+runs four jobs. **test** and **consumer-baseline** run in parallel, and
+**release** waits for both:
 
 1. **test** — `./gradlew test`. A release reaches consumers without a pull
    request in front of it, so the suite runs again here.
-2. **release** — runs [`scripts/release.sh`](../scripts/release.sh) in the
+2. **consumer-baseline** — builds `examples/consumer-baseline` against the SDK
+   on the oldest supported toolchain, including an R8-minified release. A
+   failure means the release would break consumers on the floor, so fix the
+   build rather than re-running.
+3. **release** — runs [`scripts/release.sh`](../scripts/release.sh) in the
    `production` environment, which is where the Maven Central and GPG
    credentials live. One script does everything: validate the version, generate
    notes, prepend the changelog, stamp the version, commit, tag, push, publish
    all modules as one deployment, create the GitHub Release.
-3. **post-publish-verify** — polls `repo1.maven.org` and writes an indexing
+4. **post-publish-verify** — polls `repo1.maven.org` and writes an indexing
    table to the run summary. Fails the workflow if a module is still missing
    when the 30-minute deadline elapses.
 

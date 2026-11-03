@@ -153,22 +153,22 @@ corpus or upload to App Automate.
 
 ### Consumer Baseline
 
-`examples/consumer-baseline` is a standalone build that consumes the SDK the way the oldest supported app would (Kotlin 2.2.0, AGP 8.13.2). It resolves the SDK from Maven Local, so publish first:
+`examples/consumer-baseline` is a standalone build that consumes the SDK the way the oldest supported app would, on the toolchain pinned in its version catalog. It resolves the SDK from Maven Local, so publish first:
 
 ```bash
 ./gradlew publishToMavenLocal -PsdkVersion=0.0.0-SNAPSHOT
 ./examples/consumer-baseline/gradlew -p examples/consumer-baseline :app:assembleDebug
 ```
 
-CI runs the same build on PRs that change the build, and before every release.
+CI runs the same build on PRs that change the build, and before every release. CI also builds a minified release (`:app:assembleRelease`) and fails if R8 can't read a dependency's Kotlin metadata.
 
 #### Raising the consumer floor
 
 The baseline's version catalog is the source of truth for the oldest toolchain we support. When raising it, update these together in one PR:
 
-1. `examples/consumer-baseline/gradle/libs.versions.toml`: `kotlin`, `agp`, `compileSdk`, `minSdk`. Regenerate the baseline's wrapper to the minimum Gradle version that AGP release requires.
-2. README **Requirements**.
-3. `gradle/libs.versions.toml`: `kotlinStdlibFloor` (it also sets the SDK's Kotlin language and API version), `compileSdk` (AGP stamps it into our AARs as the consumer's minimum) and `minSdk`.
+1. `examples/consumer-baseline/gradle/libs.versions.toml`: `kotlin`, `agp`, `compileSdk`, `minSdk`. Regenerate the baseline's wrapper to the minimum Gradle version that AGP release requires, with its `distributionSha256Sum`.
+2. README **Requirements**: Kotlin, AGP, Gradle, the minimum Android Studio for that AGP, compileSdk and the Android version.
+3. `gradle/libs.versions.toml`: `kotlinStdlibFloor` (it also sets the SDK's Kotlin language and API version), `compileSdk` (also set as the AARs' `minCompileSdk`, so a consumer below it fails with a clear error) and `minSdk`.
 
 ### Project Structure
 

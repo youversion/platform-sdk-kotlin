@@ -53,8 +53,9 @@ currently not available.
 
 - Android 6.0+ (API 23)
 - compileSdk 36+
-- Android Studio Narwhal+
+- Android Studio Narwhal 3 Feature Drop (2025.1.3)+
 - Android Gradle Plugin 8.13.2+
+- Gradle 8.13+
 - Kotlin 2.2.0+
 - A YouVersion Platform API key ([Register here](https://platform.youversion.com/))
 

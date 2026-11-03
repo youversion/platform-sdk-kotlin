@@ -32,7 +32,10 @@ learning because several of them look interchangeable and are not.
    (bare semver, e.g. `2.2.0`). Optionally tick `dry-run` for a rehearsal.
 2. The **test** job runs `./gradlew test`. A release is the one path that reaches
    consumers without a pull request in front of it, so the suite runs again here
-   even though it already ran on the PR.
+   even though it already ran on the PR. Alongside it, the **consumer-baseline**
+   job builds [`examples/consumer-baseline`](examples/consumer-baseline) against
+   the SDK on the oldest supported toolchain, including an R8-minified release.
+   The release job waits for both.
 3. The **release** job runs [`scripts/release.sh`](scripts/release.sh) inside the
    `production` environment, which is where the Maven Central and signing
    credentials live. In order, the script:
