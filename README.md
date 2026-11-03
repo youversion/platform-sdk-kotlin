@@ -59,7 +59,7 @@ currently not available.
 - Kotlin 2.2.0+
 - A YouVersion Platform API key ([Register here](https://platform.youversion.com/))
 
-These are verified on every relevant PR by [`examples/consumer-baseline`](examples/consumer-baseline/gradle/libs.versions.toml).
+Kotlin, AGP, Gradle, compileSdk and minSdk are verified on every relevant PR by [`examples/consumer-baseline`](examples/consumer-baseline/gradle/libs.versions.toml).
 
 
 ## Installation

@@ -160,7 +160,16 @@ corpus or upload to App Automate.
 ./examples/consumer-baseline/gradlew -p examples/consumer-baseline :app:assembleDebug
 ```
 
-CI runs the same build on PRs that change the build, and before every release. CI also builds a minified release (`:app:assembleRelease`) and fails if R8 can't read a dependency's Kotlin metadata.
+CI runs the same build on PRs that change the build, and before every release. CI also builds a minified release and fails if R8 can't read a dependency's Kotlin metadata. To reproduce that step locally:
+
+```bash
+cd examples/consumer-baseline
+set -o pipefail
+./gradlew :app:assembleRelease 2>&1 | tee r8.log
+grep -i "kotlin metadata" r8.log
+```
+
+Any `grep` output is the failure CI reports.
 
 #### Raising the consumer floor
 

@@ -16,8 +16,9 @@ runs four jobs. **test** and **consumer-baseline** run in parallel, and
    request in front of it, so the suite runs again here.
 2. **consumer-baseline** — builds `examples/consumer-baseline` against the SDK
    on the oldest supported toolchain, including an R8-minified release. A
-   failure means the release would break consumers on the floor, so fix the
-   build rather than re-running.
+   compiler error or an R8 Kotlin metadata failure means the release would
+   break consumers on the floor, so fix the build before dispatching again. A
+   runner or download failure is transient; re-dispatch the same version.
 3. **release** — runs [`scripts/release.sh`](../scripts/release.sh) in the
    `production` environment, which is where the Maven Central and GPG
    credentials live. One script does everything: validate the version, generate
