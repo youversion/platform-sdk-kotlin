@@ -32,6 +32,9 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                 defaultConfig {
                     minSdk = libs.version("minSdk").toInt()
                     consumerProguardFiles("consumer-rules.pro")
+                    aarMetadata {
+                        minCompileSdk = compileSdk
+                    }
                 }
                 buildTypes.named("release").configure {
                     isMinifyEnabled = false
