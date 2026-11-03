@@ -28,7 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.reader.R
 import com.youversion.platform.reader.icons.SyncIcon
-import com.youversion.platform.reader.icons.WifiExclamationIcon
+import com.youversion.platform.ui.icons.WifiExclamationIcon
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
