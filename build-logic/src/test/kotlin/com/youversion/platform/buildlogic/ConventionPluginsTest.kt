@@ -57,7 +57,7 @@ class ConventionPluginsTest {
     /** Checks the release Kotlin compile follows `kotlinStdlibFloor` and keeps the pre-2.4 module name. */
     @Test
     fun androidLibrary_compilesForFloorKotlinConsumers() {
-        catalog = catalogWithStdlibFloor("2.3.0")
+        catalog = catalogWith("kotlinStdlibFloor" to "2.3.0")
         writeSdkLibraryFixture()
         File(projectDir, "sdk/build.gradle.kts").appendText(
             """
@@ -77,16 +77,30 @@ class ConventionPluginsTest {
         )
 
         val output = build(":sdk:printKotlinOptions").output
+        val lines = output.lines()
 
-        assertTrue(output, output.contains("languageVersion=2.3"))
-        assertTrue(output, output.contains("apiVersion=2.3"))
-        assertTrue(output, output.contains("moduleName=sdk_release"))
+        assertTrue(output, "languageVersion=2.3" in lines)
+        assertTrue(output, "apiVersion=2.3" in lines)
+        assertTrue(output, "moduleName=sdk_release" in lines)
+    }
+
+    /** Checks the AAR metadata's `minCompileSdk` follows the catalog's `compileSdk`. */
+    @Test
+    fun androidLibrary_stampsCompileSdkAsAarMinCompileSdk() {
+        catalog = catalogWith("compileSdk" to "35")
+        writeSdkLibraryFixture()
+
+        build(":sdk:writeReleaseAarMetadata")
+        val metadataDir = "sdk/build/intermediates/aar_metadata/release/writeReleaseAarMetadata"
+        val metadata = File(projectDir, "$metadataDir/aar-metadata.properties").readLines()
+
+        assertTrue(metadata.toString(), "minCompileSdk=35" in metadata)
     }
 
     /** Checks the POM's kotlin-stdlib dependency is the catalog's `kotlinStdlibFloor`. */
     @Test
     fun androidLibrary_publishesStdlibFloorInPom() {
-        catalog = catalogWithStdlibFloor("2.3.0")
+        catalog = catalogWith("kotlinStdlibFloor" to "2.3.0")
         writeSdkLibraryFixture()
 
         build(":sdk:generatePomFileForMavenPublication")
@@ -177,13 +191,12 @@ class ConventionPluginsTest {
         )
     }
 
-    private fun catalogWithStdlibFloor(floor: String): File =
+    private fun catalogWith(vararg versions: Pair<String, String>): File =
         File(projectDir, "fixture.versions.toml").apply {
             writeText(
-                versionCatalog.readText().replace(
-                    Regex("""(?m)^(kotlinStdlibFloor\s*=\s*)"[^"]*""""),
-                    "$1\"$floor\"",
-                ),
+                versions.fold(versionCatalog.readText()) { toml, (alias, value) ->
+                    toml.replace(Regex("""(?m)^($alias\s*=\s*)"[^"]*""""), "$1\"$value\"")
+                },
             )
         }
 

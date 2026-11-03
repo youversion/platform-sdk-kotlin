@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
  * - kotlin-stdlib at `kotlinStdlibFloor` as the stdlib dependency published in the POMs.
  * - The Kotlin module name keeps its pre-2.4 form; Kotlin 2.4 prefixes the project group, which renames
  *   every mangled internal symbol in the API dumps.
+ * - The AAR metadata's `minCompileSdk` is the SDK's compileSdk, so a consumer below it fails with a clear
+ *   error.
  * - Unit tests run against compileSdk, so Robolectric's SDK 36 sandbox needs JDK 21. The sandbox reads
  *   FileDescriptor internals, so unit tests export `java.base/jdk.internal.access`.
  */
@@ -55,7 +57,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
 
             extensions.configure<KotlinAndroidProjectExtension> {
                 val stdlibFloor = libs.version("kotlinStdlibFloor")
-                val floorLanguageVersion = KotlinVersion.fromVersion(stdlibFloor.substringBeforeLast('.'))
+                val floorLanguageVersion = KotlinVersion.fromVersion(stdlibFloor.split('.').take(2).joinToString("."))
                 compilerOptions {
                     jvmTarget.set(JvmTarget.JVM_11)
                     languageVersion.set(floorLanguageVersion)
