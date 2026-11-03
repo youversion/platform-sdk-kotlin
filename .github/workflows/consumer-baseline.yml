@@ -50,6 +50,7 @@ jobs:
       - name: Minify consumer baseline with R8
         working-directory: examples/consumer-baseline
         run: |
+          set -o pipefail
           ./gradlew :app:assembleRelease 2>&1 | tee r8.log
           if grep -qi "kotlin metadata" r8.log; then
             echo "::error::R8 could not read the Kotlin metadata of a dependency; see the log above."
