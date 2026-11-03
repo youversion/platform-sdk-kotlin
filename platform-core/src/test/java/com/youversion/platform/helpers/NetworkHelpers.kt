@@ -57,7 +57,10 @@ fun testCannotDownload(block: suspend () -> Unit) =
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         assertFailsWith<YouVersionNetworkException> { block() }
-            .apply { assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, reason) }
+            .apply {
+                assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, reason)
+                assertEquals(YouVersionNetworkException.Failure.SERVER_ERROR, failure)
+            }
     }
 
 fun testInvalidResponse(block: suspend () -> Unit) =

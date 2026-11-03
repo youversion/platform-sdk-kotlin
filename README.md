@@ -559,7 +559,7 @@ val heading =
 #### Search Error Handling
 
 - Invalid arguments throw `IllegalArgumentException` before any request is made. A `query` must be 1–100 grapheme clusters (characters as the user sees them, so an emoji counts as one) for `verses`, `topics`, and `unified`, and non-empty for `suggestedQueries`. `bibleId` must be greater than zero, `pageSize` between 1 and 99, and each `languageRanges` entry a well-formed tag or `"*"` to request all languages, with at least one given.
-- A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `CANNOT_DOWNLOAD` for any other error response, and `INVALID_RESPONSE` when the response cannot be read.
+- A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `CANNOT_DOWNLOAD` for any other error response, and `INVALID_RESPONSE` when the response cannot be read. For `CANNOT_DOWNLOAD`, `failure` says whether a retry may help: `RATE_LIMITED` (429) and `SERVER_ERROR` (5xx) are temporary, `REQUEST_REJECTED` (any other 4xx) is not.
 - A response with no content (HTTP 204) is handled differently by endpoint. `trendingQueries` and `suggestedQueries` return an empty list, while `verses`, `topics`, and `unified` throw `YouVersionNetworkException` with reason `INVALID_RESPONSE` rather than reporting no matches.
 
 ### Verse Images API
@@ -605,7 +605,7 @@ A `VerseImage` is metadata only; load the picture itself from `imageUrl` with yo
 #### Verse Images Error Handling
 
 - Invalid arguments throw `IllegalArgumentException` before any request is made: `passageId`, `pageToken`, and `imageId` must not be blank, and `pageSize` must be between 1 and 99.
-- A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `CANNOT_DOWNLOAD` for any other error response — including a chapter-level `passageId` — and `INVALID_RESPONSE` when the response cannot be read.
+- A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `CANNOT_DOWNLOAD` for any other error response — including a chapter-level `passageId` — and `INVALID_RESPONSE` when the response cannot be read. For `CANNOT_DOWNLOAD`, `failure` says whether a retry may help: `RATE_LIMITED` (429) and `SERVER_ERROR` (5xx) are temporary, `REQUEST_REJECTED` (any other 4xx) is not.
 
 ## Sample App
 
