@@ -5,12 +5,6 @@ plugins {
 
 android {
     namespace = "com.youversion.platform.ui"
-    defaultConfig {
-        vectorDrawables {
-            // evenOdd support on API < 24
-            useSupportLibrary = true
-        }
-    }
 }
 
 dependencies {

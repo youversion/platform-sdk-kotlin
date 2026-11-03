@@ -6,9 +6,6 @@ plugins {
 
 android {
     namespace = "com.youversion.platform.reader"
-    defaultConfig {
-        vectorDrawables.useSupportLibrary = true
-    }
 
     buildFeatures {
         compose = true
