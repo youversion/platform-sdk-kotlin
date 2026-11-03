@@ -80,7 +80,7 @@ public object DataExchangeEndpoints : DataExchangeApi {
 
         if (response.status != HttpStatusCode.Created) {
             Logger.w { "Data exchange token request failed with status ${response.status.value}" }
-            throw cannotDownload()
+            throw cannotDownload(response.status)
         }
 
         return response.body()

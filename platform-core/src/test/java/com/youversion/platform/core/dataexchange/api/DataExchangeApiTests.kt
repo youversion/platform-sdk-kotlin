@@ -89,6 +89,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
                     )
                 }
             assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, exception.reason)
+            assertEquals(YouVersionNetworkException.Failure.SERVER_ERROR, exception.failure)
         }
 
     @Test

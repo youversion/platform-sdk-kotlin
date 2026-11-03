@@ -17,7 +17,8 @@ public interface DataExchangeApi {
      *         user is signed in or the app key is not configured,
      *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.NOT_PERMITTED] when the server
      *         refuses the request, or
-     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.CANNOT_DOWNLOAD] otherwise.
+     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.CANNOT_DOWNLOAD] otherwise, with
+     *         [com.youversion.platform.core.api.YouVersionNetworkException.failure] saying whether a retry may help.
      */
     public suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken
 }

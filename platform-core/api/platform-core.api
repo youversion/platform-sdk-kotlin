@@ -111,7 +111,17 @@ public final class com/youversion/platform/core/api/YouVersionApi {
 public final class com/youversion/platform/core/api/YouVersionNetworkException : java/lang/Exception {
 	public fun <init> (Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;Ljava/lang/Exception;)V
 	public synthetic fun <init> (Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;Ljava/lang/Exception;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFailure ()Lcom/youversion/platform/core/api/YouVersionNetworkException$Failure;
 	public final fun getReason ()Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+}
+
+public final class com/youversion/platform/core/api/YouVersionNetworkException$Failure : java/lang/Enum {
+	public static final field RATE_LIMITED Lcom/youversion/platform/core/api/YouVersionNetworkException$Failure;
+	public static final field REQUEST_REJECTED Lcom/youversion/platform/core/api/YouVersionNetworkException$Failure;
+	public static final field SERVER_ERROR Lcom/youversion/platform/core/api/YouVersionNetworkException$Failure;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/youversion/platform/core/api/YouVersionNetworkException$Failure;
+	public static fun values ()[Lcom/youversion/platform/core/api/YouVersionNetworkException$Failure;
 }
 
 public final class com/youversion/platform/core/api/YouVersionNetworkException$Reason : java/lang/Enum {

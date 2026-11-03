@@ -28,7 +28,7 @@ internal suspend inline fun <reified T> parseApiBody(response: HttpResponse): T 
 
     if (!response.status.isSuccess()) {
         Logger.w { "Request failed with status code ${response.status.value} " }
-        throw cannotDownload()
+        throw cannotDownload(response.status)
     }
 
     try {
