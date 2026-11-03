@@ -104,17 +104,6 @@ The library includes a sample app under `examples/sample-android` which is used 
 SDK. It requires a valid YouVersion API key to be added to `examples/sample-android/src/main/java/com/youversion/platform/MainApplication.kt`. 
 If a key is not provided, the sample app will crash on launch.
 
-### Consumer Baseline
-
-`examples/consumer-baseline` is a standalone build that consumes the SDK the way the oldest supported app would (Kotlin 2.2.0, AGP 8.9.1). It resolves the SDK from Maven Local, so publish first:
-
-```bash
-./gradlew publishToMavenLocal -PsdkVersion=0.0.0-SNAPSHOT
-./gradlew -p examples/consumer-baseline :app:assembleDebug
-```
-
-CI runs the same build and fails if `kotlin-stdlib` resolves to 2.4 or newer, which a Kotlin 2.2 compiler can't read.
-
 #### Device builds on BrowserStack
 
 When an approved collaborator on `platform-sdk-kotlin_automation` opens a PR
@@ -162,6 +151,17 @@ SHA is recorded separately in the workflow summary.
 This initial bridge produces an App Live build only. It does not run the Hinqa
 corpus or upload to App Automate.
 
+### Consumer Baseline
+
+`examples/consumer-baseline` is a standalone build that consumes the SDK the way the oldest supported app would (Kotlin 2.2.0, AGP 8.9.1). It resolves the SDK from Maven Local, so publish first:
+
+```bash
+./gradlew publishToMavenLocal -PsdkVersion=0.0.0-SNAPSHOT
+./examples/consumer-baseline/gradlew -p examples/consumer-baseline :app:assembleDebug
+```
+
+CI runs the same build and fails if `kotlin-stdlib` resolves to 2.4 or newer, which a Kotlin 2.2 compiler can't read.
+
 ### Project Structure
 
 The project is structured into several modules:
@@ -176,6 +176,8 @@ The project is structured into several modules:
    - Bill of materials that keeps every published module on the same version.
 - **examples/sample-android**
    - Sample Android app which demos using all of the components together.
+- **examples/consumer-baseline**
+   - Standalone app build on the oldest supported toolchain that CI uses to verify the published SDK still compiles for it.
 
 ### Branches
 

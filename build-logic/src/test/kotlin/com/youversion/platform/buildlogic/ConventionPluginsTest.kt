@@ -53,6 +53,7 @@ class ConventionPluginsTest {
         assertTrue(output, output.contains("expected minimum is 85"))
     }
 
+    /** Checks the release Kotlin compile targets Kotlin 2.2 consumers and keeps the pre-2.4 module name. */
     @Test
     fun androidLibrary_compilesForKotlin22Consumers() {
         writeSdkLibraryFixture()
@@ -80,6 +81,7 @@ class ConventionPluginsTest {
         assertTrue(output, output.contains("moduleName=sdk_release"))
     }
 
+    /** Checks the POM's kotlin-stdlib dependency is the catalog's `kotlinStdlibFloor`. */
     @Test
     fun androidLibrary_publishesStdlibFloorInPom() {
         writeSdkLibraryFixture()

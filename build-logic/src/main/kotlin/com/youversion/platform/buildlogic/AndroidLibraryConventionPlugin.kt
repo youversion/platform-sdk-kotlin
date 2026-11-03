@@ -13,11 +13,12 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
  * Applies the Android library and Kotlin plugins with the SDK's shared SDK levels, compiling Java and
  * Kotlin to JVM 11 bytecode on whatever JDK runs the build.
  *
- * - Kotlin language/API version 2.2 and kotlin-stdlib 2.2.0 in the POMs, so consumers on a Kotlin 2.2
- *   compiler can read the SDK's metadata.
+ * - Kotlin language/API version 2.2, so consumers on a Kotlin 2.2 compiler can read the SDK's metadata.
+ * - kotlin-stdlib 2.2.0 as the stdlib dependency published in the POMs.
  * - The Kotlin module name keeps its pre-2.4 form; Kotlin 2.4 prefixes the project group, which renames
  *   every mangled internal symbol in the API dumps.
- * - Unit tests run against compileSdk, so Robolectric's SDK 36 sandbox needs JDK 21.
+ * - Unit tests run against compileSdk, so Robolectric's SDK 36 sandbox needs JDK 21. The sandbox reads
+ *   FileDescriptor internals, so unit tests export `java.base/jdk.internal.access`.
  */
 class AndroidLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -44,7 +45,6 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                 }
                 testOptions {
                     unitTests.isIncludeAndroidResources = true
-                    // Robolectric's SDK 36 sandbox reads FileDescriptor internals through jdk.internal.access.
                     unitTests.all { it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED") }
                 }
             }

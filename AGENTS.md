@@ -20,6 +20,7 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 - `platform-reader`: main entry for apps. `api()` on `platform-core` because `BibleReader` takes a `BibleReference`. `implementation` on `platform-ui` because `platform-ui` never appears in public signatures.
 - `platform-bom`: bill of materials that constrains `platform-core`, `platform-ui`, and `platform-reader` to one version. Each SDK module depends on it via `api(platform(...))`.
 - `examples/sample-android` demonstrates the SDK.
+- `examples/consumer-baseline`: standalone build on the oldest supported consumer toolchain. It resolves the SDK from Maven Local, and CI builds it on every pull request.
 - Flow: `platform-core` ← `platform-ui` ← `platform-reader` ← `sample-android`.
 
 ## Initialization
