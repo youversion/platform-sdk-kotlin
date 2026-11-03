@@ -6,30 +6,34 @@ on:
       - 'gradle/**'
       - '**/*.gradle.kts'
       - 'gradle.properties'
-      - 'buildSrc/**'
+      - 'gradlew'
+      - 'gradlew.bat'
       - 'build-logic/**'
       - 'examples/consumer-baseline/**'
       - '.github/workflows/consumer-baseline.yml'
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
   consumer-baseline:
     name: Build Oldest Supported Consumer
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: 'zulu'
           java-version: '21'
-          cache: 'gradle'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew examples/consumer-baseline/gradlew
@@ -40,3 +44,14 @@ jobs:
       - name: Assemble consumer baseline
         working-directory: examples/consumer-baseline
         run: ./gradlew :app:assembleDebug
+
+      # R8 only logs a warning when it can't read a dependency's Kotlin metadata, so the build stays
+      # green unless the log is checked.
+      - name: Minify consumer baseline with R8
+        working-directory: examples/consumer-baseline
+        run: |
+          ./gradlew :app:assembleRelease 2>&1 | tee r8.log
+          if grep -qi "kotlin metadata" r8.log; then
+            echo "::error::R8 could not read the Kotlin metadata of a dependency; see the log above."
+            exit 1
+          fi
