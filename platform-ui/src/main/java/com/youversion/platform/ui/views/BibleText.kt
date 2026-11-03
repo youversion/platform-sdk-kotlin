@@ -456,21 +456,23 @@ private fun DrawScope.drawSelectionUnderlines(
             val endOffset = (range.last + 1).coerceAtMost(textLength)
             val startLine = layoutResult.getLineForOffset(range.first)
             val endLine = layoutResult.getLineForOffset(endOffset)
+            val startCaretX = layoutResult.getHorizontalPosition(range.first, true)
+            val endCaretX = layoutResult.getHorizontalPosition(endOffset, true)
 
             (startLine..endLine).forEach { line ->
                 val lineBottom = layoutResult.getLineBottom(line)
-                val lineLeft =
-                    if (line == startLine) {
-                        layoutResult.getHorizontalPosition(range.first, true)
-                    } else {
-                        layoutResult.getLineLeft(line)
-                    }
-                val lineRight =
-                    if (line == endLine) {
-                        layoutResult.getHorizontalPosition(endOffset, true)
-                    } else {
-                        layoutResult.getLineRight(line)
-                    }
+                val (lineLeft, lineRight) =
+                    highlightLineSpan(
+                        isRtl =
+                            layoutResult.getParagraphDirection(layoutResult.getLineStart(line)) ==
+                                ResolvedTextDirection.Rtl,
+                        isStartLine = line == startLine,
+                        isEndLine = line == endLine,
+                        startCaretX = startCaretX,
+                        endCaretX = endCaretX,
+                        lineLeft = layoutResult.getLineLeft(line),
+                        lineRight = layoutResult.getLineRight(line),
+                    )
                 drawLine(
                     color = color,
                     start = Offset(lineLeft, lineBottom),
