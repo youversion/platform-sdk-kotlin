@@ -10,6 +10,7 @@ import kotlin.io.path.createTempDirectory
 
 class ConventionPluginsTest {
     private val projectDir = createTempDirectory("convention-plugins").toFile()
+    private var catalog: File = versionCatalog
 
     @After
     fun tearDown() {
@@ -53,9 +54,10 @@ class ConventionPluginsTest {
         assertTrue(output, output.contains("expected minimum is 85"))
     }
 
-    /** Checks the release Kotlin compile targets Kotlin 2.2 consumers and keeps the pre-2.4 module name. */
+    /** Checks the release Kotlin compile follows `kotlinStdlibFloor` and keeps the pre-2.4 module name. */
     @Test
     fun androidLibrary_compilesForFloorKotlinConsumers() {
+        catalog = catalogWithStdlibFloor("2.3.0")
         writeSdkLibraryFixture()
         File(projectDir, "sdk/build.gradle.kts").appendText(
             """
@@ -75,16 +77,16 @@ class ConventionPluginsTest {
         )
 
         val output = build(":sdk:printKotlinOptions").output
-        val floorLanguageVersion = catalogVersion("kotlinStdlibFloor").substringBeforeLast('.')
 
-        assertTrue(output, output.contains("languageVersion=$floorLanguageVersion"))
-        assertTrue(output, output.contains("apiVersion=$floorLanguageVersion"))
+        assertTrue(output, output.contains("languageVersion=2.3"))
+        assertTrue(output, output.contains("apiVersion=2.3"))
         assertTrue(output, output.contains("moduleName=sdk_release"))
     }
 
     /** Checks the POM's kotlin-stdlib dependency is the catalog's `kotlinStdlibFloor`. */
     @Test
     fun androidLibrary_publishesStdlibFloorInPom() {
+        catalog = catalogWithStdlibFloor("2.3.0")
         writeSdkLibraryFixture()
 
         build(":sdk:generatePomFileForMavenPublication")
@@ -92,9 +94,7 @@ class ConventionPluginsTest {
 
         assertTrue(
             pom,
-            Regex(
-                "<artifactId>kotlin-stdlib</artifactId>\\s*<version>${catalogVersion("kotlinStdlibFloor")}</version>",
-            ).containsMatchIn(pom),
+            Regex("<artifactId>kotlin-stdlib</artifactId>\\s*<version>2.3.0</version>").containsMatchIn(pom),
         )
     }
 
@@ -167,7 +167,7 @@ class ConventionPluginsTest {
                 }
                 versionCatalogs {
                     create("libs") {
-                        from(files("${versionCatalog.invariantSeparatorsPath}"))
+                        from(files("${catalog.invariantSeparatorsPath}"))
                     }
                 }
             }
@@ -176,6 +176,16 @@ class ConventionPluginsTest {
             """.trimIndent(),
         )
     }
+
+    private fun catalogWithStdlibFloor(floor: String): File =
+        File(projectDir, "fixture.versions.toml").apply {
+            writeText(
+                versionCatalog.readText().replace(
+                    Regex("""(?m)^(kotlinStdlibFloor\s*=\s*)"[^"]*""""),
+                    "$1\"$floor\"",
+                ),
+            )
+        }
 
     private fun write(
         path: String,
