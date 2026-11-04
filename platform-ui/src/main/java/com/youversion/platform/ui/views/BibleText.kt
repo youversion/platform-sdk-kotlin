@@ -32,7 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.isSpecified
@@ -88,6 +88,10 @@ data class BibleTextOptions(
      */
     val lineSpacingFraction: Float? = null,
     val paragraphSpacing: TextUnit? = null,
+    /**
+     * The scripture's color; null means the enclosing [LocalTextStyle] color, or [LocalContentColor] when that is
+     * unspecified, as a [Text] with no color of its own would draw.
+     */
     val textColor: Color? = null,
     /**
      * The Words of Christ color; [Color.Unspecified] means the reader theme supplies it.
@@ -187,6 +191,9 @@ enum class BibleTextLoadingPhase {
  * the restyled text arrives. A restyle that fails keeps the chapter as it was styled and stays
  * [BibleTextLoadingPhase.SUCCESS].
  *
+ * The scripture lays out in its version's direction, overriding the host's [LocalLayoutDirection] inside it, so a
+ * right-to-left version reads right to left on a left-to-right device and the reverse.
+ *
  * @param reference The passage to render.
  * @param textOptions Text styling options (font family, font size, line spacing, etc.).
  * @param selectedVerses The verses to draw as selected.
@@ -197,7 +204,9 @@ enum class BibleTextLoadingPhase {
  * @param onStateChange Callback invoked when the loading phase changes.
  * @param onBlocksChange Callback invoked with the rendered blocks each time a load succeeds, so a host that needs
  * the same content can reuse them instead of rendering the chapter twice. It fires once per successful load: on
- * first composition, and again whenever [reference] or [textOptions] compares unequal to the previous value. It
+ * first composition, and again whenever [reference] or [textOptions] compares unequal to the previous value or the
+ * resolved text or Words of Christ color changes, such as when [BibleTextOptions.textColor] is null and the theme
+ * changes. It
  * does not fire when a load fails, is not permitted, or is cancelled. The blocks are rebuilt from scratch on every
  * load and carry no stable identity, so replace the previous list wholesale rather than diffing against it.
  */
@@ -399,6 +408,32 @@ internal fun String.toHighlightColorOrNull(): Color? {
 }
 
 /**
+ * One rectangle per line that [range] covers, spanning the range's share of that line at the line's full height.
+ * Lines the range only passes through stop at the text's edges, and the end line stops at the last character's
+ * glyph rather than at the caret after it, which on a wrap would sit at the start of the next line.
+ */
+internal fun TextLayoutResult.rangeLineRects(range: IntRange): List<Rect> {
+    val startLine = getLineForOffset(range.first)
+    val endLine = getLineForOffset(range.last)
+    val startCaretX = getHorizontalPosition(range.first, true)
+    val lastCharBounds = getBoundingBox(range.last)
+    return (startLine..endLine).map { line ->
+        val isRtl = getParagraphDirection(getLineStart(line)) == ResolvedTextDirection.Rtl
+        val (left, right) =
+            highlightLineSpan(
+                isRtl = isRtl,
+                isStartLine = line == startLine,
+                isEndLine = line == endLine,
+                startCaretX = startCaretX,
+                endCaretX = if (isRtl) lastCharBounds.left else lastCharBounds.right,
+                lineLeft = getLineLeft(line),
+                lineRight = getLineRight(line),
+            )
+        Rect(left = left, top = getLineTop(line), right = right, bottom = getLineBottom(line))
+    }
+}
+
+/**
  * Draws a continuous filled background rectangle behind every text line that contains characters in
  * [highlightedRanges]. Interior wrapped lines span the full width of their text so the highlight appears
  * as a single unbroken color rather than per-character backgrounds that would look jagged at line breaks.
@@ -410,32 +445,8 @@ private fun DrawScope.drawHighlightBackgrounds(
     highlightedRanges
         .filterNot { (range, _) -> range.isEmpty() }
         .forEach { (range, color) ->
-            val startLine = layoutResult.getLineForOffset(range.first)
-            val endLine = layoutResult.getLineForOffset(range.last)
-            val startCaretX = layoutResult.getHorizontalPosition(range.first, true)
-            val lastCharBounds = layoutResult.getBoundingBox(range.last)
-
-            (startLine..endLine).forEach { line ->
-                val lineTop = layoutResult.getLineTop(line)
-                val lineBottom = layoutResult.getLineBottom(line)
-                val isRtl =
-                    layoutResult.getParagraphDirection(layoutResult.getLineStart(line)) ==
-                        ResolvedTextDirection.Rtl
-                val (lineLeft, lineRight) =
-                    highlightLineSpan(
-                        isRtl = isRtl,
-                        isStartLine = line == startLine,
-                        isEndLine = line == endLine,
-                        startCaretX = startCaretX,
-                        endCaretX = if (isRtl) lastCharBounds.left else lastCharBounds.right,
-                        lineLeft = layoutResult.getLineLeft(line),
-                        lineRight = layoutResult.getLineRight(line),
-                    )
-                drawRect(
-                    color = color,
-                    topLeft = Offset(lineLeft, lineTop),
-                    size = Size(lineRight - lineLeft, lineBottom - lineTop),
-                )
+            layoutResult.rangeLineRects(range).forEach { rect ->
+                drawRect(color = color, topLeft = rect.topLeft, size = rect.size)
             }
         }
 }
@@ -449,34 +460,14 @@ private fun DrawScope.drawSelectionUnderlines(
     color: Color,
     strokeWidth: Dp,
 ) {
-    val textLength = layoutResult.layoutInput.text.length
     selectedRanges
         .filterNot { it.isEmpty() }
         .forEach { range ->
-            val endOffset = (range.last + 1).coerceAtMost(textLength)
-            val startLine = layoutResult.getLineForOffset(range.first)
-            val endLine = layoutResult.getLineForOffset(endOffset)
-            val startCaretX = layoutResult.getHorizontalPosition(range.first, true)
-            val endCaretX = layoutResult.getHorizontalPosition(endOffset, true)
-
-            (startLine..endLine).forEach { line ->
-                val lineBottom = layoutResult.getLineBottom(line)
-                val (lineLeft, lineRight) =
-                    highlightLineSpan(
-                        isRtl =
-                            layoutResult.getParagraphDirection(layoutResult.getLineStart(line)) ==
-                                ResolvedTextDirection.Rtl,
-                        isStartLine = line == startLine,
-                        isEndLine = line == endLine,
-                        startCaretX = startCaretX,
-                        endCaretX = endCaretX,
-                        lineLeft = layoutResult.getLineLeft(line),
-                        lineRight = layoutResult.getLineRight(line),
-                    )
+            layoutResult.rangeLineRects(range).forEach { rect ->
                 drawLine(
                     color = color,
-                    start = Offset(lineLeft, lineBottom),
-                    end = Offset(lineRight, lineBottom),
+                    start = rect.bottomLeft,
+                    end = rect.bottomRight,
                     strokeWidth = strokeWidth.toPx(),
                 )
             }

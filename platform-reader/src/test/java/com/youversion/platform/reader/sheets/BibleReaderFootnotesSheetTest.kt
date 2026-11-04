@@ -1,13 +1,21 @@
 package com.youversion.platform.reader.sheets
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
@@ -32,6 +40,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
 class BibleReaderFootnotesSheetTest {
@@ -168,12 +180,29 @@ class BibleReaderFootnotesSheetTest {
         )
     }
 
-    private fun renderFootnotes(footnotes: List<AnnotatedString>) {
+    private fun renderFootnotes(
+        footnotes: List<AnnotatedString>,
+        isVersionRightToLeft: Boolean = false,
+        deviceDirection: LayoutDirection = LayoutDirection.Ltr,
+    ) {
         composeTestRule.setContent {
             BibleReaderMaterialTheme {
-                Footnotes(footnotes = footnotes, isVersionRightToLeft = false)
+                CompositionLocalProvider(LocalLayoutDirection provides deviceDirection) {
+                    Footnotes(footnotes = footnotes, isVersionRightToLeft = isVersionRightToLeft)
+                }
             }
         }
+    }
+
+    private fun textLayout(text: String): TextLayoutResult {
+        val layoutResults = mutableListOf<TextLayoutResult>()
+        composeTestRule
+            .onNodeWithText(text)
+            .fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult]
+            .action
+            ?.invoke(layoutResults)
+        return layoutResults.first()
     }
 
     // ----- Header
@@ -312,5 +341,41 @@ class BibleReaderFootnotesSheetTest {
                 any(),
             )
         }
+    }
+
+    // ----- Text Direction
+
+    @Test
+    fun `footnote text direction follows the version`() {
+        assertEquals(TextDirection.Rtl, footnoteTextDirection(isVersionRightToLeft = true))
+        assertEquals(TextDirection.Ltr, footnoteTextDirection(isVersionRightToLeft = false))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a right-to-left footnote reads right to left on a left-to-right device with its label on the left`() {
+        renderFootnotes(listOf(AnnotatedString("Selah שלום")), isVersionRightToLeft = true)
+
+        assertEquals(ResolvedTextDirection.Rtl, textLayout("Selah שלום").getParagraphDirection(0))
+        val label = composeTestRule.onNodeWithText("a.").getBoundsInRoot()
+        val body = composeTestRule.onNodeWithText("Selah שלום").getBoundsInRoot()
+        assertTrue(label.left < body.left)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a left-to-right footnote reads left to right on a right-to-left device with its label on the right`() {
+        renderFootnotes(
+            listOf(AnnotatedString("שלום Selah")),
+            isVersionRightToLeft = false,
+            deviceDirection = LayoutDirection.Rtl,
+        )
+
+        assertEquals(ResolvedTextDirection.Ltr, textLayout("שלום Selah").getParagraphDirection(0))
+        val label = composeTestRule.onNodeWithText("a.").getBoundsInRoot()
+        val body = composeTestRule.onNodeWithText("שלום Selah").getBoundsInRoot()
+        assertTrue(label.left > body.left)
     }
 }

@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.LayoutDirection
 
 /**
  * Lays out [content] and its text in the Bible version's direction rather than the device's, so a right-to-left
- * version reads right to left even where a paragraph opens with left-to-right characters.
+ * version reads right to left even where a block opens with left-to-right characters.
  */
 @Composable
 internal fun ProvideVersionDirection(

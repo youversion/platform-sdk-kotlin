@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -935,6 +936,7 @@ class BibleTextTests {
     private fun setBibleTextContent(
         version: BibleVersion,
         blocks: List<BibleTextBlock>,
+        deviceDirection: LayoutDirection = LayoutDirection.Ltr,
     ) {
         coEvery { mockVersionRepository.version(any()) } returns version
         coEvery {
@@ -942,7 +944,7 @@ class BibleTextTests {
         } returns blocks
 
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            CompositionLocalProvider(LocalLayoutDirection provides deviceDirection) {
                 BibleText(reference = testReference)
             }
         }
@@ -952,7 +954,7 @@ class BibleTextTests {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(sdk = [34])
-    fun `a right-to-left version renders a paragraph starting with Latin text right to left`() {
+    fun `a right-to-left version renders a block starting with Latin text right to left`() {
         setBibleTextContent(rtlVersion, listOf(annotatedBlock("Selah שלום")))
 
         assertEquals(ResolvedTextDirection.Rtl, textLayout("Selah שלום").getParagraphDirection(0))
@@ -961,8 +963,26 @@ class BibleTextTests {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(sdk = [34])
-    fun `a left-to-right version renders a paragraph starting with Hebrew text left to right`() {
+    fun `a left-to-right version renders a block starting with Hebrew text left to right`() {
         setBibleTextContent(ltrVersion, listOf(annotatedBlock("שלום Selah")))
+
+        assertEquals(ResolvedTextDirection.Ltr, textLayout("שלום Selah").getParagraphDirection(0))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a right-to-left version renders a block starting with Latin text right to left on a right-to-left device`() {
+        setBibleTextContent(rtlVersion, listOf(annotatedBlock("Selah שלום")), LayoutDirection.Rtl)
+
+        assertEquals(ResolvedTextDirection.Rtl, textLayout("Selah שלום").getParagraphDirection(0))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a left-to-right version renders a block starting with Hebrew text left to right on a right-to-left device`() {
+        setBibleTextContent(ltrVersion, listOf(annotatedBlock("שלום Selah")), LayoutDirection.Rtl)
 
         assertEquals(ResolvedTextDirection.Ltr, textLayout("שלום Selah").getParagraphDirection(0))
     }
@@ -994,7 +1014,7 @@ class BibleTextTests {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(sdk = [34])
-    fun `a right-to-left version renders a scrolling paragraph starting with Latin text right to left`() {
+    fun `a right-to-left version renders a scrolling block starting with Latin text right to left`() {
         setContentWithBlock(verses = listOf("Selah שלום"), version = rtlVersion)
 
         assertEquals(ResolvedTextDirection.Rtl, textLayout("Selah שלום").getParagraphDirection(0))
@@ -1003,7 +1023,7 @@ class BibleTextTests {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(sdk = [34])
-    fun `a left-to-right version renders a scrolling paragraph starting with Hebrew text left to right`() {
+    fun `a left-to-right version renders a scrolling block starting with Hebrew text left to right`() {
         setContentWithBlock(verses = listOf("שלום Selah"), version = ltrVersion)
 
         assertEquals(ResolvedTextDirection.Ltr, textLayout("שלום Selah").getParagraphDirection(0))
@@ -1734,6 +1754,36 @@ class BibleTextTests {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Selah").assertIsDisplayed()
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a right-to-left selection ending at a wrap is underlined on its start, middle and end lines only`() {
+        lateinit var layout: TextLayoutResult
+        composeTestRule.setContent {
+            ProvideVersionDirection(isRightToLeft = true) {
+                Text(
+                    text = "בראשית ברא אלהים את השמים ואת הארץ והארץ היתה תהו ובהו וחשך על פני תהום",
+                    modifier = Modifier.width(120.dp),
+                    onTextLayout = { layout = it },
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+        assertTrue(layout.lineCount > 3)
+        val range = 2 until layout.getLineEnd(2)
+
+        val rects = layout.rangeLineRects(range)
+
+        assertEquals(3, rects.size)
+        assertEquals(layout.getHorizontalPosition(range.first, true), rects[0].right, 0.5f)
+        assertEquals(layout.getLineLeft(0), rects[0].left, 0.5f)
+        assertEquals(layout.getLineLeft(1), rects[1].left, 0.5f)
+        assertEquals(layout.getLineRight(1), rects[1].right, 0.5f)
+        assertEquals(layout.getLineRight(2), rects[2].right, 0.5f)
+        assertEquals(layout.getBoundingBox(range.last).left, rects[2].left, 0.5f)
+        assertEquals(layout.getLineBottom(2), rects[2].bottom, 0.5f)
     }
 
     // endregion

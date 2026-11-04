@@ -310,9 +310,10 @@ class BibleIntroTextTests {
 
     // region Text Direction
 
-    private fun paragraphDirection(
+    private fun blockDirection(
         version: BibleVersion,
         text: String,
+        deviceDirection: LayoutDirection = LayoutDirection.Ltr,
     ): ResolvedTextDirection {
         coEvery { mockVersionRepository.version(any()) } returns version
         coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
@@ -321,7 +322,7 @@ class BibleIntroTextTests {
         } returns listOf(annotatedBlock(text))
 
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            CompositionLocalProvider(LocalLayoutDirection provides deviceDirection) {
                 BibleIntroText(1, "GEN", "INTRO")
             }
         }
@@ -340,15 +341,29 @@ class BibleIntroTextTests {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(sdk = [34])
-    fun `a right-to-left version renders a paragraph starting with Latin text right to left`() {
-        assertEquals(ResolvedTextDirection.Rtl, paragraphDirection(rtlVersion, "Selah שלום"))
+    fun `a right-to-left version renders a block starting with Latin text right to left`() {
+        assertEquals(ResolvedTextDirection.Rtl, blockDirection(rtlVersion, "Selah שלום"))
     }
 
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(sdk = [34])
-    fun `a left-to-right version renders a paragraph starting with Hebrew text left to right`() {
-        assertEquals(ResolvedTextDirection.Ltr, paragraphDirection(ltrVersion, "שלום Selah"))
+    fun `a left-to-right version renders a block starting with Hebrew text left to right`() {
+        assertEquals(ResolvedTextDirection.Ltr, blockDirection(ltrVersion, "שלום Selah"))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a right-to-left version renders a block starting with Latin text right to left on a right-to-left device`() {
+        assertEquals(ResolvedTextDirection.Rtl, blockDirection(rtlVersion, "Selah שלום", LayoutDirection.Rtl))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a left-to-right version renders a block starting with Hebrew text left to right on a right-to-left device`() {
+        assertEquals(ResolvedTextDirection.Ltr, blockDirection(ltrVersion, "שלום Selah", LayoutDirection.Rtl))
     }
 
     // endregion
@@ -561,6 +576,39 @@ class BibleIntroTextTests {
         composeTestRule.onNodeWithText("Cell 2").assertIsDisplayed()
         composeTestRule.onNodeWithText("Cell 3").assertIsDisplayed()
         composeTestRule.onNodeWithText("Cell 4").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a right-to-left version places a table's first cell on the right`() {
+        coEvery { mockVersionRepository.version(any()) } returns rtlVersion
+        coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
+        coEvery {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns
+            listOf(
+                BibleTextBlock(
+                    text = AnnotatedString(""),
+                    chapter = 1,
+                    rows = listOf(listOf(AnnotatedString("Cell 1"), AnnotatedString("Cell 2"))),
+                    firstLineHeadIndent = 0,
+                    headIndent = 0,
+                    marginTop = 8.dp,
+                    marginBottom = 0.dp,
+                    alignment = TextAlign.Start,
+                    footnotes = emptyList(),
+                ),
+            )
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                BibleIntroText(1, "GEN", "INTRO")
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        val first = composeTestRule.onNodeWithText("Cell 1").getBoundsInRoot()
+        val second = composeTestRule.onNodeWithText("Cell 2").getBoundsInRoot()
+        assertTrue(first.left > second.left)
     }
 
     // endregion
