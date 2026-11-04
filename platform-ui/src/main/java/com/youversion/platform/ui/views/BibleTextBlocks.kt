@@ -211,6 +211,10 @@ fun rememberBibleTextBlocksState(
  * Emits the chapter held by [state] as one item per block, so a host's own header and footer can share a list with
  * it. A [layoutState] given here learns where each verse was laid out, so the host can scroll to one.
  *
+ * Each block lays out in its version's direction, overriding the host's
+ * [androidx.compose.ui.platform.LocalLayoutDirection] inside it. The host's own header and footer items keep the
+ * device's direction.
+ *
  * Until the load succeeds this is a single placeholder item instead. A non-null [focusedReference] draws the
  * verses it covers at full strength and dims everything else, the rest of the block holding them included. One
  * no block covers is ignored, since dimming every block would fade the chapter while pointing at nothing.

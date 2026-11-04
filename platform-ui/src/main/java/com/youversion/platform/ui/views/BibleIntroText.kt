@@ -46,6 +46,10 @@ import kotlinx.coroutines.CancellationException
  * This view reuses the same rendering pipeline as [BibleText] for consistent
  * styling, but does not support verse selection or tapping.
  *
+ * The intro lays out in its version's direction, overriding the host's
+ * [androidx.compose.ui.platform.LocalLayoutDirection] inside it, so a right-to-left version reads right to left on a
+ * left-to-right device and the reverse.
+ *
  * @param versionId The Bible version ID.
  * @param bookUSFM The book USFM code (e.g., "GEN").
  * @param passageId The intro passage ID for the book.

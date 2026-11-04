@@ -1,6 +1,9 @@
 package com.youversion.platform.reader.screens.bible
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
@@ -24,6 +27,7 @@ import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.Config
@@ -64,6 +68,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.GraphicsMode
 import kotlin.math.absoluteValue
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -831,6 +836,71 @@ class BibleScreenTest {
             )
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Test intro footnote").assertIsDisplayed()
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @org.robolectric.annotation.Config(sdk = [34])
+    fun `the intro footnotes sheet reads a right-to-left version right to left`() {
+        stubSuccessfulTextLoad()
+        stateFlow.value =
+            BibleReaderViewModel.State(
+                bibleReference = defaultReference,
+                bibleVersion = BibleVersion(id = 1, books = listOf(genesisBook), textDirection = "rtl"),
+                showingIntroFootnotes = true,
+                introFootnotes = listOf(AnnotatedString("Selah שלום")),
+            )
+
+        composeTestRule.setContent {
+            BibleScreen(
+                viewModel = mockViewModel,
+                onReferencesClick = {},
+                onVersionsClick = {},
+                onFontsClick = {},
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        val layoutResults = mutableListOf<TextLayoutResult>()
+        composeTestRule
+            .onNodeWithText("Selah שלום")
+            .fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult]
+            .action
+            ?.invoke(layoutResults)
+        assertEquals(ResolvedTextDirection.Rtl, layoutResults.first().getParagraphDirection(0))
+    }
+
+    // endregion
+
+    // region Text Color
+
+    @Test
+    fun `scripture is colored with the theme's onBackground`() {
+        stubSuccessfulTextLoad()
+        stateFlow.value = BibleReaderViewModel.State(bibleReference = defaultReference, bibleVersion = testVersion)
+        // MockK hands value-class arguments over unboxed, so Color arrives as its packed Long.
+        var textColorBits: Any? = null
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } coAnswers {
+            textColorBits = args[6]
+            listOf(mockk<BibleTextBlock>(relaxed = true))
+        }
+
+        composeTestRule.setContent {
+            MaterialTheme(colorScheme = lightColorScheme(onBackground = Color.Magenta)) {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+        }
+        composeTestRule.waitUntil { textColorBits != null }
+
+        assertEquals(Color.Magenta.value.toLong(), textColorBits)
     }
 
     // endregion

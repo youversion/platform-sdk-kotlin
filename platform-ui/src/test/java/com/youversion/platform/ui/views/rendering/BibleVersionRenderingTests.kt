@@ -207,7 +207,7 @@ class BibleVersionRenderingTests {
         }
 
     @Test
-    fun `verse numbers render at 55 percent of the text color's opacity`() =
+    fun `verse numbers render at 60 percent of the text color's opacity`() =
         runTest {
             val blocks = renderBlocks(SIMPLE_VERSE_HTML, FULL_CHAPTER_REF, textColor = Color.Black)
             val text = blocks.first { it.text.text.contains("1\u00A0") }.text
@@ -216,7 +216,7 @@ class BibleVersionRenderingTests {
                 text.spanStyles
                     .first { it.start <= labelStart && labelStart < it.end }
                     .item.color
-            assertEquals(Color.Black.copy(alpha = 0.55f), labelColor)
+            assertEquals(Color.Black.copy(alpha = 0.6f), labelColor)
         }
 
     // ----- verse range filtering

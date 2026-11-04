@@ -354,6 +354,19 @@ class BibleReaderFootnotesSheetTest {
     @Test
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     @Config(sdk = [34])
+    fun `the sheet reads a right-to-left version's footnotes right to left`() {
+        renderSheet(
+            version = BibleVersion(id = 1, textDirection = "rtl"),
+            reference = null,
+            footnotes = listOf(AnnotatedString("Selah שלום")),
+        )
+
+        assertEquals(ResolvedTextDirection.Rtl, textLayout("Selah שלום").getParagraphDirection(0))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
     fun `a right-to-left footnote reads right to left on a left-to-right device with its label on the left`() {
         renderFootnotes(listOf(AnnotatedString("Selah שלום")), isVersionRightToLeft = true)
 
