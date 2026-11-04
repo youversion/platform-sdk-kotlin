@@ -77,7 +77,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
     @Test
     fun `reports an unauthenticated token request as missing authentication`() =
         runTest {
-            MockEngine { respond("", HttpStatusCode.Unauthorized) }
+            MockEngine { respondJson("""{"message":"Token expired"}""", HttpStatusCode.Unauthorized) }
                 .also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
@@ -89,6 +89,8 @@ class DataExchangeApiTests : YouVersionPlatformTest {
                     )
                 }
             assertEquals(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION, exception.reason)
+            assertEquals(401, exception.statusCode)
+            assertEquals("Token expired", exception.serverMessage)
         }
 
     @Test

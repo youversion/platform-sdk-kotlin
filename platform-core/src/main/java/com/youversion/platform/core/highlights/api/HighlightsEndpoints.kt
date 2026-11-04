@@ -3,9 +3,9 @@ package com.youversion.platform.core.highlights.api
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.api.buildYouVersionUrlString
-import com.youversion.platform.core.api.notPermitted
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.api.parseApiResponse
+import com.youversion.platform.core.api.requestFailure
 import com.youversion.platform.core.highlights.models.Highlight
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import io.ktor.client.HttpClient
@@ -90,7 +90,7 @@ internal object HighlightsEndpoints : HighlightsApi {
 
         if (response.status == HttpStatusCode.Unauthorized) {
             Logger.w { "error 401: unauthorized. The user is signed out or their access token has expired" }
-            throw YouVersionNetworkException(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION)
+            throw response.requestFailure(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION)
         }
 
         if (response.status == HttpStatusCode.NoContent) {
@@ -124,7 +124,7 @@ internal object HighlightsEndpoints : HighlightsApi {
         val response = request()
         if (response.status == HttpStatusCode.Forbidden) {
             Logger.w { "Highlight write forbidden: the user has not granted permission to change highlights" }
-            throw notPermitted()
+            throw response.requestFailure(YouVersionNetworkException.Reason.NOT_PERMITTED)
         }
         return response.status.isSuccess()
     }

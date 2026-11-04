@@ -28,25 +28,33 @@ fun MockRequestHandleScope.respondJson(
 fun testUnauthorizedNotPermitted(block: suspend () -> Unit) =
     runTest {
         MockEngine { request ->
-            respond("", HttpStatusCode.Unauthorized)
+            respondJson("""{"message":"Invalid app key"}""", HttpStatusCode.Unauthorized)
         }.also { engine -> startYouVersionPlatformTest(engine) }
 
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         assertFailsWith<YouVersionNetworkException> { block() }
-            .apply { assertEquals(YouVersionNetworkException.Reason.NOT_PERMITTED, reason) }
+            .apply {
+                assertEquals(YouVersionNetworkException.Reason.NOT_PERMITTED, reason)
+                assertEquals(401, statusCode)
+                assertEquals("Invalid app key", serverMessage)
+            }
     }
 
 fun testForbiddenNotPermitted(block: suspend () -> Unit) =
     runTest {
         MockEngine { request ->
-            respond("", HttpStatusCode.Forbidden)
+            respondJson("""{"message":"App key lacks access"}""", HttpStatusCode.Forbidden)
         }.also { engine -> startYouVersionPlatformTest(engine) }
 
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         assertFailsWith<YouVersionNetworkException> { block() }
-            .apply { assertEquals(YouVersionNetworkException.Reason.NOT_PERMITTED, reason) }
+            .apply {
+                assertEquals(YouVersionNetworkException.Reason.NOT_PERMITTED, reason)
+                assertEquals(403, statusCode)
+                assertEquals("App key lacks access", serverMessage)
+            }
     }
 
 fun testServerError(block: suspend () -> Unit) =
