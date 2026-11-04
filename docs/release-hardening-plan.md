@@ -29,7 +29,7 @@ Two ticket-text assumptions did not match the repo and shaped the plan:
 - **publish** — environment selected at runtime: `production-breaking` when `breaking == true`, `production` otherwise. On push: runs `npx semantic-release` as before. On workflow_dispatch: runs [`scripts/gradle-publish-wrapper.sh`](../scripts/gradle-publish-wrapper.sh) against only the missing modules.
 - **post-publish-verify** — runs [`scripts/poll-central-index.sh`](../scripts/poll-central-index.sh) to wait up to 30 minutes for `repo1.maven.org` propagation, then re-runs the presence script. Always writes a `$GITHUB_STEP_SUMMARY` table; never fails the workflow on propagation lag.
 
-A composite action at [`.github/actions/setup-release/action.yml`](../.github/actions/setup-release/action.yml) deduplicates the JDK 17 / Gradle / Node setup steps across the three jobs that need them.
+A composite action at [`.github/actions/setup-release/action.yml`](../.github/actions/setup-release/action.yml) deduplicates the JDK 21 / Gradle / Node setup steps across the three jobs that need them.
 
 ### 2. Idempotency probes — `repo1.maven.org`, not `search.maven.org`
 
