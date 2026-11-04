@@ -113,14 +113,19 @@ public class YouVersionNetworkException private constructor(
     }
 
     internal companion object {
+        /**
+         * Creates an exception for an error response with [status], carrying the server's details. The reason is
+         * [reason] when given, otherwise classified from [status].
+         */
         fun requestFailed(
             status: HttpStatusCode,
+            reason: Reason? = null,
             serverMessage: String? = null,
             retryAfter: Duration? = null,
             validationIssues: List<ValidationIssue> = emptyList(),
         ): YouVersionNetworkException {
             val reason =
-                when (status.value) {
+                reason ?: when (status.value) {
                     HttpStatusCode.TooManyRequests.value -> Reason.RATE_LIMITED
                     in 500..599 -> Reason.SERVER_ERROR
                     in 400..499 -> Reason.REQUEST_REJECTED

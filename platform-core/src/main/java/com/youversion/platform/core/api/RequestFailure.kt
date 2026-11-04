@@ -17,7 +17,14 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-internal suspend fun HttpResponse.requestFailure(): YouVersionNetworkException {
+/**
+ * Creates an exception for this error response, carrying its status, the server's message, `Retry-After`, and any
+ * validation issues. The reason is [reason] when given, otherwise classified from the status. A body that cannot be
+ * read or parsed leaves the server's details empty.
+ */
+internal suspend fun HttpResponse.requestFailure(
+    reason: YouVersionNetworkException.Reason? = null,
+): YouVersionNetworkException {
     val body =
         try {
             ErrorBody.parse(bodyAsText(), contentType())
@@ -28,12 +35,16 @@ internal suspend fun HttpResponse.requestFailure(): YouVersionNetworkException {
         }
     return YouVersionNetworkException.requestFailed(
         status = status,
+        reason = reason,
         serverMessage = body.message,
         retryAfter = retryAfter(headers[HttpHeaders.RetryAfter]),
         validationIssues = body.validationIssues,
     )
 }
 
+/**
+ * The details an error response body explains a failure with.
+ */
 internal class ErrorBody(
     val message: String?,
     val validationIssues: List<ValidationIssue>,
@@ -41,6 +52,9 @@ internal class ErrorBody(
     companion object {
         val EMPTY = ErrorBody(message = null, validationIssues = emptyList())
 
+        /**
+         * Reads a JSON error body, or uses a non-blank `text/plain` body as the message. Any other body is [EMPTY].
+         */
         fun parse(
             text: String,
             contentType: ContentType?,
@@ -95,6 +109,10 @@ internal class ErrorBody(
     }
 }
 
+/**
+ * Reads a `Retry-After` header given in seconds or as an HTTP date, never negative. Returns `null` when [value] is
+ * missing or malformed.
+ */
 internal fun retryAfter(
     value: String?,
     nowMillis: Long = System.currentTimeMillis(),
