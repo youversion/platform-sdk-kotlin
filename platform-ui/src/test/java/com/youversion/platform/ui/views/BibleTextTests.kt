@@ -1786,6 +1786,26 @@ class BibleTextTests {
         assertEquals(layout.getLineBottom(2), rects[2].bottom, 0.5f)
     }
 
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a selection ending in opposite-direction text is underlined under every selected glyph`() {
+        val opening = "Light. "
+        val mixed = "ab אבג"
+        lateinit var layout: TextLayoutResult
+        composeTestRule.setContent { Text(text = opening + mixed + " Amen.", onTextLayout = { layout = it }) }
+        composeTestRule.waitForIdle()
+        val range = opening.length until opening.length + mixed.length
+        val glyphs = layout.getPathForRange(range.first, range.last + 1).getBounds()
+        assertTrue(glyphs.right > layout.getBoundingBox(range.last).right)
+
+        val rects = layout.rangeLineRects(range)
+
+        assertEquals(1, rects.size)
+        assertEquals(glyphs.left, rects[0].left, 0.5f)
+        assertEquals(glyphs.right, rects[0].right, 0.5f)
+    }
+
     // endregion
 
     // region Verse Focus

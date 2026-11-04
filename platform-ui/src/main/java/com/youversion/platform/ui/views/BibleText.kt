@@ -410,7 +410,8 @@ internal fun String.toHighlightColorOrNull(): Color? {
 /**
  * One rectangle per line that [range] covers, spanning the range's share of that line at the line's full height.
  * Lines the range only passes through stop at the text's edges, and the end line stops at the last character's
- * glyph rather than at the caret after it, which on a wrap would sit at the start of the next line.
+ * glyph rather than at the caret after it, which on a wrap would sit at the start of the next line. Each line also
+ * widens to every selected glyph on it, since opposite-direction text can place them beyond the first and last.
  */
 internal fun TextLayoutResult.rangeLineRects(range: IntRange): List<Rect> {
     val startLine = getLineForOffset(range.first)
@@ -429,7 +430,15 @@ internal fun TextLayoutResult.rangeLineRects(range: IntRange): List<Rect> {
                 lineLeft = getLineLeft(line),
                 lineRight = getLineRight(line),
             )
-        Rect(left = left, top = getLineTop(line), right = right, bottom = getLineBottom(line))
+        val glyphStart = maxOf(range.first, getLineStart(line))
+        val glyphEnd = minOf(range.last + 1, getLineEnd(line, visibleEnd = true))
+        val glyphs = if (glyphStart < glyphEnd) getPathForRange(glyphStart, glyphEnd).getBounds() else null
+        Rect(
+            left = minOf(left, glyphs?.left ?: left),
+            top = getLineTop(line),
+            right = maxOf(right, glyphs?.right ?: right),
+            bottom = getLineBottom(line),
+        )
     }
 }
 
