@@ -111,28 +111,33 @@ public final class com/youversion/platform/core/api/YouVersionApi {
 public final class com/youversion/platform/core/api/YouVersionNetworkException : java/lang/Exception {
 	public fun <init> (Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;Ljava/lang/Exception;)V
 	public synthetic fun <init> (Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;Ljava/lang/Exception;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getFailure ()Lcom/youversion/platform/core/api/YouVersionNetworkException$Failure;
+	public synthetic fun <init> (Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;Ljava/lang/Exception;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/time/Duration;Ljava/util/List;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getReason ()Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+	public final fun getRetryAfter-FghU774 ()Lkotlin/time/Duration;
+	public final fun getServerMessage ()Ljava/lang/String;
+	public final fun getStatusCode ()Ljava/lang/Integer;
+	public final fun getValidationIssues ()Ljava/util/List;
 }
 
-public final class com/youversion/platform/core/api/YouVersionNetworkException$Failure : java/lang/Enum {
-	public static final field RATE_LIMITED Lcom/youversion/platform/core/api/YouVersionNetworkException$Failure;
-	public static final field REQUEST_REJECTED Lcom/youversion/platform/core/api/YouVersionNetworkException$Failure;
-	public static final field SERVER_ERROR Lcom/youversion/platform/core/api/YouVersionNetworkException$Failure;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lcom/youversion/platform/core/api/YouVersionNetworkException$Failure;
-	public static fun values ()[Lcom/youversion/platform/core/api/YouVersionNetworkException$Failure;
-}
-
-public final class com/youversion/platform/core/api/YouVersionNetworkException$Reason : java/lang/Enum {
-	public static final field CANNOT_DOWNLOAD Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
-	public static final field INVALID_DOWNLOAD Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+public final class com/youversion/platform/core/api/YouVersionNetworkException$Reason {
+	public static final field Companion Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason$Companion;
 	public static final field INVALID_RESPONSE Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
 	public static final field MISSING_AUTHENTICATION Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
 	public static final field NOT_PERMITTED Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
-	public static fun values ()[Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+	public static final field RATE_LIMITED Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+	public static final field REQUEST_FAILED Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+	public static final field REQUEST_REJECTED Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+	public static final field SERVER_ERROR Lcom/youversion/platform/core/api/YouVersionNetworkException$Reason;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/api/YouVersionNetworkException$Reason$Companion {
+}
+
+public final class com/youversion/platform/core/api/YouVersionNetworkException$ValidationIssue {
+	public final fun getLocation ()Ljava/util/List;
+	public final fun getMessage ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class com/youversion/platform/core/bibles/api/BiblesApi {

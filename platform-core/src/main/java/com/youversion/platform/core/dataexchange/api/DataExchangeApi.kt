@@ -14,11 +14,11 @@ public interface DataExchangeApi {
      * @return The token to pass to the permission page.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] with reason
      *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.MISSING_AUTHENTICATION] when no
-     *         user is signed in or the app key is not configured,
+     *         user is signed in, the app key is not configured, or the server does not accept the user's access
+     *         token (`401`),
      *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.NOT_PERMITTED] when the server
-     *         refuses the request, or
-     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.CANNOT_DOWNLOAD] otherwise, with
-     *         [com.youversion.platform.core.api.YouVersionNetworkException.failure] saying whether a retry may help.
+     *         refuses the request (`403`),
+     *         or another reason describing the failed response otherwise.
      */
     public suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken
 }

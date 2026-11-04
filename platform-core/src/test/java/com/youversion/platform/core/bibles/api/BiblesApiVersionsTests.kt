@@ -6,9 +6,9 @@ import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
-import com.youversion.platform.helpers.testCannotDownload
 import com.youversion.platform.helpers.testForbiddenNotPermitted
 import com.youversion.platform.helpers.testInvalidResponse
+import com.youversion.platform.helpers.testServerError
 import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -88,8 +88,8 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test versions throws cannot download if request failed`() =
-        testCannotDownload {
+    fun `test versions throws server error if request failed`() =
+        testServerError {
             YouVersionApi.bible.versions("eng")
         }
 
@@ -181,8 +181,8 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test version throws cannot download if request failed`() =
-        testCannotDownload {
+    fun `test version throws server error if request failed`() =
+        testServerError {
             YouVersionApi.bible.version(206)
         }
 
@@ -227,8 +227,8 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test versionMetaData throws cannot download if request failed`() =
-        testCannotDownload {
+    fun `test versionMetaData throws server error if request failed`() =
+        testServerError {
             YouVersionApi.bible.versionMetaData(206)
         }
 
@@ -270,8 +270,8 @@ class BiblesApiVersionsTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test versionIndex throws cannot download if request failed`() =
-        testCannotDownload {
+    fun `test versionIndex throws server error if request failed`() =
+        testServerError {
             YouVersionApi.bible.versionIndex(206)
         }
 

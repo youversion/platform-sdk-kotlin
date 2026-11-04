@@ -7,9 +7,9 @@ import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
-import com.youversion.platform.helpers.testCannotDownload
 import com.youversion.platform.helpers.testForbiddenNotPermitted
 import com.youversion.platform.helpers.testInvalidResponse
+import com.youversion.platform.helpers.testServerError
 import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.http.HttpMethod
@@ -81,8 +81,8 @@ class BiblesApiPassageTests : YouVersionPlatformTest {
         testForbiddenNotPermitted { YouVersionApi.bible.passage(reference) }
 
     @Test
-    fun `test passage throws cannot download if request failed`() =
-        testCannotDownload { YouVersionApi.bible.passage(reference) }
+    fun `test passage throws server error if request failed`() =
+        testServerError { YouVersionApi.bible.passage(reference) }
 
     @Test
     fun `test passage throws invalid response if cannot parse`() =
@@ -189,8 +189,8 @@ class BiblesApiPassageTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test passage with versionId and passageId throws cannot download if request failed`() =
-        testCannotDownload {
+    fun `test passage with versionId and passageId throws server error if request failed`() =
+        testServerError {
             YouVersionApi.bible.passage(versionId = 206, passageId = "GEN.INTRO")
         }
 

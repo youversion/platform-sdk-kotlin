@@ -6,9 +6,9 @@ import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
-import com.youversion.platform.helpers.testCannotDownload
 import com.youversion.platform.helpers.testForbiddenNotPermitted
 import com.youversion.platform.helpers.testInvalidResponse
+import com.youversion.platform.helpers.testServerError
 import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.http.HttpMethod
@@ -78,8 +78,8 @@ class OrganizationsApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test organizations throws cannot download if request failed`() =
-        testCannotDownload {
+    fun `test organizations throws server error if request failed`() =
+        testServerError {
             YouVersionApi.organizations.organizations(111)
         }
 
@@ -177,8 +177,8 @@ class OrganizationsApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test organization throws cannot download if request failed`() =
-        testCannotDownload {
+    fun `test organization throws server error if request failed`() =
+        testServerError {
             YouVersionApi.organizations.organization("abc123")
         }
 

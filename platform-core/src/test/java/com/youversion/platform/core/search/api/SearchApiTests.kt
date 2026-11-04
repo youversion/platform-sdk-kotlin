@@ -11,9 +11,9 @@ import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
-import com.youversion.platform.helpers.testCannotDownload
 import com.youversion.platform.helpers.testForbiddenNotPermitted
 import com.youversion.platform.helpers.testInvalidResponse
+import com.youversion.platform.helpers.testServerError
 import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -408,8 +408,8 @@ class SearchApiTests : YouVersionPlatformTest {
         testForbiddenNotPermitted { YouVersionApi.search.verses(query = "love", bibleId = 111) }
 
     @Test
-    fun `test verse search server error cannot download`() =
-        testCannotDownload { YouVersionApi.search.verses(query = "love", bibleId = 111) }
+    fun `test verse search throws server error`() =
+        testServerError { YouVersionApi.search.verses(query = "love", bibleId = 111) }
 
     @Test
     fun `test verse search malformed body is an invalid response`() =
@@ -625,8 +625,8 @@ class SearchApiTests : YouVersionPlatformTest {
         testForbiddenNotPermitted { YouVersionApi.search.images(query = "love", bibleId = 111) }
 
     @Test
-    fun `test image search server error cannot download`() =
-        testCannotDownload { YouVersionApi.search.images(query = "love", bibleId = 111) }
+    fun `test image search throws server error`() =
+        testServerError { YouVersionApi.search.images(query = "love", bibleId = 111) }
 
     @Test
     fun `test image search malformed body is an invalid response`() =
