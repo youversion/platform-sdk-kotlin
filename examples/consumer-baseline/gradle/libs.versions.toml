@@ -1,5 +1,6 @@
+# The oldest toolchain the SDK supports, not a recommendation. Raising it: see CONTRIBUTING.md.
 [versions]
-agp = "8.9.1"
+agp = "8.13.2"
 kotlin = "2.2.0"
 compileSdk = "36"
 minSdk = "23"

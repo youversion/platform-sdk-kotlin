@@ -1,6 +1,6 @@
-// Standalone build that compiles the SDK the way the oldest supported consumer would: Kotlin 2.2.0,
-// AGP 8.x and compileSdk 36. It resolves the SDK from mavenLocal, so publish it first from the repo
-// root with `./gradlew publishToMavenLocal -PsdkVersion=0.0.0-SNAPSHOT`.
+// Standalone build that compiles the SDK the way the oldest supported consumer would, on the toolchain
+// pinned in gradle/libs.versions.toml and the Gradle wrapper. It resolves the SDK from mavenLocal, so
+// publish it first from the repo root with `./gradlew publishToMavenLocal -PsdkVersion=0.0.0-SNAPSHOT`.
 pluginManagement {
     repositories {
         google()

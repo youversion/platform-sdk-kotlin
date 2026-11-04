@@ -1,28 +1,40 @@
 name: Consumer Baseline
 
-on: [pull_request]
+on:
+  pull_request:
+    paths:
+      - 'gradle/**'
+      - '**/*.gradle.kts'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '**/consumer-rules.pro'
+      - 'build-logic/**'
+      - 'examples/consumer-baseline/**'
+      - '.github/workflows/consumer-baseline.yml'
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   consumer-baseline:
     name: Build Oldest Supported Consumer
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'zulu'
           java-version: '21'
-          cache: 'gradle'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew examples/consumer-baseline/gradlew
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       - name: Publish SDK to Maven Local
         run: ./gradlew publishToMavenLocal -PsdkVersion=0.0.0-SNAPSHOT
@@ -31,14 +43,14 @@ jobs:
         working-directory: examples/consumer-baseline
         run: ./gradlew :app:assembleDebug
 
-      # A Kotlin 2.2 compiler reads 2.3 metadata but not 2.4, so the SDK's transitive stdlib must stay below 2.4.
-      - name: Verify kotlin-stdlib stays below 2.4
+      # R8 only logs a warning when it can't read a dependency's Kotlin metadata, so the build stays
+      # green unless the log is checked.
+      - name: Minify consumer baseline with R8
         working-directory: examples/consumer-baseline
         run: |
-          version=$(./gradlew -q :app:dependencyInsight --dependency org.jetbrains.kotlin:kotlin-stdlib --configuration debugRuntimeClasspath \
-            | sed -n 's/^org\.jetbrains\.kotlin:kotlin-stdlib:\([0-9.]*\).*/\1/p' | head -n 1)
-          echo "Resolved kotlin-stdlib $version"
-          case "$version" in
-            2.2.*|2.3.*) ;;
-            *) echo "::error::kotlin-stdlib resolved to '$version'; Kotlin 2.2 consumers need 2.3.x or lower"; exit 1 ;;
-          esac
+          set -o pipefail
+          ./gradlew :app:assembleRelease 2>&1 | tee r8.log
+          if grep -qi "kotlin metadata" r8.log; then
+            echo "::error::R8 could not read the Kotlin metadata of a dependency; see the log above."
+            exit 1
+          fi

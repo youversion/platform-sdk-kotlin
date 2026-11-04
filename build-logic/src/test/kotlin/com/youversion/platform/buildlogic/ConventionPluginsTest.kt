@@ -10,6 +10,7 @@ import kotlin.io.path.createTempDirectory
 
 class ConventionPluginsTest {
     private val projectDir = createTempDirectory("convention-plugins").toFile()
+    private var catalog: File = versionCatalog
 
     @After
     fun tearDown() {
@@ -53,9 +54,10 @@ class ConventionPluginsTest {
         assertTrue(output, output.contains("expected minimum is 85"))
     }
 
-    /** Checks the release Kotlin compile targets Kotlin 2.2 consumers and keeps the pre-2.4 module name. */
+    /** Checks the release Kotlin compile follows `kotlinStdlibFloor` and keeps the pre-2.4 module name. */
     @Test
-    fun androidLibrary_compilesForKotlin22Consumers() {
+    fun androidLibrary_compilesForFloorKotlinConsumers() {
+        catalog = catalogWith("kotlinStdlibFloor" to "2.3.0")
         writeSdkLibraryFixture()
         File(projectDir, "sdk/build.gradle.kts").appendText(
             """
@@ -75,15 +77,30 @@ class ConventionPluginsTest {
         )
 
         val output = build(":sdk:printKotlinOptions").output
+        val lines = output.lines()
 
-        assertTrue(output, output.contains("languageVersion=2.2"))
-        assertTrue(output, output.contains("apiVersion=2.2"))
-        assertTrue(output, output.contains("moduleName=sdk_release"))
+        assertTrue(output, "languageVersion=2.3" in lines)
+        assertTrue(output, "apiVersion=2.3" in lines)
+        assertTrue(output, "moduleName=sdk_release" in lines)
+    }
+
+    /** Checks the AAR metadata's `minCompileSdk` follows the catalog's `compileSdk`. */
+    @Test
+    fun androidLibrary_stampsCompileSdkAsAarMinCompileSdk() {
+        catalog = catalogWith("compileSdk" to "35")
+        writeSdkLibraryFixture()
+
+        build(":sdk:writeReleaseAarMetadata")
+        val metadataDir = "sdk/build/intermediates/aar_metadata/release/writeReleaseAarMetadata"
+        val metadata = File(projectDir, "$metadataDir/aar-metadata.properties").readLines()
+
+        assertTrue(metadata.toString(), "minCompileSdk=35" in metadata)
     }
 
     /** Checks the POM's kotlin-stdlib dependency is the catalog's `kotlinStdlibFloor`. */
     @Test
     fun androidLibrary_publishesStdlibFloorInPom() {
+        catalog = catalogWith("kotlinStdlibFloor" to "2.3.0")
         writeSdkLibraryFixture()
 
         build(":sdk:generatePomFileForMavenPublication")
@@ -91,9 +108,7 @@ class ConventionPluginsTest {
 
         assertTrue(
             pom,
-            Regex(
-                "<artifactId>kotlin-stdlib</artifactId>\\s*<version>${catalogVersion("kotlinStdlibFloor")}</version>",
-            ).containsMatchIn(pom),
+            Regex("<artifactId>kotlin-stdlib</artifactId>\\s*<version>2.3.0</version>").containsMatchIn(pom),
         )
     }
 
@@ -166,7 +181,7 @@ class ConventionPluginsTest {
                 }
                 versionCatalogs {
                     create("libs") {
-                        from(files("${versionCatalog.invariantSeparatorsPath}"))
+                        from(files("${catalog.invariantSeparatorsPath}"))
                     }
                 }
             }
@@ -175,6 +190,15 @@ class ConventionPluginsTest {
             """.trimIndent(),
         )
     }
+
+    private fun catalogWith(vararg versions: Pair<String, String>): File =
+        File(projectDir, "fixture.versions.toml").apply {
+            writeText(
+                versions.fold(versionCatalog.readText()) { toml, (alias, value) ->
+                    toml.replace(Regex("""(?m)^($alias\s*=\s*)"[^"]*""""), "$1\"$value\"")
+                },
+            )
+        }
 
     private fun write(
         path: String,
