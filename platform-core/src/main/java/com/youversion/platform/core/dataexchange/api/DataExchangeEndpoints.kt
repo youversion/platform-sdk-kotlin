@@ -4,9 +4,9 @@ import co.touchlab.kermit.Logger
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.api.buildYouVersionUrlString
-import com.youversion.platform.core.api.cannotDownload
 import com.youversion.platform.core.api.notPermitted
 import com.youversion.platform.core.api.parameter
+import com.youversion.platform.core.api.requestFailure
 import com.youversion.platform.core.dataexchange.models.DataExchangeToken
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
@@ -74,13 +74,18 @@ object DataExchangeEndpoints : DataExchangeApi {
             }
 
         if (response.status == HttpStatusCode.Unauthorized) {
+            Logger.w { "error 401: unauthorized. The user is signed out or their access token has expired" }
+            throw YouVersionNetworkException(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION)
+        }
+
+        if (response.status == HttpStatusCode.Forbidden) {
             Logger.w { "Data exchange token request was not permitted for the signed-in user" }
             throw notPermitted()
         }
 
         if (response.status != HttpStatusCode.Created) {
             Logger.w { "Data exchange token request failed with status ${response.status.value}" }
-            throw cannotDownload(response.status)
+            throw response.requestFailure()
         }
 
         return response.body()

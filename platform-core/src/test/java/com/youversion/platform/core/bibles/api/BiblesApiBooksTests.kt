@@ -6,9 +6,9 @@ import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
-import com.youversion.platform.helpers.testCannotDownload
 import com.youversion.platform.helpers.testForbiddenNotPermitted
 import com.youversion.platform.helpers.testInvalidResponse
+import com.youversion.platform.helpers.testServerError
 import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.http.HttpMethod
@@ -140,8 +140,8 @@ class BiblesApiBooksTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test books throws cannot download if request failed`() =
-        testCannotDownload {
+    fun `test books throws server error if request failed`() =
+        testServerError {
             YouVersionApi.bible.books(206)
         }
 
@@ -288,8 +288,8 @@ class BiblesApiBooksTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test chapter throws cannot download if request failed`() =
-        testCannotDownload {
+    fun `test chapter throws server error if request failed`() =
+        testServerError {
             YouVersionApi.bible.book(206, "JHN")
         }
 

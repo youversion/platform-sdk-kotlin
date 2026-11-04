@@ -13,6 +13,7 @@ import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.time.Duration.Companion.seconds
 
 fun MockRequestHandleScope.respondJson(
     content: String,
@@ -48,18 +49,28 @@ fun testForbiddenNotPermitted(block: suspend () -> Unit) =
             .apply { assertEquals(YouVersionNetworkException.Reason.NOT_PERMITTED, reason) }
     }
 
-fun testCannotDownload(block: suspend () -> Unit) =
+fun testServerError(block: suspend () -> Unit) =
     runTest {
         MockEngine { request ->
-            respond("", HttpStatusCode.InternalServerError)
+            respond(
+                content = """{"message":"Service unavailable"}""",
+                status = HttpStatusCode.ServiceUnavailable,
+                headers =
+                    headersOf(
+                        HttpHeaders.ContentType to listOf(ContentType.Application.Json.toString()),
+                        HttpHeaders.RetryAfter to listOf("30"),
+                    ),
+            )
         }.also { engine -> startYouVersionPlatformTest(engine) }
 
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         assertFailsWith<YouVersionNetworkException> { block() }
             .apply {
-                assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, reason)
-                assertEquals(YouVersionNetworkException.Failure.SERVER_ERROR, failure)
+                assertEquals(YouVersionNetworkException.Reason.SERVER_ERROR, reason)
+                assertEquals(503, statusCode)
+                assertEquals("Service unavailable", serverMessage)
+                assertEquals(30.seconds, retryAfter)
             }
     }
 
