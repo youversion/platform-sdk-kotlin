@@ -163,13 +163,15 @@ corpus or upload to App Automate.
 CI runs the same build on PRs that change the build, and before every release. CI also builds a minified release and fails if R8 can't read a dependency's Kotlin metadata. To reproduce that step locally:
 
 ```bash
-cd examples/consumer-baseline
-set -o pipefail
-./gradlew :app:assembleRelease 2>&1 | tee r8.log
-grep -i "kotlin metadata" r8.log
+(
+  cd examples/consumer-baseline
+  set -o pipefail
+  ./gradlew :app:minifyReleaseWithR8 --rerun :app:assembleRelease 2>&1 | tee r8.log
+  grep -i "kotlin metadata" r8.log
+)
 ```
 
-Any `grep` output is the failure CI reports.
+Any `grep` output is the failure CI reports. `--rerun` forces R8 to run again, because Gradle doesn't replay an up-to-date task's warnings.
 
 #### Raising the consumer floor
 
