@@ -174,11 +174,15 @@ internal object SearchEndpoints : SearchApi {
             .get(searchQueriesUrl(languageRanges, query, isTrending))
             .let {
                 when (it.status) {
-                    HttpStatusCode.NoContent -> emptyList()
-                    else ->
+                    HttpStatusCode.NoContent -> {
+                        emptyList()
+                    }
+
+                    else -> {
                         parseApiResponse<List<SearchQueryResponse>>(it).map { response ->
                             SearchQuery(text = response.text, source = response.source)
                         }
+                    }
                 }
             }
     }

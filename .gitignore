@@ -56,3 +56,6 @@ node_modules/
 /preview.json
 /signoff-comment.json
 /signoff-comment.md
+
+# Kotlin daemon session files
+.kotlin/

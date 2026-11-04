@@ -57,26 +57,30 @@ internal fun BibleReaderBanner(
     ) {
         val icon =
             when (bannerType) {
-                BibleReaderBannerType.OFFLINE ->
+                BibleReaderBannerType.OFFLINE -> {
                     BannerIcon(
                         icon = ImageVector.vectorResource(R.drawable.ic_wifi_exclamation),
                         contentDescription = stringResource(R.string.banner_offline_icon),
                     )
+                }
 
-                BibleReaderBannerType.VERSION_UNAVAILABLE ->
+                BibleReaderBannerType.VERSION_UNAVAILABLE -> {
                     BannerIcon(
                         icon = ImageVector.vectorResource(R.drawable.ic_sync),
                         contentDescription = stringResource(R.string.banner_version_unavailable_icon),
                     )
+                }
             }
 
         val message =
             when (bannerType) {
-                BibleReaderBannerType.OFFLINE ->
+                BibleReaderBannerType.OFFLINE -> {
                     stringResource(R.string.banner_offline_message)
+                }
 
-                BibleReaderBannerType.VERSION_UNAVAILABLE ->
+                BibleReaderBannerType.VERSION_UNAVAILABLE -> {
                     stringResource(R.string.banner_version_unavailable_message)
+                }
             }
 
         Row(

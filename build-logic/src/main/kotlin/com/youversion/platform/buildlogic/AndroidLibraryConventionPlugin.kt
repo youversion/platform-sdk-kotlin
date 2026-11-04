@@ -7,9 +7,18 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 /**
- * Applies the Android library and Kotlin plugins with the SDK's shared SDK levels and JVM 11 toolchain.
+ * Applies the Android library and Kotlin plugins with the SDK's shared SDK levels, compiling Java and
+ * Kotlin to JVM 11 bytecode on whatever JDK runs the build.
+ *
+ * - Kotlin language/API version 2.2, so consumers on a Kotlin 2.2 compiler can read the SDK's metadata.
+ * - kotlin-stdlib 2.2.0 as the stdlib dependency published in the POMs.
+ * - The Kotlin module name keeps its pre-2.4 form; Kotlin 2.4 prefixes the project group, which renames
+ *   every mangled internal symbol in the API dumps.
+ * - Unit tests run against compileSdk, so Robolectric's SDK 36 sandbox needs JDK 21. The sandbox reads
+ *   FileDescriptor internals, so unit tests export `java.base/jdk.internal.access`.
  */
 class AndroidLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -34,11 +43,23 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                     sourceCompatibility = JavaVersion.VERSION_11
                     targetCompatibility = JavaVersion.VERSION_11
                 }
-                testOptions.unitTests.isIncludeAndroidResources = true
+                testOptions {
+                    unitTests.isIncludeAndroidResources = true
+                    unitTests.all { it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED") }
+                }
             }
 
             extensions.configure<KotlinAndroidProjectExtension> {
-                compilerOptions.jvmTarget.set(JvmTarget.JVM_11)
+                compilerOptions {
+                    jvmTarget.set(JvmTarget.JVM_11)
+                    languageVersion.set(KotlinVersion.KOTLIN_2_2)
+                    apiVersion.set(KotlinVersion.KOTLIN_2_2)
+                }
+                coreLibrariesVersion = libs.version("kotlinStdlibFloor")
+                this.target.compilations.configureEach {
+                    val moduleName = "${project.name}_$compilationName"
+                    compileTaskProvider.configure { compilerOptions.moduleName.set(moduleName) }
+                }
             }
         }
     }

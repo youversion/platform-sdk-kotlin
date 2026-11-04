@@ -630,9 +630,13 @@ class BibleHighlightsRepository internal constructor(
             val succeeded =
                 try {
                     when (change) {
-                        is HighlightChange.SetColor -> syncHighlight(reference, passageId, change.color)
-                        HighlightChange.Remove ->
+                        is HighlightChange.SetColor -> {
+                            syncHighlight(reference, passageId, change.color)
+                        }
+
+                        HighlightChange.Remove -> {
                             api.deleteHighlight(reference.versionId, passageId)
+                        }
                     }
                 } catch (e: YouVersionNetworkException) {
                     if (e.reason != YouVersionNetworkException.Reason.NOT_PERMITTED) throw e
@@ -649,10 +653,13 @@ class BibleHighlightsRepository internal constructor(
 
         if (syncedReferences.isNotEmpty()) {
             when (change) {
-                is HighlightChange.SetColor ->
+                is HighlightChange.SetColor -> {
                     cache.markHighlightsAsSynced(syncedReferences, notModifiedAfter = operation.timestamp)
-                HighlightChange.Remove ->
+                }
+
+                HighlightChange.Remove -> {
                     cache.markDeletesSynced(syncedReferences)
+                }
             }
         }
         return OperationOutcome(failedReferences = failedReferences, rejectedReferences = rejectedReferences)

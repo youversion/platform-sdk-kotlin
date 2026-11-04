@@ -13,7 +13,9 @@ internal fun interpretTextAttr(
 ) {
     node.classes.forEach { c ->
         when (c) {
-            "wj" -> stateDown.woc = true
+            "wj" -> {
+                stateDown.woc = true
+            }
 
             "yv-v", "verse" -> {
                 node.attributes["v"]?.toIntOrNull()?.let { verseNum ->
@@ -22,18 +24,29 @@ internal fun interpretTextAttr(
                 }
             }
 
-            "nd", "sc" -> stateDown.smallcaps = true
+            "nd", "sc" -> {
+                stateDown.smallcaps = true
+            }
 
-            "tl", "it", "add", "em", "fq", "fqa", "qac", "qs", "qt", "bk", "sig", "litl", "sls", "iqt" ->
+            "tl", "it", "add", "em", "fq", "fqa", "qac", "qs", "qt", "bk", "sig", "litl", "sls", "iqt" -> {
                 stateDown.currentFont = BibleTextFontOption.FONT_100EM_ITALIC
+            }
 
-            "rq" -> stateDown.currentFont = BibleTextFontOption.FONT_083EM_ITALIC
+            "rq" -> {
+                stateDown.currentFont = BibleTextFontOption.FONT_083EM_ITALIC
+            }
 
-            "bd", "k" -> stateDown.currentFont = BibleTextFontOption.FONT_100EM_700
+            "bd", "k" -> {
+                stateDown.currentFont = BibleTextFontOption.FONT_100EM_700
+            }
 
-            "pn" -> stateDown.currentFont = BibleTextFontOption.FONT_100EM
+            "pn" -> {
+                stateDown.currentFont = BibleTextFontOption.FONT_100EM
+            }
 
-            "bdit", "fk", "fl" -> stateDown.currentFont = BibleTextFontOption.FONT_100EM_500_ITALIC
+            "bdit", "fk", "fl" -> {
+                stateDown.currentFont = BibleTextFontOption.FONT_100EM_500_ITALIC
+            }
 
             "ord", "fv", "sup" -> {
                 // Superscript, really; same thing in practice.
@@ -112,7 +125,9 @@ internal fun interpretBlockClasses(
                 stateDown.marginTop = 0.dp
             }
 
-            "cls" -> stateDown.alignment = TextAlign.End
+            "cls" -> {
+                stateDown.alignment = TextAlign.End
+            }
 
             "d" -> {
                 stateDown.alignment = TextAlign.Center
@@ -195,13 +210,21 @@ internal fun interpretBlockClasses(
                 stateDown.marginBottom = (0.15f * fontSize).dp
             }
 
-            "io", "io1" -> stateUp.headIndent = 2
+            "io", "io1" -> {
+                stateUp.headIndent = 2
+            }
 
-            "io2" -> stateUp.headIndent = 3
+            "io2" -> {
+                stateUp.headIndent = 3
+            }
 
-            "io3" -> stateUp.headIndent = 4
+            "io3" -> {
+                stateUp.headIndent = 4
+            }
 
-            "io4" -> stateUp.headIndent = 5
+            "io4" -> {
+                stateUp.headIndent = 5
+            }
 
             "ior" -> {}
 
@@ -394,7 +417,9 @@ internal fun interpretBlockClasses(
                 stateUp.firstLineHeadIndent = 1
             }
 
-            "pr" -> stateDown.alignment = TextAlign.End
+            "pr" -> {
+                stateDown.alignment = TextAlign.End
+            }
 
             "qa" -> {
                 stateDown.currentFont = BibleTextFontOption.FONT_117EM_500_ITALIC
@@ -410,7 +435,9 @@ internal fun interpretBlockClasses(
                 stateDown.marginTop = 0.dp
             }
 
-            "qd" -> stateDown.currentFont = BibleTextFontOption.FONT_100EM_ITALIC
+            "qd" -> {
+                stateDown.currentFont = BibleTextFontOption.FONT_100EM_ITALIC
+            }
 
             "qm" -> {
                 stateDown.marginBottom = (0.50f * fontSize).dp
@@ -527,7 +554,9 @@ internal fun interpretBlockClasses(
                 }
             }
 
-            else -> assertionFailed("interpretBlockClasses: unexpected class: ", c)
+            else -> {
+                assertionFailed("interpretBlockClasses: unexpected class: ", c)
+            }
         }
 
         // Centered text has nowhere to indent from, so any indent a sibling class asked for is dropped.

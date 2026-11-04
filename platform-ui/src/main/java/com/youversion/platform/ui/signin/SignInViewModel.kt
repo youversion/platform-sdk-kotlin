@@ -65,11 +65,18 @@ class SignInViewModel(
             is Action.ProcessAuthCallback -> {
                 handleProcessAuthCallback(action)
             }
+
             is Action.SignOut -> {
                 handleSignOut(action)
             }
-            is Action.CancelSignOut -> cancelSignOut()
-            is Action.UpdateSignInState -> updateSignInState()
+
+            is Action.CancelSignOut -> {
+                cancelSignOut()
+            }
+
+            is Action.UpdateSignInState -> {
+                updateSignInState()
+            }
         }
     }
 

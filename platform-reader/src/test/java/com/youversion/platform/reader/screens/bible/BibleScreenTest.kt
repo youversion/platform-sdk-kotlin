@@ -5,6 +5,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -738,7 +739,7 @@ class BibleScreenTest {
         }
 
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("※").performClick()
+        composeTestRule.onNodeWithText("※").performTouchInput { click(centerLeft) }
         composeTestRule.waitForIdle()
 
         verify {
@@ -816,7 +817,7 @@ class BibleScreenTest {
         }
 
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("※").performClick()
+        composeTestRule.onNodeWithText("※").performTouchInput { click(centerLeft) }
         composeTestRule.waitForIdle()
 
         verify {
@@ -913,7 +914,7 @@ class BibleScreenTest {
             }
 
             composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithText("In the beginning").performClick()
+            composeTestRule.onNodeWithText("In the beginning").performTouchInput { click(centerLeft) }
             composeTestRule.waitForIdle()
 
             verify {
@@ -965,7 +966,7 @@ class BibleScreenTest {
             }
 
             composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithText("In the beginning").performClick()
+            composeTestRule.onNodeWithText("In the beginning").performTouchInput { click(centerLeft) }
             composeTestRule.waitForIdle()
 
             verify {
@@ -1507,7 +1508,7 @@ class BibleScreenTest {
         }
         showSheetAndForgetItsOwnActions()
 
-        composeTestRule.onNodeWithText("In the beginning").performClick()
+        composeTestRule.onNodeWithText("In the beginning").performTouchInput { click(centerLeft) }
         composeTestRule.waitForIdle()
 
         verify { mockViewModel.onAction(match { it is BibleReaderViewModel.Action.OnVerseTap }) }
