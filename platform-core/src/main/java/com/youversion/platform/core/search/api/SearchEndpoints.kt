@@ -63,6 +63,7 @@ internal object SearchEndpoints : SearchApi {
             pageToken(pageToken)
         }
 
+    /** The image-search URL. Null paging options are omitted; [images] checks the arguments. */
     fun searchImagesUrl(
         query: String,
         bibleId: Int,

@@ -180,6 +180,11 @@ class VotdApiTests : YouVersionPlatformTest {
                                 "day": 2,
                                 "passage_id": "HEB.13.5",
                                 "image_id": "aW1hZ2UtMg"
+                            },
+                            {
+                                "day": 3,
+                                "passage_id": "PSA.23.1",
+                                "image_id": null
                             }
                         ]
                     }
@@ -190,6 +195,7 @@ class VotdApiTests : YouVersionPlatformTest {
             YouVersionApi.votd.verseOfTheDays(languageRanges = listOf("en")).apply {
                 assertEquals(YouVersionVerseOfTheDay(1, "ISA.43.19", "aW1hZ2UtMQ"), get(0))
                 assertEquals(YouVersionVerseOfTheDay(2, "HEB.13.5", "aW1hZ2UtMg"), get(1))
+                assertEquals(YouVersionVerseOfTheDay(3, "PSA.23.1", null), get(2))
             }
         }
 }
