@@ -12,7 +12,9 @@ import com.youversion.platform.helpers.testForbiddenNotPermitted
 import com.youversion.platform.helpers.testInvalidResponse
 import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -91,6 +93,21 @@ class VerseImagesApiTests : YouVersionPlatformTest {
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
             val response = YouVersionApi.verseImages.verseImages(passageId = "JHN.3.16")
+
+            assertEquals(emptyList(), response.data)
+            assertNull(response.totalSize)
+            assertNull(response.nextPageToken)
+        }
+
+    @Test
+    fun `test verse images returns an empty page if there is no content`() =
+        runTest {
+            MockEngine { respond("", HttpStatusCode.NoContent) }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val response =
+                YouVersionApi.verseImages.verseImages(passageId = "JHN.3.16", languageRanges = listOf("zh"))
 
             assertEquals(emptyList(), response.data)
             assertNull(response.totalSize)

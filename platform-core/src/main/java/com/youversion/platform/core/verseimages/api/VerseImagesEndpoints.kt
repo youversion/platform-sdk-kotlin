@@ -13,6 +13,7 @@ import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import com.youversion.platform.core.verseimages.models.VerseImage
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.appendPathSegments
 import io.ktor.http.path
 
@@ -57,9 +58,14 @@ internal object VerseImagesEndpoints : VerseImagesApi {
         passageId?.let { require(it.isNotBlank()) { "passageId must not be blank" } }
         requireValidPageSize(pageSize)
         pageToken?.let { require(it.isNotBlank()) { "pageToken must not be blank" } }
-        return parsePaginatedResponse(
-            httpClient.get(verseImagesUrl(passageId, languageRanges, pageSize, pageToken)),
-        )
+        return httpClient
+            .get(verseImagesUrl(passageId, languageRanges, pageSize, pageToken))
+            .let {
+                when (it.status) {
+                    HttpStatusCode.NoContent -> PaginatedResponse(emptyList())
+                    else -> parsePaginatedResponse(it)
+                }
+            }
     }
 
     override suspend fun verseImage(imageId: String): VerseImage {

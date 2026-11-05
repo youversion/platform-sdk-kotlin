@@ -46,8 +46,8 @@ interface SearchApi {
      *
      * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
      *
-     * A response carrying no content fails rather than returning no results, and a result that does not name a book,
-     * chapter and verse is dropped.
+     * A search that matches nothing returns empty results rather than failing, and a result that does not name a
+     * book, chapter and verse is dropped.
      *
      * @param query The text to search for. It must be between 1 and 100 grapheme clusters.
      * @param bibleId The identifier of the Bible version to search. It must be greater than zero.
@@ -97,7 +97,7 @@ interface SearchApi {
      *
      * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
      *
-     * A response carrying no content fails rather than returning no results.
+     * A search that matches nothing returns empty results rather than failing.
      *
      * @param query The text to search for. It must be between 1 and 100 grapheme clusters.
      * @param languageRanges Canonical BCP 47 language codes such as `en`, in preference order. It must not be empty,
@@ -118,7 +118,7 @@ interface SearchApi {
      *
      * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
      *
-     * A response carrying no content fails rather than returning no results, a verse result that does not name a
+     * A search that matches nothing returns empty results rather than failing, a verse result that does not name a
      * book, chapter and verse is dropped, and an image result that does not name an id and a passage is dropped.
      *
      * @param query The text to search for. It must be between 1 and 100 grapheme clusters.

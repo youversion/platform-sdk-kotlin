@@ -372,15 +372,19 @@ class SearchApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test verse search intentionally fails on no content rather than returning nothing found`() =
+    fun `test verse search returns empty results if there is no content`() =
         runTest {
             MockEngine { respond("", HttpStatusCode.NoContent) }
                 .also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
-            assertFailsWith<YouVersionNetworkException> {
-                YouVersionApi.search.verses(query = "love", bibleId = 111)
-            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
+            val results = YouVersionApi.search.verses(query = "love", bibleId = 111)
+
+            assertTrue(results.references.isEmpty())
+            assertNull(results.userIntent)
+            assertTrue(results.didYouMean.isEmpty())
+            assertNull(results.searchInsteadFor)
+            assertNull(results.nextPageToken)
         }
 
     @Test
@@ -665,6 +669,20 @@ class SearchApiTests : YouVersionPlatformTest {
         }
 
     @Test
+    fun `test topic search returns empty results if there is no content`() =
+        runTest {
+            MockEngine { respond("", HttpStatusCode.NoContent) }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.topics(query = "love", languageRanges = listOf("en"))
+
+            assertTrue(results.topics.isEmpty())
+            assertTrue(results.didYouMean.isEmpty())
+            assertNull(results.searchInsteadFor)
+        }
+
+    @Test
     fun `test topic search intentionally fails when did you mean is absent`() =
         runTest {
             MockEngine { respondJson("""{ "topics": [] }""") }
@@ -875,6 +893,24 @@ class SearchApiTests : YouVersionPlatformTest {
 
             assertEquals(emptyList(), results.images)
             assertEquals(listOf("JHN.3.16"), results.references.map { it.asUSFM })
+        }
+
+    @Test
+    fun `test unified search returns empty results if there is no content`() =
+        runTest {
+            MockEngine { respond("", HttpStatusCode.NoContent) }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results =
+                YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
+
+            assertTrue(results.references.isEmpty())
+            assertTrue(results.topics.isEmpty())
+            assertNull(results.userIntent)
+            assertTrue(results.didYouMean.isEmpty())
+            assertNull(results.searchInsteadFor)
+            assertTrue(results.images.isEmpty())
         }
 
     @Test
