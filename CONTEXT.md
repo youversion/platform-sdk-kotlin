@@ -76,6 +76,12 @@ partway through one, or display none at all. Because of that a block names only 
 displays rather than a whole _Bible reference_.
 _Avoid_: paragraph, verse, section, chunk
 
+**Text direction**:
+Whether a Bible version reads left-to-right or right-to-left, as declared by the platform for that
+version. It is a property of the version, not of any one block: every block of a right-to-left version
+is right-to-left, whatever characters it happens to begin with.
+_Avoid_: RTL language, script direction, layout direction
+
 **Focused reference**:
 The one reference a reader is being pointed at — arrived at by following a search result or a link —
 drawn at full strength while the rest of the chapter dims around it. Distinct from a reader's

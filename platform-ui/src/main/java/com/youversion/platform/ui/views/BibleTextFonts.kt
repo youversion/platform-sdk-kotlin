@@ -78,7 +78,7 @@ data class BibleTextFonts(
     // Swift shifts verse numbers up by 0.2 × baseSize; Compose's BaselineShift is a
     // fraction of the span's own font size (0.65 × baseSize), hence the ratio.
     internal val verseNumBaselineShift = BaselineShift(0.2f / 0.65f)
-    internal val verseNumOpacity = 0.7f
+    internal val verseNumOpacity = 0.6f
 
     internal fun styleFor(
         option: BibleTextFontOption,

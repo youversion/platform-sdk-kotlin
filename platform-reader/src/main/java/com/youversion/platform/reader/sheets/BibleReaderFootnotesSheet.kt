@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -31,6 +32,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -137,7 +139,7 @@ internal fun BibleReaderFootnotesSheet(
                         },
                     )
                 }
-                Footnotes(footnotes = displayFootnotes)
+                Footnotes(footnotes = displayFootnotes, isVersionRightToLeft = version?.isRightToLeft == true)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -162,7 +164,10 @@ private fun footnotesFor(
 }
 
 @Composable
-internal fun Footnotes(footnotes: List<AnnotatedString>) {
+internal fun Footnotes(
+    footnotes: List<AnnotatedString>,
+    isVersionRightToLeft: Boolean,
+) {
     Column {
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp).testTag("footnote_divider"))
         footnotes.forEachIndexed { index, footnote ->
@@ -179,12 +184,20 @@ internal fun Footnotes(footnotes: List<AnnotatedString>) {
                 }
             Row {
                 Text(footnoteEnumeration, modifier = Modifier.padding(end = 4.dp))
-                Text(footnote)
+                Text(
+                    text = footnote,
+                    modifier = Modifier.weight(1f),
+                    style = LocalTextStyle.current.copy(textDirection = footnoteTextDirection(isVersionRightToLeft)),
+                )
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp).testTag("footnote_divider"))
         }
     }
 }
+
+/** The direction a footnote body reads in, which follows its Bible version rather than the device. */
+internal fun footnoteTextDirection(isVersionRightToLeft: Boolean): TextDirection =
+    if (isVersionRightToLeft) TextDirection.Rtl else TextDirection.Ltr
 
 @Preview
 @Composable

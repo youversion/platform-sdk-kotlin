@@ -20,12 +20,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleIntroRepository
@@ -47,6 +45,10 @@ import kotlinx.coroutines.CancellationException
  *
  * This view reuses the same rendering pipeline as [BibleText] for consistent
  * styling, but does not support verse selection or tapping.
+ *
+ * The intro lays out in its version's direction, overriding the host's
+ * [androidx.compose.ui.platform.LocalLayoutDirection] inside it, so a right-to-left version reads right to left on a
+ * left-to-right device and the reverse.
  *
  * @param versionId The Bible version ID.
  * @param bookUSFM The book USFM code (e.g., "GEN").
@@ -76,6 +78,7 @@ fun BibleIntroText(
     val versionRepository: BibleVersionRepository = PlatformKoinGraph.koinApplication.koin.get()
     val introRepository: BibleIntroRepository = PlatformKoinGraph.koinApplication.koin.get()
     val wordsOfChristColor = textOptions.resolvedWordsOfChristColor(MaterialTheme.readerColorScheme)
+    val textColor = textOptions.resolvedTextColor()
 
     LaunchedEffect(loadingPhase) {
         onStateChange(loadingPhase)
@@ -92,7 +95,7 @@ fun BibleIntroText(
         blocks = emptyList()
     }
 
-    LaunchedEffect(versionId, bookUSFM, passageId, textOptions, wordsOfChristColor) {
+    LaunchedEffect(versionId, bookUSFM, passageId, textOptions, wordsOfChristColor, textColor) {
         loadingPhase = BibleTextLoadingPhase.LOADING
         try {
             val version = versionRepository.version(versionId)
@@ -107,7 +110,7 @@ fun BibleIntroText(
                     renderHeadlines = textOptions.renderHeadlines,
                     footnoteMode = textOptions.footnoteMode,
                     footnoteMarker = textOptions.footnoteMarker,
-                    textColor = textOptions.textColor ?: Color.Unspecified,
+                    textColor = textColor,
                     wocColor = wordsOfChristColor,
                     fonts = BibleTextFonts(fontFamily = textOptions.fontFamily, baseSize = textOptions.fontSize),
                 )
@@ -129,25 +132,24 @@ fun BibleIntroText(
         }
     }
 
-    val systemLayoutDirection = LocalLayoutDirection.current
-    val mainColumnAlignment = mainColumnAlignment(systemLayoutDirection, isVersionRightToLeft)
-
     if (loadingPhase != BibleTextLoadingPhase.SUCCESS) {
         placeholder(loadingPhase)
     } else {
-        Column(horizontalAlignment = mainColumnAlignment) {
-            val visibleBlocks = remember(blocks) { blocks.filter { it.isVisible } }
-            visibleBlocks.forEachIndexed { index, block ->
-                if (block.rows.isEmpty()) {
-                    IntroTextBlock(
-                        block = block,
-                        textOptions = textOptions,
-                        isFirstBlock = index == 0,
-                        previousMarginBottom = if (index == 0) 0.dp else visibleBlocks[index - 1].marginBottom,
-                        onFootnoteTap = onFootnoteTap,
-                    )
-                } else {
-                    IntroTableBlock(block = block, textOptions = textOptions)
+        ProvideVersionDirection(isRightToLeft = isVersionRightToLeft) {
+            Column {
+                val visibleBlocks = remember(blocks) { blocks.filter { it.isVisible } }
+                visibleBlocks.forEachIndexed { index, block ->
+                    if (block.rows.isEmpty()) {
+                        IntroTextBlock(
+                            block = block,
+                            textOptions = textOptions,
+                            isFirstBlock = index == 0,
+                            previousMarginBottom = if (index == 0) 0.dp else visibleBlocks[index - 1].marginBottom,
+                            onFootnoteTap = onFootnoteTap,
+                        )
+                    } else {
+                        IntroTableBlock(block = block, textOptions = textOptions)
+                    }
                 }
             }
         }
@@ -218,22 +220,6 @@ private fun IntroTextBlock(
         inlineContent = textOptions.inlineContentMap,
     )
 }
-
-/**
- * Determines the horizontal alignment for Bible intro content based on the system layout
- * direction and the Bible version's text direction.
- */
-internal fun mainColumnAlignment(
-    systemLayoutDirection: LayoutDirection,
-    isVersionRightToLeft: Boolean,
-): Alignment.Horizontal =
-    when {
-        systemLayoutDirection == LayoutDirection.Ltr && isVersionRightToLeft -> Alignment.End
-        systemLayoutDirection == LayoutDirection.Ltr && !isVersionRightToLeft -> Alignment.Start
-        systemLayoutDirection == LayoutDirection.Rtl && isVersionRightToLeft -> Alignment.Start
-        systemLayoutDirection == LayoutDirection.Rtl && !isVersionRightToLeft -> Alignment.End
-        else -> Alignment.Start
-    }
 
 @Composable
 private fun IntroTableBlock(

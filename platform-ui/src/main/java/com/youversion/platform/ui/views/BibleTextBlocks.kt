@@ -16,15 +16,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youversion.platform.core.YouVersionPlatformConfiguration
@@ -60,7 +57,7 @@ class BibleTextBlocksState internal constructor(
     /** The options [blocks] were styled with, which they are drawn with until a restyle replaces them. */
     internal val textOptions: BibleTextOptions,
     internal val highlights: Map<BibleReference, Color>,
-    internal val horizontalAlignment: Alignment.Horizontal,
+    internal val isVersionRightToLeft: Boolean,
 ) {
     // Blocks that render as nothing are dropped up front so an index into this list is also an index into the
     // items the chapter emits, which is what makes a block addressable as a scroll target.
@@ -147,6 +144,7 @@ fun rememberBibleTextBlocksState(
 
     val readerColorScheme = MaterialTheme.readerColorScheme
     val wordsOfChristColor = textOptions.resolvedWordsOfChristColor(readerColorScheme)
+    val textColor = textOptions.resolvedTextColor()
     val highlights =
         remember(cachedHighlights, reference, readerColorScheme, hasHighlightsAccess) {
             if (hasHighlightsAccess) {
@@ -156,7 +154,7 @@ fun rememberBibleTextBlocksState(
             }
         }
 
-    LaunchedEffect(reference, textOptions, wordsOfChristColor) {
+    LaunchedEffect(reference, textOptions, wordsOfChristColor, textColor) {
         val isRestyling = loadingPhase == BibleTextLoadingPhase.SUCCESS
 
         fun fail(phase: BibleTextLoadingPhase) {
@@ -175,7 +173,7 @@ fun rememberBibleTextBlocksState(
                     footnoteMode = textOptions.footnoteMode,
                     renderHeadlines = textOptions.renderHeadlines,
                     footnoteMarker = textOptions.footnoteMarker,
-                    textColor = textOptions.textColor ?: Color.Unspecified,
+                    textColor = textColor,
                     wocColor = wordsOfChristColor,
                     fonts = BibleTextFonts(fontFamily = textOptions.fontFamily, baseSize = textOptions.fontSize),
                 )
@@ -198,23 +196,13 @@ fun rememberBibleTextBlocksState(
         }
     }
 
-    val systemLayoutDirection = LocalLayoutDirection.current
-    val horizontalAlignment =
-        when {
-            systemLayoutDirection == LayoutDirection.Ltr && isVersionRightToLeft -> Alignment.End
-            systemLayoutDirection == LayoutDirection.Ltr && !isVersionRightToLeft -> Alignment.Start
-            systemLayoutDirection == LayoutDirection.Rtl && isVersionRightToLeft -> Alignment.Start
-            systemLayoutDirection == LayoutDirection.Rtl && !isVersionRightToLeft -> Alignment.End
-            else -> Alignment.Start
-        }
-
-    return remember(loadingPhase, blocks, styledOptions, highlights, horizontalAlignment) {
+    return remember(loadingPhase, blocks, styledOptions, highlights, isVersionRightToLeft) {
         BibleTextBlocksState(
             loadingPhase = loadingPhase,
             blocks = blocks,
             textOptions = styledOptions,
             highlights = highlights,
-            horizontalAlignment = horizontalAlignment,
+            isVersionRightToLeft = isVersionRightToLeft,
         )
     }
 }
@@ -222,6 +210,10 @@ fun rememberBibleTextBlocksState(
 /**
  * Emits the chapter held by [state] as one item per block, so a host's own header and footer can share a list with
  * it. A [layoutState] given here learns where each verse was laid out, so the host can scroll to one.
+ *
+ * Each block lays out in its version's direction, overriding the host's
+ * [androidx.compose.ui.platform.LocalLayoutDirection] inside it. The host's own header and footer items keep the
+ * device's direction.
  *
  * Until the load succeeds this is a single placeholder item instead. A non-null [focusedReference] draws the
  * verses it covers at full strength and dims everything else, the rest of the block holding them included. One
@@ -278,22 +270,21 @@ fun LazyListScope.bibleTextBlocks(
                 else -> Modifier
             }
 
-        Column(
-            modifier = Modifier.fillMaxWidth().alpha(blockAlpha.value).then(focusModifier),
-            horizontalAlignment = state.horizontalAlignment,
-        ) {
-            BibleBlockContent(
-                visibleBlocks = state.visibleBlocks,
-                index = index,
-                textOptions = state.textOptions,
-                selectedVerses = selectedVerses,
-                highlights = state.highlights,
-                focusedReference = fadingFocus,
-                unfocusedAlpha = unfocusedAlpha.value,
-                layoutState = layoutState,
-                onVerseTap = onVerseTap,
-                onFootnoteTap = onFootnoteTap,
-            )
+        ProvideVersionDirection(isRightToLeft = state.isVersionRightToLeft) {
+            Column(modifier = Modifier.fillMaxWidth().alpha(blockAlpha.value).then(focusModifier)) {
+                BibleBlockContent(
+                    visibleBlocks = state.visibleBlocks,
+                    index = index,
+                    textOptions = state.textOptions,
+                    selectedVerses = selectedVerses,
+                    highlights = state.highlights,
+                    focusedReference = fadingFocus,
+                    unfocusedAlpha = unfocusedAlpha.value,
+                    layoutState = layoutState,
+                    onVerseTap = onVerseTap,
+                    onFootnoteTap = onFootnoteTap,
+                )
+            }
         }
     }
 }

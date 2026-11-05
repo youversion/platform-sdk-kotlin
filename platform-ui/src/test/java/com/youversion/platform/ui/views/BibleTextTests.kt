@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -37,8 +40,10 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -926,159 +931,71 @@ class BibleTextTests {
 
     // endregion
 
-    // region RTL/LTR Alignment
+    // region Text Direction
 
-    @Test
-    fun `LTR system with RTL version aligns content to end`() {
-        coEvery { mockVersionRepository.version(any()) } returns rtlVersion
+    private fun setBibleTextContent(
+        version: BibleVersion,
+        blocks: List<BibleTextBlock>,
+        deviceDirection: LayoutDirection = LayoutDirection.Ltr,
+    ) {
+        coEvery { mockVersionRepository.version(any()) } returns version
         coEvery {
-            BibleVersionRendering.textBlocks(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-            )
-        } returns
-            listOf(
-                annotatedBlock("Filler text"),
-                BibleTextBlock(
-                    text = AnnotatedString(""),
-                    chapter = 1,
-                    rows = listOf(listOf(AnnotatedString("A"))),
-                    firstLineHeadIndent = 0,
-                    headIndent = 0,
-                    marginTop = 8.dp,
-                    marginBottom = 0.dp,
-                    alignment = TextAlign.Start,
-                    footnotes = emptyList(),
-                ),
-            )
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns blocks
 
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            CompositionLocalProvider(LocalLayoutDirection provides deviceDirection) {
                 BibleText(reference = testReference)
             }
         }
         composeTestRule.waitForIdle()
-
-        val textBounds = composeTestRule.onNodeWithText("Filler text").getBoundsInRoot()
-        val cellBounds = composeTestRule.onNodeWithText("A").getBoundsInRoot()
-        assertTrue(cellBounds.left > textBounds.left)
     }
 
     @Test
-    fun `LTR system with LTR version aligns content to start`() {
-        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
-        coEvery {
-            BibleVersionRendering.textBlocks(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-            )
-        } returns
-            listOf(
-                annotatedBlock("Filler text"),
-                BibleTextBlock(
-                    text = AnnotatedString(""),
-                    chapter = 1,
-                    rows = listOf(listOf(AnnotatedString("A"))),
-                    firstLineHeadIndent = 0,
-                    headIndent = 0,
-                    marginTop = 8.dp,
-                    marginBottom = 0.dp,
-                    alignment = TextAlign.Start,
-                    footnotes = emptyList(),
-                ),
-            )
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a right-to-left version renders a block starting with Latin text right to left`() {
+        setBibleTextContent(rtlVersion, listOf(annotatedBlock("Selah שלום")))
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                BibleText(reference = testReference)
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        val textBounds = composeTestRule.onNodeWithText("Filler text").getBoundsInRoot()
-        val cellBounds = composeTestRule.onNodeWithText("A").getBoundsInRoot()
-        assertTrue(cellBounds.left >= textBounds.left)
+        assertEquals(ResolvedTextDirection.Rtl, textLayout("Selah שלום").getParagraphDirection(0))
     }
 
     @Test
-    fun `RTL system with RTL version aligns content to start`() {
-        coEvery { mockVersionRepository.version(any()) } returns rtlVersion
-        coEvery {
-            BibleVersionRendering.textBlocks(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-            )
-        } returns
-            listOf(
-                annotatedBlock("Filler text"),
-                BibleTextBlock(
-                    text = AnnotatedString(""),
-                    chapter = 1,
-                    rows = listOf(listOf(AnnotatedString("A"))),
-                    firstLineHeadIndent = 0,
-                    headIndent = 0,
-                    marginTop = 8.dp,
-                    marginBottom = 0.dp,
-                    alignment = TextAlign.Start,
-                    footnotes = emptyList(),
-                ),
-            )
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a left-to-right version renders a block starting with Hebrew text left to right`() {
+        setBibleTextContent(ltrVersion, listOf(annotatedBlock("שלום Selah")))
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-                BibleText(reference = testReference)
-            }
-        }
-        composeTestRule.waitForIdle()
-
-        val textBounds = composeTestRule.onNodeWithText("Filler text").getBoundsInRoot()
-        val cellBounds = composeTestRule.onNodeWithText("A").getBoundsInRoot()
-        assertTrue(cellBounds.right <= textBounds.right)
+        assertEquals(ResolvedTextDirection.Ltr, textLayout("שלום Selah").getParagraphDirection(0))
     }
 
     @Test
-    fun `RTL system with LTR version aligns content to end`() {
-        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
-        coEvery {
-            BibleVersionRendering.textBlocks(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-            )
-        } returns
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a right-to-left version renders a block starting with Latin text right to left on a right-to-left device`() {
+        setBibleTextContent(rtlVersion, listOf(annotatedBlock("Selah שלום")), LayoutDirection.Rtl)
+
+        assertEquals(ResolvedTextDirection.Rtl, textLayout("Selah שלום").getParagraphDirection(0))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a left-to-right version renders a block starting with Hebrew text left to right on a right-to-left device`() {
+        setBibleTextContent(ltrVersion, listOf(annotatedBlock("שלום Selah")), LayoutDirection.Rtl)
+
+        assertEquals(ResolvedTextDirection.Ltr, textLayout("שלום Selah").getParagraphDirection(0))
+    }
+
+    @Test
+    fun `a right-to-left version places a table's first cell on the right`() {
+        setBibleTextContent(
+            rtlVersion,
             listOf(
-                annotatedBlock("Filler text"),
                 BibleTextBlock(
                     text = AnnotatedString(""),
                     chapter = 1,
-                    rows = listOf(listOf(AnnotatedString("A"))),
+                    rows = listOf(listOf(AnnotatedString("Cell 1"), AnnotatedString("Cell 2"))),
                     firstLineHeadIndent = 0,
                     headIndent = 0,
                     marginTop = 8.dp,
@@ -1086,18 +1003,30 @@ class BibleTextTests {
                     alignment = TextAlign.Start,
                     footnotes = emptyList(),
                 ),
-            )
+            ),
+        )
 
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-                BibleText(reference = testReference)
-            }
-        }
-        composeTestRule.waitForIdle()
+        val first = composeTestRule.onNodeWithText("Cell 1").getBoundsInRoot()
+        val second = composeTestRule.onNodeWithText("Cell 2").getBoundsInRoot()
+        assertTrue(first.left > second.left)
+    }
 
-        val textBounds = composeTestRule.onNodeWithText("Filler text").getBoundsInRoot()
-        val cellBounds = composeTestRule.onNodeWithText("A").getBoundsInRoot()
-        assertTrue(cellBounds.right <= textBounds.right)
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a right-to-left version renders a scrolling block starting with Latin text right to left`() {
+        setContentWithBlock(verses = listOf("Selah שלום"), version = rtlVersion)
+
+        assertEquals(ResolvedTextDirection.Rtl, textLayout("Selah שלום").getParagraphDirection(0))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a left-to-right version renders a scrolling block starting with Hebrew text left to right`() {
+        setContentWithBlock(verses = listOf("שלום Selah"), version = ltrVersion)
+
+        assertEquals(ResolvedTextDirection.Ltr, textLayout("שלום Selah").getParagraphDirection(0))
     }
 
     // endregion
@@ -1827,6 +1756,56 @@ class BibleTextTests {
         composeTestRule.onNodeWithText("Selah").assertIsDisplayed()
     }
 
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a right-to-left selection ending at a wrap is underlined on its start, middle and end lines only`() {
+        lateinit var layout: TextLayoutResult
+        composeTestRule.setContent {
+            ProvideVersionDirection(isRightToLeft = true) {
+                Text(
+                    text = "בראשית ברא אלהים את השמים ואת הארץ והארץ היתה תהו ובהו וחשך על פני תהום",
+                    modifier = Modifier.width(120.dp),
+                    onTextLayout = { layout = it },
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+        assertTrue(layout.lineCount > 3)
+        val range = 2 until layout.getLineEnd(2)
+
+        val rects = layout.rangeLineRects(range)
+
+        assertEquals(3, rects.size)
+        assertEquals(layout.getHorizontalPosition(range.first, true), rects[0].right, 0.5f)
+        assertEquals(layout.getLineLeft(0), rects[0].left, 0.5f)
+        assertEquals(layout.getLineLeft(1), rects[1].left, 0.5f)
+        assertEquals(layout.getLineRight(1), rects[1].right, 0.5f)
+        assertEquals(layout.getLineRight(2), rects[2].right, 0.5f)
+        assertEquals(layout.getBoundingBox(range.last).left, rects[2].left, 0.5f)
+        assertEquals(layout.getLineBottom(2), rects[2].bottom, 0.5f)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a selection ending in opposite-direction text is underlined under every selected glyph`() {
+        val opening = "Light. "
+        val mixed = "ab אבג"
+        lateinit var layout: TextLayoutResult
+        composeTestRule.setContent { Text(text = opening + mixed + " Amen.", onTextLayout = { layout = it }) }
+        composeTestRule.waitForIdle()
+        val range = opening.length until opening.length + mixed.length
+        val glyphs = layout.getPathForRange(range.first, range.last + 1).getBounds()
+        assertTrue(glyphs.right > layout.getBoundingBox(range.last).right)
+
+        val rects = layout.rangeLineRects(range)
+
+        assertEquals(1, rects.size)
+        assertEquals(glyphs.left, rects[0].left, 0.5f)
+        assertEquals(glyphs.right, rects[0].right, 0.5f)
+    }
+
     // endregion
 
     // region Verse Focus
@@ -1910,13 +1889,13 @@ class BibleTextTests {
         verses: List<String> = listOf(longVerse, shortVerse, lastVerse),
         height: Dp = 2000.dp,
         headIndent: Int = 0,
-        layoutDirection: LayoutDirection = LayoutDirection.Ltr,
+        version: BibleVersion = ltrVersion,
         reference: () -> BibleReference = { chapterReference },
     ): BibleTextLayoutState {
         val text = verses.joinToString("")
         val ends = verses.runningReduce { acc, verse -> acc + verse }.map { it.length }
         val annotations = verses.indices.map { Triple("1:GEN:1:${it + 1}", ends[it] - verses[it].length, ends[it]) }
-        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery { mockVersionRepository.version(any()) } returns version
         coEvery {
             BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
         } coAnswers {
@@ -1931,7 +1910,7 @@ class BibleTextTests {
 
         lateinit var layoutState: BibleTextLayoutState
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                 val state = rememberBibleTextBlocksState(reference = reference())
                 layoutState = rememberBibleTextLayoutState(state)
                 LazyColumn(modifier = Modifier.width(200.dp).height(height)) {
@@ -2028,8 +2007,8 @@ class BibleTextTests {
     }
 
     @Test
-    fun `an indented block's bounds start at the edge right to left`() {
-        val layoutState = setContentWithBlock(headIndent = 2, layoutDirection = LayoutDirection.Rtl)
+    fun `an indented block's bounds start at the edge for a right-to-left version`() {
+        val layoutState = setContentWithBlock(headIndent = 2, version = rtlVersion)
 
         assertEquals(0f, layoutState.verseBounds(verse(1))?.left)
     }
@@ -2555,6 +2534,51 @@ class BibleTextTests {
 
         assertEquals(20f to 380f, ltr)
         assertEquals(20f to 380f, rtl)
+    }
+
+    // endregion
+
+    // region Text Color
+
+    @Test
+    fun `renders in the theme's content color when no text color is set`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns listOf(annotatedBlock("In the beginning"))
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalContentColor provides Color.Magenta) {
+                BibleText(reference = testReference)
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        coVerify {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), Color.Magenta, any(), any())
+        }
+    }
+
+    @Test
+    fun `renders in the inherited text style's color over the content color when no text color is set`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns listOf(annotatedBlock("In the beginning"))
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalContentColor provides Color.Magenta,
+                LocalTextStyle provides TextStyle(color = Color.Cyan),
+            ) {
+                BibleText(reference = testReference)
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        coVerify {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), Color.Cyan, any(), any())
+        }
     }
 
     // endregion

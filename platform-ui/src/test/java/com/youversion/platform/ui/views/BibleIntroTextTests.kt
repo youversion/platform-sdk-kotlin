@@ -1,10 +1,15 @@
 package com.youversion.platform.ui.views
 
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getBoundsInRoot
@@ -13,7 +18,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -29,6 +37,7 @@ import com.youversion.platform.ui.views.rendering.BibleTextCategory
 import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
@@ -41,6 +50,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -297,26 +308,109 @@ class BibleIntroTextTests {
 
     // endregion
 
-    // region RTL/LTR Alignment
+    // region Text Direction
 
-    @Test
-    fun `LTR system with RTL version aligns to End`() {
-        assertEquals(Alignment.End, mainColumnAlignment(LayoutDirection.Ltr, isVersionRightToLeft = true))
+    private fun blockDirection(
+        version: BibleVersion,
+        text: String,
+        deviceDirection: LayoutDirection = LayoutDirection.Ltr,
+    ): ResolvedTextDirection {
+        coEvery { mockVersionRepository.version(any()) } returns version
+        coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
+        coEvery {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns listOf(annotatedBlock(text))
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalLayoutDirection provides deviceDirection) {
+                BibleIntroText(1, "GEN", "INTRO")
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        val layoutResults = mutableListOf<TextLayoutResult>()
+        composeTestRule
+            .onNodeWithText(text)
+            .fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult]
+            .action
+            ?.invoke(layoutResults)
+        return layoutResults.first().getParagraphDirection(0)
     }
 
     @Test
-    fun `LTR system with LTR version aligns to Start`() {
-        assertEquals(Alignment.Start, mainColumnAlignment(LayoutDirection.Ltr, isVersionRightToLeft = false))
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a right-to-left version renders a block starting with Latin text right to left`() {
+        assertEquals(ResolvedTextDirection.Rtl, blockDirection(rtlVersion, "Selah שלום"))
     }
 
     @Test
-    fun `RTL system with RTL version aligns to Start`() {
-        assertEquals(Alignment.Start, mainColumnAlignment(LayoutDirection.Rtl, isVersionRightToLeft = true))
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a left-to-right version renders a block starting with Hebrew text left to right`() {
+        assertEquals(ResolvedTextDirection.Ltr, blockDirection(ltrVersion, "שלום Selah"))
     }
 
     @Test
-    fun `RTL system with LTR version aligns to End`() {
-        assertEquals(Alignment.End, mainColumnAlignment(LayoutDirection.Rtl, isVersionRightToLeft = false))
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a right-to-left version renders a block starting with Latin text right to left on a right-to-left device`() {
+        assertEquals(ResolvedTextDirection.Rtl, blockDirection(rtlVersion, "Selah שלום", LayoutDirection.Rtl))
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a left-to-right version renders a block starting with Hebrew text left to right on a right-to-left device`() {
+        assertEquals(ResolvedTextDirection.Ltr, blockDirection(ltrVersion, "שלום Selah", LayoutDirection.Rtl))
+    }
+
+    // endregion
+
+    // region Text Color
+
+    @Test
+    fun `renders in the theme's content color when no text color is set`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
+        coEvery {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns listOf(annotatedBlock("Intro"))
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalContentColor provides Color.Magenta) {
+                BibleIntroText(1, "GEN", "INTRO")
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        coVerify {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), Color.Magenta, any(), any())
+        }
+    }
+
+    @Test
+    fun `renders in the inherited text style's color over the content color when no text color is set`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
+        coEvery {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns listOf(annotatedBlock("Intro"))
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalContentColor provides Color.Magenta,
+                LocalTextStyle provides TextStyle(color = Color.Cyan),
+            ) {
+                BibleIntroText(1, "GEN", "INTRO")
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        coVerify {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), Color.Cyan, any(), any())
+        }
     }
 
     // endregion
@@ -482,6 +576,39 @@ class BibleIntroTextTests {
         composeTestRule.onNodeWithText("Cell 2").assertIsDisplayed()
         composeTestRule.onNodeWithText("Cell 3").assertIsDisplayed()
         composeTestRule.onNodeWithText("Cell 4").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a right-to-left version places a table's first cell on the right`() {
+        coEvery { mockVersionRepository.version(any()) } returns rtlVersion
+        coEvery { mockIntroRepository.introContent(any(), any()) } returns ""
+        coEvery {
+            BibleVersionRendering.introTextBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns
+            listOf(
+                BibleTextBlock(
+                    text = AnnotatedString(""),
+                    chapter = 1,
+                    rows = listOf(listOf(AnnotatedString("Cell 1"), AnnotatedString("Cell 2"))),
+                    firstLineHeadIndent = 0,
+                    headIndent = 0,
+                    marginTop = 8.dp,
+                    marginBottom = 0.dp,
+                    alignment = TextAlign.Start,
+                    footnotes = emptyList(),
+                ),
+            )
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                BibleIntroText(1, "GEN", "INTRO")
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        val first = composeTestRule.onNodeWithText("Cell 1").getBoundsInRoot()
+        val second = composeTestRule.onNodeWithText("Cell 2").getBoundsInRoot()
+        assertTrue(first.left > second.left)
     }
 
     // endregion
