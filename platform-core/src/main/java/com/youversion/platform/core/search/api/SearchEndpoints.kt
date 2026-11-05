@@ -10,6 +10,7 @@ import com.youversion.platform.core.api.parseApiBody
 import com.youversion.platform.core.api.parseApiResponse
 import com.youversion.platform.core.api.requireValidPageSize
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.search.models.ImageSearchResults
 import com.youversion.platform.core.search.models.SearchImage
 import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.core.search.models.SearchResults
@@ -58,6 +59,21 @@ internal object SearchEndpoints : SearchApi {
             parameter("query", query)
             parameter("bible_id", bibleId)
             parameter("user_intent", userIntent.rawValue)
+            pageSize(pageSize)
+            pageToken(pageToken)
+        }
+
+    /** The image-search URL. Null paging options are omitted; [images] checks the arguments. */
+    fun searchImagesUrl(
+        query: String,
+        bibleId: Int,
+        pageSize: Int? = null,
+        pageToken: String? = null,
+    ): String =
+        buildYouVersionUrlString {
+            path("/v1/search-images")
+            parameter("query", query)
+            parameter("bible_id", bibleId)
             pageSize(pageSize)
             pageToken(pageToken)
         }
@@ -119,6 +135,27 @@ internal object SearchEndpoints : SearchApi {
             userIntent = response.userIntent?.let(::SearchUserIntent),
             didYouMean = response.didYouMean,
             searchInsteadFor = response.searchInsteadFor,
+            nextPageToken = response.nextPageToken,
+        )
+    }
+
+    override suspend fun images(
+        query: String,
+        bibleId: Int,
+        pageSize: Int?,
+        pageToken: String?,
+    ): ImageSearchResults {
+        requireValidQueryLength(query)
+        require(bibleId > 0) { "bibleId must be greater than zero" }
+        requireValidPageSize(pageSize)
+        pageToken?.let { require(it.isNotBlank()) { "pageToken must not be blank" } }
+
+        val response =
+            parseApiBody<ImageSearchResponse>(
+                httpClient.get(searchImagesUrl(query, bibleId, pageSize, pageToken)),
+            )
+        return ImageSearchResults(
+            images = response.images.filterIsInstance<JsonObject>().mapNotNull { it.searchImage() },
             nextPageToken = response.nextPageToken,
         )
     }

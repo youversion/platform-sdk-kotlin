@@ -1,5 +1,7 @@
 package com.youversion.platform.core.search.api
 
+import com.youversion.platform.core.search.models.ImageSearchResults
+import com.youversion.platform.core.search.models.SearchImage
 import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.core.search.models.SearchResults
 import com.youversion.platform.core.search.models.SearchUserIntent
@@ -63,6 +65,32 @@ interface SearchApi {
         pageSize: Int? = null,
         pageToken: String? = null,
     ): VerseSearchResults
+
+    /**
+     * Retrieves the images illustrating scripture in the Bible version identified by [bibleId] that match [query].
+     *
+     * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
+     *
+     * A response carrying no content fails rather than returning no results, and a result that does not name an id
+     * and a passage is dropped.
+     *
+     * @param query The text to search for. It must be between 1 and 100 grapheme clusters.
+     * @param bibleId The identifier of the Bible version to search. It must be greater than zero.
+     * @param pageSize The number of results to return. When supplied, it must be between 1 and 99.
+     * @param pageToken An [ImageSearchResults.nextPageToken] from an earlier search with the same [query], [bibleId]
+     *     and [pageSize], to continue where it left off. It must not be blank.
+     * @return The matching [ImageSearchResults]. Pass each [SearchImage.id] to
+     *     [com.youversion.platform.core.verseimages.api.VerseImagesApi.verseImage] to get the image itself.
+     * @throws IllegalArgumentException if [query], [bibleId] or [pageSize] is outside the range stated above, or
+     *     [pageToken] is blank.
+     * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
+     */
+    suspend fun images(
+        query: String,
+        bibleId: Int,
+        pageSize: Int? = null,
+        pageToken: String? = null,
+    ): ImageSearchResults
 
     /**
      * Retrieves the topics matching [query] in the first supported language range.

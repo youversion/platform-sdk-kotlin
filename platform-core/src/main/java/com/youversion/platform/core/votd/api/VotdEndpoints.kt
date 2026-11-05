@@ -1,6 +1,7 @@
 package com.youversion.platform.core.votd.api
 
 import com.youversion.platform.core.api.buildYouVersionUrlString
+import com.youversion.platform.core.api.languageRanges
 import com.youversion.platform.core.api.parseApiBody
 import com.youversion.platform.core.api.parseApiResponse
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
@@ -14,19 +15,37 @@ internal object VotdEndpoints : VotdApi {
     private val httpClient: HttpClient
         get() = PlatformCoreKoinComponent.httpClient
 
-    fun votdUrl(dayOfTheYear: Int? = null): String =
+    /** The VOTD URL for [dayOfTheYear], or the full year when it is `null`. An empty [languageRanges] is omitted. */
+    fun votdUrl(
+        dayOfTheYear: Int? = null,
+        languageRanges: List<String> = emptyList(),
+    ): String =
         buildYouVersionUrlString {
-            path("/v1/verse_of_the_days")
+            path("/v1/verse-of-the-days")
             dayOfTheYear?.let { appendPathSegments(it.toString()) }
+            languageRanges(languageRanges)
         }
 
     override suspend fun verseOfTheDay(dayOfTheYear: Int): YouVersionVerseOfTheDay =
-        httpClient
-            .get(votdUrl(dayOfTheYear))
-            .let { parseApiBody(it) }
+        verseOfTheDay(dayOfTheYear, emptyList())
 
-    override suspend fun verseOfTheDays(): List<YouVersionVerseOfTheDay> =
+    override suspend fun verseOfTheDay(
+        dayOfTheYear: Int,
+        languageRanges: List<String>,
+    ): YouVersionVerseOfTheDay =
         httpClient
-            .get(votdUrl())
-            .let { parseApiResponse(it) }
+            .get(votdUrl(dayOfTheYear, languageRanges))
+            .let { parseApiBody<YouVersionVerseOfTheDay>(it) }
+            .blankImageIdAsNull()
+
+    override suspend fun verseOfTheDays(): List<YouVersionVerseOfTheDay> = verseOfTheDays(emptyList())
+
+    override suspend fun verseOfTheDays(languageRanges: List<String>): List<YouVersionVerseOfTheDay> =
+        httpClient
+            .get(votdUrl(languageRanges = languageRanges))
+            .let { parseApiResponse<List<YouVersionVerseOfTheDay>>(it) }
+            .map { it.blankImageIdAsNull() }
+
+    private fun YouVersionVerseOfTheDay.blankImageIdAsNull(): YouVersionVerseOfTheDay =
+        if (imageId?.isBlank() == true) YouVersionVerseOfTheDay(day, passageUsfm) else this
 }
