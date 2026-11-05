@@ -313,6 +313,15 @@ suspend fun fetchVotd(): YouVersionVerseOfTheDay {
 }
 ```
 
+To show verse art, pass `languageRanges` and fetch the image the day names:
+
+```kotlin
+val votd = YouVersionApi.votd.verseOfTheDay(dayOfTheYear, languageRanges = listOf("en"))
+val image = votd.imageId?.let { YouVersionApi.verseImages.verseImage(imageId = it) }
+```
+
+`imageId` is `null` when no image is available for that day and language, so plan for a text-only fallback. `verseOfTheDays(languageRanges)` returns the same for every day of the year.
+
 ### Authentication
 
 Integrating "Sign In with YouVersion" is straightforward. The SDK handles the entire authentication flow, including launching the sign-in screen, handling the redirect, and managing tokens.
@@ -514,6 +523,22 @@ Alongside the references, the results carry:
 - `didYouMean` — alternative spellings offered alongside results for the query as written.
 - `searchInsteadFor` — present only when the platform corrected the query and searched for the correction. It holds the user's original wording, so you can offer to search for that instead.
 
+#### Images
+
+```kotlin
+val firstPage = YouVersionApi.search.images(query = "peace", bibleId = 3034, pageSize = 20)
+firstPage.images.forEach { result ->
+    val image = YouVersionApi.verseImages.verseImage(imageId = result.id)
+}
+
+val secondPage =
+    firstPage.nextPageToken?.let { token ->
+        YouVersionApi.search.images(query = "peace", bibleId = 3034, pageSize = 20, pageToken = token)
+    }
+```
+
+Each result is a `SearchImage`, the same type `unified` returns. Image results page like verse results, but a page token only works with the same `query`, `bibleId` and `pageSize` that produced it. Change any of them and the request fails, so start again without a token. `nextPageToken` is `null` on the last page, and a search with no matches returns an empty page.
+
 #### Topics
 
 ```kotlin
@@ -558,9 +583,9 @@ val heading =
 
 #### Search Error Handling
 
-- Invalid arguments throw `IllegalArgumentException` before any request is made. A `query` must be 1–100 grapheme clusters (characters as the user sees them, so an emoji counts as one) for `verses`, `topics`, and `unified`, and non-empty for `suggestedQueries`. `bibleId` must be greater than zero, `pageSize` between 1 and 99, and each `languageRanges` entry a well-formed tag or `"*"` to request all languages, with at least one given.
+- Invalid arguments throw `IllegalArgumentException` before any request is made. A `query` must be 1–100 grapheme clusters (characters as the user sees them, so an emoji counts as one) for `verses`, `images`, `topics`, and `unified`, and non-empty for `suggestedQueries`. `bibleId` must be greater than zero, `pageSize` between 1 and 99, and each `languageRanges` entry a well-formed tag or `"*"` to request all languages, with at least one given.
 - A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `CANNOT_DOWNLOAD` for any other error response, and `INVALID_RESPONSE` when the response cannot be read.
-- A response with no content (HTTP 204) is handled differently by endpoint. `trendingQueries` and `suggestedQueries` return an empty list, while `verses`, `topics`, and `unified` throw `YouVersionNetworkException` with reason `INVALID_RESPONSE` rather than reporting no matches.
+- A response with no content (HTTP 204) is handled differently by endpoint. `trendingQueries` and `suggestedQueries` return an empty list, while `verses`, `images`, `topics`, and `unified` throw `YouVersionNetworkException` with reason `INVALID_RESPONSE` rather than reporting no matches.
 
 ### Verse Images API
 
@@ -595,8 +620,10 @@ A filter that matches nothing returns an empty page rather than failing.
 #### Fetching One Image
 
 ```kotlin
-val image = YouVersionApi.verseImages.verseImage(imageId = savedImageId)
+val image = YouVersionApi.verseImages.verseImage(imageId = searchImage.id)
 ```
+
+Image ids come from search results and the verse of the day. Treat them as opaque, and fetch them fresh rather than storing them.
 
 #### Displaying an Image
 

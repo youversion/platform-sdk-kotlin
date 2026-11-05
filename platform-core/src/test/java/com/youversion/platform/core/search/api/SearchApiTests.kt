@@ -24,6 +24,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -409,6 +410,177 @@ class SearchApiTests : YouVersionPlatformTest {
     @Test
     fun `test verse search malformed body is an invalid response`() =
         testInvalidResponse { YouVersionApi.search.verses(query = "love", bibleId = 111) }
+
+    @Test
+    fun `test image search success returns data`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals(HttpMethod.Get, request.method)
+                assertEquals(
+                    "/v1/search-images?query=two+fish&bible_id=111&page_size=25&page_token=current-token",
+                    request.url.encodedPathAndQuery,
+                )
+                respondJson(
+                    """
+                    {
+                        "images": [
+                            { "id": "img-1", "passage_id": "MAT.14.17" },
+                            { "id": "img-2", "passage_id": "JHN.6.9" }
+                        ],
+                        "next_page_token": "next-token"
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results =
+                YouVersionApi.search.images(
+                    query = "two fish",
+                    bibleId = 111,
+                    pageSize = 25,
+                    pageToken = "current-token",
+                )
+
+            assertEquals(
+                listOf(
+                    SearchImage(id = "img-1", passageId = "MAT.14.17"),
+                    SearchImage(id = "img-2", passageId = "JHN.6.9"),
+                ),
+                results.images,
+            )
+            assertEquals("next-token", results.nextPageToken)
+        }
+
+    @Test
+    fun `test image search returns an empty page when nothing matches`() =
+        runTest {
+            MockEngine { respondJson("""{ "images": [], "next_page_token": null }""") }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.images(query = "love", bibleId = 111)
+
+            assertEquals(emptyList(), results.images)
+            assertNull(results.nextPageToken)
+        }
+
+    @Test
+    fun `test image search drops a malformed image and keeps its well formed siblings`() =
+        runTest {
+            MockEngine {
+                respondJson(
+                    """
+                    {
+                        "images": [
+                            { "id": "img-1" },
+                            { "id": null, "passage_id": "ROM.8.28" },
+                            { "id": "", "passage_id": "PHP.4.13" },
+                            { "id": "img-2", "passage_id": "MAT.14.17" },
+                            { "id": "img-4", "passage_id": " " },
+                            { "id": 5, "passage_id": "PSA.23.1" },
+                            null,
+                            "img-6",
+                            ["img-7", "JHN.1.1"],
+                            { "id": "img-3", "passage_id": "1CO.13.4-7" }
+                        ],
+                        "next_page_token": "next-token"
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.images(query = "love", bibleId = 111)
+
+            val valid =
+                listOf(
+                    SearchImage(id = "img-2", passageId = "MAT.14.17"),
+                    SearchImage(id = "img-3", passageId = "1CO.13.4-7"),
+                )
+            assertTrue(results.images.containsAll(valid))
+            listOf("img-1", "img-4", "img-6", "img-7").forEach { id ->
+                assertFalse(results.images.any { it.id == id }, "expected $id to be dropped")
+            }
+            listOf("ROM.8.28", "PHP.4.13", "PSA.23.1", "JHN.1.1").forEach { passageId ->
+                assertFalse(results.images.any { it.passageId == passageId }, "expected $passageId to be dropped")
+            }
+            assertEquals(valid, results.images)
+            assertEquals("next-token", results.nextPageToken)
+        }
+
+    @Test
+    fun `test image search rejects a query outside one to one hundred graphemes`() =
+        runTest {
+            startNoRequestExpected()
+            listOf("", "a".repeat(101)).forEach { query ->
+                assertFailsWith<IllegalArgumentException>("expected a query of ${query.length} to be rejected") {
+                    YouVersionApi.search.images(query = query, bibleId = 111)
+                }
+            }
+        }
+
+    @Test
+    fun `test image search rejects a bible version identifier of zero or less`() =
+        runTest {
+            startNoRequestExpected()
+            listOf(0, -1).forEach { bibleId ->
+                assertFailsWith<IllegalArgumentException>("expected $bibleId to be rejected") {
+                    YouVersionApi.search.images(query = "love", bibleId = bibleId)
+                }
+            }
+        }
+
+    @Test
+    fun `test image search rejects a page size outside one to ninety nine`() =
+        runTest {
+            startNoRequestExpected()
+            listOf(0, 100).forEach { pageSize ->
+                assertFailsWith<IllegalArgumentException>("expected $pageSize to be rejected") {
+                    YouVersionApi.search.images(query = "love", bibleId = 111, pageSize = pageSize)
+                }
+            }
+        }
+
+    @Test
+    fun `test image search intentionally fails on no content rather than returning nothing found`() =
+        runTest {
+            MockEngine { respond("", HttpStatusCode.NoContent) }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            assertFailsWith<YouVersionNetworkException> {
+                YouVersionApi.search.images(query = "love", bibleId = 111)
+            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
+        }
+
+    @Test
+    fun `test image search intentionally fails when images is absent`() =
+        runTest {
+            MockEngine { respondJson("""{ "next_page_token": null }""") }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            assertFailsWith<YouVersionNetworkException> {
+                YouVersionApi.search.images(query = "love", bibleId = 111)
+            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
+        }
+
+    @Test
+    fun `test image search unauthorized is not permitted`() =
+        testUnauthorizedNotPermitted { YouVersionApi.search.images(query = "love", bibleId = 111) }
+
+    @Test
+    fun `test image search forbidden is not permitted`() =
+        testForbiddenNotPermitted { YouVersionApi.search.images(query = "love", bibleId = 111) }
+
+    @Test
+    fun `test image search server error cannot download`() =
+        testCannotDownload { YouVersionApi.search.images(query = "love", bibleId = 111) }
+
+    @Test
+    fun `test image search malformed body is an invalid response`() =
+        testInvalidResponse { YouVersionApi.search.images(query = "love", bibleId = 111) }
 
     @Test
     fun `test topic search success returns data`() =

@@ -58,6 +58,28 @@ class SearchEndpointsTests {
     }
 
     @Test
+    fun `test image search url`() {
+        assertEquals(
+            "https://api.youversion.com/v1/search-images" +
+                "?query=two+fish&bible_id=111&page_size=25&page_token=current-token",
+            SearchEndpoints.searchImagesUrl(
+                query = "two fish",
+                bibleId = 111,
+                pageSize = 25,
+                pageToken = "current-token",
+            ),
+        )
+    }
+
+    @Test
+    fun `test image search url omits paging when it is not supplied`() {
+        assertEquals(
+            "https://api.youversion.com/v1/search-images?query=love&bible_id=111",
+            SearchEndpoints.searchImagesUrl(query = "love", bibleId = 111),
+        )
+    }
+
+    @Test
     fun `test topic search url repeats every language range`() {
         assertEquals(
             "https://api.youversion.com/v1/search-topics" +
