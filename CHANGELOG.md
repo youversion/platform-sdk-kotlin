@@ -1,3 +1,17 @@
+## [2.8.0](https://github.com/youversion/platform-sdk-kotlin/compare/2.7.0...2.8.0) (2026-11-05)
+
+### Features
+
+* **core:** add paginated image search and verse of the day images ([a6b3f02](https://github.com/youversion/platform-sdk-kotlin/commit/a6b3f02a32c671c3a0987519f7aa2487d1306047))
+* **ui:** make verses targetable on screen ([b346915](https://github.com/youversion/platform-sdk-kotlin/commit/b34691518afffd3994400cdbd4f1e09eaf0c9a8c))
+* **ui:** render agreed phase 3 typography styles ([a4d6354](https://github.com/youversion/platform-sdk-kotlin/commit/a4d6354004fc4e5fb53455de576e4e6e410f47e8))
+* **ui:** render right-to-left Bible versions right to left ([c7f1cc7](https://github.com/youversion/platform-sdk-kotlin/commit/c7f1cc7fa7257150deaf6b47dc6edb029cb5ee9f))
+
+### Bug Fixes
+
+* **i18n:** sync kotlin localization from platform-localization ([cd9ff08](https://github.com/youversion/platform-sdk-kotlin/commit/cd9ff08a677c41a2e46362798d0948990379ad7f))
+* **i18n:** sync kotlin localization from platform-localization ([0f6aa93](https://github.com/youversion/platform-sdk-kotlin/commit/0f6aa93e66867619a78ec6c2d8e23bcb926293eb))
+
 ## [2.7.0](https://github.com/youversion/platform-sdk-kotlin/compare/2.6.0...2.7.0) (2026-10-26)
 
 ### Features
