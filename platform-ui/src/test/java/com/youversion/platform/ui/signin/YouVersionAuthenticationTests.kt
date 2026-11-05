@@ -256,7 +256,7 @@ class YouVersionAuthenticationTests {
             stubPKCEStoreWithValues()
             coEvery {
                 mockUsersApi.getSignInResult(any(), any(), any(), any(), any())
-            } throws YouVersionNetworkException(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD)
+            } throws YouVersionNetworkException(YouVersionNetworkException.Reason.SERVER_ERROR)
             every { YouVersionPlatformConfiguration.saveAuthData(any(), any(), any(), any()) } just Runs
             every { YouVersionPlatformConfiguration.saveGrantedPermissions(any()) } just Runs
 

@@ -1223,7 +1223,7 @@ private class FakeHighlightsApi(
         }
         if (highlightsFailures > 0) {
             highlightsFailures--
-            throw YouVersionNetworkException(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD)
+            throw YouVersionNetworkException(YouVersionNetworkException.Reason.SERVER_ERROR)
         }
         return highlightsToReturn
     }

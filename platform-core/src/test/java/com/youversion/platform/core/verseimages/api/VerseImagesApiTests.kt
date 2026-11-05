@@ -7,9 +7,9 @@ import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
-import com.youversion.platform.helpers.testCannotDownload
 import com.youversion.platform.helpers.testForbiddenNotPermitted
 import com.youversion.platform.helpers.testInvalidResponse
+import com.youversion.platform.helpers.testServerError
 import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.http.HttpMethod
@@ -194,8 +194,7 @@ class VerseImagesApiTests : YouVersionPlatformTest {
         testForbiddenNotPermitted { YouVersionApi.verseImages.verseImages() }
 
     @Test
-    fun `test verse images throws cannot download on server error`() =
-        testCannotDownload { YouVersionApi.verseImages.verseImages() }
+    fun `test verse images throws server error`() = testServerError { YouVersionApi.verseImages.verseImages() }
 
     @Test
     fun `test verse images throws invalid response on malformed body`() =
@@ -210,8 +209,8 @@ class VerseImagesApiTests : YouVersionPlatformTest {
         testForbiddenNotPermitted { YouVersionApi.verseImages.verseImage(imageId = "abc123") }
 
     @Test
-    fun `test verse image throws cannot download on server error`() =
-        testCannotDownload { YouVersionApi.verseImages.verseImage(imageId = "abc123") }
+    fun `test verse image throws server error`() =
+        testServerError { YouVersionApi.verseImages.verseImage(imageId = "abc123") }
 
     @Test
     fun `test verse image throws invalid response on malformed body`() =

@@ -5,9 +5,9 @@ import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
-import com.youversion.platform.helpers.testCannotDownload
 import com.youversion.platform.helpers.testForbiddenNotPermitted
 import com.youversion.platform.helpers.testInvalidResponse
+import com.youversion.platform.helpers.testServerError
 import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
 import kotlinx.coroutines.test.runTest
@@ -54,8 +54,8 @@ class VotdApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test verseOfTheDay throws cannot download if request failed`() =
-        testCannotDownload {
+    fun `test verseOfTheDay throws server error if request failed`() =
+        testServerError {
             YouVersionApi.votd.verseOfTheDay(206)
         }
 

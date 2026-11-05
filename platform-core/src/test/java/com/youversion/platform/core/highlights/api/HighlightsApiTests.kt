@@ -150,7 +150,7 @@ class HighlightsApiTests : YouVersionPlatformTest {
                 assertFailsWith<YouVersionNetworkException> {
                     YouVersionApi.highlights.highlights(1, "GEN.1")
                 }
-            assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, exception.reason)
+            assertEquals(YouVersionNetworkException.Reason.SERVER_ERROR, exception.reason)
         }
 
     @Test
@@ -165,7 +165,7 @@ class HighlightsApiTests : YouVersionPlatformTest {
                 assertFailsWith<YouVersionNetworkException> {
                     YouVersionApi.highlights.highlights(1, "GEN.1")
                 }
-            assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, exception.reason)
+            assertEquals(YouVersionNetworkException.Reason.RATE_LIMITED, exception.reason)
         }
 
     @Test

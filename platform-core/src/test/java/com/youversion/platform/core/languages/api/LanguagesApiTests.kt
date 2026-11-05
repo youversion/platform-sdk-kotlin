@@ -6,9 +6,9 @@ import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
 import com.youversion.platform.helpers.stopYouVersionPlatformTest
-import com.youversion.platform.helpers.testCannotDownload
 import com.youversion.platform.helpers.testForbiddenNotPermitted
 import com.youversion.platform.helpers.testInvalidResponse
+import com.youversion.platform.helpers.testServerError
 import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -161,8 +161,8 @@ class LanguagesApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test languages throws cannot download if request failed`() =
-        testCannotDownload {
+    fun `test languages throws server error if request failed`() =
+        testServerError {
             YouVersionApi.languages.languages(country = "US")
         }
 

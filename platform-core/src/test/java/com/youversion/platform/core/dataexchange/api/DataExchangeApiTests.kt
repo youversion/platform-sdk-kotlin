@@ -60,7 +60,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
     @Test
     fun `reports a rejected token request as not permitted`() =
         runTest {
-            MockEngine { respond("", HttpStatusCode.Unauthorized) }
+            MockEngine { respond("", HttpStatusCode.Forbidden) }
                 .also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
@@ -75,9 +75,9 @@ class DataExchangeApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `reports an unexpected token response as a failed download`() =
+    fun `reports an unauthenticated token request as missing authentication`() =
         runTest {
-            MockEngine { respond("", HttpStatusCode.InternalServerError) }
+            MockEngine { respondJson("""{"message":"Token expired"}""", HttpStatusCode.Unauthorized) }
                 .also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
@@ -88,7 +88,28 @@ class DataExchangeApiTests : YouVersionPlatformTest {
                         setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
                     )
                 }
-            assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, exception.reason)
+            assertEquals(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION, exception.reason)
+            assertEquals(401, exception.statusCode)
+            assertEquals("Token expired", exception.serverMessage)
+        }
+
+    @Test
+    fun `reports a failed token response as a server error`() =
+        runTest {
+            MockEngine { respondJson("""{"message":"Token service down"}""", HttpStatusCode.InternalServerError) }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
+
+            val exception =
+                assertFailsWith<YouVersionNetworkException> {
+                    YouVersionApi.dataExchange.dataExchangeToken(
+                        setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                    )
+                }
+            assertEquals(YouVersionNetworkException.Reason.SERVER_ERROR, exception.reason)
+            assertEquals(500, exception.statusCode)
+            assertEquals("Token service down", exception.serverMessage)
         }
 
     @Test
