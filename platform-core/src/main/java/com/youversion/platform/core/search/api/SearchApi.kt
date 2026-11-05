@@ -71,7 +71,7 @@ interface SearchApi {
      *
      * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
      *
-     * A response carrying no content fails rather than returning no results, and a result that does not name an id
+     * A search that matches nothing returns empty results rather than failing, and a result that does not name an id
      * and a passage is dropped.
      *
      * @param query The text to search for. It must be between 1 and 100 grapheme clusters.

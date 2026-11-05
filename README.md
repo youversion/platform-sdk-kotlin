@@ -585,7 +585,7 @@ val heading =
 
 - Invalid arguments throw `IllegalArgumentException` before any request is made. A `query` must be 1–100 grapheme clusters (characters as the user sees them, so an emoji counts as one) for `verses`, `images`, `topics`, and `unified`, and non-empty for `suggestedQueries`. `bibleId` must be greater than zero, `pageSize` between 1 and 99, and each `languageRanges` entry a well-formed tag or `"*"` to request all languages, with at least one given.
 - A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `CANNOT_DOWNLOAD` for any other error response, and `INVALID_RESPONSE` when the response cannot be read.
-- A response with no content (HTTP 204) is handled differently by endpoint. `trendingQueries` and `suggestedQueries` return an empty list, and `verses`, `topics`, and `unified` return empty results, while `images` throws `YouVersionNetworkException` with reason `INVALID_RESPONSE` rather than reporting no matches.
+- A response with no content (HTTP 204) reports no matches. `trendingQueries` and `suggestedQueries` return an empty list, and `verses`, `images`, `topics`, and `unified` return empty results.
 
 ### Verse Images API
 

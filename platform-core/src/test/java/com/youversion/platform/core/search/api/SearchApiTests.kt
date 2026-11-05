@@ -592,15 +592,16 @@ class SearchApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test image search intentionally fails on no content rather than returning nothing found`() =
+    fun `test image search returns an empty page if there is no content`() =
         runTest {
             MockEngine { respond("", HttpStatusCode.NoContent) }
                 .also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
-            assertFailsWith<YouVersionNetworkException> {
-                YouVersionApi.search.images(query = "love", bibleId = 111)
-            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
+            val results = YouVersionApi.search.images(query = "love", bibleId = 111)
+
+            assertTrue(results.images.isEmpty())
+            assertNull(results.nextPageToken)
         }
 
     @Test

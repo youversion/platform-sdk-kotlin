@@ -158,10 +158,12 @@ internal object SearchEndpoints : SearchApi {
         requireValidPageSize(pageSize)
         pageToken?.let { require(it.isNotBlank()) { "pageToken must not be blank" } }
 
-        val response =
-            parseApiBody<ImageSearchResponse>(
-                httpClient.get(searchImagesUrl(query, bibleId, pageSize, pageToken)),
-            )
+        val httpResponse = httpClient.get(searchImagesUrl(query, bibleId, pageSize, pageToken))
+        if (httpResponse.status == HttpStatusCode.NoContent) {
+            return ImageSearchResults(images = emptyList(), nextPageToken = null)
+        }
+
+        val response = parseApiBody<ImageSearchResponse>(httpResponse)
         return ImageSearchResults(
             images = response.images.filterIsInstance<JsonObject>().mapNotNull { it.searchImage() },
             nextPageToken = response.nextPageToken,
