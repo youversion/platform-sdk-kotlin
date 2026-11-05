@@ -313,14 +313,14 @@ suspend fun fetchVotd(): YouVersionVerseOfTheDay {
 }
 ```
 
-To show verse art, pass `languageRanges` and fetch the image the day names:
+To show verse art, pass `languageRanges` and fetch the image that day names:
 
 ```kotlin
 val votd = YouVersionApi.votd.verseOfTheDay(dayOfTheYear, languageRanges = listOf("en"))
 val image = votd.imageId?.let { YouVersionApi.verseImages.verseImage(imageId = it) }
 ```
 
-`imageId` is `null` when no image is available for that day and language, so plan for a text-only fallback. `verseOfTheDays(languageRanges)` returns the same for every day of the year.
+`imageId` is `null` when no image is available for that day and language, so plan for a text-only fallback. `verseOfTheDays(languageRanges)` returns every day of the year, and each day carries its own `imageId`, which is `null` when that day has no image. `YouVersionVerseOfTheDay.copy()` does not carry `imageId` over, so a copy has none.
 
 ### Authentication
 

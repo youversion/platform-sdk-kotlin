@@ -466,6 +466,40 @@ class SearchApiTests : YouVersionPlatformTest {
         }
 
     @Test
+    fun `test image search returns a populated last page without a next page token`() =
+        runTest {
+            MockEngine {
+                respondJson(
+                    """
+                    {
+                        "images": [{ "id": "img-1", "passage_id": "MAT.14.17" }],
+                        "next_page_token": null
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.images(query = "love", bibleId = 111)
+
+            assertEquals(listOf(SearchImage(id = "img-1", passageId = "MAT.14.17")), results.images)
+            assertNull(results.nextPageToken)
+        }
+
+    @Test
+    fun `test image search keeps the next page token on an empty page`() =
+        runTest {
+            MockEngine { respondJson("""{ "images": [], "next_page_token": "next-token" }""") }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.images(query = "love", bibleId = 111)
+
+            assertEquals(emptyList(), results.images)
+            assertEquals("next-token", results.nextPageToken)
+        }
+
+    @Test
     fun `test image search drops a malformed image and keeps its well formed siblings`() =
         runTest {
             MockEngine {
@@ -538,6 +572,17 @@ class SearchApiTests : YouVersionPlatformTest {
             listOf(0, 100).forEach { pageSize ->
                 assertFailsWith<IllegalArgumentException>("expected $pageSize to be rejected") {
                     YouVersionApi.search.images(query = "love", bibleId = 111, pageSize = pageSize)
+                }
+            }
+        }
+
+    @Test
+    fun `test image search rejects a blank page token`() =
+        runTest {
+            startNoRequestExpected()
+            listOf("", " ").forEach { blank ->
+                assertFailsWith<IllegalArgumentException>("expected pageToken \"$blank\" to be rejected") {
+                    YouVersionApi.search.images(query = "love", bibleId = 111, pageToken = blank)
                 }
             }
         }

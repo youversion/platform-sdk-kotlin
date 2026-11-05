@@ -35,12 +35,17 @@ internal object VotdEndpoints : VotdApi {
     ): YouVersionVerseOfTheDay =
         httpClient
             .get(votdUrl(dayOfTheYear, languageRanges))
-            .let { parseApiBody(it) }
+            .let { parseApiBody<YouVersionVerseOfTheDay>(it) }
+            .blankImageIdAsNull()
 
     override suspend fun verseOfTheDays(): List<YouVersionVerseOfTheDay> = verseOfTheDays(emptyList())
 
     override suspend fun verseOfTheDays(languageRanges: List<String>): List<YouVersionVerseOfTheDay> =
         httpClient
             .get(votdUrl(languageRanges = languageRanges))
-            .let { parseApiResponse(it) }
+            .let { parseApiResponse<List<YouVersionVerseOfTheDay>>(it) }
+            .map { it.blankImageIdAsNull() }
+
+    private fun YouVersionVerseOfTheDay.blankImageIdAsNull(): YouVersionVerseOfTheDay =
+        if (imageId?.isBlank() == true) YouVersionVerseOfTheDay(day, passageUsfm) else this
 }

@@ -148,6 +148,7 @@ internal object SearchEndpoints : SearchApi {
         requireValidQueryLength(query)
         require(bibleId > 0) { "bibleId must be greater than zero" }
         requireValidPageSize(pageSize)
+        pageToken?.let { require(it.isNotBlank()) { "pageToken must not be blank" } }
 
         val response =
             parseApiBody<ImageSearchResponse>(

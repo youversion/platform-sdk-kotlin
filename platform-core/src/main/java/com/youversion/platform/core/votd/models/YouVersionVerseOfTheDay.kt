@@ -21,7 +21,10 @@ data class YouVersionVerseOfTheDay(
     var imageId: String? = null
         private set
 
-    /** Creates a verse of the day with [imageId], the only way to set it; the two-argument constructor leaves it `null`. */
+    /**
+     * Creates a verse of the day with [imageId], the only way to set it; the two-argument constructor leaves it
+     * `null`.
+     */
     constructor(day: Int, passageUsfm: String, imageId: String?) : this(day, passageUsfm) {
         this.imageId = imageId
     }

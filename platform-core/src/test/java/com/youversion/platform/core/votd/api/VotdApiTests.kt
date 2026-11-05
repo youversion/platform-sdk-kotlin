@@ -97,6 +97,28 @@ class VotdApiTests : YouVersionPlatformTest {
         }
 
     @Test
+    fun `test verseOfTheDay treats a blank image id as null`() =
+        runTest {
+            MockEngine {
+                respondJson(
+                    """
+                    {
+                        "day": 1,
+                        "passage_id": "ISA.43.19",
+                        "image_id": " "
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionApi.votd.verseOfTheDay(dayOfTheYear = 1, languageRanges = listOf("en")).apply {
+                assertEquals(1, day)
+                assertEquals("ISA.43.19", passageUsfm)
+                assertNull(imageId)
+            }
+        }
+
+    @Test
     fun `test verseOfTheDay throws not permitted if unauthorized`() =
         testUnauthorizedNotPermitted {
             YouVersionApi.votd.verseOfTheDay(206)
@@ -158,6 +180,36 @@ class VotdApiTests : YouVersionPlatformTest {
                 assertEquals(2, get(1).day)
                 assertEquals("HEB.13.5", get(1).passageUsfm)
                 assertNull(get(1).imageId)
+            }
+        }
+
+    @Test
+    fun `test verseOfTheDays treats a blank image id as null and keeps the others`() =
+        runTest {
+            MockEngine {
+                respondJson(
+                    """
+                    {
+                        "data": [
+                            {
+                                "day": 1,
+                                "passage_id": "ISA.43.19",
+                                "image_id": ""
+                            },
+                            {
+                                "day": 2,
+                                "passage_id": "HEB.13.5",
+                                "image_id": "aW1hZ2UtMg"
+                            }
+                        ]
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionApi.votd.verseOfTheDays(languageRanges = listOf("en")).apply {
+                assertEquals(YouVersionVerseOfTheDay(1, "ISA.43.19"), get(0))
+                assertEquals(YouVersionVerseOfTheDay(2, "HEB.13.5", "aW1hZ2UtMg"), get(1))
             }
         }
 
