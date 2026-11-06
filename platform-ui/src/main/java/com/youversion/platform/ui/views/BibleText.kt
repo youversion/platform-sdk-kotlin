@@ -127,7 +127,7 @@ data class BibleTextOptions(
                     ) {
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.ic_material_footnotes),
-                            contentDescription = stringResource(R.string.footnote_content_desc),
+                            contentDescription = stringResource(R.string.footnote_aria_label),
                             modifier = Modifier.size(iconSize),
                             tint = LocalContentColor.current.copy(alpha = 0.6f),
                         )
@@ -753,7 +753,7 @@ internal fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
                 PlaceholderMessage(
                     icon = ImageVector.vectorResource(R.drawable.ic_material_lock),
                     iconContentDescription = stringResource(R.string.placeholder_version_unavailable_icon_content_desc),
-                    message = stringResource(R.string.placeholder_version_unavailable),
+                    message = stringResource(R.string.version_unavailable_auto_selected_message),
                 )
             }
 

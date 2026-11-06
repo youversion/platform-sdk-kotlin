@@ -135,7 +135,7 @@ private fun OfflineAgreement() {
         modifier = Modifier.padding(top = 16.dp),
     ) {
         Text(
-            text = stringResource(UiR.string.version_info_offline_agreement),
+            text = stringResource(UiR.string.offline_download_agreement),
             style =
                 TextStyle(
                     fontSize = 14.sp,
@@ -145,7 +145,7 @@ private fun OfflineAgreement() {
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = stringResource(UiR.string.version_info_offline_tagline),
+            text = stringResource(UiR.string.offline_download_tagline),
             textAlign = TextAlign.Center,
             maxLines = 1,
             style =
@@ -184,7 +184,7 @@ private fun PrimaryActions(
                     .height(50.dp),
         ) {
             Text(
-                text = stringResource(UiR.string.version_info_agree_and_download),
+                text = stringResource(UiR.string.agree_and_download),
                 style =
                     TextStyle(
                         fontSize = 20.sp,
@@ -198,7 +198,7 @@ private fun PrimaryActions(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
-                text = stringResource(UiR.string.version_info_maybe_later),
+                text = stringResource(UiR.string.maybe_later),
                 style =
                     TextStyle(
                         fontWeight = FontWeight.Normal,

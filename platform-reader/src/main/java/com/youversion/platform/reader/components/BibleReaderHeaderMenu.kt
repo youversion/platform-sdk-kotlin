@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import com.youversion.platform.reader.R
+import com.youversion.platform.ui.R as UiR
 
 @Composable
 internal fun BibleReaderHeaderDropdownMenu(
@@ -53,7 +54,7 @@ internal fun BibleReaderHeaderDropdownMenu(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = stringResource(R.string.reader_menu_sign_out),
+                            text = stringResource(UiR.string.sign_out),
                             color = MaterialTheme.colorScheme.error,
                         )
                     },
@@ -65,7 +66,7 @@ internal fun BibleReaderHeaderDropdownMenu(
                 )
             } else {
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.reader_menu_sign_in)) },
+                    text = { Text(stringResource(UiR.string.sign_in)) },
                     onClick = {
                         expanded = false
                         onSignInClick()

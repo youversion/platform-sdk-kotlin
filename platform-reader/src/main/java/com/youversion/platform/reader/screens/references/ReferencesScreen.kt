@@ -49,6 +49,7 @@ import com.youversion.platform.ui.views.components.BibleReaderTopAppBar
 import com.youversion.platform.ui.views.components.SearchBar
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
+import com.youversion.platform.ui.R as UiR
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -92,7 +93,7 @@ internal fun ReferencesScreen(
     Scaffold(
         topBar = {
             BibleReaderTopAppBar(
-                title = stringResource(R.string.book_chapter_picker_title),
+                title = stringResource(UiR.string.books_heading),
                 onBackClick = onBackClick,
             )
         },
