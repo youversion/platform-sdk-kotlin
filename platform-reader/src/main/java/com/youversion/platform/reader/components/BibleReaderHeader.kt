@@ -85,7 +85,7 @@ internal fun BibleReaderHeader(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Language,
-                        contentDescription = stringResource(R.string.language_content_desc),
+                        contentDescription = stringResource(UiR.string.language),
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(

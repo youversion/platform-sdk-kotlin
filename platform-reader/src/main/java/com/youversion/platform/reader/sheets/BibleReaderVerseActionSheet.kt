@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import com.youversion.platform.reader.R
 import com.youversion.platform.ui.theme.ReaderColorScheme
 import com.youversion.platform.ui.theme.readerColorScheme
+import com.youversion.platform.ui.R as UiR
 
 /**
  * The actions offered for the current verse selection.
@@ -77,12 +78,12 @@ internal fun BibleReaderVerseActionSheet(
             }
             VerseActionButton(
                 icon = ImageVector.vectorResource(R.drawable.ic_copy),
-                label = stringResource(R.string.verse_action_copy),
+                label = stringResource(UiR.string.copy),
                 onClick = onCopy,
             )
             VerseActionButton(
                 icon = Icons.Outlined.Share,
-                label = stringResource(R.string.verse_action_share),
+                label = stringResource(UiR.string.share),
                 onClick = onShare,
             )
         }

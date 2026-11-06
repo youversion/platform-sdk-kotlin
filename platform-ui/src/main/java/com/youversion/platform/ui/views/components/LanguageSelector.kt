@@ -52,7 +52,7 @@ internal fun LanguageSelector(
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
-            text = stringResource(R.string.language_label),
+            text = stringResource(R.string.language),
             style = BibleReaderTheme.typography.labelL,
             modifier = Modifier.weight(1f),
         )

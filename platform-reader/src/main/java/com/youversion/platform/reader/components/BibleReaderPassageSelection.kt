@@ -52,6 +52,7 @@ import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import kotlin.math.abs
+import com.youversion.platform.ui.R as UiR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,7 +104,7 @@ internal fun BibleReaderPassageSelection(
         ) {
             Icon(
                 imageVector = Icons.Filled.ChevronLeft,
-                contentDescription = stringResource(R.string.previous_chapter_content_desc),
+                contentDescription = stringResource(UiR.string.previous_chapter_aria_label),
                 tint = readerColors.readerTextPrimaryColor,
             )
         }
@@ -124,7 +125,7 @@ internal fun BibleReaderPassageSelection(
         ) {
             Icon(
                 imageVector = Icons.Filled.ChevronRight,
-                contentDescription = stringResource(R.string.next_chapter_content_desc),
+                contentDescription = stringResource(UiR.string.next_chapter_aria_label),
                 tint = readerColors.readerTextPrimaryColor,
             )
         }

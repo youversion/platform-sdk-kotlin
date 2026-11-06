@@ -31,7 +31,7 @@ fun SignOutConfirmationAlert(
         },
         dismissButton = {
             TextButton(onClick = onDismissRequest) {
-                Text(stringResource(R.string.sign_out_cancel_button_text))
+                Text(stringResource(R.string.cancel))
             }
         },
         confirmButton = {

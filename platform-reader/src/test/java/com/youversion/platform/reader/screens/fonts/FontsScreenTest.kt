@@ -116,7 +116,7 @@ class FontsScreenTest {
         }
 
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        composeTestRule.onNodeWithContentDescription(context.getString(UiR.string.back_button)).performClick()
+        composeTestRule.onNodeWithContentDescription(context.getString(UiR.string.back)).performClick()
         assertTrue(onBackClicked)
     }
 }

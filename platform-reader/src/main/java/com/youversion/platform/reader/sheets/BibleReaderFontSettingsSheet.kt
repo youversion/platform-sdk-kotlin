@@ -57,6 +57,7 @@ import com.youversion.platform.ui.theme.TrueBlack
 import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import kotlinx.coroutines.launch
+import com.youversion.platform.ui.R as UiR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -256,7 +257,7 @@ private fun FontDisplayButton(
         ) {
             Column {
                 Text(
-                    text = stringResource(R.string.font_settings_label),
+                    text = stringResource(UiR.string.font),
                     style = TextStyle(fontSize = 12.sp),
                     color = BibleReaderTheme.colorScheme.textMuted,
                 )
