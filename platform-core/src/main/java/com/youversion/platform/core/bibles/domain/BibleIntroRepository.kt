@@ -12,7 +12,7 @@ import com.youversion.platform.core.utilities.InFlightTasks
  * a numeric chapter >= 1), so this repository fetches passages by their
  * string passage ID (e.g., "GEN.INTRO") directly.
  */
-class BibleIntroRepository(
+public class BibleIntroRepository(
     private val now: () -> Long = System::currentTimeMillis,
 ) {
     private val introCache = mutableMapOf<String, CachedBibleContent<String>>()
@@ -25,7 +25,7 @@ class BibleIntroRepository(
      * @param passageId The passage ID string (e.g., "GEN.INTRO").
      * @return The HTML content of the intro passage.
      */
-    suspend fun introContent(
+    public suspend fun introContent(
         versionId: Int,
         passageId: String,
     ): String {

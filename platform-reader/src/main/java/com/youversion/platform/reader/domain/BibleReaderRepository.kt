@@ -180,7 +180,11 @@ internal class BibleReaderRepository(
         return when {
             bibleReference.chapter > 1 -> {
                 // We're navigating to a previous chapter inside the same book
-                bibleReference.copy(chapter = bibleReference.chapter - 1)
+                BibleReference(
+                    versionId = bibleReference.versionId,
+                    bookUSFM = bibleReference.bookUSFM,
+                    chapter = bibleReference.chapter - 1,
+                )
             }
 
             previousBookIndex > 0 -> {
@@ -191,7 +195,8 @@ internal class BibleReaderRepository(
                 if (lastChapter < 1) {
                     return null
                 }
-                bibleReference.copy(
+                BibleReference(
+                    versionId = bibleReference.versionId,
                     bookUSFM = previousBook.id ?: "",
                     chapter = lastChapter,
                 )
@@ -216,13 +221,18 @@ internal class BibleReaderRepository(
         return when {
             bibleReference.chapter < lastChapter -> {
                 // We're navigating to the next chapter in the same book
-                bibleReference.copy(chapter = bibleReference.chapter + 1)
+                BibleReference(
+                    versionId = bibleReference.versionId,
+                    bookUSFM = bibleReference.bookUSFM,
+                    chapter = bibleReference.chapter + 1,
+                )
             }
 
             currentBookIndex < books.count() - 1 -> {
                 // We're navigating to the first chapter of the next book
                 val nextBook = books.getOrNull(currentBookIndex + 1)
-                bibleReference.copy(
+                BibleReference(
+                    versionId = bibleReference.versionId,
                     bookUSFM = nextBook?.id ?: "",
                     chapter = 1,
                 )

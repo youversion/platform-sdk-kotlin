@@ -3,6 +3,7 @@ package com.youversion.platform.core.bibles.domain
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -267,4 +268,53 @@ class BibleTextNodeTests {
         node.type
         node.children.forEach(::assertSupportedNodeTypes)
     }
+
+    @Test
+    fun `test nodes with the same fields are equal and hash alike`() {
+        assertEquals(node(), node())
+        assertEquals(node().hashCode(), node().hashCode())
+    }
+
+    @Test
+    fun `test a difference in any field makes nodes unequal`() {
+        listOf(
+            node(name = "div"),
+            node(text = "other"),
+            node(children = mutableListOf()),
+            node(classes = emptyList()),
+            node(attributes = emptyMap()),
+        ).forEach {
+            assertNotEquals(node(), it)
+            assertNotEquals(node().hashCode(), it.hashCode())
+        }
+    }
+
+    @Test
+    fun `test changing text or children changes equality`() {
+        assertNotEquals(node(), node().apply { text = "other" })
+        assertNotEquals(node(), node().apply { children.add(BibleTextNode(name = "text")) })
+    }
+
+    @Test
+    fun `test text segments are not part of equality`() {
+        assertEquals(node(), node().apply { textSegments.add("segment") })
+    }
+
+    @Test
+    fun `test toString matches the existing format`() {
+        assertEquals(
+            "BibleTextNode(name=span, text=text, " +
+                "children=[BibleTextNode(name=text, text=, children=[], classes=[], attributes={})], " +
+                "classes=[wj], attributes={v=1})",
+            node().toString(),
+        )
+    }
+
+    private fun node(
+        name: String = "span",
+        text: String = "text",
+        children: MutableList<BibleTextNode> = mutableListOf(BibleTextNode(name = "text")),
+        classes: List<String> = listOf("wj"),
+        attributes: Map<String, String> = mapOf("v" to "1"),
+    ) = BibleTextNode(name = name, text = text, children = children, classes = classes, attributes = attributes)
 }

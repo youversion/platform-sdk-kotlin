@@ -21,20 +21,21 @@ import com.youversion.platform.ui.theme.Charcoal
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @PlatformInternalApi
-fun BibleReaderTopAppBar(
+public fun BibleReaderTopAppBar(
     title: String,
     onBackClick: () -> Unit,
     actions: @Composable RowScope.() -> Unit = {},
-) = BibleReaderTopAppBar(
-    title = { Text(text = title) },
-    onBackClick = onBackClick,
-    actions = actions,
-)
+): Unit =
+    BibleReaderTopAppBar(
+        title = { Text(text = title) },
+        onBackClick = onBackClick,
+        actions = actions,
+    )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @PlatformInternalApi
-fun BibleReaderTopAppBar(
+public fun BibleReaderTopAppBar(
     title: @Composable () -> Unit,
     onBackClick: () -> Unit,
     actions: @Composable RowScope.() -> Unit = {},

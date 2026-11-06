@@ -28,9 +28,9 @@ internal enum class BibleTextFontOption {
  * Generates the Compose `SpanStyle` variations used to render Bible text,
  * derived from a base font family and size.
  */
-data class BibleTextFonts(
-    val fontFamily: FontFamily,
-    val baseSize: TextUnit = 17.sp,
+public class BibleTextFonts(
+    public val fontFamily: FontFamily,
+    public val baseSize: TextUnit = 17.sp,
 ) {
     private val styles: Map<BibleTextFontOption, SpanStyle> =
         mapOf(
@@ -79,6 +79,20 @@ data class BibleTextFonts(
     // fraction of the span's own font size (0.65 × baseSize), hence the ratio.
     internal val verseNumBaselineShift = BaselineShift(0.2f / 0.65f)
     internal val verseNumOpacity = 0.6f
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is BibleTextFonts) return false
+        return fontFamily == other.fontFamily && baseSize == other.baseSize
+    }
+
+    override fun hashCode(): Int {
+        var result = fontFamily.hashCode()
+        result = 31 * result + baseSize.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "BibleTextFonts(fontFamily=$fontFamily, baseSize=$baseSize)"
 
     internal fun styleFor(
         option: BibleTextFontOption,

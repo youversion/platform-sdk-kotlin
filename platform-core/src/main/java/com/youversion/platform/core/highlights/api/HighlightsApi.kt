@@ -2,7 +2,7 @@ package com.youversion.platform.core.highlights.api
 
 import com.youversion.platform.core.highlights.models.Highlight
 
-interface HighlightsApi {
+public interface HighlightsApi {
     /**
      * Creates a new Bible highlight on YouVersion.
      *
@@ -17,7 +17,7 @@ interface HighlightsApi {
      *         is not permitted to write highlights. Such a request will not succeed on retry.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun createHighlight(
+    public suspend fun createHighlight(
         versionId: Int,
         passageId: String,
         color: String,
@@ -45,7 +45,7 @@ interface HighlightsApi {
      *         the chapter holds no highlights.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun highlights(
+    public suspend fun highlights(
         versionId: Int,
         passageId: String,
     ): List<Highlight>
@@ -64,7 +64,7 @@ interface HighlightsApi {
      *         is not permitted to write highlights. Such a request will not succeed on retry.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun updateHighlight(
+    public suspend fun updateHighlight(
         versionId: Int,
         passageId: String,
         color: String,
@@ -84,7 +84,7 @@ interface HighlightsApi {
      *         is not permitted to write highlights. Such a request will not succeed on retry.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun deleteHighlight(
+    public suspend fun deleteHighlight(
         versionId: Int,
         passageId: String,
     ): Boolean

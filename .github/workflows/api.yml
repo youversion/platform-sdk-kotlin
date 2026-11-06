@@ -36,3 +36,6 @@ jobs:
 
       - name: Check Public API
         run: ./gradlew apiCheck
+
+      - name: Block public data classes
+        run: bash scripts/check-no-public-data-classes.sh

@@ -4,12 +4,12 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.users.model.SignInWithYouVersionResult
 import com.youversion.platform.core.users.model.YouVersionUserInfo
 
-interface UsersApi {
-    fun signOut()
+public interface UsersApi {
+    public fun signOut()
 
-    suspend fun userInfo(accessToken: String?): YouVersionUserInfo
+    public suspend fun userInfo(accessToken: String?): YouVersionUserInfo
 
-    suspend fun getSignInResult(
+    public suspend fun getSignInResult(
         callbackUri: String,
         state: String,
         codeVerifier: String,
@@ -17,20 +17,20 @@ interface UsersApi {
         nonce: String,
     ): SignInWithYouVersionResult
 
-    suspend fun performRefresh(): SignInWithYouVersionResult
+    public suspend fun performRefresh(): SignInWithYouVersionResult
 
-    fun decodeJWT(token: String): Map<String, Any?>
+    public fun decodeJWT(token: String): Map<String, Any?>
 
-    val currentUserId: String?
+    public val currentUserId: String?
         get() = currentIdClaims?.get("sub") as? String
 
-    val currentUserName: String?
+    public val currentUserName: String?
         get() = currentIdClaims?.get("name") as? String
 
-    val currentUserEmail: String?
+    public val currentUserEmail: String?
         get() = currentIdClaims?.get("email") as? String
 
-    val currentUserProfilePicture: String?
+    public val currentUserProfilePicture: String?
         get() = currentIdClaims?.get("picture") as? String
 
     /**

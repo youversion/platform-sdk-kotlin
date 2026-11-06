@@ -20,7 +20,7 @@ internal enum class BibleVersionDownloadStatus {
     NOT_DOWNLOADABLE,
 }
 
-class BibleVersionRepository(
+public class BibleVersionRepository(
     private val memoryCache: BibleVersionCache,
     private val temporaryCache: BibleVersionCache,
     private val persistentCache: BibleVersionCache,
@@ -32,7 +32,7 @@ class BibleVersionRepository(
     private val fullVersionsMutex = Mutex()
 
     // ----- Versions
-    suspend fun versionIfCached(id: Int): BibleVersion? {
+    public suspend fun versionIfCached(id: Int): BibleVersion? {
         memoryCache.version(id)?.let { return it.value }
 
         temporaryCache.version(id)?.let {
@@ -48,7 +48,7 @@ class BibleVersionRepository(
         return null
     }
 
-    suspend fun version(id: Int): BibleVersion {
+    public suspend fun version(id: Int): BibleVersion {
         // Try to get from cache first
         try {
             versionIfCached(id)?.let { return it }
@@ -69,12 +69,12 @@ class BibleVersionRepository(
         }
     }
 
-    fun versionIsPresent(id: Int): Boolean = persistentCache.versionIsPresent(id)
+    public fun versionIsPresent(id: Int): Boolean = persistentCache.versionIsPresent(id)
 
-    val downloadedVersions: List<Int>
+    public val downloadedVersions: List<Int>
         get() = persistentCache.storedVersionIds
 
-    suspend fun downloadVersion(id: Int) {
+    public suspend fun downloadVersion(id: Int) {
         if (persistentCache.versionIsPresent(id)) {
             return
         }
@@ -92,13 +92,13 @@ class BibleVersionRepository(
         return BibleVersionDownloadStatus.NOT_DOWNLOADABLE
     }
 
-    suspend fun removeVersion(id: Int) {
+    public suspend fun removeVersion(id: Int) {
         memoryCache.removeVersion(id)
         temporaryCache.removeVersion(id)
         persistentCache.removeVersion(id)
     }
 
-    suspend fun removeUnpermittedVersions(permittedIds: Set<Int>) {
+    public suspend fun removeUnpermittedVersions(permittedIds: Set<Int>) {
         removeExpiredContent()
         val allowedIds = permittedIds - YouVersionPlatformConfiguration.excludedVersionIds
         memoryCache.removeUnpermittedVersions(allowedIds)
@@ -107,13 +107,13 @@ class BibleVersionRepository(
     }
 
     /** Removes expired entries from every cache tier. */
-    suspend fun removeExpiredContent() {
+    public suspend fun removeExpiredContent() {
         memoryCache.removeExpiredEntries()
         temporaryCache.removeExpiredEntries()
         persistentCache.removeExpiredEntries()
     }
 
-    suspend fun permittedVersions(languageTag: String? = null): List<BibleVersion> =
+    public suspend fun permittedVersions(languageTag: String? = null): List<BibleVersion> =
         YouVersionApi.bible
             .versions(
                 languageCode = languageTag,
@@ -126,14 +126,14 @@ class BibleVersionRepository(
             .filter { it.isPermittedByConfiguration() }
 
     /** Holds minimal information about all Bible versions available to this app, in all languages. */
-    var permittedVersions: List<BibleVersion>? = null
+    public var permittedVersions: List<BibleVersion>? = null
         private set
     private val permittedVersionsMutex = Mutex()
 
     /**
      * Returns minimal information about all Bible versions available to this app, in all languages
      */
-    suspend fun permittedVersionsListing(): List<BibleVersion> =
+    public suspend fun permittedVersionsListing(): List<BibleVersion> =
         permittedVersionsMutex.withLock {
             permittedVersions ?: permittedVersions().also { permittedVersions = it }
         }
@@ -149,12 +149,12 @@ class BibleVersionRepository(
      * [fullVersionsMutex] keeps its own reference and only its post-fetch write becomes orphaned —
      * the next call reads the fresh map and triggers a refetch.
      */
-    fun clearVersionListings() {
+    public fun clearVersionListings() {
         permittedVersions = null
         versionsInLanguage = mutableMapOf()
     }
 
-    suspend fun fullVersions(languageTag: String): List<BibleVersion> =
+    public suspend fun fullVersions(languageTag: String): List<BibleVersion> =
         fullVersionsMutex.withLock {
             versionsInLanguage[languageTag]?.let { return@withLock it }
 
@@ -196,7 +196,7 @@ class BibleVersionRepository(
  * [YouVersionPlatformConfiguration.permittedVersionIds].
  */
 @PlatformInternalApi
-fun BibleVersion.isPermittedByConfiguration(): Boolean {
+public fun BibleVersion.isPermittedByConfiguration(): Boolean {
     if (!YouVersionPlatformConfiguration.isPermittedByVersionIdFilters(id)) return false
     YouVersionPlatformConfiguration.permittedLanguageTags?.let { permittedTags ->
         if (languageTag == null || languageTag !in permittedTags) return false

@@ -38,7 +38,7 @@ import org.koin.core.parameter.parametersOf
  */
 @OptIn(KoinExperimentalAPI::class)
 @Composable
-fun BibleReader(
+public fun BibleReader(
     bibleReference: BibleReference? = null,
     fontDefinitionProvider: FontDefinitionProvider? = null,
     bottomBar: @Composable () -> Unit = {},
@@ -158,7 +158,7 @@ fun BibleReader(
  */
 @Deprecated("Pass appName and signInPromptMessage to YouVersionPlatformConfiguration.configure() instead.")
 @Composable
-fun BibleReader(
+public fun BibleReader(
     appName: String,
     appSignInMessage: String,
     bibleReference: BibleReference? = null,

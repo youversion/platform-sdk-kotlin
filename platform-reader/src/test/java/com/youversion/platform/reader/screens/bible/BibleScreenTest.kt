@@ -1379,7 +1379,7 @@ class BibleScreenTest {
                 bibleReference = defaultReference,
                 bibleVersion = testVersion,
                 showVerseActionSheet = true,
-                selectedVerses = setOf(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+                selectedVerses = setOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
             )
         stubSuccessfulTextLoad()
 
@@ -1404,7 +1404,7 @@ class BibleScreenTest {
 
     @Test
     fun `highlight picker gains a remove affordance when highlights change without reselecting`() {
-        val selectedVerse = defaultReference.copy(verseStart = 1, verseEnd = 1)
+        val selectedVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
         var presentColors = emptySet<String>()
         every { mockViewModel.isColorPresentOnAnySelectedVerses(any()) } answers {
             presentColors.contains(firstArg<String>())
@@ -1483,7 +1483,7 @@ class BibleScreenTest {
                 bibleReference = defaultReference,
                 bibleVersion = testVersion,
                 showVerseActionSheet = true,
-                selectedVerses = setOf(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+                selectedVerses = setOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
             )
         stubSuccessfulTextLoad()
 
@@ -1536,7 +1536,7 @@ class BibleScreenTest {
                 bibleReference = defaultReference,
                 bibleVersion = testVersion,
                 showVerseActionSheet = true,
-                selectedVerses = setOf(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+                selectedVerses = setOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
             )
         stubVersionWithTappableVerse()
 
@@ -1564,7 +1564,7 @@ class BibleScreenTest {
                 bibleReference = defaultReference,
                 bibleVersion = testVersion,
                 showVerseActionSheet = true,
-                selectedVerses = setOf(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+                selectedVerses = setOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
             )
         stubVersionWithTappableVerse()
 

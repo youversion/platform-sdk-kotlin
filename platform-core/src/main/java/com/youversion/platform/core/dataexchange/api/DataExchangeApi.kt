@@ -3,7 +3,7 @@ package com.youversion.platform.core.dataexchange.api
 import com.youversion.platform.core.dataexchange.models.DataExchangeToken
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 
-interface DataExchangeApi {
+public interface DataExchangeApi {
     /**
      * Creates a short-lived token authorizing one run of the data exchange permission flow.
      *
@@ -19,5 +19,5 @@ interface DataExchangeApi {
      *         refuses the request, or
      *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.CANNOT_DOWNLOAD] otherwise.
      */
-    suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken
+    public suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken
 }

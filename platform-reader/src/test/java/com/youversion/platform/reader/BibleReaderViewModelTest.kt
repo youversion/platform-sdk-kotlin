@@ -100,7 +100,7 @@ class BibleReaderViewModelTest {
     @Test
     fun `selecting verse adds it to selectedVerses`() =
         runTest(testDispatcher) {
-            val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
+            val verseRef = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
 
@@ -113,7 +113,7 @@ class BibleReaderViewModelTest {
     @Test
     fun `selecting verse sets showVerseActionSheet to true`() =
         runTest(testDispatcher) {
-            val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
+            val verseRef = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
 
@@ -123,7 +123,7 @@ class BibleReaderViewModelTest {
     @Test
     fun `selecting already selected verse removes it`() =
         runTest(testDispatcher) {
-            val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
+            val verseRef = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
@@ -137,7 +137,7 @@ class BibleReaderViewModelTest {
     @Test
     fun `deselecting last verse sets showVerseActionSheet to false`() =
         runTest(testDispatcher) {
-            val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
+            val verseRef = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
@@ -148,9 +148,9 @@ class BibleReaderViewModelTest {
     @Test
     fun `can select multiple verses`() =
         runTest(testDispatcher) {
-            val verse1 = defaultReference.copy(verseStart = 1, verseEnd = 1)
-            val verse2 = defaultReference.copy(verseStart = 2, verseEnd = 2)
-            val verse3 = defaultReference.copy(verseStart = 3, verseEnd = 3)
+            val verse1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val verse2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
+            val verse3 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 3)
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verse1))
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verse2))
@@ -166,8 +166,8 @@ class BibleReaderViewModelTest {
     @Test
     fun `ClearVerseSelection action clears all selected verses`() =
         runTest(testDispatcher) {
-            val verse1 = defaultReference.copy(verseStart = 1, verseEnd = 1)
-            val verse2 = defaultReference.copy(verseStart = 2, verseEnd = 2)
+            val verse1 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val verse2 = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
 
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verse1))
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verse2))
@@ -206,7 +206,7 @@ class BibleReaderViewModelTest {
         runTest(testDispatcher) {
             viewModel.bibleVersion = testBibleVersion
 
-            val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
+            val verseRef = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
 
             assertTrue(
@@ -235,7 +235,9 @@ class BibleReaderViewModelTest {
             viewModel.bibleVersion = testBibleVersion
 
             viewModel.onAction(
-                BibleReaderViewModel.Action.OnVerseTap(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+                BibleReaderViewModel.Action.OnVerseTap(
+                    BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
+                ),
             )
 
             viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses)
@@ -251,7 +253,9 @@ class BibleReaderViewModelTest {
             viewModel.bibleVersion = testBibleVersion
 
             viewModel.onAction(
-                BibleReaderViewModel.Action.OnVerseTap(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+                BibleReaderViewModel.Action.OnVerseTap(
+                    BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
+                ),
             )
 
             viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses)
@@ -269,7 +273,9 @@ class BibleReaderViewModelTest {
             viewModel.bibleVersion = testBibleVersion
 
             viewModel.onAction(
-                BibleReaderViewModel.Action.OnVerseTap(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+                BibleReaderViewModel.Action.OnVerseTap(
+                    BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
+                ),
             )
 
             viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses)

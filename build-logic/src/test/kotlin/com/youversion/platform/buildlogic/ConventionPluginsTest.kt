@@ -165,7 +165,7 @@ class ConventionPluginsTest {
         write(
             "sdk/src/main/kotlin/Uncovered.kt",
             """
-            fun uncovered(): Int = 1
+            public fun uncovered(): Int = 1
             """.trimIndent(),
         )
     }

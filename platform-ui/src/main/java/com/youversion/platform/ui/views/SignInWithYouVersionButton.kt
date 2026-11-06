@@ -46,23 +46,23 @@ import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.rememberSignIn
 import kotlinx.coroutines.launch
 
-enum class SignInWithYouVersionButtonMode {
+public enum class SignInWithYouVersionButtonMode {
     FULL,
     COMPACT,
     ICON_ONLY,
 }
 
-object SignInWithYouVersionButtonDefaults {
-    val capsuleShape: Shape
+public object SignInWithYouVersionButtonDefaults {
+    public val capsuleShape: Shape
         @Composable get() = RoundedCornerShape(percent = 100)
 
-    val rectangleShape: Shape
+    public val rectangleShape: Shape
         @Composable get() = RoundedCornerShape(4.dp)
 
-    val mode: SignInWithYouVersionButtonMode
+    public val mode: SignInWithYouVersionButtonMode
         get() = SignInWithYouVersionButtonMode.FULL
 
-    val padding: PaddingValues
+    public val padding: PaddingValues
         get() = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
 }
 
@@ -81,7 +81,7 @@ object SignInWithYouVersionButtonDefaults {
  * @param onClick Optional click callback. When non-null the built-in auth flow is bypassed.
  */
 @Composable
-fun SignInWithYouVersionButton(
+public fun SignInWithYouVersionButton(
     permissions: () -> Set<SignInWithYouVersionPermission>,
     paddingValues: PaddingValues = SignInWithYouVersionButtonDefaults.padding,
     shape: Shape = SignInWithYouVersionButtonDefaults.capsuleShape,

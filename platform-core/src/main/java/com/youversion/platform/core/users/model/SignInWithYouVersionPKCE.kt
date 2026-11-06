@@ -16,7 +16,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
  * @property nonce An opaque value used to associate a client session with an ID token.
  */
 @PlatformInternalApi
-data class SignInWithYouVersionPKCEParameters(
+public data class SignInWithYouVersionPKCEParameters(
     val codeVerifier: String,
     val codeChallenge: String,
     val state: String,
@@ -27,11 +27,11 @@ data class SignInWithYouVersionPKCEParameters(
  * Data class holding the generated authorization URL and the PKCE parameters used to create it.
  */
 @PlatformInternalApi
-data class SignInWithYouVersionPKCEAuthorizationRequest(
+public data class SignInWithYouVersionPKCEAuthorizationRequest(
     val url: String,
     val parameters: SignInWithYouVersionPKCEParameters,
 ) {
-    companion object {
+    public companion object {
         /**
          * Creates a fully-formed PKCE authorization request.
          *
@@ -41,7 +41,7 @@ data class SignInWithYouVersionPKCEAuthorizationRequest(
          * @return A [SignInWithYouVersionPKCEAuthorizationRequest] containing the URL and parameters.
          * @throws SignInWithYouVersionPKCEAuthorizationError if random string generation or URL construction fails.
          */
-        operator fun invoke(
+        public operator fun invoke(
             appKey: String,
             permissions: Set<SignInWithYouVersionPermission>,
             redirectUri: String,

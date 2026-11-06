@@ -15,50 +15,51 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Date
 
-object YouVersionPlatformConfiguration {
+public object YouVersionPlatformConfiguration {
     private const val DEFAULT_API_HOST = "api.youversion.com"
     private const val DEFAULT_AUTH_CALLBACK = "youversionauth://callback"
     private val _configState = MutableStateFlow<Config?>(null)
-    val configState = _configState.asStateFlow()
+    public val configState: StateFlow<Config?> = _configState.asStateFlow()
 
     private val config: Config?
         get() = _configState.value
-    val appKey: String?
+    public val appKey: String?
         get() = config?.appKey
 
     /**
      * The name of the host app, shown in the sign-in prompt so the reader knows who is asking. When `null` or
      * blank, the prompt names the host app by its launcher label.
      */
-    val appName: String?
+    public val appName: String?
         get() = config?.appName
 
     /**
      * The host app's own reason for asking the reader to sign in, shown above the standard explanation in the
      * sign-in prompt. Omitted from the prompt when `null` or blank. Supports `**bold**` markdown.
      */
-    val signInPromptMessage: String?
+    public val signInPromptMessage: String?
         get() = config?.signInPromptMessage
 
-    val authCallback: String
+    public val authCallback: String
         get() = config?.authCallback ?: DEFAULT_AUTH_CALLBACK
-    val apiHost: String
+    public val apiHost: String
         get() = config?.apiHost ?: DEFAULT_API_HOST
-    val hostEnv: String?
+    public val hostEnv: String?
         get() = config?.hostEnv
-    val installId: String?
+    public val installId: String?
         get() = config?.installId
-    val accessToken: String?
+    public val accessToken: String?
         get() = config?.accessToken
-    val refreshToken: String?
+    public val refreshToken: String?
         get() = config?.refreshToken
-    val idToken: String?
+    public val idToken: String?
         get() = config?.idToken
-    val expiryDate: Date?
+    public val expiryDate: Date?
         get() = config?.expiryDate
 
     /**
@@ -66,7 +67,7 @@ object YouVersionPlatformConfiguration {
      * in the version picker UI and other version listings. When `null` (the default), versions
      * in all languages are available. Tags follow BCP 47 (e.g. `"en"` for English).
      */
-    val permittedLanguageTags: Set<String>?
+    public val permittedLanguageTags: Set<String>?
         get() = config?.permittedLanguageTags
 
     /**
@@ -75,7 +76,7 @@ object YouVersionPlatformConfiguration {
      * Combines with [permittedLanguageTags] — a version must satisfy both filters to be available —
      * and is overruled by [excludedVersionIds], so an id named by both is not available.
      */
-    val permittedVersionIds: Set<Int>?
+    public val permittedVersionIds: Set<Int>?
         get() = config?.permittedVersionIds
 
     /**
@@ -83,7 +84,7 @@ object YouVersionPlatformConfiguration {
      * fallbacks. Empty by default, which withholds nothing. Takes precedence over
      * [permittedVersionIds].
      */
-    val excludedVersionIds: Set<Int>
+    public val excludedVersionIds: Set<Int>
         get() = config?.excludedVersionIds.orEmpty()
 
     /**
@@ -93,17 +94,17 @@ object YouVersionPlatformConfiguration {
      * that could never work, and a highlight action cannot start a sign-in flow. A reader who is already signed in
      * keeps their highlight colors, since they need nothing further. Defaults to `true`.
      */
-    val isSignInEnabled: Boolean
+    public val isSignInEnabled: Boolean
         get() = config?.isSignInEnabled ?: true
 
     /**
      * The permissions the signed-in user has granted to this app. Empty when signed out, or when
      * the user has granted nothing.
      */
-    val grantedPermissions: Set<SignInWithYouVersionPermission>
+    public val grantedPermissions: Set<SignInWithYouVersionPermission>
         get() = config?.grantedPermissions.orEmpty()
 
-    val isSignedIn: Boolean
+    public val isSignedIn: Boolean
         get() = accessToken != null
 
     /**
@@ -116,7 +117,7 @@ object YouVersionPlatformConfiguration {
      * [com.youversion.platform.core.bibles.domain.BibleVersionRepository.permittedVersionsListing] instead.
      */
     @PlatformInternalApi
-    fun isPermittedByVersionIdFilters(versionId: Int): Boolean {
+    public fun isPermittedByVersionIdFilters(versionId: Int): Boolean {
         if (versionId in excludedVersionIds) return false
         permittedVersionIds?.let { permittedIds ->
             if (versionId !in permittedIds) return false
@@ -124,7 +125,7 @@ object YouVersionPlatformConfiguration {
         return true
     }
 
-    fun configure(
+    public fun configure(
         context: Context,
         appKey: String?,
         authCallback: String = DEFAULT_AUTH_CALLBACK,
@@ -257,12 +258,12 @@ object YouVersionPlatformConfiguration {
      * @throws YouVersionNotConfiguredException If [configure] has not been called first.
      */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    fun configureSignIn(
+    public fun configureSignIn(
         appName: String,
         signInPromptMessage: String?,
     ) {
         val currentConfig = config ?: throw YouVersionNotConfiguredException()
-        _configState.value = currentConfig.copy(appName = appName, signInPromptMessage = signInPromptMessage)
+        _configState.value = currentConfig.updated(appName = appName, signInPromptMessage = signInPromptMessage)
     }
 
     /**
@@ -288,7 +289,7 @@ object YouVersionPlatformConfiguration {
      * token does not revoke them. Tokens identifying a different session — a second user signing in without an
      * intervening [clearAuthData] — drop them instead, since one user's consent cannot stand in for another's.
      */
-    fun saveAuthData(
+    public fun saveAuthData(
         accessToken: String?,
         refreshToken: String?,
         idToken: String?,
@@ -332,7 +333,7 @@ object YouVersionPlatformConfiguration {
         val currentConfig = config ?: throw YouVersionNotConfiguredException()
 
         _configState.value =
-            currentConfig.copy(
+            currentConfig.updated(
                 accessToken = accessToken,
                 refreshToken = refreshToken,
                 idToken = idToken,
@@ -365,7 +366,7 @@ object YouVersionPlatformConfiguration {
      * trace of who was signed in. A grant whose callback arrives afterwards is dropped by [completePermissionGrant]
      * rather than landing on the next user.
      */
-    fun clearAuthData() {
+    public fun clearAuthData() {
         writeAuthData(
             accessToken = null,
             refreshToken = null,
@@ -387,14 +388,14 @@ object YouVersionPlatformConfiguration {
      * @param permissions The permissions the user granted.
      * @throws YouVersionNotConfiguredException If [configure] has not been called first.
      */
-    fun saveGrantedPermissions(permissions: Collection<SignInWithYouVersionPermission>) {
+    public fun saveGrantedPermissions(permissions: Collection<SignInWithYouVersionPermission>) {
         val currentConfig = config ?: throw YouVersionNotConfiguredException()
         val sessionRepository = PlatformCoreKoinComponent.sessionRepository
 
         val mergedValues = sessionRepository.grantedPermissionValues + permissions.map { it.rawValue }
         sessionRepository.grantedPermissionValues = mergedValues
 
-        _configState.value = currentConfig.copy(grantedPermissions = mergedValues.toGrantedPermissions())
+        _configState.value = currentConfig.updated(grantedPermissions = mergedValues.toGrantedPermissions())
     }
 
     /**
@@ -407,7 +408,7 @@ object YouVersionPlatformConfiguration {
      * @throws YouVersionNotConfiguredException If [configure] has not been called first.
      */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    fun beginPermissionGrant() {
+    public fun beginPermissionGrant() {
         config ?: throw YouVersionNotConfiguredException()
         PlatformCoreKoinComponent.sessionRepository.permissionGrantSessionId = YouVersionApi.currentSessionId
     }
@@ -430,7 +431,7 @@ object YouVersionPlatformConfiguration {
      * @throws YouVersionNotConfiguredException If [configure] has not been called first.
      */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    fun completePermissionGrant(permissions: Collection<SignInWithYouVersionPermission>): Boolean {
+    public fun completePermissionGrant(permissions: Collection<SignInWithYouVersionPermission>): Boolean {
         config ?: throw YouVersionNotConfiguredException()
         val startingSessionId = PlatformCoreKoinComponent.sessionRepository.permissionGrantSessionId
         if (startingSessionId == null || startingSessionId != YouVersionApi.currentSessionId) return false
@@ -456,29 +457,112 @@ object YouVersionPlatformConfiguration {
      * @param apiHost The new apiHost to be used by the SDK
      * @throws YouVersionNotConfiguredException If [configure] has not been called first.
      */
-    fun setApiHost(apiHost: String) {
+    public fun setApiHost(apiHost: String) {
         val currentConfig = config ?: throw YouVersionNotConfiguredException()
-        _configState.value = currentConfig.copy(apiHost = apiHost)
+        _configState.value = currentConfig.updated(apiHost = apiHost)
     }
 }
 
-data class Config(
-    val appKey: String?,
-    val authCallback: String,
-    val apiHost: String,
-    val hostEnv: String?,
-    val installId: String?,
-    val accessToken: String?,
-    val refreshToken: String?,
-    val idToken: String?,
-    val expiryDate: Date?,
-    val permittedLanguageTags: Set<String>? = null,
-    val permittedVersionIds: Set<Int>? = null,
-    val excludedVersionIds: Set<Int> = emptySet(),
-    val grantedPermissions: Set<SignInWithYouVersionPermission> = emptySet(),
-    val isSignInEnabled: Boolean = true,
-    val appName: String? = null,
-    val signInPromptMessage: String? = null,
-) {
-    val isSignedIn = accessToken != null
-}
+public class Config
+    @PlatformInternalApi
+    constructor(
+        public val appKey: String?,
+        public val authCallback: String,
+        public val apiHost: String,
+        public val hostEnv: String?,
+        public val installId: String?,
+        public val accessToken: String?,
+        public val refreshToken: String?,
+        public val idToken: String?,
+        public val expiryDate: Date?,
+        public val permittedLanguageTags: Set<String>? = null,
+        public val permittedVersionIds: Set<Int>? = null,
+        public val excludedVersionIds: Set<Int> = emptySet(),
+        public val grantedPermissions: Set<SignInWithYouVersionPermission> = emptySet(),
+        public val isSignInEnabled: Boolean = true,
+        public val appName: String? = null,
+        public val signInPromptMessage: String? = null,
+    ) {
+        public val isSignedIn: Boolean = accessToken != null
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Config) return false
+            return appKey == other.appKey &&
+                authCallback == other.authCallback &&
+                apiHost == other.apiHost &&
+                hostEnv == other.hostEnv &&
+                installId == other.installId &&
+                accessToken == other.accessToken &&
+                refreshToken == other.refreshToken &&
+                idToken == other.idToken &&
+                expiryDate == other.expiryDate &&
+                permittedLanguageTags == other.permittedLanguageTags &&
+                permittedVersionIds == other.permittedVersionIds &&
+                excludedVersionIds == other.excludedVersionIds &&
+                grantedPermissions == other.grantedPermissions &&
+                isSignInEnabled == other.isSignInEnabled &&
+                appName == other.appName &&
+                signInPromptMessage == other.signInPromptMessage
+        }
+
+        override fun hashCode(): Int {
+            var result = appKey.hashCode()
+            result = 31 * result + authCallback.hashCode()
+            result = 31 * result + apiHost.hashCode()
+            result = 31 * result + hostEnv.hashCode()
+            result = 31 * result + installId.hashCode()
+            result = 31 * result + accessToken.hashCode()
+            result = 31 * result + refreshToken.hashCode()
+            result = 31 * result + idToken.hashCode()
+            result = 31 * result + expiryDate.hashCode()
+            result = 31 * result + permittedLanguageTags.hashCode()
+            result = 31 * result + permittedVersionIds.hashCode()
+            result = 31 * result + excludedVersionIds.hashCode()
+            result = 31 * result + grantedPermissions.hashCode()
+            result = 31 * result + isSignInEnabled.hashCode()
+            result = 31 * result + appName.hashCode()
+            result = 31 * result + signInPromptMessage.hashCode()
+            return result
+        }
+
+        override fun toString(): String =
+            "Config(appKey=$appKey, authCallback=$authCallback, apiHost=$apiHost, hostEnv=$hostEnv, " +
+                "installId=$installId, accessToken=${accessToken.redacted()}, " +
+                "refreshToken=${refreshToken.redacted()}, idToken=${idToken.redacted()}, " +
+                "expiryDate=$expiryDate, permittedLanguageTags=$permittedLanguageTags, " +
+                "permittedVersionIds=$permittedVersionIds, excludedVersionIds=$excludedVersionIds, " +
+                "grantedPermissions=$grantedPermissions, isSignInEnabled=$isSignInEnabled, appName=$appName, " +
+                "signInPromptMessage=$signInPromptMessage)"
+
+        private fun String?.redacted(): String? = this?.let { "<redacted>" }
+    }
+
+private fun Config.updated(
+    apiHost: String = this.apiHost,
+    accessToken: String? = this.accessToken,
+    refreshToken: String? = this.refreshToken,
+    idToken: String? = this.idToken,
+    expiryDate: Date? = this.expiryDate,
+    grantedPermissions: Set<SignInWithYouVersionPermission> = this.grantedPermissions,
+    appName: String? = this.appName,
+    signInPromptMessage: String? = this.signInPromptMessage,
+): Config =
+    Config(
+        appKey = appKey,
+        authCallback = authCallback,
+        apiHost = apiHost,
+        hostEnv = hostEnv,
+        installId = installId,
+        accessToken = accessToken,
+        refreshToken = refreshToken,
+        idToken = idToken,
+        expiryDate = expiryDate,
+        permittedLanguageTags = permittedLanguageTags,
+        permittedVersionIds = permittedVersionIds,
+        excludedVersionIds = excludedVersionIds,
+        grantedPermissions = grantedPermissions,
+        isSignInEnabled = isSignInEnabled,
+        appName = appName,
+        signInPromptMessage = signInPromptMessage,
+    )

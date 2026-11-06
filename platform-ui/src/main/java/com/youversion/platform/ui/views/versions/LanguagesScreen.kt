@@ -53,7 +53,7 @@ private enum class LanguageTab(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @PlatformInternalApi
-fun LanguagesScreen(
+public fun LanguagesScreen(
     viewModel: BibleVersionsViewModel,
     onBackClick: () -> Unit,
     onLanguageTagSelected: (String) -> Unit,

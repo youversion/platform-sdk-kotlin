@@ -13,10 +13,6 @@ public final class com/youversion/platform/reader/ComposableSingletons$BibleRead
 public final class com/youversion/platform/reader/FontDefinition {
 	public static final field $stable I
 	public fun <init> (Ljava/lang/String;Landroidx/compose/ui/text/font/FontFamily;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Landroidx/compose/ui/text/font/FontFamily;
-	public final fun copy (Ljava/lang/String;Landroidx/compose/ui/text/font/FontFamily;)Lcom/youversion/platform/reader/FontDefinition;
-	public static synthetic fun copy$default (Lcom/youversion/platform/reader/FontDefinition;Ljava/lang/String;Landroidx/compose/ui/text/font/FontFamily;ILjava/lang/Object;)Lcom/youversion/platform/reader/FontDefinition;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getFontFamily ()Landroidx/compose/ui/text/font/FontFamily;
 	public final fun getFontName ()Ljava/lang/String;

@@ -62,7 +62,22 @@ internal object ReaderFontSettings {
             ?: availableLineSpacingFractions.first()
 }
 
-data class FontDefinition(
-    val fontName: String,
-    val fontFamily: FontFamily,
-)
+public class FontDefinition(
+    public val fontName: String,
+    public val fontFamily: FontFamily,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is FontDefinition) return false
+        return fontName == other.fontName &&
+            fontFamily == other.fontFamily
+    }
+
+    override fun hashCode(): Int {
+        var result = fontName.hashCode()
+        result = 31 * result + fontFamily.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "FontDefinition(fontName=$fontName, fontFamily=$fontFamily)"
+}

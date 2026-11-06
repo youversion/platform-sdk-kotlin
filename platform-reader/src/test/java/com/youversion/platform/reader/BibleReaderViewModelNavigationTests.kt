@@ -186,7 +186,7 @@ class BibleReaderViewModelNavigationTests {
         viewModel.bibleVersion = multiBookVersion
         viewModel.bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 5)
 
-        val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
+        val verseRef = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
         viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
         assertEquals(1, viewModel.state.value.selectedVerses.size)
 
@@ -295,7 +295,7 @@ class BibleReaderViewModelNavigationTests {
         viewModel.bibleVersion = multiBookVersion
         viewModel.bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 10)
 
-        val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
+        val verseRef = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
         viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
         assertEquals(1, viewModel.state.value.selectedVerses.size)
 

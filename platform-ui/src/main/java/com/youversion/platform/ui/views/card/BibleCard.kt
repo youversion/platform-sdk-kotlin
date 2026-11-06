@@ -64,7 +64,7 @@ import org.koin.core.parameter.parametersOf
 import java.util.UUID
 
 @Composable
-fun BibleCard(
+public fun BibleCard(
     reference: BibleReference,
     modifier: Modifier = Modifier,
     version: BibleVersion? = null,
@@ -88,7 +88,7 @@ fun BibleCard(
 
 @OptIn(ExperimentalMaterial3Api::class, KoinExperimentalAPI::class)
 @Composable
-fun BibleCard(
+public fun BibleCard(
     reference: BibleReference,
     textOptions: BibleTextOptions,
     modifier: Modifier = Modifier,

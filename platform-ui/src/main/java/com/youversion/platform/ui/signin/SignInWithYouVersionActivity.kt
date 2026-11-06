@@ -9,7 +9,7 @@ import com.youversion.platform.ui.dataexchange.DataExchangeHandler
 import com.youversion.platform.ui.dataexchange.dataExchangeResult
 import kotlin.getValue
 
-abstract class SignInWithYouVersionActivity : ComponentActivity() {
+public abstract class SignInWithYouVersionActivity : ComponentActivity() {
     private val signInViewModel by viewModels<SignInViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
