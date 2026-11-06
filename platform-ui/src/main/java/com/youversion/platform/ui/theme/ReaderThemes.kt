@@ -4,12 +4,12 @@ import androidx.compose.ui.graphics.Color
 import com.youversion.platform.core.di.PlatformInternalApi
 
 @PlatformInternalApi
-data class ReaderTheme(
+public data class ReaderTheme(
     val id: Int,
     val colorScheme: ReaderColorScheme,
 ) {
-    companion object {
-        val allThemes =
+    public companion object {
+        public val allThemes: List<ReaderTheme> =
             listOf(
                 ReaderTheme(1, PureWhite),
                 ReaderTheme(2, Sepia),
@@ -20,34 +20,34 @@ data class ReaderTheme(
                 ReaderTheme(7, TrueBlack),
             )
 
-        fun themeById(id: Int? = null): ReaderTheme = allThemes.find { it.id == id } ?: allThemes.first()
+        public fun themeById(id: Int? = null): ReaderTheme = allThemes.find { it.id == id } ?: allThemes.first()
     }
 }
 
 // Light themes
 @PlatformInternalApi
-val PureWhite =
+public val PureWhite: ReaderColorScheme =
     lightReaderColorScheme(
         background = Color(0xFFFFFFFF),
         foreground = Color(0xFF121212),
     )
 
 @PlatformInternalApi
-val Sepia =
+public val Sepia: ReaderColorScheme =
     lightReaderColorScheme(
         background = Color(0xFFF6EFEE),
         foreground = Color(0xFF121212),
     )
 
 @PlatformInternalApi
-val PaperGray =
+public val PaperGray: ReaderColorScheme =
     lightReaderColorScheme(
         background = Color(0xFFEDEFEF),
         foreground = Color(0xFF121212),
     )
 
 @PlatformInternalApi
-val Cream =
+public val Cream: ReaderColorScheme =
     lightReaderColorScheme(
         background = Color(0xFFFEF5EB),
         foreground = Color(0xFF121212),
@@ -55,21 +55,21 @@ val Cream =
 
 // Dark themes
 @PlatformInternalApi
-val Charcoal =
+public val Charcoal: ReaderColorScheme =
     darkReaderColorScheme(
         background = Color(0xFF2B3031),
         foreground = Color.White,
     )
 
 @PlatformInternalApi
-val MidnightBlue =
+public val MidnightBlue: ReaderColorScheme =
     darkReaderColorScheme(
         background = Color(0xFF1C2A3B),
         foreground = Color.White,
     )
 
 @PlatformInternalApi
-val TrueBlack =
+public val TrueBlack: ReaderColorScheme =
     darkReaderColorScheme(
         background = Color(0xFF121212),
         foreground = Color.White,

@@ -1,5 +1,5 @@
 package com.youversion.platform.reader
 
-interface FontDefinitionProvider {
-    fun fonts(): List<FontDefinition>
+public interface FontDefinitionProvider {
+    public fun fonts(): List<FontDefinition>
 }

@@ -10,4 +10,4 @@ package com.youversion.platform.core.di
     AnnotationTarget.FIELD,
     AnnotationTarget.CONSTRUCTOR,
 )
-annotation class PlatformInternalApi
+public annotation class PlatformInternalApi

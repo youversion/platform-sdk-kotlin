@@ -59,5 +59,5 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 - Document new non-private functions. Do not add inline comments inside functions, and do not delete existing ones.
 - Use the strictest access. Prefer `val`. Properties come before functions. Do not leave unused code or commented-out code.
 - A Boolean starts with "is", "has", "should", "shows", or "showing". A non-Boolean name ends with its type, as in `shadowColor`.
-- Do not write an unnecessary `this.`. A class is `open` only when it is meant to be subclassed. Prefer a data class or a value class over an open class.
+- Do not write an unnecessary `this.`. A class is `open` only when it is meant to be subclassed. Prefer a data class or a value class over an open class, but a new public type is a plain class with hand-written `equals`, `hashCode`, and `toString`.
 - Types are PascalCase. Properties and functions are camelCase. Avoid abbreviations.

@@ -25,14 +25,14 @@ import kotlinx.coroutines.launch
  *   should ensure their current reference exists in this new version and choose a new one if not.
  */
 @PlatformInternalApi
-class BibleVersionsViewModel(
+public class BibleVersionsViewModel(
     initialVersionId: Int? = null,
-    var onVersionChange: (BibleVersion) -> Unit,
+    public var onVersionChange: (BibleVersion) -> Unit,
     private val languageRepository: LanguageRepository,
     private val bibleVersionRepository: BibleVersionRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(State())
-    val state: StateFlow<State> by lazy { _state.asStateFlow() }
+    public val state: StateFlow<State> by lazy { _state.asStateFlow() }
 
     init {
         viewModelScope.launch {
@@ -176,7 +176,7 @@ class BibleVersionsViewModel(
         }
     }
 
-    fun loadVersionsForLanguage(languageTag: String) {
+    public fun loadVersionsForLanguage(languageTag: String) {
         viewModelScope.launch {
             try {
                 _state.update {
@@ -205,7 +205,7 @@ class BibleVersionsViewModel(
         }
     }
 
-    fun onAction(action: Action) {
+    public fun onAction(action: Action) {
         when (action) {
             is Action.VersionInfoTapped -> {
                 loadOrganization(bibleVersion = action.bibleVersion)
@@ -284,17 +284,18 @@ class BibleVersionsViewModel(
     }
 
     /** Updates the search query used to filter Bible versions. */
-    fun onVersionSearchQueryChange(query: String) {
+    public fun onVersionSearchQueryChange(query: String) {
         _state.update { it.copy(versionSearchQuery = query) }
     }
 
     /** Updates the search query used to filter languages. */
-    fun onLanguageSearchQueryChange(query: String) {
+    public fun onLanguageSearchQueryChange(query: String) {
         _state.update { it.copy(languageSearchQuery = query) }
     }
 
     // ----- State
-    data class State(
+    @PlatformInternalApi
+    public data class State(
         val initializing: Boolean = true,
         val currentVersion: BibleVersion? = null,
         val permittedMinimalVersions: List<BibleVersion> = emptyList(),
@@ -352,17 +353,22 @@ class BibleVersionsViewModel(
     }
 
     // ----- Events
-    sealed interface Event
+    @PlatformInternalApi
+    public sealed interface Event
 
     // ----- Actions
-    sealed interface Action {
-        data class VersionInfoTapped(
+    @PlatformInternalApi
+    public sealed interface Action {
+        @PlatformInternalApi
+        public data class VersionInfoTapped(
             val bibleVersion: BibleVersion,
         ) : Action
 
-        data object VersionDismissed : Action
+        @PlatformInternalApi
+        public data object VersionDismissed : Action
 
-        data class VersionSelected(
+        @PlatformInternalApi
+        public data class VersionSelected(
             val bibleVersion: BibleVersion,
         ) : Action
     }

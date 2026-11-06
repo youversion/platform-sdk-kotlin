@@ -8,7 +8,7 @@ import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.ui.R
 
 @PlatformInternalApi
-val UntitledSerif =
+public val UntitledSerif: FontFamily =
     FontFamily(
         Font(R.font.untitled_serif_app_regular, FontWeight.Normal),
         Font(R.font.untitled_serif_app_regular_italic, FontWeight.Normal, FontStyle.Italic),

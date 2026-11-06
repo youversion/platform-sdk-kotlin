@@ -7,7 +7,7 @@ import com.youversion.platform.core.bibles.models.BibleVersion
  * Interfacing for caching Bible Version metadata and chapter contents locally, either
  * in memory or on disk, based on the implementation.
  */
-interface BibleVersionCache {
+public interface BibleVersionCache {
     /**
      * A list of all version IDs currently stored in the cache.
      *
@@ -19,7 +19,7 @@ interface BibleVersionCache {
      *
      * @return A list of version IDs.
      */
-    val storedVersionIds: List<Int>
+    public val storedVersionIds: List<Int>
 
     /**
      * Retrieves a [BibleVersion] from the cache.
@@ -33,7 +33,7 @@ interface BibleVersionCache {
      * @param id The ID of the version to retrieve.
      * @return The [BibleVersion] and its expiration if found, or null if not found or expired.
      */
-    suspend fun version(id: Int): CachedBibleContent<BibleVersion>?
+    public suspend fun version(id: Int): CachedBibleContent<BibleVersion>?
 
     /**
      * Retrieves chapter content from the cache.
@@ -49,7 +49,7 @@ interface BibleVersionCache {
      * @param reference The [BibleReference] for the chapter.
      * @return The chapter's content and its expiration, or null if not found or expired.
      */
-    suspend fun chapterContent(reference: BibleReference): CachedBibleContent<String>?
+    public suspend fun chapterContent(reference: BibleReference): CachedBibleContent<String>?
 
     /**
      * Adds a [BibleVersion] to the cache.
@@ -57,7 +57,7 @@ interface BibleVersionCache {
      * @param version The [BibleVersion] to add.
      * @param expiresAt When the entry expires, as epoch milliseconds, or null to never expire.
      */
-    suspend fun addVersion(
+    public suspend fun addVersion(
         version: BibleVersion,
         expiresAt: Long? = null,
     )
@@ -69,7 +69,7 @@ interface BibleVersionCache {
      * @param reference The [BibleReference] for the chapter.
      * @param expiresAt When the entry expires, as epoch milliseconds, or null to never expire.
      */
-    suspend fun addChapterContents(
+    public suspend fun addChapterContents(
         content: String,
         reference: BibleReference,
         expiresAt: Long? = null,
@@ -80,14 +80,14 @@ interface BibleVersionCache {
      *
      * @param versionId The ID of the [BibleVersion] to remove.
      */
-    suspend fun removeVersion(versionId: Int)
+    public suspend fun removeVersion(versionId: Int)
 
     /**
      * Removes all chapters for a given Bible version from the cache.
      *
      * @param versionId The ID of the Bible version whose chapters to remove.
      */
-    suspend fun removeVersionChapters(versionId: Int)
+    public suspend fun removeVersionChapters(versionId: Int)
 
     /**
      * Removes all [BibleVersion]s from the cache that are not in the provided
@@ -95,12 +95,12 @@ interface BibleVersionCache {
      *
      * @param permittedIds A set of IDs for [BibleVersion]s that are allowed to remain in the cache.
      */
-    suspend fun removeUnpermittedVersions(permittedIds: Set<Int>)
+    public suspend fun removeUnpermittedVersions(permittedIds: Set<Int>)
 
     /**
      * Removes every entry whose expiration time has passed.
      */
-    suspend fun removeExpiredEntries()
+    public suspend fun removeExpiredEntries()
 
     /**
      * Checks if a [BibleVersion] is present in the cache.
@@ -114,7 +114,7 @@ interface BibleVersionCache {
      * @param versionId The ID of the [BibleVersion] to check.
      * @return True if the [BibleVersion] is present, false otherwise.
      */
-    fun versionIsPresent(versionId: Int): Boolean
+    public fun versionIsPresent(versionId: Int): Boolean
 
     /**
      * Checks if any chapters for a Bible version are present in the cache.
@@ -128,5 +128,5 @@ interface BibleVersionCache {
      * @param versionId The ID of the [BibleVersion] to check.
      * @return True if chapters are present, false otherwise.
      */
-    fun chaptersArePresent(versionId: Int): Boolean
+    public fun chaptersArePresent(versionId: Int): Boolean
 }

@@ -32,7 +32,7 @@ import kotlin.math.ceil
  */
 @PlatformInternalApi
 @Stable
-class BibleTextLayoutState internal constructor(
+public class BibleTextLayoutState internal constructor(
     private val blocksState: State<BibleTextBlocksState>,
 ) {
     private val placedBlocks = mutableStateMapOf<Int, PlacedBlock>()
@@ -42,7 +42,7 @@ class BibleTextLayoutState internal constructor(
      * block it starts in is not composed or not yet laid out with its current text. A verse wrapping onto another
      * line spans the block's full width.
      */
-    fun verseBounds(reference: BibleReference): Rect? {
+    public fun verseBounds(reference: BibleReference): Rect? {
         val blocks = blocksState.value
         val index = blocks.indexOfBlockContaining(reference) ?: return null
         val placed = placedBlocks[index]?.takeIf { it.text === blocks.visibleBlocks[index].text } ?: return null
@@ -55,7 +55,7 @@ class BibleTextLayoutState internal constructor(
      * block, the top of its block is brought to the top instead, which still counts as found. Returns false only
      * when the chapter renders no block for it.
      */
-    suspend fun scrollToVerse(
+    public suspend fun scrollToVerse(
         listState: LazyListState,
         reference: BibleReference,
         leadingItemCount: Int,
@@ -74,7 +74,7 @@ class BibleTextLayoutState internal constructor(
      * The reader's place is held as the block's position in the chapter plus its text, so a restyle that adds or
      * drops blocks before it, such as toggling headings, is not followed and leaves the list where it was.
      */
-    suspend fun keepReadingPosition(
+    public suspend fun keepReadingPosition(
         listState: LazyListState,
         leadingItemCount: Int,
     ) {
@@ -166,7 +166,7 @@ class BibleTextLayoutState internal constructor(
 /** Keeps a [BibleTextLayoutState] measuring the chapter held by [blocksState] for as long as it is composed. */
 @PlatformInternalApi
 @Composable
-fun rememberBibleTextLayoutState(blocksState: BibleTextBlocksState): BibleTextLayoutState {
+public fun rememberBibleTextLayoutState(blocksState: BibleTextBlocksState): BibleTextLayoutState {
     val currentBlocksState = rememberUpdatedState(blocksState)
     return remember { BibleTextLayoutState(currentBlocksState) }
 }

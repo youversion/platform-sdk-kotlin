@@ -46,7 +46,7 @@ import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.parameter.parametersOf
 
 @Composable
-fun CompactVerseOfTheDay(
+public fun CompactVerseOfTheDay(
     bibleVersionId: Int = BibleDefaults.VERSION_ID,
     showIcon: Boolean = true,
     dark: Boolean = isSystemInDarkTheme(),
@@ -60,7 +60,7 @@ fun CompactVerseOfTheDay(
 }
 
 @Composable
-fun VerseOfTheDay(
+public fun VerseOfTheDay(
     bibleVersionId: Int = BibleDefaults.VERSION_ID,
     showIcon: Boolean = true,
     dark: Boolean = isSystemInDarkTheme(),

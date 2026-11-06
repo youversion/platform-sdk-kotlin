@@ -336,6 +336,40 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     }
 
     @Test
+    fun `setApiHost keeps every other value`() {
+        with(YouVersionPlatformConfiguration) {
+            configure(
+                appKey = "appKey",
+                authCallback = "auth_callback",
+                accessToken = "token",
+                apiHost = "example.com",
+                hostEnv = "prod",
+                refreshToken = "refresh",
+                idToken = "id",
+                expiryDate = Date(1000L),
+                permittedLanguageTags = setOf("en"),
+                permittedVersionIds = setOf(1),
+                excludedVersionIds = setOf(2),
+                isSignInEnabled = false,
+            )
+            configureSignIn(appName = "Sample App", signInPromptMessage = "Keep your highlights")
+            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            val before = assertNotNull(configState.value).toString()
+
+            setApiHost(apiHost = "new.example.com")
+
+            assertEquals(
+                before.replace("apiHost=example.com", "apiHost=new.example.com"),
+                assertNotNull(configState.value).toString(),
+            )
+            val after = assertNotNull(configState.value)
+            assertEquals("token", after.accessToken)
+            assertEquals("refresh", after.refreshToken)
+            assertEquals("id", after.idToken)
+        }
+    }
+
+    @Test
     fun `setApiHost throws when not configured`() {
         assertFailsWith<YouVersionNotConfiguredException> {
             YouVersionPlatformConfiguration.setApiHost("example.com")

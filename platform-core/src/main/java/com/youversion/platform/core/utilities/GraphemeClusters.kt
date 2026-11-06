@@ -9,7 +9,7 @@ import java.util.Locale
  * Pinned to [Locale.ROOT] so a query is accepted or rejected identically on every device.
  */
 @PlatformInternalApi
-val String.graphemeClusterCount: Int
+public val String.graphemeClusterCount: Int
     get() {
         val iterator = BreakIterator.getCharacterInstance(Locale.ROOT)
         iterator.setText(this)

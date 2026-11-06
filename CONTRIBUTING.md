@@ -281,6 +281,10 @@ Not every dump change is a consumer-facing one. Adding or removing a `@Composabl
 `@Preview`, moves a generated `ComposableSingletons$...getLambda$...` entry; that is compiler bookkeeping, so
 run `apiDump` and carry on. Anything marked `@PlatformInternalApi` never reaches the dump at all.
 
+New public types are plain classes with hand-written `equals`, `hashCode` and `toString`, not data classes: a data class's generated `copy` and `componentN` change whenever a property is added, which breaks apps already built against a release. CI runs `scripts/check-no-public-data-classes.sh` after `apiCheck` to enforce this.
+
+Explicit API mode is on in the published modules, so every public declaration states its visibility and return type. A model the SDK returns has a `@PlatformInternalApi` constructor, so adding a field does not break an app's code. A type that keeps a public constructor, such as `BibleReference`, `BibleTextOptions` or `SearchUserIntent`, must keep its old constructor as a hidden overload (`@Deprecated(level = DeprecationLevel.HIDDEN)`) when a field is added; otherwise apps built against the old signature fail to link.
+
 ### Commit messages
 * Commit messages should be written in English
 * They should follow the [Conventional Commits](https://www.conventionalcommits.org/) specification

@@ -1,10 +1,10 @@
 package com.youversion.platform.core.api
 
-class YouVersionNetworkException(
-    val reason: Reason,
+public class YouVersionNetworkException(
+    public val reason: Reason,
     cause: Exception? = null,
 ) : Exception(reason.toString().lowercase(), cause) {
-    enum class Reason {
+    public enum class Reason {
         /**
          * The server returns an error response
          */

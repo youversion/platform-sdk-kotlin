@@ -54,7 +54,7 @@ internal class BibleCardViewModel(
                 val newVersion = bibleVersionRepository.version(id = versionId)
                 _state.update {
                     it.copy(
-                        reference = it.reference.copy(versionId = versionId),
+                        reference = it.reference.withVersionId(versionId),
                         bibleVersion = newVersion,
                     )
                 }

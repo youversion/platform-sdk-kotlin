@@ -3,7 +3,7 @@ package com.youversion.platform.core.verseimages.api
 import com.youversion.platform.core.api.PaginatedResponse
 import com.youversion.platform.core.verseimages.models.VerseImage
 
-interface VerseImagesApi {
+public interface VerseImagesApi {
     /**
      * Retrieves a page of verse art, optionally narrowed to a passage, a language, or both.
      *
@@ -25,7 +25,7 @@ interface VerseImagesApi {
      *     stated above.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun verseImages(
+    public suspend fun verseImages(
         passageId: String? = null,
         languageRanges: List<String> = emptyList(),
         pageSize: Int? = null,
@@ -43,5 +43,5 @@ interface VerseImagesApi {
      * @throws IllegalArgumentException if [imageId] is blank.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun verseImage(imageId: String): VerseImage
+    public suspend fun verseImage(imageId: String): VerseImage
 }

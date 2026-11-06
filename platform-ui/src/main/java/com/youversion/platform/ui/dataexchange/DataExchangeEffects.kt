@@ -19,7 +19,7 @@ import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
  *         or null when there is no [androidx.activity.result.ActivityResultRegistryOwner] to launch from.
  */
 @Composable
-fun rememberDataExchange(
+public fun rememberDataExchange(
     onBrowserOpened: () -> Unit = {},
 ): suspend (Set<SignInWithYouVersionPermission>) -> DataExchangeResult? {
     val registryOwner = LocalActivityResultRegistryOwner.current

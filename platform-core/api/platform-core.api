@@ -12,26 +12,6 @@ public final class com/youversion/platform/core/BuildConfig {
 }
 
 public final class com/youversion/platform/core/Config {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ZLjava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ZLjava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component10 ()Ljava/util/Set;
-	public final fun component11 ()Ljava/util/Set;
-	public final fun component12 ()Ljava/util/Set;
-	public final fun component13 ()Ljava/util/Set;
-	public final fun component14 ()Z
-	public final fun component15 ()Ljava/lang/String;
-	public final fun component16 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun component4 ()Ljava/lang/String;
-	public final fun component5 ()Ljava/lang/String;
-	public final fun component6 ()Ljava/lang/String;
-	public final fun component7 ()Ljava/lang/String;
-	public final fun component8 ()Ljava/lang/String;
-	public final fun component9 ()Ljava/util/Date;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ZLjava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/Config;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/Config;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ZLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/Config;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAccessToken ()Ljava/lang/String;
 	public final fun getApiHost ()Ljava/lang/String;
@@ -88,13 +68,6 @@ public final class com/youversion/platform/core/YouVersionPlatformConfiguration 
 
 public final class com/youversion/platform/core/api/PaginatedResponse {
 	public static final field Companion Lcom/youversion/platform/core/api/PaginatedResponse$Companion;
-	public fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)V
-	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/util/List;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/lang/Integer;
-	public final fun copy (Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)Lcom/youversion/platform/core/api/PaginatedResponse;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/api/PaginatedResponse;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/youversion/platform/core/api/PaginatedResponse;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getData ()Ljava/util/List;
 	public final fun getNextPageToken ()Ljava/lang/String;
@@ -216,10 +189,6 @@ public final class com/youversion/platform/core/bibles/data/BibleVersionMemoryCa
 
 public final class com/youversion/platform/core/bibles/data/CachedBibleContent {
 	public fun <init> (Ljava/lang/Object;Ljava/lang/Long;)V
-	public final fun component1 ()Ljava/lang/Object;
-	public final fun component2 ()Ljava/lang/Long;
-	public final fun copy (Ljava/lang/Object;Ljava/lang/Long;)Lcom/youversion/platform/core/bibles/data/CachedBibleContent;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/data/CachedBibleContent;Ljava/lang/Object;Ljava/lang/Long;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/data/CachedBibleContent;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getExpiresAt ()Ljava/lang/Long;
 	public final fun getValue ()Ljava/lang/Object;
@@ -247,14 +216,7 @@ public final class com/youversion/platform/core/bibles/domain/BibleReference : j
 	public fun <init> (ILjava/lang/String;III)V
 	public fun compareTo (Lcom/youversion/platform/core/bibles/domain/BibleReference;)I
 	public synthetic fun compareTo (Ljava/lang/Object;)I
-	public final fun component1 ()I
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()I
-	public final fun component4 ()Ljava/lang/Integer;
-	public final fun component5 ()Ljava/lang/Integer;
 	public final fun contains (Lcom/youversion/platform/core/bibles/domain/BibleReference;)Z
-	public final fun copy (ILjava/lang/String;ILjava/lang/Integer;Ljava/lang/Integer;)Lcom/youversion/platform/core/bibles/domain/BibleReference;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/domain/BibleReference;ILjava/lang/String;ILjava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/domain/BibleReference;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun existsIn (Lcom/youversion/platform/core/bibles/models/BibleVersion;)Z
 	public final fun getAsUSFM ()Ljava/lang/String;
@@ -281,15 +243,6 @@ public final class com/youversion/platform/core/bibles/domain/BibleReference$Com
 
 public final class com/youversion/platform/core/bibles/domain/BibleTextNode {
 	public static final field Companion Lcom/youversion/platform/core/bibles/domain/BibleTextNode$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/Map;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/util/List;
-	public final fun component4 ()Ljava/util/List;
-	public final fun component5 ()Ljava/util/Map;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/Map;)Lcom/youversion/platform/core/bibles/domain/BibleTextNode;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/domain/BibleTextNode;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/Map;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/domain/BibleTextNode;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAttributes ()Ljava/util/Map;
 	public final fun getChildren ()Ljava/util/List;
@@ -299,7 +252,6 @@ public final class com/youversion/platform/core/bibles/domain/BibleTextNode {
 	public final fun getType ()Lcom/youversion/platform/core/bibles/domain/BibleTextNodeType;
 	public fun hashCode ()I
 	public static final fun parse (Ljava/lang/String;)Lcom/youversion/platform/core/bibles/domain/BibleTextNode;
-	public final fun setText (Ljava/lang/String;)V
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -340,17 +292,6 @@ public final class com/youversion/platform/core/bibles/domain/BibleVersionReposi
 
 public final class com/youversion/platform/core/bibles/models/BibleBook {
 	public static final field Companion Lcom/youversion/platform/core/bibles/models/BibleBook$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lcom/youversion/platform/core/bibles/models/BibleBookIntro;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lcom/youversion/platform/core/bibles/models/BibleBookIntro;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun component4 ()Ljava/lang/String;
-	public final fun component5 ()Ljava/lang/String;
-	public final fun component6 ()Ljava/util/List;
-	public final fun component7 ()Lcom/youversion/platform/core/bibles/models/BibleBookIntro;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lcom/youversion/platform/core/bibles/models/BibleBookIntro;)Lcom/youversion/platform/core/bibles/models/BibleBook;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BibleBook;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lcom/youversion/platform/core/bibles/models/BibleBookIntro;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BibleBook;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAbbreviation ()Ljava/lang/String;
 	public final fun getCanon ()Ljava/lang/String;
@@ -394,12 +335,6 @@ public final class com/youversion/platform/core/bibles/models/BibleBook$Companio
 
 public final class com/youversion/platform/core/bibles/models/BibleBookIntro {
 	public static final field Companion Lcom/youversion/platform/core/bibles/models/BibleBookIntro$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/bibles/models/BibleBookIntro;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BibleBookIntro;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BibleBookIntro;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getId ()Ljava/lang/String;
 	public final fun getPassageId ()Ljava/lang/String;
@@ -432,13 +367,6 @@ public final class com/youversion/platform/core/bibles/models/BibleBookIntro$Com
 
 public final class com/youversion/platform/core/bibles/models/BibleChapter {
 	public static final field Companion Lcom/youversion/platform/core/bibles/models/BibleChapter$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun component4 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lcom/youversion/platform/core/bibles/models/BibleChapter;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BibleChapter;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BibleChapter;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getId ()Ljava/lang/String;
 	public final fun getPassageId ()Ljava/lang/String;
@@ -474,12 +402,6 @@ public final class com/youversion/platform/core/bibles/models/BibleChapter$Compa
 
 public final class com/youversion/platform/core/bibles/models/BiblePassage {
 	public static final field Companion Lcom/youversion/platform/core/bibles/models/BiblePassage$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/bibles/models/BiblePassage;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BiblePassage;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BiblePassage;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getContent ()Ljava/lang/String;
 	public final fun getId ()Ljava/lang/String;
@@ -506,12 +428,6 @@ public final class com/youversion/platform/core/bibles/models/BiblePassage$Compa
 
 public final class com/youversion/platform/core/bibles/models/BibleVerse {
 	public static final field Companion Lcom/youversion/platform/core/bibles/models/BibleVerse$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/bibles/models/BibleVerse;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BibleVerse;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BibleVerse;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getId ()Ljava/lang/String;
 	public final fun getPassageId ()Ljava/lang/String;
@@ -537,28 +453,10 @@ public final class com/youversion/platform/core/bibles/models/BibleVerse$Compani
 
 public final class com/youversion/platform/core/bibles/models/BibleVersion {
 	public static final field Companion Lcom/youversion/platform/core/bibles/models/BibleVersion$Companion;
-	public fun <init> (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun book (Ljava/lang/String;)Lcom/youversion/platform/core/bibles/models/BibleBook;
 	public final fun bookName (Ljava/lang/String;)Ljava/lang/String;
 	public final fun canonicalChapters (Ljava/lang/String;)Ljava/util/List;
 	public final fun chapterLabels (Ljava/lang/String;)Ljava/util/List;
-	public final fun component1 ()I
-	public final fun component10 ()Ljava/lang/String;
-	public final fun component11 ()Ljava/util/List;
-	public final fun component12 ()Ljava/util/List;
-	public final fun component13 ()Ljava/lang/String;
-	public final fun component14 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun component4 ()Ljava/lang/String;
-	public final fun component5 ()Ljava/lang/String;
-	public final fun component6 ()Ljava/lang/String;
-	public final fun component7 ()Ljava/lang/String;
-	public final fun component8 ()Ljava/lang/String;
-	public final fun component9 ()Ljava/lang/String;
-	public final fun copy (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/bibles/models/BibleVersion;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BibleVersion;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BibleVersion;
 	public final fun displayTitle (Lcom/youversion/platform/core/bibles/domain/BibleReference;Z)Ljava/lang/String;
 	public static synthetic fun displayTitle$default (Lcom/youversion/platform/core/bibles/models/BibleVersion;Lcom/youversion/platform/core/bibles/domain/BibleReference;ZILjava/lang/Object;)Ljava/lang/String;
 	public fun equals (Ljava/lang/Object;)Z
@@ -620,11 +518,6 @@ public final class com/youversion/platform/core/bibles/models/BibleVersion$Compa
 
 public final class com/youversion/platform/core/bibles/models/BibleVersionIndex {
 	public static final field Companion Lcom/youversion/platform/core/bibles/models/BibleVersionIndex$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lcom/youversion/platform/core/bibles/models/BibleVersionIndex;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/bibles/models/BibleVersionIndex;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/youversion/platform/core/bibles/models/BibleVersionIndex;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBooks ()Ljava/util/List;
 	public final fun getTextDirection ()Ljava/lang/String;
@@ -665,10 +558,6 @@ public final class com/youversion/platform/core/dataexchange/api/DataExchangeEnd
 
 public final class com/youversion/platform/core/dataexchange/models/DataExchangeToken {
 	public static final field Companion Lcom/youversion/platform/core/dataexchange/models/DataExchangeToken$Companion;
-	public fun <init> (Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lcom/youversion/platform/core/dataexchange/models/DataExchangeToken;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/dataexchange/models/DataExchangeToken;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/dataexchange/models/DataExchangeToken;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getToken ()Ljava/lang/String;
 	public fun hashCode ()I
@@ -735,36 +624,7 @@ public final class com/youversion/platform/core/highlights/domain/BibleHighlight
 	public final fun updateHighlightColors (Ljava/util/List;Ljava/lang/String;)V
 }
 
-public abstract interface class com/youversion/platform/core/highlights/domain/HighlightChange {
-}
-
-public final class com/youversion/platform/core/highlights/domain/HighlightChange$Remove : com/youversion/platform/core/highlights/domain/HighlightChange {
-	public static final field INSTANCE Lcom/youversion/platform/core/highlights/domain/HighlightChange$Remove;
-	public fun equals (Ljava/lang/Object;)Z
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class com/youversion/platform/core/highlights/domain/HighlightChange$SetColor : com/youversion/platform/core/highlights/domain/HighlightChange {
-	public fun <init> (Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lcom/youversion/platform/core/highlights/domain/HighlightChange$SetColor;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/highlights/domain/HighlightChange$SetColor;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/highlights/domain/HighlightChange$SetColor;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getColor ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
 public final class com/youversion/platform/core/highlights/domain/OperationResult {
-	public fun <init> (Ljava/util/UUID;ZLjava/lang/Throwable;I)V
-	public synthetic fun <init> (Ljava/util/UUID;ZLjava/lang/Throwable;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/util/UUID;
-	public final fun component2 ()Z
-	public final fun component3 ()Ljava/lang/Throwable;
-	public final fun component4 ()I
-	public final fun copy (Ljava/util/UUID;ZLjava/lang/Throwable;I)Lcom/youversion/platform/core/highlights/domain/OperationResult;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/highlights/domain/OperationResult;Ljava/util/UUID;ZLjava/lang/Throwable;IILjava/lang/Object;)Lcom/youversion/platform/core/highlights/domain/OperationResult;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getError ()Ljava/lang/Throwable;
 	public final fun getOperationId ()Ljava/util/UUID;
@@ -774,34 +634,7 @@ public final class com/youversion/platform/core/highlights/domain/OperationResul
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/youversion/platform/core/highlights/domain/PendingHighlightOperation {
-	public fun <init> (Ljava/util/List;Lcom/youversion/platform/core/highlights/domain/HighlightChange;Ljava/util/UUID;Ljava/util/Date;ILjava/lang/String;)V
-	public synthetic fun <init> (Ljava/util/List;Lcom/youversion/platform/core/highlights/domain/HighlightChange;Ljava/util/UUID;Ljava/util/Date;ILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/util/List;
-	public final fun component2 ()Lcom/youversion/platform/core/highlights/domain/HighlightChange;
-	public final fun component3 ()Ljava/util/UUID;
-	public final fun component4 ()Ljava/util/Date;
-	public final fun component5 ()I
-	public final fun component6 ()Ljava/lang/String;
-	public final fun copy (Ljava/util/List;Lcom/youversion/platform/core/highlights/domain/HighlightChange;Ljava/util/UUID;Ljava/util/Date;ILjava/lang/String;)Lcom/youversion/platform/core/highlights/domain/PendingHighlightOperation;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/highlights/domain/PendingHighlightOperation;Ljava/util/List;Lcom/youversion/platform/core/highlights/domain/HighlightChange;Ljava/util/UUID;Ljava/util/Date;ILjava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/highlights/domain/PendingHighlightOperation;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getChange ()Lcom/youversion/platform/core/highlights/domain/HighlightChange;
-	public final fun getId ()Ljava/util/UUID;
-	public final fun getReferences ()Ljava/util/List;
-	public final fun getRetryCount ()I
-	public final fun getSessionId ()Ljava/lang/String;
-	public final fun getTimestamp ()Ljava/util/Date;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
 public final class com/youversion/platform/core/highlights/models/BibleHighlight {
-	public fun <init> (Lcom/youversion/platform/core/bibles/domain/BibleReference;Ljava/lang/String;)V
-	public final fun component1 ()Lcom/youversion/platform/core/bibles/domain/BibleReference;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (Lcom/youversion/platform/core/bibles/domain/BibleReference;Ljava/lang/String;)Lcom/youversion/platform/core/highlights/models/BibleHighlight;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/highlights/models/BibleHighlight;Lcom/youversion/platform/core/bibles/domain/BibleReference;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/highlights/models/BibleHighlight;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBibleReference ()Lcom/youversion/platform/core/bibles/domain/BibleReference;
 	public final fun getHexColor ()Ljava/lang/String;
@@ -811,17 +644,6 @@ public final class com/youversion/platform/core/highlights/models/BibleHighlight
 
 public final class com/youversion/platform/core/highlights/models/Highlight {
 	public static final field Companion Lcom/youversion/platform/core/highlights/models/Highlight$Companion;
-	public fun <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()I
-	public final fun component3 ()Ljava/lang/String;
-	public final fun component4 ()Ljava/lang/String;
-	public final fun component5 ()Ljava/lang/String;
-	public final fun component6 ()Ljava/lang/String;
-	public final fun component7 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/highlights/models/Highlight;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/highlights/models/Highlight;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/highlights/models/Highlight;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBibleId ()I
 	public final fun getColor ()Ljava/lang/String;
@@ -870,22 +692,6 @@ public final class com/youversion/platform/core/languages/domain/LanguageReposit
 
 public final class com/youversion/platform/core/languages/models/Language {
 	public static final field Companion Lcom/youversion/platform/core/languages/models/Language$Companion;
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component10 ()Ljava/lang/String;
-	public final fun component11 ()Ljava/lang/Integer;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun component4 ()Ljava/lang/String;
-	public final fun component5 ()Ljava/util/List;
-	public final fun component6 ()Ljava/util/Map;
-	public final fun component7 ()Ljava/util/List;
-	public final fun component8 ()Ljava/util/List;
-	public final fun component9 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;)Lcom/youversion/platform/core/languages/models/Language;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/languages/models/Language;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/Map;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/youversion/platform/core/languages/models/Language;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAliases ()Ljava/util/List;
 	public final fun getCountries ()Ljava/util/List;
@@ -939,18 +745,6 @@ public abstract interface class com/youversion/platform/core/organizations/api/O
 
 public final class com/youversion/platform/core/organizations/models/Organization {
 	public static final field Companion Lcom/youversion/platform/core/organizations/models/Organization$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun component4 ()Ljava/lang/String;
-	public final fun component5 ()Ljava/lang/String;
-	public final fun component6 ()Ljava/lang/String;
-	public final fun component7 ()Ljava/lang/String;
-	public final fun component8 ()Ljava/lang/String;
-	public final fun component9 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/organizations/models/Organization;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/organizations/models/Organization;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/organizations/models/Organization;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAddress ()Ljava/lang/String;
 	public final fun getDescription ()Ljava/lang/String;
@@ -1000,7 +794,6 @@ public final class com/youversion/platform/core/search/api/SearchApi$DefaultImpl
 }
 
 public final class com/youversion/platform/core/search/models/ImageSearchResults {
-	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getImages ()Ljava/util/List;
 	public final fun getNextPageToken ()Ljava/lang/String;
@@ -1009,7 +802,6 @@ public final class com/youversion/platform/core/search/models/ImageSearchResults
 }
 
 public final class com/youversion/platform/core/search/models/SearchImage {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getId ()Ljava/lang/String;
 	public final fun getPassageId ()Ljava/lang/String;
@@ -1018,11 +810,6 @@ public final class com/youversion/platform/core/search/models/SearchImage {
 }
 
 public final class com/youversion/platform/core/search/models/SearchQuery {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/search/models/SearchQuery;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/search/models/SearchQuery;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/search/models/SearchQuery;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getSource ()Ljava/lang/String;
 	public final fun getText ()Ljava/lang/String;
@@ -1031,15 +818,6 @@ public final class com/youversion/platform/core/search/models/SearchQuery {
 }
 
 public final class com/youversion/platform/core/search/models/SearchResults {
-	public fun <init> (Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;)V
-	public fun <init> (Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;Ljava/util/List;)V
-	public final fun component1 ()Ljava/util/List;
-	public final fun component2 ()Ljava/util/List;
-	public final fun component3 ()Lcom/youversion/platform/core/search/models/SearchUserIntent;
-	public final fun component4 ()Ljava/util/List;
-	public final fun component5 ()Ljava/lang/String;
-	public final fun copy (Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;)Lcom/youversion/platform/core/search/models/SearchResults;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/search/models/SearchResults;Ljava/util/List;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/search/models/SearchResults;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDidYouMean ()Ljava/util/List;
 	public final fun getImages ()Ljava/util/List;
@@ -1052,12 +830,6 @@ public final class com/youversion/platform/core/search/models/SearchResults {
 }
 
 public final class com/youversion/platform/core/search/models/SearchTopic {
-	public fun <init> (Ljava/lang/Integer;Ljava/lang/String;Ljava/util/List;)V
-	public final fun component1 ()Ljava/lang/Integer;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/Integer;Ljava/lang/String;Ljava/util/List;)Lcom/youversion/platform/core/search/models/SearchTopic;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/search/models/SearchTopic;Ljava/lang/Integer;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/youversion/platform/core/search/models/SearchTopic;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getId ()Ljava/lang/Integer;
 	public final fun getSubtopics ()Ljava/util/List;
@@ -1069,9 +841,6 @@ public final class com/youversion/platform/core/search/models/SearchTopic {
 public final class com/youversion/platform/core/search/models/SearchUserIntent {
 	public static final field Companion Lcom/youversion/platform/core/search/models/SearchUserIntent$Companion;
 	public fun <init> (Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lcom/youversion/platform/core/search/models/SearchUserIntent;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/search/models/SearchUserIntent;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getRawValue ()Ljava/lang/String;
 	public fun hashCode ()I
@@ -1086,12 +855,6 @@ public final class com/youversion/platform/core/search/models/SearchUserIntent$C
 }
 
 public final class com/youversion/platform/core/search/models/TopicSearchResults {
-	public fun <init> (Ljava/util/List;Ljava/util/List;Ljava/lang/String;)V
-	public final fun component1 ()Ljava/util/List;
-	public final fun component2 ()Ljava/util/List;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun copy (Ljava/util/List;Ljava/util/List;Ljava/lang/String;)Lcom/youversion/platform/core/search/models/TopicSearchResults;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/search/models/TopicSearchResults;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/search/models/TopicSearchResults;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDidYouMean ()Ljava/util/List;
 	public final fun getSearchInsteadFor ()Ljava/lang/String;
@@ -1101,14 +864,6 @@ public final class com/youversion/platform/core/search/models/TopicSearchResults
 }
 
 public final class com/youversion/platform/core/search/models/VerseSearchResults {
-	public fun <init> (Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;)V
-	public final fun component1 ()Ljava/util/List;
-	public final fun component2 ()Lcom/youversion/platform/core/search/models/SearchUserIntent;
-	public final fun component3 ()Ljava/util/List;
-	public final fun component4 ()Ljava/lang/String;
-	public final fun component5 ()Ljava/lang/String;
-	public final fun copy (Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/search/models/VerseSearchResults;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/search/models/VerseSearchResults;Ljava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/search/models/VerseSearchResults;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDidYouMean ()Ljava/util/List;
 	public final fun getNextPageToken ()Ljava/lang/String;
@@ -1160,18 +915,6 @@ public final class com/youversion/platform/core/users/model/SignInWithYouVersion
 
 public final class com/youversion/platform/core/users/model/SignInWithYouVersionResult {
 	public static final field Companion Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/util/Date;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/util/Date;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun component4 ()Ljava/lang/String;
-	public final fun component5 ()Ljava/util/List;
-	public final fun component6 ()Ljava/lang/String;
-	public final fun component7 ()Ljava/lang/String;
-	public final fun component8 ()Ljava/lang/String;
-	public final fun component9 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/util/Date;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult;Ljava/lang/String;Ljava/util/Date;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAccessToken ()Ljava/lang/String;
 	public final fun getEmail ()Ljava/lang/String;
@@ -1187,21 +930,10 @@ public final class com/youversion/platform/core/users/model/SignInWithYouVersion
 }
 
 public final class com/youversion/platform/core/users/model/SignInWithYouVersionResult$Companion {
-	public final fun create (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult;
-	public static synthetic fun create$default (Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult$Companion;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/users/model/SignInWithYouVersionResult;
 }
 
 public final class com/youversion/platform/core/users/model/YouVersionUserInfo {
 	public static final field Companion Lcom/youversion/platform/core/users/model/YouVersionUserInfo$Companion;
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/lang/String;
-	public final fun component4 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/youversion/platform/core/users/model/YouVersionUserInfo;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/users/model/YouVersionUserInfo;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/users/model/YouVersionUserInfo;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAvatarUrl ()Ljava/lang/String;
 	public final fun getAvatarUrlFormat ()Ljava/lang/String;
@@ -1260,7 +992,6 @@ public final class com/youversion/platform/core/verseimages/api/VerseImagesApi$D
 
 public final class com/youversion/platform/core/verseimages/models/VerseImage {
 	public static final field Companion Lcom/youversion/platform/core/verseimages/models/VerseImage$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IID)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAspectRatio ()D
 	public final fun getAttribution ()Ljava/lang/String;
@@ -1303,12 +1034,6 @@ public final class com/youversion/platform/core/votd/api/VotdApi$DefaultImpls {
 
 public final class com/youversion/platform/core/votd/models/YouVersionVerseOfTheDay {
 	public static final field Companion Lcom/youversion/platform/core/votd/models/YouVersionVerseOfTheDay$Companion;
-	public fun <init> (ILjava/lang/String;)V
-	public fun <init> (ILjava/lang/String;Ljava/lang/String;)V
-	public final fun component1 ()I
-	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (ILjava/lang/String;)Lcom/youversion/platform/core/votd/models/YouVersionVerseOfTheDay;
-	public static synthetic fun copy$default (Lcom/youversion/platform/core/votd/models/YouVersionVerseOfTheDay;ILjava/lang/String;ILjava/lang/Object;)Lcom/youversion/platform/core/votd/models/YouVersionVerseOfTheDay;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDay ()I
 	public final fun getImageId ()Ljava/lang/String;

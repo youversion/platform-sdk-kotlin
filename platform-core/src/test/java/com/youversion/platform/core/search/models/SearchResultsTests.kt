@@ -38,13 +38,13 @@ class SearchResultsTests {
     }
 
     @Test
-    fun `test copy drops images`() {
-        val copied = results(listOf(SearchImage(id = "img-1", passageId = "JHN.3.16"))).copy()
-        assertEquals(emptyList(), copied.images)
+    fun `test images are kept`() {
+        val images = listOf(SearchImage(id = "img-1", passageId = "JHN.3.16"))
+        assertEquals(images, results(images).images)
     }
 
     @Test
-    fun `test five argument constructor leaves images empty`() {
+    fun `test images default to empty`() {
         val results =
             SearchResults(
                 references = emptyList(),

@@ -117,7 +117,7 @@ internal class BibleReaderViewModel(
             bibleVersionsViewModel ?: BibleVersionsViewModel(
                 initialVersionId = reference.versionId,
                 onVersionChange = { version ->
-                    onHeaderSelectionChange(this.bibleReference.copy(versionId = version.id))
+                    onHeaderSelectionChange(this.bibleReference.withVersionId(version.id))
                 },
                 languageRepository = languageRepository,
                 bibleVersionRepository = bibleVersionRepository,
@@ -312,7 +312,8 @@ internal class BibleReaderViewModel(
                         val previousBook = books[currentBookIndex - 1]
                         val lastChapter = previousBook.chapters?.count() ?: 1
                         bibleReference =
-                            bibleReference.copy(
+                            BibleReference(
+                                versionId = bibleReference.versionId,
                                 bookUSFM = previousBook.id ?: "",
                                 chapter = lastChapter,
                             )
@@ -404,7 +405,7 @@ internal class BibleReaderViewModel(
     }
 
     fun switchToVersion(versionId: Int) {
-        val newReference = bibleReference.copy(versionId = versionId)
+        val newReference = bibleReference.withVersionId(versionId)
         onHeaderSelectionChange(newReference)
     }
 
@@ -413,7 +414,7 @@ internal class BibleReaderViewModel(
         passageId: String,
     ) {
         _state.update { it.copy(introBookUSFM = bookUSFM, introPassageId = passageId) }
-        bibleReference = bibleReference.copy(bookUSFM = bookUSFM, chapter = 1)
+        bibleReference = BibleReference(bibleReference.versionId, bookUSFM, chapter = 1)
     }
 
     fun onHeaderSelectionChange(newReference: BibleReference) {
@@ -471,7 +472,7 @@ internal class BibleReaderViewModel(
         pendingFocusedReference = reference
         // Search is left showing so the sheet can close over the move it started, and closes itself once it has.
         _state.update { it.copy(scrollTargetReference = reference) }
-        onHeaderSelectionChange(reference.copy(verseStart = null, verseEnd = null))
+        onHeaderSelectionChange(BibleReference(reference.versionId, reference.bookUSFM, reference.chapter))
     }
 
     private fun addHighlight(hexColor: String) {

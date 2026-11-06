@@ -7,6 +7,7 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.api.notPermitted
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.highlights.api.HighlightsApi
 import com.youversion.platform.core.highlights.api.HighlightsEndpoints
 import com.youversion.platform.core.highlights.models.BibleHighlight
@@ -42,7 +43,7 @@ import kotlin.math.pow
  * Modeled as a sealed type so that setting a highlight's color always carries a color while removing one never does: a
  * colorless [SetColor] cannot be constructed, so no queued write can ever send a blank color to the server.
  */
-sealed interface HighlightChange {
+internal sealed interface HighlightChange {
     /**
      * Sets highlights to [color]. Adding and recoloring both mean "ensure a highlight of this color exists", so they
      * share this type and sync identically.
@@ -58,7 +59,7 @@ sealed interface HighlightChange {
 /**
  * A highlight change that has been applied to the local cache and is queued to be synced to the server.
  */
-data class PendingHighlightOperation(
+internal data class PendingHighlightOperation(
     val references: List<BibleReference>,
     val change: HighlightChange,
     val id: UUID = UUID.randomUUID(),
@@ -73,12 +74,34 @@ data class PendingHighlightOperation(
  * Mirrors the Swift SDK's `OperationResult`: it is keyed by [operationId] and refreshed each time the operation is
  * processed, so callers can inspect whether a specific write succeeded, why it failed, and how many times it has retried.
  */
-data class OperationResult(
-    val operationId: UUID,
-    val isSuccess: Boolean,
-    val error: Throwable? = null,
-    val retryCount: Int = 0,
-)
+public class OperationResult
+    @PlatformInternalApi
+    constructor(
+        public val operationId: UUID,
+        public val isSuccess: Boolean,
+        public val error: Throwable? = null,
+        public val retryCount: Int = 0,
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is OperationResult) return false
+            return operationId == other.operationId &&
+                isSuccess == other.isSuccess &&
+                error == other.error &&
+                retryCount == other.retryCount
+        }
+
+        override fun hashCode(): Int {
+            var result = operationId.hashCode()
+            result = 31 * result + isSuccess.hashCode()
+            result = 31 * result + error.hashCode()
+            result = 31 * result + retryCount.hashCode()
+            return result
+        }
+
+        override fun toString(): String =
+            "OperationResult(operationId=$operationId, isSuccess=$isSuccess, error=$error, retryCount=$retryCount)"
+    }
 
 /**
  * How each reference in an operation fared, splitting failures the server may yet accept from ones it never will.
@@ -121,7 +144,7 @@ private data class OperationOutcome(
  * later dispatch. The clear is therefore part of the session change rather than something that trails it: no reader
  * can observe the new session while the cache still holds the previous one's highlights.
  */
-class BibleHighlightsRepository internal constructor(
+public class BibleHighlightsRepository internal constructor(
     private val api: HighlightsApi = HighlightsEndpoints,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     private val cache: BibleHighlightCache = BibleHighlightCache.shared,
@@ -135,7 +158,7 @@ class BibleHighlightsRepository internal constructor(
      * it exposes the internal [BibleHighlightCache] type.
      */
     @VisibleForTesting
-    constructor(api: HighlightsApi) : this(api = api, cache = BibleHighlightCache.shared)
+    public constructor(api: HighlightsApi) : this(api = api, cache = BibleHighlightCache.shared)
 
     private val loadScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
 
@@ -156,14 +179,14 @@ class BibleHighlightsRepository internal constructor(
      * cache's internal sync bookkeeping (pending vs. synced state) is intentionally not exposed here; consumers see only
      * the highlights themselves.
      */
-    val highlights: StateFlow<List<BibleHighlight>> =
+    public val highlights: StateFlow<List<BibleHighlight>> =
         MappedStateFlow(cache.highlights) { cached -> cached.map { it.highlight } }
 
     /**
      * The number of highlight changes queued for the server, including any awaiting a retry. Collect this to drive a
      * sync indicator. The count drops to zero while a batch is in flight and rises again only if operations fail.
      */
-    val pendingOperationCount: StateFlow<Int> =
+    public val pendingOperationCount: StateFlow<Int> =
         queuedOperations
             .map { operations -> operations.size }
             .stateIn(scope, SharingStarted.Eagerly, 0)
@@ -171,7 +194,7 @@ class BibleHighlightsRepository internal constructor(
     /**
      * The number of queued highlight changes that have failed at least once and are awaiting a retry.
      */
-    val failedOperationCount: StateFlow<Int> =
+    public val failedOperationCount: StateFlow<Int> =
         combine(queuedOperations, operationResultsState) { operations, results ->
             operations.count { results[it.id]?.isSuccess == false }
         }.stateIn(scope, SharingStarted.Eagerly, 0)
@@ -191,7 +214,8 @@ class BibleHighlightsRepository internal constructor(
     /**
      * Returns the cached highlights overlapping [overlapping] synchronously.
      */
-    fun highlights(overlapping: BibleReference): List<BibleHighlight> = cache.highlights(overlapping = overlapping)
+    public fun highlights(overlapping: BibleReference): List<BibleHighlight> =
+        cache.highlights(overlapping = overlapping)
 
     /**
      * Loads the chapter containing [reference] from the server if it has not been loaded recently.
@@ -203,7 +227,7 @@ class BibleHighlightsRepository internal constructor(
      * already registered by the time the in-flight one finishes, that newer load began after this call and so already
      * reflects post-call state, and this defers to it instead of chaining more reloads.
      */
-    fun ensureHighlightsForChapterLoaded(
+    public fun ensureHighlightsForChapterLoaded(
         reference: BibleReference,
         forceReload: Boolean = false,
     ) {
@@ -248,7 +272,7 @@ class BibleHighlightsRepository internal constructor(
     /**
      * Adds highlights of [color] to each of [references], updating the cache immediately and syncing to the server.
      */
-    fun addHighlights(
+    public fun addHighlights(
         references: List<BibleReference>,
         color: String,
     ) {
@@ -266,7 +290,7 @@ class BibleHighlightsRepository internal constructor(
     /**
      * Removes the highlights on each of [references], updating the cache immediately and syncing to the server.
      */
-    fun removeHighlights(references: List<BibleReference>) {
+    public fun removeHighlights(references: List<BibleReference>) {
         val normalizedReferences = references.map { it.verseLevelReference() }
         applyAndQueue(
             references = normalizedReferences,
@@ -281,7 +305,7 @@ class BibleHighlightsRepository internal constructor(
      * flight; it is cancelled with other loads when [reset] runs on a session change, which is intended since the
      * removal should not outlive the session that requested it.
      */
-    fun removeHighlights(
+    public fun removeHighlights(
         references: List<BibleReference>,
         matchingColor: String,
     ) {
@@ -305,7 +329,7 @@ class BibleHighlightsRepository internal constructor(
      * from the highlight's cache state at that point, so a reference whose chapter is still loading is not classified
      * from a stale snapshot.
      */
-    fun updateHighlightColors(
+    public fun updateHighlightColors(
         references: List<BibleReference>,
         newColor: String,
     ) {
@@ -326,7 +350,7 @@ class BibleHighlightsRepository internal constructor(
      * retrying rather than looping forever after a sign-out. A write already in flight is additionally guarded at send
      * time, so one user's highlights can never land on another user's account.
      */
-    fun reset() {
+    public fun reset() {
         queueLock.withLock {
             queuedOperations.value = emptyList()
             operationGeneration++
@@ -343,7 +367,7 @@ class BibleHighlightsRepository internal constructor(
      * A processor takes the whole queue when it claims a batch, so [pendingOperationCount] reads zero for as long as
      * that batch is in flight. This reports the in-progress processor too, and so stays true across that window.
      */
-    fun hasPendingOperations(): Boolean {
+    public fun hasPendingOperations(): Boolean {
         queueLock.withLock { return isProcessingQueue || queuedOperations.value.isNotEmpty() }
     }
 
@@ -353,7 +377,7 @@ class BibleHighlightsRepository internal constructor(
      * network. Public because [BibleHighlightCache] is internal to this module and so out of reach of those tests.
      */
     @VisibleForTesting
-    fun seedCachedHighlights(highlights: List<BibleHighlight>) {
+    public fun seedCachedHighlights(highlights: List<BibleHighlight>) {
         cache.addHighlights(highlights)
     }
 
@@ -362,7 +386,7 @@ class BibleHighlightsRepository internal constructor(
      * process-wide singleton, so a consumer-module test resets it here between cases.
      */
     @VisibleForTesting
-    fun clearCachedHighlights() {
+    public fun clearCachedHighlights() {
         cache.clear()
     }
 
@@ -370,13 +394,13 @@ class BibleHighlightsRepository internal constructor(
      * The result of the most recent attempt to sync the operation with [operationId], or null if it has not been
      * processed yet or its results have been cleared via [clearOperationResults].
      */
-    fun operationResult(operationId: UUID): OperationResult? = operationResultsState.value[operationId]
+    public fun operationResult(operationId: UUID): OperationResult? = operationResultsState.value[operationId]
 
     /**
      * Forgets every recorded [OperationResult]. This does not affect operations still queued for the server; it only
      * clears the history exposed by [operationResult].
      */
-    fun clearOperationResults() {
+    public fun clearOperationResults() {
         queueLock.withLock {
             operationResultsState.value = emptyMap()
         }
@@ -387,7 +411,7 @@ class BibleHighlightsRepository internal constructor(
      * automatically with backoff, so this only has an effect when the processor has fully drained and stopped; it does
      * not interrupt an in-progress retry backoff. Provided to mirror the Swift SDK's `retryFailedOperations`.
      */
-    suspend fun retryFailedOperations() {
+    public suspend fun retryFailedOperations() {
         val hasFailedOperations =
             queueLock.withLock {
                 val results = operationResultsState.value

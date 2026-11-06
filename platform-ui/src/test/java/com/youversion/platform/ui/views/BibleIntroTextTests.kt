@@ -52,6 +52,7 @@ import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -97,6 +98,8 @@ class BibleIntroTextTests {
                 }
             }
         return BibleTextBlock(
+            id = UUID.randomUUID(),
+            rows = emptyList(),
             text = annotatedText,
             chapter = 1,
             firstLineHeadIndent = 0,
@@ -110,6 +113,8 @@ class BibleIntroTextTests {
 
     private fun bookTitleBlock(text: String): BibleTextBlock =
         BibleTextBlock(
+            id = UUID.randomUUID(),
+            rows = emptyList(),
             text =
                 buildAnnotatedString {
                     append(text)
@@ -540,6 +545,7 @@ class BibleIntroTextTests {
 
         val tableBlock =
             BibleTextBlock(
+                id = UUID.randomUUID(),
                 text = AnnotatedString(""),
                 chapter = 1,
                 rows =
@@ -587,6 +593,7 @@ class BibleIntroTextTests {
         } returns
             listOf(
                 BibleTextBlock(
+                    id = UUID.randomUUID(),
                     text = AnnotatedString(""),
                     chapter = 1,
                     rows = listOf(listOf(AnnotatedString("Cell 1"), AnnotatedString("Cell 2"))),

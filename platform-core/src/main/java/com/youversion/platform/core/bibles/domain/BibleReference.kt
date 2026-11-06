@@ -1,6 +1,7 @@
 package com.youversion.platform.core.bibles.domain
 
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.di.PlatformInternalApi
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -13,16 +14,14 @@ import kotlinx.serialization.encoding.Encoder
 /** Widens a verse so the range constructor delegates to the primary constructor rather than to itself. */
 private fun optionalVerse(verse: Int): Int? = verse
 
-// The primary constructor is private so a reference can only be built as one of the three shapes below. Copying to
-// another version, book or chapter must keep working, so the generated copy stays public and init asserts the shape.
-@ExposedCopyVisibility
+// The primary constructor is private so a reference can only be built as one of the three shapes below.
 @Serializable(with = BibleReferenceSerializer::class)
-data class BibleReference private constructor(
-    val versionId: Int,
-    val bookUSFM: String,
-    val chapter: Int,
-    val verseStart: Int?,
-    val verseEnd: Int?,
+public class BibleReference private constructor(
+    public val versionId: Int,
+    public val bookUSFM: String,
+    public val chapter: Int,
+    public val verseStart: Int?,
+    public val verseEnd: Int?,
 ) : Comparable<BibleReference> {
     init {
         require(chapter >= 1) { "Chapter must be greater than or equal to 1." }
@@ -32,27 +31,26 @@ data class BibleReference private constructor(
         verseEnd?.let {
             require(it >= 1) { "Ending verse must be greater than or equal to 1." }
         }
-        require((verseStart == null) == (verseEnd == null)) { LEGAL_SHAPES }
         if (verseStart != null && verseEnd != null) {
             require(verseEnd >= verseStart) { "Ending verse must be equal to or after starting verse." }
         }
     }
 
     /** The whole chapter. */
-    constructor(versionId: Int, bookUSFM: String, chapter: Int) : this(versionId, bookUSFM, chapter, null, null)
+    public constructor(versionId: Int, bookUSFM: String, chapter: Int) : this(versionId, bookUSFM, chapter, null, null)
 
     /** A single verse. */
-    constructor(versionId: Int, bookUSFM: String, chapter: Int, verse: Int) :
+    public constructor(versionId: Int, bookUSFM: String, chapter: Int, verse: Int) :
         this(versionId, bookUSFM, chapter, optionalVerse(verse), optionalVerse(verse))
 
     /** A verse range, ending on or after it starts. */
-    constructor(versionId: Int, bookUSFM: String, chapter: Int, verseStart: Int, verseEnd: Int) :
+    public constructor(versionId: Int, bookUSFM: String, chapter: Int, verseStart: Int, verseEnd: Int) :
         this(versionId, bookUSFM, chapter, optionalVerse(verseStart), optionalVerse(verseEnd))
 
-    val chapterUSFM: String
+    public val chapterUSFM: String
         get() = "${bookUSFM.uppercase()}.$chapter"
 
-    val isRange: Boolean
+    public val isRange: Boolean
         get() = verseStart != verseEnd
 
     /**
@@ -66,6 +64,40 @@ data class BibleReference private constructor(
             return if (start != null && end != null) start..end else 1..Int.MAX_VALUE
         }
 
+    public val asUSFM: String
+        get() {
+            val upperBookUSFM = bookUSFM.uppercase()
+            return when {
+                verseStart == null -> "$upperBookUSFM.$chapter"
+                isRange -> "$upperBookUSFM.$chapter.$verseStart-$upperBookUSFM.$chapter.$verseEnd"
+                else -> "$upperBookUSFM.$chapter.$verseStart"
+            }
+        }
+
+    /** This same chapter, verse or range, in the version identified by [versionId]. */
+    @PlatformInternalApi
+    public fun withVersionId(versionId: Int): BibleReference =
+        BibleReference(versionId, bookUSFM, chapter, verseStart, verseEnd)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is BibleReference) return false
+        return versionId == other.versionId &&
+            bookUSFM == other.bookUSFM &&
+            chapter == other.chapter &&
+            verseStart == other.verseStart &&
+            verseEnd == other.verseEnd
+    }
+
+    override fun hashCode(): Int {
+        var result = versionId.hashCode()
+        result = 31 * result + bookUSFM.hashCode()
+        result = 31 * result + chapter.hashCode()
+        result = 31 * result + verseStart.hashCode()
+        result = 31 * result + verseEnd.hashCode()
+        return result
+    }
+
     override fun toString(): String {
         val prefix = "bible${versionId}__$bookUSFM.$chapter"
         return when {
@@ -77,16 +109,6 @@ data class BibleReference private constructor(
 
     override fun compareTo(other: BibleReference): Int = compare(this, other)
 
-    val asUSFM: String
-        get() {
-            val upperBookUSFM = bookUSFM.uppercase()
-            return when {
-                verseStart == null -> "$upperBookUSFM.$chapter"
-                isRange -> "$upperBookUSFM.$chapter.$verseStart-$upperBookUSFM.$chapter.$verseEnd"
-                else -> "$upperBookUSFM.$chapter.$verseStart"
-            }
-        }
-
     /**
      * Returns whether this reference exists in [version].
      *
@@ -95,7 +117,7 @@ data class BibleReference private constructor(
      * false negative. A version whose books list is explicitly empty is treated as not containing
      * any reference.
      */
-    fun existsIn(version: BibleVersion): Boolean {
+    public fun existsIn(version: BibleVersion): Boolean {
         if (version.books == null) return true
 
         val normalizedBookUSFM = bookUSFM.uppercase()
@@ -116,7 +138,7 @@ data class BibleReference private constructor(
      * Whether this reference and [otherReference] share at least one verse. A whole chapter overlaps any
      * reference within the same chapter.
      */
-    fun overlaps(otherReference: BibleReference): Boolean {
+    public fun overlaps(otherReference: BibleReference): Boolean {
         if (versionId != otherReference.versionId || bookUSFM != otherReference.bookUSFM) {
             return false
         }
@@ -138,7 +160,7 @@ data class BibleReference private constructor(
      * Whether this reference covers every verse of [otherReference]. A whole chapter contains any reference
      * within the same chapter.
      */
-    fun contains(otherReference: BibleReference): Boolean {
+    public fun contains(otherReference: BibleReference): Boolean {
         if (versionId != otherReference.versionId || bookUSFM != otherReference.bookUSFM) {
             return false
         }
@@ -153,7 +175,7 @@ data class BibleReference private constructor(
         return outerVerses.first <= innerVerses.first && outerVerses.last >= innerVerses.last
     }
 
-    fun isAdjacentOrOverlapping(otherReference: BibleReference): Boolean {
+    public fun isAdjacentOrOverlapping(otherReference: BibleReference): Boolean {
         if (versionId != otherReference.versionId ||
             bookUSFM != otherReference.bookUSFM ||
             chapter != otherReference.chapter
@@ -167,13 +189,9 @@ data class BibleReference private constructor(
         return a.verseRange.last >= b.verseRange.first - 1
     }
 
-    companion object {
-        private const val LEGAL_SHAPES =
-            "A reference must be a whole chapter (neither verse), a single verse (both verses the same) or a " +
-                "verse range (both verses set); it cannot have only one of verseStart and verseEnd."
-
+    public companion object {
         // Static function equivalent
-        fun compare(
+        public fun compare(
             a: BibleReference,
             b: BibleReference,
         ): Int {
@@ -203,7 +221,7 @@ data class BibleReference private constructor(
             }
         }
 
-        fun referencesByMerging(references: List<BibleReference>): List<BibleReference> {
+        public fun referencesByMerging(references: List<BibleReference>): List<BibleReference> {
             val tmp = references.toMutableList()
             tmp.sort()
             var i = 1
@@ -220,7 +238,7 @@ data class BibleReference private constructor(
             return tmp
         }
 
-        fun referenceByMerging(
+        public fun referenceByMerging(
             a: BibleReference,
             b: BibleReference,
         ): BibleReference {
@@ -247,7 +265,7 @@ data class BibleReference private constructor(
             )
         }
 
-        fun unvalidatedReference(
+        public fun unvalidatedReference(
             usfm: String,
             versionId: Int,
         ): BibleReference? {

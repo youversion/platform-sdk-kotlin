@@ -43,7 +43,7 @@ import com.youversion.platform.ui.views.components.SearchBar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @PlatformInternalApi
-fun VersionsScreen(
+public fun VersionsScreen(
     viewModel: BibleVersionsViewModel,
     onBackClick: () -> Unit,
     onLanguagesClick: () -> Unit,

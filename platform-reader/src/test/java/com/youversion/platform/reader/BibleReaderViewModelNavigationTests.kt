@@ -186,7 +186,7 @@ class BibleReaderViewModelNavigationTests {
         viewModel.bibleVersion = multiBookVersion
         viewModel.bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 5)
 
-        val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
+        val verseRef = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
         viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
         assertEquals(1, viewModel.state.value.selectedVerses.size)
 
@@ -295,7 +295,7 @@ class BibleReaderViewModelNavigationTests {
         viewModel.bibleVersion = multiBookVersion
         viewModel.bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 10)
 
-        val verseRef = defaultReference.copy(verseStart = 1, verseEnd = 1)
+        val verseRef = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
         viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
         assertEquals(1, viewModel.state.value.selectedVerses.size)
 
@@ -306,5 +306,44 @@ class BibleReaderViewModelNavigationTests {
 
         assertEquals(0, viewModel.state.value.selectedVerses.size)
         assertEquals(9, viewModel.state.value.bibleReference.chapter)
+    }
+
+    // ----- Verse range is dropped
+
+    @Test
+    fun `onIntroSelected drops the verse range`() {
+        viewModel.bibleReference =
+            BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 3, verseStart = 2, verseEnd = 4)
+
+        viewModel.onIntroSelected("LEV", "LEV.INTRO1")
+
+        assertEquals(BibleReference(versionId = 1, bookUSFM = "LEV", chapter = 1), viewModel.state.value.bibleReference)
+    }
+
+    @Test
+    fun `GoToPreviousChapter from intro drops the verse range`() {
+        viewModel.bibleVersion = multiBookVersion
+        viewModel.onIntroSelected("LEV", "LEV.INTRO1")
+        viewModel.bibleReference =
+            BibleReference(versionId = 1, bookUSFM = "LEV", chapter = 1, verseStart = 2, verseEnd = 4)
+
+        viewModel.onAction(BibleReaderViewModel.Action.GoToPreviousChapter)
+
+        assertEquals(
+            BibleReference(versionId = 1, bookUSFM = "EXO", chapter = 40),
+            viewModel.state.value.bibleReference,
+        )
+    }
+
+    @Test
+    fun `GoToNextChapter from intro drops the verse range`() {
+        viewModel.bibleVersion = multiBookVersion
+        viewModel.onIntroSelected("LEV", "LEV.INTRO1")
+        viewModel.bibleReference =
+            BibleReference(versionId = 1, bookUSFM = "LEV", chapter = 1, verseStart = 2, verseEnd = 4)
+
+        viewModel.onAction(BibleReaderViewModel.Action.GoToNextChapter)
+
+        assertEquals(BibleReference(versionId = 1, bookUSFM = "LEV", chapter = 1), viewModel.state.value.bibleReference)
     }
 }
