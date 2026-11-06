@@ -23,7 +23,7 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.putJsonArray
 
-object DataExchangeEndpoints : DataExchangeApi {
+public object DataExchangeEndpoints : DataExchangeApi {
     private val httpClient: HttpClient
         get() = PlatformCoreKoinComponent.httpClient
 
@@ -47,7 +47,7 @@ object DataExchangeEndpoints : DataExchangeApi {
      * The page redirects back to the app's callback URL configured in the YouVersion developer console when the
      * flow ends; the redirect target is not passed here.
      */
-    fun dataExchangeUrl(
+    public fun dataExchangeUrl(
         token: String,
         appKey: String,
     ): String =

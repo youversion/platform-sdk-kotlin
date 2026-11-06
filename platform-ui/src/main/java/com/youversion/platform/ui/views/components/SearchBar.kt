@@ -40,7 +40,7 @@ import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 /** A styled search text field with a search icon and placeholder text. */
 @Composable
 @PlatformInternalApi
-fun SearchBar(
+public fun SearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,

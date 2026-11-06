@@ -16,14 +16,14 @@ import com.youversion.platform.ui.theme.ui.lightBibleReaderColorScheme
 private val LocalReaderColorScheme = staticCompositionLocalOf { PureWhite }
 
 @PlatformInternalApi
-val MaterialTheme.readerColorScheme: ReaderColorScheme
+public val MaterialTheme.readerColorScheme: ReaderColorScheme
     @Composable
     @ReadOnlyComposable
     get() = LocalReaderColorScheme.current
 
 @Composable
 @PlatformInternalApi
-fun BibleReaderMaterialTheme(
+public fun BibleReaderMaterialTheme(
     readerColorScheme: ReaderColorScheme? = null,
     content: @Composable () -> Unit,
 ) {

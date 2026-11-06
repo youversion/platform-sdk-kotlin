@@ -35,11 +35,11 @@ private const val LAST_RENDERABLE_VERSE = 999
  * for use in Jetpack Compose.
  */
 @PlatformInternalApi
-object BibleVersionRendering {
+public object BibleVersionRendering {
     /**
      * Returns plain text for a Bible reference.
      */
-    suspend fun plainTextOf(
+    public suspend fun plainTextOf(
         bibleChapterRepository: BibleChapterRepository,
         reference: BibleReference,
     ): String? {
@@ -68,7 +68,7 @@ object BibleVersionRendering {
      * Unlike [textBlocks], this method takes raw HTML content directly and renders
      * all content without verse filtering or verse number rendering.
      */
-    suspend fun introTextBlocks(
+    public suspend fun introTextBlocks(
         htmlContent: String,
         versionId: Int,
         bookUSFM: String,
@@ -137,7 +137,7 @@ object BibleVersionRendering {
     /**
      * Formats Bible data into styled AnnotatedString blocks for Compose.
      */
-    suspend fun textBlocks(
+    public suspend fun textBlocks(
         bibleChapterRepository: BibleChapterRepository,
         reference: BibleReference,
         renderVerseNumbers: Boolean = true,

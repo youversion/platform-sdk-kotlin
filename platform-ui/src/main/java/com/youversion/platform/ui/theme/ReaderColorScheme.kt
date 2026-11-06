@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 import com.youversion.platform.core.di.PlatformInternalApi
 
 @PlatformInternalApi
-data class ReaderColorScheme(
+public data class ReaderColorScheme(
     val isDark: Boolean,
     val background: Color,
     val foreground: Color,
@@ -38,7 +38,8 @@ data class ReaderColorScheme(
      *
      * Any alpha carried by [highlightColor] is dropped; the returned color is opaque.
      */
-    fun mixedHighlightColor(highlightColor: Color): Color = mixSrgb(highlightColor, background, highlightMixRatio)
+    public fun mixedHighlightColor(highlightColor: Color): Color =
+        mixSrgb(highlightColor, background, highlightMixRatio)
 }
 
 /**

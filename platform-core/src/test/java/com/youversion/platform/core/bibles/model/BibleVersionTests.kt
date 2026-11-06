@@ -5,6 +5,7 @@ import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleChapter
 import com.youversion.platform.core.bibles.models.BibleVerse
 import com.youversion.platform.core.bibles.models.BibleVersion
+import com.youversion.platform.core.bibles.models.BibleVersionIndex
 import com.youversion.platform.helpers.FixtureLoader
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import kotlinx.serialization.json.Json
@@ -31,6 +32,28 @@ class BibleVersionTests : YouVersionPlatformTest {
                 json.decodeFromString(bible206IndexJson),
             )
     }
+
+    private fun BibleVersion.modified(
+        abbreviation: String? = this.abbreviation,
+        localizedAbbreviation: String? = this.localizedAbbreviation,
+        books: List<BibleBook>? = this.books,
+        textDirection: String? = this.textDirection,
+    ) = BibleVersion(
+        id = id,
+        abbreviation = abbreviation,
+        promotionalContent = promotionalContent,
+        copyright = copyright,
+        languageTag = languageTag,
+        localizedAbbreviation = localizedAbbreviation,
+        localizedTitle = localizedTitle,
+        readerFooter = readerFooter,
+        readerFooterUrl = readerFooterUrl,
+        title = title,
+        bookCodes = bookCodes,
+        books = books,
+        textDirection = textDirection,
+        organizationId = organizationId,
+    )
 
     // ----- Core Metadata
 
@@ -94,7 +117,7 @@ class BibleVersionTests : YouVersionPlatformTest {
 
     @Test
     fun `test displayTitle for rtl language`() {
-        val bibleVersion = bibleVersion.copy(textDirection = "rtl")
+        val bibleVersion = bibleVersion.modified(textDirection = "rtl")
         with(BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3)) {
             assertEquals("3 Genesis", bibleVersion.displayTitle(this, includesVersionAbbreviation = false))
         }
@@ -206,14 +229,14 @@ class BibleVersionTests : YouVersionPlatformTest {
         val booksWithNullUsfm = bibleVersion.books!!.toMutableList()
         booksWithNullUsfm.add(BibleBook(null, null, null, null, null, null))
 
-        val bibleVersion = bibleVersion.copy(books = booksWithNullUsfm)
+        val bibleVersion = bibleVersion.modified(books = booksWithNullUsfm)
         assertEquals(81, bibleVersion.books?.count())
         assertEquals(80, bibleVersion.bookUSFMs.size)
     }
 
     @Test
     fun `test bookUSFMs returns null if books is empty`() {
-        val bibleVersion = bibleVersion.copy(books = null)
+        val bibleVersion = bibleVersion.modified(books = null)
         assertEquals(emptyList(), bibleVersion.bookUSFMs)
     }
 
@@ -231,7 +254,7 @@ class BibleVersionTests : YouVersionPlatformTest {
 
     @Test
     fun `test isRightToLeft for right-to-left version`() {
-        val bibleVersion = bibleVersion.copy(textDirection = "rtl")
+        val bibleVersion = bibleVersion.modified(textDirection = "rtl")
         assertTrue { bibleVersion.isRightToLeft }
     }
 
@@ -374,7 +397,7 @@ class BibleVersionTests : YouVersionPlatformTest {
                 canon = "new_testament",
                 chapters = listOf(nonCanonicalChapter, canonicalChapter),
             )
-        val version = bibleVersion.copy(books = listOf(testBook))
+        val version = bibleVersion.modified(books = listOf(testBook))
 
         val labels = version.chapterLabels("TST")
         assertEquals(listOf("1"), labels)
@@ -405,7 +428,7 @@ class BibleVersionTests : YouVersionPlatformTest {
                 canon = "new_testament",
                 chapters = listOf(chapterWithNullTitle, chapterWithTitle),
             )
-        val version = bibleVersion.copy(books = listOf(testBook))
+        val version = bibleVersion.modified(books = listOf(testBook))
 
         val labels = version.chapterLabels("TST")
         assertEquals(listOf("2"), labels)
@@ -456,7 +479,7 @@ class BibleVersionTests : YouVersionPlatformTest {
                 canon = "new_testament",
                 chapters = listOf(nonCanonicalChapter, canonicalChapter),
             )
-        val version = bibleVersion.copy(books = listOf(testBook))
+        val version = bibleVersion.modified(books = listOf(testBook))
 
         val chapters = version.canonicalChapters("TST")
         assertEquals(1, chapters.size)
@@ -507,6 +530,64 @@ class BibleVersionTests : YouVersionPlatformTest {
         assertFalse { bibleVersion.hashCode() == other.hashCode() }
     }
 
+    @Test
+    fun `test toString matches the existing format`() {
+        val version =
+            BibleVersion(
+                id = 1,
+                abbreviation = "abbreviation",
+                promotionalContent = "promotionalContent",
+                copyright = "copyright",
+                languageTag = "languageTag",
+                localizedAbbreviation = "localizedAbbreviation",
+                localizedTitle = "localizedTitle",
+                readerFooter = "readerFooter",
+                readerFooterUrl = "readerFooterUrl",
+                title = "title",
+                bookCodes = listOf("GEN"),
+                books = emptyList(),
+                textDirection = "rtl",
+                organizationId = "organizationId",
+            )
+        assertEquals(
+            "BibleVersion(id=1, abbreviation=abbreviation, promotionalContent=promotionalContent, " +
+                "copyright=copyright, languageTag=languageTag, localizedAbbreviation=localizedAbbreviation, " +
+                "localizedTitle=localizedTitle, readerFooter=readerFooter, readerFooterUrl=readerFooterUrl, " +
+                "title=title, bookCodes=[GEN], books=[], textDirection=rtl, organizationId=organizationId)",
+            version.toString(),
+        )
+    }
+
+    // ----- Builder
+
+    @Test
+    fun `test merge keeps every basic field and takes books and text direction from the index`() {
+        val basic =
+            BibleVersion(
+                id = 1,
+                abbreviation = "abbreviation",
+                promotionalContent = "promotionalContent",
+                copyright = "copyright",
+                languageTag = "languageTag",
+                localizedAbbreviation = "localizedAbbreviation",
+                localizedTitle = "localizedTitle",
+                readerFooter = "readerFooter",
+                readerFooterUrl = "readerFooterUrl",
+                title = "title",
+                bookCodes = listOf("GEN"),
+                books = null,
+                textDirection = "ltr",
+                organizationId = "organizationId",
+            )
+
+        val merged = BibleVersion.Builder.merge(basic, BibleVersionIndex(books = emptyList(), textDirection = "rtl"))
+
+        assertEquals(
+            basic.toString().replace("books=null", "books=[]").replace("textDirection=ltr", "textDirection=rtl"),
+            merged.toString(),
+        )
+    }
+
     // ----- displayTitle for single-chapter book (JUD)
 
     @Test
@@ -547,7 +628,7 @@ class BibleVersionTests : YouVersionPlatformTest {
 
     @Test
     fun `test displayTitle for single-chapter book rtl`() {
-        val rtlVersion = bibleVersion.copy(textDirection = "rtl")
+        val rtlVersion = bibleVersion.modified(textDirection = "rtl")
         val reference = BibleReference(versionId = 206, bookUSFM = "JUD", chapter = 1, verse = 5)
         assertEquals("WEBUS 5 Jude", rtlVersion.displayTitle(reference))
     }
@@ -570,7 +651,7 @@ class BibleVersionTests : YouVersionPlatformTest {
 
     @Test
     fun `test displayTitle omits abbreviation when both are null`() {
-        val version = bibleVersion.copy(localizedAbbreviation = null, abbreviation = null)
+        val version = bibleVersion.modified(localizedAbbreviation = null, abbreviation = null)
         val reference = BibleReference(versionId = 206, bookUSFM = "GEN", chapter = 3, verse = 1)
         assertEquals("Genesis 3:1", version.displayTitle(reference))
     }

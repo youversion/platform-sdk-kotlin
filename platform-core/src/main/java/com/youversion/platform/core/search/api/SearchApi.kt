@@ -8,7 +8,7 @@ import com.youversion.platform.core.search.models.SearchUserIntent
 import com.youversion.platform.core.search.models.TopicSearchResults
 import com.youversion.platform.core.search.models.VerseSearchResults
 
-interface SearchApi {
+public interface SearchApi {
     /**
      * Retrieves as-you-type query suggestions matching [query] in the first supported language range.
      *
@@ -22,7 +22,7 @@ interface SearchApi {
      *     neither a well-formed BCP 47 tag nor `*`.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun suggestedQueries(
+    public suspend fun suggestedQueries(
         query: String,
         languageRanges: List<String>,
     ): List<SearchQuery>
@@ -39,7 +39,7 @@ interface SearchApi {
      *     well-formed BCP 47 tag nor `*`.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun trendingQueries(languageRanges: List<String>): List<SearchQuery>
+    public suspend fun trendingQueries(languageRanges: List<String>): List<SearchQuery>
 
     /**
      * Retrieves the scripture in the Bible version identified by [bibleId] that matches [query].
@@ -58,7 +58,7 @@ interface SearchApi {
      * @throws IllegalArgumentException if [query], [bibleId] or [pageSize] is outside the range stated above.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun verses(
+    public suspend fun verses(
         query: String,
         bibleId: Int,
         userIntent: SearchUserIntent = SearchUserIntent.unknown,
@@ -85,7 +85,7 @@ interface SearchApi {
      *     [pageToken] is blank.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun images(
+    public suspend fun images(
         query: String,
         bibleId: Int,
         pageSize: Int? = null,
@@ -107,7 +107,7 @@ interface SearchApi {
      *     or holds a range that is neither a well-formed BCP 47 tag nor `*`.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun topics(
+    public suspend fun topics(
         query: String,
         languageRanges: List<String>,
     ): TopicSearchResults
@@ -133,7 +133,7 @@ interface SearchApi {
      *     [languageRanges] is empty or holds a range that is neither a well-formed BCP 47 tag nor `*`.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun unified(
+    public suspend fun unified(
         query: String,
         bibleId: Int,
         languageRanges: List<String>,

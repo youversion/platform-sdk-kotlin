@@ -159,6 +159,22 @@ class BibleTextTests {
         )
     }
 
+    private fun BibleTextBlock.modified(
+        text: AnnotatedString = this.text,
+        rows: List<List<AnnotatedString>> = this.rows,
+    ) = BibleTextBlock(
+        id = id,
+        text = text,
+        chapter = chapter,
+        rows = rows,
+        firstLineHeadIndent = firstLineHeadIndent,
+        headIndent = headIndent,
+        marginTop = marginTop,
+        marginBottom = marginBottom,
+        alignment = alignment,
+        footnotes = footnotes,
+    )
+
     /** Where the block's first glyph sits within the text, which is the first-line indent. */
     private fun SemanticsNodeInteraction.firstLineIndentPx(): Float {
         val layoutResults = mutableListOf<TextLayoutResult>()
@@ -1902,7 +1918,7 @@ class BibleTextTests {
             if (arg<BibleReference>(1) != chapterReference) return@coAnswers listOf(annotatedBlock("Other chapter"))
             listOf(
                 annotatedBlock("Opening", marginTop = 0.dp),
-                annotatedBlock("", marginTop = 24.dp, headIndent = headIndent).copy(
+                annotatedBlock("", marginTop = 24.dp, headIndent = headIndent).modified(
                     text = referenceAnnotatedString(text, annotations),
                 ),
             )
@@ -2071,7 +2087,11 @@ class BibleTextTests {
         val text = lines.joinToString("")
         val ends = lines.runningReduce { acc, line -> acc + line }.map { it.length }
         val annotations = lines.indices.map { Triple("1:GEN:1:${it + 1}", ends[it] - lines[it].length, ends[it]) }
-        val block = annotatedBlock("", marginTop = 12.375.dp).copy(text = referenceAnnotatedString(text, annotations))
+        val block =
+            annotatedBlock(
+                "",
+                marginTop = 12.375.dp,
+            ).modified(text = referenceAnnotatedString(text, annotations))
         val (layoutState, listState, scope) = setContentForScrolling(block)
         assertTrue(listState.layoutInfo.visibleItemsInfo.none { it.index == 31 })
 
@@ -2087,7 +2107,7 @@ class BibleTextTests {
     fun `scrolling to a verse in a table block puts the top of the block at the top`() {
         val cell =
             referenceAnnotatedString("Selah", listOf(Triple("1:GEN:1:3", 0, 5)))
-        val tableBlock = annotatedBlock("").copy(rows = listOf(listOf(cell)))
+        val tableBlock = annotatedBlock("").modified(rows = listOf(listOf(cell)))
         val (layoutState, listState, scope) = setContentForScrolling(tableBlock)
 
         val found = scrollToVerse(layoutState, listState, scope, verse(3))

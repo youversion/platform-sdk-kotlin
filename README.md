@@ -28,6 +28,7 @@ currently not available.
   - [Highlights](#highlights)
   - [Search API](#search-api)
   - [Verse Images API](#verse-images-api)
+  - [Building SDK Models in Tests](#building-sdk-models-in-tests)
 - [Sample App](#sample-app)
 - [For Different Use Cases](#-for-different-use-cases)
 - [Development Setup](#development-setup)
@@ -320,7 +321,7 @@ val votd = YouVersionApi.votd.verseOfTheDay(dayOfTheYear, languageRanges = listO
 val image = votd.imageId?.let { YouVersionApi.verseImages.verseImage(imageId = it) }
 ```
 
-`imageId` is `null` when no image is available for that day and language, so plan for a text-only fallback. `verseOfTheDays(languageRanges)` returns every day of the year, and each day carries its own `imageId`, which is `null` when that day has no image. `YouVersionVerseOfTheDay.copy()` does not carry `imageId` over, so a copy has none.
+`imageId` is `null` when no image is available for that day and language, so plan for a text-only fallback. `verseOfTheDays(languageRanges)` returns every day of the year, and each day carries its own `imageId`, which is `null` when that day has no image.
 
 ### Authentication
 
@@ -566,7 +567,7 @@ val results =
 
 `fields` names the kinds of result to return — any of `"verses"`, `"topics"`, and `"images"`; leave it empty for every kind. Ask only for the kinds you display. Unified results do not page.
 
-Each `SearchImage` carries only an `id` and the `passageId` it illustrates — a single verse or a verse range such as `"1CO.13.4-7"`. Pass the `id` to `YouVersionApi.verseImages.verseImage` to get the image's URL, size and attribution (see [Fetching One Image](#fetching-one-image)). `images` is empty wherever the platform does not yet offer image results. `SearchResults.copy()` does not carry `images` over, so a copy has none.
+Each `SearchImage` carries only an `id` and the `passageId` it illustrates — a single verse or a verse range such as `"1CO.13.4-7"`. Pass the `id` to `YouVersionApi.verseImages.verseImage` to get the image's URL, size and attribution (see [Fetching One Image](#fetching-one-image)). `images` is empty wherever the platform does not yet offer image results.
 
 #### User Intent
 
@@ -633,6 +634,17 @@ A `VerseImage` is metadata only; load the picture itself from `imageUrl` with yo
 
 - Invalid arguments throw `IllegalArgumentException` before any request is made: `passageId`, `pageToken`, and `imageId` must not be blank, and `pageSize` must be between 1 and 99.
 - A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `CANNOT_DOWNLOAD` for any other error response — including a chapter-level `passageId` — and `INVALID_RESPONSE` when the response cannot be read.
+
+### Building SDK Models in Tests
+
+Models the SDK returns, such as `BibleVersion` and `SearchResults`, have no public constructor, so that adding a field to one in a later release does not break your code. If a test or a Compose preview needs one, opt in to `PlatformInternalApi` and call its constructor:
+
+```kotlin
+@OptIn(PlatformInternalApi::class)
+val version = BibleVersion(id = 111, abbreviation = "NIV")
+```
+
+These constructors have no compatibility promise and can change in any release, so use them only in tests and previews, not production code.
 
 ## Sample App
 

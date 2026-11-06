@@ -1,8 +1,10 @@
 package com.youversion.platform.reader
 
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.sp
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 class ReaderFontSettingsTests {
     // availableSizes = [9.sp, 12.sp, 15.sp, 18.sp, 21.sp, 24.sp]
@@ -92,5 +94,35 @@ class ReaderFontSettingsTests {
     @Test
     fun `nextLineSpacingFraction returns the smallest available for a value below the smallest`() {
         assertEquals(0.3f, ReaderFontSettings.nextLineSpacingFraction(0.1f))
+    }
+
+    private fun fontDefinition(
+        fontName: String = "name",
+        fontFamily: FontFamily = FontFamily.Serif,
+    ) = FontDefinition(
+        fontName = fontName,
+        fontFamily = fontFamily,
+    )
+
+    @Test
+    fun `test FontDefinition values with the same fields are equal and hash alike`() {
+        assertEquals(fontDefinition(), fontDefinition())
+        assertEquals(fontDefinition().hashCode(), fontDefinition().hashCode())
+    }
+
+    @Test
+    fun `test FontDefinition a difference in any field makes values unequal`() {
+        listOf(
+            fontDefinition(fontName = "other"),
+            fontDefinition(fontFamily = FontFamily.Monospace),
+        ).forEach {
+            assertNotEquals(fontDefinition(), it)
+            assertNotEquals(fontDefinition().hashCode(), it.hashCode())
+        }
+    }
+
+    @Test
+    fun `test FontDefinition toString matches the existing format`() {
+        assertEquals("FontDefinition(fontName=name, fontFamily=${FontFamily.Serif})", fontDefinition().toString())
     }
 }

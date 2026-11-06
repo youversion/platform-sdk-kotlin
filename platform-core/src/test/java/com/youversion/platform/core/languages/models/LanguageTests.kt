@@ -78,4 +78,28 @@ class LanguageTests {
         val set = hashSetOf(first, second)
         assertEquals(2, set.size)
     }
+
+    @Test
+    fun `test toString matches the existing format`() {
+        val language =
+            Language(
+                id = "en",
+                language = "English",
+                script = "Latn",
+                scriptName = "Latin",
+                aliases = listOf("eng"),
+                displayNames = mapOf("en" to "English"),
+                scripts = listOf("Latn"),
+                variants = listOf("US"),
+                countries = listOf("US"),
+                textDirection = "ltr",
+                defaultBibleVersionId = 1,
+            )
+        assertEquals(
+            "Language(id=en, language=English, script=Latn, scriptName=Latin, aliases=[eng], " +
+                "displayNames={en=English}, scripts=[Latn], variants=[US], countries=[US], textDirection=ltr, " +
+                "defaultBibleVersionId=1)",
+            language.toString(),
+        )
+    }
 }

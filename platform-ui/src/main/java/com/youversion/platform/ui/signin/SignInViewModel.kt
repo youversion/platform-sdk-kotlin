@@ -12,10 +12,12 @@ import androidx.lifecycle.viewmodel.InitializerViewModelFactoryBuilder
 import androidx.lifecycle.viewmodel.initializer
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.ui.R
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,7 +27,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class SignInViewModel(
+public class SignInViewModel(
     application: Application,
 ) : AndroidViewModel(application) {
     /**
@@ -41,16 +43,16 @@ class SignInViewModel(
             .hasPendingOperations()
     }
     private val _state = MutableStateFlow(SignInViewState())
-    val state: StateFlow<SignInViewState> by lazy { _state.asStateFlow() }
+    public val state: StateFlow<SignInViewState> by lazy { _state.asStateFlow() }
 
     private val _events = Channel<Event>()
-    val events = _events.receiveAsFlow()
+    public val events: Flow<Event> = _events.receiveAsFlow()
 
     init {
         YouVersionPlatformConfiguration.configState
             .onEach { config ->
                 _state.update {
-                    it.copy(
+                    it.updated(
                         isSignedIn = config?.isSignedIn == true,
                         isSignInEnabled = config?.isSignInEnabled != false,
                         userName = YouVersionApi.users.currentUserName,
@@ -60,7 +62,7 @@ class SignInViewModel(
             }.launchIn(viewModelScope)
     }
 
-    fun onAction(action: Action) {
+    public fun onAction(action: Action) {
         when (action) {
             is Action.ProcessAuthCallback -> {
                 handleProcessAuthCallback(action)
@@ -83,12 +85,12 @@ class SignInViewModel(
     private fun handleProcessAuthCallback(action: Action.ProcessAuthCallback) {
         viewModelScope.launch {
             try {
-                _state.update { it.copy(isProcessing = true) }
+                _state.update { it.updated(isProcessing = true) }
                 YouVersionAuthentication.handleAuthCallback(application, action.intent)
             } catch (_: Exception) {
                 _events.send(Event.AuthenticationError)
             } finally {
-                _state.update { it.copy(isProcessing = false) }
+                _state.update { it.updated(isProcessing = false) }
             }
         }
     }
@@ -101,15 +103,15 @@ class SignInViewModel(
                 } else {
                     SignOutConfirmation.STANDARD
                 }
-            _state.update { it.copy(signOutConfirmation = confirmation) }
+            _state.update { it.updated(signOutConfirmation = confirmation) }
         } else {
-            _state.update { it.copy(signOutConfirmation = null) }
+            _state.update { it.updated(signOutConfirmation = null) }
             YouVersionApi.users.signOut()
         }
     }
 
     private fun cancelSignOut() {
-        _state.update { it.copy(signOutConfirmation = null) }
+        _state.update { it.updated(signOutConfirmation = null) }
     }
 
     private fun updateSignInState() {
@@ -125,7 +127,7 @@ class SignInViewModel(
      * Which sign-out confirmation to present, and the copy that presents it. [UNSYNCED_HIGHLIGHTS] warns that highlight
      * changes have not reached the server yet and will be lost, so it is offered whenever such changes are outstanding.
      */
-    enum class SignOutConfirmation(
+    public enum class SignOutConfirmation(
         @StringRes internal val titleResourceId: Int,
         @StringRes internal val messageResourceId: Int,
         @StringRes internal val confirmButtonResourceId: Int,
@@ -143,38 +145,85 @@ class SignInViewModel(
     }
 
     // ----- State
-    data class SignInViewState(
-        val isProcessing: Boolean = false,
-        val isSignedIn: Boolean = false,
-        val isSignInEnabled: Boolean = true,
-        val userName: String? = null,
-        val userEmail: String? = null,
-        val signOutConfirmation: SignOutConfirmation? = null,
-    )
+    public class SignInViewState
+        @PlatformInternalApi
+        constructor(
+            public val isProcessing: Boolean = false,
+            public val isSignedIn: Boolean = false,
+            public val isSignInEnabled: Boolean = true,
+            public val userName: String? = null,
+            public val userEmail: String? = null,
+            public val signOutConfirmation: SignOutConfirmation? = null,
+        ) {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other !is SignInViewState) return false
+                return isProcessing == other.isProcessing &&
+                    isSignedIn == other.isSignedIn &&
+                    isSignInEnabled == other.isSignInEnabled &&
+                    userName == other.userName &&
+                    userEmail == other.userEmail &&
+                    signOutConfirmation == other.signOutConfirmation
+            }
+
+            override fun hashCode(): Int {
+                var result = isProcessing.hashCode()
+                result = 31 * result + isSignedIn.hashCode()
+                result = 31 * result + isSignInEnabled.hashCode()
+                result = 31 * result + userName.hashCode()
+                result = 31 * result + userEmail.hashCode()
+                result = 31 * result + signOutConfirmation.hashCode()
+                return result
+            }
+
+            override fun toString(): String =
+                "SignInViewState(isProcessing=$isProcessing, isSignedIn=$isSignedIn, " +
+                    "isSignInEnabled=$isSignInEnabled, userName=$userName, userEmail=$userEmail, signOutConfirmation=$signOutConfirmation)"
+        }
 
     // ----- Events
-    interface Event {
-        data object AuthenticationError : Event
+    public interface Event {
+        public data object AuthenticationError : Event
     }
 
     // ----- Actions
-    sealed interface Action {
-        data class ProcessAuthCallback(
-            val intent: Intent,
-        ) : Action
+    public sealed interface Action {
+        public class ProcessAuthCallback(
+            public val intent: Intent,
+        ) : Action {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other !is ProcessAuthCallback) return false
+                return intent == other.intent
+            }
 
-        data class SignOut(
-            val requireConfirmation: Boolean = false,
-        ) : Action
+            override fun hashCode(): Int = intent.hashCode()
 
-        data object CancelSignOut : Action
+            override fun toString(): String = "ProcessAuthCallback(intent=$intent)"
+        }
 
-        data object UpdateSignInState : Action
+        public class SignOut(
+            public val requireConfirmation: Boolean = false,
+        ) : Action {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other !is SignOut) return false
+                return requireConfirmation == other.requireConfirmation
+            }
+
+            override fun hashCode(): Int = requireConfirmation.hashCode()
+
+            override fun toString(): String = "SignOut(requireConfirmation=$requireConfirmation)"
+        }
+
+        public data object CancelSignOut : Action
+
+        public data object UpdateSignInState : Action
     }
 
     // ----- Injection
-    companion object {
-        fun factory(): ViewModelProvider.Factory =
+    public companion object {
+        public fun factory(): ViewModelProvider.Factory =
             InitializerViewModelFactoryBuilder()
                 .apply {
                     initializer {
@@ -184,3 +233,19 @@ class SignInViewModel(
                 }.build()
     }
 }
+
+private fun SignInViewModel.SignInViewState.updated(
+    isProcessing: Boolean = this.isProcessing,
+    isSignedIn: Boolean = this.isSignedIn,
+    isSignInEnabled: Boolean = this.isSignInEnabled,
+    userName: String? = this.userName,
+    userEmail: String? = this.userEmail,
+    signOutConfirmation: SignInViewModel.SignOutConfirmation? = this.signOutConfirmation,
+) = SignInViewModel.SignInViewState(
+    isProcessing = isProcessing,
+    isSignedIn = isSignedIn,
+    isSignInEnabled = isSignInEnabled,
+    userName = userName,
+    userEmail = userEmail,
+    signOutConfirmation = signOutConfirmation,
+)

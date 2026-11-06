@@ -50,9 +50,9 @@ import kotlinx.coroutines.launch
  */
 @PlatformInternalApi
 @Immutable
-class BibleTextBlocksState internal constructor(
+public class BibleTextBlocksState internal constructor(
     /** How far the load named by the state's reference has got. */
-    val loadingPhase: BibleTextLoadingPhase,
+    public val loadingPhase: BibleTextLoadingPhase,
     internal val blocks: List<BibleTextBlock>,
     /** The options [blocks] were styled with, which they are drawn with until a restyle replaces them. */
     internal val textOptions: BibleTextOptions,
@@ -103,7 +103,7 @@ class BibleTextBlocksState internal constructor(
  */
 @PlatformInternalApi
 @Composable
-fun rememberBibleTextBlocksState(
+public fun rememberBibleTextBlocksState(
     reference: BibleReference,
     textOptions: BibleTextOptions = BibleTextOptions(),
 ): BibleTextBlocksState {
@@ -223,7 +223,7 @@ fun rememberBibleTextBlocksState(
  * index on the same block. A setting that adds or drops blocks, such as headings, would need stable keys.
  */
 @PlatformInternalApi
-fun LazyListScope.bibleTextBlocks(
+public fun LazyListScope.bibleTextBlocks(
     state: BibleTextBlocksState,
     selectedVerses: Set<BibleReference> = emptySet(),
     focusedReference: BibleReference? = null,

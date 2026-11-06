@@ -17,7 +17,7 @@ import com.youversion.platform.ui.R
  */
 @Composable
 @PlatformInternalApi
-fun SignInErrorAlert(
+public fun SignInErrorAlert(
     onDismissRequest: () -> Unit,
     onConfirm: () -> Unit,
 ) {

@@ -8,20 +8,30 @@ package com.youversion.platform.core.search.models
  *
  * @property rawValue The intent as the platform spells it.
  */
-data class SearchUserIntent(
-    val rawValue: String,
+public class SearchUserIntent(
+    public val rawValue: String,
 ) {
-    companion object {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is SearchUserIntent) return false
+        return rawValue == other.rawValue
+    }
+
+    override fun hashCode(): Int = rawValue.hashCode()
+
+    override fun toString(): String = "SearchUserIntent(rawValue=$rawValue)"
+
+    public companion object {
         /** A specific address in scripture, such as `John 3:16`. */
-        val reference = SearchUserIntent("reference")
+        public val reference: SearchUserIntent = SearchUserIntent("reference")
 
         /** Scripture containing the words the reader typed. */
-        val text = SearchUserIntent("text")
+        public val text: SearchUserIntent = SearchUserIntent("text")
 
         /** A subject scripture speaks to, such as anxiety. */
-        val topical = SearchUserIntent("topical")
+        public val topical: SearchUserIntent = SearchUserIntent("topical")
 
         /** Not known. */
-        val unknown = SearchUserIntent("unknown")
+        public val unknown: SearchUserIntent = SearchUserIntent("unknown")
     }
 }

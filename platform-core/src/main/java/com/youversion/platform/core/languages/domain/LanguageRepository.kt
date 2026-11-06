@@ -9,7 +9,7 @@ import java.util.Locale
 /**
  * Responsible for fetching, caching, and retrieving languages
  */
-class LanguageRepository(
+public class LanguageRepository(
     private val bibleVersionRepository: BibleVersionRepository,
 ) {
     private val localeCountryCode: String
@@ -34,7 +34,7 @@ class LanguageRepository(
     /**
      * Returns a list of languages based on the given country.
      */
-    suspend fun suggestedLanguages(country: String): List<Language> =
+    public suspend fun suggestedLanguages(country: String): List<Language> =
         YouVersionApi
             .languages
             .languages(
@@ -46,7 +46,7 @@ class LanguageRepository(
     /**
      * Returns a list of all languages, paginated
      */
-    suspend fun languages(): List<Language> =
+    public suspend fun languages(): List<Language> =
         YouVersionApi
             .languages
             .languages(
@@ -58,7 +58,7 @@ class LanguageRepository(
      * Returns the distinct language tags across all permitted versions, awaiting the
      * permitted-versions load if it has not yet completed.
      */
-    suspend fun allPermittedLanguageTags(): List<String> =
+    public suspend fun allPermittedLanguageTags(): List<String> =
         bibleVersionRepository
             .permittedVersionsListing()
             .mapNotNull { it.languageTag }
@@ -66,7 +66,7 @@ class LanguageRepository(
 
     private var suggestedLanguageTags: List<String>? = null
 
-    suspend fun suggestedLanguageTags(): List<String> {
+    public suspend fun suggestedLanguageTags(): List<String> {
         suggestedLanguageTags?.let { return it }
 
         val data = suggestedLanguages(localeCountryCode)
@@ -93,7 +93,7 @@ class LanguageRepository(
 
     private var languageNames: Map<String, String> = emptyMap()
 
-    suspend fun loadLanguageNames(version: BibleVersion?) {
+    public suspend fun loadLanguageNames(version: BibleVersion?) {
         if (languageNames.isNotEmpty()) return
 
         val result = languages()
@@ -113,7 +113,7 @@ class LanguageRepository(
         languageNames = langNames
     }
 
-    fun languageName(lang: String): String {
+    public fun languageName(lang: String): String {
         languageNames[lang]?.let { return it }
         val displayName = Locale.forLanguageTag(lang).getDisplayLanguage(Locale.getDefault())
         return displayName.takeIf { it.isNotBlank() } ?: lang

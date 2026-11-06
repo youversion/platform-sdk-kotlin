@@ -5,14 +5,14 @@ import com.youversion.platform.core.bibles.api.BiblesEndpoints
 import com.youversion.platform.core.bibles.data.BibleVersionCache
 import com.youversion.platform.core.utilities.InFlightTasks
 
-class BibleChapterRepository(
+public class BibleChapterRepository(
     private val memoryCache: BibleVersionCache,
     private val temporaryCache: BibleVersionCache,
     private val persistentCache: BibleVersionCache,
 ) {
     private val inFlightTasks = InFlightTasks<String, String>()
 
-    suspend fun chapter(reference: BibleReference): String {
+    public suspend fun chapter(reference: BibleReference): String {
         memoryCache.chapterContent(reference)?.let {
             return it.value
         }
@@ -43,7 +43,7 @@ class BibleChapterRepository(
 
     private fun cacheKey(reference: BibleReference): String = "${reference.versionId}_${reference.chapterUSFM}"
 
-    suspend fun removeVersionChapters(versionId: Int) {
+    public suspend fun removeVersionChapters(versionId: Int) {
         memoryCache.removeVersionChapters(versionId)
         temporaryCache.removeVersionChapters(versionId)
         persistentCache.removeVersionChapters(versionId)

@@ -26,18 +26,18 @@ import kotlinx.coroutines.withContext
 import java.security.MessageDigest
 import java.util.Date
 
-object YouVersionApi {
-    val bible: BiblesApi = BiblesEndpoints
-    val dataExchange: DataExchangeApi = DataExchangeEndpoints
-    val highlights: HighlightsApi = HighlightsEndpoints
-    val languages: LanguagesApi = LanguagesEndpoints
-    val organizations: OrganizationsApi = OrganizationsEndpoints
-    val search: SearchApi = SearchEndpoints
-    val users: UsersApi = UsersEndpoints
-    val verseImages: VerseImagesApi = VerseImagesEndpoints
-    val votd: VotdApi = VotdEndpoints
+public object YouVersionApi {
+    public val bible: BiblesApi = BiblesEndpoints
+    public val dataExchange: DataExchangeApi = DataExchangeEndpoints
+    public val highlights: HighlightsApi = HighlightsEndpoints
+    public val languages: LanguagesApi = LanguagesEndpoints
+    public val organizations: OrganizationsApi = OrganizationsEndpoints
+    public val search: SearchApi = SearchEndpoints
+    public val users: UsersApi = UsersEndpoints
+    public val verseImages: VerseImagesApi = VerseImagesEndpoints
+    public val votd: VotdApi = VotdEndpoints
 
-    val isSignedIn: Boolean
+    public val isSignedIn: Boolean
         get() = YouVersionPlatformConfiguration.isSignedIn
 
     /**
@@ -53,7 +53,7 @@ object YouVersionApi {
      * landing mid-read cannot produce an id built from two sessions' tokens — which could name the outgoing user
      * while the digest covers the incoming one, and so read as unchanged to a caller checking for a change.
      */
-    val currentSessionId: String?
+    public val currentSessionId: String?
         get() =
             YouVersionPlatformConfiguration.configState.value?.let {
                 sessionId(
@@ -90,7 +90,7 @@ object YouVersionApi {
      * @param permission The permission to check.
      * @return `true` if the user has granted the permission, `false` otherwise.
      */
-    fun hasPermission(permission: SignInWithYouVersionPermission): Boolean =
+    public fun hasPermission(permission: SignInWithYouVersionPermission): Boolean =
         YouVersionPlatformConfiguration.grantedPermissions.contains(permission)
 
     /**
@@ -99,7 +99,7 @@ object YouVersionApi {
      *
      * @return `true` if a valid token exists or was successfully refreshed, `false` otherwise.
      */
-    suspend fun hasValidToken(): Boolean {
+    public suspend fun hasValidToken(): Boolean {
         val expiryDate = YouVersionPlatformConfiguration.expiryDate ?: return false
 
         val thirtySecondsFromNow = Date(System.currentTimeMillis() + 30_000L)

@@ -28,7 +28,7 @@ import kotlinx.coroutines.sync.withLock
  *
  * Cache is volatile and will be lost when the app is closed.
  */
-class BibleVersionMemoryCache(
+public class BibleVersionMemoryCache(
     private val now: () -> Long = System::currentTimeMillis,
 ) : BibleVersionCache {
     private val versionCache = mutableMapOf<Int, CachedBibleContent<BibleVersion>>()
@@ -73,17 +73,19 @@ class BibleVersionMemoryCache(
     override suspend fun addVersion(
         version: BibleVersion,
         expiresAt: Long?,
-    ) = versionMutex.withLock {
-        versionCache[version.id] = CachedBibleContent(version, expiresAt)
-    }
+    ): Unit =
+        versionMutex.withLock {
+            versionCache[version.id] = CachedBibleContent(version, expiresAt)
+        }
 
     override suspend fun addChapterContents(
         content: String,
         reference: BibleReference,
         expiresAt: Long?,
-    ) = chapterMutex.withLock {
-        chapterCache[cacheKey(reference)] = CachedBibleContent(content, expiresAt)
-    }
+    ): Unit =
+        chapterMutex.withLock {
+            chapterCache[cacheKey(reference)] = CachedBibleContent(content, expiresAt)
+        }
 
     override suspend fun removeVersion(versionId: Int) {
         versionMutex.withLock {
