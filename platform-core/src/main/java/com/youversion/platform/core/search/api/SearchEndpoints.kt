@@ -126,10 +126,18 @@ internal object SearchEndpoints : SearchApi {
         require(bibleId > 0) { "bibleId must be greater than zero" }
         requireValidPageSize(pageSize)
 
-        val response =
-            parseApiBody<VerseSearchResponse>(
-                httpClient.get(searchVersesUrl(query, bibleId, userIntent, pageSize, pageToken)),
+        val httpResponse = httpClient.get(searchVersesUrl(query, bibleId, userIntent, pageSize, pageToken))
+        if (httpResponse.status == HttpStatusCode.NoContent) {
+            return VerseSearchResults(
+                references = emptyList(),
+                userIntent = null,
+                didYouMean = emptyList(),
+                searchInsteadFor = null,
+                nextPageToken = null,
             )
+        }
+
+        val response = parseApiBody<VerseSearchResponse>(httpResponse)
         return VerseSearchResults(
             references = response.references.mapNotNull { it.bibleReference(bibleId) },
             userIntent = response.userIntent?.let(::SearchUserIntent),
@@ -150,10 +158,12 @@ internal object SearchEndpoints : SearchApi {
         requireValidPageSize(pageSize)
         pageToken?.let { require(it.isNotBlank()) { "pageToken must not be blank" } }
 
-        val response =
-            parseApiBody<ImageSearchResponse>(
-                httpClient.get(searchImagesUrl(query, bibleId, pageSize, pageToken)),
-            )
+        val httpResponse = httpClient.get(searchImagesUrl(query, bibleId, pageSize, pageToken))
+        if (httpResponse.status == HttpStatusCode.NoContent) {
+            return ImageSearchResults(images = emptyList(), nextPageToken = null)
+        }
+
+        val response = parseApiBody<ImageSearchResponse>(httpResponse)
         return ImageSearchResults(
             images = response.images.filterIsInstance<JsonObject>().mapNotNull { it.searchImage() },
             nextPageToken = response.nextPageToken,
@@ -167,8 +177,12 @@ internal object SearchEndpoints : SearchApi {
         requireValidQueryLength(query)
         requireValidLanguageRanges(languageRanges)
 
-        val response =
-            parseApiBody<TopicSearchResponse>(httpClient.get(searchTopicsUrl(query, languageRanges)))
+        val httpResponse = httpClient.get(searchTopicsUrl(query, languageRanges))
+        if (httpResponse.status == HttpStatusCode.NoContent) {
+            return TopicSearchResults(topics = emptyList(), didYouMean = emptyList(), searchInsteadFor = null)
+        }
+
+        val response = parseApiBody<TopicSearchResponse>(httpResponse)
         return TopicSearchResults(
             topics = response.topics.map { it.searchTopic() },
             didYouMean = response.didYouMean,
@@ -187,10 +201,18 @@ internal object SearchEndpoints : SearchApi {
         require(bibleId > 0) { "bibleId must be greater than zero" }
         requireValidLanguageRanges(languageRanges)
 
-        val response =
-            parseApiBody<UnifiedSearchResponse>(
-                httpClient.get(searchUnifiedUrl(query, bibleId, languageRanges, userIntent, fields)),
+        val httpResponse = httpClient.get(searchUnifiedUrl(query, bibleId, languageRanges, userIntent, fields))
+        if (httpResponse.status == HttpStatusCode.NoContent) {
+            return SearchResults(
+                references = emptyList(),
+                topics = emptyList(),
+                userIntent = null,
+                didYouMean = emptyList(),
+                searchInsteadFor = null,
             )
+        }
+
+        val response = parseApiBody<UnifiedSearchResponse>(httpResponse)
         return SearchResults(
             references = response.references.mapNotNull { it.bibleReference(bibleId) },
             topics = response.topics.map { it.searchTopic() },
