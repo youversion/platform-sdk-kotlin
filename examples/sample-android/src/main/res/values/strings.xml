@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">YouVersionPlatform</string>
+    <string name="sign_in_prompt">Sign in to see your **YouVersion** highlights in **Sample App**</string>
 </resources>

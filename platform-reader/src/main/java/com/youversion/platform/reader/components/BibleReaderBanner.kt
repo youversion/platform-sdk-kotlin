@@ -24,10 +24,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.reader.R
+import com.youversion.platform.reader.icons.SyncIcon
+import com.youversion.platform.ui.icons.WifiExclamationIcon
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 
@@ -59,14 +60,14 @@ internal fun BibleReaderBanner(
             when (bannerType) {
                 BibleReaderBannerType.OFFLINE -> {
                     BannerIcon(
-                        icon = ImageVector.vectorResource(R.drawable.ic_wifi_exclamation),
+                        icon = WifiExclamationIcon,
                         contentDescription = stringResource(R.string.banner_offline_icon),
                     )
                 }
 
                 BibleReaderBannerType.VERSION_UNAVAILABLE -> {
                     BannerIcon(
-                        icon = ImageVector.vectorResource(R.drawable.ic_sync),
+                        icon = SyncIcon,
                         contentDescription = stringResource(R.string.banner_version_unavailable_icon),
                     )
                 }
@@ -104,6 +105,7 @@ internal fun BibleReaderBanner(
                 imageVector = icon.icon,
                 contentDescription = icon.contentDescription,
                 modifier = Modifier.size(20.dp),
+                tint = BibleReaderTheme.colorScheme.textPrimary,
             )
             Spacer(modifier = Modifier.width(24.dp))
             Text(
@@ -120,6 +122,7 @@ internal fun BibleReaderBanner(
                     imageVector = Icons.Default.Close,
                     contentDescription = stringResource(R.string.banner_dismiss_content_description),
                     modifier = Modifier.size(16.dp),
+                    tint = BibleReaderTheme.colorScheme.textPrimary,
                 )
             }
         }
