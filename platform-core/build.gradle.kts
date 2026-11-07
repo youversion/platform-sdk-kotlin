@@ -20,10 +20,11 @@ dependencies {
 
     // api(): these types appear in platform-core's public signatures, so consumers need
     // them on their compile classpath. Everything else stays implementation.
-    api(libs.koin.core) // PlatformKoinGraph.koinApplication, start(List<Module>)
     api(libs.kotlin.coroutines) // YouVersionPlatformConfiguration.configState, BibleHighlightsRepository.highlights
+    api(libs.kotlin.serialization.core) // serializer() and $serializer generated on @Serializable models
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.koin.core)
     implementation(libs.kotlin.serialization)
 
     implementation(libs.ktor.client.core)
