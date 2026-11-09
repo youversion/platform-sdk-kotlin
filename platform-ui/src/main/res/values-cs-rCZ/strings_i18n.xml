@@ -69,13 +69,13 @@
     <string name="yv_placeholder_version_unavailable">Dříve vybraná verze Bible není dostupná. Přepněte prosím na jinou.</string>
     <string name="yv_placeholder_version_unavailable_icon_content_desc">Verze není dostupná</string>
     <string name="yv_previous_chapter_aria_label">Předchozí kapitola</string>
-    <string name="yv_recently_used_versions_heading">Recent Versions</string>
+    <string name="yv_recently_used_versions_heading">Nedávné překlady</string>
     <string name="yv_regional">Regionální</string>
     <string name="yv_retry">Zkusit znovu</string>
     <string name="yv_search">Hledat</string>
     <string name="yv_search_bible_versions">Hledat verze</string>
-    <string name="yv_search_languages">Search Languages</string>
-    <string name="yv_search_versions">Search Versions</string>
+    <string name="yv_search_languages">Hledat jazyky</string>
+    <string name="yv_search_versions">Hledat překlady</string>
     <string name="yv_select_language">Vybrat jazyk</string>
     <string name="yv_select_language_title">Vybrat jazyk</string>
     <string name="yv_share">Sdílet</string>

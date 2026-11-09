@@ -69,13 +69,13 @@
     <string name="yv_placeholder_version_unavailable">A versão da Bíblia selecionada anteriormente não está disponível. Por favor, mude para outra.</string>
     <string name="yv_placeholder_version_unavailable_icon_content_desc">Versão indisponível</string>
     <string name="yv_previous_chapter_aria_label">Capítulo anterior</string>
-    <string name="yv_recently_used_versions_heading">Recent Versions</string>
+    <string name="yv_recently_used_versions_heading">Versões Recentes</string>
     <string name="yv_regional">Regional</string>
     <string name="yv_retry">Repetir</string>
     <string name="yv_search">Pesquisar</string>
     <string name="yv_search_bible_versions">Pesquisar versões</string>
-    <string name="yv_search_languages">Search Languages</string>
-    <string name="yv_search_versions">Search Versions</string>
+    <string name="yv_search_languages">Pesquisar Idiomas</string>
+    <string name="yv_search_versions">Pesquisar Versões</string>
     <string name="yv_select_language">Selecionar um Idioma</string>
     <string name="yv_select_language_title">Selecionar um Idioma</string>
     <string name="yv_share">Partilhar</string>
