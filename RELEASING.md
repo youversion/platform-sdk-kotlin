@@ -196,10 +196,17 @@ line.
 > to angular without complaining. `assert-bump-table.mjs` exists to keep that
 > from regressing unnoticed.
 
-Note for squash merges: the merge commit body is the PR description, and footers
-run to the end of the message. Put `BREAKING CHANGE:` on its own line at the
-bottom. Do not put `!` in a PR *title* unless you mean it — the title becomes the
+Note for squash merges: the merge commit body is the branch's commit messages, not
+the PR description, so a footer that only appears in the description is never
+seen by the analyzer or the signoff check. Footers run to the end of the message,
+so put the footer at the end of the last branch commit, starting with
+`BREAKING CHANGE:` in column 0 (a bulleted `- BREAKING CHANGE:` produces no release).
+Do not put `!` in a PR *title* unless you mean it — the title becomes the
 squashed subject.
+
+Raising the consumer floor can be breaking too. See
+[Raising the consumer floor](CONTRIBUTING.md#raising-the-consumer-floor) for
+which raises need a major.
 
 ## Major version signoff
 

@@ -180,6 +180,9 @@ The baseline's version catalog is the source of truth for the oldest toolchain w
 1. `examples/consumer-baseline/gradle/libs.versions.toml`: `kotlin`, `agp`, `compileSdk`, `minSdk`. Regenerate the baseline's wrapper to the minimum Gradle version that AGP release requires, with its `distributionSha256Sum`.
 2. README **Requirements**: Kotlin, AGP, Gradle, the minimum Android Studio for that AGP, compileSdk and the Android version.
 3. `gradle/libs.versions.toml`: `kotlinStdlibFloor` (it also sets the SDK's Kotlin language and API version), `compileSdk` (also set as the AARs' `minCompileSdk`, so a consumer below it fails with a clear error) and `minSdk`.
+4. The commit message. Decide whether an app on the old floor still builds after the raise:
+   - **It fails to build: the raise is a major.** This covers raising `compileSdk` (it's stamped as the AARs' `minCompileSdk`), `minSdk` (manifest merging fails for apps below it), `kotlinStdlibFloor` to a higher language version (major.minor: older Kotlin compilers can't read the metadata, and old R8 metadata checks can fail), and a dependency whose AAR metadata requires a newer compileSdk or AGP. Mark it with a `BREAKING CHANGE:` footer holding the migration steps at the end of the last branch commit's message. The line must start with `BREAKING CHANGE:` in column 0; a bulleted `- BREAKING CHANGE:` produces no release. Squash merges keep the branch commit messages, not the PR description, and a `build:` subject alone doesn't bump. See [Breaking Changes](RELEASING.md#breaking-changes) and [Major version signoff](RELEASING.md#major-version-signoff).
+   - **It still builds: no bump of its own.** A change to only the documented floor, a `kotlinStdlibFloor` patch on the same language version (`2.2.0` → `2.2.21` stays language `2.2`), the JDK, or this repo's own AGP, Gradle, or Android Studio pins goes in as a `build:` commit and ships with whatever else is in the release.
 
 ### Project Structure
 
