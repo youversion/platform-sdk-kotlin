@@ -199,7 +199,8 @@ line.
 Note for squash merges: the merge commit body is the branch's commit messages, not
 the PR description, so a footer that only appears in the description is never
 seen by the analyzer or the signoff check. Footers run to the end of the message,
-so put `BREAKING CHANGE:` on its own line at the end of the last branch commit.
+so put the footer at the end of the last branch commit, starting with
+`BREAKING CHANGE:` in column 0 (a bulleted `- BREAKING CHANGE:` produces no release).
 Do not put `!` in a PR *title* unless you mean it — the title becomes the
 squashed subject.
 
