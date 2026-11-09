@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- AUTO-GENERATED from en.json — do not edit manually -->
 <resources>
     <string name="active_language_versions_header">@string/yv_active_language_versions_header</string>
     <string name="agree_and_download">@string/yv_agree_and_download</string>
