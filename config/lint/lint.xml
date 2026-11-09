@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Aliases point at yv_* strings, which carry the translations. -->
+    <issue id="MissingTranslation">
+        <ignore path="**/values/strings_aliases.xml" />
+    </issue>
+</lint>
