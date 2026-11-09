@@ -7,7 +7,7 @@ User-facing copy in the YouVersion Platform SDK (Kotlin) is owned by [platform-l
 | Layer | File | Who edits |
 |-------|------|-----------|
 | Canonical (synced) | `**/values/strings_i18n.xml` | platform-localization sync workflow only |
-| Locale overlays | `**/values-*/strings.xml` | platform-localization sync workflow only |
+| Locale overlays | `**/values-*/strings_i18n.xml` | platform-localization sync workflow only |
 | Aliases (synced) | `**/values/strings_aliases.xml` | platform-localization sync workflow only (maps `R.string.*` → `@string/yv_*`) |
 
 **Modules with UI strings:** `platform-ui`, `platform-reader`
@@ -20,7 +20,7 @@ User-facing copy in the YouVersion Platform SDK (Kotlin) is owned by [platform-l
 2. Run the localization sync workflow to update `strings_i18n.xml`, `strings_aliases.xml`, and locale files in this repo. The sync also generates the unprefixed `R.string.*` aliases.
 3. Reference the string in Kotlin with `stringResource(R.string.*)` or `pluralStringResource()`.
 
-Do **not** hand-edit `strings_i18n.xml`, `strings_aliases.xml`, or locale `strings.xml` files in feature PRs.
+Do **not** hand-edit `strings_i18n.xml` (base or locale) or `strings_aliases.xml` files in feature PRs.
 
 ## Enforcement
 
@@ -72,10 +72,10 @@ These paths may only be modified by the localization sync bot (see `config/i18n/
 
 - `platform-ui/src/main/res/values/strings_i18n.xml`
 - `platform-ui/src/main/res/values/strings_aliases.xml`
-- `platform-ui/src/main/res/values-*/strings.xml`
+- `platform-ui/src/main/res/values-*/strings_i18n.xml`
 - `platform-reader/src/main/res/values/strings_i18n.xml`
 - `platform-reader/src/main/res/values/strings_aliases.xml`
-- `platform-reader/src/main/res/values-*/strings.xml`
+- `platform-reader/src/main/res/values-*/strings_i18n.xml`
 
 Lint skips `MissingTranslation` on `strings_aliases.xml` (see `config/lint/lint.xml`). Each alias points at a `yv_*` string, which carries the translations.
 

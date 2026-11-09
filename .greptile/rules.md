@@ -14,7 +14,7 @@ Do not edit synced catalogs in feature PRs:
 
 - `**/strings_i18n.xml`
 - `**/values/strings_aliases.xml`
-- `**/values-*/strings.xml`
+- `**/values-*/strings_i18n.xml`
 
 Add or change keys in **platform-localization**, then sync into this repo.
 
