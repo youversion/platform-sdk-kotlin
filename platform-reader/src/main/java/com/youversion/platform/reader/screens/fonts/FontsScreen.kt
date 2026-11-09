@@ -30,6 +30,7 @@ import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.FontDefinition
 import com.youversion.platform.reader.R
 import com.youversion.platform.ui.views.components.BibleReaderTopAppBar
+import com.youversion.platform.ui.R as UiR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +45,7 @@ internal fun FontsScreen(
             BibleReaderTopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.font_settings_label),
+                        text = stringResource(UiR.string.font),
                         style = MaterialTheme.typography.titleMedium,
                     )
                 },

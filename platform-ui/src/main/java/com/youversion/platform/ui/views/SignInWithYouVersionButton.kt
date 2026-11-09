@@ -192,7 +192,7 @@ private fun LocalizedLoginText(
 
         SignInWithYouVersionButtonMode.COMPACT -> {
             Text(
-                stringResource(R.string.sign_in_button_compact),
+                stringResource(R.string.sign_in),
                 color = if (dark) Color.White else Color.Black,
             )
         }

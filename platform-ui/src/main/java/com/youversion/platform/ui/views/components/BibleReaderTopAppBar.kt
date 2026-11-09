@@ -51,7 +51,7 @@ fun BibleReaderTopAppBar(
             IconButton(onClick = onBackClick) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                    contentDescription = stringResource(R.string.back_button),
+                    contentDescription = stringResource(R.string.back),
                 )
             }
         },

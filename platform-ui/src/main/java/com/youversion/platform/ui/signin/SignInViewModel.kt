@@ -131,14 +131,14 @@ class SignInViewModel(
         @StringRes internal val confirmButtonResourceId: Int,
     ) {
         STANDARD(
-            titleResourceId = R.string.sign_out_confirmation_title,
+            titleResourceId = R.string.sign_out,
             messageResourceId = R.string.sign_out_confirmation_message,
-            confirmButtonResourceId = R.string.sign_out_confirm_button_text,
+            confirmButtonResourceId = R.string.sign_out,
         ),
         UNSYNCED_HIGHLIGHTS(
-            titleResourceId = R.string.sign_out_pending_highlights_title,
-            messageResourceId = R.string.sign_out_pending_highlights_message,
-            confirmButtonResourceId = R.string.sign_out_pending_highlights_confirm_button_text,
+            titleResourceId = R.string.sign_out_pending_highlights_question,
+            messageResourceId = R.string.sign_out_pending_highlights_explanation,
+            confirmButtonResourceId = R.string.sign_out_pending_highlights_confirm,
         ),
     }
 

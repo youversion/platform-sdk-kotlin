@@ -46,12 +46,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import com.youversion.platform.reader.R
 import com.youversion.platform.reader.components.PassageSelectionState.Companion.Saver
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import kotlin.math.abs
+import com.youversion.platform.ui.R as UiR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,7 +103,7 @@ internal fun BibleReaderPassageSelection(
         ) {
             Icon(
                 imageVector = Icons.Filled.ChevronLeft,
-                contentDescription = stringResource(R.string.previous_chapter_content_desc),
+                contentDescription = stringResource(UiR.string.previous_chapter_aria_label),
                 tint = readerColors.readerTextPrimaryColor,
             )
         }
@@ -124,7 +124,7 @@ internal fun BibleReaderPassageSelection(
         ) {
             Icon(
                 imageVector = Icons.Filled.ChevronRight,
-                contentDescription = stringResource(R.string.next_chapter_content_desc),
+                contentDescription = stringResource(UiR.string.next_chapter_aria_label),
                 tint = readerColors.readerTextPrimaryColor,
             )
         }

@@ -46,8 +46,8 @@ import kotlinx.coroutines.launch
 private enum class LanguageTab(
     @StringRes val labelRes: Int,
 ) {
-    SUGGESTED(R.string.language_tab_suggested),
-    ALL(R.string.language_tab_all),
+    SUGGESTED(R.string.suggested),
+    ALL(R.string.all),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,7 +83,7 @@ fun LanguagesScreen(
     Scaffold(
         topBar = {
             BibleReaderTopAppBar(
-                title = stringResource(R.string.select_language_title),
+                title = stringResource(R.string.select_language),
                 onBackClick = handleBack,
                 actions = {
                     IconButton(
