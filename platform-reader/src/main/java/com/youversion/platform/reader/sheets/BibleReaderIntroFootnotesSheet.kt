@@ -23,7 +23,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.youversion.platform.reader.R
 import com.youversion.platform.ui.theme.UntitledSerif
 import com.youversion.platform.ui.R as UiR
 
