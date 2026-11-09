@@ -180,6 +180,7 @@ The baseline's version catalog is the source of truth for the oldest toolchain w
 1. `examples/consumer-baseline/gradle/libs.versions.toml`: `kotlin`, `agp`, `compileSdk`, `minSdk`. Regenerate the baseline's wrapper to the minimum Gradle version that AGP release requires, with its `distributionSha256Sum`.
 2. README **Requirements**: Kotlin, AGP, Gradle, the minimum Android Studio for that AGP, compileSdk and the Android version.
 3. `gradle/libs.versions.toml`: `kotlinStdlibFloor` (it also sets the SDK's Kotlin language and API version), `compileSdk` (also set as the AARs' `minCompileSdk`, so a consumer below it fails with a clear error) and `minSdk`.
+4. The commit message: if an app on the old floor would fail to build after the raise (for example, a higher `compileSdk` or a dependency whose AAR metadata requires a newer compileSdk or AGP), the raise is a major. Add a `BREAKING CHANGE:` footer with the migration steps (see [RELEASING.md](RELEASING.md)). If only the documented floor changes and old setups still build, a minor is fine.
 
 ### Project Structure
 
