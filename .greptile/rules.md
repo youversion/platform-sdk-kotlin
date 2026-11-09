@@ -13,6 +13,7 @@ These rules are **advisory** in Greptile PR review. The merge gate is the Gradle
 Do not edit synced catalogs in feature PRs:
 
 - `**/strings_i18n.xml`
+- `**/values/strings_aliases.xml`
 - `**/values-*/strings.xml`
 
 Add or change keys in **platform-localization**, then sync into this repo.

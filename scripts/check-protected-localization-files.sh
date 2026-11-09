@@ -38,6 +38,8 @@ PROTECTED_CHANGED=()
 for file in "${CHANGED_FILES[@]}"; do
   if [[ "$file" == "platform-ui/src/main/res/values/strings_i18n.xml" ]] || \
      [[ "$file" == "platform-reader/src/main/res/values/strings_i18n.xml" ]] || \
+     [[ "$file" == "platform-ui/src/main/res/values/strings_aliases.xml" ]] || \
+     [[ "$file" == "platform-reader/src/main/res/values/strings_aliases.xml" ]] || \
      [[ "$file" =~ ^platform-(ui|reader)/src/main/res/values-[^/]+/strings\.xml$ ]]; then
     PROTECTED_CHANGED+=("$file")
   fi

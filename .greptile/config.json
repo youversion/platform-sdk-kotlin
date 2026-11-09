@@ -12,11 +12,13 @@
     },
     {
       "id": "localization-protected-string-files",
-      "rule": "Reject direct edits to synced localization catalogs. User-facing strings are owned by platform-localization and synced into **/strings_i18n.xml and locale overlays (**/values-*/strings.xml). Feature PRs must not hand-edit these files; add keys in platform-localization and run the sync workflow instead.",
+      "rule": "Reject direct edits to synced localization catalogs. User-facing strings are owned by platform-localization and synced into **/strings_i18n.xml, **/values/strings_aliases.xml, and locale overlays (**/values-*/strings.xml). Feature PRs must not hand-edit these files; add keys in platform-localization and run the sync workflow instead.",
       "scope": [
         "platform-ui/src/**/strings_i18n.xml",
+        "platform-ui/src/main/res/values/strings_aliases.xml",
         "platform-ui/src/**/values-*/strings.xml",
         "platform-reader/src/**/strings_i18n.xml",
+        "platform-reader/src/main/res/values/strings_aliases.xml",
         "platform-reader/src/**/values-*/strings.xml"
       ],
       "severity": "high",
