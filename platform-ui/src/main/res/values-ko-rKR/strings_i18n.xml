@@ -69,13 +69,13 @@
     <string name="yv_placeholder_version_unavailable">이전에 선택한 성경 번역본을 사용할 수 없습니다. 다른 번역본을 선택해 주세요.</string>
     <string name="yv_placeholder_version_unavailable_icon_content_desc">번역본 사용 불가</string>
     <string name="yv_previous_chapter_aria_label">이전 장</string>
-    <string name="yv_recently_used_versions_heading">Recent Versions</string>
+    <string name="yv_recently_used_versions_heading">최근 번역본</string>
     <string name="yv_regional">지역</string>
     <string name="yv_retry">재시도</string>
     <string name="yv_search">찾기</string>
     <string name="yv_search_bible_versions">번역본 찾기</string>
-    <string name="yv_search_languages">Search Languages</string>
-    <string name="yv_search_versions">Search Versions</string>
+    <string name="yv_search_languages">언어 검색</string>
+    <string name="yv_search_versions">번역본 검색</string>
     <string name="yv_select_language">언어 선택</string>
     <string name="yv_select_language_title">언어 선택</string>
     <string name="yv_share">공유</string>

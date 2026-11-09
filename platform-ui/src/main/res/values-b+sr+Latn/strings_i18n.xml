@@ -69,13 +69,13 @@
     <string name="yv_placeholder_version_unavailable">Prethodno odabran prevod Biblije nije dostupan. Molimo, izaberite drugi prevod.</string>
     <string name="yv_placeholder_version_unavailable_icon_content_desc">Prevod nije dostupan</string>
     <string name="yv_previous_chapter_aria_label">Prethodno poglavlje</string>
-    <string name="yv_recently_used_versions_heading">Recent Versions</string>
+    <string name="yv_recently_used_versions_heading">Nedavni prevodi</string>
     <string name="yv_regional">Regionalno</string>
     <string name="yv_retry">Pokušaj ponovo</string>
     <string name="yv_search">Pretražite</string>
     <string name="yv_search_bible_versions">Pretražite prevode</string>
-    <string name="yv_search_languages">Search Languages</string>
-    <string name="yv_search_versions">Search Versions</string>
+    <string name="yv_search_languages">Pretražite jezike</string>
+    <string name="yv_search_versions">Pretražite prevode</string>
     <string name="yv_select_language">Izaberite jezik</string>
     <string name="yv_select_language_title">Izaberite jezik</string>
     <string name="yv_share">Podeliti</string>
