@@ -69,7 +69,7 @@ fun VersionsScreen(
                 title = {
                     Column {
                         Text(
-                            text = stringResource(R.string.versions_screen_title),
+                            text = stringResource(R.string.bible_versions_heading),
                             style = BibleReaderTheme.typography.headerM,
                         )
                         if (state.versionsCount > 0) {
@@ -185,7 +185,7 @@ fun VersionsScreen(
                                         Modifier
                                             .fillMaxWidth(),
                                 ) {
-                                    Text(stringResource(R.string.versions_empty_for_language))
+                                    Text(stringResource(R.string.no_versions_found))
                                 }
                             }
                         }

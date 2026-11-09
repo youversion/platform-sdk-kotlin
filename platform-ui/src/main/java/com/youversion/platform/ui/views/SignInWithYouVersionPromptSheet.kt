@@ -84,7 +84,7 @@ fun SignInWithYouVersionPromptSheet(
                     .padding(bottom = 32.dp),
         ) {
             Text(
-                text = stringResource(R.string.sign_in_prompt_introducing),
+                text = stringResource(R.string.sign_in_introducing),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontFamily = AktivGrotesk,
                 fontSize = 10.sp,
@@ -123,13 +123,13 @@ fun SignInWithYouVersionPromptSheet(
 
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 SignInPromptButton(
-                    text = stringResource(R.string.sign_in_prompt_yes_button),
+                    text = stringResource(R.string.sign_in_yes_button),
                     isPrimary = true,
                     onClick = onSignIn,
                 )
 
                 SignInPromptButton(
-                    text = stringResource(R.string.sign_in_prompt_no_button),
+                    text = stringResource(R.string.sign_in_no_button),
                     isPrimary = false,
                     onClick = onDismissRequest,
                 )

@@ -23,8 +23,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.youversion.platform.reader.R
 import com.youversion.platform.ui.theme.UntitledSerif
+import com.youversion.platform.ui.R as UiR
 
 // Matches the fixed size the chapter footnotes sheet renders at, so both sheets ignore the reader's font settings.
 private val SheetFootnoteStyle =
@@ -57,7 +57,7 @@ internal fun BibleReaderIntroFootnotesSheet(
                     .verticalScroll(rememberScrollState()),
         ) {
             Text(
-                text = stringResource(R.string.footnote_header_label),
+                text = stringResource(UiR.string.footnote_aria_label),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
             )

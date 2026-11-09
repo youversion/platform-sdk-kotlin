@@ -218,7 +218,7 @@ private fun UnavailableReferenceView() {
             contentDescription = null,
         )
         Text(
-            text = stringResource(R.string.bible_card_unavailable_reference),
+            text = stringResource(R.string.passage_unavailable),
         )
     }
 }
