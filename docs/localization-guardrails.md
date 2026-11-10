@@ -7,8 +7,8 @@ User-facing copy in the YouVersion Platform SDK (Kotlin) is owned by [platform-l
 | Layer | File | Who edits |
 |-------|------|-----------|
 | Canonical (synced) | `**/values/strings_i18n.xml` | platform-localization sync workflow only |
-| Locale overlays | `**/values-*/strings.xml` | platform-localization sync workflow only |
-| SDK aliases | `**/values/strings_aliases.xml` | SDK developers (maps `R.string.*` → `@string/yv_*`) |
+| Locale overlays | `**/values-*/strings_i18n.xml` | platform-localization sync workflow only |
+| Aliases (synced) | `**/values/strings_aliases.xml` | platform-localization sync workflow only (maps `R.string.*` → `@string/yv_*`) |
 
 **Modules with UI strings:** `platform-ui`, `platform-reader`
 
@@ -17,11 +17,10 @@ User-facing copy in the YouVersion Platform SDK (Kotlin) is owned by [platform-l
 ## How to add or change user-facing copy
 
 1. Add or update keys in **platform-localization**.
-2. Run the localization sync workflow to update `strings_i18n.xml` and locale files in this repo.
-3. Add an alias in `strings_aliases.xml` if the SDK needs an unprefixed `R.string.*` name.
-4. Reference the string in Kotlin with `stringResource(R.string.*)` or `pluralStringResource()`.
+2. Run the localization sync workflow to update `strings_i18n.xml`, `strings_aliases.xml`, and locale files in this repo. The sync also generates the unprefixed `R.string.*` aliases.
+3. Reference the string in Kotlin with `stringResource(R.string.*)` or `pluralStringResource()`.
 
-Do **not** hand-edit `strings_i18n.xml` or locale `strings.xml` files in feature PRs.
+Do **not** hand-edit `strings_i18n.xml` (base or locale) or `strings_aliases.xml` files in feature PRs.
 
 ## Enforcement
 
@@ -72,11 +71,13 @@ The Gradle task scans `platform-ui/src/main` and `platform-reader/src/main` for 
 These paths may only be modified by the localization sync bot (see `config/i18n/localization-bot-allowlist.txt`):
 
 - `platform-ui/src/main/res/values/strings_i18n.xml`
-- `platform-ui/src/main/res/values-*/strings.xml`
+- `platform-ui/src/main/res/values/strings_aliases.xml`
+- `platform-ui/src/main/res/values-*/strings_i18n.xml`
 - `platform-reader/src/main/res/values/strings_i18n.xml`
-- `platform-reader/src/main/res/values-*/strings.xml`
+- `platform-reader/src/main/res/values/strings_aliases.xml`
+- `platform-reader/src/main/res/values-*/strings_i18n.xml`
 
-`strings_aliases.xml` is **not** protected — SDK developers maintain aliases locally.
+Lint skips `MissingTranslation` on `strings_aliases.xml` (see `config/lint/lint.xml`). Each alias points at a `yv_*` string, which carries the translations.
 
 ## Known migration work
 

@@ -1,5 +1,6 @@
 package com.youversion.platform.buildlogic
 
+import com.android.build.api.dsl.LibraryExtension
 import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
 import kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension
 import org.gradle.api.Plugin
@@ -16,6 +17,9 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
  * `check` depends on the root project's `verifyNoHardcodedUiStrings`, which scans `platform-ui` and
  * `platform-reader` from the root so the scan runs once per build. Only SDK modules wire it in;
  * `platform-bom` and the sample app have no UI strings of their own to guard.
+ *
+ * Lint reads the root `config/lint/lint.xml`, which skips `MissingTranslation` on the generated
+ * `strings_aliases.xml`.
  */
 class SdkLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -27,6 +31,10 @@ class SdkLibraryConventionPlugin : Plugin<Project> {
 
             extensions.configure<KotlinAndroidProjectExtension> {
                 compilerOptions.optIn.add("com.youversion.platform.core.di.PlatformInternalApi")
+            }
+
+            extensions.configure<LibraryExtension> {
+                lint.lintConfig = rootProject.file("config/lint/lint.xml")
             }
 
             extensions.configure<KoverProjectExtension> {
