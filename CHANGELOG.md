@@ -1,3 +1,10 @@
+## [2.8.1](https://github.com/youversion/platform-sdk-kotlin/compare/2.8.0...2.8.1) (2026-11-10)
+
+### Bug Fixes
+
+* **core:** return empty results on HTTP 204 for verse images and search ([87d4860](https://github.com/youversion/platform-sdk-kotlin/commit/87d486024e5831805b7b970df1c7e753e0c36c57))
+* **i18n:** sync kotlin localization from platform-localization ([a0f1e94](https://github.com/youversion/platform-sdk-kotlin/commit/a0f1e94fbad7ca6ec131c0fc7ee8ddc16c56f9bc))
+
 ## [2.8.0](https://github.com/youversion/platform-sdk-kotlin/compare/2.7.0...2.8.0) (2026-11-05)
 
 ### Features
