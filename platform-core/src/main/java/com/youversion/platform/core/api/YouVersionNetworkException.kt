@@ -1,7 +1,10 @@
 package com.youversion.platform.core.api
 
 import io.ktor.http.HttpStatusCode
+import java.io.Serializable
+import java.util.Collections
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 public class YouVersionNetworkException private constructor(
     public val reason: Reason,
@@ -15,15 +18,20 @@ public class YouVersionNetworkException private constructor(
      * The server's description of the failure, when the error response includes one.
      */
     public val serverMessage: String?,
+    private val retryAfterMillis: Long?,
+    validationIssues: List<ValidationIssue>,
+) : Exception(message, cause) {
     /**
      * How long the server asks the app to wait before retrying, from the `Retry-After` header.
      */
-    public val retryAfter: Duration?,
+    public val retryAfter: Duration?
+        get() = retryAfterMillis?.milliseconds
+
     /**
      * The request parameters the server found invalid. Empty when it reports none.
      */
-    public val validationIssues: List<ValidationIssue>,
-) : Exception(message, cause) {
+    public val validationIssues: List<ValidationIssue> = Collections.unmodifiableList(validationIssues.toList())
+
     /**
      * Creates an exception for [reason], with its name as the message.
      */
@@ -33,7 +41,7 @@ public class YouVersionNetworkException private constructor(
         message = reason.toString(),
         statusCode = null,
         serverMessage = null,
-        retryAfter = null,
+        retryAfterMillis = null,
         validationIssues = emptyList(),
     )
 
@@ -43,8 +51,19 @@ public class YouVersionNetworkException private constructor(
      */
     public class Reason private constructor(
         private val name: String,
-    ) {
+    ) : Serializable {
         override fun toString(): String = name
+
+        private fun readResolve(): Any =
+            listOf(
+                REQUEST_FAILED,
+                RATE_LIMITED,
+                SERVER_ERROR,
+                REQUEST_REJECTED,
+                NOT_PERMITTED,
+                INVALID_RESPONSE,
+                MISSING_AUTHENTICATION,
+            ).firstOrNull { it.name == name } ?: this
 
         public companion object {
             /**
@@ -100,15 +119,22 @@ public class YouVersionNetworkException private constructor(
      * A request parameter the server found invalid.
      */
     public class ValidationIssue internal constructor(
-        /**
-         * The path to the invalid value, such as `["query", "language_ranges"]`.
-         */
-        public val location: List<String>,
+        location: List<String>,
         /**
          * Why the value is invalid.
          */
         public val message: String,
-    ) {
+    ) : Serializable {
+        /**
+         * The path to the invalid value, such as `["query", "language_ranges"]`.
+         */
+        public val location: List<String> = Collections.unmodifiableList(location.toList())
+
+        override fun equals(other: Any?): Boolean =
+            other is ValidationIssue && location == other.location && message == other.message
+
+        override fun hashCode(): Int = 31 * location.hashCode() + message.hashCode()
+
         override fun toString(): String = "${location.joinToString(".")}: $message"
     }
 
@@ -120,25 +146,26 @@ public class YouVersionNetworkException private constructor(
         fun requestFailed(
             status: HttpStatusCode,
             reason: Reason? = null,
+            cause: Exception? = null,
             serverMessage: String? = null,
             retryAfter: Duration? = null,
             validationIssues: List<ValidationIssue> = emptyList(),
         ): YouVersionNetworkException {
-            val reason =
+            val resolvedReason =
                 reason ?: when (status.value) {
                     HttpStatusCode.TooManyRequests.value -> Reason.RATE_LIMITED
                     in 500..599 -> Reason.SERVER_ERROR
                     in 400..499 -> Reason.REQUEST_REJECTED
                     else -> Reason.REQUEST_FAILED
                 }
-            val summary = "$reason (${status.value})"
+            val summary = "$resolvedReason (${status.value})"
             return YouVersionNetworkException(
-                reason = reason,
-                cause = null,
+                reason = resolvedReason,
+                cause = cause,
                 message = serverMessage?.let { "$summary: $it" } ?: summary,
                 statusCode = status.value,
                 serverMessage = serverMessage,
-                retryAfter = retryAfter,
+                retryAfterMillis = retryAfter?.inWholeMilliseconds,
                 validationIssues = validationIssues,
             )
         }

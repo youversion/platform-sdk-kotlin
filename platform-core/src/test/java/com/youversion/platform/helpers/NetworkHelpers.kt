@@ -79,6 +79,7 @@ fun testServerError(block: suspend () -> Unit) =
                 assertEquals(503, statusCode)
                 assertEquals("Service unavailable", serverMessage)
                 assertEquals(30.seconds, retryAfter)
+                assertEquals("server_error (503): Service unavailable", message)
             }
     }
 

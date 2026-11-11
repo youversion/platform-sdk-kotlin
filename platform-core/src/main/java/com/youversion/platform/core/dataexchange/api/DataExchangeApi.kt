@@ -18,7 +18,12 @@ public interface DataExchangeApi {
      *         token (`401`),
      *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.NOT_PERMITTED] when the server
      *         refuses the request (`403`),
-     *         or another reason describing the failed response otherwise.
+     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.RATE_LIMITED] for `429`,
+     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.SERVER_ERROR] for `5xx`,
+     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.REQUEST_REJECTED] for another
+     *         `4xx`, or [com.youversion.platform.core.api.YouVersionNetworkException.Reason.REQUEST_FAILED]
+     *         otherwise. The exception's `statusCode`, `serverMessage`, `retryAfter` and `validationIssues` carry
+     *         the server's details.
      */
     public suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken
 }
