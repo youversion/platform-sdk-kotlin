@@ -295,6 +295,13 @@ class BibleTextNodeTests {
     }
 
     @Test
+    fun `test children cannot be mutated`() {
+        assertFailsWith<UnsupportedOperationException> {
+            (node().children as MutableList<BibleTextNode>).add(node())
+        }
+    }
+
+    @Test
     fun `test toString matches the existing format`() {
         assertEquals(
             "BibleTextNode(name=span, text=text, " +

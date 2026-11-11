@@ -13,7 +13,7 @@ fi
 OFFENDERS="$(
   awk '
     /^public .*class / { for (i = 1; i <= NF; i++) if ($i == "class") current = $(i + 1) }
-    /fun (component[0-9]+(-[^ ]*)?|copy(-[^ ]*)?\$default) \(/ { print FILENAME ": " current }
+    /fun (component[0-9]+(-[^ ]*)?|copy(-[^ ]*)?(\$default)?) \(/ { print FILENAME ": " current }
   ' "$@" | sort -u
 )"
 

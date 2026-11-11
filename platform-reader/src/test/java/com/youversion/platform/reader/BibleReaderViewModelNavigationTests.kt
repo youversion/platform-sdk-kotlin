@@ -321,6 +321,16 @@ class BibleReaderViewModelNavigationTests {
     }
 
     @Test
+    fun `onIntroSelected keeps the verse selection`() {
+        val verseRef = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+        viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseRef))
+
+        viewModel.onIntroSelected("LEV", "LEV.INTRO1")
+
+        assertEquals(setOf(verseRef), viewModel.state.value.selectedVerses)
+    }
+
+    @Test
     fun `GoToPreviousChapter from intro drops the verse range`() {
         viewModel.bibleVersion = multiBookVersion
         viewModel.onIntroSelected("LEV", "LEV.INTRO1")
