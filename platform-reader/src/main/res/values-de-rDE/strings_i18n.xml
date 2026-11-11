@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
-    <string name="yv_banner_dismiss_content_description">Schließen</string>
-    <string name="yv_banner_offline_icon">Offline</string>
-    <string name="yv_banner_offline_message">Wir haben Probleme mit deiner Verbindung. Bitte lade eine Bibelversion herunter, wenn du online bist.</string>
-    <string name="yv_banner_version_unavailable_icon">Version nicht verfügbar</string>
-    <string name="yv_banner_version_unavailable_message">Deine zuvor ausgewählte Bibelversion ist nicht verfügbar. Bitte wechsle zu einer anderen.</string>
-    <string name="yv_book_chapter_picker_title">Bücher</string>
     <string name="yv_font_selected_check">Häkchen für ausgewählte Schriftart</string>
-    <string name="yv_font_settings_label">Schriftart</string>
-    <string name="yv_footnote_header_label">Fußnote</string>
     <string name="yv_highlight_color_blue">blau</string>
     <string name="yv_highlight_color_green">Grün</string>
     <string name="yv_highlight_color_orange">Orange</string>
@@ -17,16 +9,9 @@
     <string name="yv_highlight_color_purple">lila</string>
     <string name="yv_highlight_color_yellow">Gelb</string>
     <string name="yv_intro_chapter_label">Einführung</string>
-    <string name="yv_language_content_desc">Sprache</string>
     <string name="yv_line_spacing_label">Zeilenabstand</string>
-    <string name="yv_next_chapter_content_desc">Nächstes Kapitel</string>
-    <string name="yv_previous_chapter_content_desc">Vorheriges Kapitel</string>
     <string name="yv_reader_menu_font_settings">Schriftart &amp; Einstellungen</string>
-    <string name="yv_reader_menu_sign_in">Anmelden</string>
-    <string name="yv_reader_menu_sign_out">Abmelden</string>
     <string name="yv_theme_selected">Ausgewählt</string>
     <string name="yv_verse_action_add_highlight">%1$s hervorheben</string>
-    <string name="yv_verse_action_copy">Kopieren</string>
     <string name="yv_verse_action_remove_highlight">%1$s -Markierung entfernen</string>
-    <string name="yv_verse_action_share">Teilen</string>
 </resources>

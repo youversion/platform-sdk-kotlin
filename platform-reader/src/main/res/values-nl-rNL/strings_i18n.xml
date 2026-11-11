@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
-    <string name="yv_banner_dismiss_content_description">Sluiten</string>
-    <string name="yv_banner_offline_icon">Offline</string>
-    <string name="yv_banner_offline_message">We ondervinden problemen met je verbinding. Download een Bijbelvertaling wanneer je online bent.</string>
-    <string name="yv_banner_version_unavailable_icon">Vertaling niet beschikbaar</string>
-    <string name="yv_banner_version_unavailable_message">De Bijbelvertaling die je eerder had gekozen, is niet beschikbaar. Kies alsjeblieft een andere.</string>
-    <string name="yv_book_chapter_picker_title">Boeken</string>
     <string name="yv_font_selected_check">Vinkje voor geselecteerd lettertype</string>
-    <string name="yv_font_settings_label">Lettertype</string>
-    <string name="yv_footnote_header_label">Voetnoot</string>
     <string name="yv_highlight_color_blue">blauw</string>
     <string name="yv_highlight_color_green">groen</string>
     <string name="yv_highlight_color_orange">oranje</string>
@@ -17,16 +9,9 @@
     <string name="yv_highlight_color_purple">paars</string>
     <string name="yv_highlight_color_yellow">geel</string>
     <string name="yv_intro_chapter_label">Intro</string>
-    <string name="yv_language_content_desc">Taal</string>
     <string name="yv_line_spacing_label">Regelafstand</string>
-    <string name="yv_next_chapter_content_desc">Volgend hoofdstuk</string>
-    <string name="yv_previous_chapter_content_desc">Vorig hoofdstuk</string>
     <string name="yv_reader_menu_font_settings">Lettertype &amp; Instellingen</string>
-    <string name="yv_reader_menu_sign_in">Inloggen</string>
-    <string name="yv_reader_menu_sign_out">Afmelden</string>
     <string name="yv_theme_selected">Geselecteerd</string>
     <string name="yv_verse_action_add_highlight">%1$s markering toevoegen</string>
-    <string name="yv_verse_action_copy">Kopiëren</string>
     <string name="yv_verse_action_remove_highlight">%1$s markering verwijderen</string>
-    <string name="yv_verse_action_share">Delen</string>
 </resources>

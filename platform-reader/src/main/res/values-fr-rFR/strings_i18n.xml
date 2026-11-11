@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
-    <string name="yv_banner_dismiss_content_description">Fermer</string>
-    <string name="yv_banner_offline_icon">Hors ligne</string>
-    <string name="yv_banner_offline_message">Nous rencontrons des difficultés avec votre connexion. Veuillez télécharger une version de la Bible lorsque vous êtes en ligne.</string>
-    <string name="yv_banner_version_unavailable_icon">Version non disponible</string>
-    <string name="yv_banner_version_unavailable_message">La version de la Bible précédemment sélectionnée n\'est pas disponible. Veuillez en choisir une autre.</string>
-    <string name="yv_book_chapter_picker_title">Livres</string>
     <string name="yv_font_selected_check">Coche de police sélectionnée</string>
-    <string name="yv_font_settings_label">Police</string>
-    <string name="yv_footnote_header_label">Note de bas de page</string>
     <string name="yv_highlight_color_blue">bleu</string>
     <string name="yv_highlight_color_green">vert</string>
     <string name="yv_highlight_color_orange">orange</string>
@@ -17,16 +9,9 @@
     <string name="yv_highlight_color_purple">violet</string>
     <string name="yv_highlight_color_yellow">jaune</string>
     <string name="yv_intro_chapter_label">Introduction</string>
-    <string name="yv_language_content_desc">Langue</string>
     <string name="yv_line_spacing_label">Interligne</string>
-    <string name="yv_next_chapter_content_desc">Chapitre suivant</string>
-    <string name="yv_previous_chapter_content_desc">Chapitre précédent</string>
     <string name="yv_reader_menu_font_settings">Police &amp; Paramètres</string>
-    <string name="yv_reader_menu_sign_in">Se connecter</string>
-    <string name="yv_reader_menu_sign_out">Se déconnecter</string>
     <string name="yv_theme_selected">Sélectionné</string>
     <string name="yv_verse_action_add_highlight">Ajouter un surlignage %1$s</string>
-    <string name="yv_verse_action_copy">Copier</string>
     <string name="yv_verse_action_remove_highlight">Supprimer le surlignage %1$s</string>
-    <string name="yv_verse_action_share">Partager</string>
 </resources>

@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
-    <string name="yv_banner_dismiss_content_description">Fechar</string>
-    <string name="yv_banner_offline_icon">Offline</string>
-    <string name="yv_banner_offline_message">Estamos tendo dificuldades com a conexão. Baixe uma versão da Bíblia quando estiver on-line.</string>
-    <string name="yv_banner_version_unavailable_icon">Versão indisponível</string>
-    <string name="yv_banner_version_unavailable_message">A versão da Bíblia selecionada anteriormente não está disponível. Mude para outra.</string>
-    <string name="yv_book_chapter_picker_title">Livros</string>
     <string name="yv_font_selected_check">Marca de seleção de fonte selecionada</string>
-    <string name="yv_font_settings_label">Fonte</string>
-    <string name="yv_footnote_header_label">Nota de rodapé</string>
     <string name="yv_highlight_color_blue">azul</string>
     <string name="yv_highlight_color_green">verde</string>
     <string name="yv_highlight_color_orange">laranja</string>
@@ -17,16 +9,9 @@
     <string name="yv_highlight_color_purple">roxo</string>
     <string name="yv_highlight_color_yellow">amarelo</string>
     <string name="yv_intro_chapter_label">Introdução</string>
-    <string name="yv_language_content_desc">Idioma</string>
     <string name="yv_line_spacing_label">Espaçamento entre linhas</string>
-    <string name="yv_next_chapter_content_desc">Próximo capítulo</string>
-    <string name="yv_previous_chapter_content_desc">Capítulo anterior</string>
     <string name="yv_reader_menu_font_settings">Fonte e Configurações</string>
-    <string name="yv_reader_menu_sign_in">Entrar</string>
-    <string name="yv_reader_menu_sign_out">Sair</string>
     <string name="yv_theme_selected">Selecionado</string>
     <string name="yv_verse_action_add_highlight">Adicionar destaque de %1$s</string>
-    <string name="yv_verse_action_copy">Copiar</string>
     <string name="yv_verse_action_remove_highlight">Remover destaque de %1$s</string>
-    <string name="yv_verse_action_share">Compartilhar</string>
 </resources>
