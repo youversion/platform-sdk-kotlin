@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- AUTO-GENERATED from en.json — do not edit manually -->
 <resources>
     <string name="font_selected_check">@string/yv_font_selected_check</string>
     <string name="highlight_color_blue">@string/yv_highlight_color_blue</string>

@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
-    <string name="yv_banner_dismiss_content_description">Bezárás</string>
-    <string name="yv_banner_offline_icon">Offline</string>
-    <string name="yv_banner_offline_message">Probléma merült fel az internetkapcsolattal. Kérjük, tölts le egy Bibliafordítást, amikor újra online vagy.</string>
-    <string name="yv_banner_version_unavailable_icon">A fordítás nem érhető el</string>
-    <string name="yv_banner_version_unavailable_message">A korábban kiválasztott Bibliafordítás nem érhető el. Kérjük, válts egy másikra.</string>
-    <string name="yv_book_chapter_picker_title">Könyvek</string>
     <string name="yv_font_selected_check">Kiválasztott betűtípus pipa</string>
-    <string name="yv_font_settings_label">Betűtípus</string>
-    <string name="yv_footnote_header_label">Lábjegyzet</string>
     <string name="yv_highlight_color_blue">kék</string>
     <string name="yv_highlight_color_green">zöld</string>
     <string name="yv_highlight_color_orange">narancssárga</string>
@@ -17,16 +9,9 @@
     <string name="yv_highlight_color_purple">lila</string>
     <string name="yv_highlight_color_yellow">sárga</string>
     <string name="yv_intro_chapter_label">Bevezető</string>
-    <string name="yv_language_content_desc">Nyelv</string>
     <string name="yv_line_spacing_label">Sorköz</string>
-    <string name="yv_next_chapter_content_desc">Következő fejezet</string>
-    <string name="yv_previous_chapter_content_desc">Előző fejezet</string>
     <string name="yv_reader_menu_font_settings">Betűtípus &amp; beállítások</string>
-    <string name="yv_reader_menu_sign_in">Bejelentkezés</string>
-    <string name="yv_reader_menu_sign_out">Kijelentkezés</string>
     <string name="yv_theme_selected">Kiválasztva</string>
     <string name="yv_verse_action_add_highlight">Adj hozzá %1$s kiemelést</string>
-    <string name="yv_verse_action_copy">Másolás</string>
     <string name="yv_verse_action_remove_highlight">Távolítsd el a %1$s kiemelést</string>
-    <string name="yv_verse_action_share">Megosztás</string>
 </resources>

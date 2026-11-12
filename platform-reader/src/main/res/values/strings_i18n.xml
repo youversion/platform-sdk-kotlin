@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
-    <string name="yv_banner_dismiss_content_description">Close</string>
-    <string name="yv_banner_offline_icon">Offline</string>
-    <string name="yv_banner_offline_message">We’re having difficulties with your connection. Please download a Bible version when you’re online.</string>
-    <string name="yv_banner_version_unavailable_icon">Version unavailable</string>
-    <string name="yv_banner_version_unavailable_message">Your previously selected Bible version is unavailable. Please switch to another one.</string>
-    <string name="yv_book_chapter_picker_title">Books</string>
     <string name="yv_font_selected_check">Font selected check</string>
-    <string name="yv_font_settings_label">Font</string>
-    <string name="yv_footnote_header_label">Footnote</string>
     <string name="yv_highlight_color_blue">blue</string>
     <string name="yv_highlight_color_green">green</string>
     <string name="yv_highlight_color_orange">orange</string>
@@ -17,16 +9,9 @@
     <string name="yv_highlight_color_purple">purple</string>
     <string name="yv_highlight_color_yellow">yellow</string>
     <string name="yv_intro_chapter_label">Intro</string>
-    <string name="yv_language_content_desc">Language</string>
     <string name="yv_line_spacing_label">Line Spacing</string>
-    <string name="yv_next_chapter_content_desc">Next chapter</string>
-    <string name="yv_previous_chapter_content_desc">Previous chapter</string>
     <string name="yv_reader_menu_font_settings">Font &amp; Settings</string>
-    <string name="yv_reader_menu_sign_in">Sign in</string>
-    <string name="yv_reader_menu_sign_out">Sign out</string>
     <string name="yv_theme_selected">Selected</string>
     <string name="yv_verse_action_add_highlight">Add %1$s highlight</string>
-    <string name="yv_verse_action_copy">Copy</string>
     <string name="yv_verse_action_remove_highlight">Remove %1$s highlight</string>
-    <string name="yv_verse_action_share">Share</string>
 </resources>
