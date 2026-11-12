@@ -13,6 +13,7 @@ import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.time.Duration.Companion.seconds
 
 fun MockRequestHandleScope.respondJson(
     content: String,
@@ -27,37 +28,59 @@ fun MockRequestHandleScope.respondJson(
 fun testUnauthorizedNotPermitted(block: suspend () -> Unit) =
     runTest {
         MockEngine { request ->
-            respond("", HttpStatusCode.Unauthorized)
+            respondJson("""{"message":"Invalid app key"}""", HttpStatusCode.Unauthorized)
         }.also { engine -> startYouVersionPlatformTest(engine) }
 
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         assertFailsWith<YouVersionNetworkException> { block() }
-            .apply { assertEquals(YouVersionNetworkException.Reason.NOT_PERMITTED, reason) }
+            .apply {
+                assertEquals(YouVersionNetworkException.Reason.NOT_PERMITTED, reason)
+                assertEquals(401, statusCode)
+                assertEquals("Invalid app key", serverMessage)
+            }
     }
 
 fun testForbiddenNotPermitted(block: suspend () -> Unit) =
     runTest {
         MockEngine { request ->
-            respond("", HttpStatusCode.Forbidden)
+            respondJson("""{"message":"App key lacks access"}""", HttpStatusCode.Forbidden)
         }.also { engine -> startYouVersionPlatformTest(engine) }
 
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         assertFailsWith<YouVersionNetworkException> { block() }
-            .apply { assertEquals(YouVersionNetworkException.Reason.NOT_PERMITTED, reason) }
+            .apply {
+                assertEquals(YouVersionNetworkException.Reason.NOT_PERMITTED, reason)
+                assertEquals(403, statusCode)
+                assertEquals("App key lacks access", serverMessage)
+            }
     }
 
-fun testCannotDownload(block: suspend () -> Unit) =
+fun testServerError(block: suspend () -> Unit) =
     runTest {
         MockEngine { request ->
-            respond("", HttpStatusCode.InternalServerError)
+            respond(
+                content = """{"message":"Service unavailable"}""",
+                status = HttpStatusCode.ServiceUnavailable,
+                headers =
+                    headersOf(
+                        HttpHeaders.ContentType to listOf(ContentType.Application.Json.toString()),
+                        HttpHeaders.RetryAfter to listOf("30"),
+                    ),
+            )
         }.also { engine -> startYouVersionPlatformTest(engine) }
 
         YouVersionPlatformConfiguration.configure(appKey = "app")
 
         assertFailsWith<YouVersionNetworkException> { block() }
-            .apply { assertEquals(YouVersionNetworkException.Reason.CANNOT_DOWNLOAD, reason) }
+            .apply {
+                assertEquals(YouVersionNetworkException.Reason.SERVER_ERROR, reason)
+                assertEquals(503, statusCode)
+                assertEquals("Service unavailable", serverMessage)
+                assertEquals(30.seconds, retryAfter)
+                assertEquals("server_error (503): Service unavailable", message)
+            }
     }
 
 fun testInvalidResponse(block: suspend () -> Unit) =

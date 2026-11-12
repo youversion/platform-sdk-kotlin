@@ -18,17 +18,17 @@ internal suspend inline fun <reified T> parseApiResponse(response: HttpResponse)
 internal suspend inline fun <reified T> parseApiBody(response: HttpResponse): T {
     if (response.status == HttpStatusCode.Unauthorized) {
         Logger.w { "error 401: unauthorized. Check your appKey" }
-        throw notPermitted()
+        throw response.failureException(YouVersionNetworkException.Reason.NOT_PERMITTED)
     }
 
     if (response.status == HttpStatusCode.Forbidden) {
         Logger.w { "error 403: forbidden. Check your appKey and it's entitlements" }
-        throw notPermitted()
+        throw response.failureException(YouVersionNetworkException.Reason.NOT_PERMITTED)
     }
 
     if (!response.status.isSuccess()) {
         Logger.w { "Request failed with status code ${response.status.value} " }
-        throw cannotDownload()
+        throw response.failureException()
     }
 
     try {

@@ -14,10 +14,16 @@ public interface DataExchangeApi {
      * @return The token to pass to the permission page.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] with reason
      *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.MISSING_AUTHENTICATION] when no
-     *         user is signed in or the app key is not configured,
+     *         user is signed in, the app key is not configured, or the server does not accept the user's access
+     *         token (`401`),
      *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.NOT_PERMITTED] when the server
-     *         refuses the request, or
-     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.CANNOT_DOWNLOAD] otherwise.
+     *         refuses the request (`403`),
+     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.RATE_LIMITED] for `429`,
+     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.SERVER_ERROR] for `5xx`,
+     *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.REQUEST_REJECTED] for another
+     *         `4xx`, or [com.youversion.platform.core.api.YouVersionNetworkException.Reason.REQUEST_FAILED]
+     *         otherwise. The exception's `statusCode`, `serverMessage`, `retryAfter` and `validationIssues` carry
+     *         the server's details.
      */
     public suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken
 }
