@@ -22,9 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,6 +34,10 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.di.PlatformUIKoinModule
+import com.youversion.platform.ui.icons.ShareIcon
+import com.youversion.platform.ui.icons.VotdIcon
+import com.youversion.platform.ui.icons.YvBibleAppDarkIcon
+import com.youversion.platform.ui.icons.YvBibleAppLightIcon
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.PreviewBackground
@@ -141,7 +143,7 @@ private fun VerseOfTheDayContent(
         ) {
             if (showIcon) {
                 Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_votd),
+                    imageVector = VotdIcon,
                     modifier = Modifier.size(44.dp),
                     contentDescription = stringResource(R.string.verse_of_the_day),
                 )
@@ -155,7 +157,7 @@ private fun VerseOfTheDayContent(
             )
             IconButton(onClick = onShareClick) {
                 Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_material_share),
+                    imageVector = ShareIcon,
                     modifier = Modifier.size(24.dp),
                     contentDescription = stringResource(R.string.share),
                 )
@@ -198,9 +200,7 @@ private fun VerseOfTheDayContent(
             }
             Image(
                 imageVector =
-                    ImageVector.vectorResource(
-                        if (dark) R.drawable.yv_bibleapp_dm else R.drawable.yv_bibleapp_lm,
-                    ),
+                    if (dark) YvBibleAppDarkIcon else YvBibleAppLightIcon,
                 contentDescription = "YouVersion Logo",
             )
         }
@@ -223,7 +223,7 @@ private fun CompactVerseOfTheDayContent(
         ) {
             if (showIcon) {
                 Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_votd),
+                    imageVector = VotdIcon,
                     modifier = Modifier.size(44.dp),
                     contentDescription = stringResource(R.string.verse_of_the_day),
                 )

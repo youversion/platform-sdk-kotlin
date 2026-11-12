@@ -33,11 +33,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -52,6 +50,8 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.di.PlatformUIKoinModule
+import com.youversion.platform.ui.icons.YvBibleAppDarkIcon
+import com.youversion.platform.ui.icons.YvBibleAppLightIcon
 import com.youversion.platform.ui.utilities.ObserveAsEvents
 import com.youversion.platform.ui.views.BibleText
 import com.youversion.platform.ui.views.BibleTextOptions
@@ -164,9 +164,7 @@ public fun BibleCard(
                 )
                 Image(
                     imageVector =
-                        ImageVector.vectorResource(
-                            if (isSystemInDarkTheme()) R.drawable.yv_bibleapp_dm else R.drawable.yv_bibleapp_lm,
-                        ),
+                        if (isSystemInDarkTheme()) YvBibleAppDarkIcon else YvBibleAppLightIcon,
                     contentDescription = "YouVersion Logo",
                 )
             }

@@ -10,7 +10,7 @@ class MainApplication : Application() {
             context = this,
             appKey = TODO("Provide your app key"),
             appName = "Sample App",
-            signInPromptMessage = "Sign in to see your **YouVersion** highlights in **Sample App**",
+            signInPromptMessage = getString(R.string.sign_in_prompt),
         )
     }
 }

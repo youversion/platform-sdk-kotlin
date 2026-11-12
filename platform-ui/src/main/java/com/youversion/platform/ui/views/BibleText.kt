@@ -42,7 +42,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
@@ -62,6 +61,9 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.icons.FootnotesIcon
+import com.youversion.platform.ui.icons.LockIcon
+import com.youversion.platform.ui.icons.WifiExclamationIcon
 import com.youversion.platform.ui.theme.ReaderColorScheme
 import com.youversion.platform.ui.theme.UntitledSerif
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
@@ -126,7 +128,7 @@ public class BibleTextOptions(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_material_footnotes),
+                            imageVector = FootnotesIcon,
                             contentDescription = stringResource(R.string.footnote_aria_label),
                             modifier = Modifier.size(iconSize),
                             tint = LocalContentColor.current.copy(alpha = 0.6f),
@@ -788,7 +790,7 @@ internal fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
 
             BibleTextLoadingPhase.NOT_PERMITTED -> {
                 PlaceholderMessage(
-                    icon = ImageVector.vectorResource(R.drawable.ic_material_lock),
+                    icon = LockIcon,
                     iconContentDescription = stringResource(R.string.placeholder_version_unavailable_icon_content_desc),
                     message = stringResource(R.string.version_unavailable_auto_selected_message),
                 )
@@ -796,7 +798,7 @@ internal fun StandardPlaceholder(phase: BibleTextLoadingPhase) {
 
             BibleTextLoadingPhase.FAILED -> {
                 PlaceholderMessage(
-                    icon = ImageVector.vectorResource(R.drawable.ic_wifi_exclamation),
+                    icon = WifiExclamationIcon,
                     iconContentDescription = stringResource(R.string.placeholder_offline_icon_content_desc),
                     message = stringResource(R.string.placeholder_offline),
                 )

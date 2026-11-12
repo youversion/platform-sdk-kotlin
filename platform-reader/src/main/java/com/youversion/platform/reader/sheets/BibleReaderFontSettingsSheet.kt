@@ -34,10 +34,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.youversion.platform.reader.FontDefinition
 import com.youversion.platform.reader.R
 import com.youversion.platform.reader.ReaderFontSettings
+import com.youversion.platform.reader.icons.CircleIcon
 import com.youversion.platform.ui.theme.Charcoal
 import com.youversion.platform.ui.theme.Cream
 import com.youversion.platform.ui.theme.MidnightBlue
@@ -346,7 +345,7 @@ private fun ThemePickerItem(
                     if (selected) {
                         Icons.Default.CheckCircle
                     } else {
-                        ImageVector.vectorResource(R.drawable.ic_circle)
+                        CircleIcon
                     },
                 contentDescription = if (selected) stringResource(R.string.theme_selected) else null,
                 tint =

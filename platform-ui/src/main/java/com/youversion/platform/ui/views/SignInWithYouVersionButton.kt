@@ -29,9 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +40,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.ui.R
+import com.youversion.platform.ui.icons.YvBibleAppIcon
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.rememberSignIn
 import kotlinx.coroutines.launch
@@ -141,7 +140,7 @@ public fun SignInWithYouVersionButton(
         ) {
             Box(modifier = Modifier.size(26.dp)) {
                 Image(
-                    ImageVector.vectorResource(R.drawable.yv_bibleapp_icon),
+                    YvBibleAppIcon,
                     contentDescription = "Bible Logo",
                     modifier =
                         Modifier
