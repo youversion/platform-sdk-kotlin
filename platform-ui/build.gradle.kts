@@ -14,15 +14,15 @@ dependencies {
     // them on their compile classpath. Everything else stays implementation.
     api(projects.platformCore) // BibleText(BibleReference), BibleCard(BibleVersion), rememberSignIn()
     api(platform(libs.androidx.compose.bom))
-    api(libs.androidx.compose.ui) // BibleTextOptions/BibleTextFonts (TextStyle, AnnotatedString, TextUnit)
-    api(libs.androidx.compose.ui.graphics) // ReaderColorScheme(Color), SignInWithYouVersionButtonDefaults (Shape)
-    api(libs.androidx.compose.material3) // MaterialTheme.readerColorScheme extension receiver
+    api(libs.androidx.compose.ui) // BibleTextOptions/BibleTextFonts (FontFamily, AnnotatedString, TextUnit)
+    api(libs.androidx.compose.ui.graphics) // BibleTextOptions (Color), SignInWithYouVersionButtonDefaults (Shape)
+    api(libs.androidx.compose.foundation.layout) // SignInWithYouVersionButton(paddingValues: PaddingValues)
     api(libs.androidx.activity.compose) // SignInWithYouVersionActivity : ComponentActivity
     api(libs.androidx.lifecycle.viewmodel.compose) // SignInViewModel : AndroidViewModel
-    api(libs.koin.core) // PlatformUIKoinModule : Module
     api(libs.kotlin.coroutines) // SignInViewModel.state, BibleVersionsViewModel.state : StateFlow
 
     implementation(libs.androidx.browser)
+    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.icons.core)
     implementation(libs.androidx.compose.icons.extended)
@@ -31,6 +31,7 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 
+    implementation(libs.koin.core)
     implementation(libs.koin.androidx.compose)
 
     testImplementation(libs.kotlin.test)
