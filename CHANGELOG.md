@@ -1,3 +1,116 @@
+## [3.0.0](https://github.com/youversion/platform-sdk-kotlin/compare/2.8.1...3.0.0) (2026-11-12)
+
+### ⚠ BREAKING CHANGES
+
+* public model classes are no longer data classes.
+
+`copy()` is gone. Build the changed value yourself from the properties you need.
+
+Destructuring is gone. Replace `val (id, abbreviation) = version` with property access:
+`version.id` and `version.abbreviation`.
+
+`equals`, `hashCode` and `toString` otherwise behave as before, except that `toString` no longer
+prints secrets or email: tokens in `SignInWithYouVersionResult`, `DataExchangeToken` and `Config`,
+the app key in `Config`, email in `SignInWithYouVersionResult` and `SignInViewState`, and the intent
+in `SignInViewModel.Action.ProcessAuthCallback`.
+
+To move a `BibleReference` to another version, where you previously called
+`reference.copy(versionId = newId)`:
+
+```kotlin
+val start = reference.verseStart
+val end = reference.verseEnd
+val moved =
+    if (start != null && end != null) {
+        BibleReference(newId, reference.bookUSFM, reference.chapter, start, end)
+    } else {
+        BibleReference(newId, reference.bookUSFM, reference.chapter)
+    }
+```
+
+Models the SDK returns no longer have a public constructor. A test or preview that builds one
+needs `@OptIn(com.youversion.platform.core.di.PlatformInternalApi::class)`; these constructors have
+no compatibility promise. Types you create yourself, such as `BibleReference` and
+`SearchUserIntent`, keep theirs. The affected types:
+
+- platform-core: `Config`, `PaginatedResponse`, `BibleTextNode`, `BibleBook`, `BibleBookIntro`,
+  `BibleChapter`, `BiblePassage`, `BibleVerse`, `BibleVersion`, `BibleVersionIndex`,
+  `DataExchangeToken`, `OperationResult`, `BibleHighlight`, `Highlight`, `Language`,
+  `Organization`, `ImageSearchResults`, `SearchImage`, `SearchQuery`, `SearchResults`,
+  `SearchTopic`, `TopicSearchResults`, `VerseSearchResults`, `SignInWithYouVersionResult`,
+  `YouVersionUserInfo`, `VerseImage`, `YouVersionVerseOfTheDay`
+- platform-ui: `BibleTextBlock`, `DataExchangeResult`, `DataExchangeStatus.Unknown`,
+  `SignInViewModel.SignInViewState`
+
+`SignInWithYouVersionResult.create` needs the same opt-in.
+
+`BibleTextNode.text` and `BibleTextNode.children` are now read-only; `children` is a `List`.
+
+These types are no longer part of the public API: `HighlightChange` (with `HighlightChange.Remove`
+and `HighlightChange.SetColor`), `PendingHighlightOperation`, `BibleVersionsViewModel.State`,
+`BibleVersionsViewModel.Event`, `BibleVersionsViewModel.Action` (with `VersionSelected`,
+`VersionInfoTapped` and `VersionDismissed`), `BibleTextFonts` and `BibleTextCategory`.
+
+In the reader, moving to the next or previous chapter now lands on the whole chapter, with no verse
+range or selection carried over. Opening a book intro drops the verse range too; the verse selection
+is kept, as before.
+
+* test: close data-class gate gap and cover review follow-ups
+
+- Match a plain `fun copy (` in check-no-public-data-classes.sh
+- Test that BibleTextNode.children can't be mutated
+- Test that opening an intro keeps the verse selection
+* **ui,reader:** the library drawable resources are removed in favour of
+ImageVector icons. Consumers referencing these R.drawable ids must supply
+their own assets.
+platform-ui: ic_chevron_forward, ic_material_footnotes, ic_material_language,
+ic_material_lock, ic_material_share, ic_material_warning, ic_votd,
+ic_wifi_exclamation, yv_bibleapp_dm, yv_bibleapp_icon, yv_bibleapp_lm,
+yv_platform_dm, yv_platform_lm
+platform-reader: ic_circle, ic_copy, ic_i_icon, ic_pending, ic_sync,
+ic_wifi_exclamation
+* **core:** YouVersionNetworkException.Reason is a class instead of an
+enum, so a `when` over it needs an `else` branch. CANNOT_DOWNLOAD is renamed
+to REQUEST_FAILED, INVALID_DOWNLOAD and `failure` are removed, and a 401 from
+the data exchange token request is reported as MISSING_AUTHENTICATION instead
+of NOT_PERMITTED.
+
+* fix(core): keep server details on 401 and 403 responses
+
+- Route 401 and 403 responses through requestFailure with an explicit reason
+- Document the internal error-response helpers
+
+* fix(core): harden failure details from review
+
+- Rename requestFailure to failureException
+- Keep a body read failure as the cause, skip null loc segments
+- Treat blank messages as missing and cap them at 1,000 characters
+- Make Reason and ValidationIssue serializable, store retryAfter as millis
+- Give ValidationIssue value equality and unmodifiable lists
+- Name the new reasons and details in DataExchangeApi's @throws
+* **build:** Koin and Compose material3 are no longer on the compile classpath of apps through the SDK.
+Apps that use these libraries directly must declare the ones they use (`androidx.compose.*` versions via the Compose BOM):
+- `io.insert-koin:koin-core`
+- `androidx.compose.material3:material3`
+- `androidx.compose.foundation:foundation`
+- `androidx.compose.material:material-ripple`
+- `androidx.compose.animation:animation`, `androidx.compose.animation:animation-core`, and `androidx.collection:collection`, previously re-exported through foundation
+`PaddingValues` still resolves through platform-ui. Runtime behavior is unchanged.
+
+### Features
+
+* **core:** report failed responses with specific reasons and details ([c976086](https://github.com/youversion/platform-sdk-kotlin/commit/c97608684fa824bab3616ca3c22a3ed8da2f4ab2))
+
+### Bug Fixes
+
+* **build:** correct api and implementation dependency scopes ([0e30e2d](https://github.com/youversion/platform-sdk-kotlin/commit/0e30e2d66374342162c52601f4974246a33466de))
+* **i18n:** sync kotlin localization from platform-localization ([b6b5a57](https://github.com/youversion/platform-sdk-kotlin/commit/b6b5a571b6ad84aaa514657d2061e1c86eae1211))
+* **ui,reader:** convert XML drawables to ImageVector icons ([9212f50](https://github.com/youversion/platform-sdk-kotlin/commit/9212f50b0b15ba00159bfd9b4e245ac050bf9715))
+
+### Code Refactoring
+
+* replace public data classes with plain classes ([095694b](https://github.com/youversion/platform-sdk-kotlin/commit/095694bc87be31b401c058ff89ea65f58f610d75))
+
 ## [2.8.1](https://github.com/youversion/platform-sdk-kotlin/compare/2.8.0...2.8.1) (2026-11-10)
 
 ### Bug Fixes
