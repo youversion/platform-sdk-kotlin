@@ -1,5 +1,6 @@
 package com.youversion.platform.core.verseimages.models
 
+import com.youversion.platform.core.di.PlatformInternalApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -18,42 +19,44 @@ import kotlinx.serialization.Serializable
  *     image loads.
  */
 @Serializable
-class VerseImage(
-    @SerialName("id") val id: String,
-    @SerialName("image_url") val imageUrl: String,
-    @SerialName("passage_id") val passageId: String,
-    @SerialName("attribution") val attribution: String,
-    @SerialName("language_tag") val languageTag: String,
-    @SerialName("width") val width: Int,
-    @SerialName("height") val height: Int,
-    @SerialName("aspect_ratio") val aspectRatio: Double,
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is VerseImage) return false
-        return id == other.id &&
-            imageUrl == other.imageUrl &&
-            passageId == other.passageId &&
-            attribution == other.attribution &&
-            languageTag == other.languageTag &&
-            width == other.width &&
-            height == other.height &&
-            aspectRatio.compareTo(other.aspectRatio) == 0
-    }
+public class VerseImage
+    @PlatformInternalApi
+    constructor(
+        @SerialName("id") public val id: String,
+        @SerialName("image_url") public val imageUrl: String,
+        @SerialName("passage_id") public val passageId: String,
+        @SerialName("attribution") public val attribution: String,
+        @SerialName("language_tag") public val languageTag: String,
+        @SerialName("width") public val width: Int,
+        @SerialName("height") public val height: Int,
+        @SerialName("aspect_ratio") public val aspectRatio: Double,
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is VerseImage) return false
+            return id == other.id &&
+                imageUrl == other.imageUrl &&
+                passageId == other.passageId &&
+                attribution == other.attribution &&
+                languageTag == other.languageTag &&
+                width == other.width &&
+                height == other.height &&
+                aspectRatio.compareTo(other.aspectRatio) == 0
+        }
 
-    override fun hashCode(): Int {
-        var result = id.hashCode()
-        result = 31 * result + imageUrl.hashCode()
-        result = 31 * result + passageId.hashCode()
-        result = 31 * result + attribution.hashCode()
-        result = 31 * result + languageTag.hashCode()
-        result = 31 * result + width
-        result = 31 * result + height
-        result = 31 * result + aspectRatio.hashCode()
-        return result
-    }
+        override fun hashCode(): Int {
+            var result = id.hashCode()
+            result = 31 * result + imageUrl.hashCode()
+            result = 31 * result + passageId.hashCode()
+            result = 31 * result + attribution.hashCode()
+            result = 31 * result + languageTag.hashCode()
+            result = 31 * result + width
+            result = 31 * result + height
+            result = 31 * result + aspectRatio.hashCode()
+            return result
+        }
 
-    override fun toString(): String =
-        "VerseImage(id=$id, imageUrl=$imageUrl, passageId=$passageId, attribution=$attribution, " +
-            "languageTag=$languageTag, width=$width, height=$height, aspectRatio=$aspectRatio)"
-}
+        override fun toString(): String =
+            "VerseImage(id=$id, imageUrl=$imageUrl, passageId=$passageId, attribution=$attribution, " +
+                "languageTag=$languageTag, width=$width, height=$height, aspectRatio=$aspectRatio)"
+    }

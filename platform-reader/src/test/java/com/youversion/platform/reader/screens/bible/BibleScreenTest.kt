@@ -69,6 +69,7 @@ import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.GraphicsMode
+import java.util.UUID
 import kotlin.math.absoluteValue
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -196,6 +197,8 @@ class BibleScreenTest {
         } returns
             listOf(
                 BibleTextBlock(
+                    id = UUID.randomUUID(),
+                    rows = emptyList(),
                     text =
                         buildAnnotatedString {
                             verses.forEach { (verseText, verse) ->
@@ -238,6 +241,8 @@ class BibleScreenTest {
             (1..verseCount).map { verse ->
                 val verseText = "Verse $verse"
                 BibleTextBlock(
+                    id = UUID.randomUUID(),
+                    rows = emptyList(),
                     text =
                         buildAnnotatedString {
                             append(verseText)
@@ -695,6 +700,8 @@ class BibleScreenTest {
             }
         val block =
             BibleTextBlock(
+                id = UUID.randomUUID(),
+                rows = emptyList(),
                 text =
                     buildAnnotatedString {
                         append("※")
@@ -778,6 +785,8 @@ class BibleScreenTest {
             }
         val block =
             BibleTextBlock(
+                id = UUID.randomUUID(),
+                rows = emptyList(),
                 text =
                     buildAnnotatedString {
                         append("※")
@@ -910,6 +919,8 @@ class BibleScreenTest {
     private fun stubVersionWithTappableVerse() {
         val block =
             BibleTextBlock(
+                id = UUID.randomUUID(),
+                rows = emptyList(),
                 text =
                     buildAnnotatedString {
                         append("In the beginning")
@@ -1379,7 +1390,7 @@ class BibleScreenTest {
                 bibleReference = defaultReference,
                 bibleVersion = testVersion,
                 showVerseActionSheet = true,
-                selectedVerses = setOf(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+                selectedVerses = setOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
             )
         stubSuccessfulTextLoad()
 
@@ -1404,7 +1415,7 @@ class BibleScreenTest {
 
     @Test
     fun `highlight picker gains a remove affordance when highlights change without reselecting`() {
-        val selectedVerse = defaultReference.copy(verseStart = 1, verseEnd = 1)
+        val selectedVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
         var presentColors = emptySet<String>()
         every { mockViewModel.isColorPresentOnAnySelectedVerses(any()) } answers {
             presentColors.contains(firstArg<String>())
@@ -1483,7 +1494,7 @@ class BibleScreenTest {
                 bibleReference = defaultReference,
                 bibleVersion = testVersion,
                 showVerseActionSheet = true,
-                selectedVerses = setOf(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+                selectedVerses = setOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
             )
         stubSuccessfulTextLoad()
 
@@ -1536,7 +1547,7 @@ class BibleScreenTest {
                 bibleReference = defaultReference,
                 bibleVersion = testVersion,
                 showVerseActionSheet = true,
-                selectedVerses = setOf(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+                selectedVerses = setOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
             )
         stubVersionWithTappableVerse()
 
@@ -1564,7 +1575,7 @@ class BibleScreenTest {
                 bibleReference = defaultReference,
                 bibleVersion = testVersion,
                 showVerseActionSheet = true,
-                selectedVerses = setOf(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+                selectedVerses = setOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
             )
         stubVersionWithTappableVerse()
 

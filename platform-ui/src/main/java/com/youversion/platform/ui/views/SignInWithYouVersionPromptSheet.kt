@@ -57,7 +57,7 @@ import com.youversion.platform.ui.theme.readerColorScheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @PlatformInternalApi
-fun SignInWithYouVersionPromptSheet(
+public fun SignInWithYouVersionPromptSheet(
     onSignIn: () -> Unit,
     onDismissRequest: () -> Unit,
 ) {

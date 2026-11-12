@@ -132,7 +132,7 @@ class BibleReaderViewModelReferenceTests {
     fun `version picker selection loads the full version instead of the listing entry`() {
         // The picker's list comes from the versions listing endpoint, which carries no books.
         val listedVersion = BibleVersion(id = 99, abbreviation = "NIV")
-        val fullVersion = listedVersion.copy(books = testBibleVersion.books)
+        val fullVersion = BibleVersion(id = 99, abbreviation = "NIV", books = testBibleVersion.books)
         coEvery { bibleVersionRepository.version(id = 99) } returns fullVersion
 
         viewModel.bibleVersionsViewModel.onVersionChange(listedVersion)
@@ -203,7 +203,9 @@ class BibleReaderViewModelReferenceTests {
     fun `onHeaderSelectionChange clears verse selection`() {
         viewModel.bibleVersion = testBibleVersion
         viewModel.onAction(
-            BibleReaderViewModel.Action.OnVerseTap(defaultReference.copy(verseStart = 1, verseEnd = 1)),
+            BibleReaderViewModel.Action.OnVerseTap(
+                BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1),
+            ),
         )
         assertEquals(1, viewModel.state.value.selectedVerses.size)
 

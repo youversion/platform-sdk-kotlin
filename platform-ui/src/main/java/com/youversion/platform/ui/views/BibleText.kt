@@ -79,32 +79,32 @@ private val DefaultFootnoteMarker: AnnotatedString =
 internal val ImageFootnoteMarker: AnnotatedString =
     buildAnnotatedString { appendInlineContent(id = FOOTNOTE_IMAGE_ID) }
 
-data class BibleTextOptions(
-    val fontFamily: FontFamily = UntitledSerif,
-    val fontSize: TextUnit = 16.sp,
+public class BibleTextOptions(
+    public val fontFamily: FontFamily = UntitledSerif,
+    public val fontSize: TextUnit = 16.sp,
     /**
      * Extra space between lines as a fraction of [fontSize]; null means
      * [DEFAULT_LINE_SPACING_FRACTION].
      */
-    val lineSpacingFraction: Float? = null,
-    val paragraphSpacing: TextUnit? = null,
+    public val lineSpacingFraction: Float? = null,
+    public val paragraphSpacing: TextUnit? = null,
     /**
      * The scripture's color; null means the enclosing [LocalTextStyle] color, or [LocalContentColor] when that is
      * unspecified, as a [Text] with no color of its own would draw.
      */
-    val textColor: Color? = null,
+    public val textColor: Color? = null,
     /**
      * The Words of Christ color; [Color.Unspecified] means the reader theme supplies it.
      *
      * Unset is spelled with the sentinel rather than null, unlike the nullable colors around it,
      * to keep the property binary compatible for consumers compiled against an earlier release.
      */
-    val wocColor: Color = Color.Unspecified,
-    val renderHeadlines: Boolean = true,
-    val renderVerseNumbers: Boolean = true,
-    val footnoteMode: BibleTextFootnoteMode = BibleTextFootnoteMode.NONE,
-    val footnoteMarker: AnnotatedString? = DefaultFootnoteMarker,
-    val selectionColor: Color? = null,
+    public val wocColor: Color = Color.Unspecified,
+    public val renderHeadlines: Boolean = true,
+    public val renderVerseNumbers: Boolean = true,
+    public val footnoteMode: BibleTextFootnoteMode = BibleTextFootnoteMode.NONE,
+    public val footnoteMarker: AnnotatedString? = DefaultFootnoteMarker,
+    public val selectionColor: Color? = null,
 ) {
     internal val inlineContentMap =
         mapOf(
@@ -152,9 +152,46 @@ data class BibleTextOptions(
     internal fun resolvedTextColor(): Color =
         textColor ?: LocalTextStyle.current.color.takeOrElse { LocalContentColor.current }
 
-    companion object {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is BibleTextOptions) return false
+        return fontFamily == other.fontFamily &&
+            fontSize == other.fontSize &&
+            lineSpacingFraction?.toBits() == other.lineSpacingFraction?.toBits() &&
+            paragraphSpacing == other.paragraphSpacing &&
+            textColor == other.textColor &&
+            wocColor == other.wocColor &&
+            renderHeadlines == other.renderHeadlines &&
+            renderVerseNumbers == other.renderVerseNumbers &&
+            footnoteMode == other.footnoteMode &&
+            footnoteMarker == other.footnoteMarker &&
+            selectionColor == other.selectionColor
+    }
+
+    override fun hashCode(): Int {
+        var result = fontFamily.hashCode()
+        result = 31 * result + fontSize.hashCode()
+        result = 31 * result + lineSpacingFraction.hashCode()
+        result = 31 * result + paragraphSpacing.hashCode()
+        result = 31 * result + textColor.hashCode()
+        result = 31 * result + wocColor.hashCode()
+        result = 31 * result + renderHeadlines.hashCode()
+        result = 31 * result + renderVerseNumbers.hashCode()
+        result = 31 * result + footnoteMode.hashCode()
+        result = 31 * result + footnoteMarker.hashCode()
+        result = 31 * result + selectionColor.hashCode()
+        return result
+    }
+
+    override fun toString(): String =
+        "BibleTextOptions(fontFamily=$fontFamily, fontSize=$fontSize, lineSpacingFraction=$lineSpacingFraction, " +
+            "paragraphSpacing=$paragraphSpacing, textColor=$textColor, wocColor=$wocColor, " +
+            "renderHeadlines=$renderHeadlines, renderVerseNumbers=$renderVerseNumbers, " +
+            "footnoteMode=$footnoteMode, footnoteMarker=$footnoteMarker, selectionColor=$selectionColor)"
+
+    public companion object {
         /** Extra leading applied when [lineSpacingFraction] is unset. */
-        const val DEFAULT_LINE_SPACING_FRACTION: Float = 0.4f
+        public const val DEFAULT_LINE_SPACING_FRACTION: Float = 0.4f
 
         // The line height a font already carries before any extra leading is added.
         private const val BASE_LINE_HEIGHT = 1.2f
@@ -162,12 +199,12 @@ data class BibleTextOptions(
 }
 
 @PlatformInternalApi
-fun Int.convertToEnumeration(): String {
+public fun Int.convertToEnumeration(): String {
     val value = 'a'.code + minOf(25, this)
     return value.toChar().toString()
 }
 
-enum class BibleTextFootnoteMode {
+public enum class BibleTextFootnoteMode {
     NONE,
     INLINE,
     MARKER,
@@ -175,7 +212,7 @@ enum class BibleTextFootnoteMode {
     IMAGE,
 }
 
-enum class BibleTextLoadingPhase {
+public enum class BibleTextLoadingPhase {
     INACTIVE,
     LOADING,
     FAILED,
@@ -211,7 +248,7 @@ enum class BibleTextLoadingPhase {
  * load and carry no stable identity, so replace the previous list wholesale rather than diffing against it.
  */
 @Composable
-fun BibleText(
+public fun BibleText(
     reference: BibleReference,
     textOptions: BibleTextOptions = BibleTextOptions(),
     selectedVerses: Set<BibleReference> = emptySet(),

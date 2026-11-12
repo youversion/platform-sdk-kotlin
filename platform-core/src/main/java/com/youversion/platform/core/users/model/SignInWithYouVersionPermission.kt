@@ -1,7 +1,7 @@
 package com.youversion.platform.core.users.model
 
-enum class SignInWithYouVersionPermission(
-    val rawValue: String,
+public enum class SignInWithYouVersionPermission(
+    public val rawValue: String,
 ) {
     OPENID("openid"),
     PROFILE("profile"),
@@ -9,7 +9,7 @@ enum class SignInWithYouVersionPermission(
     HIGHLIGHTS("highlights"),
     ;
 
-    companion object {
+    public companion object {
         /**
          * The permission matching [rawValue], or `null` when no permission matches.
          *
@@ -18,6 +18,10 @@ enum class SignInWithYouVersionPermission(
          *
          * @param rawValue The raw value to resolve.
          */
-        fun fromRawValue(rawValue: String): SignInWithYouVersionPermission? = entries.find { it.rawValue == rawValue }
+        public fun fromRawValue(rawValue: String): SignInWithYouVersionPermission? =
+            entries.find {
+                it.rawValue ==
+                    rawValue
+            }
     }
 }

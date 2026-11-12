@@ -9,7 +9,7 @@ import com.youversion.platform.core.bibles.models.BibleVerse
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.bibles.models.BibleVersionIndex
 
-interface BiblesApi {
+public interface BiblesApi {
     /**
      * Retrieves a list of [BibleVersion]s available for a specified [languageCode].
      *
@@ -22,7 +22,7 @@ interface BiblesApi {
      * @return A list of [BibleVersion]s  available for the language.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun versions(
+    public suspend fun versions(
         languageCode: String? = null,
         fields: List<String>? = null,
         pageSize: Int? = null,
@@ -38,17 +38,17 @@ interface BiblesApi {
      * @return The [BibleVersion] matching the [versionId]
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun version(versionId: Int): BibleVersion
+    public suspend fun version(versionId: Int): BibleVersion
 
     /**
      *
      */
-    suspend fun versionMetaData(versionId: Int): BibleVersion
+    public suspend fun versionMetaData(versionId: Int): BibleVersion
 
     /**
      *
      */
-    suspend fun versionIndex(versionId: Int): BibleVersionIndex
+    public suspend fun versionIndex(versionId: Int): BibleVersionIndex
 
     /**
      * Retrieves a list of [BibleBook]s for a specific [BibleVersion] identified by [versionId]
@@ -59,12 +59,12 @@ interface BiblesApi {
      * @return The list of [BibleBook]s belonging to the [BibleVersion].
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun books(versionId: Int): List<BibleBook>
+    public suspend fun books(versionId: Int): List<BibleBook>
 
     /**
      *
      */
-    suspend fun book(
+    public suspend fun book(
         versionId: Int,
         bookUsfm: String,
     ): BibleBook
@@ -72,7 +72,7 @@ interface BiblesApi {
     /**
      *
      */
-    suspend fun chapters(
+    public suspend fun chapters(
         versionId: Int,
         bookUsfm: String,
     ): List<BibleChapter>
@@ -80,7 +80,7 @@ interface BiblesApi {
     /**
      *
      */
-    suspend fun chapter(
+    public suspend fun chapter(
         versionId: Int,
         bookUsfm: String,
         chapterId: String,
@@ -89,7 +89,7 @@ interface BiblesApi {
     /**
      *
      */
-    suspend fun verses(
+    public suspend fun verses(
         versionId: Int,
         bookUsfm: String,
         chapterId: String,
@@ -98,7 +98,7 @@ interface BiblesApi {
     /**
      *
      */
-    suspend fun verse(
+    public suspend fun verse(
         versionId: Int,
         bookUsfm: String,
         chapterId: String,
@@ -108,7 +108,7 @@ interface BiblesApi {
     /**
      *
      */
-    suspend fun passage(
+    public suspend fun passage(
         reference: BibleReference,
         format: String = "html",
     ): BiblePassage
@@ -125,7 +125,7 @@ interface BiblesApi {
      * @return The [BiblePassage] for the given passage ID.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun passage(
+    public suspend fun passage(
         versionId: Int,
         passageId: String,
         format: String = "html",

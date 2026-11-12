@@ -259,6 +259,54 @@ class BibleReaderRepositoryTest {
     }
 
     @Test
+    fun `previousChapter from a verse lands on the whole chapter`() {
+        val repository = createRepository()
+        val version = versionWithBooks(book("GEN", chapterCount = 3))
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verse = 16)
+
+        assertEquals(
+            BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1),
+            repository.previousChapter(version, reference),
+        )
+    }
+
+    @Test
+    fun `previousChapter from a verse in the first chapter lands on the whole last chapter of the previous book`() {
+        val repository = createRepository()
+        val version = versionWithBooks(book("GEN", chapterCount = 3), book("EXO", chapterCount = 2))
+        val reference = BibleReference(versionId = 1, bookUSFM = "EXO", chapter = 1, verse = 16)
+
+        assertEquals(
+            BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 3),
+            repository.previousChapter(version, reference),
+        )
+    }
+
+    @Test
+    fun `nextChapter from a verse lands on the whole chapter`() {
+        val repository = createRepository()
+        val version = versionWithBooks(book("GEN", chapterCount = 3))
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verse = 16)
+
+        assertEquals(
+            BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 3),
+            repository.nextChapter(version, reference),
+        )
+    }
+
+    @Test
+    fun `nextChapter from a verse in the last chapter lands on the whole first chapter of the next book`() {
+        val repository = createRepository()
+        val version = versionWithBooks(book("GEN", chapterCount = 3), book("EXO", chapterCount = 2))
+        val reference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 3, verse = 16)
+
+        assertEquals(
+            BibleReference(versionId = 1, bookUSFM = "EXO", chapter = 1),
+            repository.nextChapter(version, reference),
+        )
+    }
+
+    @Test
     fun `previousChapter returns null when at first chapter of first book`() {
         val repository = createRepository()
         val version = versionWithBooks(book("GEN", chapterCount = 3))

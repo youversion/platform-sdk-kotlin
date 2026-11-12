@@ -16,7 +16,7 @@ import com.youversion.platform.ui.R
  */
 @Composable
 @PlatformInternalApi
-fun SignOutConfirmationAlert(
+public fun SignOutConfirmationAlert(
     onDismissRequest: () -> Unit,
     onConfirm: () -> Unit,
     confirmation: SignInViewModel.SignOutConfirmation = SignInViewModel.SignOutConfirmation.STANDARD,

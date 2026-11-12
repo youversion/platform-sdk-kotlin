@@ -130,9 +130,13 @@ class BibleReaderViewModelActionTests {
             )
     }
 
-    private fun verseReference(verse: Int) =
-        viewModel.state.value.bibleReference
-            .copy(verseStart = verse, verseEnd = verse)
+    private fun verseReference(
+        verse: Int,
+        chapter: Int = viewModel.state.value.bibleReference.chapter,
+    ): BibleReference {
+        val current = viewModel.state.value.bibleReference
+        return BibleReference(current.versionId, current.bookUSFM, chapter, verse)
+    }
 
     @AfterTest
     fun teardown() {
@@ -238,7 +242,7 @@ class BibleReaderViewModelActionTests {
 
     @Test
     fun `OpenFootnotes sets showing state and stores reference and footnotes`() {
-        val footnoteRef = defaultReference.copy(verseStart = 5, verseEnd = 5)
+        val footnoteRef = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 5)
         val footnotes = listOf(AnnotatedString("footnote text"))
 
         viewModel.onAction(BibleReaderViewModel.Action.OpenFootnotes(footnoteRef, footnotes))
@@ -251,7 +255,7 @@ class BibleReaderViewModelActionTests {
 
     @Test
     fun `CloseFootnotes clears showing state and reference and footnotes`() {
-        val footnoteRef = defaultReference.copy(verseStart = 5, verseEnd = 5)
+        val footnoteRef = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 5)
         val footnotes = listOf(AnnotatedString("note"))
         viewModel.onAction(BibleReaderViewModel.Action.OpenFootnotes(footnoteRef, footnotes))
 
@@ -344,7 +348,7 @@ class BibleReaderViewModelActionTests {
     fun `a scroll target that never landed is dropped when the reader moves on`() {
         viewModel.onAction(BibleReaderViewModel.Action.ScrollToReference(verseReference(12)))
 
-        viewModel.onHeaderSelectionChange(defaultReference.copy(chapter = 2))
+        viewModel.onHeaderSelectionChange(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2))
 
         assertNull(viewModel.state.value.scrollTargetReference)
     }
@@ -365,7 +369,7 @@ class BibleReaderViewModelActionTests {
     fun `a scroll target does not survive a trip through the next book's intro`() {
         viewModel.bibleVersion = versionWithExodusIntro
         every { bibleReaderRepository.nextChapter(any(), any()) } returns
-            defaultReference.copy(bookUSFM = "EXO", chapter = 1)
+            BibleReference(versionId = 1, bookUSFM = "EXO", chapter = 1)
         viewModel.onAction(BibleReaderViewModel.Action.ScrollToReference(verseReference(12)))
 
         viewModel.onAction(BibleReaderViewModel.Action.GoToNextChapter)
@@ -404,7 +408,7 @@ class BibleReaderViewModelActionTests {
 
     @Test
     fun `FocusReference ignores a verse outside the chapter on display`() {
-        val otherChapterVerse = verseReference(5).copy(chapter = viewModel.bibleReference.chapter + 1)
+        val otherChapterVerse = verseReference(5, chapter = viewModel.bibleReference.chapter + 1)
 
         viewModel.onAction(BibleReaderViewModel.Action.FocusReference(otherChapterVerse))
 
@@ -468,7 +472,7 @@ class BibleReaderViewModelActionTests {
     fun `navigating to another chapter lifts the focus`() {
         viewModel.onAction(BibleReaderViewModel.Action.FocusReference(verseReference(12)))
 
-        viewModel.bibleReference = verseReference(3).copy(chapter = 2)
+        viewModel.bibleReference = verseReference(3, chapter = 2)
 
         assertNull(viewModel.state.value.focusedReference)
     }
@@ -508,16 +512,16 @@ class BibleReaderViewModelActionTests {
 
     @Test
     fun `GoToSearchResult takes the reader to the chapter containing the result`() {
-        val verse = verseReference(12).copy(chapter = 3)
+        val verse = verseReference(12, chapter = 3)
 
         viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verse))
 
-        assertEquals(verse.copy(verseStart = null, verseEnd = null), viewModel.bibleReference)
+        assertEquals(BibleReference(verse.versionId, verse.bookUSFM, verse.chapter), viewModel.bibleReference)
     }
 
     @Test
     fun `GoToSearchResult stages the verse as the scroll target`() {
-        val verse = verseReference(12).copy(chapter = 3)
+        val verse = verseReference(12, chapter = 3)
 
         viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verse))
 
@@ -536,14 +540,14 @@ class BibleReaderViewModelActionTests {
 
     @Test
     fun `the result is not focused while the sheet is still closing over the move`() {
-        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12).copy(chapter = 3)))
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12, chapter = 3)))
 
         assertNull(viewModel.state.value.focusedReference)
     }
 
     @Test
     fun `the staged focus outlives the move and takes once the sheet is down`() {
-        val verse = verseReference(12).copy(chapter = 3)
+        val verse = verseReference(12, chapter = 3)
         viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verse))
 
         viewModel.onAction(BibleReaderViewModel.Action.CloseSearch)
@@ -554,7 +558,7 @@ class BibleReaderViewModelActionTests {
     /** The dim is meant to be seen fading in, so the focus waits for the sheet instead of landing behind it. */
     @Test
     fun `the staged focus waits for the sheet even after the scroll has landed`() {
-        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12).copy(chapter = 3)))
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12, chapter = 3)))
 
         viewModel.onAction(BibleReaderViewModel.Action.ScrollTargetReached)
 
@@ -618,9 +622,9 @@ class BibleReaderViewModelActionTests {
 
     @Test
     fun `a staged focus does not follow the reader into an unrelated chapter`() {
-        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12).copy(chapter = 3)))
+        viewModel.onAction(BibleReaderViewModel.Action.GoToSearchResult(verseReference(12, chapter = 3)))
 
-        viewModel.bibleReference = viewModel.bibleReference.copy(chapter = 9)
+        viewModel.bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 9)
         viewModel.onAction(BibleReaderViewModel.Action.CloseSearch)
 
         assertNull(viewModel.state.value.focusedReference)

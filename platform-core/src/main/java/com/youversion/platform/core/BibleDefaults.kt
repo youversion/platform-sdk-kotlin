@@ -1,7 +1,7 @@
 package com.youversion.platform.core
 
 /** Default values used across the YouVersion Platform SDK. */
-object BibleDefaults {
+public object BibleDefaults {
     /** The default Bible version ID (BSB). */
-    const val VERSION_ID: Int = 3034
+    public const val VERSION_ID: Int = 3034
 }

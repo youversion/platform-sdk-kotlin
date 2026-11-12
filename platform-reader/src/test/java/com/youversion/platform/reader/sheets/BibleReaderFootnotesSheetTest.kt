@@ -42,6 +42,7 @@ import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -155,6 +156,8 @@ class BibleReaderFootnotesSheetTest {
         } returns
             listOf(
                 BibleTextBlock(
+                    id = UUID.randomUUID(),
+                    rows = emptyList(),
                     text = AnnotatedString(""),
                     chapter = 1,
                     firstLineHeadIndent = 0,
@@ -310,7 +313,7 @@ class BibleReaderFootnotesSheetTest {
 
     @Test
     fun `keeps passed-in footnotes when no annotation matches the reference`() {
-        val otherVerse = testVerseReference.copy(verseStart = 9, verseEnd = 9)
+        val otherVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 9)
         stubRenderedFootnotes(listOf(footnoteFor(otherVerse, "Other verse footnote")))
 
         renderSheet(

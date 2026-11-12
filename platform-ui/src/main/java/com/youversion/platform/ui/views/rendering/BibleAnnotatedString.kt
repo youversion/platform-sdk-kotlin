@@ -30,11 +30,11 @@ internal fun AnnotatedString.trimTrailingWhitespace(): AnnotatedString {
 }
 
 @PlatformInternalApi
-object BibleReferenceAttribute {
-    const val NAME = "BibleReference"
+public object BibleReferenceAttribute {
+    public const val NAME: String = "BibleReference"
 }
 
 @PlatformInternalApi
-object BibleTextCategoryAttribute {
-    const val NAME = "BibleTextCategory"
+public object BibleTextCategoryAttribute {
+    public const val NAME: String = "BibleTextCategory"
 }

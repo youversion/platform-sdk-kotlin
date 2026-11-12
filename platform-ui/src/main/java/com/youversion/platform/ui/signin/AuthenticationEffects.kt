@@ -20,7 +20,7 @@ import com.youversion.platform.core.users.model.SignInWithYouVersionResult
  *         and returns a [SignInWithYouVersionResult] on success, or null on failure.
  */
 @Composable
-fun rememberSignIn(): suspend (Set<SignInWithYouVersionPermission>) -> SignInWithYouVersionResult? {
+public fun rememberSignIn(): suspend (Set<SignInWithYouVersionPermission>) -> SignInWithYouVersionResult? {
     val context = LocalContext.current
     val registryOwner = LocalActivityResultRegistryOwner.current
     if (registryOwner == null) {

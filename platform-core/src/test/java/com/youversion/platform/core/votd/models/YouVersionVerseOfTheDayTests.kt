@@ -1,5 +1,6 @@
 package com.youversion.platform.core.votd.models
 
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -34,20 +35,43 @@ class YouVersionVerseOfTheDayTests {
     }
 
     @Test
-    fun `test copy drops image id`() {
-        val day = YouVersionVerseOfTheDay(1, "ISA.43.19", "img-1")
-        val copied = day.copy()
-        assertNull(copied.imageId)
-        assertNotEquals(day, copied)
+    fun `test decoding reads the image id`() {
+        val day =
+            Json.decodeFromString<YouVersionVerseOfTheDay>(
+                """{"day":1,"passage_id":"ISA.43.19","image_id":"img-1"}""",
+            )
+        assertEquals(YouVersionVerseOfTheDay(1, "ISA.43.19", "img-1"), day)
     }
 
     @Test
-    fun `test two argument constructor leaves image id null`() {
+    fun `test decoding without an image id leaves it null`() {
+        val day = Json.decodeFromString<YouVersionVerseOfTheDay>("""{"day":1,"passage_id":"ISA.43.19"}""")
+        assertNull(day.imageId)
+    }
+
+    @Test
+    fun `test encoding writes the image id under its key`() {
+        assertEquals(
+            """{"day":1,"passage_id":"ISA.43.19","image_id":"img-1"}""",
+            Json.encodeToString(YouVersionVerseOfTheDay(1, "ISA.43.19", "img-1")),
+        )
+    }
+
+    @Test
+    fun `test encoding omits a null image id`() {
+        assertEquals(
+            """{"day":1,"passage_id":"ISA.43.19"}""",
+            Json.encodeToString(YouVersionVerseOfTheDay(1, "ISA.43.19")),
+        )
+    }
+
+    @Test
+    fun `test image id defaults to null`() {
         assertNull(YouVersionVerseOfTheDay(1, "ISA.43.19").imageId)
     }
 
     @Test
-    fun `test three argument constructor sets image id`() {
+    fun `test image id is kept`() {
         assertEquals("img-1", YouVersionVerseOfTheDay(1, "ISA.43.19", "img-1").imageId)
     }
 }

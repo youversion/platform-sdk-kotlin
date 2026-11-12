@@ -4,10 +4,10 @@ import com.youversion.platform.core.bibles.models.BibleBook
 import com.youversion.platform.core.bibles.models.BibleChapter
 import com.youversion.platform.core.bibles.models.BibleVersion
 import kotlin.test.Test
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -549,76 +549,47 @@ class BibleReferenceTests {
     }
 
     @Test
-    fun `test copy throws when it drops the ending verse`() {
-        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verseStart = 3, verseEnd = 5)
-
-        assertFailsWith<IllegalArgumentException> { ref.copy(verseEnd = null) }
-    }
-
-    @Test
-    fun `test copy throws when it drops the starting verse`() {
-        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verseStart = 3, verseEnd = 5)
-
-        assertFailsWith<IllegalArgumentException> { ref.copy(verseStart = null) }
-    }
-
-    @Test
-    fun `test copy throws when it adds an ending verse to a whole chapter`() {
+    fun `test withVersionId keeps a whole chapter`() {
         val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2)
 
-        assertFailsWith<IllegalArgumentException> { ref.copy(verseEnd = 5) }
+        assertEquals(BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 2), ref.withVersionId(111))
     }
 
     @Test
-    fun `test copy throws when it adds a starting verse to a whole chapter`() {
-        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2)
+    fun `test withVersionId keeps a single verse`() {
+        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verse = 3)
 
-        assertFailsWith<IllegalArgumentException> { ref.copy(verseStart = 3) }
+        assertEquals(BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 2, verse = 3), ref.withVersionId(111))
     }
 
     @Test
-    fun `test the rejection message names the three legal shapes`() {
+    fun `test withVersionId keeps a verse range`() {
         val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verseStart = 3, verseEnd = 5)
 
-        val message = assertFailsWith<IllegalArgumentException> { ref.copy(verseEnd = null) }.message ?: ""
-
-        assertContains(message, "whole chapter")
-        assertContains(message, "single verse")
-        assertContains(message, "verse range")
+        assertEquals(
+            BibleReference(versionId = 111, bookUSFM = "GEN", chapter = 2, verseStart = 3, verseEnd = 5),
+            ref.withVersionId(111),
+        )
     }
 
     @Test
-    fun `test copy of the version book and chapter still succeeds`() {
+    fun `test references with the same fields are equal and hash alike`() {
+        val a = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verseStart = 3, verseEnd = 5)
+        val b = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verseStart = 3, verseEnd = 5)
+
+        assertEquals(a, b)
+        assertEquals(a.hashCode(), b.hashCode())
+    }
+
+    @Test
+    fun `test a difference in any field makes references unequal`() {
         val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verseStart = 3, verseEnd = 5)
 
-        val moved = ref.copy(versionId = 111, bookUSFM = "EXO", chapter = 4)
-
-        assertEquals(111, moved.versionId)
-        assertEquals("EXO", moved.bookUSFM)
-        assertEquals(4, moved.chapter)
-        assertEquals(3, moved.verseStart)
-        assertEquals(5, moved.verseEnd)
-    }
-
-    @Test
-    fun `test copy of a whole chapter to another chapter still succeeds`() {
-        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2)
-
-        val moved = ref.copy(chapter = 4)
-
-        assertEquals(4, moved.chapter)
-        assertNull(moved.verseStart)
-        assertNull(moved.verseEnd)
-    }
-
-    @Test
-    fun `test copy that changes both verses together still succeeds`() {
-        val ref = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verseStart = 3, verseEnd = 5)
-
-        val widened = ref.copy(verseStart = 1, verseEnd = 10)
-
-        assertEquals(1, widened.verseStart)
-        assertEquals(10, widened.verseEnd)
+        assertNotEquals(ref, BibleReference(versionId = 9, bookUSFM = "GEN", chapter = 2, verseStart = 3, verseEnd = 5))
+        assertNotEquals(ref, BibleReference(versionId = 1, bookUSFM = "EXO", chapter = 2, verseStart = 3, verseEnd = 5))
+        assertNotEquals(ref, BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 9, verseStart = 3, verseEnd = 5))
+        assertNotEquals(ref, BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verseStart = 4, verseEnd = 5))
+        assertNotEquals(ref, BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 2, verseStart = 3, verseEnd = 6))
     }
 
     private fun chapter(

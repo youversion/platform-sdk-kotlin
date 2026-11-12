@@ -3,7 +3,7 @@ package com.youversion.platform.core.languages.api
 import com.youversion.platform.core.api.PaginatedResponse
 import com.youversion.platform.core.languages.models.Language
 
-interface LanguagesApi {
+public interface LanguagesApi {
     /**
      * Retrieves a list of languages supported in the Platform.
      *
@@ -19,7 +19,7 @@ interface LanguagesApi {
      * @return A list of [Language]s representing the available languages.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
-    suspend fun languages(
+    public suspend fun languages(
         country: String? = null,
         fields: List<String>? = null,
         perPage: Int? = null,

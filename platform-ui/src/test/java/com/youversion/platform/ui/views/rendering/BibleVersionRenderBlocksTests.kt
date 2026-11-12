@@ -8,6 +8,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.core.bibles.domain.BibleReference
 import kotlinx.coroutines.test.runTest
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -588,6 +589,8 @@ class BibleVersionRenderBlocksTests {
     fun `blank text is not visible but a non-breaking space is`() {
         fun block(text: String) =
             BibleTextBlock(
+                id = UUID.randomUUID(),
+                rows = emptyList(),
                 text = AnnotatedString(text),
                 chapter = 1,
                 firstLineHeadIndent = 0,

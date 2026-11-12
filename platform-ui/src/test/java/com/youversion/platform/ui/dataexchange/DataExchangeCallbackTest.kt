@@ -7,6 +7,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
@@ -107,5 +108,38 @@ class DataExchangeCallbackTest {
         assertFalse(
             grantsHighlights("youversionauth://callback?data_exchange_status=granted&granted_permissions=profile"),
         )
+    }
+
+    @Test
+    fun `results with equal values are equal`() {
+        val permissions = listOf(SignInWithYouVersionPermission.HIGHLIGHTS)
+        val first = DataExchangeResult(DataExchangeStatus.Granted, permissions)
+        val second = DataExchangeResult(DataExchangeStatus.Granted, permissions)
+        assertEquals(first, second)
+        assertEquals(first.hashCode(), second.hashCode())
+    }
+
+    @Test
+    fun `results differing in any value are not equal`() {
+        val base = DataExchangeResult(DataExchangeStatus.Granted, listOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+        assertNotEquals(base, DataExchangeResult(DataExchangeStatus.Cancelled, base.grantedPermissions))
+        assertNotEquals(base, DataExchangeResult(DataExchangeStatus.Granted, emptyList()))
+    }
+
+    @Test
+    fun `result toString matches the existing format`() {
+        val permissions = listOf(SignInWithYouVersionPermission.HIGHLIGHTS)
+        assertEquals(
+            "DataExchangeResult(status=Granted, grantedPermissions=$permissions)",
+            DataExchangeResult(DataExchangeStatus.Granted, permissions).toString(),
+        )
+    }
+
+    @Test
+    fun `unknown statuses compare by raw value`() {
+        assertEquals(DataExchangeStatus.Unknown("a"), DataExchangeStatus.Unknown("a"))
+        assertEquals(DataExchangeStatus.Unknown("a").hashCode(), DataExchangeStatus.Unknown("a").hashCode())
+        assertNotEquals(DataExchangeStatus.Unknown("a"), DataExchangeStatus.Unknown("b"))
+        assertEquals("Unknown(rawValue=a)", DataExchangeStatus.Unknown("a").toString())
     }
 }

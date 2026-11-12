@@ -3,12 +3,12 @@ package com.youversion.platform.core.domain
 /**
  * A simple Key-value storage.
  */
-interface Storage {
+public interface Storage {
     /**
      * Stores a string value for a given key. If the String is null,
      * then the key is removed.
      */
-    fun putString(
+    public fun putString(
         key: String,
         value: String?,
     )
@@ -17,13 +17,13 @@ interface Storage {
      * @return The string value for a given key, or null if the key
      * does not exist.
      */
-    fun getStringOrNull(key: String): String?
+    public fun getStringOrNull(key: String): String?
 
     /**
      * Stores an integer value for a given key. If the Integer is null,
      * then the key is removed.
      */
-    fun putInt(
+    public fun putInt(
         key: String,
         value: Int?,
     )
@@ -32,13 +32,13 @@ interface Storage {
      * @return The integer value for a given key, or null if the key
      * does not exist.
      */
-    fun getIntOrNull(key: String): Int?
+    public fun getIntOrNull(key: String): Int?
 
     /**
      * Stores a float value for a given key. If the Float is null,
      * then the key is removed.
      */
-    fun putFloat(
+    public fun putFloat(
         key: String,
         value: Float?,
     )
@@ -47,5 +47,5 @@ interface Storage {
      * @return The float value for a given key, or null if the key
      * does not exist.
      */
-    fun getFloatOrNull(key: String): Float?
+    public fun getFloatOrNull(key: String): Float?
 }

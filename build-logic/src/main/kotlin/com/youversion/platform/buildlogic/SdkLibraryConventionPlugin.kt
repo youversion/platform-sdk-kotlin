@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 /**
  * Configures a published SDK module: Android library, publishing, formatting, and an 85% line-coverage floor.
  *
+ * Explicit API mode is on, so every public declaration has to state its visibility and return type.
+ *
  * SDK modules opt in to each other's `@PlatformInternalApi` declarations. Sample apps deliberately do not,
  * so that they compile against the same surface a consumer sees.
  *
@@ -30,6 +32,7 @@ class SdkLibraryConventionPlugin : Plugin<Project> {
             pluginManager.apply("org.jetbrains.kotlinx.kover")
 
             extensions.configure<KotlinAndroidProjectExtension> {
+                explicitApi()
                 compilerOptions.optIn.add("com.youversion.platform.core.di.PlatformInternalApi")
             }
 

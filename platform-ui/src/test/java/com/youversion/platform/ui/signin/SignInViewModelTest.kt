@@ -31,6 +31,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -294,4 +295,72 @@ class SignInViewModelTest {
             idToken = null,
             expiryDate = null,
         )
+
+    @Test
+    fun `test sign in states with equal values are equal`() {
+        val first = signInViewState()
+        val second = signInViewState()
+        assertEquals(first, second)
+        assertEquals(first.hashCode(), second.hashCode())
+    }
+
+    @Test
+    fun `test sign in states differing in any value are not equal`() {
+        val base = signInViewState()
+        listOf(
+            signInViewState(isProcessing = false),
+            signInViewState(isSignedIn = false),
+            signInViewState(isSignInEnabled = true),
+            signInViewState(userName = "Other"),
+            signInViewState(userEmail = "other@example.com"),
+            signInViewState(signOutConfirmation = null),
+        ).forEach { assertNotEquals(base, it) }
+    }
+
+    @Test
+    fun `test sign in state toString masks email`() {
+        assertEquals(
+            "SignInViewState(isProcessing=true, isSignedIn=true, isSignInEnabled=false, userName=Name, " +
+                "userEmail=<redacted>, signOutConfirmation=STANDARD)",
+            signInViewState().toString(),
+        )
+        assertTrue(signInViewState(userEmail = null).toString().contains("userEmail=null"))
+    }
+
+    @Test
+    fun `test process auth callback actions compare by intent`() {
+        val intent = mockk<Intent>(relaxed = true)
+        val first = SignInViewModel.Action.ProcessAuthCallback(intent)
+        val second = SignInViewModel.Action.ProcessAuthCallback(intent)
+        assertEquals(first, second)
+        assertEquals(first.hashCode(), second.hashCode())
+        assertNotEquals(first, SignInViewModel.Action.ProcessAuthCallback(mockk(relaxed = true)))
+        assertEquals("ProcessAuthCallback(intent=<redacted>)", first.toString())
+    }
+
+    @Test
+    fun `test sign out actions compare by requireConfirmation`() {
+        val first = SignInViewModel.Action.SignOut(requireConfirmation = true)
+        val second = SignInViewModel.Action.SignOut(requireConfirmation = true)
+        assertEquals(first, second)
+        assertEquals(first.hashCode(), second.hashCode())
+        assertNotEquals<SignInViewModel.Action>(first, SignInViewModel.Action.SignOut())
+        assertEquals("SignOut(requireConfirmation=true)", first.toString())
+    }
+
+    private fun signInViewState(
+        isProcessing: Boolean = true,
+        isSignedIn: Boolean = true,
+        isSignInEnabled: Boolean = false,
+        userName: String? = "Name",
+        userEmail: String? = "name@example.com",
+        signOutConfirmation: SignInViewModel.SignOutConfirmation? = SignInViewModel.SignOutConfirmation.STANDARD,
+    ) = SignInViewModel.SignInViewState(
+        isProcessing = isProcessing,
+        isSignedIn = isSignedIn,
+        isSignInEnabled = isSignInEnabled,
+        userName = userName,
+        userEmail = userEmail,
+        signOutConfirmation = signOutConfirmation,
+    )
 }

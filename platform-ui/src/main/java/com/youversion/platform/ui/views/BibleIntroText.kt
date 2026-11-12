@@ -62,7 +62,7 @@ import kotlinx.coroutines.CancellationException
  */
 @Composable
 @PlatformInternalApi
-fun BibleIntroText(
+public fun BibleIntroText(
     versionId: Int,
     bookUSFM: String,
     passageId: String,

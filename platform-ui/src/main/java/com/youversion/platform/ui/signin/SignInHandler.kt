@@ -21,7 +21,7 @@ import kotlin.coroutines.resume
  * @param context The Android context needed to launch the Custom Tab and handle callbacks.
  * @param activityResultRegistry The registry used to register for activity results.
  */
-class SignInHandler(
+public class SignInHandler(
     private val context: Context,
     private val activityResultRegistry: ActivityResultRegistry,
 ) {
@@ -36,7 +36,7 @@ class SignInHandler(
      * @return A [SignInWithYouVersionResult] on success, or null on failure/cancellation.
      * @throws Exception if the token exchange or sign-in launch fails.
      */
-    suspend fun signIn(permissions: Set<SignInWithYouVersionPermission>): SignInWithYouVersionResult? {
+    public suspend fun signIn(permissions: Set<SignInWithYouVersionPermission>): SignInWithYouVersionResult? {
         var launcher: ActivityResultLauncher<Intent>? = null
         val callbackIntent =
             try {

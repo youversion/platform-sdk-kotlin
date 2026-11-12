@@ -26,7 +26,7 @@ import kotlin.coroutines.resume
  *
  * @param activityResultRegistry The registry used to register for the callback.
  */
-class DataExchangeHandler(
+public class DataExchangeHandler(
     private val activityResultRegistry: ActivityResultRegistry,
 ) {
     /**
@@ -45,7 +45,7 @@ class DataExchangeHandler(
      *         [DataExchangeStatus.NotStarted] — telling a caller that settles the flow on a resume that no resume is
      *         coming.
      */
-    suspend fun requestDataExchange(
+    public suspend fun requestDataExchange(
         permissions: Set<SignInWithYouVersionPermission>,
         onBrowserOpened: () -> Unit = {},
     ): DataExchangeResult =

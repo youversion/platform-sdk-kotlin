@@ -35,8 +35,8 @@ class BibleReaderViewModelHighlightsTests {
             bookUSFM = "GEN",
             chapter = 1,
         )
-    private val verseOne = defaultReference.copy(verseStart = 1, verseEnd = 1)
-    private val verseTwo = defaultReference.copy(verseStart = 2, verseEnd = 2)
+    private val verseOne = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+    private val verseTwo = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
 
     private val yellow = "#ffff00"
     private val blue = "#0000ff"

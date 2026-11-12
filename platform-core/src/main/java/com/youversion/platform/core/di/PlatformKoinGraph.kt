@@ -1,15 +1,16 @@
 package com.youversion.platform.core.di
 
+import org.koin.core.KoinApplication
 import org.koin.core.context.KoinContext
 import org.koin.core.module.Module
 import org.koin.dsl.koinApplication
 
 @PlatformInternalApi
-object PlatformKoinGraph {
-    val koinApplication
+public object PlatformKoinGraph {
+    public val koinApplication: KoinApplication
         get() = PlatformKoinContext.koinApplication
 
-    fun start(modules: List<Module>) {
+    public fun start(modules: List<Module>) {
         PlatformKoinContext
             .startKoin(
                 koinApplication {
@@ -18,7 +19,7 @@ object PlatformKoinGraph {
             )
     }
 
-    fun stop() = PlatformKoinContext.stopKoin()
+    public fun stop(): Unit = PlatformKoinContext.stopKoin()
 
     internal fun getContext(): KoinContext = PlatformKoinContext
 }
