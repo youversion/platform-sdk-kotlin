@@ -57,6 +57,7 @@ internal object VideosEndpoints : VideosApi {
             appendPathSegments(listOf(id), encodeSlash = true)
         }
 
+    /** shortcut: sends `Accept-Language: en` to dodge cached empty 204 responses; remove once the server fix is verified. */
     override suspend fun playlists(
         organizationId: String,
         fields: List<String>?,
@@ -72,7 +73,6 @@ internal object VideosEndpoints : VideosApi {
         }
         return httpClient
             .get(playlistsUrl(organizationId, fields, pageSize, pageToken)) {
-                // shortcut: forces English to dodge cached empty 204 playlist responses; remove once the server fix is verified.
                 header(HttpHeaders.AcceptLanguage, "en")
             }.let {
                 when (it.status) {
