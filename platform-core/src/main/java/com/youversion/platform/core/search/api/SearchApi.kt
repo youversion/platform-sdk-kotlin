@@ -124,8 +124,8 @@ public interface SearchApi {
      * @param languageRanges BCP 47 language ranges in preference order, sent as the `Accept-Language` header. It must
      *     not be empty, and `*` requests all languages.
      * @param pageSize The number of results to return. When supplied, it must be between 1 and 99.
-     * @param pageToken A [VideoSearchResults.nextPageToken] from an earlier search with the same arguments, to
-     *     continue where it left off.
+     * @param pageToken A [VideoSearchResults.nextPageToken] from an earlier search with the same [query],
+     *     [organizationIds] and [languageRanges], to continue where it left off. [pageSize] may change.
      * @return The matching [VideoSearchResults].
      * @throws IllegalArgumentException if [query] or [pageSize] is outside the range stated above, an entry of
      *     [organizationIds] is not a UUID, or [languageRanges] is empty or holds a range that is neither a
