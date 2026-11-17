@@ -38,7 +38,7 @@ class VideosApiTests : YouVersionPlatformTest {
                     "/v1/organizations/org%2F1/playlists?page_size=50&page_token=next%2B%2F%3D",
                     request.url.encodedPathAndQuery,
                 )
-                assertNull(request.headers[HttpHeaders.AcceptLanguage])
+                assertEquals("en", request.headers[HttpHeaders.AcceptLanguage])
                 respondJson(
                     """
                     {

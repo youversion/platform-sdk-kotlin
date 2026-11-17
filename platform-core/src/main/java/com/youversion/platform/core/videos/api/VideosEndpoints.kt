@@ -12,6 +12,8 @@ import com.youversion.platform.core.videos.models.Video
 import com.youversion.platform.core.videos.models.VideoPlaylist
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.appendPathSegments
 import io.ktor.http.path
@@ -69,8 +71,10 @@ internal object VideosEndpoints : VideosApi {
             }
         }
         return httpClient
-            .get(playlistsUrl(organizationId, fields, pageSize, pageToken))
-            .let {
+            .get(playlistsUrl(organizationId, fields, pageSize, pageToken)) {
+                // shortcut: forces English to dodge cached empty 204 playlist responses; remove once the server fix is verified.
+                header(HttpHeaders.AcceptLanguage, "en")
+            }.let {
                 when (it.status) {
                     HttpStatusCode.NoContent -> PaginatedResponse(emptyList())
                     else -> parsePaginatedResponse(it)
