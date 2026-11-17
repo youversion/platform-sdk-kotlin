@@ -102,6 +102,7 @@ public final class com/youversion/platform/core/api/YouVersionApi {
 	public final fun getSearch ()Lcom/youversion/platform/core/search/api/SearchApi;
 	public final fun getUsers ()Lcom/youversion/platform/core/users/api/UsersApi;
 	public final fun getVerseImages ()Lcom/youversion/platform/core/verseimages/api/VerseImagesApi;
+	public final fun getVideos ()Lcom/youversion/platform/core/videos/api/VideosApi;
 	public final fun getVotd ()Lcom/youversion/platform/core/votd/api/VotdApi;
 	public final fun hasPermission (Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;)Z
 	public final fun hasValidToken (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -802,12 +803,15 @@ public abstract interface class com/youversion/platform/core/search/api/SearchAp
 	public static synthetic fun unified$default (Lcom/youversion/platform/core/search/api/SearchApi;Ljava/lang/String;ILjava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public abstract fun verses (Ljava/lang/String;ILcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun verses$default (Lcom/youversion/platform/core/search/api/SearchApi;Ljava/lang/String;ILcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun videos (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun videos$default (Lcom/youversion/platform/core/search/api/SearchApi;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class com/youversion/platform/core/search/api/SearchApi$DefaultImpls {
 	public static synthetic fun images$default (Lcom/youversion/platform/core/search/api/SearchApi;Ljava/lang/String;ILjava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun unified$default (Lcom/youversion/platform/core/search/api/SearchApi;Ljava/lang/String;ILjava/util/List;Lcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/util/List;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun verses$default (Lcom/youversion/platform/core/search/api/SearchApi;Ljava/lang/String;ILcom/youversion/platform/core/search/models/SearchUserIntent;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun videos$default (Lcom/youversion/platform/core/search/api/SearchApi;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class com/youversion/platform/core/search/models/ImageSearchResults {
@@ -842,6 +846,7 @@ public final class com/youversion/platform/core/search/models/SearchResults {
 	public final fun getSearchInsteadFor ()Ljava/lang/String;
 	public final fun getTopics ()Ljava/util/List;
 	public final fun getUserIntent ()Lcom/youversion/platform/core/search/models/SearchUserIntent;
+	public final fun getVideos ()Ljava/util/List;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -871,6 +876,13 @@ public final class com/youversion/platform/core/search/models/SearchUserIntent$C
 	public final fun getUnknown ()Lcom/youversion/platform/core/search/models/SearchUserIntent;
 }
 
+public final class com/youversion/platform/core/search/models/SearchVideo {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/youversion/platform/core/search/models/TopicSearchResults {
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDidYouMean ()Ljava/util/List;
@@ -887,6 +899,17 @@ public final class com/youversion/platform/core/search/models/VerseSearchResults
 	public final fun getReferences ()Ljava/util/List;
 	public final fun getSearchInsteadFor ()Ljava/lang/String;
 	public final fun getUserIntent ()Lcom/youversion/platform/core/search/models/SearchUserIntent;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/search/models/VideoSearchResults {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDidYouMean ()Ljava/util/List;
+	public final fun getNextPageToken ()Ljava/lang/String;
+	public final fun getSearchInsteadFor ()Ljava/lang/String;
+	public final fun getUserIntent ()Lcom/youversion/platform/core/search/models/SearchUserIntent;
+	public final fun getVideos ()Ljava/util/List;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1034,6 +1057,131 @@ public final synthetic class com/youversion/platform/core/verseimages/models/Ver
 }
 
 public final class com/youversion/platform/core/verseimages/models/VerseImage$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/youversion/platform/core/videos/api/VideosApi {
+	public abstract fun playlist (Ljava/lang/String;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun playlists (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun playlists$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun video (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun video$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/videos/api/VideosApi$DefaultImpls {
+	public static synthetic fun playlists$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun video$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/videos/models/Video {
+	public static final field Companion Lcom/youversion/platform/core/videos/models/Video$Companion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getLanguageTag ()Ljava/lang/String;
+	public final fun getOrientation ()Ljava/lang/String;
+	public final fun getPassageId ()Ljava/lang/String;
+	public final fun getPlaybackPreviewSources ()Ljava/util/List;
+	public final fun getPlaybackSources ()Ljava/util/List;
+	public final fun getReferences ()Ljava/util/List;
+	public final fun getRuntime ()Ljava/lang/Integer;
+	public final fun getShareUrl ()Ljava/lang/String;
+	public final fun getThumbnail ()Lcom/youversion/platform/core/videos/models/VideoThumbnail;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/videos/models/Video$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/videos/models/Video$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/videos/models/Video;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/videos/models/Video;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/videos/models/Video$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/videos/models/VideoPlaybackSource {
+	public static final field Companion Lcom/youversion/platform/core/videos/models/VideoPlaybackSource$Companion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFormat ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/videos/models/VideoPlaybackSource$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/videos/models/VideoPlaybackSource$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/videos/models/VideoPlaybackSource;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/videos/models/VideoPlaybackSource;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/videos/models/VideoPlaybackSource$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/videos/models/VideoPlaylist {
+	public static final field Companion Lcom/youversion/platform/core/videos/models/VideoPlaylist$Companion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/Integer;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getTotal ()Ljava/lang/Integer;
+	public final fun getType ()Ljava/lang/String;
+	public final fun getVideoIds ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/videos/models/VideoPlaylist$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/videos/models/VideoPlaylist$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/videos/models/VideoPlaylist;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/videos/models/VideoPlaylist;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/videos/models/VideoPlaylist$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/videos/models/VideoThumbnail {
+	public static final field Companion Lcom/youversion/platform/core/videos/models/VideoThumbnail$Companion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAspectRatio ()Ljava/lang/Double;
+	public final fun getHeight ()Ljava/lang/Integer;
+	public final fun getUrl ()Ljava/lang/String;
+	public final fun getWidth ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/youversion/platform/core/videos/models/VideoThumbnail$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/youversion/platform/core/videos/models/VideoThumbnail$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/youversion/platform/core/videos/models/VideoThumbnail;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/youversion/platform/core/videos/models/VideoThumbnail;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/videos/models/VideoThumbnail$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 

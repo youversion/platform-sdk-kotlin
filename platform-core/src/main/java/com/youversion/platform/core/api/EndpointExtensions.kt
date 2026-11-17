@@ -48,3 +48,19 @@ internal fun URLBuilder.pageToken(pageToken: String?): Unit = parameter("page_to
 internal fun requireValidPageSize(pageSize: Int?) {
     pageSize?.let { require(it in 1..99) { "pageSize must be between 1 and 99" } }
 }
+
+/** An `Accept-Language` value weighting [languageRanges] in order, or `null` when none is usable. */
+internal fun acceptLanguage(languageRanges: List<String>): String? =
+    languageRanges
+        .filter { it.isNotBlank() }
+        .take(MAX_RANGES)
+        .mapIndexed { index, range ->
+            when (index) {
+                0 -> range
+                else -> "$range;q=0.${MAX_RANGES - index}"
+            }
+        }.joinToString(", ")
+        .takeIf { it.isNotEmpty() }
+
+/** Ranges past the tenth have no distinct quality value left below them, so they are dropped. */
+private const val MAX_RANGES = 10

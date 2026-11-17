@@ -7,6 +7,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.search.models.SearchImage
 import com.youversion.platform.core.search.models.SearchTopic
 import com.youversion.platform.core.search.models.SearchUserIntent
+import com.youversion.platform.core.search.models.SearchVideo
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
@@ -17,6 +18,7 @@ import com.youversion.platform.helpers.testServerError
 import com.youversion.platform.helpers.testUnauthorizedNotPermitted
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.runTest
@@ -184,10 +186,23 @@ class SearchApiTests : YouVersionPlatformTest {
                 MockEngine { request ->
                     assertEquals(expectedLanguageRanges, request.url.parameters.getAll("language_ranges[]"))
                     when (request.url.encodedPath) {
-                        "/v1/search-queries" -> respondJson("""{ "data": [] }""")
-                        "/v1/search-topics" -> respondJson("""{ "topics": [], "did_you_mean": [] }""")
-                        "/v1/search-unified" -> respondJson("""{ "verses": [], "topics": [], "did_you_mean": [] }""")
-                        else -> fail("Unexpected Search endpoint: ${request.url}")
+                        "/v1/search-queries" -> {
+                            respondJson("""{ "data": [] }""")
+                        }
+
+                        "/v1/search-topics" -> {
+                            respondJson("""{ "topics": [], "did_you_mean": [] }""")
+                        }
+
+                        "/v1-beta/search-unified" -> {
+                            respondJson(
+                                """{ "verses": [], "topics": [], "did_you_mean": [] }""",
+                            )
+                        }
+
+                        else -> {
+                            fail("Unexpected Search endpoint: ${request.url}")
+                        }
                     }
                 }.also { startYouVersionPlatformTest(it) }
 
@@ -633,6 +648,131 @@ class SearchApiTests : YouVersionPlatformTest {
         testInvalidResponse { YouVersionApi.search.images(query = "love", bibleId = 111) }
 
     @Test
+    fun `test video search success returns data`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals(HttpMethod.Get, request.method)
+                assertEquals(
+                    "/v1-beta/search-videos?query=two+fish" +
+                        "&organization_ids%5B%5D=11111111-1111-1111-1111-111111111111" +
+                        "&organization_ids%5B%5D=22222222-2222-2222-2222-222222222222" +
+                        "&page_size=99&page_token=next%2B%2F%3D",
+                    request.url.encodedPathAndQuery,
+                )
+                assertEquals("es, en;q=0.9", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson(
+                    """
+                    {
+                        "videos": [
+                            {
+                                "id": "vid-1",
+                                "thumbnail": { "url": "https://img.example/v.jpg?size=full&signature=a%2Bb%2F%3D" },
+                                "playback_sources": [],
+                                "playback_preview_sources": []
+                            }
+                        ],
+                        "user_intent": "videos",
+                        "did_you_mean": ["fishes"],
+                        "search_instead_for": "two fsh",
+                        "next_page_token": "next-token"
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results =
+                YouVersionApi.search.videos(
+                    query = "two fish",
+                    organizationIds =
+                        listOf(
+                            "11111111-1111-1111-1111-111111111111",
+                            "22222222-2222-2222-2222-222222222222",
+                        ),
+                    languageRanges = listOf("es", "en"),
+                    pageSize = 99,
+                    pageToken = "next+/=",
+                )
+
+            assertEquals(listOf("vid-1"), results.videos.map { it.id })
+            assertEquals(
+                "https://img.example/v.jpg?signature=a%2Bb%2F%3D",
+                results.videos
+                    .single()
+                    .thumbnail
+                    ?.url,
+            )
+            assertEquals(SearchUserIntent("videos"), results.userIntent)
+            assertEquals(listOf("fishes"), results.didYouMean)
+            assertEquals("two fsh", results.searchInsteadFor)
+            assertEquals("next-token", results.nextPageToken)
+        }
+
+    @Test
+    fun `test video search sends english by default and keeps the token on an empty page`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals("/v1-beta/search-videos?query=love", request.url.encodedPathAndQuery)
+                assertEquals("en", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{ "videos": [], "did_you_mean": [], "next_page_token": "next-token" }""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.videos(query = "love")
+
+            assertTrue(results.videos.isEmpty())
+            assertNull(results.userIntent)
+            assertNull(results.searchInsteadFor)
+            assertEquals("next-token", results.nextPageToken)
+        }
+
+    @Test
+    fun `test video search rejects invalid parameters`() =
+        runTest {
+            startNoRequestExpected()
+            val invalid: List<suspend () -> Unit> =
+                listOf(
+                    { YouVersionApi.search.videos(query = "") },
+                    { YouVersionApi.search.videos(query = "a".repeat(101)) },
+                    { YouVersionApi.search.videos(query = "love", organizationIds = listOf("org-1")) },
+                    { YouVersionApi.search.videos(query = "love", organizationIds = listOf("")) },
+                    {
+                        YouVersionApi.search.videos(
+                            query = "love",
+                            organizationIds = listOf("0000000000000-0000-0000-000000000000"),
+                        )
+                    },
+                    { YouVersionApi.search.videos(query = "love", languageRanges = emptyList()) },
+                    { YouVersionApi.search.videos(query = "love", languageRanges = listOf("not a tag")) },
+                    { YouVersionApi.search.videos(query = "love", pageSize = 0) },
+                    { YouVersionApi.search.videos(query = "love", pageSize = 100) },
+                )
+            invalid.forEach { call -> assertFailsWith<IllegalArgumentException> { call() } }
+        }
+
+    @Test
+    fun `test video search intentionally fails when videos is absent`() =
+        runTest {
+            MockEngine { respondJson("{}") }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            assertFailsWith<YouVersionNetworkException> {
+                YouVersionApi.search.videos(query = "love")
+            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
+        }
+
+    @Test
+    fun `test video search unauthorized is not permitted`() =
+        testUnauthorizedNotPermitted { YouVersionApi.search.videos(query = "love") }
+
+    @Test
+    fun `test video search forbidden is not permitted`() =
+        testForbiddenNotPermitted { YouVersionApi.search.videos(query = "love") }
+
+    @Test
+    fun `test video search throws server error`() = testServerError { YouVersionApi.search.videos(query = "love") }
+
+    @Test
     fun `test topic search success returns data`() =
         runTest {
             MockEngine { request ->
@@ -701,7 +841,7 @@ class SearchApiTests : YouVersionPlatformTest {
             MockEngine { request ->
                 assertEquals(HttpMethod.Get, request.method)
                 assertEquals(
-                    "/v1/search-unified?query=faif&bible_id=111" +
+                    "/v1-beta/search-unified?query=faif&bible_id=111" +
                         "&language_ranges%5B%5D=en-US&language_ranges%5B%5D=es" +
                         "&user_intent=topical&fields%5B%5D=verses&fields%5B%5D=topics&fields%5B%5D=images",
                     request.url.encodedPathAndQuery,
@@ -721,6 +861,7 @@ class SearchApiTests : YouVersionPlatformTest {
                             { "id": "img-1", "passage_id": "HEB.11.1" },
                             { "id": "img-2", "passage_id": "1CO.13.4-7" }
                         ],
+                        "videos": [{ "id": "vid+1/=" }, { "id": "vid-2" }],
                         "user_intent": "topical",
                         "did_you_mean": ["faith"],
                         "search_instead_for": "faif"
@@ -760,6 +901,7 @@ class SearchApiTests : YouVersionPlatformTest {
                 ),
                 results.images,
             )
+            assertEquals(listOf(SearchVideo(id = "vid+1/="), SearchVideo(id = "vid-2")), results.videos)
             assertEquals(SearchUserIntent.topical, results.userIntent)
             assertEquals(listOf("faith"), results.didYouMean)
             assertEquals("faif", results.searchInsteadFor)
@@ -770,7 +912,7 @@ class SearchApiTests : YouVersionPlatformTest {
         runTest {
             MockEngine { request ->
                 assertEquals(
-                    "/v1/search-unified?query=love&bible_id=111&language_ranges%5B%5D=en&user_intent=unknown",
+                    "/v1-beta/search-unified?query=love&bible_id=111&language_ranges%5B%5D=en&user_intent=unknown",
                     request.url.encodedPathAndQuery,
                 )
                 respondJson("""{ "verses": [], "topics": [], "did_you_mean": [] }""")
@@ -789,7 +931,7 @@ class SearchApiTests : YouVersionPlatformTest {
         runTest {
             MockEngine { request ->
                 assertEquals(
-                    "/v1/search-unified?query=love&bible_id=111&language_ranges%5B%5D=en" +
+                    "/v1-beta/search-unified?query=love&bible_id=111&language_ranges%5B%5D=en" +
                         "&user_intent=unknown&fields%5B%5D=images",
                     request.url.encodedPathAndQuery,
                 )
@@ -862,6 +1004,40 @@ class SearchApiTests : YouVersionPlatformTest {
 
             assertEquals(listOf(SearchImage(id = "img-3", passageId = "1CO.13.4-7")), results.images)
             assertEquals(listOf("JHN.3.16"), results.references.map { it.asUSFM })
+        }
+
+    @Test
+    fun `test unified search drops a malformed video and keeps its well formed siblings`() =
+        runTest {
+            MockEngine {
+                respondJson(
+                    """
+                    {
+                        "verses": [],
+                        "topics": [],
+                        "videos": [{}, { "id": null }, { "id": " " }, { "id": 5 }, null, "vid-0", { "id": "vid-1" }],
+                        "did_you_mean": []
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
+
+            assertEquals(listOf(SearchVideo(id = "vid-1")), results.videos)
+        }
+
+    @Test
+    fun `test unified search returns no videos when the platform omits them`() =
+        runTest {
+            MockEngine { respondJson("""{ "verses": [], "topics": [], "videos": {}, "did_you_mean": [] }""") }
+                .also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
+
+            assertEquals(emptyList(), results.videos)
         }
 
     @Test
