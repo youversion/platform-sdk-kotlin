@@ -568,7 +568,12 @@ firstPage.videos.forEach { video ->
 
 val secondPage =
     firstPage.nextPageToken?.let { token ->
-        YouVersionApi.search.videos(query = "prodigal son", pageToken = token)
+        YouVersionApi.search.videos(
+            query = "prodigal son",
+            organizationIds = listOf("11111111-1111-1111-1111-111111111111"),
+            languageRanges = listOf("es", "en"),
+            pageToken = token,
+        )
     }
 ```
 
