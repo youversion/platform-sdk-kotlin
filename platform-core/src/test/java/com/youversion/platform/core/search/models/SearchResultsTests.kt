@@ -6,15 +6,18 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class SearchResultsTests {
-    private fun results(images: List<SearchImage>) =
-        SearchResults(
-            references = emptyList(),
-            topics = emptyList(),
-            userIntent = null,
-            didYouMean = emptyList(),
-            searchInsteadFor = null,
-            images = images,
-        )
+    private fun results(
+        images: List<SearchImage>,
+        videos: List<SearchVideo> = emptyList(),
+    ) = SearchResults(
+        references = emptyList(),
+        topics = emptyList(),
+        userIntent = null,
+        didYouMean = emptyList(),
+        searchInsteadFor = null,
+        images = images,
+        videos = videos,
+    )
 
     @Test
     fun `test results with equal images are equal`() {
@@ -54,5 +57,27 @@ class SearchResultsTests {
                 searchInsteadFor = null,
             )
         assertEquals(emptyList(), results.images)
+    }
+
+    @Test
+    fun `test results differing only in videos are not equal`() {
+        val first = results(emptyList(), listOf(SearchVideo(id = "vid-1")))
+        val second = results(emptyList(), listOf(SearchVideo(id = "vid-2")))
+        assertNotEquals(first, second)
+        assertNotEquals(first.hashCode(), second.hashCode())
+        assertTrue(first.toString().endsWith("videos=[SearchVideo(id=vid-1)])"))
+    }
+
+    @Test
+    fun `test videos default to empty`() {
+        val results =
+            SearchResults(
+                references = emptyList(),
+                topics = emptyList(),
+                userIntent = null,
+                didYouMean = emptyList(),
+                searchInsteadFor = null,
+            )
+        assertEquals(emptyList(), results.videos)
     }
 }

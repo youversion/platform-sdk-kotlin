@@ -28,6 +28,7 @@ currently not available.
   - [Highlights](#highlights)
   - [Search API](#search-api)
   - [Verse Images API](#verse-images-api)
+  - [Videos API](#videos-api)
   - [Building SDK Models in Tests](#building-sdk-models-in-tests)
 - [Sample App](#sample-app)
 - [For Different Use Cases](#-for-different-use-cases)
@@ -42,8 +43,9 @@ currently not available.
 ## Features
 - 📖 **Scripture Display** - Easy-to-use Jetpack Compose components for displaying Bible verses, chapters, and passages with `BibleText`
 - 📕 **Bible Reader** - A complete Bible reading experience inside your app with `BibleReader`
-- 🔍 **Search** - Built-in search in `BibleReader`, plus API access to verse and topic search, unified search (verses, topics, and images in one request), and suggested and trending queries
+- 🔍 **Search** - Built-in search in `BibleReader`, plus API access to verse, topic, image, and video search, unified search (verses, topics, images, and videos in one request), and suggested and trending queries
 - 🖼️ **Verse Images** - API access to verse art, filtered by passage and language
+- 🎬 **Videos** - API access to an organization's playlists and to video metadata, thumbnails, and playback streams
 - 🖍️ **Highlights** - The signed-in user's YouVersion highlights are rendered in `BibleText` and can be created, recolored, and removed from the reader
 - 🔐 **User Authentication** - Seamless "Sign In with YouVersion" integration using `SignInWithYouVersionButton`, with a top-level toggle to disable all sign-in UI
 - 🌅 **Verse of the Day** - Built-in `VerseOfTheDay` component and API access to VOTD data
@@ -551,9 +553,30 @@ results.topics.forEach { topic ->
 
 Topic results do not page — there is no page token and no total count. They carry `didYouMean` and `searchInsteadFor` like verse results.
 
+#### Videos
+
+```kotlin
+val firstPage =
+    YouVersionApi.search.videos(
+        query = "prodigal son",
+        organizationIds = listOf("11111111-1111-1111-1111-111111111111"),
+        languageRanges = listOf("es", "en"),
+    )
+firstPage.videos.forEach { video ->
+    println("${video.title} (${video.runtimeSeconds}s)")
+}
+
+val secondPage =
+    firstPage.nextPageToken?.let { token ->
+        YouVersionApi.search.videos(query = "prodigal son", pageToken = token)
+    }
+```
+
+Each result is a full `Video`, the same type `YouVersionApi.videos.video` returns (see [Videos API](#videos-api)). `organizationIds` are organization UUIDs; leave it empty to search every organization. `languageRanges` is sent as the `Accept-Language` header and defaults to `"en"`. A page token only works with the same `query`, `organizationIds`, and `languageRanges`, but `pageSize` may change between pages. A page with no videos can still carry a `nextPageToken`, so keep paging until it is `null`. Thumbnail URLs in search results carry no `size`, so the platform serves its default rendition.
+
 #### Unified Search
 
-`unified` returns verses, topics, and images from a single request:
+`unified` returns verses, topics, images, and videos from a single request:
 
 ```kotlin
 val results =
@@ -561,13 +584,15 @@ val results =
         query = "peace",
         bibleId = 3034,
         languageRanges = listOf("en"),
-        fields = listOf("verses", "topics", "images"),
+        fields = listOf("verses", "topics", "images", "videos"),
     )
 ```
 
-`fields` names the kinds of result to return — any of `"verses"`, `"topics"`, and `"images"`; leave it empty for every kind. Ask only for the kinds you display. Unified results do not page.
+`fields` names the kinds of result to return — any of `"verses"`, `"topics"`, `"images"`, and `"videos"`; leave it empty for every kind. Ask only for the kinds you display. Unified results do not page.
 
 Each `SearchImage` carries only an `id` and the `passageId` it illustrates — a single verse or a verse range such as `"1CO.13.4-7"`. Pass the `id` to `YouVersionApi.verseImages.verseImage` to get the image's URL, size and attribution (see [Fetching One Image](#fetching-one-image)). `images` is empty wherever the platform does not yet offer image results.
+
+Each `SearchVideo` carries only an `id`. Pass it to `YouVersionApi.videos.video` for the title, thumbnail, and playback streams.
 
 #### User Intent
 
@@ -584,10 +609,10 @@ val heading =
 
 #### Search Error Handling
 
-- Invalid arguments throw `IllegalArgumentException` before any request is made. A `query` must be 1–100 grapheme clusters (characters as the user sees them, so an emoji counts as one) for `verses`, `images`, `topics`, and `unified`, and non-empty for `suggestedQueries`. `bibleId` must be greater than zero, `pageSize` between 1 and 99, and each `languageRanges` entry a well-formed tag or `"*"` to request all languages, with at least one given.
+- Invalid arguments throw `IllegalArgumentException` before any request is made. A `query` must be 1–100 grapheme clusters (characters as the user sees them, so an emoji counts as one) for `verses`, `images`, `topics`, `videos`, and `unified`, and non-empty for `suggestedQueries`. `bibleId` must be greater than zero, each `organizationIds` entry a UUID, `pageSize` between 1 and 99, and each `languageRanges` entry a well-formed tag or `"*"` to request all languages, with at least one given.
 - A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `RATE_LIMITED` (429) or `SERVER_ERROR` (5xx), which a later retry may resolve, `REQUEST_REJECTED` for any other 4xx, which a retry usually will not, `REQUEST_FAILED` for any other error response, and `INVALID_RESPONSE` when the response cannot be read.
 - For an error response, the exception also carries `statusCode`, `serverMessage` when the server explains the failure, `retryAfter` when the server asks the app to wait before retrying, and `validationIssues` listing any request parameters the server found invalid.
-- A response with no content (HTTP 204) reports no matches. `trendingQueries` and `suggestedQueries` return an empty list, and `verses`, `images`, `topics`, and `unified` return empty results.
+- A response with no content (HTTP 204) reports no matches. `trendingQueries` and `suggestedQueries` return an empty list, and `verses`, `images`, `topics`, `videos`, and `unified` return empty results.
 
 ### Verse Images API
 
@@ -636,6 +661,47 @@ A `VerseImage` is metadata only; load the picture itself from `imageUrl` with yo
 - Invalid arguments throw `IllegalArgumentException` before any request is made: `passageId`, `pageToken`, and `imageId` must not be blank, and `pageSize` must be between 1 and 99.
 - A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `RATE_LIMITED` (429) or `SERVER_ERROR` (5xx), which a later retry may resolve, `REQUEST_REJECTED` for any other 4xx — including a chapter-level `passageId` — which a retry usually will not, `REQUEST_FAILED` for any other error response, and `INVALID_RESPONSE` when the response cannot be read.
 - For an error response, the exception also carries `statusCode`, `serverMessage` when the server explains the failure, `retryAfter` when the server asks the app to wait before retrying, and `validationIssues` listing any request parameters the server found invalid.
+
+### Videos API
+
+An organization's playlists and videos are available through `YouVersionApi.videos`, which is part of `platform-core`. All calls are suspend functions and need only a configured app key — the user does not have to be signed in.
+
+#### Playlists
+
+```kotlin
+val firstPage = YouVersionApi.videos.playlists(organizationId = organizationId, pageSize = 20)
+firstPage.data.forEach { playlist ->
+    println("${playlist.title}: ${playlist.total} videos")
+}
+
+val secondPage =
+    firstPage.nextPageToken?.let { token ->
+        YouVersionApi.videos.playlists(organizationId = organizationId, pageSize = 20, pageToken = token)
+    }
+
+val playlist = YouVersionApi.videos.playlist(organizationId = organizationId, id = 7)
+```
+
+- `fields` names the playlist fields to return — any of `"id"`, `"title"`, `"description"`, `"type"`, `"total"`, and `"videos"`. Fields left out are `null`. Naming one to three fields returns every remaining playlist in one page, whatever `pageSize` is.
+- `pageSize` (1–99) and `pageToken` page through the playlists. Keep the same `fields` and `pageSize` when continuing. An organization with no playlists returns an empty page.
+- `languageRanges` chooses the language of titles and descriptions, sent as `Accept-Language`. It defaults to `"en"`, because a request without the header can currently return an empty page even when playlists exist.
+- `videoIds` lists the playlist's videos in order; pass each to `video`.
+
+#### Fetching One Video
+
+```kotlin
+val video = YouVersionApi.videos.video(id = videoId, thumbnailSize = VideoThumbnailSize.card)
+val stream = video.playbackSources.firstOrNull { it.format == "hls" }
+```
+
+A `Video` carries its title, description, the USFM `references` it covers, `runtimeSeconds`, a `thumbnail`, the full-length `playbackSources`, the `playbackPreviewSources`, and a `shareUrl`. Video ids are opaque and are reissued with each response, so use the latest one rather than storing it.
+
+`thumbnailSize` picks the thumbnail rendition — `VideoThumbnailSize.thumb`, `card`, or `full` — by setting `size` on `thumbnail.url`. Leave it `null` to remove `size`, so the platform serves its default rendition. `thumbnail.width`, `height`, and `aspectRatio` describe the original image.
+
+#### Videos Error Handling
+
+- Invalid arguments throw `IllegalArgumentException` before any request is made: `organizationId` and `id` must not be empty, `fields` must not be empty or name an unknown field, and `pageSize` must be between 1 and 99.
+- A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `RATE_LIMITED` (429) or `SERVER_ERROR` (5xx), which a later retry may resolve, `REQUEST_REJECTED` for any other 4xx, which a retry usually will not, `REQUEST_FAILED` for any other error response, and `INVALID_RESPONSE` when the response — including a video's thumbnail URL — cannot be read.
 
 ### Building SDK Models in Tests
 

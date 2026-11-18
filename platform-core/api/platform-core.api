@@ -1061,16 +1061,18 @@ public final class com/youversion/platform/core/verseimages/models/VerseImage$Co
 }
 
 public abstract interface class com/youversion/platform/core/videos/api/VideosApi {
-	public abstract fun playlist (Ljava/lang/String;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun playlists (Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun playlists$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-	public abstract fun video (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun video$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun playlist (Ljava/lang/String;ILjava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun playlist$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;ILjava/util/List;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun playlists (Ljava/lang/String;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun playlists$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Ljava/util/List;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun video (Ljava/lang/String;Lcom/youversion/platform/core/videos/models/VideoThumbnailSize;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun video$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;Lcom/youversion/platform/core/videos/models/VideoThumbnailSize;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class com/youversion/platform/core/videos/api/VideosApi$DefaultImpls {
-	public static synthetic fun playlists$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-	public static synthetic fun video$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun playlist$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;ILjava/util/List;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun playlists$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;Ljava/util/List;Ljava/lang/Integer;Ljava/lang/String;Ljava/util/List;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun video$default (Lcom/youversion/platform/core/videos/api/VideosApi;Ljava/lang/String;Lcom/youversion/platform/core/videos/models/VideoThumbnailSize;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class com/youversion/platform/core/videos/models/Video {
@@ -1084,7 +1086,7 @@ public final class com/youversion/platform/core/videos/models/Video {
 	public final fun getPlaybackPreviewSources ()Ljava/util/List;
 	public final fun getPlaybackSources ()Ljava/util/List;
 	public final fun getReferences ()Ljava/util/List;
-	public final fun getRuntime ()Ljava/lang/Integer;
+	public final fun getRuntimeSeconds ()Ljava/lang/Integer;
 	public final fun getShareUrl ()Ljava/lang/String;
 	public final fun getThumbnail ()Lcom/youversion/platform/core/videos/models/VideoThumbnail;
 	public final fun getTitle ()Ljava/lang/String;
@@ -1183,6 +1185,20 @@ public final synthetic class com/youversion/platform/core/videos/models/VideoThu
 
 public final class com/youversion/platform/core/videos/models/VideoThumbnail$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/youversion/platform/core/videos/models/VideoThumbnailSize {
+	public static final field Companion Lcom/youversion/platform/core/videos/models/VideoThumbnailSize$Companion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRawValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/videos/models/VideoThumbnailSize$Companion {
+	public final fun getCard ()Lcom/youversion/platform/core/videos/models/VideoThumbnailSize;
+	public final fun getFull ()Lcom/youversion/platform/core/videos/models/VideoThumbnailSize;
+	public final fun getThumb ()Lcom/youversion/platform/core/videos/models/VideoThumbnailSize;
 }
 
 public abstract interface class com/youversion/platform/core/votd/api/VotdApi {

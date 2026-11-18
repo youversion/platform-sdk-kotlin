@@ -770,6 +770,46 @@ class SearchApiTests : YouVersionPlatformTest {
         testForbiddenNotPermitted { YouVersionApi.search.videos(query = "love") }
 
     @Test
+    fun `test video search with no content returns empty results`() =
+        runTest {
+            MockEngine { respond("", HttpStatusCode.NoContent) }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            val results = YouVersionApi.search.videos(query = "love")
+
+            assertTrue(results.videos.isEmpty())
+            assertTrue(results.didYouMean.isEmpty())
+            assertNull(results.nextPageToken)
+        }
+
+    @Test
+    fun `test video search with a malformed thumbnail url is an invalid response`() =
+        runTest {
+            MockEngine {
+                respondJson(
+                    """
+                    {
+                        "videos": [
+                            {
+                                "id": "vid-1",
+                                "thumbnail": { "url": "https://img.example:notaport/v.jpg" },
+                                "playback_sources": [],
+                                "playback_preview_sources": []
+                            }
+                        ],
+                        "did_you_mean": []
+                    }
+                    """.trimIndent(),
+                )
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            assertFailsWith<YouVersionNetworkException> {
+                YouVersionApi.search.videos(query = "love")
+            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
+        }
+
+    @Test
     fun `test video search throws server error`() = testServerError { YouVersionApi.search.videos(query = "love") }
 
     @Test

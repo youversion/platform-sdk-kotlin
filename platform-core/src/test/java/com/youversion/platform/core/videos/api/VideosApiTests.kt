@@ -3,10 +3,12 @@ package com.youversion.platform.core.videos.api
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.PaginatedResponse
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.videos.models.Video
 import com.youversion.platform.core.videos.models.VideoPlaybackSource
 import com.youversion.platform.core.videos.models.VideoPlaylist
 import com.youversion.platform.core.videos.models.VideoThumbnail
+import com.youversion.platform.core.videos.models.VideoThumbnailSize
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
@@ -55,7 +57,7 @@ class VideosApiTests : YouVersionPlatformTest {
             val page =
                 YouVersionApi.videos.playlists(
                     organizationId = "org/1",
-                    pageSize = "50",
+                    pageSize = 50,
                     pageToken = "next+/=",
                 )
 
@@ -94,7 +96,7 @@ class VideosApiTests : YouVersionPlatformTest {
                 YouVersionApi.videos.playlists(
                     organizationId = "org",
                     fields = listOf("id", "videos"),
-                    pageSize = "*",
+                    pageSize = 5,
                     pageToken = "",
                 )
 
@@ -119,17 +121,12 @@ class VideosApiTests : YouVersionPlatformTest {
         runTest {
             MockEngine { error("no request expected") }.also { startYouVersionPlatformTest(it) }
             YouVersionPlatformConfiguration.configure(appKey = "app")
-            val all = listOf("id", "title", "description", "type", "total", "videos")
-
             listOf<suspend () -> Unit>(
                 { YouVersionApi.videos.playlists(organizationId = "") },
                 { YouVersionApi.videos.playlists(organizationId = "org", fields = emptyList()) },
                 { YouVersionApi.videos.playlists(organizationId = "org", fields = listOf("bogus")) },
-                { YouVersionApi.videos.playlists(organizationId = "org", pageSize = "0") },
-                { YouVersionApi.videos.playlists(organizationId = "org", pageSize = "100") },
-                { YouVersionApi.videos.playlists(organizationId = "org", pageSize = "05") },
-                { YouVersionApi.videos.playlists(organizationId = "org", pageSize = "*") },
-                { YouVersionApi.videos.playlists(organizationId = "org", fields = all.take(4), pageSize = "*") },
+                { YouVersionApi.videos.playlists(organizationId = "org", pageSize = 0) },
+                { YouVersionApi.videos.playlists(organizationId = "org", pageSize = 100) },
             ).forEach { assertFailsWith<IllegalArgumentException> { it() } }
         }
 
@@ -147,6 +144,40 @@ class VideosApiTests : YouVersionPlatformTest {
                 VideoPlaylist(id = 7, title = "Easter"),
                 YouVersionApi.videos.playlist(organizationId = "org/1", id = 7),
             )
+        }
+
+    @Test
+    fun `test playlists and playlist send the requested languages`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals("es, en;q=0.9", request.headers[HttpHeaders.AcceptLanguage])
+                if (request.url.encodedPath.endsWith("/7")) {
+                    respondJson("""{ "id": 7 }""")
+                } else {
+                    respondJson("""{ "data": [] }""")
+                }
+            }.also { startYouVersionPlatformTest(it) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+
+            YouVersionApi.videos.playlists(organizationId = "org", languageRanges = listOf("es", "en"))
+            YouVersionApi.videos.playlist(organizationId = "org", id = 7, languageRanges = listOf("es", "en"))
+        }
+
+    @Test
+    fun `test playlist sends english by default and no language when given none`() =
+        runTest {
+            var expectedLanguage: String? = "en"
+            MockEngine { request ->
+                assertEquals(expectedLanguage, request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{ "id": 7 }""")
+            }.also { startYouVersionPlatformTest(it) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+
+            YouVersionApi.videos.playlist(organizationId = "org", id = 7)
+            expectedLanguage = null
+            YouVersionApi.videos.playlist(organizationId = "org", id = 7, languageRanges = emptyList())
         }
 
     @Test
@@ -186,7 +217,7 @@ class VideosApiTests : YouVersionPlatformTest {
             }.also { startYouVersionPlatformTest(it) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
-            val video = YouVersionApi.videos.video(id = "vid+1/=", thumbnailSize = "thumb")
+            val video = YouVersionApi.videos.video(id = "vid+1/=", thumbnailSize = VideoThumbnailSize.thumb)
 
             assertEquals(
                 Video(
@@ -196,7 +227,7 @@ class VideosApiTests : YouVersionPlatformTest {
                     references = listOf("JHN.3.16", "JHN.3.16-17"),
                     passageId = "JHN.3",
                     languageTag = "en",
-                    runtime = 120,
+                    runtimeSeconds = 120,
                     orientation = "landscape",
                     thumbnail =
                         VideoThumbnail(
@@ -290,7 +321,6 @@ class VideosApiTests : YouVersionPlatformTest {
     fun `test video rejects invalid parameters`() =
         runTest {
             assertFailsWith<IllegalArgumentException> { YouVersionApi.videos.video(id = "") }
-            assertFailsWith<IllegalArgumentException> { YouVersionApi.videos.video(id = "v", thumbnailSize = "huge") }
         }
 
     @Test
@@ -323,4 +353,43 @@ class VideosApiTests : YouVersionPlatformTest {
     @Test
     fun `test video throws invalid response on malformed body`() =
         testInvalidResponse { YouVersionApi.videos.video(id = "v") }
+
+    @Test
+    fun `test video with a malformed thumbnail url is an invalid response`() =
+        runTest {
+            MockEngine {
+                respondJson(
+                    """
+                    {
+                        "id": "v",
+                        "thumbnail": { "url": "https://img.example.com:notaport/t.jpg?size=card" },
+                        "playback_sources": [],
+                        "playback_preview_sources": []
+                    }
+                    """.trimIndent(),
+                )
+            }.also { startYouVersionPlatformTest(it) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+
+            assertFailsWith<YouVersionNetworkException> {
+                YouVersionApi.videos.video(id = "v", thumbnailSize = VideoThumbnailSize.card)
+            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
+        }
+
+    @Test
+    fun `test playlists throws server error`() =
+        testServerError { YouVersionApi.videos.playlists(organizationId = "org") }
+
+    @Test
+    fun `test playlists throws invalid response on malformed body`() =
+        testInvalidResponse { YouVersionApi.videos.playlists(organizationId = "org") }
+
+    @Test
+    fun `test playlist throws server error`() =
+        testServerError { YouVersionApi.videos.playlist(organizationId = "org", id = 1) }
+
+    @Test
+    fun `test playlist throws invalid response on malformed body`() =
+        testInvalidResponse { YouVersionApi.videos.playlist(organizationId = "org", id = 1) }
 }

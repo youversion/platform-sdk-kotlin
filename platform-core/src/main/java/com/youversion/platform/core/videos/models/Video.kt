@@ -1,7 +1,9 @@
 package com.youversion.platform.core.videos.models
 
+import com.youversion.platform.core.api.invalidResponse
 import com.youversion.platform.core.di.PlatformInternalApi
 import io.ktor.http.URLBuilder
+import io.ktor.http.URLParserException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -15,7 +17,7 @@ import kotlinx.serialization.Serializable
  * @property references The USFM references the video covers, including ranges and combined references.
  * @property passageId The chapter, verse or range the video covers, when it covers a single passage.
  * @property languageTag The BCP 47 language tag of the video.
- * @property runtime The running time in seconds.
+ * @property runtimeSeconds The running time in seconds.
  * @property orientation The video's orientation, as the platform names it.
  * @property thumbnail The still image to show before playback.
  * @property playbackSources The full-length streams.
@@ -32,7 +34,7 @@ public class Video
         @SerialName("references") public val references: List<String>? = null,
         @SerialName("passage_id") public val passageId: String? = null,
         @SerialName("language_tag") public val languageTag: String? = null,
-        @SerialName("runtime") public val runtime: Int? = null,
+        @SerialName("runtime") public val runtimeSeconds: Int? = null,
         @SerialName("orientation") public val orientation: String? = null,
         @SerialName("thumbnail") public val thumbnail: VideoThumbnail? = null,
         @SerialName("playback_sources") public val playbackSources: List<VideoPlaybackSource>,
@@ -48,7 +50,7 @@ public class Video
                 references == other.references &&
                 passageId == other.passageId &&
                 languageTag == other.languageTag &&
-                runtime == other.runtime &&
+                runtimeSeconds == other.runtimeSeconds &&
                 orientation == other.orientation &&
                 thumbnail == other.thumbnail &&
                 playbackSources == other.playbackSources &&
@@ -63,7 +65,7 @@ public class Video
             result = 31 * result + references.hashCode()
             result = 31 * result + passageId.hashCode()
             result = 31 * result + languageTag.hashCode()
-            result = 31 * result + (runtime ?: 0)
+            result = 31 * result + (runtimeSeconds ?: 0)
             result = 31 * result + orientation.hashCode()
             result = 31 * result + thumbnail.hashCode()
             result = 31 * result + playbackSources.hashCode()
@@ -74,14 +76,26 @@ public class Video
 
         override fun toString(): String =
             "Video(id=$id, title=$title, description=$description, references=$references, passageId=$passageId, " +
-                "languageTag=$languageTag, runtime=$runtime, orientation=$orientation, thumbnail=$thumbnail, " +
-                "playbackSources=$playbackSources, playbackPreviewSources=$playbackPreviewSources, shareUrl=$shareUrl)"
+                "languageTag=$languageTag, runtimeSeconds=$runtimeSeconds, orientation=$orientation, " +
+                "thumbnail=$thumbnail, playbackSources=$playbackSources, " +
+                "playbackPreviewSources=$playbackPreviewSources, shareUrl=$shareUrl)"
 
-        /** Replaces every `size` query item on the thumbnail URL with [size], or drops them when [size] is `null`. */
+        /**
+         * Replaces every `size` query item on the thumbnail URL with [size], or drops them when [size] is `null`.
+         *
+         * @throws com.youversion.platform.core.api.YouVersionNetworkException with `INVALID_RESPONSE` when the
+         *     thumbnail URL cannot be parsed.
+         */
         internal fun withThumbnailSize(size: String?): Video {
             val thumbnail = thumbnail ?: return this
+            val builder =
+                try {
+                    URLBuilder(thumbnail.url ?: return this)
+                } catch (e: URLParserException) {
+                    throw invalidResponse(e)
+                }
             val url =
-                URLBuilder(thumbnail.url ?: return this)
+                builder
                     .apply {
                         encodedParameters.remove("size")
                         size?.let { encodedParameters.append("size", it) }
@@ -93,7 +107,7 @@ public class Video
                 references,
                 passageId,
                 languageTag,
-                runtime,
+                runtimeSeconds,
                 orientation,
                 VideoThumbnail(url, thumbnail.width, thumbnail.height),
                 playbackSources,
@@ -106,7 +120,10 @@ public class Video
 /**
  * A video's still image and the source image's native size.
  *
- * @property url Where the image is served, at the size the request asked for.
+ * @property url Where the image is served.
+ *     [VideosApi.video][com.youversion.platform.core.videos.api.VideosApi.video] sets its `size` to the requested
+ *     [VideoThumbnailSize], or removes it when none is requested. Video search results always remove it. Without a
+ *     `size`, the platform serves its default rendition.
  * @property width The native width in pixels.
  * @property height The native height in pixels.
  */

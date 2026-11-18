@@ -118,6 +118,9 @@ public interface SearchApi {
      *
      * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
      *
+     * A search that matches nothing returns empty results rather than failing. Each video's thumbnail URL carries no
+     * `size`, so the platform serves its default rendition.
+     *
      * @param query The text to search for. It must be between 1 and 100 grapheme clusters.
      * @param organizationIds The UUIDs of the organizations whose videos to search. Empty searches every
      *     organization.

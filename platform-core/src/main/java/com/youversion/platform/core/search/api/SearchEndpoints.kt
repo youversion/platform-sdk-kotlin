@@ -206,6 +206,16 @@ internal object SearchEndpoints : SearchApi {
             httpClient.get(searchVideosUrl(query, organizationIds, pageSize, pageToken)) {
                 acceptLanguage(languageRanges)?.let { header(HttpHeaders.AcceptLanguage, it) }
             }
+        if (httpResponse.status == HttpStatusCode.NoContent) {
+            return VideoSearchResults(
+                videos = emptyList(),
+                userIntent = null,
+                didYouMean = emptyList(),
+                searchInsteadFor = null,
+                nextPageToken = null,
+            )
+        }
+
         val response = parseApiBody<VideoSearchResponse>(httpResponse)
         return VideoSearchResults(
             videos = response.videos.map { it.withThumbnailSize(null) },

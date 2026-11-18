@@ -3,10 +3,13 @@ package com.youversion.platform.core.videos.api
 import com.youversion.platform.core.api.PaginatedResponse
 import com.youversion.platform.core.videos.models.Video
 import com.youversion.platform.core.videos.models.VideoPlaylist
+import com.youversion.platform.core.videos.models.VideoThumbnailSize
 
 public interface VideosApi {
     /**
      * Fetches one page of an organization's playlists.
+     *
+     * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
      *
      * Keep the same [fields] and [pageSize] when continuing with a [pageToken]. A response with no content is an
      * empty page.
@@ -14,40 +17,59 @@ public interface VideosApi {
      * @param organizationId The organization whose playlists to fetch. Opaque; it is encoded as given.
      * @param fields The fields to return — any of `id`, `title`, `description`, `type`, `total` and `videos`.
      *     `null` returns every field; fields left out are `null` on each playlist.
-     * @param pageSize `"1"` to `"99"`, or `"*"` for every remaining playlist when one to three [fields] are named.
-     *     `null` uses the platform default.
+     * @param pageSize The number of playlists to return. When supplied, it must be between 1 and 99. Naming one to
+     *     three [fields] returns every remaining playlist instead, whatever [pageSize] is.
      * @param pageToken The [PaginatedResponse.nextPageToken] of the previous page.
+     * @param languageRanges BCP 47 language ranges in preference order, sent as the `Accept-Language` header to choose
+     *     the language of titles and descriptions. It defaults to `en`; an empty list leaves the header off, which can
+     *     currently return an empty page for an organization that has playlists.
+     * @return The page of [VideoPlaylist]s.
      * @throws IllegalArgumentException if [organizationId] is empty, [fields] is empty or names an unknown field, or
-     *     [pageSize] is not allowed.
+     *     [pageSize] is outside the range stated above.
+     * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
     public suspend fun playlists(
         organizationId: String,
         fields: List<String>? = null,
-        pageSize: String? = null,
+        pageSize: Int? = null,
         pageToken: String? = null,
+        languageRanges: List<String> = listOf("en"),
     ): PaginatedResponse<VideoPlaylist>
 
     /**
      * Fetches one of an organization's playlists.
      *
+     * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
+     *
      * @param organizationId The organization that owns the playlist. Opaque; it is encoded as given.
      * @param id The playlist's id.
+     * @param languageRanges BCP 47 language ranges in preference order, sent as the `Accept-Language` header to choose
+     *     the language of the title and description. It defaults to `en`; an empty list leaves the header off.
+     * @return The [VideoPlaylist].
      * @throws IllegalArgumentException if [organizationId] is empty.
+     * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
      */
     public suspend fun playlist(
         organizationId: String,
         id: Int,
+        languageRanges: List<String> = listOf("en"),
     ): VideoPlaylist
 
     /**
      * Fetches a video's metadata, thumbnail and playback streams.
      *
+     * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
+     *
      * @param id The video's id. Opaque; it is encoded as given.
-     * @param thumbnailSize The thumbnail size — `thumb`, `card` or `full`. `null` returns the full-size thumbnail.
-     * @throws IllegalArgumentException if [id] is empty or [thumbnailSize] is not one of the allowed values.
+     * @param thumbnailSize The rendition of the thumbnail to link to. `null` removes the size from the thumbnail URL,
+     *     so the platform serves its default rendition.
+     * @return The [Video].
+     * @throws IllegalArgumentException if [id] is empty.
+     * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response,
+     *     including a thumbnail URL that cannot be parsed.
      */
     public suspend fun video(
         id: String,
-        thumbnailSize: String? = null,
+        thumbnailSize: VideoThumbnailSize? = null,
     ): Video
 }
