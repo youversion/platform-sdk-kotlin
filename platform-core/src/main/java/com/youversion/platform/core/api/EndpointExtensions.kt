@@ -4,6 +4,7 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
+import java.util.Locale
 
 internal fun buildYouVersionUrlString(block: URLBuilder.() -> Unit): String =
     HttpRequestBuilder()
@@ -61,6 +62,17 @@ internal fun acceptLanguage(languageRanges: List<String>): String? =
             }
         }.joinToString(", ")
         .takeIf { it.isNotEmpty() }
+
+/**
+ * The device's language tag, then its language without a region or script, then `en`, without repeats. An
+ * undetermined device locale yields only `en`.
+ */
+internal fun deviceLanguageRanges(): List<String> {
+    val locale = Locale.getDefault()
+    return listOf(locale.toLanguageTag(), locale.language, "en")
+        .filter { it.isNotBlank() && it != "und" }
+        .distinct()
+}
 
 /** Ranges past the tenth have no distinct quality value left below them, so they are dropped. */
 private const val MAX_RANGES = 10

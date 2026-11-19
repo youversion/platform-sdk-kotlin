@@ -63,9 +63,9 @@ internal object VideosEndpoints : VideosApi {
         }
 
     /**
-     * The language defaults to English because requests without an `Accept-Language` header can receive a cached
-     * empty response even when the organization has playlists. Drop the default once the server fix for
-     * [YPE-6461](https://lifechurch.atlassian.net/browse/YPE-6461) is verified.
+     * The language defaults to the device's, with English as a fallback, because requests without an
+     * `Accept-Language` header can receive a cached empty response even when the organization has playlists. Revisit
+     * the default once the server fix for [YPE-6461](https://lifechurch.atlassian.net/browse/YPE-6461) is verified.
      */
     override suspend fun playlists(
         organizationId: String,

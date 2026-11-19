@@ -1,6 +1,7 @@
 package com.youversion.platform.core.videos.api
 
 import com.youversion.platform.core.api.PaginatedResponse
+import com.youversion.platform.core.api.deviceLanguageRanges
 import com.youversion.platform.core.videos.models.Video
 import com.youversion.platform.core.videos.models.VideoPlaylist
 import com.youversion.platform.core.videos.models.VideoThumbnailSize
@@ -22,9 +23,9 @@ public interface VideosApi {
      * @param pageToken The [PaginatedResponse.nextPageToken] of the previous page.
      * @param languageRanges BCP 47 language ranges in preference order that choose the language of titles and
      *     descriptions. Sent as `Accept-Language`, with a descending quality value on every range after the first;
-     *     only the first ten ranges are sent and blank ranges are dropped. It defaults to `en`. A list with no
-     *     non-blank range leaves the header off, which can currently return an empty page for an organization that
-     *     has playlists.
+     *     only the first ten ranges are sent and blank ranges are dropped. It defaults to the device's language, then
+     *     that language without its region, then `en`, such as `es-MX, es, en`. A list with no non-blank range leaves
+     *     the header off, which can currently return an empty page for an organization that has playlists.
      * @return The page of [VideoPlaylist]s.
      * @throws IllegalArgumentException if [organizationId] is empty, [fields] is empty or names an unknown field, or
      *     [pageSize] is outside the range stated above.
@@ -35,7 +36,7 @@ public interface VideosApi {
         fields: List<String>? = null,
         pageSize: Int? = null,
         pageToken: String? = null,
-        languageRanges: List<String> = listOf("en"),
+        languageRanges: List<String> = deviceLanguageRanges(),
     ): PaginatedResponse<VideoPlaylist>
 
     /**
@@ -47,8 +48,8 @@ public interface VideosApi {
      * @param id The playlist's id.
      * @param languageRanges BCP 47 language ranges in preference order that choose the language of the title and
      *     description. Sent as `Accept-Language`, with a descending quality value on every range after the first;
-     *     only the first ten ranges are sent and blank ranges are dropped. It defaults to `en`. A list with no
-     *     non-blank range leaves the header off.
+     *     only the first ten ranges are sent and blank ranges are dropped. It defaults to the device's language, then
+     *     that language without its region, then `en`. A list with no non-blank range leaves the header off.
      * @return The [VideoPlaylist].
      * @throws IllegalArgumentException if [organizationId] is empty.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
@@ -56,7 +57,7 @@ public interface VideosApi {
     public suspend fun playlist(
         organizationId: String,
         id: Int,
-        languageRanges: List<String> = listOf("en"),
+        languageRanges: List<String> = deviceLanguageRanges(),
     ): VideoPlaylist
 
     /**

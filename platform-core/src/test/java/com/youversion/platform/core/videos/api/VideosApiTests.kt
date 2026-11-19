@@ -22,6 +22,7 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.runTest
+import java.util.Locale
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -29,12 +30,18 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class VideosApiTests : YouVersionPlatformTest {
+    private val originalLocale = Locale.getDefault()
+
     @AfterTest
-    fun teardown() = stopYouVersionPlatformTest()
+    fun teardown() {
+        Locale.setDefault(originalLocale)
+        stopYouVersionPlatformTest()
+    }
 
     @Test
     fun `test playlists encodes opaque values and decodes the page`() =
         runTest {
+            Locale.setDefault(Locale.ENGLISH)
             MockEngine { request ->
                 assertEquals(
                     "/v1-beta/organizations/org%2F1/playlists?page_size=50&page_token=next%2B%2F%3D",
@@ -165,9 +172,10 @@ class VideosApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test playlist sends english by default and no language when given none`() =
+    fun `test playlist sends the device language by default and no language when given none`() =
         runTest {
-            var expectedLanguage: String? = "en"
+            Locale.setDefault(Locale.forLanguageTag("es-MX"))
+            var expectedLanguage: String? = "es-MX, es;q=0.9, en;q=0.8"
             MockEngine { request ->
                 assertEquals(expectedLanguage, request.headers[HttpHeaders.AcceptLanguage])
                 respondJson("""{ "id": 7 }""")
@@ -442,5 +450,33 @@ class VideosApiTests : YouVersionPlatformTest {
             YouVersionPlatformConfiguration.configure(appKey = "app")
 
             YouVersionApi.videos.playlists(organizationId = "org", fields = listOf("id"))
+        }
+
+    @Test
+    fun `test playlists fall back to english when the device language is undetermined`() =
+        runTest {
+            Locale.setDefault(Locale.ROOT)
+            MockEngine { request ->
+                assertEquals("en", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{ "data": [] }""")
+            }.also { startYouVersionPlatformTest(it) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+
+            YouVersionApi.videos.playlists(organizationId = "org")
+        }
+
+    @Test
+    fun `test playlists send an english device language once`() =
+        runTest {
+            Locale.setDefault(Locale.US)
+            MockEngine { request ->
+                assertEquals("en-US, en;q=0.9", request.headers[HttpHeaders.AcceptLanguage])
+                respondJson("""{ "data": [] }""")
+            }.also { startYouVersionPlatformTest(it) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+
+            YouVersionApi.videos.playlists(organizationId = "org")
         }
 }

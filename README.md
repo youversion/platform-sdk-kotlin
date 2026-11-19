@@ -689,7 +689,7 @@ val playlist = YouVersionApi.videos.playlist(organizationId = organizationId, id
 
 - `fields` names the playlist fields to return — any of `"id"`, `"title"`, `"description"`, `"type"`, `"total"`, and `"videos"`. Fields left out are `null`. Naming one to three fields without a `pageSize` returns every remaining playlist in one page.
 - `pageSize` (1–99) and `pageToken` page through the playlists. Keep the same `fields` and `pageSize` when continuing. An organization with no playlists returns an empty page.
-- `languageRanges` chooses the language of titles and descriptions for `playlists` and `playlist`. It is sent as `Accept-Language`, with a descending quality value on every range after the first; only the first ten are sent, and blank ranges are dropped, so a list with no non-blank range leaves the header off. It defaults to `"en"`, because a request without the header can currently return an empty page even when playlists exist.
+- `languageRanges` chooses the language of titles and descriptions for `playlists` and `playlist`. It is sent as `Accept-Language`, with a descending quality value on every range after the first; only the first ten are sent, and blank ranges are dropped, so a list with no non-blank range leaves the header off. It defaults to the device's language, then that language without its region, then `"en"` (for example `es-MX, es, en`), because a request without the header can currently return an empty page even when playlists exist.
 - `videoIds` lists the playlist's videos in order; pass each to `video`.
 
 #### Fetching One Video
