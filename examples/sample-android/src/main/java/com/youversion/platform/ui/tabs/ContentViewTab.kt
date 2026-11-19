@@ -18,6 +18,11 @@ import androidx.compose.ui.unit.dp
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
 
+/**
+ * The Content tab, a placeholder until the sample shows videos and verse images.
+ *
+ * @param onDestinationClick Called when the user picks a tab in the bottom bar.
+ */
 @Composable
 fun ContentViewTab(onDestinationClick: (SampleDestination) -> Unit) {
     Scaffold(

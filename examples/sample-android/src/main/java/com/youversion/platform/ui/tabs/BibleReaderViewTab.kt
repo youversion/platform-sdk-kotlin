@@ -10,6 +10,12 @@ import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.theme.CormorantGaramond
 import com.youversion.platform.ui.theme.Tinos
 
+/**
+ * The Bible tab, showing the SDK's Bible reader with the sample's fonts.
+ *
+ * @param bibleReference The passage to open, or null to restore the last-read passage.
+ * @param onDestinationClick Called when the user picks a tab in the bottom bar.
+ */
 @Composable
 fun BibleReaderViewTab(
     bibleReference: BibleReference?,

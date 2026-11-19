@@ -27,6 +27,12 @@ import com.youversion.platform.ui.icons.BibleCardIcon
 import com.youversion.platform.ui.icons.NavigateIcon
 import com.youversion.platform.ui.icons.VerseOfTheDayIcon
 
+/**
+ * The Examples tab: a list of SDK examples, each opening its own screen.
+ *
+ * @param onDestinationClick Called when the user picks a tab in the bottom bar.
+ * @param onExampleClick Called with the example's destination when the user picks an example.
+ */
 @Composable
 fun ExamplesViewTab(
     onDestinationClick: (SampleDestination) -> Unit,

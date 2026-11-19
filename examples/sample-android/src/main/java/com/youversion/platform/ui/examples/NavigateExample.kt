@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -29,6 +31,13 @@ private val passages =
         "Genesis 1" to BibleReference(BibleDefaults.VERSION_ID, "GEN", 1),
     )
 
+/**
+ * Lists passages that open in the Bible tab, showing how a host app sends the reader to a reference.
+ *
+ * @param onDestinationClick Called when the user picks a tab in the bottom bar.
+ * @param onBack Called when the user taps the back arrow.
+ * @param onReadInBible Called with the passage the user picks, to open it in the Bible tab.
+ */
 @Composable
 fun NavigateExample(
     onDestinationClick: (SampleDestination) -> Unit,
@@ -51,7 +60,13 @@ fun NavigateExample(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding).padding(top = 8.dp)) {
+        Column(
+            modifier =
+                Modifier
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(top = 8.dp),
+        ) {
             GroupedCard(containerColor = MaterialTheme.colorScheme.surface) {
                 passages.forEachIndexed { index, (title, reference) ->
                     if (index > 0) {
