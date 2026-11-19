@@ -1,5 +1,7 @@
 package com.youversion.platform.core.search.api
 
+import com.youversion.platform.core.api.YouVersionNetworkException
+import com.youversion.platform.core.api.acceptLanguage
 import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.fields
 import com.youversion.platform.core.api.languageRanges
@@ -16,12 +18,16 @@ import com.youversion.platform.core.search.models.SearchQuery
 import com.youversion.platform.core.search.models.SearchResults
 import com.youversion.platform.core.search.models.SearchTopic
 import com.youversion.platform.core.search.models.SearchUserIntent
+import com.youversion.platform.core.search.models.SearchVideo
 import com.youversion.platform.core.search.models.TopicSearchResults
 import com.youversion.platform.core.search.models.VerseSearchResults
+import com.youversion.platform.core.search.models.VideoSearchResults
 import com.youversion.platform.core.utilities.graphemeClusterCount
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.path
 import kotlinx.serialization.json.JsonArray
@@ -63,6 +69,21 @@ internal object SearchEndpoints : SearchApi {
             pageToken(pageToken)
         }
 
+    /** The video-search URL. Null paging options are omitted; [videos] checks the arguments. */
+    fun searchVideosUrl(
+        query: String,
+        organizationIds: List<String>,
+        pageSize: Int? = null,
+        pageToken: String? = null,
+    ): String =
+        buildYouVersionUrlString {
+            path("/v1-beta/search-videos")
+            parameter("query", query)
+            organizationIds.forEach { parameters.append("organization_ids[]", it) }
+            pageSize(pageSize)
+            pageToken(pageToken)
+        }
+
     /** The image-search URL. Null paging options are omitted; [images] checks the arguments. */
     fun searchImagesUrl(
         query: String,
@@ -96,7 +117,7 @@ internal object SearchEndpoints : SearchApi {
         fields: List<String>,
     ): String =
         buildYouVersionUrlString {
-            path("/v1/search-unified")
+            path(if ("videos" in fields) "/v1-beta/search-unified" else "/v1/search-unified")
             parameter("query", query)
             parameter("bible_id", bibleId)
             languageRanges(languageRanges)
@@ -170,6 +191,49 @@ internal object SearchEndpoints : SearchApi {
         )
     }
 
+    override suspend fun videos(
+        query: String,
+        organizationIds: List<String>,
+        languageRanges: List<String>,
+        pageSize: Int?,
+        pageToken: String?,
+    ): VideoSearchResults {
+        requireValidQueryLength(query)
+        require(organizationIds.all(::isUuid)) { "organizationIds must each be a UUID" }
+        requireValidLanguageRanges(languageRanges)
+        requireValidPageSize(pageSize)
+
+        val httpResponse =
+            httpClient.get(searchVideosUrl(query, organizationIds, pageSize, pageToken)) {
+                acceptLanguage(languageRanges)?.let { header(HttpHeaders.AcceptLanguage, it) }
+            }
+        if (httpResponse.status == HttpStatusCode.NoContent) {
+            return VideoSearchResults(
+                videos = emptyList(),
+                userIntent = null,
+                didYouMean = emptyList(),
+                searchInsteadFor = null,
+                nextPageToken = null,
+            )
+        }
+
+        val response = parseApiBody<VideoSearchResponse>(httpResponse)
+        return VideoSearchResults(
+            videos =
+                response.videos.mapNotNull { video ->
+                    try {
+                        video.withThumbnailSize(null)
+                    } catch (_: YouVersionNetworkException) {
+                        null
+                    }
+                },
+            userIntent = response.userIntent?.let(::SearchUserIntent),
+            didYouMean = response.didYouMean,
+            searchInsteadFor = response.searchInsteadFor,
+            nextPageToken = response.nextPageToken,
+        )
+    }
+
     override suspend fun topics(
         query: String,
         languageRanges: List<String>,
@@ -219,7 +283,8 @@ internal object SearchEndpoints : SearchApi {
             userIntent = response.userIntent?.let(::SearchUserIntent),
             didYouMean = response.didYouMean,
             searchInsteadFor = response.searchInsteadFor,
-            images = (response.images as? JsonArray).orEmpty().mapNotNull { (it as? JsonObject)?.searchImage() },
+            images = response.images.jsonObjects().mapNotNull { it.searchImage() },
+            videos = response.videos.jsonObjects().mapNotNull { it.searchVideo() },
         )
     }
 
@@ -269,12 +334,21 @@ internal object SearchEndpoints : SearchApi {
         return SearchImage(id = id, passageId = passageId)
     }
 
+    private fun JsonElement?.jsonObjects(): List<JsonObject> =
+        (this as? JsonArray).orEmpty().filterIsInstance<JsonObject>()
+
+    private fun JsonObject.searchVideo(): SearchVideo? = this["id"].nonBlankString()?.let(::SearchVideo)
+
     private fun JsonElement?.nonBlankString(): String? =
         (this as? JsonPrimitive)?.takeIf { it.isString }?.content?.takeIf { it.isNotBlank() }
 
     private fun requireValidQueryLength(query: String) {
         require(query.graphemeClusterCount in 1..100) { "query must be between 1 and 100 grapheme clusters" }
     }
+
+    private val uuidRegex = Regex("[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}")
+
+    private fun isUuid(value: String): Boolean = uuidRegex.matches(value)
 
     private fun requireValidLanguageRanges(languageRanges: List<String>) {
         require(languageRanges.isNotEmpty()) { "languageRanges must not be empty" }
