@@ -30,6 +30,12 @@ import com.youversion.platform.ui.icons.ExamplesFilledIcon
 import com.youversion.platform.ui.icons.ExamplesStrokedIcon
 import com.youversion.platform.ui.theme.TabSelectedColor
 
+/**
+ * The sample app's bottom tab bar, styled like the Swift sample's.
+ *
+ * @param currentDestination The tab to show as selected.
+ * @param onDestinationClick Called when the user picks a tab.
+ */
 @Composable
 fun SampleBottomBar(
     currentDestination: SampleDestination,

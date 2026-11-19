@@ -22,6 +22,12 @@ import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.views.card.BibleCard
 
+/**
+ * Shows a Bible card for a fixed passage, with its version picker.
+ *
+ * @param onDestinationClick Called when the user picks a tab in the bottom bar.
+ * @param onBack Called when the user taps the back arrow.
+ */
 @Composable
 fun BibleCardExample(
     onDestinationClick: (SampleDestination) -> Unit,

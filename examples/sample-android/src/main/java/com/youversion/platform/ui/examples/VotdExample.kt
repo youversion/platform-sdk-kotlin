@@ -14,6 +14,12 @@ import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.views.votd.CompactVerseOfTheDay
 
+/**
+ * Shows the compact Verse of the Day component.
+ *
+ * @param onDestinationClick Called when the user picks a tab in the bottom bar.
+ * @param onBack Called when the user taps the back arrow.
+ */
 @Composable
 fun VotdExample(
     onDestinationClick: (SampleDestination) -> Unit,

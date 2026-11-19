@@ -28,10 +28,10 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
+import com.youversion.platform.ui.dataexchange.DataExchangeStatus
 import com.youversion.platform.ui.dataexchange.rememberDataExchange
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.views.SignInWithYouVersionButton
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 @Composable
@@ -79,12 +79,10 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                             onClick = {
                                 dataExchangeStatusText = null
                                 scope.launch {
-                                    try {
-                                        requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
-                                    } catch (e: CancellationException) {
-                                        throw e
-                                    } catch (e: Exception) {
-                                        dataExchangeStatusText = "Highlights permission failed: ${e.localizedMessage}"
+                                    val result = requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+                                    if (result == null || result.status == DataExchangeStatus.NotStarted) {
+                                        dataExchangeStatusText =
+                                            "Highlights permission failed: the request couldn't start."
                                     }
                                 }
                             },
