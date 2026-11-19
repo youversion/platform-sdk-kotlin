@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
@@ -79,7 +79,7 @@ private fun RowScope.SampleTab(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    val contentColor = if (isSelected) TabSelectedColor else MaterialTheme.colorScheme.onSurface
+    val iconColor = if (isSelected) TabSelectedColor else MaterialTheme.colorScheme.onSurface
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -88,7 +88,7 @@ private fun RowScope.SampleTab(
             Modifier
                 .weight(1f)
                 .padding(vertical = 6.dp)
-                .height(57.dp)
+                .heightIn(min = 57.dp)
                 .clip(RoundedCornerShape(percent = 50))
                 .background(
                     if (isSelected) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f) else Color.Transparent,
@@ -97,12 +97,12 @@ private fun RowScope.SampleTab(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = contentColor,
+            tint = iconColor,
             modifier = Modifier.size(28.dp),
         )
         Text(
             text = label,
-            color = contentColor,
+            color = MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier.padding(top = 4.dp),
         )
