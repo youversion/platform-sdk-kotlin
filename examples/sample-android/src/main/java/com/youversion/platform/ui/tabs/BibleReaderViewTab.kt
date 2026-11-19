@@ -19,8 +19,8 @@ import com.youversion.platform.ui.theme.Tinos
 /**
  * The Bible tab, showing the SDK's Bible reader with the sample's fonts.
  *
- * The reader hosts the bottom bar inside its own bar, which has the reader's background and a small inset. The bar
- * paints its background past its own edges so that frame matches the sample's surface colour.
+ * The reader hosts the bottom bar inside its own bar and theme. The bar keeps the sample's theme, and paints its
+ * background past its own edges so the reader bar's background and small inset match the sample's surface colour.
  *
  * @param bibleReference The passage to open, or null to restore the last-read passage.
  * @param onDestinationClick Called when the user picks a tab in the bottom bar.
@@ -38,27 +38,29 @@ fun BibleReaderViewTab(
                     FontDefinition("Cormorant Garamond", CormorantGaramond),
                 )
         }
-    val bottomBarColor = MaterialTheme.colorScheme.surface
+    val colorScheme = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
 
     BibleReader(
         bibleReference = bibleReference,
         fontDefinitionProvider = fontDefinitionProvider,
         bottomBar = {
-            Box(
-                modifier =
-                    Modifier.drawBehind {
-                        drawRect(
-                            color = bottomBarColor,
-                            topLeft = Offset(-size.width, -size.height),
-                            size = Size(size.width * 3, size.height * 3),
-                        )
-                    },
-            ) {
-                SampleBottomBar(
-                    currentDestination = SampleDestination.Reader,
-                    onDestinationClick = onDestinationClick,
-                    containerColor = bottomBarColor,
-                )
+            MaterialTheme(colorScheme = colorScheme, typography = typography) {
+                Box(
+                    modifier =
+                        Modifier.drawBehind {
+                            drawRect(
+                                color = colorScheme.surface,
+                                topLeft = Offset(-size.width, -size.height),
+                                size = Size(size.width * 3, size.height * 3),
+                            )
+                        },
+                ) {
+                    SampleBottomBar(
+                        currentDestination = SampleDestination.Reader,
+                        onDestinationClick = onDestinationClick,
+                    )
+                }
             }
         },
     )

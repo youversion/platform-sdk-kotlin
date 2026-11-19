@@ -34,18 +34,15 @@ import com.youversion.platform.ui.theme.TabSelectedColor
  *
  * @param currentDestination The tab to show as selected.
  * @param onDestinationClick Called when the user picks a tab.
- * @param containerColor The bar's background. A host that draws the bar inside another theme, such as the Bible reader,
- *        passes the sample's surface colour from outside that theme.
  */
 @Composable
 fun SampleBottomBar(
     currentDestination: SampleDestination,
     onDestinationClick: (SampleDestination) -> Unit,
-    containerColor: Color = MaterialTheme.colorScheme.surface,
 ) {
     val isBibleSelected = currentDestination == SampleDestination.Reader
 
-    NavigationBar(containerColor = containerColor) {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         SampleTab(
             label = "Bible",
             icon = if (isBibleSelected) BibleFilledIcon else BibleStrokedIcon,
