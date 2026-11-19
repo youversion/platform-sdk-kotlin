@@ -1,6 +1,7 @@
 package com.youversion.platform.ui.examples
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -46,6 +47,8 @@ fun NavigateExample(
     onBack: () -> Unit,
     onReadInBible: (BibleReference) -> Unit,
 ) {
+    val isDarkTheme = isSystemInDarkTheme()
+
     Scaffold(
         topBar = {
             ExampleTopBar(
@@ -59,7 +62,8 @@ fun NavigateExample(
                 onDestinationClick = onDestinationClick,
             )
         },
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        containerColor =
+            if (isDarkTheme) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer,
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { innerPadding ->
         Column(
@@ -69,7 +73,10 @@ fun NavigateExample(
                     .verticalScroll(rememberScrollState())
                     .padding(top = 8.dp),
         ) {
-            GroupedCard(containerColor = MaterialTheme.colorScheme.surface) {
+            GroupedCard(
+                containerColor =
+                    if (isDarkTheme) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surface,
+            ) {
                 passages.forEachIndexed { index, (title, reference) ->
                     if (index > 0) {
                         HorizontalDivider(
