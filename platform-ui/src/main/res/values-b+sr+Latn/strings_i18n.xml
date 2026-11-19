@@ -72,7 +72,6 @@
     <string name="yv_select_language">Izaberite jezik</string>
     <string name="yv_share">Podeliti</string>
     <string name="yv_sign_in">Prijavite se</string>
-    <string name="yv_sign_in_button_content_desc">Prijavite se sa YouVersion nalogom</string>
     <string name="yv_sign_in_button_full">Prijavite se pomoću</string>
     <string name="yv_sign_in_error_message">Trenutno nismo mogli da vas prijavimo. Molimo, pokušajte ponovo.</string>
     <string name="yv_sign_in_error_title">Prijava nije uspela</string>

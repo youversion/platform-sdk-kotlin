@@ -72,7 +72,6 @@
     <string name="yv_select_language">Bir Dil Seçin</string>
     <string name="yv_share">Paylaş</string>
     <string name="yv_sign_in">Giriş yap</string>
-    <string name="yv_sign_in_button_content_desc">YouVersion ile oturum aç</string>
     <string name="yv_sign_in_button_full">Şununla oturum aç:</string>
     <string name="yv_sign_in_error_message">Şu anda oturumunuzu açamadık. Lütfen tekrar deneyin.</string>
     <string name="yv_sign_in_error_title">Oturum Açma Başarısız</string>

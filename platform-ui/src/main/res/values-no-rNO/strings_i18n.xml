@@ -72,7 +72,6 @@
     <string name="yv_select_language">Velg et språk</string>
     <string name="yv_share">Del</string>
     <string name="yv_sign_in">Logg inn</string>
-    <string name="yv_sign_in_button_content_desc">Logg inn med YouVersion</string>
     <string name="yv_sign_in_button_full">Logg inn med</string>
     <string name="yv_sign_in_error_message">Du kunne ikke logge inn akkurat nå. Prøv på nytt.</string>
     <string name="yv_sign_in_error_title">Innlogging mislyktes</string>

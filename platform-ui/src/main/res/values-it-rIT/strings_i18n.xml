@@ -72,7 +72,6 @@
     <string name="yv_select_language">Seleziona una lingua</string>
     <string name="yv_share">Condividi</string>
     <string name="yv_sign_in">Accedi</string>
-    <string name="yv_sign_in_button_content_desc">Accedi con YouVersion</string>
     <string name="yv_sign_in_button_full">Accedi con</string>
     <string name="yv_sign_in_error_message">Non è stato possibile effettuare l\'accesso in questo momento. Riprova.</string>
     <string name="yv_sign_in_error_title">Accesso non riuscito</string>

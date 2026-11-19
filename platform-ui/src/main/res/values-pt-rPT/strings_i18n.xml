@@ -72,7 +72,6 @@
     <string name="yv_select_language">Selecionar um Idioma</string>
     <string name="yv_share">Partilhar</string>
     <string name="yv_sign_in">Iniciar sessão</string>
-    <string name="yv_sign_in_button_content_desc">Iniciar sessão com a YouVersion</string>
     <string name="yv_sign_in_button_full">Iniciar sessão com</string>
     <string name="yv_sign_in_error_message">Não foi possível iniciar a sua sessão neste momento. Por favor, tente novamente.</string>
     <string name="yv_sign_in_error_title">Falha ao Iniciar Sessão</string>

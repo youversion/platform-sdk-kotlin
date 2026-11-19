@@ -72,7 +72,6 @@
     <string name="yv_select_language">Valitse kieli</string>
     <string name="yv_share">Jaa</string>
     <string name="yv_sign_in">Kirjaudu sisään</string>
-    <string name="yv_sign_in_button_content_desc">Kirjaudu sisään YouVersionilla</string>
     <string name="yv_sign_in_button_full">Kirjaudu sisään palvelulla</string>
     <string name="yv_sign_in_error_message">Emme pystyneet kirjaamaan sinua sisään tällä hetkellä. Yritä uudelleen.</string>
     <string name="yv_sign_in_error_title">Kirjautuminen epäonnistui</string>
