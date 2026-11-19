@@ -36,8 +36,9 @@ fun App() {
     var readerReference by remember { mutableStateOf<BibleReference?>(null) }
     val onReadInBible: (BibleReference) -> Unit = { reference ->
         readerReference = reference
+        navController.popBackStack(SampleDestination.Reader.route, inclusive = false, saveState = true)
         navController.navigate(SampleDestination.Reader.route) {
-            popUpTo(navController.graph.findStartDestination().id) {
+            popUpTo(SampleDestination.Reader.route) {
                 inclusive = true
             }
         }

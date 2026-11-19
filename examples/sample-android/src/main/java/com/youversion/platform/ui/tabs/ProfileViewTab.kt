@@ -80,10 +80,32 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                                 dataExchangeStatusText = null
                                 scope.launch {
                                     val result = requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
-                                    if (result == null || result.status == DataExchangeStatus.NotStarted) {
-                                        dataExchangeStatusText =
-                                            "Highlights permission failed: the request couldn't start."
-                                    }
+                                    dataExchangeStatusText =
+                                        when (val status = result?.status) {
+                                            null, DataExchangeStatus.NotStarted -> {
+                                                "Highlights permission failed: the request couldn't start."
+                                            }
+
+                                            DataExchangeStatus.Granted -> {
+                                                if (result.grants(SignInWithYouVersionPermission.HIGHLIGHTS)) {
+                                                    null
+                                                } else {
+                                                    "Highlights permission was not granted."
+                                                }
+                                            }
+
+                                            DataExchangeStatus.Cancelled -> {
+                                                null
+                                            }
+
+                                            DataExchangeStatus.Missing -> {
+                                                "Highlights permission failed: no status was returned."
+                                            }
+
+                                            is DataExchangeStatus.Unknown -> {
+                                                "Highlights permission failed: unknown status \"${status.rawValue}\"."
+                                            }
+                                        }
                                 }
                             },
                         ) {

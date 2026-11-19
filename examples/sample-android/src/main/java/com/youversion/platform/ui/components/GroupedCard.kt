@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
  * A rounded card that groups list rows, like an inset grouped list on iOS.
  */
 @Composable
-fun GroupedCard(
+internal fun GroupedCard(
     containerColor: Color,
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
