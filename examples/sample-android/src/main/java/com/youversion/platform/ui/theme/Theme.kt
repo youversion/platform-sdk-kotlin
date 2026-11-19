@@ -19,6 +19,8 @@ private val DarkColorScheme =
         background = Color.Black,
         surface = Color.Black,
         surfaceContainer = DarkGroupedBackgroundColor,
+        surfaceVariant = DarkSystemGray5Color,
+        onSurfaceVariant = SystemGrayColor,
     )
 
 private val LightColorScheme =
@@ -29,6 +31,8 @@ private val LightColorScheme =
         background = Color.White,
         surface = Color.White,
         surfaceContainer = GroupedBackgroundColor,
+        surfaceVariant = SystemGray5Color,
+        onSurfaceVariant = SystemGrayColor,
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
     surface = Color(0xFFFFFBFE),

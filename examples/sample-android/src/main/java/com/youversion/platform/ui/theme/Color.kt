@@ -17,3 +17,7 @@ internal val LinkColor = Color(0xFF007AFF)
 internal val GroupedBackgroundColor = Color(0xFFF2F2F7)
 
 internal val DarkGroupedBackgroundColor = Color(0xFF1C1C1E)
+
+internal val SystemGray5Color = Color(0xFFE5E5EA)
+
+internal val DarkSystemGray5Color = Color(0xFF2C2C2E)
