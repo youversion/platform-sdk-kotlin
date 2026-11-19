@@ -7,6 +7,7 @@ import com.youversion.platform.core.search.models.SearchResults
 import com.youversion.platform.core.search.models.SearchUserIntent
 import com.youversion.platform.core.search.models.TopicSearchResults
 import com.youversion.platform.core.search.models.VerseSearchResults
+import com.youversion.platform.core.search.models.VideoSearchResults
 
 public interface SearchApi {
     /**
@@ -113,21 +114,56 @@ public interface SearchApi {
     ): TopicSearchResults
 
     /**
-     * Retrieves the scripture in the Bible version identified by [bibleId], the topics and the images matching [query],
-     * in a single round trip.
+     * Retrieves the videos matching [query].
+     *
+     * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
+     *
+     * A search that matches nothing returns empty results rather than failing, and a video whose thumbnail URL
+     * cannot be parsed is dropped. Each video's thumbnail URL carries no `size`, so the platform serves its default
+     * rendition.
+     *
+     * @param query The text to search for. It must be between 1 and 100 grapheme clusters.
+     * @param organizationIds The UUIDs of the organizations whose videos to search. Empty searches every
+     *     organization.
+     * @param languageRanges BCP 47 language ranges in preference order, sent as `Accept-Language` with a descending
+     *     quality value on every range after the first; only the first ten ranges are sent. It must not be empty, and
+     *     `*` requests all languages.
+     * @param pageSize The number of results to return. When supplied, it must be between 1 and 99.
+     * @param pageToken A [VideoSearchResults.nextPageToken] from an earlier search with the same [query],
+     *     [organizationIds] and [languageRanges], to continue where it left off. [pageSize] may change.
+     * @return The matching [VideoSearchResults].
+     * @throws IllegalArgumentException if [query] or [pageSize] is outside the range stated above, an entry of
+     *     [organizationIds] is not a UUID, or [languageRanges] is empty or holds a range that is neither a
+     *     well-formed BCP 47 tag nor `*`.
+     * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.
+     */
+    public suspend fun videos(
+        query: String,
+        organizationIds: List<String> = emptyList(),
+        languageRanges: List<String> = listOf("en"),
+        pageSize: Int? = null,
+        pageToken: String? = null,
+    ): VideoSearchResults
+
+    /**
+     * Retrieves the scripture in the Bible version identified by [bibleId], the topics, the images and the videos
+     * matching [query], in a single round trip.
      *
      * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
      *
      * A search that matches nothing returns empty results rather than failing, a verse result that does not name a
-     * book, chapter and verse is dropped, and an image result that does not name an id and a passage is dropped.
+     * book, chapter and verse is dropped, an image result that does not name an id and a passage is dropped, and a
+     * video result that does not name an id is dropped.
      *
      * @param query The text to search for. It must be between 1 and 100 grapheme clusters.
      * @param bibleId The identifier of the Bible version to search. It must be greater than zero.
      * @param languageRanges Canonical BCP 47 language codes such as `en`, in preference order. It must not be empty,
      *     a range with a region such as `en-US` matches no language, and `*` requests all languages.
      * @param userIntent The kind of thing the reader is believed to be looking for, used to rank the results.
-     * @param fields The kinds of result to return — any of `verses`, `topics` and `images`. Empty asks for every
-     *     kind. Name only the kinds you will display, so you are not paying for results you discard.
+     * @param fields The kinds of result to return — any of `verses`, `topics`, `images` and `videos`. Empty asks
+     *     for every stable kind, which leaves out `videos`. Naming `videos` uses the beta endpoint, which needs an
+     *     app key with beta access. Name only the kinds you will display, so you are not paying for results you
+     *     discard.
      * @return The matching [SearchResults]. Unified results do not page.
      * @throws IllegalArgumentException if [query] or [bibleId] is outside the range stated above, or
      *     [languageRanges] is empty or holds a range that is neither a well-formed BCP 47 tag nor `*`.

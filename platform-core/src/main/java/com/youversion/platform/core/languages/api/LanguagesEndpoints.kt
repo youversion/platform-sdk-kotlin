@@ -1,6 +1,7 @@
 package com.youversion.platform.core.languages.api
 
 import com.youversion.platform.core.api.PaginatedResponse
+import com.youversion.platform.core.api.acceptLanguage
 import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.fields
 import com.youversion.platform.core.api.pageSize
@@ -50,19 +51,4 @@ internal object LanguagesEndpoints : LanguagesApi {
                     else -> parsePaginatedResponse(it)
                 }
             }
-
-    private fun acceptLanguage(languageRanges: List<String>): String? =
-        languageRanges
-            .filter { it.isNotBlank() }
-            .take(MAX_RANGES)
-            .mapIndexed { index, range ->
-                when (index) {
-                    0 -> range
-                    else -> "$range;q=0.${MAX_RANGES - index}"
-                }
-            }.joinToString(", ")
-            .takeIf { it.isNotEmpty() }
 }
-
-/** Ranges past the tenth have no distinct quality value left below them, so they are dropped. */
-private const val MAX_RANGES = 10

@@ -120,4 +120,20 @@ class SearchEndpointsTests {
             ),
         )
     }
+
+    @Test
+    fun `test unified search url uses the beta endpoint only when videos are named`() {
+        assertEquals(
+            "https://api.youversion.com/v1-beta/search-unified" +
+                "?query=love&bible_id=111&language_ranges%5B%5D=en&user_intent=unknown" +
+                "&fields%5B%5D=verses&fields%5B%5D=videos",
+            SearchEndpoints.searchUnifiedUrl(
+                query = "love",
+                bibleId = 111,
+                languageRanges = listOf("en"),
+                userIntent = SearchUserIntent.unknown,
+                fields = listOf("verses", "videos"),
+            ),
+        )
+    }
 }

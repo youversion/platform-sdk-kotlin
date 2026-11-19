@@ -4,7 +4,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.di.PlatformInternalApi
 
 /**
- * The scripture, topics and images matching a unified search. Unified results do not page.
+ * The scripture, topics, images and videos matching a unified search. Unified results do not page.
  *
  * @property references The matching references, in rank order.
  * @property topics The matching topics, in rank order.
@@ -13,6 +13,7 @@ import com.youversion.platform.core.di.PlatformInternalApi
  * @property searchInsteadFor The original wording, present only when the platform corrected the query and
  *     searched for the correction instead.
  * @property images The matching images, in rank order. Empty when the platform does not offer image results.
+ * @property videos The matching videos, in rank order. Empty when the platform does not offer video results.
  */
 public class SearchResults
     @PlatformInternalApi
@@ -23,6 +24,7 @@ public class SearchResults
         public val didYouMean: List<String>,
         public val searchInsteadFor: String?,
         public val images: List<SearchImage> = emptyList(),
+        public val videos: List<SearchVideo> = emptyList(),
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -32,7 +34,8 @@ public class SearchResults
                 userIntent == other.userIntent &&
                 didYouMean == other.didYouMean &&
                 searchInsteadFor == other.searchInsteadFor &&
-                images == other.images
+                images == other.images &&
+                videos == other.videos
         }
 
         override fun hashCode(): Int {
@@ -42,10 +45,11 @@ public class SearchResults
             result = 31 * result + didYouMean.hashCode()
             result = 31 * result + (searchInsteadFor?.hashCode() ?: 0)
             result = 31 * result + images.hashCode()
+            result = 31 * result + videos.hashCode()
             return result
         }
 
         override fun toString(): String =
             "SearchResults(references=$references, topics=$topics, userIntent=$userIntent, " +
-                "didYouMean=$didYouMean, searchInsteadFor=$searchInsteadFor, images=$images)"
+                "didYouMean=$didYouMean, searchInsteadFor=$searchInsteadFor, images=$images, videos=$videos)"
     }
