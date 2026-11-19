@@ -1,5 +1,6 @@
 package com.youversion.platform.ui.tabs
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.reader.BibleReader
@@ -29,6 +30,7 @@ fun BibleReaderViewTab(
                     FontDefinition("Cormorant Garamond", CormorantGaramond),
                 )
         }
+    val bottomBarColor = MaterialTheme.colorScheme.surface
 
     BibleReader(
         bibleReference = bibleReference,
@@ -37,6 +39,7 @@ fun BibleReaderViewTab(
             SampleBottomBar(
                 currentDestination = SampleDestination.Reader,
                 onDestinationClick = onDestinationClick,
+                containerColor = bottomBarColor,
             )
         },
     )
