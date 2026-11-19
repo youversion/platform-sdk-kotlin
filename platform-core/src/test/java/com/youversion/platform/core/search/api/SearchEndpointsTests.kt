@@ -91,7 +91,7 @@ class SearchEndpointsTests {
     @Test
     fun `test unified search url sends every parameter in order`() {
         assertEquals(
-            "https://api.youversion.com/v1-beta/search-unified" +
+            "https://api.youversion.com/v1/search-unified" +
                 "?query=love&bible_id=111" +
                 "&language_ranges%5B%5D=en-US&language_ranges%5B%5D=es" +
                 "&user_intent=topical" +
@@ -109,7 +109,7 @@ class SearchEndpointsTests {
     @Test
     fun `test unified search url asks for every result kind by omitting fields`() {
         assertEquals(
-            "https://api.youversion.com/v1-beta/search-unified" +
+            "https://api.youversion.com/v1/search-unified" +
                 "?query=love&bible_id=111&language_ranges%5B%5D=en-US&user_intent=unknown",
             SearchEndpoints.searchUnifiedUrl(
                 query = "love",
@@ -117,6 +117,22 @@ class SearchEndpointsTests {
                 languageRanges = listOf("en-US"),
                 userIntent = SearchUserIntent.unknown,
                 fields = emptyList(),
+            ),
+        )
+    }
+
+    @Test
+    fun `test unified search url uses the beta endpoint only when videos are named`() {
+        assertEquals(
+            "https://api.youversion.com/v1-beta/search-unified" +
+                "?query=love&bible_id=111&language_ranges%5B%5D=en&user_intent=unknown" +
+                "&fields%5B%5D=verses&fields%5B%5D=videos",
+            SearchEndpoints.searchUnifiedUrl(
+                query = "love",
+                bibleId = 111,
+                languageRanges = listOf("en"),
+                userIntent = SearchUserIntent.unknown,
+                fields = listOf("verses", "videos"),
             ),
         )
     }

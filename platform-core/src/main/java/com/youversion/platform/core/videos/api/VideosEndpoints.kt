@@ -4,8 +4,8 @@ import com.youversion.platform.core.api.PaginatedResponse
 import com.youversion.platform.core.api.acceptLanguage
 import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.fields
-import com.youversion.platform.core.api.pageSize
 import com.youversion.platform.core.api.pageToken
+import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.api.parseApiBody
 import com.youversion.platform.core.api.parsePaginatedResponse
 import com.youversion.platform.core.api.requireValidPageSize
@@ -27,7 +27,10 @@ internal object VideosEndpoints : VideosApi {
 
     private val playlistFields = setOf("id", "title", "description", "type", "total", "videos")
 
-    /** The playlists URL. Selecting [fields] switches to the beta path; [playlists] checks the arguments. */
+    /**
+     * The playlists URL. With one to three [fields] and no [pageSize], it asks for every remaining playlist;
+     * [playlists] checks the arguments.
+     */
     fun playlistsUrl(
         organizationId: String,
         fields: List<String>? = null,
@@ -35,10 +38,10 @@ internal object VideosEndpoints : VideosApi {
         pageToken: String? = null,
     ): String =
         buildYouVersionUrlString {
-            path(if (fields.isNullOrEmpty()) "/v1/organizations" else "/v1-beta/organizations")
+            path("/v1-beta/organizations")
             appendPathSegments(listOf(organizationId, "playlists"), encodeSlash = true)
             fields(fields)
-            pageSize(pageSize, fields)
+            parameter("page_size", pageSize ?: "*".takeIf { fields?.size in 1..3 })
             pageToken(pageToken)
         }
 
@@ -48,7 +51,7 @@ internal object VideosEndpoints : VideosApi {
         id: Int,
     ): String =
         buildYouVersionUrlString {
-            path("/v1/organizations")
+            path("/v1-beta/organizations")
             appendPathSegments(listOf(organizationId, "playlists", id.toString()), encodeSlash = true)
         }
 

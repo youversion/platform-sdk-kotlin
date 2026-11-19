@@ -194,7 +194,7 @@ class SearchApiTests : YouVersionPlatformTest {
                             respondJson("""{ "topics": [], "did_you_mean": [] }""")
                         }
 
-                        "/v1-beta/search-unified" -> {
+                        "/v1/search-unified" -> {
                             respondJson(
                                 """{ "verses": [], "topics": [], "did_you_mean": [] }""",
                             )
@@ -924,7 +924,7 @@ class SearchApiTests : YouVersionPlatformTest {
             MockEngine { request ->
                 assertEquals(HttpMethod.Get, request.method)
                 assertEquals(
-                    "/v1-beta/search-unified?query=faif&bible_id=111" +
+                    "/v1/search-unified?query=faif&bible_id=111" +
                         "&language_ranges%5B%5D=en-US&language_ranges%5B%5D=es" +
                         "&user_intent=topical&fields%5B%5D=verses&fields%5B%5D=topics&fields%5B%5D=images",
                     request.url.encodedPathAndQuery,
@@ -995,7 +995,7 @@ class SearchApiTests : YouVersionPlatformTest {
         runTest {
             MockEngine { request ->
                 assertEquals(
-                    "/v1-beta/search-unified?query=love&bible_id=111&language_ranges%5B%5D=en&user_intent=unknown",
+                    "/v1/search-unified?query=love&bible_id=111&language_ranges%5B%5D=en&user_intent=unknown",
                     request.url.encodedPathAndQuery,
                 )
                 respondJson("""{ "verses": [], "topics": [], "did_you_mean": [] }""")
@@ -1014,7 +1014,7 @@ class SearchApiTests : YouVersionPlatformTest {
         runTest {
             MockEngine { request ->
                 assertEquals(
-                    "/v1-beta/search-unified?query=love&bible_id=111&language_ranges%5B%5D=en" +
+                    "/v1/search-unified?query=love&bible_id=111&language_ranges%5B%5D=en" +
                         "&user_intent=unknown&fields%5B%5D=images",
                     request.url.encodedPathAndQuery,
                 )

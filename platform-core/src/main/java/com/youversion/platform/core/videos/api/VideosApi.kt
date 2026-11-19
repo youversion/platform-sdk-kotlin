@@ -17,8 +17,8 @@ public interface VideosApi {
      * @param organizationId The organization whose playlists to fetch. Opaque; it is encoded as given.
      * @param fields The fields to return — any of `id`, `title`, `description`, `type`, `total` and `videos`.
      *     `null` returns every field; fields left out are `null` on each playlist.
-     * @param pageSize The number of playlists to return. When supplied, it must be between 1 and 99. Naming one to
-     *     three [fields] returns every remaining playlist instead, whatever [pageSize] is.
+     * @param pageSize The number of playlists to return. When supplied, it must be between 1 and 99. `null` uses the
+     *     platform default, except that naming one to three [fields] returns every remaining playlist.
      * @param pageToken The [PaginatedResponse.nextPageToken] of the previous page.
      * @param languageRanges BCP 47 language ranges in preference order that choose the language of titles and
      *     descriptions. Sent as `Accept-Language`, with a descending quality value on every range after the first;

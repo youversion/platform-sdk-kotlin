@@ -117,7 +117,7 @@ internal object SearchEndpoints : SearchApi {
         fields: List<String>,
     ): String =
         buildYouVersionUrlString {
-            path("/v1-beta/search-unified")
+            path(if ("videos" in fields) "/v1-beta/search-unified" else "/v1/search-unified")
             parameter("query", query)
             parameter("bible_id", bibleId)
             languageRanges(languageRanges)

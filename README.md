@@ -593,7 +593,7 @@ val results =
     )
 ```
 
-`fields` names the kinds of result to return — any of `"verses"`, `"topics"`, `"images"`, and `"videos"`; leave it empty for every kind. Ask only for the kinds you display. Unified results do not page.
+`fields` names the kinds of result to return — any of `"verses"`, `"topics"`, `"images"`, and `"videos"`; leave it empty for every stable kind, which leaves out videos. Naming `"videos"` uses the beta endpoint, which needs an app key with beta access. Ask only for the kinds you display. Unified results do not page.
 
 Each `SearchImage` carries only an `id` and the `passageId` it illustrates — a single verse or a verse range such as `"1CO.13.4-7"`. Pass the `id` to `YouVersionApi.verseImages.verseImage` to get the image's URL, size and attribution (see [Fetching One Image](#fetching-one-image)). `images` is empty wherever the platform does not yet offer image results.
 
@@ -687,7 +687,7 @@ val secondPage =
 val playlist = YouVersionApi.videos.playlist(organizationId = organizationId, id = 7)
 ```
 
-- `fields` names the playlist fields to return — any of `"id"`, `"title"`, `"description"`, `"type"`, `"total"`, and `"videos"`. Fields left out are `null`. Naming one to three fields returns every remaining playlist in one page, whatever `pageSize` is.
+- `fields` names the playlist fields to return — any of `"id"`, `"title"`, `"description"`, `"type"`, `"total"`, and `"videos"`. Fields left out are `null`. Naming one to three fields without a `pageSize` returns every remaining playlist in one page.
 - `pageSize` (1–99) and `pageToken` page through the playlists. Keep the same `fields` and `pageSize` when continuing. An organization with no playlists returns an empty page.
 - `languageRanges` chooses the language of titles and descriptions for `playlists` and `playlist`. It is sent as `Accept-Language`, with a descending quality value on every range after the first; only the first ten are sent, and blank ranges are dropped, so a list with no non-blank range leaves the header off. It defaults to `"en"`, because a request without the header can currently return an empty page even when playlists exist.
 - `videoIds` lists the playlist's videos in order; pass each to `video`.

@@ -161,7 +161,9 @@ public interface SearchApi {
      *     a range with a region such as `en-US` matches no language, and `*` requests all languages.
      * @param userIntent The kind of thing the reader is believed to be looking for, used to rank the results.
      * @param fields The kinds of result to return — any of `verses`, `topics`, `images` and `videos`. Empty asks
-     *     for every kind. Name only the kinds you will display, so you are not paying for results you discard.
+     *     for every stable kind, which leaves out `videos`. Naming `videos` uses the beta endpoint, which needs an
+     *     app key with beta access. Name only the kinds you will display, so you are not paying for results you
+     *     discard.
      * @return The matching [SearchResults]. Unified results do not page.
      * @throws IllegalArgumentException if [query] or [bibleId] is outside the range stated above, or
      *     [languageRanges] is empty or holds a range that is neither a well-formed BCP 47 tag nor `*`.
