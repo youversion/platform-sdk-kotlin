@@ -27,7 +27,6 @@ import com.youversion.platform.ui.icons.BibleFilledIcon
 import com.youversion.platform.ui.icons.BibleStrokedIcon
 import com.youversion.platform.ui.icons.ContentIcon
 import com.youversion.platform.ui.icons.ExamplesFilledIcon
-import com.youversion.platform.ui.icons.ExamplesStrokedIcon
 import com.youversion.platform.ui.theme.TabSelectedColor
 
 /**
@@ -42,9 +41,8 @@ fun SampleBottomBar(
     onDestinationClick: (SampleDestination) -> Unit,
 ) {
     val isBibleSelected = currentDestination == SampleDestination.Reader
-    val isExamplesSelected = currentDestination == SampleDestination.Examples
 
-    NavigationBar {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         SampleTab(
             label = "Bible",
             icon = if (isBibleSelected) BibleFilledIcon else BibleStrokedIcon,
@@ -59,8 +57,8 @@ fun SampleBottomBar(
         )
         SampleTab(
             label = "Examples",
-            icon = if (isExamplesSelected) ExamplesFilledIcon else ExamplesStrokedIcon,
-            isSelected = isExamplesSelected,
+            icon = ExamplesFilledIcon,
+            isSelected = currentDestination == SampleDestination.Examples,
             onClick = { onDestinationClick(SampleDestination.Examples) },
         )
         SampleTab(
@@ -79,7 +77,7 @@ private fun RowScope.SampleTab(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    val iconColor = if (isSelected) TabSelectedColor else MaterialTheme.colorScheme.onSurface
+    val contentColor = if (isSelected) TabSelectedColor else MaterialTheme.colorScheme.onSurface
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -97,12 +95,12 @@ private fun RowScope.SampleTab(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = iconColor,
+            tint = contentColor,
             modifier = Modifier.size(28.dp),
         )
         Text(
             text = label,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = contentColor,
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier.padding(top = 4.dp),
         )

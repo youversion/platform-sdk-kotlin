@@ -8,10 +8,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.dataexchange.DataExchangeStatus
 import com.youversion.platform.ui.dataexchange.rememberDataExchange
 import com.youversion.platform.ui.signin.SignInViewModel
+import com.youversion.platform.ui.theme.LinkColor
 import com.youversion.platform.ui.views.SignInWithYouVersionButton
 import kotlinx.coroutines.launch
 
@@ -44,6 +46,7 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
     val scope = rememberCoroutineScope()
     var dataExchangeStatusText by remember { mutableStateOf<String?>(null) }
     val requestDataExchange = rememberDataExchange()
+    val linkButtonColors = ButtonDefaults.textButtonColors(contentColor = LinkColor)
 
     LaunchedEffect(Unit) {
         signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState)
@@ -75,7 +78,8 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                     if (hasHighlightsPermission) {
                         Text("Highlights permission: granted")
                     } else {
-                        Button(
+                        TextButton(
+                            colors = linkButtonColors,
                             onClick = {
                                 dataExchangeStatusText = null
                                 scope.launch {
@@ -120,10 +124,13 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = {
-                        dataExchangeStatusText = null
-                        signInViewModel.onAction(SignInViewModel.Action.SignOut())
-                    }) {
+                    TextButton(
+                        colors = linkButtonColors,
+                        onClick = {
+                            dataExchangeStatusText = null
+                            signInViewModel.onAction(SignInViewModel.Action.SignOut())
+                        },
+                    ) {
                         Text("Sign out")
                     }
                 }

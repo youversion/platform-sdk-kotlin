@@ -11,3 +11,9 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 internal val TabSelectedColor = Color(0xFFF23B22)
+
+internal val LinkColor = Color(0xFF007AFF)
+
+internal val GroupedBackgroundColor = Color(0xFFF2F2F7)
+
+internal val DarkGroupedBackgroundColor = Color(0xFF1C1C1E)
