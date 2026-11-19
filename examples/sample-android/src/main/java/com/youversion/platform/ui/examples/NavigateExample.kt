@@ -22,6 +22,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.ui.components.GroupedCard
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
+import com.youversion.platform.ui.theme.LinkColor
 
 private val passages =
     listOf(
@@ -76,7 +77,7 @@ fun NavigateExample(
                         )
                     }
                     ListItem(
-                        headlineContent = { Text(title, color = MaterialTheme.colorScheme.primary) },
+                        headlineContent = { Text(title, color = LinkColor) },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         modifier = Modifier.clickable { onReadInBible(reference) },
                     )
