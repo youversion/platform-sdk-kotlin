@@ -1,6 +1,7 @@
 package com.youversion.platform.ui.tabs
 
 import androidx.compose.runtime.Composable
+import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.reader.BibleReader
 import com.youversion.platform.reader.FontDefinition
 import com.youversion.platform.reader.FontDefinitionProvider
@@ -10,7 +11,10 @@ import com.youversion.platform.ui.theme.CormorantGaramond
 import com.youversion.platform.ui.theme.Tinos
 
 @Composable
-fun BibleReaderViewTab(onDestinationClick: (SampleDestination) -> Unit) {
+fun BibleReaderViewTab(
+    bibleReference: BibleReference?,
+    onDestinationClick: (SampleDestination) -> Unit,
+) {
     val fontDefinitionProvider =
         object : FontDefinitionProvider {
             override fun fonts(): List<FontDefinition> =
@@ -21,6 +25,7 @@ fun BibleReaderViewTab(onDestinationClick: (SampleDestination) -> Unit) {
         }
 
     BibleReader(
+        bibleReference = bibleReference,
         fontDefinitionProvider = fontDefinitionProvider,
         bottomBar = {
             SampleBottomBar(

@@ -1,4 +1,4 @@
-package com.youversion.platform.ui.tabs
+package com.youversion.platform.ui.examples
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +24,10 @@ import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.views.card.BibleCard
 
 @Composable
-fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
+fun BibleCardExample(
+    onDestinationClick: (SampleDestination) -> Unit,
+    onBack: () -> Unit,
+) {
     val bibleReference =
         BibleReference(
             versionId = BibleDefaults.VERSION_ID,
@@ -35,9 +38,15 @@ fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
         )
 
     Scaffold(
+        topBar = {
+            ExampleTopBar(
+                title = "Bible Card",
+                onBack = onBack,
+            )
+        },
         bottomBar = {
             SampleBottomBar(
-                currentDestination = SampleDestination.Widget,
+                currentDestination = SampleDestination.Examples,
                 onDestinationClick = onDestinationClick,
             )
         },
@@ -64,10 +73,10 @@ fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
 
 @Preview
 @Composable
-private fun Preview_WidgetViewTab() {
+private fun Preview_BibleCardExample() {
     MaterialTheme {
         Surface {
-            WidgetViewTab(onDestinationClick = {})
+            BibleCardExample(onDestinationClick = {}, onBack = {})
         }
     }
 }

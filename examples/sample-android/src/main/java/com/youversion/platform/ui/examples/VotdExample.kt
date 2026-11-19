@@ -1,4 +1,4 @@
-package com.youversion.platform.ui.tabs
+package com.youversion.platform.ui.examples
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,20 +10,26 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.views.votd.CompactVerseOfTheDay
 
 @Composable
-fun VotdViewTab(onDestinationClick: (SampleDestination) -> Unit) {
-    val context = LocalContext.current
-
+fun VotdExample(
+    onDestinationClick: (SampleDestination) -> Unit,
+    onBack: () -> Unit,
+) {
     Scaffold(
+        topBar = {
+            ExampleTopBar(
+                title = "Verse of the Day",
+                onBack = onBack,
+            )
+        },
         bottomBar = {
             SampleBottomBar(
-                currentDestination = SampleDestination.Votd,
+                currentDestination = SampleDestination.Examples,
                 onDestinationClick = onDestinationClick,
             )
         },

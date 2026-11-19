@@ -1,58 +1,104 @@
 package com.youversion.platform.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.youversion.platform.R
+import com.youversion.platform.ui.icons.BibleFilledIcon
+import com.youversion.platform.ui.icons.BibleStrokedIcon
+import com.youversion.platform.ui.icons.ContentIcon
+import com.youversion.platform.ui.icons.ExamplesFilledIcon
+import com.youversion.platform.ui.icons.ExamplesStrokedIcon
+import com.youversion.platform.ui.theme.TabSelectedColor
 
 @Composable
 fun SampleBottomBar(
     currentDestination: SampleDestination,
     onDestinationClick: (SampleDestination) -> Unit,
 ) {
+    val isBibleSelected = currentDestination == SampleDestination.Reader
+    val isExamplesSelected = currentDestination == SampleDestination.Examples
+
     NavigationBar {
-        NavigationBarItem(
-            selected = currentDestination == SampleDestination.Reader,
+        SampleTab(
+            label = "Bible",
+            icon = if (isBibleSelected) BibleFilledIcon else BibleStrokedIcon,
+            isSelected = isBibleSelected,
             onClick = { onDestinationClick(SampleDestination.Reader) },
-            icon = { Icon(Icons.Filled.Book, contentDescription = null) },
-            label = { Text("Bible") },
         )
-
-        NavigationBarItem(
-            selected = currentDestination == SampleDestination.Votd,
-            onClick = { onDestinationClick(SampleDestination.Votd) },
-            icon = {
-                Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_votd),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                )
-            },
-            label = { Text("VOTD") },
+        SampleTab(
+            label = "Content",
+            icon = ContentIcon,
+            isSelected = currentDestination == SampleDestination.Content,
+            onClick = { onDestinationClick(SampleDestination.Content) },
         )
-
-        NavigationBarItem(
-            selected = currentDestination == SampleDestination.Widget,
-            onClick = { onDestinationClick(SampleDestination.Widget) },
-            icon = { Icon(Icons.Filled.Description, contentDescription = null) },
-            label = { Text("Widget") },
+        SampleTab(
+            label = "Examples",
+            icon = if (isExamplesSelected) ExamplesFilledIcon else ExamplesStrokedIcon,
+            isSelected = isExamplesSelected,
+            onClick = { onDestinationClick(SampleDestination.Examples) },
         )
-        NavigationBarItem(
-            selected = currentDestination == SampleDestination.Profile,
+        SampleTab(
+            label = "Profile",
+            icon = Icons.Filled.Person,
+            isSelected = currentDestination == SampleDestination.Profile,
             onClick = { onDestinationClick(SampleDestination.Profile) },
-            icon = { Icon(Icons.Filled.Person, contentDescription = null) },
-            label = { Text("Profile") },
+        )
+    }
+}
+
+@Composable
+private fun RowScope.SampleTab(
+    label: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    val contentColor = if (isSelected) TabSelectedColor else MaterialTheme.colorScheme.onSurface
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier =
+            Modifier
+                .weight(1f)
+                .padding(vertical = 6.dp)
+                .height(57.dp)
+                .clip(RoundedCornerShape(percent = 50))
+                .background(
+                    if (isSelected) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f) else Color.Transparent,
+                ).selectable(selected = isSelected, role = Role.Tab, onClick = onClick),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(28.dp),
+        )
+        Text(
+            text = label,
+            color = contentColor,
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(top = 4.dp),
         )
     }
 }
