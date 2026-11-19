@@ -9,12 +9,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -27,6 +31,7 @@ import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.dataexchange.rememberDataExchange
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.views.SignInWithYouVersionButton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 @Composable
@@ -37,6 +42,7 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
     val hasHighlightsPermission =
         config?.grantedPermissions?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
     val scope = rememberCoroutineScope()
+    var dataExchangeStatusText by remember { mutableStateOf<String?>(null) }
     val requestDataExchange = rememberDataExchange()
 
     LaunchedEffect(Unit) {
@@ -63,31 +69,42 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("You are signed in as:")
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(state.userName ?: "user name")
-                    Text(state.userEmail ?: "user email")
+                    Text(state.userName ?: "(no name)")
+                    Text(state.userEmail ?: "(no email)")
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        if (hasHighlightsPermission) {
-                            "Highlights permission: granted"
-                        } else {
-                            "Highlights permission: not granted"
-                        },
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    if (!hasHighlightsPermission) {
+                    if (hasHighlightsPermission) {
+                        Text("Highlights permission: granted")
+                    } else {
                         Button(
                             onClick = {
+                                dataExchangeStatusText = null
                                 scope.launch {
-                                    requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+                                    try {
+                                        requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+                                    } catch (e: CancellationException) {
+                                        throw e
+                                    } catch (e: Exception) {
+                                        dataExchangeStatusText = "Highlights permission failed: ${e.localizedMessage}"
+                                    }
                                 }
                             },
                         ) {
                             Text("Request highlights permission")
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
                     }
-                    Button(onClick = { signInViewModel.onAction(SignInViewModel.Action.SignOut()) }) {
-                        Text("Sign Out")
+                    dataExchangeStatusText?.let { text ->
+                        Text(
+                            text = text,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(vertical = 16.dp),
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = {
+                        dataExchangeStatusText = null
+                        signInViewModel.onAction(SignInViewModel.Action.SignOut())
+                    }) {
+                        Text("Sign out")
                     }
                 }
             } else {

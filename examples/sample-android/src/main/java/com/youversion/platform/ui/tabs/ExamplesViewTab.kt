@@ -62,7 +62,7 @@ fun ExamplesViewTab(
                 )
                 ExampleDivider()
                 ExampleRow(
-                    title = "Bible Card",
+                    title = "Card",
                     icon = BibleCardIcon,
                     onClick = { onExampleClick(SampleDestination.BibleCard) },
                 )
