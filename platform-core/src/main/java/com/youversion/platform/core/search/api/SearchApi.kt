@@ -118,14 +118,16 @@ public interface SearchApi {
      *
      * A valid `YouVersionPlatformConfiguration.appKey` must be set for the request to succeed.
      *
-     * A search that matches nothing returns empty results rather than failing. Each video's thumbnail URL carries no
-     * `size`, so the platform serves its default rendition.
+     * A search that matches nothing returns empty results rather than failing, and a video whose thumbnail URL
+     * cannot be parsed is dropped. Each video's thumbnail URL carries no `size`, so the platform serves its default
+     * rendition.
      *
      * @param query The text to search for. It must be between 1 and 100 grapheme clusters.
      * @param organizationIds The UUIDs of the organizations whose videos to search. Empty searches every
      *     organization.
-     * @param languageRanges BCP 47 language ranges in preference order, sent as the `Accept-Language` header. It must
-     *     not be empty, and `*` requests all languages.
+     * @param languageRanges BCP 47 language ranges in preference order, sent as `Accept-Language` with a descending
+     *     quality value on every range after the first; only the first ten ranges are sent. It must not be empty, and
+     *     `*` requests all languages.
      * @param pageSize The number of results to return. When supplied, it must be between 1 and 99.
      * @param pageToken A [VideoSearchResults.nextPageToken] from an earlier search with the same [query],
      *     [organizationIds] and [languageRanges], to continue where it left off. [pageSize] may change.

@@ -577,7 +577,7 @@ val secondPage =
     }
 ```
 
-Each result is a full `Video`, the same type `YouVersionApi.videos.video` returns (see [Videos API](#videos-api)). `organizationIds` are organization UUIDs; leave it empty to search every organization. `languageRanges` is sent as the `Accept-Language` header and defaults to `"en"`. A page token only works with the same `query`, `organizationIds`, and `languageRanges`, but `pageSize` may change between pages. A page with no videos can still carry a `nextPageToken`, so keep paging until it is `null`. Thumbnail URLs in search results carry no `size`, so the platform serves its default rendition.
+Each result is a full `Video`, the same type `YouVersionApi.videos.video` returns (see [Videos API](#videos-api)). `organizationIds` are organization UUIDs; leave it empty to search every organization. `languageRanges` defaults to `"en"` and is sent as the `Accept-Language` header, with a descending quality value on every range after the first; only the first ten are sent, and a blank range throws `IllegalArgumentException`. A page token only works with the same `query`, `organizationIds`, and `languageRanges`, but `pageSize` may change between pages. A page with no videos can still carry a `nextPageToken`, so keep paging until it is `null`. Thumbnail URLs in search results carry no `size`, so the platform serves its default rendition.
 
 #### Unified Search
 
@@ -689,7 +689,7 @@ val playlist = YouVersionApi.videos.playlist(organizationId = organizationId, id
 
 - `fields` names the playlist fields to return — any of `"id"`, `"title"`, `"description"`, `"type"`, `"total"`, and `"videos"`. Fields left out are `null`. Naming one to three fields returns every remaining playlist in one page, whatever `pageSize` is.
 - `pageSize` (1–99) and `pageToken` page through the playlists. Keep the same `fields` and `pageSize` when continuing. An organization with no playlists returns an empty page.
-- `languageRanges` chooses the language of titles and descriptions, sent as `Accept-Language`. It defaults to `"en"`, because a request without the header can currently return an empty page even when playlists exist.
+- `languageRanges` chooses the language of titles and descriptions for `playlists` and `playlist`. It is sent as `Accept-Language`, with a descending quality value on every range after the first; only the first ten are sent, and blank ranges are dropped, so a list with no non-blank range leaves the header off. It defaults to `"en"`, because a request without the header can currently return an empty page even when playlists exist.
 - `videoIds` lists the playlist's videos in order; pass each to `video`.
 
 #### Fetching One Video

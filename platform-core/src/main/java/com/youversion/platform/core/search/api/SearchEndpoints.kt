@@ -1,5 +1,6 @@
 package com.youversion.platform.core.search.api
 
+import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.api.acceptLanguage
 import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.fields
@@ -218,7 +219,14 @@ internal object SearchEndpoints : SearchApi {
 
         val response = parseApiBody<VideoSearchResponse>(httpResponse)
         return VideoSearchResults(
-            videos = response.videos.map { it.withThumbnailSize(null) },
+            videos =
+                response.videos.mapNotNull { video ->
+                    try {
+                        video.withThumbnailSize(null)
+                    } catch (_: YouVersionNetworkException) {
+                        null
+                    }
+                },
             userIntent = response.userIntent?.let(::SearchUserIntent),
             didYouMean = response.didYouMean,
             searchInsteadFor = response.searchInsteadFor,

@@ -20,9 +20,11 @@ public interface VideosApi {
      * @param pageSize The number of playlists to return. When supplied, it must be between 1 and 99. Naming one to
      *     three [fields] returns every remaining playlist instead, whatever [pageSize] is.
      * @param pageToken The [PaginatedResponse.nextPageToken] of the previous page.
-     * @param languageRanges BCP 47 language ranges in preference order, sent as the `Accept-Language` header to choose
-     *     the language of titles and descriptions. It defaults to `en`; an empty list leaves the header off, which can
-     *     currently return an empty page for an organization that has playlists.
+     * @param languageRanges BCP 47 language ranges in preference order that choose the language of titles and
+     *     descriptions. Sent as `Accept-Language`, with a descending quality value on every range after the first;
+     *     only the first ten ranges are sent and blank ranges are dropped. It defaults to `en`. A list with no
+     *     non-blank range leaves the header off, which can currently return an empty page for an organization that
+     *     has playlists.
      * @return The page of [VideoPlaylist]s.
      * @throws IllegalArgumentException if [organizationId] is empty, [fields] is empty or names an unknown field, or
      *     [pageSize] is outside the range stated above.
@@ -43,8 +45,10 @@ public interface VideosApi {
      *
      * @param organizationId The organization that owns the playlist. Opaque; it is encoded as given.
      * @param id The playlist's id.
-     * @param languageRanges BCP 47 language ranges in preference order, sent as the `Accept-Language` header to choose
-     *     the language of the title and description. It defaults to `en`; an empty list leaves the header off.
+     * @param languageRanges BCP 47 language ranges in preference order that choose the language of the title and
+     *     description. Sent as `Accept-Language`, with a descending quality value on every range after the first;
+     *     only the first ten ranges are sent and blank ranges are dropped. It defaults to `en`. A list with no
+     *     non-blank range leaves the header off.
      * @return The [VideoPlaylist].
      * @throws IllegalArgumentException if [organizationId] is empty.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] for any invalid request or response.

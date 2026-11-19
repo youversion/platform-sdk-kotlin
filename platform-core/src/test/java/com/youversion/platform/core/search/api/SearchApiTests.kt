@@ -783,7 +783,7 @@ class SearchApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test video search with a malformed thumbnail url is an invalid response`() =
+    fun `test video search drops a video with a malformed thumbnail url and keeps its siblings`() =
         runTest {
             MockEngine {
                 respondJson(
@@ -791,22 +791,65 @@ class SearchApiTests : YouVersionPlatformTest {
                     {
                         "videos": [
                             {
+                                "id": "vid-0",
+                                "thumbnail": { "url": "https://img.example/a.jpg?size=card" },
+                                "playback_sources": [],
+                                "playback_preview_sources": []
+                            },
+                            {
                                 "id": "vid-1",
                                 "thumbnail": { "url": "https://img.example:notaport/v.jpg" },
                                 "playback_sources": [],
                                 "playback_preview_sources": []
-                            }
+                            },
+                            { "id": "vid-2", "playback_sources": [], "playback_preview_sources": [] }
                         ],
-                        "did_you_mean": []
+                        "did_you_mean": [],
+                        "next_page_token": "next-token"
                     }
                     """.trimIndent(),
                 )
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
-            assertFailsWith<YouVersionNetworkException> {
-                YouVersionApi.search.videos(query = "love")
-            }.apply { assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, reason) }
+            val results = YouVersionApi.search.videos(query = "love")
+
+            assertEquals(listOf("vid-0", "vid-2"), results.videos.map { it.id })
+            assertEquals(
+                "https://img.example/a.jpg",
+                results.videos
+                    .first()
+                    .thumbnail
+                    ?.url,
+            )
+            assertEquals("next-token", results.nextPageToken)
+        }
+
+    @Test
+    fun `test video search sends only the first ten language ranges`() =
+        runTest {
+            MockEngine { request ->
+                assertEquals(
+                    "en, es;q=0.9, fr;q=0.8, de;q=0.7, it;q=0.6, pt;q=0.5, nl;q=0.4, sv;q=0.3, da;q=0.2, fi;q=0.1",
+                    request.headers[HttpHeaders.AcceptLanguage],
+                )
+                respondJson("""{ "videos": [], "did_you_mean": [] }""")
+            }.also { engine -> startYouVersionPlatformTest(engine) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+            YouVersionApi.search.videos(
+                query = "love",
+                languageRanges = listOf("en", "es", "fr", "de", "it", "pt", "nl", "sv", "da", "fi", "nb"),
+            )
+        }
+
+    @Test
+    fun `test video search rejects a blank language range`() =
+        runTest {
+            startNoRequestExpected()
+            assertFailsWith<IllegalArgumentException> {
+                YouVersionApi.search.videos(query = "love", languageRanges = listOf(" "))
+            }
         }
 
     @Test

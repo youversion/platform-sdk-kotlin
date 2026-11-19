@@ -392,4 +392,39 @@ class VideosApiTests : YouVersionPlatformTest {
     @Test
     fun `test playlist throws invalid response on malformed body`() =
         testInvalidResponse { YouVersionApi.videos.playlist(organizationId = "org", id = 1) }
+
+    @Test
+    fun `test playlists sends only the first ten language ranges`() =
+        runTest {
+            val ranges = listOf("en", "es", "fr", "de", "it", "pt", "nl", "sv", "da", "fi", "nb")
+            MockEngine { request ->
+                assertEquals(
+                    "en, es;q=0.9, fr;q=0.8, de;q=0.7, it;q=0.6, pt;q=0.5, nl;q=0.4, sv;q=0.3, da;q=0.2, fi;q=0.1",
+                    request.headers[HttpHeaders.AcceptLanguage],
+                )
+                respondJson("""{ "data": [] }""")
+            }.also { startYouVersionPlatformTest(it) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+
+            YouVersionApi.videos.playlists(organizationId = "org", languageRanges = ranges)
+        }
+
+    @Test
+    fun `test playlists and playlist send no language for only blank ranges`() =
+        runTest {
+            MockEngine { request ->
+                assertNull(request.headers[HttpHeaders.AcceptLanguage])
+                if (request.url.encodedPath.endsWith("/7")) {
+                    respondJson("""{ "id": 7 }""")
+                } else {
+                    respondJson("""{ "data": [] }""")
+                }
+            }.also { startYouVersionPlatformTest(it) }
+
+            YouVersionPlatformConfiguration.configure(appKey = "app")
+
+            YouVersionApi.videos.playlists(organizationId = "org", languageRanges = listOf(" "))
+            YouVersionApi.videos.playlist(organizationId = "org", id = 7, languageRanges = listOf(" "))
+        }
 }
