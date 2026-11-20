@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.BreakIterator
+import java.util.Locale
 
 /** The content language of the image library. The sample has no language picker yet. */
 const val CONTENT_LANGUAGE_TAG = "en"
@@ -36,6 +38,15 @@ fun passageTitle(
 
 private const val PAGE_SIZE = 30
 private const val MAXIMUM_QUERY_LENGTH = 100
+
+private val String.characterCount: Int
+    get() {
+        val iterator = BreakIterator.getCharacterInstance(Locale.ROOT)
+        iterator.setText(this)
+        var count = 0
+        while (iterator.next() != BreakIterator.DONE) count++
+        return count
+    }
 
 /**
  * What the image library shows.
@@ -102,7 +113,7 @@ class ContentImagesViewModel(
      */
     fun search(query: String) {
         val trimmedQuery = query.trim()
-        if (trimmedQuery.length > MAXIMUM_QUERY_LENGTH) {
+        if (trimmedQuery.characterCount > MAXIMUM_QUERY_LENGTH) {
             loadJob?.cancel()
             mutableState.update { it.copy(isQueryTooLong = true, isLoading = false) }
             return

@@ -27,7 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.LocalPlatformContext
@@ -56,6 +59,7 @@ enum class VerseImageSize(
  * @param size The rendition to download.
  * @param isDecorative Whether the image is a passive preview.
  * @param onClick Called when the user taps the downloaded image, or `null` when it is not tappable.
+ * @param accessibilityActions Extra actions that accessibility services offer on the tappable image.
  */
 @Composable
 fun VerseImageView(
@@ -65,6 +69,7 @@ fun VerseImageView(
     size: VerseImageSize = VerseImageSize.Card,
     isDecorative: Boolean = false,
     onClick: (() -> Unit)? = null,
+    accessibilityActions: List<CustomAccessibilityAction> = emptyList(),
 ) {
     var retryCount by remember(image.id) { mutableIntStateOf(0) }
     val imageUrl =
@@ -125,7 +130,13 @@ fun VerseImageView(
                 success = {
                     SubcomposeAsyncImageContent(
                         modifier =
-                            if (onClick != null && !isDecorative) Modifier.clickable(onClick = onClick) else Modifier,
+                            if (onClick != null && !isDecorative) {
+                                Modifier
+                                    .clickable(onClick = onClick)
+                                    .semantics { customActions = accessibilityActions }
+                            } else {
+                                Modifier
+                            },
                     )
                 },
                 modifier = Modifier.fillMaxSize(),

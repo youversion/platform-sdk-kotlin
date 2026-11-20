@@ -192,6 +192,10 @@ fun ContentViewTab(
                             }
                         }
 
+                        state.hasMorePages -> {
+                            TextButton(onClick = viewModel::loadMore) { Text("Load more") }
+                        }
+
                         state.images.isEmpty() && !state.isQueryTooLong -> {
                             Text(
                                 text =
@@ -203,10 +207,6 @@ fun ContentViewTab(
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
-                        }
-
-                        state.hasMorePages -> {
-                            TextButton(onClick = viewModel::loadMore) { Text("Load more") }
                         }
                     }
                 }
