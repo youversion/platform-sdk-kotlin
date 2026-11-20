@@ -21,3 +21,5 @@ internal val DarkGroupedBackgroundColor = Color(0xFF1C1C1E)
 internal val SystemGray5Color = Color(0xFFE5E5EA)
 
 internal val DarkSystemGray5Color = Color(0xFF2C2C2E)
+
+internal val DarkSystemGray2Color = Color(0xFF636366)
