@@ -72,7 +72,6 @@
     <string name="yv_select_language">选择语言</string>
     <string name="yv_share">分享</string>
     <string name="yv_sign_in">登录</string>
-    <string name="yv_sign_in_button_content_desc">使用 YouVersion 登录</string>
     <string name="yv_sign_in_button_full">登录方式</string>
     <string name="yv_sign_in_error_message">我们目前无法为你登录。请重试。</string>
     <string name="yv_sign_in_error_title">登录失败</string>

@@ -72,7 +72,6 @@
     <string name="yv_select_language">Dewisa Iaith</string>
     <string name="yv_share">Rhannu</string>
     <string name="yv_sign_in">Mewngofnoda</string>
-    <string name="yv_sign_in_button_content_desc">Mewngofnodi gyda YouVersion</string>
     <string name="yv_sign_in_button_full">Mewngofnodi gyda</string>
     <string name="yv_sign_in_error_message">Nid oeddem yn gallu dy fewngofnodi ar hyn o bryd. Rho gynnig arall arni.</string>
     <string name="yv_sign_in_error_title">Mewngofnodi Wedi Methu</string>

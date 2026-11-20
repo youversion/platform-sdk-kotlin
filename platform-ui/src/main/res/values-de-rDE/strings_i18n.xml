@@ -72,7 +72,6 @@
     <string name="yv_select_language">Sprache auswählen</string>
     <string name="yv_share">Teilen</string>
     <string name="yv_sign_in">Anmelden</string>
-    <string name="yv_sign_in_button_content_desc">Mit YouVersion anmelden</string>
     <string name="yv_sign_in_button_full">Anmelden mit</string>
     <string name="yv_sign_in_error_message">Wir konnten dich derzeit nicht anmelden. Bitte versuche es erneut.</string>
     <string name="yv_sign_in_error_title">Anmeldung fehlgeschlagen</string>

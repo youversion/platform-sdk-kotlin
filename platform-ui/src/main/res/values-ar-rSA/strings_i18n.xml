@@ -72,7 +72,6 @@
     <string name="yv_select_language">اختر لغة</string>
     <string name="yv_share">شارك</string>
     <string name="yv_sign_in">تسجيل الدخول</string>
-    <string name="yv_sign_in_button_content_desc">تسجيل الدخول باستخدام YouVersion</string>
     <string name="yv_sign_in_button_full">سجّل الدخول باستخدام</string>
     <string name="yv_sign_in_error_message">تعذّر تسجيل دخولك في الوقت الحالي. يرجى المحاولة مرة أخرى.</string>
     <string name="yv_sign_in_error_title">فشل تسجيل الدخول</string>

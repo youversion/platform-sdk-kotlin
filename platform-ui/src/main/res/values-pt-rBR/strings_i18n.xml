@@ -72,7 +72,6 @@
     <string name="yv_select_language">Selecionar um Idioma</string>
     <string name="yv_share">Compartilhar</string>
     <string name="yv_sign_in">Entrar</string>
-    <string name="yv_sign_in_button_content_desc">Entrar com a YouVersion</string>
     <string name="yv_sign_in_button_full">Entrar com</string>
     <string name="yv_sign_in_error_message">Não foi possível entrar no momento. Tente novamente.</string>
     <string name="yv_sign_in_error_title">Falha ao entrar</string>

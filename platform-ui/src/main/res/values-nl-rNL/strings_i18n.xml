@@ -72,7 +72,6 @@
     <string name="yv_select_language">Selecteer een taal</string>
     <string name="yv_share">Delen</string>
     <string name="yv_sign_in">Inloggen</string>
-    <string name="yv_sign_in_button_content_desc">Aanmelden met YouVersion</string>
     <string name="yv_sign_in_button_full">Aanmelden met</string>
     <string name="yv_sign_in_error_message">We konden je op dit moment niet inloggen. Probeer het nog eens.</string>
     <string name="yv_sign_in_error_title">Aanmelden mislukt</string>

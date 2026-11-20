@@ -72,7 +72,6 @@
     <string name="yv_select_language">Selectați o Limbă</string>
     <string name="yv_share">Distribuie</string>
     <string name="yv_sign_in">Conectare</string>
-    <string name="yv_sign_in_button_content_desc">Conectează-te cu contul YouVersion</string>
     <string name="yv_sign_in_button_full">Conectează-te cu</string>
     <string name="yv_sign_in_error_message">Nu am putut să vă conectăm în acest moment. Vă rugăm să încercați din nou.</string>
     <string name="yv_sign_in_error_title">Conectare eșuată</string>

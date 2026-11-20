@@ -72,7 +72,6 @@
     <string name="yv_select_language">Chọn ngôn ngữ</string>
     <string name="yv_share">Chia sẻ</string>
     <string name="yv_sign_in">Đăng nhập</string>
-    <string name="yv_sign_in_button_content_desc">Đăng nhập bằng YouVersion</string>
     <string name="yv_sign_in_button_full">Đăng nhập bằng</string>
     <string name="yv_sign_in_error_message">Chúng tôi không thể đăng nhập cho bạn lúc này. Vui lòng thử lại.</string>
     <string name="yv_sign_in_error_title">Đăng Nhập Thất Bại</string>

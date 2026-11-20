@@ -72,7 +72,6 @@
     <string name="yv_select_language">Välj ett språk</string>
     <string name="yv_share">Dela</string>
     <string name="yv_sign_in">Logga in</string>
-    <string name="yv_sign_in_button_content_desc">Logga in med YouVersion</string>
     <string name="yv_sign_in_button_full">Logga in med</string>
     <string name="yv_sign_in_error_message">Vi kunde inte logga in dig just nu. Försök igen.</string>
     <string name="yv_sign_in_error_title">Inloggningen misslyckades</string>

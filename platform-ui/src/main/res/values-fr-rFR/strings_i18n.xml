@@ -72,7 +72,6 @@
     <string name="yv_select_language">Sélectionner une langue</string>
     <string name="yv_share">Partager</string>
     <string name="yv_sign_in">Se connecter</string>
-    <string name="yv_sign_in_button_content_desc">Se connecter avec YouVersion</string>
     <string name="yv_sign_in_button_full">Se connecter avec</string>
     <string name="yv_sign_in_error_message">Nous n\'avons pas pu vous connecter pour le moment. Veuillez réessayer.</string>
     <string name="yv_sign_in_error_title">Échec de la connexion</string>
