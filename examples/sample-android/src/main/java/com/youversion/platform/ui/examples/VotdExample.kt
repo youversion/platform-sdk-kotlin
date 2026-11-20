@@ -123,7 +123,7 @@ fun VotdExample(
                                     if (isSelected) {
                                         Modifier
                                             .shadow(2.dp, CircleShape)
-                                            .background(MaterialTheme.colorScheme.surface, CircleShape)
+                                            .background(MaterialTheme.colorScheme.surfaceBright, CircleShape)
                                     } else {
                                         Modifier
                                     },
