@@ -69,22 +69,23 @@ private class CardFlight(
 }
 
 /**
- * Shows [images] as a stack of cards. Swiping the top card sideways sends it to the back of the stack, and tapping
- * it calls [onImageClick]. Cards behind the top one are decorative previews.
+ * Shows [images] as a stack of cards. Swiping the top card sideways sends it to the back of the stack. Tapping it
+ * calls [onImageClick], or also sends it to the back when there is none. Cards behind the top one are decorative
+ * previews.
  *
  * @param images The images to show. It must not be empty.
  * @param titleOf The passage title read out for an image.
- * @param onSelectionChange Called with the image on top whenever it changes, including the first one.
- * @param onImageClick Called when the user taps the image on top.
  * @param modifier The modifier for the stack.
+ * @param onSelectionChange Called with the image on top whenever it changes, including the first one.
+ * @param onImageClick Called when the user taps the image on top, or `null` to shuffle on a tap.
  */
 @Composable
 fun VerseImageStack(
     images: List<VerseImage>,
     titleOf: (VerseImage) -> String,
-    onSelectionChange: (VerseImage) -> Unit,
-    onImageClick: (VerseImage) -> Unit,
     modifier: Modifier = Modifier,
+    onSelectionChange: (VerseImage) -> Unit = {},
+    onImageClick: ((VerseImage) -> Unit)? = null,
 ) {
     var selectedImageId by rememberSaveable { mutableStateOf(images.first().id) }
     val selectedIndex = images.indexOfFirst { it.id == selectedImageId }.coerceAtLeast(0)
@@ -156,7 +157,13 @@ fun VerseImageStack(
                         image = image,
                         contentDescription = titleOf(image),
                         isDecorative = depth != 0,
-                        onClick = { if (dragOffsetX == 0f) onImageClick(image) },
+                        onClick = {
+                            when {
+                                dragOffsetX != 0f -> Unit
+                                onImageClick != null -> onImageClick(image)
+                                images.size > 1 -> shuffle(-1f)
+                            }
+                        },
                         modifier =
                             Modifier
                                 .zIndex(flight?.zIndex ?: -depth.toFloat())
@@ -235,10 +242,10 @@ fun VerseImageStack(
 
         Text(
             text =
-                if (images.size > 1) {
-                    "${selectedIndex + 1} of ${images.size} · Swipe for more"
-                } else {
-                    "1 of 1"
+                when {
+                    images.size == 1 -> "1 of 1"
+                    onImageClick == null -> "${selectedIndex + 1} of ${images.size} · Tap or swipe for more"
+                    else -> "${selectedIndex + 1} of ${images.size} · Swipe for more"
                 },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
