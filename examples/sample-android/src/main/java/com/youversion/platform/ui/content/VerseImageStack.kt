@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.youversion.platform.core.verseimages.models.VerseImage
@@ -70,8 +71,8 @@ private class CardFlight(
 
 /**
  * Shows [images] as a stack of cards. Swiping the top card sideways sends it to the back of the stack. Tapping it
- * calls [onImageClick], or also sends it to the back when there is none. Cards behind the top one are decorative
- * previews.
+ * calls [onImageClick], or also sends it to the back when there is none. Accessibility services get "Next image" and
+ * "Previous image" actions on the top card instead of the swipe. Cards behind the top one are decorative previews.
  *
  * @param images The images to show. It must not be empty.
  * @param titleOf The passage title read out for an image.
@@ -143,6 +144,13 @@ fun VerseImageStack(
                 }
             }
 
+            fun showPrevious() {
+                val previousId = images[(selectedIndex - 1 + images.size) % images.size].id
+                flights.remove(previousId)
+                dragOffsetX = 0f
+                selectedImageId = previousId
+            }
+
             images.forEachIndexed { index, image ->
                 val depth = (index - selectedIndex + images.size) % images.size
                 val flight = flights[image.id]
@@ -157,6 +165,21 @@ fun VerseImageStack(
                         image = image,
                         contentDescription = titleOf(image),
                         isDecorative = depth != 0,
+                        accessibilityActions =
+                            if (images.size > 1) {
+                                listOf(
+                                    CustomAccessibilityAction("Next image") {
+                                        shuffle(-1f)
+                                        true
+                                    },
+                                    CustomAccessibilityAction("Previous image") {
+                                        showPrevious()
+                                        true
+                                    },
+                                )
+                            } else {
+                                emptyList()
+                            },
                         onClick = {
                             when {
                                 dragOffsetX != 0f -> Unit
