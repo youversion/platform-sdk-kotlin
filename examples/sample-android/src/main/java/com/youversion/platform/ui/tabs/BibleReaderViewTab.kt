@@ -1,6 +1,13 @@
 package com.youversion.platform.ui.tabs
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.reader.BibleReader
 import com.youversion.platform.reader.FontDefinition
 import com.youversion.platform.reader.FontDefinitionProvider
@@ -9,8 +16,20 @@ import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.theme.CormorantGaramond
 import com.youversion.platform.ui.theme.Tinos
 
+/**
+ * The Bible tab, showing the SDK's Bible reader with the sample's fonts.
+ *
+ * The reader hosts the bottom bar inside its own bar and theme. The bar keeps the sample's theme, and paints its
+ * background past its own edges so the reader bar's background and small inset match the sample's surface colour.
+ *
+ * @param bibleReference The passage to open, or null to restore the last-read passage.
+ * @param onDestinationClick Called when the user picks a tab in the bottom bar.
+ */
 @Composable
-fun BibleReaderViewTab(onDestinationClick: (SampleDestination) -> Unit) {
+fun BibleReaderViewTab(
+    bibleReference: BibleReference?,
+    onDestinationClick: (SampleDestination) -> Unit,
+) {
     val fontDefinitionProvider =
         object : FontDefinitionProvider {
             override fun fonts(): List<FontDefinition> =
@@ -19,14 +38,30 @@ fun BibleReaderViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                     FontDefinition("Cormorant Garamond", CormorantGaramond),
                 )
         }
+    val colorScheme = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
 
     BibleReader(
+        bibleReference = bibleReference,
         fontDefinitionProvider = fontDefinitionProvider,
         bottomBar = {
-            SampleBottomBar(
-                currentDestination = SampleDestination.Reader,
-                onDestinationClick = onDestinationClick,
-            )
+            MaterialTheme(colorScheme = colorScheme, typography = typography) {
+                Box(
+                    modifier =
+                        Modifier.drawBehind {
+                            drawRect(
+                                color = colorScheme.surface,
+                                topLeft = Offset(-size.width, -size.height),
+                                size = Size(size.width * 3, size.height * 3),
+                            )
+                        },
+                ) {
+                    SampleBottomBar(
+                        currentDestination = SampleDestination.Reader,
+                        onDestinationClick = onDestinationClick,
+                    )
+                }
+            }
         },
     )
 }
