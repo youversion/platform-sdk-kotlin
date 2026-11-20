@@ -1,5 +1,9 @@
 package com.youversion.platform.reader.sheets
 
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
@@ -96,12 +100,22 @@ class BibleReaderFontSettingsSheetTest {
     }
 
     @Test
+    fun `line spacing button is announced as a Change line spacing button`() {
+        renderSheet()
+
+        composeTestRule
+            .onNodeWithTag("line_spacing_button")
+            .assert(hasContentDescription("Change line spacing"))
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+    }
+
+    @Test
     fun `clicking line spacing button calls onLineSpacingClick`() {
         var isClicked = false
 
         renderSheet(onLineSpacingClick = { isClicked = true })
 
-        composeTestRule.onNodeWithTag("line_spacing_button").performClick()
+        composeTestRule.onNode(hasContentDescription("Change line spacing")).performClick()
 
         assertTrue(isClicked)
     }
