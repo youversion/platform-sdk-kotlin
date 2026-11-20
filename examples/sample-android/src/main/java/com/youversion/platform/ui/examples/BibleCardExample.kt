@@ -1,7 +1,6 @@
-package com.youversion.platform.ui.tabs
+package com.youversion.platform.ui.examples
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -23,51 +22,67 @@ import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.views.card.BibleCard
 
+/**
+ * Shows a Bible card for a fixed passage, with its version picker.
+ *
+ * @param onDestinationClick Called when the user picks a tab in the bottom bar.
+ * @param onBack Called when the user taps the back arrow.
+ */
 @Composable
-fun WidgetViewTab(onDestinationClick: (SampleDestination) -> Unit) {
+fun BibleCardExample(
+    onDestinationClick: (SampleDestination) -> Unit,
+    onBack: () -> Unit,
+) {
     val bibleReference =
         BibleReference(
             versionId = BibleDefaults.VERSION_ID,
             bookUSFM = "2CO",
             chapter = 1,
             verseStart = 3,
-            verseEnd = 20,
+            verseEnd = 4,
         )
 
     Scaffold(
+        topBar = {
+            ExampleTopBar(
+                title = "Card",
+                onBack = onBack,
+            )
+        },
         bottomBar = {
             SampleBottomBar(
-                currentDestination = SampleDestination.Widget,
+                currentDestination = SampleDestination.Examples,
                 onDestinationClick = onDestinationClick,
             )
         },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { innerPadding ->
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            Box(
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+        ) {
+            BibleCard(
+                reference = bibleReference,
+                fontSize = 18.sp,
+                showVersionPicker = true,
                 modifier =
                     Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(20.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                BibleCard(
-                    reference = bibleReference,
-                    fontSize = 16.sp,
-                    showVersionPicker = true,
-                )
-            }
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+            )
         }
     }
 }
 
 @Preview
 @Composable
-private fun Preview_WidgetViewTab() {
+private fun Preview_BibleCardExample() {
     MaterialTheme {
         Surface {
-            WidgetViewTab(onDestinationClick = {})
+            BibleCardExample(onDestinationClick = {}, onBack = {})
         }
     }
 }

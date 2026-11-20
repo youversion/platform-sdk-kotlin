@@ -5,9 +5,17 @@ sealed class SampleDestination(
 ) {
     data object Reader : SampleDestination("reader")
 
-    data object Votd : SampleDestination("votd")
+    data object Content : SampleDestination("content")
 
-    data object Widget : SampleDestination("widget")
+    data object Examples : SampleDestination("examples")
+
+    data object ExamplesList : SampleDestination("examples/list")
+
+    data object Navigate : SampleDestination("examples/navigate")
+
+    data object Votd : SampleDestination("examples/votd")
+
+    data object BibleCard : SampleDestination("examples/bible-card")
 
     data object Profile : SampleDestination("profile")
 }

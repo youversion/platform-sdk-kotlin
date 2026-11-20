@@ -30,8 +30,8 @@
     <string name="yv_close_search_bar">關閉搜尋輸入框</string>
     <string name="yv_copy">複製</string>
     <string name="yv_data_exchange_continue">繼續</string>
-    <string name="yv_data_exchange_highlights_explanation">YouVersion 將在儲存醒目標示前要求你授予存取權限。</string>
-    <string name="yv_data_exchange_highlights_question">允許此應用程式將醒目標示儲存至 YouVersion？</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion 將要求您授予存取權限，才能儲存重點標記。</string>
+    <string name="yv_data_exchange_highlights_question">允許此應用程式將畫重點內容儲存至 YouVersion？</string>
     <string name="yv_decrease_font_size_aria_label">減小字體大小</string>
     <string name="yv_done">完成</string>
     <string name="yv_error">錯誤</string>
@@ -72,7 +72,6 @@
     <string name="yv_select_language">選擇語言</string>
     <string name="yv_share">分享</string>
     <string name="yv_sign_in">登入</string>
-    <string name="yv_sign_in_button_content_desc">以 YouVersion 登入</string>
     <string name="yv_sign_in_button_full">登入方式</string>
     <string name="yv_sign_in_error_message">我們目前無法為你登入。請再試一次。</string>
     <string name="yv_sign_in_error_title">登入失敗</string>
@@ -83,11 +82,11 @@
     <string name="yv_sign_in_yes_button">是的，請繼續</string>
     <string name="yv_sign_out">登出</string>
     <string name="yv_sign_out_confirmation_message">你確定要登出 YouVersion 嗎？你需要重新登入才能存取你的醒目標示。</string>
-    <string name="yv_sign_out_explanation">你需要重新登入才能查看你的醒目標示。</string>
+    <string name="yv_sign_out_explanation">You\'ll need to sign in again to access your highlights.</string>
     <string name="yv_sign_out_of_you_version">登出 &lt;bold&gt;%1$s&lt;/bold&gt;</string>
-    <string name="yv_sign_out_pending_highlights_confirm">仍要登出</string>
-    <string name="yv_sign_out_pending_highlights_explanation">你有部分醒目標示尚未儲存，如果你登出，這些內容將會遺失。你確定要登出嗎？</string>
-    <string name="yv_sign_out_pending_highlights_question">儲存您的畫重點？</string>
+    <string name="yv_sign_out_pending_highlights_confirm">Sign out anyway</string>
+    <string name="yv_sign_out_pending_highlights_explanation">Some of your highlights haven\'t been saved yet, and they will be lost if you sign out. Do you want to sign out anyway?</string>
+    <string name="yv_sign_out_pending_highlights_question">Save your highlights?</string>
     <string name="yv_sign_out_question">你確定要登出 YouVersion 嗎？</string>
     <string name="yv_suggested">建議</string>
     <string name="yv_traditional">傳統</string>

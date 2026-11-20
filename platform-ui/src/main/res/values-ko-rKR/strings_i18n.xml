@@ -30,8 +30,8 @@
     <string name="yv_close_search_bar">검색 입력창 닫기</string>
     <string name="yv_copy">복사</string>
     <string name="yv_data_exchange_continue">계속</string>
-    <string name="yv_data_exchange_highlights_explanation">하이라이트를 저장하기 전에 YouVersion에서 액세스 권한을 요청합니다.</string>
-    <string name="yv_data_exchange_highlights_question">이 앱이 YouVersion에 하이라이트를 저장하도록 허용하시겠습니까?</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion이 하이라이트를 저장하기 전에 액세스 권한을 부여하도록 요청합니다.</string>
+    <string name="yv_data_exchange_highlights_question">이 앱이 YouVersion과 함께 하이라이트를 저장하도록 허용하시겠습니까?</string>
     <string name="yv_decrease_font_size_aria_label">글꼴 크기 줄이기</string>
     <string name="yv_done">완료</string>
     <string name="yv_error">오류</string>
@@ -72,7 +72,6 @@
     <string name="yv_select_language">언어 선택</string>
     <string name="yv_share">공유</string>
     <string name="yv_sign_in">로그인</string>
-    <string name="yv_sign_in_button_content_desc">YouVersion으로 로그인</string>
     <string name="yv_sign_in_button_full">로그인 방법</string>
     <string name="yv_sign_in_error_message">현재 로그인할 수 없습니다. 다시 시도해 주세요.</string>
     <string name="yv_sign_in_error_title">로그인 실패</string>
