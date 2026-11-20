@@ -30,7 +30,7 @@
     <string name="yv_close_search_bar">Fechar a entrada de pesquisa</string>
     <string name="yv_copy">Copiar</string>
     <string name="yv_data_exchange_continue">Continuar</string>
-    <string name="yv_data_exchange_highlights_explanation">O YouVersion solicitará que você conceda acesso antes que os destaques possam ser salvos.</string>
+    <string name="yv_data_exchange_highlights_explanation">A YouVersion pedirá sua permissão antes que os destaques possam ser salvos.</string>
     <string name="yv_data_exchange_highlights_question">Permitir que este app salve destaques com a YouVersion?</string>
     <string name="yv_decrease_font_size_aria_label">Diminuir tamanho da fonte</string>
     <string name="yv_done">Concluído</string>
@@ -82,12 +82,12 @@
     <string name="yv_sign_in_yes_button">Sim, por favor</string>
     <string name="yv_sign_out">Sair</string>
     <string name="yv_sign_out_confirmation_message">Tem certeza de que deseja sair do YouVersion? Você precisará entrar novamente para acessar seus destaques.</string>
-    <string name="yv_sign_out_explanation">Você precisará entrar novamente para acessar os destaques.</string>
+    <string name="yv_sign_out_explanation">Você precisará entrar novamente para acessar seus destaques.</string>
     <string name="yv_sign_out_of_you_version">Sair de &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">Sair mesmo assim</string>
     <string name="yv_sign_out_pending_highlights_explanation">Alguns dos seus destaques ainda não foram salvos e serão perdidos se você sair. Deseja sair mesmo assim?</string>
-    <string name="yv_sign_out_pending_highlights_question">Salvar destaques?</string>
-    <string name="yv_sign_out_question">Tem certeza de que deseja sair da YouVersion?</string>
+    <string name="yv_sign_out_pending_highlights_question">Salvar seus destaques?</string>
+    <string name="yv_sign_out_question">Você tem certeza de que deseja sair da YouVersion?</string>
     <string name="yv_suggested">Sugerido</string>
     <string name="yv_traditional">Tradicional</string>
     <string name="yv_untitled_serif_font_name">Untitled Serif</string>

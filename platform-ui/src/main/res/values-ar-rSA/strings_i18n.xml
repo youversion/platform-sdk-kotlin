@@ -30,7 +30,7 @@
     <string name="yv_close_search_bar">أغلق حقل البحث</string>
     <string name="yv_copy">نسخ</string>
     <string name="yv_data_exchange_continue">متابعة</string>
-    <string name="yv_data_exchange_highlights_explanation">سيطلب منك YouVersion منح الوصول قبل حفظ التمييزات.</string>
+    <string name="yv_data_exchange_highlights_explanation">ستطلب منك YouVersion منح الوصول قبل أن يتمكن من حفظ إبراز النصوص.</string>
     <string name="yv_data_exchange_highlights_question">هل تسمح لهذا التطبيق بحفظ التمييزات مع YouVersion؟</string>
     <string name="yv_decrease_font_size_aria_label">تصغير حجم الخط</string>
     <string name="yv_done">تم</string>
@@ -82,11 +82,11 @@
     <string name="yv_sign_in_yes_button">نعم من فضلك</string>
     <string name="yv_sign_out">تسجيل الخروج</string>
     <string name="yv_sign_out_confirmation_message">هل أنت متأكد أنك تريد تسجيل الخروج من YouVersion؟ سيتعين عليك تسجيل الدخول مرة أخرى للوصول إلى تمييزاتك.</string>
-    <string name="yv_sign_out_explanation">ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى النصوص الخاصة بك.</string>
+    <string name="yv_sign_out_explanation">ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى ملاحظاتك المميزة.</string>
     <string name="yv_sign_out_of_you_version">تسجيل الخروج من &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">تسجيل الخروج على أي حال</string>
-    <string name="yv_sign_out_pending_highlights_explanation">لم يتم حفظ بعض تمييزاتك بعد، وستُفقد إذا قمت بتسجيل الخروج. هل تريد تسجيل الخروج على أي حال؟</string>
-    <string name="yv_sign_out_pending_highlights_question">حفظ تمييزاتك؟</string>
+    <string name="yv_sign_out_pending_highlights_explanation">لم يتم حفظ بعض التمييزات الخاصه بك بعد، وستُفقد إذا قمت بتسجيل الخروج. هل تريد تسجيل الخروج على أي حال؟</string>
+    <string name="yv_sign_out_pending_highlights_question">هل تريد حفظ ملاحظاتك المميزة؟</string>
     <string name="yv_sign_out_question">هل أنت متأكد أنك تريد تسجيل الخروج من YouVersion؟</string>
     <string name="yv_suggested">مقترح</string>
     <string name="yv_traditional">تقليدي</string>
