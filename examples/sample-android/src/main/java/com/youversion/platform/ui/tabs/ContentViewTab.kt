@@ -21,7 +21,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,6 +51,7 @@ import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.content.ContentImagesViewModel
 import com.youversion.platform.ui.content.VerseImageView
 import com.youversion.platform.ui.content.passageTitle
+import com.youversion.platform.ui.icons.BookClosedIcon
 
 /**
  * The Content tab: a searchable, paged grid of verse images.
@@ -158,7 +158,11 @@ fun ContentViewTab(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(Icons.Outlined.Book, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Icon(
+                            BookClosedIcon,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
                         Text(
                             text = title,
                             style = MaterialTheme.typography.labelLarge,
