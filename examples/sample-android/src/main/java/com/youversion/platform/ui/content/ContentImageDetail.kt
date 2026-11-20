@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -269,11 +271,19 @@ private fun ContentImageViewer(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
                             contentColor = LinkColor,
                         ),
+                    contentPadding = PaddingValues(start = 24.dp, end = 16.dp),
                     modifier = Modifier.heightIn(min = 48.dp),
                 ) {
-                    Row {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(ButtonDefaults.IconSpacing),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Text(title, fontWeight = FontWeight.SemiBold)
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            modifier = Modifier.size(ButtonDefaults.IconSize),
+                        )
                     }
                 }
                 if (reference != null) {
