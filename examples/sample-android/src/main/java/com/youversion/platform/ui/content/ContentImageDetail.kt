@@ -18,7 +18,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -55,6 +54,7 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.verseimages.models.VerseImage
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
+import com.youversion.platform.ui.icons.BookClosedIcon
 import com.youversion.platform.ui.theme.LinkColor
 import com.youversion.platform.ui.views.card.BibleCard
 import kotlinx.coroutines.CancellationException
@@ -239,7 +239,7 @@ private fun ContentImageViewer(
                             .fillMaxWidth()
                             .padding(20.dp),
                 ) {
-                    Icon(Icons.Outlined.Book, contentDescription = null)
+                    Icon(BookClosedIcon, contentDescription = null)
                     Text("Read in Bible", modifier = Modifier.padding(start = 8.dp))
                 }
             },
