@@ -30,7 +30,7 @@
     <string name="yv_close_search_bar">Arama girişini kapat</string>
     <string name="yv_copy">Kopyala</string>
     <string name="yv_data_exchange_continue">Devam Et</string>
-    <string name="yv_data_exchange_highlights_explanation">YouVersion, vurgular kaydedilmeden önce erişim izni vermenizi isteyecektir.</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion, vurguların kaydedilebilmesi için önce erişim izni vermenizi isteyecektir.</string>
     <string name="yv_data_exchange_highlights_question">Bu uygulamanın vurguları YouVersion ile kaydetmesine izin verilsin mi?</string>
     <string name="yv_decrease_font_size_aria_label">Yazı tipi boyutunu küçült</string>
     <string name="yv_done">Tamam</string>
@@ -85,7 +85,7 @@
     <string name="yv_sign_out_explanation">Vurgularınıza erişmek için tekrar giriş yapmanız gerekecek.</string>
     <string name="yv_sign_out_of_you_version">&lt;bold&gt;%1$s&lt;/bold&gt; \'dan çıkış yap</string>
     <string name="yv_sign_out_pending_highlights_confirm">Yine de çıkış yap</string>
-    <string name="yv_sign_out_pending_highlights_explanation">Bazı vurgularınız henüz kaydedilmedi ve oturumu kapatırsanız kaybolacaklar. Yine de oturumu kapatmak istiyor musunuz?</string>
+    <string name="yv_sign_out_pending_highlights_explanation">Bazı vurgulamalarınız henüz kaydedilmedi ve oturumu kapatırsanız kaybolacaklardır. Yine de oturumu kapatmak istiyor musunuz?</string>
     <string name="yv_sign_out_pending_highlights_question">Vurgularınız kaydedilsin mi?</string>
     <string name="yv_sign_out_question">YouVersion\'dan çıkış yapmak istediğinizden emin misiniz?</string>
     <string name="yv_suggested">Önerilen</string>

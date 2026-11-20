@@ -30,8 +30,8 @@
     <string name="yv_close_search_bar">Zavřít vyhledávací pole</string>
     <string name="yv_copy">Kopírovat</string>
     <string name="yv_data_exchange_continue">Pokračovat</string>
-    <string name="yv_data_exchange_highlights_explanation">Než budou zvýraznění uložena, YouVersion vás požádá o udělení přístupu.</string>
-    <string name="yv_data_exchange_highlights_question">Povolit YouVersion ukládat zvýraznění v této aplikaci?</string>
+    <string name="yv_data_exchange_highlights_explanation">YouVersion vás požádá o udělení přístupu, než bude možné zvýraznění uložit.</string>
+    <string name="yv_data_exchange_highlights_question">Povolit této aplikaci ukládání zvýraznění pomocí YouVersion?</string>
     <string name="yv_decrease_font_size_aria_label">Zmenšit velikost písma</string>
     <string name="yv_done">Hotovo</string>
     <string name="yv_error">Chyba</string>
@@ -71,7 +71,7 @@
     <string name="yv_search_versions">Hledat překlady</string>
     <string name="yv_select_language">Vybrat jazyk</string>
     <string name="yv_share">Sdílet</string>
-    <string name="yv_sign_in">Přihlásit se</string>
+    <string name="yv_sign_in">Přihlášení</string>
     <string name="yv_sign_in_button_full">Přihlásit se pomocí</string>
     <string name="yv_sign_in_error_message">V tuto chvíli se vás nepodařilo přihlásit. Zkuste to prosím znovu.</string>
     <string name="yv_sign_in_error_title">Přihlášení se nezdařilo</string>
@@ -85,8 +85,8 @@
     <string name="yv_sign_out_explanation">Pro přístup ke svým zvýrazněním se budete muset znovu přihlásit.</string>
     <string name="yv_sign_out_of_you_version">Odhlásit se z &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">Opravdu se odhlásit</string>
-    <string name="yv_sign_out_pending_highlights_explanation">Některá vaše zvýraznění ještě nebyla uložena a, pokud se nyní odhlásíte, budou ztracena. Chcete se přesto odhlásit?</string>
-    <string name="yv_sign_out_pending_highlights_question">Uložit zvýraznění?</string>
+    <string name="yv_sign_out_pending_highlights_explanation">Některá vaše zvýraznění ještě nebyla uložena a budou ztracena, pokud se odhlásíte. Chcete se přesto odhlásit?</string>
+    <string name="yv_sign_out_pending_highlights_question">Uložit vaše zvýraznění?</string>
     <string name="yv_sign_out_question">Opravdu se chcete odhlásit z YouVersion?</string>
     <string name="yv_suggested">Navrhované</string>
     <string name="yv_traditional">Tradiční</string>

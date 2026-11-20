@@ -30,7 +30,7 @@
     <string name="yv_close_search_bar">Cau\'r mewnbwn chwilio</string>
     <string name="yv_copy">Copïo</string>
     <string name="yv_data_exchange_continue">Parhau</string>
-    <string name="yv_data_exchange_highlights_explanation">Bydd YouVersion yn gofyn i ti ganiatáu mynediad cyn y gellir cadw amlygiadau.</string>
+    <string name="yv_data_exchange_highlights_explanation">Bydd YouVersion yn gofyn am fynediad cyn y gellir cadw amlygiadau.</string>
     <string name="yv_data_exchange_highlights_question">Caniatáu i\'r ap hwn gadw amlygiadau gyda YouVersion?</string>
     <string name="yv_decrease_font_size_aria_label">Lleihau maint y ffont</string>
     <string name="yv_done">Gorffen</string>
@@ -71,7 +71,7 @@
     <string name="yv_search_versions">Chwilio Fersiynau</string>
     <string name="yv_select_language">Dewisa Iaith</string>
     <string name="yv_share">Rhannu</string>
-    <string name="yv_sign_in">Mewngofnoda</string>
+    <string name="yv_sign_in">Mewngofnodi</string>
     <string name="yv_sign_in_button_full">Mewngofnodi gyda</string>
     <string name="yv_sign_in_error_message">Nid oeddem yn gallu dy fewngofnodi ar hyn o bryd. Rho gynnig arall arni.</string>
     <string name="yv_sign_in_error_title">Mewngofnodi Wedi Methu</string>
@@ -82,11 +82,11 @@
     <string name="yv_sign_in_yes_button">Ie, Os Gwelwch yn Dda</string>
     <string name="yv_sign_out">Allgofnodi</string>
     <string name="yv_sign_out_confirmation_message">Wyt ti\'n siŵr dy fod eisiau allgofnodi o YouVersion? Bydd angen i ti fewngofnodi eto i gael mynediad at dy uchafbwyntiau.</string>
-    <string name="yv_sign_out_explanation">Bydd angen i ti fewngofnodi eto i gael mynediad at dy uchafbwyntiau.</string>
+    <string name="yv_sign_out_explanation">Bydd angen i ti fewngofnodi eto i gael mynediad at dy amlygiadau.</string>
     <string name="yv_sign_out_of_you_version">Allgofnodi o &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">Allgofnodi beth bynnag</string>
-    <string name="yv_sign_out_pending_highlights_explanation">Nid yw rhai o\'th amlygiadau wedi\'u cadw eto, a byddan nhw\'n cael eu colli os byddi di\'n allgofnodi. Wyt ti am allgofnodi beth bynnag?</string>
-    <string name="yv_sign_out_pending_highlights_question">Cadw dy amlygiadau?</string>
+    <string name="yv_sign_out_pending_highlights_explanation">Nid yw rhai o\'ch amlygiadau wedi\'u cadw eto, a byddan nhw\'n cael eu colli os byddi di\'n allgofnodi. A wyt am allgofnodi beth bynnag?</string>
+    <string name="yv_sign_out_pending_highlights_question">Cadw eich amlygiadau?</string>
     <string name="yv_sign_out_question">Wyt ti\'n siŵr dy fod am allgofnodi o YouVersion?</string>
     <string name="yv_suggested">Awgrymedig</string>
     <string name="yv_traditional">Traddodiadol</string>
