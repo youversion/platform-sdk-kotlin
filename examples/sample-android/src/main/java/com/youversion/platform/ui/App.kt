@@ -1,17 +1,24 @@
 package com.youversion.platform.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.ui.components.SampleDestination
+import com.youversion.platform.ui.content.ContentImageDetail
+import com.youversion.platform.ui.content.ContentImagesViewModel
 import com.youversion.platform.ui.examples.BibleCardExample
 import com.youversion.platform.ui.examples.NavigateExample
 import com.youversion.platform.ui.examples.VotdExample
@@ -57,10 +64,42 @@ fun App() {
             )
         }
 
-        composable(
+        navigation(
             route = SampleDestination.Content.route,
+            startDestination = SampleDestination.ContentImages.route,
         ) {
-            ContentViewTab(onDestinationClick = onDestinationClick)
+            composable(
+                route = SampleDestination.ContentImages.route,
+            ) { entry ->
+                val viewModel = contentImagesViewModel(navController, entry)
+                ContentViewTab(
+                    viewModel = viewModel,
+                    onDestinationClick = onDestinationClick,
+                    onImageClick = { image ->
+                        viewModel.openedImage = image
+                        navController.navigate(SampleDestination.ContentImage.route)
+                    },
+                )
+            }
+
+            composable(
+                route = SampleDestination.ContentImage.route,
+            ) { entry ->
+                val viewModel = contentImagesViewModel(navController, entry)
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                val image = viewModel.openedImage
+                if (image == null) {
+                    LaunchedEffect(Unit) { navController.navigateUp() }
+                } else {
+                    ContentImageDetail(
+                        image = image,
+                        bibleVersion = state.bibleVersion,
+                        onBack = onBack,
+                        onDestinationClick = onDestinationClick,
+                        onReadInBible = onReadInBible,
+                    )
+                }
+            }
         }
 
         navigation(
@@ -111,4 +150,14 @@ fun App() {
             ProfileViewTab(onDestinationClick = onDestinationClick)
         }
     }
+}
+
+/** The image library's view model, shared by every screen in the Content tab. */
+@Composable
+private fun contentImagesViewModel(
+    navController: NavHostController,
+    entry: NavBackStackEntry,
+): ContentImagesViewModel {
+    val contentEntry = remember(entry) { navController.getBackStackEntry(SampleDestination.Content.route) }
+    return viewModel(contentEntry) { ContentImagesViewModel() }
 }

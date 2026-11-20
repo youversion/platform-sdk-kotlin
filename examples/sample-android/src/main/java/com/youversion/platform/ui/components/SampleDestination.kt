@@ -7,6 +7,10 @@ sealed class SampleDestination(
 
     data object Content : SampleDestination("content")
 
+    data object ContentImages : SampleDestination("content/images")
+
+    data object ContentImage : SampleDestination("content/image")
+
     data object Examples : SampleDestination("examples")
 
     data object ExamplesList : SampleDestination("examples/list")
