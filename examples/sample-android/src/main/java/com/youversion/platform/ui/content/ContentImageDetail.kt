@@ -80,7 +80,9 @@ private val verseImagesSaver =
  * and the share button shares whichever card is on top.
  *
  * @param image The image the user opened.
- * @param bibleVersion The version used to title the passage and read it, or `null` until it loads.
+ * @param languageTag The content language: the images are in it, and the passage is titled and read in a Bible in it
+ *     that contains the passage.
+ * @param bibleVersion The content language's Bible, which titles the passage until a Bible with it loads.
  * @param onBack Called when the user taps the back arrow.
  * @param onDestinationClick Called when the user picks a tab in the bottom bar.
  * @param onReadInBible Called with the passage to open in the Bible tab.
@@ -89,20 +91,38 @@ private val verseImagesSaver =
 @Composable
 internal fun ContentImageDetail(
     image: VerseImage,
+    languageTag: String,
     bibleVersion: BibleVersion?,
     onBack: () -> Unit,
     onDestinationClick: (SampleDestination) -> Unit,
     onReadInBible: (BibleReference) -> Unit,
 ) {
     val context = LocalContext.current
-    var images by rememberSaveable(image.id, stateSaver = verseImagesSaver) { mutableStateOf(listOf(image)) }
-    var hasError by remember(image.id) { mutableStateOf(false) }
-    var retryCount by remember(image.id) { mutableIntStateOf(0) }
+    var images by rememberSaveable(image.id, languageTag, stateSaver = verseImagesSaver) {
+        mutableStateOf(listOf(image))
+    }
+    var hasError by remember(image.id, languageTag) { mutableStateOf(false) }
+    var retryCount by remember(image.id, languageTag) { mutableIntStateOf(0) }
+    var passageVersion by remember(image.passageId, languageTag) { mutableStateOf<BibleVersion?>(null) }
+    var hasPassageVersionError by remember(image.passageId, languageTag) { mutableStateOf(false) }
+    var passageVersionRetryCount by remember(image.passageId, languageTag) { mutableIntStateOf(0) }
+    val version = passageVersion ?: bibleVersion
     var selectedImageId by rememberSaveable(image.id) { mutableStateOf(image.id) }
     val displayedImage = images.firstOrNull { it.id == selectedImageId } ?: images.first()
     var isViewerOpen by rememberSaveable(image.id) { mutableStateOf(false) }
 
-    LaunchedEffect(image.id, retryCount) {
+    LaunchedEffect(image.passageId, languageTag, passageVersionRetryCount) {
+        hasPassageVersionError = false
+        try {
+            passageVersion = YouVersionApi.bible.version(contentBibleId(languageTag, image.passageId))
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (_: Exception) {
+            hasPassageVersionError = true
+        }
+    }
+
+    LaunchedEffect(image.id, languageTag, retryCount) {
         hasError = false
         try {
             var pageToken: String? = null
@@ -111,7 +131,7 @@ internal fun ContentImageDetail(
                 val page =
                     YouVersionApi.verseImages.verseImages(
                         passageId = image.passageId,
-                        languageRanges = listOf(CONTENT_LANGUAGE_TAG),
+                        languageRanges = listOf(languageTag),
                         pageSize = PASSAGE_PAGE_SIZE,
                         pageToken = pageToken,
                     )
@@ -141,7 +161,7 @@ internal fun ContentImageDetail(
                             shareImageLink(
                                 context,
                                 displayedImage,
-                                passageTitle(bibleVersion, displayedImage.passageId),
+                                passageTitle(version, displayedImage.passageId),
                             )
                         },
                     ) {
@@ -173,7 +193,7 @@ internal fun ContentImageDetail(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = passageTitle(bibleVersion, image.passageId),
+                    text = passageTitle(version, image.passageId),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                 )
@@ -182,10 +202,17 @@ internal fun ContentImageDetail(
                 images = images,
                 selectedImageId = selectedImageId,
                 onSelectedImageIdChange = { selectedImageId = it },
-                titleOf = { passageTitle(bibleVersion, it.passageId) },
+                titleOf = { passageTitle(version, it.passageId) },
                 onImageClick = { isViewerOpen = true },
                 modifier = Modifier.fillMaxWidth(),
             )
+            if (hasPassageVersionError) {
+                Text(
+                    text = "This passage isn’t available in the selected language.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedButton(onClick = { passageVersionRetryCount++ }) { Text("Retry") }
+            }
             if (hasError) {
                 Text(
                     text = "More images for this passage didn’t load.",
@@ -199,7 +226,7 @@ internal fun ContentImageDetail(
     if (isViewerOpen) {
         ContentImageViewer(
             image = displayedImage,
-            bibleVersion = bibleVersion,
+            bibleVersion = version,
             onClose = { isViewerOpen = false },
             onReadInBible = { reference ->
                 isViewerOpen = false

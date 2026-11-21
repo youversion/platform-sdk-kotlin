@@ -55,7 +55,8 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.verseimages.models.VerseImage
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
-import com.youversion.platform.ui.content.CONTENT_LANGUAGE_TAG
+import com.youversion.platform.ui.components.SegmentedSwitch
+import com.youversion.platform.ui.content.DEFAULT_CONTENT_LANGUAGE_TAG
 import com.youversion.platform.ui.content.VerseImageStack
 import com.youversion.platform.ui.content.passageTitle
 import com.youversion.platform.ui.views.votd.CompactVerseOfTheDay
@@ -105,44 +106,11 @@ fun VotdExample(
                     .verticalScroll(rememberScrollState())
                     .padding(24.dp),
         ) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-                        .padding(2.dp)
-                        .selectableGroup(),
-            ) {
-                listOf("VotdView", "Verse Images").forEachIndexed { index, label ->
-                    val isSelected = showsImages == (index == 1)
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier =
-                            Modifier
-                                .weight(1f)
-                                .then(
-                                    if (isSelected) {
-                                        Modifier
-                                            .shadow(2.dp, CircleShape)
-                                            .background(MaterialTheme.colorScheme.surfaceBright, CircleShape)
-                                    } else {
-                                        Modifier
-                                    },
-                                ).clip(CircleShape)
-                                .selectable(
-                                    selected = isSelected,
-                                    role = Role.Tab,
-                                    onClick = { showsImages = index == 1 },
-                                ).minimumInteractiveComponentSize(),
-                    ) {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                        )
-                    }
-                }
-            }
+            SegmentedSwitch(
+                labels = listOf("VotdView", "Verse Images"),
+                selectedIndex = if (showsImages) 1 else 0,
+                onSelect = { showsImages = it == 1 },
+            )
             if (showsImages) {
                 VotdImages()
             } else {
@@ -190,7 +158,7 @@ private fun VotdImages() {
                 val page =
                     YouVersionApi.verseImages.verseImages(
                         passageId = passageId,
-                        languageRanges = listOf(CONTENT_LANGUAGE_TAG),
+                        languageRanges = listOf(DEFAULT_CONTENT_LANGUAGE_TAG),
                     )
                 title = passageTitle(version.await(), passageId)
                 images = page.data

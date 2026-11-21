@@ -31,9 +31,15 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.verseimages.models.VerseImage
+import com.youversion.platform.core.videos.models.VideoPlaylist
 import com.youversion.platform.ui.components.SampleDestination
+import com.youversion.platform.ui.content.ContentCollectionDetail
 import com.youversion.platform.ui.content.ContentImageDetail
 import com.youversion.platform.ui.content.ContentImagesViewModel
+import com.youversion.platform.ui.content.ContentLanguageViewModel
+import com.youversion.platform.ui.content.ContentVideoDetail
+import com.youversion.platform.ui.content.ContentVideosViewModel
+import com.youversion.platform.ui.content.displayTitle
 import com.youversion.platform.ui.examples.BibleCardExample
 import com.youversion.platform.ui.examples.NavigateExample
 import com.youversion.platform.ui.examples.VotdExample
@@ -87,10 +93,28 @@ fun App() {
             composable(
                 route = SampleDestination.ContentImages.route,
             ) { entry ->
+                val languageViewModel = contentLanguageViewModel(navController, entry)
+                val languageTag by languageViewModel.languageTag.collectAsStateWithLifecycle()
                 val viewModel = contentImagesViewModel(navController, entry)
+                val videosViewModel = contentVideosViewModel(navController, entry)
+                val collectionsState by videosViewModel.collectionsState.collectAsStateWithLifecycle()
+                val videosState by videosViewModel.videosState.collectAsStateWithLifecycle()
+                LaunchedEffect(languageTag) {
+                    viewModel.setLanguage(languageTag)
+                    videosViewModel.setLanguage(languageTag)
+                }
                 ContentViewTab(
+                    languageTag = languageTag,
+                    onLanguageSelect = languageViewModel::select,
+                    collectionsState = collectionsState,
+                    videosState = videosState,
+                    onRetryCollections = videosViewModel::retryCollections,
+                    onLoadVideos = videosViewModel::loadVideos,
                     viewModel = viewModel,
                     onDestinationClick = onDestinationClick,
+                    onCollectionClick = { collection ->
+                        collection.id?.let { navController.navigate(SampleDestination.ContentCollection.route(it)) }
+                    },
                     onImageClick = { image ->
                         navController.navigate(SampleDestination.ContentImage.route(image.id))
                     },
@@ -123,26 +147,79 @@ fun App() {
                 }
                 val loadedImage = image
                 if (loadedImage == null) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                        if (hasError) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                Text("The image didn’t load.")
-                                OutlinedButton(onClick = { retryCount++ }) { Text("Retry") }
-                            }
-                        } else {
-                            CircularProgressIndicator()
-                        }
-                    }
+                    LoadingOrRetry(hasError, "The image didn’t load.", onRetry = { retryCount++ })
                 } else {
                     ContentImageDetail(
                         image = loadedImage,
+                        languageTag = viewModel.languageTag,
                         bibleVersion = state.bibleVersion,
                         onBack = onBack,
                         onDestinationClick = onDestinationClick,
                         onReadInBible = onReadInBible,
+                    )
+                }
+            }
+
+            composable(
+                route = SampleDestination.ContentCollection.route,
+                arguments =
+                    listOf(
+                        navArgument(SampleDestination.ContentCollection.COLLECTION_ID_ARGUMENT) {
+                            type = NavType.IntType
+                        },
+                    ),
+            ) { entry ->
+                val viewModel = contentVideosViewModel(navController, entry)
+                val videosState by viewModel.videosState.collectAsStateWithLifecycle()
+                val collectionId =
+                    requireNotNull(entry.arguments?.getInt(SampleDestination.ContentCollection.COLLECTION_ID_ARGUMENT))
+                val collection = rememberCollection(viewModel, collectionId)
+                val loadedCollection = collection.value
+                if (loadedCollection == null) {
+                    LoadingOrRetry(collection.hasError, "The collection didn’t load.", onRetry = collection.retry)
+                } else {
+                    ContentCollectionDetail(
+                        collection = loadedCollection,
+                        videosState = videosState,
+                        onLoadVideos = viewModel::loadVideos,
+                        onBack = onBack,
+                        onDestinationClick = onDestinationClick,
+                        onVideoClick = { videoId ->
+                            navController.navigate(SampleDestination.ContentVideo.route(collectionId, videoId))
+                        },
+                    )
+                }
+            }
+
+            composable(
+                route = SampleDestination.ContentVideo.route,
+                arguments =
+                    listOf(
+                        navArgument(SampleDestination.ContentVideo.COLLECTION_ID_ARGUMENT) { type = NavType.IntType },
+                        navArgument(SampleDestination.ContentVideo.VIDEO_ID_ARGUMENT) { type = NavType.StringType },
+                    ),
+            ) { entry ->
+                val viewModel = contentVideosViewModel(navController, entry)
+                val videosState by viewModel.videosState.collectAsStateWithLifecycle()
+                val collectionId =
+                    requireNotNull(entry.arguments?.getInt(SampleDestination.ContentVideo.COLLECTION_ID_ARGUMENT))
+                val videoId =
+                    requireNotNull(entry.arguments?.getString(SampleDestination.ContentVideo.VIDEO_ID_ARGUMENT))
+                val collection = rememberCollection(viewModel, collectionId)
+                LaunchedEffect(videoId) { viewModel.loadVideos(listOf(videoId)) }
+                val video = videosState.videosByRequestedId[videoId]
+                if (video == null) {
+                    LoadingOrRetry(
+                        hasError = videoId in videosState.failedIds,
+                        message = "The video didn’t load.",
+                        onRetry = { viewModel.loadVideos(listOf(videoId)) },
+                    )
+                } else {
+                    ContentVideoDetail(
+                        video = video,
+                        collectionTitle = collection.value?.displayTitle,
+                        onBack = onBack,
+                        onDestinationClick = onDestinationClick,
                     )
                 }
             }
@@ -205,5 +282,85 @@ private fun contentImagesViewModel(
     entry: NavBackStackEntry,
 ): ContentImagesViewModel {
     val contentEntry = remember(entry) { navController.getBackStackEntry(SampleDestination.Content.route) }
-    return viewModel(contentEntry) { ContentImagesViewModel(createSavedStateHandle()) }
+    val languageTag = contentLanguageViewModel(navController, entry).languageTag.value
+    return viewModel(
+        contentEntry,
+    ) { ContentImagesViewModel(createSavedStateHandle(), initialLanguageTag = languageTag) }
+}
+
+/** The video library's view model, shared by every screen in the Content tab. */
+@Composable
+private fun contentVideosViewModel(
+    navController: NavHostController,
+    entry: NavBackStackEntry,
+): ContentVideosViewModel {
+    val contentEntry = remember(entry) { navController.getBackStackEntry(SampleDestination.Content.route) }
+    val languageTag = contentLanguageViewModel(navController, entry).languageTag.value
+    return viewModel(contentEntry) { ContentVideosViewModel(initialLanguageTag = languageTag) }
+}
+
+/** The Content tab's saved content language, shared by both libraries. */
+@Composable
+private fun contentLanguageViewModel(
+    navController: NavHostController,
+    entry: NavBackStackEntry,
+): ContentLanguageViewModel {
+    val contentEntry = remember(entry) { navController.getBackStackEntry(SampleDestination.Content.route) }
+    return viewModel(contentEntry) { ContentLanguageViewModel(createSavedStateHandle()) }
+}
+
+/**
+ * A collection that loads by id, for a screen restored after process death.
+ *
+ * @property value The collection, or `null` until it loads.
+ * @property hasError Whether it failed to load.
+ * @property retry Loads it again.
+ */
+private class LoadedCollection(
+    val value: VideoPlaylist?,
+    val hasError: Boolean,
+    val retry: () -> Unit,
+)
+
+@Composable
+private fun rememberCollection(
+    viewModel: ContentVideosViewModel,
+    collectionId: Int,
+): LoadedCollection {
+    var collection by remember(collectionId) { mutableStateOf<VideoPlaylist?>(null) }
+    var hasError by remember(collectionId) { mutableStateOf(false) }
+    var retryCount by remember(collectionId) { mutableIntStateOf(0) }
+    LaunchedEffect(collectionId, retryCount) {
+        hasError = false
+        try {
+            collection = viewModel.collection(collectionId)
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (_: Exception) {
+            hasError = true
+        }
+    }
+    return LoadedCollection(collection, hasError, retry = { retryCount++ })
+}
+
+/** A spinner, or [message] with a Retry button when [hasError]. */
+@Composable
+private fun LoadingOrRetry(
+    hasError: Boolean,
+    message: String,
+    onRetry: () -> Unit,
+) {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+        if (hasError) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(message)
+                OutlinedButton(onClick = onRetry) { Text("Retry") }
+            }
+        } else {
+            CircularProgressIndicator()
+        }
+    }
 }
