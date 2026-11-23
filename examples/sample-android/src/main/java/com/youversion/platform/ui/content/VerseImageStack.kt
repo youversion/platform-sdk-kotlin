@@ -155,6 +155,7 @@ internal fun VerseImageStack(
                 val flight = flights[image.id]
                 if (depth >= VISIBLE_CARD_COUNT && flight == null) return@forEachIndexed
                 key(image.id) {
+                    val currentShuffle by rememberUpdatedState(::shuffle)
                     val appearance = remember { Animatable(if (depth == 0) 1f else 0f) }
                     LaunchedEffect(Unit) { appearance.animateTo(1f, tween(durationMillis = 300)) }
                     val isFlyingOut = flight != null && !flight.isReturning
@@ -192,7 +193,7 @@ internal fun VerseImageStack(
                                 .zIndex(flight?.zIndex ?: -depth.toFloat())
                                 .then(
                                     if (depth == 0 && images.size > 1) {
-                                        Modifier.pointerInput(image.id, images, stackWidth) {
+                                        Modifier.pointerInput(image.id, stackWidth) {
                                             val velocityTracker = VelocityTracker()
                                             detectHorizontalDragGestures(
                                                 onDragStart = {
@@ -203,7 +204,7 @@ internal fun VerseImageStack(
                                                     val predictedX =
                                                         dragOffsetX + velocityTracker.calculateVelocity().x * 0.2f
                                                     if (abs(predictedX) > stackWidth * 0.25f) {
-                                                        shuffle(sign(predictedX))
+                                                        currentShuffle(sign(predictedX))
                                                     } else {
                                                         settle()
                                                     }

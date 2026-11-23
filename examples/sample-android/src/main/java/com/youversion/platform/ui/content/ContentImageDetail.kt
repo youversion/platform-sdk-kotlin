@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -61,8 +62,18 @@ import com.youversion.platform.ui.theme.LinkColor
 import com.youversion.platform.ui.theme.linkTextColor
 import com.youversion.platform.ui.views.card.BibleCard
 import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 
 private const val PASSAGE_PAGE_SIZE = 99
+
+private val verseImagesSerializer = ListSerializer(VerseImage.serializer())
+
+private val verseImagesSaver =
+    Saver<List<VerseImage>, String>(
+        save = { Json.encodeToString(verseImagesSerializer, it) },
+        restore = { Json.decodeFromString(verseImagesSerializer, it) },
+    )
 
 /**
  * Shows [image] on top of a stack of the other art for its passage. Tapping the top card opens it full screen,
@@ -84,7 +95,7 @@ internal fun ContentImageDetail(
     onReadInBible: (BibleReference) -> Unit,
 ) {
     val context = LocalContext.current
-    var images by remember(image.id) { mutableStateOf(listOf(image)) }
+    var images by rememberSaveable(image.id, stateSaver = verseImagesSaver) { mutableStateOf(listOf(image)) }
     var hasError by remember(image.id) { mutableStateOf(false) }
     var retryCount by remember(image.id) { mutableIntStateOf(0) }
     var selectedImageId by rememberSaveable(image.id) { mutableStateOf(image.id) }

@@ -8,10 +8,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BrokenImage
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -52,8 +56,9 @@ internal enum class VerseImageSize(
 
 /**
  * Shows [image] at its own aspect ratio, or square when the ratio is unusable, with a spinner while it downloads and
- * a retry button if the download fails. A decorative image shows neither, takes no taps, and is hidden from
- * accessibility services. Retrying skips the disk cache, which keeps a failed response.
+ * a retry button if the download fails. A failed download is square too, so the retry button fits a wide image. A
+ * decorative image shows neither, takes no taps, and is hidden from accessibility services. Retrying skips the disk
+ * cache, which keeps a failed response.
  *
  * @param image The image to show.
  * @param contentDescription What the image shows, read by accessibility services.
@@ -90,7 +95,8 @@ internal fun VerseImageView(
     var imageState by remember(imageUrl, retryCount) {
         mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty)
     }
-    val aspectRatio = image.aspectRatio.toFloat().takeIf { it > 0f && it.isFinite() } ?: 1f
+    val hasFailed = imageState is AsyncImagePainter.State.Error
+    val aspectRatio = image.aspectRatio.toFloat().takeIf { it > 0f && it.isFinite() && !hasFailed } ?: 1f
     Box(
         contentAlignment = Alignment.Center,
         modifier =
@@ -104,10 +110,9 @@ internal fun VerseImageView(
                             Modifier.clearAndSetSemantics {}
                         }
 
-                        onClick != null -> {
+                        onClick != null && imageState is AsyncImagePainter.State.Success -> {
                             Modifier
                                 .clickable(
-                                    enabled = imageState is AsyncImagePainter.State.Success,
                                     onClickLabel = onClickLabel,
                                     role = Role.Button,
                                     onClick = onClick,
@@ -138,16 +143,23 @@ internal fun VerseImageView(
             when (imageState) {
                 is AsyncImagePainter.State.Error -> {
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+                        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
                         horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier =
+                            Modifier
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 8.dp),
                     ) {
-                        Icon(Icons.Outlined.BrokenImage, contentDescription = null, modifier = Modifier.size(40.dp))
+                        Icon(Icons.Outlined.BrokenImage, contentDescription = null, modifier = Modifier.size(32.dp))
                         Text(
                             text = "The image didn’t load.",
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
                         )
-                        OutlinedButton(onClick = { retryCount++ }) {
+                        OutlinedButton(
+                            onClick = { retryCount++ },
+                            contentPadding = ButtonDefaults.TextButtonContentPadding,
+                        ) {
                             Text("Retry image")
                         }
                     }
