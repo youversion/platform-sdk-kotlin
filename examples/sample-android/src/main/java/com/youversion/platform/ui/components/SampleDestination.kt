@@ -1,11 +1,22 @@
 package com.youversion.platform.ui.components
 
+import android.net.Uri
+
 sealed class SampleDestination(
     val route: String,
 ) {
     data object Reader : SampleDestination("reader")
 
     data object Content : SampleDestination("content")
+
+    data object ContentImages : SampleDestination("content/images")
+
+    data object ContentImage : SampleDestination("content/image/{imageId}") {
+        const val IMAGE_ID_ARGUMENT = "imageId"
+
+        /** The route that opens the image with [imageId]. */
+        fun route(imageId: String): String = "content/image/${Uri.encode(imageId)}"
+    }
 
     data object Examples : SampleDestination("examples")
 
