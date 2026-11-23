@@ -189,6 +189,22 @@ class ContentImagesViewModelTest {
         }
 
     @Test
+    fun `a rejected search leaves the running page loading`() =
+        runViewModelTest {
+            val firstPage = CompletableDeferred<Pair<List<VerseImage>, String?>>()
+            val viewModel = viewModel(browsePage = { firstPage.await() })
+            advanceUntilIdle()
+
+            viewModel.search("a".repeat(101))
+            firstPage.complete(listOf(image("A")) to null)
+            advanceUntilIdle()
+
+            assertTrue(viewModel.state.value.isQueryTooLong)
+            assertFalse(viewModel.state.value.isLoading)
+            assertEquals(listOf("A"), viewModel.imageIds())
+        }
+
+    @Test
     fun `the submitted search is saved and restored`() =
         runViewModelTest {
             val savedStateHandle = SavedStateHandle()

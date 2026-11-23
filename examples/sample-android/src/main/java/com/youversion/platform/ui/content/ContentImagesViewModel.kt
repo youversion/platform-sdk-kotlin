@@ -118,8 +118,7 @@ internal class ContentImagesViewModel(
     fun search(query: String) {
         val trimmedQuery = query.trim()
         if (trimmedQuery.characterCount > MAXIMUM_QUERY_LENGTH) {
-            loadJob?.cancel()
-            mutableState.update { it.copy(isQueryTooLong = true, isLoading = false) }
+            mutableState.update { it.copy(isQueryTooLong = true) }
             return
         }
         loadJob?.cancel()
