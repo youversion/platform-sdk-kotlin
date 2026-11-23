@@ -155,7 +155,7 @@ internal fun VerseImageStack(
                 val flight = flights[image.id]
                 if (depth >= VISIBLE_CARD_COUNT && flight == null) return@forEachIndexed
                 key(image.id) {
-                    val currentShuffle by rememberUpdatedState(::shuffle)
+                    val currentShuffle by rememberUpdatedState<(Float) -> Unit> { direction -> shuffle(direction) }
                     val appearance = remember { Animatable(if (depth == 0) 1f else 0f) }
                     LaunchedEffect(Unit) { appearance.animateTo(1f, tween(durationMillis = 300)) }
                     val isFlyingOut = flight != null && !flight.isReturning
