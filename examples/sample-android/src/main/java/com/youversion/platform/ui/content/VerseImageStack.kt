@@ -75,24 +75,23 @@ private class CardFlight(
  * "Previous image" actions on the top card instead of the swipe. Cards behind the top one are decorative previews.
  *
  * @param images The images to show. It must not be empty.
+ * @param selectedImageId The id of the image on top. An id that isn't in [images] shows the first image.
+ * @param onSelectedImageIdChange Called with the id of the image that should go on top.
  * @param titleOf The passage title read out for an image.
  * @param modifier The modifier for the stack.
- * @param onSelectionChange Called with the image on top whenever it changes, including the first one.
  * @param onImageClick Called when the user taps the image on top, or `null` to shuffle on a tap.
  */
 @Composable
-fun VerseImageStack(
+internal fun VerseImageStack(
     images: List<VerseImage>,
+    selectedImageId: String,
+    onSelectedImageIdChange: (String) -> Unit,
     titleOf: (VerseImage) -> String,
     modifier: Modifier = Modifier,
-    onSelectionChange: (VerseImage) -> Unit = {},
     onImageClick: ((VerseImage) -> Unit)? = null,
 ) {
-    var selectedImageId by rememberSaveable { mutableStateOf(images.first().id) }
     val selectedIndex = images.indexOfFirst { it.id == selectedImageId }.coerceAtLeast(0)
     val selectedImage = images[selectedIndex]
-    val currentOnSelectionChange by rememberUpdatedState(onSelectionChange)
-    LaunchedEffect(selectedImage) { currentOnSelectionChange(selectedImage) }
 
     val scope = rememberCoroutineScope()
     val flights = remember { mutableStateMapOf<String, CardFlight>() }
@@ -130,7 +129,7 @@ fun VerseImageStack(
                 flights.remove(nextId)
                 flights[currentId] = flight
                 dragOffsetX = 0f
-                selectedImageId = nextId
+                onSelectedImageIdChange(nextId)
                 scope.launch {
                     with(localDensity) {
                         flight.offset.animateTo(
@@ -148,7 +147,7 @@ fun VerseImageStack(
                 val previousId = images[(selectedIndex - 1 + images.size) % images.size].id
                 flights.remove(previousId)
                 dragOffsetX = 0f
-                selectedImageId = previousId
+                onSelectedImageIdChange(previousId)
             }
 
             images.forEachIndexed { index, image ->
@@ -165,6 +164,7 @@ fun VerseImageStack(
                         image = image,
                         contentDescription = titleOf(image),
                         isDecorative = depth != 0,
+                        onClickLabel = if (onImageClick == null) "Next image" else "Open image",
                         accessibilityActions =
                             if (images.size > 1) {
                                 listOf(

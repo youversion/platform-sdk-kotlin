@@ -31,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,6 +55,7 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.verseimages.models.VerseImage
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
+import com.youversion.platform.ui.content.CONTENT_LANGUAGE_TAG
 import com.youversion.platform.ui.content.VerseImageStack
 import com.youversion.platform.ui.content.passageTitle
 import com.youversion.platform.ui.views.votd.CompactVerseOfTheDay
@@ -62,7 +64,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.text.DateFormat
 import java.util.Calendar
-import java.util.Locale
 import java.util.TimeZone
 
 private const val DAY_MILLIS = 24 * 60 * 60 * 1000L
@@ -132,7 +133,7 @@ fun VotdExample(
                                     selected = isSelected,
                                     role = Role.Tab,
                                     onClick = { showsImages = index == 1 },
-                                ).heightIn(min = 32.dp),
+                                ).minimumInteractiveComponentSize(),
                     ) {
                         Text(
                             text = label,
@@ -189,7 +190,7 @@ private fun VotdImages() {
                 val page =
                     YouVersionApi.verseImages.verseImages(
                         passageId = passageId,
-                        languageRanges = listOf(Locale.getDefault().language),
+                        languageRanges = listOf(CONTENT_LANGUAGE_TAG),
                     )
                 title = passageTitle(version.await(), passageId)
                 images = page.data
@@ -225,8 +226,11 @@ private fun VotdImages() {
         when {
             loadedImages != null && loadedImages.isNotEmpty() -> {
                 key(selectedDateMillis) {
+                    var selectedImageId by rememberSaveable { mutableStateOf(loadedImages.first().id) }
                     VerseImageStack(
                         images = loadedImages,
+                        selectedImageId = selectedImageId,
+                        onSelectedImageIdChange = { selectedImageId = it },
                         titleOf = { title ?: it.passageId },
                         modifier = Modifier.fillMaxWidth(),
                     )

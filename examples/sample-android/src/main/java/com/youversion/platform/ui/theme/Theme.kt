@@ -8,6 +8,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
@@ -21,7 +22,7 @@ private val DarkColorScheme =
         surfaceBright = DarkSystemGray2Color,
         surfaceContainer = DarkGroupedBackgroundColor,
         surfaceVariant = DarkSystemGray5Color,
-        onSurfaceVariant = SystemGrayColor,
+        onSurfaceVariant = DarkSecondaryTextColor,
     )
 
 private val LightColorScheme =
@@ -34,7 +35,7 @@ private val LightColorScheme =
         surfaceBright = Color.White,
         surfaceContainer = GroupedBackgroundColor,
         surfaceVariant = SystemGray5Color,
-        onSurfaceVariant = SystemGrayColor,
+        onSurfaceVariant = SecondaryTextColor,
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
     surface = Color(0xFFFFFBFE),
@@ -45,6 +46,12 @@ private val LightColorScheme =
     onSurface = Color(0xFF1C1B1F),
      */
     )
+
+/** The color for link text: dark enough on light backgrounds and light enough on dark ones. */
+internal val linkTextColor: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (isSystemInDarkTheme()) DarkLinkColor else LinkColor
 
 @Composable
 fun YouVersionPlatformTheme(

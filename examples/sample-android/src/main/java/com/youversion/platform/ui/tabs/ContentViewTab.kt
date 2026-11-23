@@ -61,7 +61,7 @@ import com.youversion.platform.ui.icons.BookClosedIcon
  * @param onImageClick Called with the image the user taps.
  */
 @Composable
-fun ContentViewTab(
+internal fun ContentViewTab(
     viewModel: ContentImagesViewModel,
     onDestinationClick: (SampleDestination) -> Unit,
     onImageClick: (VerseImage) -> Unit,
@@ -96,7 +96,7 @@ fun ContentViewTab(
                     TextField(
                         value = query,
                         onValueChange = { query = it },
-                        placeholder = { Text("Search by verse reference") },
+                        label = { Text("Search by verse reference") },
                         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                         trailingIcon = {
                             if (query.isNotEmpty()) {
@@ -110,14 +110,23 @@ fun ContentViewTab(
                                 }
                             }
                         },
+                        isError = state.isQueryTooLong,
+                        supportingText =
+                            if (state.isQueryTooLong) {
+                                { Text("Enter a search of 100 characters or fewer.") }
+                            } else {
+                                null
+                            },
                         singleLine = true,
                         shape = CircleShape,
                         colors =
                             TextFieldDefaults.colors(
                                 focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                errorContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 focusedIndicatorColor = Color.Transparent,
                                 unfocusedIndicatorColor = Color.Transparent,
+                                errorIndicatorColor = Color.Transparent,
                             ),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions =
@@ -129,11 +138,15 @@ fun ContentViewTab(
                             ),
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    if (state.isQueryTooLong) {
-                        Text(
-                            text = "Enter a search of 100 characters or fewer.",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                    if (state.hasVersionError) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Passage names didn’t load.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.weight(1f),
+                            )
+                            TextButton(onClick = viewModel::retry) { Text("Retry") }
+                        }
                     }
                 }
             }

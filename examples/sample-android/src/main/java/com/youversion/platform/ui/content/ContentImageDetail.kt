@@ -58,6 +58,7 @@ import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.icons.BookClosedIcon
 import com.youversion.platform.ui.theme.LinkColor
+import com.youversion.platform.ui.theme.linkTextColor
 import com.youversion.platform.ui.views.card.BibleCard
 import kotlinx.coroutines.CancellationException
 
@@ -75,7 +76,7 @@ private const val PASSAGE_PAGE_SIZE = 99
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ContentImageDetail(
+internal fun ContentImageDetail(
     image: VerseImage,
     bibleVersion: BibleVersion?,
     onBack: () -> Unit,
@@ -86,7 +87,8 @@ fun ContentImageDetail(
     var images by remember(image.id) { mutableStateOf(listOf(image)) }
     var hasError by remember(image.id) { mutableStateOf(false) }
     var retryCount by remember(image.id) { mutableIntStateOf(0) }
-    var displayedImage by remember(image.id) { mutableStateOf(image) }
+    var selectedImageId by rememberSaveable(image.id) { mutableStateOf(image.id) }
+    val displayedImage = images.firstOrNull { it.id == selectedImageId } ?: images.first()
     var isViewerOpen by rememberSaveable(image.id) { mutableStateOf(false) }
 
     LaunchedEffect(image.id, retryCount) {
@@ -123,8 +125,16 @@ fun ContentImageDetail(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { shareImage(context, displayedImage) }) {
-                        Icon(Icons.Filled.Share, contentDescription = "Share image")
+                    IconButton(
+                        onClick = {
+                            shareImageLink(
+                                context,
+                                displayedImage,
+                                passageTitle(bibleVersion, displayedImage.passageId),
+                            )
+                        },
+                    ) {
+                        Icon(Icons.Filled.Share, contentDescription = "Share link")
                     }
                 },
             )
@@ -159,8 +169,9 @@ fun ContentImageDetail(
             }
             VerseImageStack(
                 images = images,
+                selectedImageId = selectedImageId,
+                onSelectedImageIdChange = { selectedImageId = it },
                 titleOf = { passageTitle(bibleVersion, it.passageId) },
-                onSelectionChange = { displayedImage = it },
                 onImageClick = { isViewerOpen = true },
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -225,8 +236,8 @@ private fun ContentImageViewer(
                         }
                     },
                     actions = {
-                        IconButton(onClick = { shareImage(context, image) }) {
-                            Icon(Icons.Filled.Share, contentDescription = "Share image")
+                        IconButton(onClick = { shareImageLink(context, image, title) }) {
+                            Icon(Icons.Filled.Share, contentDescription = "Share link")
                         }
                     },
                 )
@@ -269,7 +280,7 @@ private fun ContentImageViewer(
                     colors =
                         ButtonDefaults.filledTonalButtonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = LinkColor,
+                            contentColor = linkTextColor,
                         ),
                     contentPadding = PaddingValues(start = 24.dp, end = 16.dp),
                     modifier = Modifier.heightIn(min = 48.dp),
@@ -299,13 +310,15 @@ private fun ContentImageViewer(
     }
 }
 
-private fun shareImage(
+private fun shareImageLink(
     context: Context,
     image: VerseImage,
+    title: String,
 ) {
     val intent =
         Intent(Intent.ACTION_SEND)
             .setType("text/plain")
-            .putExtra(Intent.EXTRA_TEXT, image.imageUrl)
+            .putExtra(Intent.EXTRA_SUBJECT, title)
+            .putExtra(Intent.EXTRA_TEXT, "$title\n${image.imageUrl}")
     context.startActivity(Intent.createChooser(intent, null))
 }

@@ -24,7 +24,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.ui.components.GroupedCard
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
-import com.youversion.platform.ui.theme.LinkColor
+import com.youversion.platform.ui.theme.linkTextColor
 
 private val passages =
     listOf(
@@ -93,7 +93,7 @@ fun NavigateExample(
                                 .clickable { onReadInBible(reference) }
                                 .padding(horizontal = 16.dp),
                     ) {
-                        Text(title, color = LinkColor, style = MaterialTheme.typography.bodyLarge)
+                        Text(title, color = linkTextColor, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }

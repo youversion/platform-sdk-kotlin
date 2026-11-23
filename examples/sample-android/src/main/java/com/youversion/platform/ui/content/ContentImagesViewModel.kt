@@ -1,5 +1,6 @@
 package com.youversion.platform.ui.content
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.youversion.platform.core.BibleDefaults
@@ -22,12 +23,12 @@ import java.text.BreakIterator
 import java.util.Locale
 
 /** The content language of the image library. The sample has no language picker yet. */
-const val CONTENT_LANGUAGE_TAG = "en"
+internal const val CONTENT_LANGUAGE_TAG = "en"
 
 /**
  * The title of [passageId] in [bibleVersion], such as "John 3:16", or [passageId] itself until the version loads.
  */
-fun passageTitle(
+internal fun passageTitle(
     bibleVersion: BibleVersion?,
     passageId: String,
 ): String =
@@ -38,6 +39,7 @@ fun passageTitle(
 
 private const val PAGE_SIZE = 30
 private const val MAXIMUM_QUERY_LENGTH = 100
+private const val QUERY_KEY = "query"
 
 private val String.characterCount: Int
     get() {
@@ -58,8 +60,9 @@ private val String.characterCount: Int
  * @property hasError Whether the last page failed. Images already loaded stay.
  * @property hasMorePages Whether another page can be loaded.
  * @property isQueryTooLong Whether the last search was rejected for its length.
+ * @property hasVersionError Whether the Bible version failed to load, so passages show their ids.
  */
-data class ContentImagesState(
+internal data class ContentImagesState(
     val query: String = "",
     val images: List<VerseImage> = emptyList(),
     val bibleVersion: BibleVersion? = null,
@@ -67,15 +70,18 @@ data class ContentImagesState(
     val hasError: Boolean = false,
     val hasMorePages: Boolean = false,
     val isQueryTooLong: Boolean = false,
+    val hasVersionError: Boolean = false,
 )
 
 /**
  * Pages through verse images, or through the images matching a search, for the Content tab.
  *
  * A search hit names only an image id, so each hit is fetched in full. Hits keep the order the server returned
- * them in, and a hit that fails to load is fetched again on [retry] without repeating the search.
+ * them in, and a hit that fails to load is fetched again on [retry] without repeating the search. The submitted
+ * search is kept in [savedStateHandle], so it survives process death.
  */
-class ContentImagesViewModel(
+internal class ContentImagesViewModel(
+    private val savedStateHandle: SavedStateHandle,
     private val browsePage: suspend (pageToken: String?) -> Pair<List<VerseImage>, String?> = { pageToken ->
         YouVersionApi.verseImages
             .verseImages(languageRanges = listOf(CONTENT_LANGUAGE_TAG), pageSize = PAGE_SIZE, pageToken = pageToken)
@@ -90,11 +96,8 @@ class ContentImagesViewModel(
     private val imageDetail: suspend (imageId: String) -> VerseImage = { YouVersionApi.verseImages.verseImage(it) },
     private val bibleVersion: suspend () -> BibleVersion = { YouVersionApi.bible.version(BibleDefaults.VERSION_ID) },
 ) : ViewModel() {
-    private val mutableState = MutableStateFlow(ContentImagesState())
+    private val mutableState = MutableStateFlow(ContentImagesState(query = savedStateHandle[QUERY_KEY] ?: ""))
     val state: StateFlow<ContentImagesState> = mutableState.asStateFlow()
-
-    /** The image the detail screen shows. */
-    var openedImage: VerseImage? = null
 
     private var loadJob: Job? = null
     private var versionJob: Job? = null
@@ -103,6 +106,7 @@ class ContentImagesViewModel(
     private var pendingNextPageToken: String? = null
     private val hitIds = mutableListOf<String>()
     private val imagesById = mutableMapOf<String, VerseImage>()
+    private val openedImagesById = mutableMapOf<String, VerseImage>()
 
     init {
         load()
@@ -119,6 +123,7 @@ class ContentImagesViewModel(
             return
         }
         loadJob?.cancel()
+        savedStateHandle[QUERY_KEY] = trimmedQuery
         nextPageToken = null
         pendingHitIds = null
         hitIds.clear()
@@ -134,10 +139,18 @@ class ContentImagesViewModel(
         load()
     }
 
-    /** Repeats the page that failed, and the Bible version if it failed too. */
+    /** Repeats the page that failed, and the Bible version if it failed. */
     fun retry() {
-        if (state.value.hasError) load()
+        if (state.value.hasError) load() else loadBibleVersion()
     }
+
+    /**
+     * The image with [imageId]: a loaded one, or else fetched, for a detail screen restored after process death.
+     */
+    suspend fun image(imageId: String): VerseImage =
+        state.value.images.firstOrNull { it.id == imageId }
+            ?: openedImagesById[imageId]
+            ?: imageDetail(imageId).also { openedImagesById[imageId] = it }
 
     private fun load() {
         loadBibleVersion()
@@ -159,6 +172,7 @@ class ContentImagesViewModel(
 
     private fun loadBibleVersion() {
         if (state.value.bibleVersion != null || versionJob?.isActive == true) return
+        mutableState.update { it.copy(hasVersionError = false) }
         versionJob =
             viewModelScope.launch {
                 try {
@@ -167,6 +181,7 @@ class ContentImagesViewModel(
                 } catch (exception: CancellationException) {
                     throw exception
                 } catch (_: Exception) {
+                    mutableState.update { it.copy(hasVersionError = true) }
                 }
             }
     }

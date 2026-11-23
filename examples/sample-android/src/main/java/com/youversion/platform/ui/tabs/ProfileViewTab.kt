@@ -32,7 +32,7 @@ import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.dataexchange.DataExchangeStatus
 import com.youversion.platform.ui.dataexchange.rememberDataExchange
 import com.youversion.platform.ui.signin.SignInViewModel
-import com.youversion.platform.ui.theme.LinkColor
+import com.youversion.platform.ui.theme.linkTextColor
 import com.youversion.platform.ui.views.SignInWithYouVersionButton
 import kotlinx.coroutines.launch
 
@@ -46,7 +46,7 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
     val scope = rememberCoroutineScope()
     var dataExchangeStatusText by remember { mutableStateOf<String?>(null) }
     val requestDataExchange = rememberDataExchange()
-    val linkButtonColors = ButtonDefaults.textButtonColors(contentColor = LinkColor)
+    val linkButtonColors = ButtonDefaults.textButtonColors(contentColor = linkTextColor)
 
     LaunchedEffect(Unit) {
         signInViewModel.onAction(SignInViewModel.Action.UpdateSignInState)
