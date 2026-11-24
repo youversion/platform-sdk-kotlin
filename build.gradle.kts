@@ -24,7 +24,7 @@ apiValidation {
 }
 
 // Merges the SDK modules' coverage into one report at `build/reports/kover/report.xml`. The sample
-// app has no tests, so it is left out.
+// app isn't measured; its unit tests run in CI as their own step.
 dependencies {
     kover(projects.platformCore)
     kover(projects.platformUi)
