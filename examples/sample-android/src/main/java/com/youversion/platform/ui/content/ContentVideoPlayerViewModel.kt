@@ -24,8 +24,8 @@ internal val List<VideoPlaybackSource>.playbackCandidates: List<VideoPlaybackSou
     get() = filter { it.format == "hls" } + filter { it.format == "mp4" }
 
 /**
- * Owns the video screen's player, so it survives configuration changes. The player exists only while the screen is
- * started: [start] builds it and [stop] releases its decoders. The position, whether to play, and the stream in use
+ * Owns the video screen's player and its playback state, which survives configuration changes. The player exists only
+ * while the screen is started: [start] builds it and [stop] releases its decoders, so a rotation rebuilds it. The position, whether to play, and the stream in use
  * are kept in [savedStateHandle] by [save], so playback resumes in the same place after process death. A stream that
  * fails falls back to the next of [sources]' [playbackCandidates] before an error shows.
  */

@@ -94,15 +94,13 @@ internal suspend fun contentBibleId(
             candidates.firstOrNull { it.languageTag.equals(tag, ignoreCase = true) } ?: candidates.firstOrNull()
         if (version != null) return version.id
     }
-    error(
-        if (passageId ==
-            null
-        ) {
+    val message =
+        if (passageId == null) {
             "No Bible is available for the selected language."
         } else {
             "This passage is not available in the selected language."
-        },
-    )
+        }
+    error(message)
 }
 
 private suspend fun cachedVersions(languageTag: String): List<BibleVersion> =
