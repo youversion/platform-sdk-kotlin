@@ -44,7 +44,7 @@ class VideosApiTests : YouVersionPlatformTest {
             Locale.setDefault(Locale.ENGLISH)
             MockEngine { request ->
                 assertEquals(
-                    "/v1-beta/organizations/org%2F1/playlists?page_size=50&page_token=next%2B%2F%3D",
+                    "/v1/organizations/org%2F1/playlists?page_size=50&page_token=next%2B%2F%3D",
                     request.url.encodedPathAndQuery,
                 )
                 assertEquals("en", request.headers[HttpHeaders.AcceptLanguage])
@@ -92,7 +92,7 @@ class VideosApiTests : YouVersionPlatformTest {
         runTest {
             MockEngine { request ->
                 assertEquals(
-                    "/v1-beta/organizations/org/playlists?fields%5B%5D=id&fields%5B%5D=videos&page_size=5&page_token=",
+                    "/v1/organizations/org/playlists?fields%5B%5D=id&fields%5B%5D=videos&page_size=5&page_token=",
                     request.url.encodedPathAndQuery,
                 )
                 respondJson("""{ "data": [{ "id": 1 }] }""")
@@ -114,7 +114,7 @@ class VideosApiTests : YouVersionPlatformTest {
     fun `test playlists without fields sends no fields`() =
         runTest {
             MockEngine { request ->
-                assertEquals("/v1-beta/organizations/org/playlists", request.url.encodedPathAndQuery)
+                assertEquals("/v1/organizations/org/playlists", request.url.encodedPathAndQuery)
                 respond("", HttpStatusCode.NoContent)
             }.also { startYouVersionPlatformTest(it) }
 
@@ -141,7 +141,7 @@ class VideosApiTests : YouVersionPlatformTest {
     fun `test playlist fetches one playlist`() =
         runTest {
             MockEngine { request ->
-                assertEquals("/v1-beta/organizations/org%2F1/playlists/7", request.url.encodedPathAndQuery)
+                assertEquals("/v1/organizations/org%2F1/playlists/7", request.url.encodedPathAndQuery)
                 respondJson("""{ "id": 7, "title": "Easter" }""")
             }.also { startYouVersionPlatformTest(it) }
 
@@ -198,7 +198,7 @@ class VideosApiTests : YouVersionPlatformTest {
     fun `test video decodes metadata and resizes the thumbnail`() =
         runTest {
             MockEngine { request ->
-                assertEquals("/v1-beta/videos/vid+1%2F=", request.url.encodedPathAndQuery)
+                assertEquals("/v1/videos/vid+1%2F=", request.url.encodedPathAndQuery)
                 assertNull(request.headers[HttpHeaders.AcceptLanguage])
                 respondJson(
                     """
@@ -441,7 +441,7 @@ class VideosApiTests : YouVersionPlatformTest {
         runTest {
             MockEngine { request ->
                 assertEquals(
-                    "/v1-beta/organizations/org/playlists?fields%5B%5D=id&page_size=%2A",
+                    "/v1/organizations/org/playlists?fields%5B%5D=id&page_size=%2A",
                     request.url.encodedPathAndQuery,
                 )
                 respondJson("""{ "data": [] }""")

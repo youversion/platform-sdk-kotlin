@@ -593,7 +593,7 @@ val results =
     )
 ```
 
-`fields` names the kinds of result to return — any of `"verses"`, `"topics"`, `"images"`, and `"videos"`; leave it empty for every stable kind, which leaves out videos. Naming `"videos"` uses the beta endpoint, which needs an app key with beta access. Ask only for the kinds you display. Unified results do not page.
+`fields` names the kinds of result to return — any of `"verses"`, `"topics"`, `"images"`, and `"videos"`; leave it empty for every kind. Ask only for the kinds you display. Unified results do not page.
 
 Each `SearchImage` carries only an `id` and the `passageId` it illustrates — a single verse or a verse range such as `"1CO.13.4-7"`. Pass the `id` to `YouVersionApi.verseImages.verseImage` to get the image's URL, size and attribution (see [Fetching One Image](#fetching-one-image)). `images` is empty wherever the platform does not yet offer image results.
 

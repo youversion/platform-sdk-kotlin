@@ -653,7 +653,7 @@ class SearchApiTests : YouVersionPlatformTest {
             MockEngine { request ->
                 assertEquals(HttpMethod.Get, request.method)
                 assertEquals(
-                    "/v1-beta/search-videos?query=two+fish" +
+                    "/v1/search-videos?query=two+fish" +
                         "&organization_ids%5B%5D=11111111-1111-1111-1111-111111111111" +
                         "&organization_ids%5B%5D=22222222-2222-2222-2222-222222222222" +
                         "&page_size=99&page_token=next%2B%2F%3D",
@@ -712,7 +712,7 @@ class SearchApiTests : YouVersionPlatformTest {
     fun `test video search sends english by default and keeps the token on an empty page`() =
         runTest {
             MockEngine { request ->
-                assertEquals("/v1-beta/search-videos?query=love", request.url.encodedPathAndQuery)
+                assertEquals("/v1/search-videos?query=love", request.url.encodedPathAndQuery)
                 assertEquals("en", request.headers[HttpHeaders.AcceptLanguage])
                 respondJson("""{ "videos": [], "did_you_mean": [], "next_page_token": "next-token" }""")
             }.also { engine -> startYouVersionPlatformTest(engine) }
