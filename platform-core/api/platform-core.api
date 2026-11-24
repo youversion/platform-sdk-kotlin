@@ -98,6 +98,7 @@ public final class com/youversion/platform/core/api/YouVersionApi {
 	public final fun getDataExchange ()Lcom/youversion/platform/core/dataexchange/api/DataExchangeApi;
 	public final fun getHighlights ()Lcom/youversion/platform/core/highlights/api/HighlightsApi;
 	public final fun getLanguages ()Lcom/youversion/platform/core/languages/api/LanguagesApi;
+	public final fun getNotes ()Lcom/youversion/platform/core/notes/api/NotesApi;
 	public final fun getOrganizations ()Lcom/youversion/platform/core/organizations/api/OrganizationsApi;
 	public final fun getSearch ()Lcom/youversion/platform/core/search/api/SearchApi;
 	public final fun getUsers ()Lcom/youversion/platform/core/users/api/UsersApi;
@@ -756,6 +757,100 @@ public final class com/youversion/platform/core/languages/models/Language$Compan
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public abstract interface class com/youversion/platform/core/notes/api/NotesApi {
+	public abstract fun createNote (Lcom/youversion/platform/core/notes/models/NoteCreateRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun deleteNote (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun note (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun notes (Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun notes (Ljava/util/List;ZLjava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun notes$default (Lcom/youversion/platform/core/notes/api/NotesApi;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun notes$default (Lcom/youversion/platform/core/notes/api/NotesApi;Ljava/util/List;ZLjava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun updateNote (Ljava/lang/String;Lcom/youversion/platform/core/notes/models/NoteUpdate;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/notes/api/NotesApi$DefaultImpls {
+	public static synthetic fun notes$default (Lcom/youversion/platform/core/notes/api/NotesApi;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun notes$default (Lcom/youversion/platform/core/notes/api/NotesApi;Ljava/util/List;ZLjava/lang/Integer;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/notes/models/Note {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Ljava/lang/String;
+	public final fun getContent ()Ljava/lang/String;
+	public final fun getCreatedTime ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getLanguageTag ()Ljava/lang/String;
+	public final fun getReferences ()Ljava/util/List;
+	public final fun getStatus ()Lcom/youversion/platform/core/notes/models/NoteStatus;
+	public final fun getTags ()Ljava/util/List;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getUpdatedTime ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/notes/models/NoteCreateRequest {
+	public fun <init> (Ljava/lang/String;Lcom/youversion/platform/core/notes/models/NoteStatus;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/youversion/platform/core/notes/models/NoteStatus;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Ljava/lang/String;
+	public final fun getContent ()Ljava/lang/String;
+	public final fun getLanguageTag ()Ljava/lang/String;
+	public final fun getReferences ()Ljava/util/List;
+	public final fun getRequestId ()Ljava/lang/String;
+	public final fun getStatus ()Lcom/youversion/platform/core/notes/models/NoteStatus;
+	public final fun getTags ()Ljava/util/List;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/notes/models/NoteStatus {
+	public static final field Companion Lcom/youversion/platform/core/notes/models/NoteStatus$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRawValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/notes/models/NoteStatus$Companion {
+	public final fun getPRIVATE ()Lcom/youversion/platform/core/notes/models/NoteStatus;
+	public final fun getPUBLIC ()Lcom/youversion/platform/core/notes/models/NoteStatus;
+}
+
+public final class com/youversion/platform/core/notes/models/NoteUpdate {
+	public fun <init> ()V
+	public fun <init> (Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;Ljava/lang/String;Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;Lcom/youversion/platform/core/notes/models/NoteStatus;)V
+	public synthetic fun <init> (Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;Ljava/lang/String;Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;Lcom/youversion/platform/core/notes/models/NoteStatus;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;
+	public final fun getContent ()Ljava/lang/String;
+	public final fun getLanguageTag ()Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;
+	public final fun getReferences ()Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;
+	public final fun getStatus ()Lcom/youversion/platform/core/notes/models/NoteStatus;
+	public final fun getTags ()Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;
+	public final fun getTitle ()Lcom/youversion/platform/core/notes/models/NoteUpdate$Field;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/youversion/platform/core/notes/models/NoteUpdate$Field {
+}
+
+public final class com/youversion/platform/core/notes/models/NoteUpdate$Field$Clear : com/youversion/platform/core/notes/models/NoteUpdate$Field {
+	public static final field INSTANCE Lcom/youversion/platform/core/notes/models/NoteUpdate$Field$Clear;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/core/notes/models/NoteUpdate$Field$Value : com/youversion/platform/core/notes/models/NoteUpdate$Field {
+	public fun <init> (Ljava/lang/Object;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract interface class com/youversion/platform/core/organizations/api/OrganizationsApi {
 	public abstract fun organization (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun organizations (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -943,6 +1038,8 @@ public final class com/youversion/platform/core/users/model/SignInWithYouVersion
 	public static final field HIGHLIGHTS Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
 	public static final field OPENID Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
 	public static final field PROFILE Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
+	public static final field READ_NOTES Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
+	public static final field WRITE_NOTES Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun getRawValue ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;

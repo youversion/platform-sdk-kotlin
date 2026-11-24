@@ -7,6 +7,12 @@ public enum class SignInWithYouVersionPermission(
     PROFILE("profile"),
     EMAIL("email"),
     HIGHLIGHTS("highlights"),
+
+    /** Reading the user's notes. Requested as an OAuth scope when signing in. */
+    READ_NOTES("read_notes"),
+
+    /** Creating, updating and deleting the user's notes. Requested as an OAuth scope when signing in. */
+    WRITE_NOTES("write_notes"),
     ;
 
     public companion object {

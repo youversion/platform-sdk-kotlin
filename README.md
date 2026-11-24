@@ -29,6 +29,7 @@ currently not available.
   - [Search API](#search-api)
   - [Verse Images API](#verse-images-api)
   - [Videos API](#videos-api)
+  - [Notes API](#notes-api)
   - [Building SDK Models in Tests](#building-sdk-models-in-tests)
 - [Sample App](#sample-app)
 - [For Different Use Cases](#-for-different-use-cases)
@@ -46,6 +47,7 @@ currently not available.
 - 🔍 **Search** - Built-in search in `BibleReader`, plus API access to verse, topic, image, and video search, unified search (verses, topics, images, and videos in one request), and suggested and trending queries
 - 🖼️ **Verse Images** - API access to verse art, filtered by passage and language
 - 🎬 **Videos** - API access to an organization's playlists and to video metadata, thumbnails, and playback streams
+- 📝 **Notes** - API access to list, create, update, and delete the signed-in user's notes, attached to verses
 - 🖍️ **Highlights** - The signed-in user's YouVersion highlights are rendered in `BibleText` and can be created, recolored, and removed from the reader
 - 🔐 **User Authentication** - Seamless "Sign In with YouVersion" integration using `SignInWithYouVersionButton`, with a top-level toggle to disable all sign-in UI
 - 🌅 **Verse of the Day** - Built-in `VerseOfTheDay` component and API access to VOTD data
@@ -373,6 +375,7 @@ Use the `SignInWithYouVersionButton` composable in your UI. You can use the `Sig
 - `SignInWithYouVersionPermission.PROFILE`: To access the user's name and profile picture.
 - `SignInWithYouVersionPermission.EMAIL`: To access the user's email address.
 - `SignInWithYouVersionPermission.HIGHLIGHTS`: To read and write the user's Bible highlights. See [Highlights](#highlights).
+- `SignInWithYouVersionPermission.READ_NOTES` and `WRITE_NOTES`: To read and to change the user's notes. See [Notes API](#notes-api).
 
 ```kotlin
 // ProfileScreen.kt
@@ -707,6 +710,72 @@ A `Video` carries its title, description, the USFM `references` it covers, `runt
 
 - Invalid arguments throw `IllegalArgumentException` before any request is made: `organizationId` and `id` must not be empty, `fields` must not be empty or name an unknown field, and `pageSize` must be between 1 and 99.
 - A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `RATE_LIMITED` (429) or `SERVER_ERROR` (5xx), which a later retry may resolve, `REQUEST_REJECTED` for any other 4xx, which a retry usually will not, `REQUEST_FAILED` for any other error response, and `INVALID_RESPONSE` when the response — including a video's thumbnail URL — cannot be read.
+
+### Notes API
+
+The signed-in user's notes are available through `YouVersionApi.notes`, which is part of `platform-core`. All calls are suspend functions that need a configured app key and a signed-in user.
+
+#### Notes Permissions
+
+Reading notes needs `SignInWithYouVersionPermission.READ_NOTES`, and creating, updating, and deleting them need `WRITE_NOTES`. Both are OAuth scopes, so request them when the user signs in; existing sign-ins do not gain them, and the data exchange flow does not grant them.
+
+```kotlin
+SignInWithYouVersionButton(
+    permissions = {
+        setOf(
+            SignInWithYouVersionPermission.PROFILE,
+            SignInWithYouVersionPermission.READ_NOTES,
+            SignInWithYouVersionPermission.WRITE_NOTES,
+        )
+    }
+)
+```
+
+Call `YouVersionApi.hasValidToken()` before a notes call to refresh an access token that is about to expire.
+
+#### Listing Notes
+
+```kotlin
+var pageToken: String? = null
+do {
+    val page = YouVersionApi.notes.notes(versionId = 111, pageSize = 50, pageToken = pageToken)
+    page.data.forEach { note -> println("${note.id}: ${note.content}") }
+    pageToken = page.nextPageToken
+} while (pageToken != null)
+
+val john3 = YouVersionApi.notes.notes(references = listOf(BibleReference(111, "JHN", 3, 16)))
+```
+
+- `versionId` returns only notes attached to that version; leave it `null` for every note, including notes with no attachment.
+- `references` returns the notes attached to any of the given verses, ranges, or whole chapter, which must all be in one version, book, and chapter. Set `isAnyVersion = true` to match those verses in every version.
+- Notes come newest first. `pageSize` (1–99) and `pageToken` page through them. Keep following `nextPageToken` until it is `null`, even past an empty page, and keep the same filters on every page.
+- A `Note` carries its `content`, `title`, `color`, `tags`, `languageTag`, `status` (`NoteStatus.PRIVATE` or `PUBLIC`), timestamps, and the `references` it is attached to. Attached verses from one chapter keep their gaps, so verses 1–3 and 7 come back as two references. A note whose attachment cannot be read still loads, with `references` set to `null`.
+
+#### Creating, Updating, and Deleting Notes
+
+```kotlin
+val request = NoteCreateRequest(
+    content = "For God so loved the world",
+    status = NoteStatus.PRIVATE,
+    references = listOf(BibleReference(111, "JHN", 3, 16)),
+)
+val note = YouVersionApi.notes.createNote(request)
+
+val updated = YouVersionApi.notes.updateNote(
+    id = note.id,
+    update = NoteUpdate(title = NoteUpdate.Field.Clear, tags = NoteUpdate.Field.Value(listOf("faith"))),
+)
+
+YouVersionApi.notes.deleteNote(note.id)
+```
+
+- Retry a failed create with the same `NoteCreateRequest`: its `requestId` stays the same, so the server creates the note at most once.
+- `NoteUpdate` changes only the fields it names. A `null` field is left unchanged, `Field.Clear` removes the value, and `Field.Value` replaces it. Use `Field.Clear`, not an empty list, to remove a note's attachment.
+
+#### Notes Error Handling
+
+- Invalid arguments throw `IllegalArgumentException` before any request is made: ids must not be empty, `pageSize` must be between 1 and 99, references must be nonempty and in one version, book, and chapter, an attachment cannot be a whole chapter, and an update must change something without setting empty `content`.
+- A request that fails throws `YouVersionNetworkException`: `MISSING_AUTHENTICATION` when no user is signed in or their access token is not accepted, which a sign-in or token refresh may resolve; `NOT_PERMITTED` when the app key or the user's grants do not allow the call; `RATE_LIMITED` (429) or `SERVER_ERROR` (5xx), which a later retry may resolve; `REQUEST_REJECTED` for any other 4xx, such as deleting a note that no longer exists (`statusCode` 404); and `INVALID_RESPONSE` when the response cannot be read.
 
 ### Building SDK Models in Tests
 

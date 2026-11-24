@@ -9,6 +9,8 @@ import com.youversion.platform.core.highlights.api.HighlightsApi
 import com.youversion.platform.core.highlights.api.HighlightsEndpoints
 import com.youversion.platform.core.languages.api.LanguagesApi
 import com.youversion.platform.core.languages.api.LanguagesEndpoints
+import com.youversion.platform.core.notes.api.NotesApi
+import com.youversion.platform.core.notes.api.NotesEndpoints
 import com.youversion.platform.core.organizations.api.OrganizationsApi
 import com.youversion.platform.core.organizations.api.OrganizationsEndpoints
 import com.youversion.platform.core.search.api.SearchApi
@@ -33,6 +35,7 @@ public object YouVersionApi {
     public val dataExchange: DataExchangeApi = DataExchangeEndpoints
     public val highlights: HighlightsApi = HighlightsEndpoints
     public val languages: LanguagesApi = LanguagesEndpoints
+    public val notes: NotesApi = NotesEndpoints
     public val organizations: OrganizationsApi = OrganizationsEndpoints
     public val search: SearchApi = SearchEndpoints
     public val users: UsersApi = UsersEndpoints

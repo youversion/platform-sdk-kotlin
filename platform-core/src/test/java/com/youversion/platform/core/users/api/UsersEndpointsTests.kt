@@ -362,6 +362,52 @@ class UsersEndpointsTests : YouVersionPlatformTest {
         }
 
     @Test
+    fun `test getSignInResult reads space-separated scopes`() =
+        runTest {
+            val idToken = buildTestJwt(buildJsonObject { put("nonce", TEST_NONCE) })
+            val mockEngine =
+                MockEngine { request ->
+                    when {
+                        request.url.encodedPath.contains("/auth/callback") -> {
+                            respond(
+                                "",
+                                HttpStatusCode.Found,
+                                headersOf("Location", "https://redirect.example.com?code=$TEST_AUTH_CODE"),
+                            )
+                        }
+
+                        else -> {
+                            respondJson(
+                                buildTokenResponseJson(idToken, scope = "openid profile read_notes write_notes"),
+                            )
+                        }
+                    }
+                }
+            stopYouVersionPlatformTest()
+            startYouVersionPlatformTest(engine = mockEngine)
+            YouVersionPlatformConfiguration.configure(appKey = TEST_APP_KEY)
+
+            val result =
+                YouVersionApi.users.getSignInResult(
+                    callbackUri = "${UsersEndpoints.callbackUrl()}?state=$TEST_STATE",
+                    state = TEST_STATE,
+                    codeVerifier = TEST_CODE_VERIFIER,
+                    redirectUri = TEST_REDIRECT_URI,
+                    nonce = TEST_NONCE,
+                )
+
+            assertEquals(
+                listOf(
+                    SignInWithYouVersionPermission.OPENID,
+                    SignInWithYouVersionPermission.PROFILE,
+                    SignInWithYouVersionPermission.READ_NOTES,
+                    SignInWithYouVersionPermission.WRITE_NOTES,
+                ),
+                result.permissions,
+            )
+        }
+
+    @Test
     fun `test getSignInResult throws on state mismatch`() =
         runTest {
             YouVersionPlatformConfiguration.configure(appKey = TEST_APP_KEY)

@@ -241,7 +241,7 @@ internal object UsersEndpoints : UsersApi {
 
         val scopePermissions =
             tokens.scope
-                .split(",")
+                .split(" ", ",")
                 .mapNotNull { SignInWithYouVersionPermission.fromRawValue(it) }
                 .toSet()
 

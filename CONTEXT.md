@@ -116,6 +116,14 @@ A highlight the reader has made that the platform has not yet accepted. It is bo
 that made it, so it outlives a sign-out rather than passing to whoever signs in next.
 _Avoid_: unsaved highlight, queued highlight, optimistic highlight
 
+### Notes
+
+**Note**:
+A reader's own writing, owned by their YouVersion account, optionally attached to verses in one
+version, book, and chapter. The attachment keeps the gaps between the verses chosen, so it is a list
+of _Bible references_ rather than one; a note with no attachment stands on its own.
+_Avoid_: annotation, journal entry, comment
+
 ### Identity
 
 **App key**:
