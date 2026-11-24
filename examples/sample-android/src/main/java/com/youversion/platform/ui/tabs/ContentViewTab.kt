@@ -94,6 +94,7 @@ internal fun ContentViewTab(
 ) {
     var showsImages by rememberSaveable { mutableStateOf(false) }
     var showsLanguages by rememberSaveable { mutableStateOf(false) }
+    var imageQuery by rememberSaveable { mutableStateOf(viewModel.state.value.query) }
     val collectionsListState = rememberLazyListState()
     val imagesGridState = rememberLazyGridState()
 
@@ -135,7 +136,13 @@ internal fun ContentViewTab(
                 )
             }
             if (showsImages) {
-                ContentImages(viewModel = viewModel, gridState = imagesGridState, onImageClick = onImageClick)
+                ContentImages(
+                    viewModel = viewModel,
+                    query = imageQuery,
+                    onQueryChange = { imageQuery = it },
+                    gridState = imagesGridState,
+                    onImageClick = onImageClick,
+                )
             } else {
                 ContentCollections(
                     state = collectionsState,
@@ -161,11 +168,12 @@ internal fun ContentViewTab(
 @Composable
 private fun ContentImages(
     viewModel: ContentImagesViewModel,
+    query: String,
+    onQueryChange: (String) -> Unit,
     gridState: LazyGridState,
     onImageClick: (VerseImage) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var query by rememberSaveable { mutableStateOf(state.query) }
     val focusManager = LocalFocusManager.current
 
     LazyVerticalGrid(
@@ -179,14 +187,14 @@ private fun ContentImages(
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 TextField(
                     value = query,
-                    onValueChange = { query = it },
+                    onValueChange = onQueryChange,
                     label = { Text("Search by verse reference") },
                     leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                     trailingIcon = {
                         if (query.isNotEmpty()) {
                             IconButton(
                                 onClick = {
-                                    query = ""
+                                    onQueryChange("")
                                     viewModel.search("")
                                 },
                             ) {

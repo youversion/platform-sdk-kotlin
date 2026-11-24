@@ -50,7 +50,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.youversion.platform.core.BibleDefaults
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.models.BibleVersion
@@ -246,9 +245,7 @@ private fun ContentImageViewer(
 ) {
     val context = LocalContext.current
     val title = passageTitle(bibleVersion, image.passageId)
-    val reference =
-        bibleVersion?.reference(image.passageId)
-            ?: BibleReference.unvalidatedReference(image.passageId, BibleDefaults.VERSION_ID)
+    val reference = bibleVersion?.reference(image.passageId)
 
     ModalBottomSheet(
         onDismissRequest = onClose,
