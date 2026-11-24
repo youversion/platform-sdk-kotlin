@@ -18,6 +18,24 @@ sealed class SampleDestination(
         fun route(imageId: String): String = "content/image/${Uri.encode(imageId)}"
     }
 
+    data object ContentCollection : SampleDestination("content/collection/{collectionId}") {
+        const val COLLECTION_ID_ARGUMENT = "collectionId"
+
+        /** The route that opens the collection with [collectionId]. */
+        fun route(collectionId: Int): String = "content/collection/$collectionId"
+    }
+
+    data object ContentVideo : SampleDestination("content/collection/{collectionId}/video/{videoId}") {
+        const val COLLECTION_ID_ARGUMENT = "collectionId"
+        const val VIDEO_ID_ARGUMENT = "videoId"
+
+        /** The route that plays the video requested as [videoId] from the collection with [collectionId]. */
+        fun route(
+            collectionId: Int,
+            videoId: String,
+        ): String = "content/collection/$collectionId/video/${Uri.encode(videoId)}"
+    }
+
     data object Examples : SampleDestination("examples")
 
     data object ExamplesList : SampleDestination("examples/list")

@@ -57,8 +57,8 @@ class ContentImagesViewModelTest {
         bibleVersion: suspend () -> BibleVersion = { awaitCancellation() },
     ) = ContentImagesViewModel(
         savedStateHandle = savedStateHandle,
-        browsePage = browsePage,
-        searchPage = { query, pageToken ->
+        browsePage = { _, pageToken -> browsePage(pageToken) },
+        searchPage = { query, _, pageToken ->
             searchCalls += query to pageToken
             searchPage(query, pageToken)
         },
@@ -68,7 +68,8 @@ class ContentImagesViewModelTest {
             if (id in failingDetailIds && count == 1) error("$id failed")
             image(id)
         },
-        bibleVersion = bibleVersion,
+        bibleId = { 1 },
+        bibleVersion = { bibleVersion() },
     )
 
     private fun ContentImagesViewModel.imageIds() = state.value.images.map { it.id }
@@ -260,5 +261,36 @@ class ContentImagesViewModelTest {
                     ?.id,
             )
             assertEquals(2, versionCalls)
+        }
+
+    @Test
+    fun `a new language reloads the images and searches with that language's Bible`() =
+        runViewModelTest {
+            val browseLanguages = mutableListOf<String>()
+            val searchBibleIds = mutableListOf<Int>()
+            val viewModel =
+                ContentImagesViewModel(
+                    savedStateHandle = SavedStateHandle(),
+                    browsePage = { languageTag, _ ->
+                        browseLanguages += languageTag
+                        listOf(image("$languageTag-1")) to null
+                    },
+                    searchPage = { _, bibleId, _ ->
+                        searchBibleIds += bibleId
+                        emptyList<String>() to null
+                    },
+                    imageDetail = { image(it) },
+                    bibleId = { if (it == "es") 128 else 3034 },
+                    bibleVersion = { awaitCancellation() },
+                )
+            advanceUntilIdle()
+            viewModel.setLanguage("es")
+            advanceUntilIdle()
+            assertEquals(listOf("es-1"), viewModel.imageIds())
+            viewModel.search("amor")
+            advanceUntilIdle()
+
+            assertEquals(listOf("en", "es"), browseLanguages)
+            assertEquals(listOf(128), searchBibleIds)
         }
 }

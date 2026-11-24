@@ -41,6 +41,9 @@ jobs:
         id: tests
         run: ./gradlew koverXmlReport
 
+      - name: Run sample app unit tests
+        run: ./gradlew :examples:sample-android:testDebugUnitTest
+
       - name: Verify per-module coverage thresholds
         run: ./gradlew koverVerify --continue
 
