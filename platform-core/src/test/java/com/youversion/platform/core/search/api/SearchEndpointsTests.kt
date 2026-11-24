@@ -120,4 +120,20 @@ class SearchEndpointsTests {
             ),
         )
     }
+
+    @Test
+    fun `test unified search url sends the video field on v1`() {
+        assertEquals(
+            "https://api.youversion.com/v1/search-unified" +
+                "?query=love&bible_id=111&language_ranges%5B%5D=en&user_intent=unknown" +
+                "&fields%5B%5D=verses&fields%5B%5D=videos",
+            SearchEndpoints.searchUnifiedUrl(
+                query = "love",
+                bibleId = 111,
+                languageRanges = listOf("en"),
+                userIntent = SearchUserIntent.unknown,
+                fields = listOf("verses", "videos"),
+            ),
+        )
+    }
 }
