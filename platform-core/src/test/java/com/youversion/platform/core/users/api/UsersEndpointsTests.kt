@@ -11,6 +11,7 @@ import com.youversion.platform.helpers.stopYouVersionPlatformTest
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.Url
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
@@ -122,13 +123,15 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                     setOf(
                         SignInWithYouVersionPermission.PROFILE,
                         SignInWithYouVersionPermission.HIGHLIGHTS,
+                        SignInWithYouVersionPermission.READ_NOTES,
+                        SignInWithYouVersionPermission.WRITE_NOTES,
                     ),
                 redirectUri = "app://callback",
                 parameters = pkceParams,
             )
 
-        assertTrue(url.contains("scope=openid+profile"))
-        assertTrue(url.contains("requested_permissions=highlights"))
+        assertEquals("openid profile read_notes write_notes", Url(url).parameters["scope"])
+        assertEquals("highlights", Url(url).parameters["requested_permissions"])
     }
 
     @Test

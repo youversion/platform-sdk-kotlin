@@ -59,6 +59,7 @@ public class NoteCreateRequest(
     }
 
     override fun toString(): String =
-        "NoteCreateRequest(content=$content, status=$status, requestId=$requestId, title=$title, color=$color, " +
-            "references=$references, languageTag=$languageTag, tags=$tags)"
+        "NoteCreateRequest(content=${content.redacted()}, status=$status, requestId=$requestId, " +
+            "title=${title.redacted()}, color=$color, references=$references, languageTag=$languageTag, " +
+            "tags=${tags.redacted()})"
 }

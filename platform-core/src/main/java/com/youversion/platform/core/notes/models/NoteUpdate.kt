@@ -86,6 +86,6 @@ public class NoteUpdate(
     }
 
     override fun toString(): String =
-        "NoteUpdate(title=$title, content=$content, color=$color, references=$references, " +
-            "languageTag=$languageTag, tags=$tags, status=$status)"
+        "NoteUpdate(title=${title.redacted()}, content=${content.redacted()}, color=$color, " +
+            "references=$references, languageTag=$languageTag, tags=${tags.redacted()}, status=$status)"
 }

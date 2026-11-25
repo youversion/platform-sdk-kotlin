@@ -30,6 +30,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -139,7 +140,7 @@ class NotesApiTests : YouVersionPlatformTest {
 
             val page =
                 YouVersionApi.notes.notes(
-                    references = listOf(BibleReference(111, "JHN", 3, 16), BibleReference(111, "JHN", 3)),
+                    references = listOf(BibleReference(111, "jhn", 3, 16), BibleReference(111, "JHN", 3)),
                     isAnyVersion = true,
                 )
 
@@ -330,6 +331,34 @@ class NotesApiTests : YouVersionPlatformTest {
 
             assertEquals(YouVersionNetworkException.Reason.INVALID_RESPONSE, exception.reason)
         }
+
+    @Test
+    fun `test logging notes hides the user's writing`() {
+        val logged =
+            listOf(
+                NoteCreateRequest(
+                    "secret text",
+                    NoteStatus.PRIVATE,
+                    title = "secret title",
+                    tags = listOf("secret tag"),
+                ),
+                NoteUpdate(title = NoteUpdate.Field.Value("secret title"), content = "secret text"),
+                Note(
+                    "n1",
+                    "secret title",
+                    "secret text",
+                    null,
+                    null,
+                    null,
+                    listOf("secret tag"),
+                    NoteStatus.PUBLIC,
+                    null,
+                    null,
+                ),
+            ).joinToString()
+
+        assertFalse(logged.contains("secret"), logged)
+    }
 
     @Test
     fun `test malformed passages decode to no references`() {

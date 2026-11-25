@@ -64,10 +64,13 @@ public class Note
         }
 
         override fun toString(): String =
-            "Note(id=$id, title=$title, content=$content, color=$color, references=$references, " +
-                "languageTag=$languageTag, tags=$tags, status=$status, createdTime=$createdTime, " +
-                "updatedTime=$updatedTime)"
+            "Note(id=$id, title=${title.redacted()}, content=${content.redacted()}, color=$color, " +
+                "references=$references, languageTag=$languageTag, tags=${tags.redacted()}, status=$status, " +
+                "createdTime=$createdTime, updatedTime=$updatedTime)"
     }
+
+/** Hides the user's writing when a note is logged, leaving `null` as it is. */
+internal fun Any?.redacted(): String? = this?.let { "<redacted>" }
 
 /**
  * Who can see a note. Values the server adds later are kept as they are rather than failing, so a `when` over a

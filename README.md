@@ -736,10 +736,11 @@ Call `YouVersionApi.hasValidToken()` before a notes call to refresh an access to
 #### Listing Notes
 
 ```kotlin
+val notes = mutableListOf<Note>()
 var pageToken: String? = null
 do {
     val page = YouVersionApi.notes.notes(versionId = 111, pageSize = 50, pageToken = pageToken)
-    page.data.forEach { note -> println("${note.id}: ${note.content}") }
+    notes += page.data
     pageToken = page.nextPageToken
 } while (pageToken != null)
 
@@ -776,6 +777,7 @@ YouVersionApi.notes.deleteNote(note.id)
 
 - Invalid arguments throw `IllegalArgumentException` before any request is made: ids must not be empty, `pageSize` must be between 1 and 99, references must be nonempty and in one version, book, and chapter, an attachment cannot be a whole chapter, and an update must change something without setting empty `content`.
 - A request that fails throws `YouVersionNetworkException`: `MISSING_AUTHENTICATION` when no user is signed in or their access token is not accepted, which a sign-in or token refresh may resolve; `NOT_PERMITTED` when the app key or the user's grants do not allow the call; `RATE_LIMITED` (429) or `SERVER_ERROR` (5xx), which a later retry may resolve; `REQUEST_REJECTED` for any other 4xx, such as deleting a note that no longer exists (`statusCode` 404); and `INVALID_RESPONSE` when the response cannot be read.
+- A request that never gets a response, such as when the device is offline, throws the HTTP client's own exception, such as an `IOException`, rather than `YouVersionNetworkException`.
 
 ### Building SDK Models in Tests
 

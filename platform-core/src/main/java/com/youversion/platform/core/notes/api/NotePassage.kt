@@ -12,23 +12,34 @@ private val bookRegex = Regex("[A-Z0-9]{3}")
 private val verseIdRegex = Regex("([A-Z0-9]{3})\\.([1-9][0-9]*)\\.([1-9][0-9]*)(?:-([1-9][0-9]*))?")
 
 /**
- * [references] sorted with adjacent or overlapping verses merged and gaps kept, or `null` when they are empty, span
- * more than one version, book or chapter, or name a whole chapter without [allowsChapter]. A whole chapter, when
- * allowed, replaces every verse in it.
+ * [references] with uppercase book codes, sorted with adjacent or overlapping verses merged and gaps kept, or `null`
+ * when they are empty, span more than one version, book or chapter, or name a whole chapter without [allowsChapter].
+ * A whole chapter, when allowed, replaces every verse in it.
  */
 internal fun normalizedNoteReferences(
     references: List<BibleReference>,
     allowsChapter: Boolean = false,
 ): List<BibleReference>? {
-    val first = references.firstOrNull() ?: return null
+    val uppercased =
+        references.map {
+            val book = it.bookUSFM.uppercase()
+            val start = it.verseStart
+            val end = it.verseEnd
+            if (start == null || end == null) {
+                BibleReference(it.versionId, book, it.chapter)
+            } else {
+                BibleReference(it.versionId, book, it.chapter, start, end)
+            }
+        }
+    val first = uppercased.firstOrNull() ?: return null
     val isOneChapter =
         bookRegex.matches(first.bookUSFM) &&
-            references.all {
+            uppercased.all {
                 it.versionId == first.versionId && it.bookUSFM == first.bookUSFM && it.chapter == first.chapter
             }
     return when {
         !isOneChapter -> null
-        references.none { it.verseStart == null } -> BibleReference.referencesByMerging(references)
+        uppercased.none { it.verseStart == null } -> BibleReference.referencesByMerging(uppercased)
         allowsChapter -> listOf(BibleReference(first.versionId, first.bookUSFM, first.chapter))
         else -> null
     }
