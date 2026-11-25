@@ -78,12 +78,10 @@
     <string name="yv_sign_in_introducing">تقديم</string>
     <string name="yv_sign_in_no_button">لا شكراً</string>
     <string name="yv_sign_in_prompt_paragraph">**%1$s** يريد الاتصال بحساب **تطبيق الكتاب المقدس** الخاص بك على YouVersion. سيتيح لهم ذلك رؤية نشاطك في تطبيق الكتاب المقدس والتفاعل معه. هل تريد المتابعة؟</string>
-    <string name="yv_sign_in_with_you_version">تسجيل الدخول باستخدام &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_in_yes_button">نعم من فضلك</string>
     <string name="yv_sign_out">تسجيل الخروج</string>
     <string name="yv_sign_out_confirmation_message">هل أنت متأكد أنك تريد تسجيل الخروج من YouVersion؟ سيتعين عليك تسجيل الدخول مرة أخرى للوصول إلى تمييزاتك.</string>
     <string name="yv_sign_out_explanation">ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى ملاحظاتك المميزة.</string>
-    <string name="yv_sign_out_of_you_version">تسجيل الخروج من &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">تسجيل الخروج على أي حال</string>
     <string name="yv_sign_out_pending_highlights_explanation">لم يتم حفظ بعض التمييزات الخاصه بك بعد، وستُفقد إذا قمت بتسجيل الخروج. هل تريد تسجيل الخروج على أي حال؟</string>
     <string name="yv_sign_out_pending_highlights_question">هل تريد حفظ ملاحظاتك المميزة؟</string>

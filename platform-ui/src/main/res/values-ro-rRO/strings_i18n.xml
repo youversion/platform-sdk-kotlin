@@ -78,12 +78,10 @@
     <string name="yv_sign_in_introducing">PREZENTARE</string>
     <string name="yv_sign_in_no_button">Nu, mulțumesc</string>
     <string name="yv_sign_in_prompt_paragraph">**%1$s** dorește să se conecteze la contul tău YouVersion **Bible App**. Acest lucru le va permite să vadă și să interacționeze cu activitatea ta din Bible App. Dorești să continui?</string>
-    <string name="yv_sign_in_with_you_version">Conectează-te cu &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_in_yes_button">Da, vă rog</string>
     <string name="yv_sign_out">Deconectare</string>
     <string name="yv_sign_out_confirmation_message">Sigur dorești să te deconectezi de la YouVersion? Va trebui să te autentifici din nou pentru a accesa evidențierile.</string>
     <string name="yv_sign_out_explanation">Va trebui să te conectezi din nou pentru a accesa evidențierile tale.</string>
-    <string name="yv_sign_out_of_you_version">Deconectează-te de la &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">Deconectați-vă oricum</string>
     <string name="yv_sign_out_pending_highlights_explanation">Unele dintre evidențierile tale nu au fost salvate încă și se vor pierde dacă te deconectezi. Vrei să te deconectezi oricum?</string>
     <string name="yv_sign_out_pending_highlights_question">Salvați evidențierile?</string>

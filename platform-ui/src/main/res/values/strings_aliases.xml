@@ -2,6 +2,7 @@
 <!-- AUTO-GENERATED from en.json — do not edit manually -->
 <resources>
     <string name="active_language_versions_header">@string/yv_active_language_versions_header</string>
+    <string name="add_highlight_aria_label">@string/yv_add_highlight_aria_label</string>
     <string name="agree_and_download">@string/yv_agree_and_download</string>
     <string name="all">@string/yv_all</string>
     <string name="all_languages_heading">@string/yv_all_languages_heading</string>
@@ -40,6 +41,12 @@
     <string name="footnote_aria_label">@string/yv_footnote_aria_label</string>
     <string name="full_chapter">@string/yv_full_chapter</string>
     <string name="generic_request_error_body">@string/yv_generic_request_error_body</string>
+    <string name="highlight_blue">@string/yv_highlight_blue</string>
+    <string name="highlight_green">@string/yv_highlight_green</string>
+    <string name="highlight_orange">@string/yv_highlight_orange</string>
+    <string name="highlight_pink">@string/yv_highlight_pink</string>
+    <string name="highlight_purple">@string/yv_highlight_purple</string>
+    <string name="highlight_yellow">@string/yv_highlight_yellow</string>
     <string name="increase_font_size_aria_label">@string/yv_increase_font_size_aria_label</string>
     <string name="inter_font_name">@string/yv_inter_font_name</string>
     <string name="language">@string/yv_language</string>
@@ -80,6 +87,7 @@
     <string name="previous_chapter_aria_label">@string/yv_previous_chapter_aria_label</string>
     <string name="recently_used_versions_heading">@string/yv_recently_used_versions_heading</string>
     <string name="regional">@string/yv_regional</string>
+    <string name="remove_highlight_aria_label">@string/yv_remove_highlight_aria_label</string>
     <string name="retry">@string/yv_retry</string>
     <string name="search">@string/yv_search</string>
     <string name="search_bible_versions">@string/yv_search_bible_versions</string>
@@ -94,12 +102,10 @@
     <string name="sign_in_introducing">@string/yv_sign_in_introducing</string>
     <string name="sign_in_no_button">@string/yv_sign_in_no_button</string>
     <string name="sign_in_prompt_paragraph">@string/yv_sign_in_prompt_paragraph</string>
-    <string name="sign_in_with_you_version">@string/yv_sign_in_with_you_version</string>
     <string name="sign_in_yes_button">@string/yv_sign_in_yes_button</string>
     <string name="sign_out">@string/yv_sign_out</string>
     <string name="sign_out_confirmation_message">@string/yv_sign_out_confirmation_message</string>
     <string name="sign_out_explanation">@string/yv_sign_out_explanation</string>
-    <string name="sign_out_of_you_version">@string/yv_sign_out_of_you_version</string>
     <string name="sign_out_pending_highlights_confirm">@string/yv_sign_out_pending_highlights_confirm</string>
     <string name="sign_out_pending_highlights_explanation">@string/yv_sign_out_pending_highlights_explanation</string>
     <string name="sign_out_pending_highlights_question">@string/yv_sign_out_pending_highlights_question</string>

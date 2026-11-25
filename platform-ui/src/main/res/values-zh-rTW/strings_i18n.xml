@@ -78,12 +78,10 @@
     <string name="yv_sign_in_introducing">介紹</string>
     <string name="yv_sign_in_no_button">不，謝謝</string>
     <string name="yv_sign_in_prompt_paragraph">**%1$s** 想要連接到您的 YouVersion **Bible App** 帳戶。這將允許他們查看您的 Bible App 活動並與之互動。您要繼續嗎？</string>
-    <string name="yv_sign_in_with_you_version">使用 &lt;bold&gt;%1$s&lt;/bold&gt; 登入</string>
     <string name="yv_sign_in_yes_button">是的，請繼續</string>
     <string name="yv_sign_out">登出</string>
     <string name="yv_sign_out_confirmation_message">你確定要登出 YouVersion 嗎？你需要重新登入才能存取你的醒目標示。</string>
     <string name="yv_sign_out_explanation">You\'ll need to sign in again to access your highlights.</string>
-    <string name="yv_sign_out_of_you_version">登出 &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">Sign out anyway</string>
     <string name="yv_sign_out_pending_highlights_explanation">Some of your highlights haven\'t been saved yet, and they will be lost if you sign out. Do you want to sign out anyway?</string>
     <string name="yv_sign_out_pending_highlights_question">Save your highlights?</string>

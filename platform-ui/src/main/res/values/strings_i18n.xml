@@ -2,6 +2,7 @@
 <!-- Synced from platform-localization dist/android — do not edit manually -->
 <resources>
     <string name="yv_active_language_versions_header">%1$s Versions (%2$s)</string>
+    <string name="yv_add_highlight_aria_label">Add %1$s highlight</string>
     <string name="yv_agree_and_download">Agree and Download</string>
     <string name="yv_all">All</string>
     <string name="yv_all_languages_heading">All Languages</string>
@@ -40,6 +41,12 @@
     <string name="yv_footnote_aria_label">Footnote</string>
     <string name="yv_full_chapter">Full Chapter</string>
     <string name="yv_generic_request_error_body">This request can’t be completed right now.</string>
+    <string name="yv_highlight_blue">blue</string>
+    <string name="yv_highlight_green">green</string>
+    <string name="yv_highlight_orange">orange</string>
+    <string name="yv_highlight_pink">pink</string>
+    <string name="yv_highlight_purple">purple</string>
+    <string name="yv_highlight_yellow">yellow</string>
     <string name="yv_increase_font_size_aria_label">Increase font size</string>
     <string name="yv_inter_font_name">Inter</string>
     <string name="yv_language">Language</string>
@@ -80,6 +87,7 @@
     <string name="yv_previous_chapter_aria_label">Previous chapter</string>
     <string name="yv_recently_used_versions_heading">Recent Versions</string>
     <string name="yv_regional">Regional</string>
+    <string name="yv_remove_highlight_aria_label">Remove %1$s highlight</string>
     <string name="yv_retry">Retry</string>
     <string name="yv_search">Search</string>
     <string name="yv_search_bible_versions">Search versions</string>
@@ -94,12 +102,10 @@
     <string name="yv_sign_in_introducing">INTRODUCING</string>
     <string name="yv_sign_in_no_button">No Thanks</string>
     <string name="yv_sign_in_prompt_paragraph">**%1$s** wants to connect to your YouVersion **Bible App** account. This will allow them to see and interact with your Bible App activity. Would you like to proceed?</string>
-    <string name="yv_sign_in_with_you_version">Sign in with &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_in_yes_button">Yes Please</string>
     <string name="yv_sign_out">Sign out</string>
     <string name="yv_sign_out_confirmation_message">Are you sure you want to sign out from YouVersion? You\'ll need to sign in again to access your highlights.</string>
     <string name="yv_sign_out_explanation">You\'ll need to sign in again to access your highlights.</string>
-    <string name="yv_sign_out_of_you_version">Sign out of &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">Sign out anyway</string>
     <string name="yv_sign_out_pending_highlights_explanation">Some of your highlights haven\'t been saved yet, and they will be lost if you sign out. Do you want to sign out anyway?</string>
     <string name="yv_sign_out_pending_highlights_question">Save your highlights?</string>

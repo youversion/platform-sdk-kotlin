@@ -78,12 +78,10 @@
     <string name="yv_sign_in_introducing">TANITIM</string>
     <string name="yv_sign_in_no_button">Hayır Teşekkürler</string>
     <string name="yv_sign_in_prompt_paragraph">**%1$s** YouVersion **Kutsal Kitap uygulaması** hesabınıza bağlanmak istiyor. Bu, uygulamadaki etkinliğinizi görmesine ve etkileşime girmesine olanak tanıyacak. Devam etmek ister misiniz?</string>
-    <string name="yv_sign_in_with_you_version">&lt;bold&gt;%1$s&lt;/bold&gt; ile giriş yap</string>
     <string name="yv_sign_in_yes_button">Evet, Lütfen</string>
     <string name="yv_sign_out">Çıkış yap</string>
     <string name="yv_sign_out_confirmation_message">YouVersion\'dan çıkış yapmak istediğinizden emin misiniz? Vurgularınıza erişmek için tekrar giriş yapmanız gerekecek.</string>
     <string name="yv_sign_out_explanation">Vurgularınıza erişmek için tekrar giriş yapmanız gerekecek.</string>
-    <string name="yv_sign_out_of_you_version">&lt;bold&gt;%1$s&lt;/bold&gt; \'dan çıkış yap</string>
     <string name="yv_sign_out_pending_highlights_confirm">Yine de çıkış yap</string>
     <string name="yv_sign_out_pending_highlights_explanation">Bazı vurgulamalarınız henüz kaydedilmedi ve oturumu kapatırsanız kaybolacaklardır. Yine de oturumu kapatmak istiyor musunuz?</string>
     <string name="yv_sign_out_pending_highlights_question">Vurgularınız kaydedilsin mi?</string>
