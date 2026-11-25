@@ -998,13 +998,14 @@ class SearchApiTests : YouVersionPlatformTest {
                     "/v1/search-unified?query=love&bible_id=111&language_ranges%5B%5D=en&user_intent=unknown",
                     request.url.encodedPathAndQuery,
                 )
-                respondJson("""{ "verses": [], "topics": [], "did_you_mean": [] }""")
+                respondJson("""{ "verses": [], "topics": [], "videos": [{ "id": "vid-1" }], "did_you_mean": [] }""")
             }.also { engine -> startYouVersionPlatformTest(engine) }
 
             YouVersionPlatformConfiguration.configure(appKey = "app")
             val results = YouVersionApi.search.unified(query = "love", bibleId = 111, languageRanges = listOf("en"))
 
             assertTrue { results.references.isEmpty() && results.topics.isEmpty() }
+            assertEquals(listOf(SearchVideo(id = "vid-1")), results.videos)
             assertNull(results.userIntent)
             assertNull(results.searchInsteadFor)
         }
