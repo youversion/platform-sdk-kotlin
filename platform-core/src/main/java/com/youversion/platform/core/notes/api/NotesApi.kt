@@ -17,11 +17,11 @@ import com.youversion.platform.core.notes.models.NoteUpdate
  *
  * Every call throws [com.youversion.platform.core.api.YouVersionNetworkException] with reason
  * [MISSING_AUTHENTICATION][com.youversion.platform.core.api.YouVersionNetworkException.Reason.MISSING_AUTHENTICATION]
- * when no user is signed in or the server does not accept their access token, which a sign-in or token refresh may
- * resolve; with reason
- * [NOT_PERMITTED][com.youversion.platform.core.api.YouVersionNetworkException.Reason.NOT_PERMITTED] when the app key
- * or the user's grants do not allow the call, which a retry does not change; and for any other invalid request or
- * response.
+ * when no user is signed in or the server answers `401`, which a sign-in or token refresh may resolve; an invalid app
+ * key also answers `401`. It throws with reason
+ * [NOT_PERMITTED][com.youversion.platform.core.api.YouVersionNetworkException.Reason.NOT_PERMITTED] when the server
+ * answers `403` because the user has not granted the notes permission the call needs, which a retry does not change;
+ * and for any other invalid request or response.
  */
 public interface NotesApi {
     /**
@@ -81,8 +81,8 @@ public interface NotesApi {
      *
      * @param request The note to create.
      * @return The created [Note].
-     * @throws IllegalArgumentException if [NoteCreateRequest.references] is empty, spans more than one version, book
-     *     or chapter, or names a whole chapter.
+     * @throws IllegalArgumentException if [NoteCreateRequest.content] is empty, or [NoteCreateRequest.references] is
+     *     empty, spans more than one version, book or chapter, or names a whole chapter.
      */
     public suspend fun createNote(request: NoteCreateRequest): Note
 

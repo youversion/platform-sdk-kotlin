@@ -1,5 +1,9 @@
 package com.youversion.platform.core.users.model
 
+/**
+ * A permission an app asks the user to grant. More values may be added in a minor release, so a `when` over a
+ * permission needs an `else` branch.
+ */
 public enum class SignInWithYouVersionPermission(
     public val rawValue: String,
 ) {

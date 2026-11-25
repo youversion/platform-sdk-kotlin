@@ -12,15 +12,15 @@ import java.util.UUID
  * The server checks the formats of [color], [languageTag] and [tags] and rejects a value that does not match with
  * [REQUEST_REJECTED][com.youversion.platform.core.api.YouVersionNetworkException.Reason.REQUEST_REJECTED].
  *
- * @property content The note's text. May be empty to save the attached passage without text.
+ * @property content The note's text. Must not be empty.
  * @property status Who can see the note.
- * @property requestId Identifies this create to the server so that retries do not create duplicates.
+ * @property requestId Identifies this create to the server so that retries do not create duplicates. Must be a UUID.
  * @property title The note's title.
  * @property color Six lowercase hexadecimal digits without a leading `#`, such as `ffcc00`.
  * @property references The verses to attach, all in one version, book and chapter. Gaps are kept and adjacent or
  *     overlapping verses are merged. A whole-chapter reference cannot be attached. `null` creates a note with no
  *     attachment.
- * @property languageTag The BCP 47 language tag of [content], such as `en-US`.
+ * @property languageTag The language of [content]: two lowercase letters for the language, optionally followed by `-` and two uppercase letters for the region, such as `en` or `en-US`.
  * @property tags The note's tags. Each must be nonempty and contain no commas.
  */
 public class NoteCreateRequest(

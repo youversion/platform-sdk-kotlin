@@ -8,12 +8,12 @@ import com.youversion.platform.core.di.PlatformInternalApi
  *
  * @property id The note's identifier. Opaque.
  * @property title The note's title, or `null` when it has none.
- * @property content The note's text. Empty when the note only saves a passage.
+ * @property content The note's text.
  * @property color The note's color as six lowercase hexadecimal digits without a leading `#`, such as `ffcc00`.
  * @property references The verses the note is attached to, all in one version, book and chapter, with adjacent
  *     verses merged and gaps kept. `null` when the note has no attachment or the server sent one the SDK cannot
  *     read, so one malformed attachment does not prevent the note from loading.
- * @property languageTag The BCP 47 language tag of the note's text, such as `en-US`.
+ * @property languageTag The language of the note's text: two lowercase letters for the language, optionally followed by `-` and two uppercase letters for the region, such as `en` or `en-US`.
  * @property tags The note's tags.
  * @property status Who can see the note.
  * @property createdTime When the note was created, as the ISO 8601 text the server sent.

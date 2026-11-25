@@ -26,7 +26,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
  * @property color Six lowercase hexadecimal digits without a leading `#`, such as `ffcc00`.
  * @property references The verses the note is attached to, all in one version, book and chapter. A whole-chapter
  *     reference cannot be attached. Use [Field.Clear] rather than an empty list to remove the attachment.
- * @property languageTag The BCP 47 language tag of the note's text, such as `en-US`.
+ * @property languageTag The language of the note's text: two lowercase letters for the language, optionally followed by `-` and two uppercase letters for the region, such as `en` or `en-US`.
  * @property tags The note's tags. Each must be nonempty and contain no commas.
  * @property status Who can see the note.
  */

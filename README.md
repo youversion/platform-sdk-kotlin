@@ -775,8 +775,8 @@ YouVersionApi.notes.deleteNote(note.id)
 
 #### Notes Error Handling
 
-- Invalid arguments throw `IllegalArgumentException` before any request is made: ids must not be empty, `pageSize` must be between 1 and 99, references must be nonempty and in one version, book, and chapter, an attachment cannot be a whole chapter, and an update must change something without setting empty `content`.
-- A request that fails throws `YouVersionNetworkException`: `MISSING_AUTHENTICATION` when no user is signed in or their access token is not accepted, which a sign-in or token refresh may resolve; `NOT_PERMITTED` when the app key or the user's grants do not allow the call; `RATE_LIMITED` (429) or `SERVER_ERROR` (5xx), which a later retry may resolve; `REQUEST_REJECTED` for any other 4xx, such as deleting a note that no longer exists (`statusCode` 404); and `INVALID_RESPONSE` when the response cannot be read.
+- Invalid arguments throw `IllegalArgumentException` before any request is made: ids must not be empty, `pageSize` must be between 1 and 99, references must be nonempty and in one version, book, and chapter, an attachment cannot be a whole chapter, `content` must not be empty, and an update must change something.
+- A request that fails throws `YouVersionNetworkException`: `MISSING_AUTHENTICATION` when no user is signed in or the server answers 401, which a sign-in or token refresh may resolve (an invalid app key also answers 401); `NOT_PERMITTED` when the server answers 403 because the user has not granted the notes permission the call needs; `RATE_LIMITED` (429) or `SERVER_ERROR` (5xx), which a later retry may resolve; `REQUEST_REJECTED` for any other 4xx, such as deleting a note that no longer exists (`statusCode` 404); and `INVALID_RESPONSE` when the response cannot be read.
 - A request that never gets a response, such as when the device is offline, throws the HTTP client's own exception, such as an `IOException`, rather than `YouVersionNetworkException`.
 
 ### Building SDK Models in Tests

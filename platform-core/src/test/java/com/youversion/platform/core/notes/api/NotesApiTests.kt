@@ -239,7 +239,7 @@ class NotesApiTests : YouVersionPlatformTest {
             }
             val request =
                 NoteCreateRequest(
-                    content = "",
+                    content = "Born again",
                     status = NoteStatus.PUBLIC,
                     color = "ffcc00",
                     references = listOf(BibleReference(111, "JHN", 3, 7), BibleReference(111, "JHN", 3, 1, 2)),
@@ -256,7 +256,7 @@ class NotesApiTests : YouVersionPlatformTest {
                 Json.parseToJsonElement(
                     """
                     {
-                      "request_id": "${request.requestId}", "content": "", "status": "public", "color": "ffcc00",
+                      "request_id": "${request.requestId}", "content": "Born again", "status": "public", "color": "ffcc00",
                       "passage": { "bible_id": 111, "passage_id": "JHN.3.1-2+JHN.3.7" }
                     }
                     """.trimIndent(),
@@ -266,13 +266,19 @@ class NotesApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test createNote rejects a chapter attachment`() =
+    fun `test createNote rejects empty content and a chapter attachment`() =
         runTest {
             start { error("no request expected") }
 
             assertFailsWith<IllegalArgumentException> {
                 YouVersionApi.notes.createNote(
-                    NoteCreateRequest("", NoteStatus.PRIVATE, references = listOf(BibleReference(111, "JHN", 3))),
+                    NoteCreateRequest("", NoteStatus.PRIVATE, references = listOf(BibleReference(111, "JHN", 3, 16))),
+                )
+            }
+
+            assertFailsWith<IllegalArgumentException> {
+                YouVersionApi.notes.createNote(
+                    NoteCreateRequest("text", NoteStatus.PRIVATE, references = listOf(BibleReference(111, "JHN", 3))),
                 )
             }
         }
