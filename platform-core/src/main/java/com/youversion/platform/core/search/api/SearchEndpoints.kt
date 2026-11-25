@@ -77,7 +77,7 @@ internal object SearchEndpoints : SearchApi {
         pageToken: String? = null,
     ): String =
         buildYouVersionUrlString {
-            path("/v1-beta/search-videos")
+            path("/v1/search-videos")
             parameter("query", query)
             organizationIds.forEach { parameters.append("organization_ids[]", it) }
             pageSize(pageSize)
@@ -117,7 +117,7 @@ internal object SearchEndpoints : SearchApi {
         fields: List<String>,
     ): String =
         buildYouVersionUrlString {
-            path(if ("videos" in fields) "/v1-beta/search-unified" else "/v1/search-unified")
+            path("/v1/search-unified")
             parameter("query", query)
             parameter("bible_id", bibleId)
             languageRanges(languageRanges)

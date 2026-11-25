@@ -38,7 +38,7 @@ internal object VideosEndpoints : VideosApi {
         pageToken: String? = null,
     ): String =
         buildYouVersionUrlString {
-            path("/v1-beta/organizations")
+            path("/v1/organizations")
             appendPathSegments(listOf(organizationId, "playlists"), encodeSlash = true)
             fields(fields)
             parameter("page_size", pageSize ?: "*".takeIf { fields?.size in 1..3 })
@@ -51,14 +51,14 @@ internal object VideosEndpoints : VideosApi {
         id: Int,
     ): String =
         buildYouVersionUrlString {
-            path("/v1-beta/organizations")
+            path("/v1/organizations")
             appendPathSegments(listOf(organizationId, "playlists", id.toString()), encodeSlash = true)
         }
 
     /** The URL of one video; [id] is encoded as a single path segment. */
     fun videoUrl(id: String): String =
         buildYouVersionUrlString {
-            path("/v1-beta/videos")
+            path("/v1/videos")
             appendPathSegments(listOf(id), encodeSlash = true)
         }
 
