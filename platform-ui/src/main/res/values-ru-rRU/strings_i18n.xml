@@ -78,12 +78,10 @@
     <string name="yv_sign_in_introducing">INTRODUCING</string>
     <string name="yv_sign_in_no_button">No Thanks</string>
     <string name="yv_sign_in_prompt_paragraph">**%1$s** хочет подключиться к вашей учётной записи приложения Библия YouVersion. Это позволит им видеть вашу активность в приложении Библия и взаимодействовать с ней. Хотите продолжить?</string>
-    <string name="yv_sign_in_with_you_version">Войти через &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_in_yes_button">Да, пожалуйста</string>
     <string name="yv_sign_out">Выйти</string>
     <string name="yv_sign_out_confirmation_message">Вы уверены, что хотите выйти из YouVersion? Чтобы получить доступ к своим заметкам, вам нужно будет войти снова.</string>
     <string name="yv_sign_out_explanation">You\'ll need to sign in again to access your highlights.</string>
-    <string name="yv_sign_out_of_you_version">Выйти из &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">Sign out anyway</string>
     <string name="yv_sign_out_pending_highlights_explanation">Some of your highlights haven\'t been saved yet, and they will be lost if you sign out. Do you want to sign out anyway?</string>
     <string name="yv_sign_out_pending_highlights_question">Save your highlights?</string>

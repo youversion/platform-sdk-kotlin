@@ -78,12 +78,10 @@
     <string name="yv_sign_in_introducing">PŘEDSTAVUJEME</string>
     <string name="yv_sign_in_no_button">Ne, děkuji</string>
     <string name="yv_sign_in_prompt_paragraph">**%1$s** se chce připojit k vašemu účtu YouVersion **aplikace Bible**. Uvidí vaši činnost v aplikaci Bible a bude v ní moct pracovat. Chcete pokračovat?</string>
-    <string name="yv_sign_in_with_you_version">Přihlásit se pomocí &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_in_yes_button">Ano, prosím</string>
     <string name="yv_sign_out">Odhlášení</string>
     <string name="yv_sign_out_confirmation_message">Opravdu se chcete odhlásit z YouVersion? Pro přístup ke svým zvýrazněným pasážím se budete muset znovu přihlásit.</string>
     <string name="yv_sign_out_explanation">Pro přístup ke svým zvýrazněním se budete muset znovu přihlásit.</string>
-    <string name="yv_sign_out_of_you_version">Odhlásit se z &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">Opravdu se odhlásit</string>
     <string name="yv_sign_out_pending_highlights_explanation">Některá vaše zvýraznění ještě nebyla uložena a budou ztracena, pokud se odhlásíte. Chcete se přesto odhlásit?</string>
     <string name="yv_sign_out_pending_highlights_question">Uložit vaše zvýraznění?</string>

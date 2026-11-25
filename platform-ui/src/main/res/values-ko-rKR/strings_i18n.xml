@@ -78,12 +78,10 @@
     <string name="yv_sign_in_introducing">소개</string>
     <string name="yv_sign_in_no_button">괜찮습니다.</string>
     <string name="yv_sign_in_prompt_paragraph">**%1$s**이(가) 회원님의 YouVersion **성경 앱** 계정에 연결하려고 합니다. 이를 통해 회원님의 성경 앱 활동을 확인하고 상호작용할 수 있게 됩니다. 계속하시겠습니까?</string>
-    <string name="yv_sign_in_with_you_version">&lt;bold&gt;%1$s&lt;/bold&gt; 으로 로그인</string>
     <string name="yv_sign_in_yes_button">네, 진행합니다.</string>
     <string name="yv_sign_out">로그아웃</string>
     <string name="yv_sign_out_confirmation_message">YouVersion에서 로그아웃하시겠습니까? 하이라이트에 접근하려면 다시 로그인해야 합니다.</string>
     <string name="yv_sign_out_explanation">하이라이트에 접근하려면 다시 로그인해야 합니다.</string>
-    <string name="yv_sign_out_of_you_version">&lt;bold&gt;%1$s&lt;/bold&gt; 에서 로그아웃</string>
     <string name="yv_sign_out_pending_highlights_confirm">로그아웃 진행</string>
     <string name="yv_sign_out_pending_highlights_explanation">일부 하이라이트가 아직 저장되지 않았으며, 로그아웃하면 삭제됩니다. 그래도 로그아웃하시겠습니까?</string>
     <string name="yv_sign_out_pending_highlights_question">하이라이트를 저장하시겠습니까?</string>

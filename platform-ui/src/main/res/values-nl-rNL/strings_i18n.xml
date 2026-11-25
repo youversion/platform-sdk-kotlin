@@ -78,12 +78,10 @@
     <string name="yv_sign_in_introducing">INTRODUCING</string>
     <string name="yv_sign_in_no_button">No Thanks</string>
     <string name="yv_sign_in_prompt_paragraph">**%1$s** wil verbinding maken met je YouVersion **Bijbel App**-account. Hierdoor kan hij of zij je activiteiten in de Bijbel App bekijken en erop reageren. Wil je doorgaan?</string>
-    <string name="yv_sign_in_with_you_version">Aanmelden met &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_in_yes_button">Yes Please</string>
     <string name="yv_sign_out">Afmelden</string>
     <string name="yv_sign_out_confirmation_message">Weet je zeker dat je je wilt afmelden bij YouVersion? Je moet je dan opnieuw aanmelden om je markeringen te kunnen bekijken.</string>
     <string name="yv_sign_out_explanation">You\'ll need to sign in again to access your highlights.</string>
-    <string name="yv_sign_out_of_you_version">Afmelden bij &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">Sign out anyway</string>
     <string name="yv_sign_out_pending_highlights_explanation">Some of your highlights haven\'t been saved yet, and they will be lost if you sign out. Do you want to sign out anyway?</string>
     <string name="yv_sign_out_pending_highlights_question">Save your highlights?</string>

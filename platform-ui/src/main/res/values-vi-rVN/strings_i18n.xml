@@ -78,12 +78,10 @@
     <string name="yv_sign_in_introducing">GIỚI THIỆU</string>
     <string name="yv_sign_in_no_button">Không, Cảm Ơn</string>
     <string name="yv_sign_in_prompt_paragraph">**%1$s** muốn kết nối với tài khoản **Ứng dụng Kinh Thánh** YouVersion của bạn. Điều này sẽ cho phép họ xem và tương tác với hoạt động Ứng dụng Kinh Thánh của bạn. Bạn có muốn tiếp tục không?</string>
-    <string name="yv_sign_in_with_you_version">Đăng nhập bằng &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_in_yes_button">Vâng, Được Thôi</string>
     <string name="yv_sign_out">Đăng xuất</string>
     <string name="yv_sign_out_confirmation_message">Bạn có chắc chắn muốn đăng xuất khỏi YouVersion không? Bạn sẽ cần đăng nhập lại để truy cập phần đánh dấu của mình.</string>
     <string name="yv_sign_out_explanation">Bạn cần đăng nhập lại để truy cập các phần đánh dấu của mình.</string>
-    <string name="yv_sign_out_of_you_version">Đăng xuất khỏi &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">Vẫn đăng xuất</string>
     <string name="yv_sign_out_pending_highlights_explanation">Một số điểm nổi bật của bạn chưa được lưu và sẽ bị mất nếu bạn đăng xuất. Bạn có muốn đăng xuất không?</string>
     <string name="yv_sign_out_pending_highlights_question">Lưu các điểm đánh dấu của bạn?</string>

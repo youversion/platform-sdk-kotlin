@@ -78,12 +78,10 @@
     <string name="yv_sign_in_introducing">INTRODUCING</string>
     <string name="yv_sign_in_no_button">No Thanks</string>
     <string name="yv_sign_in_prompt_paragraph">**%1$s** haluaa yhdistää YouVersion **Bible App** -tiliisi. Tämä sallii heidän nähdä ja olla vuorovaikutuksessa Bible App -toimintasi kanssa. Haluatko jatkaa?</string>
-    <string name="yv_sign_in_with_you_version">Kirjaudu sisään palvelulla &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_in_yes_button">Yes Please</string>
     <string name="yv_sign_out">Kirjaudu ulos</string>
     <string name="yv_sign_out_confirmation_message">Haluatko varmasti kirjautua ulos YouVersionista? Sinun on kirjauduttava uudelleen sisään päästäksesi korostuksiisi.</string>
     <string name="yv_sign_out_explanation">You\'ll need to sign in again to access your highlights.</string>
-    <string name="yv_sign_out_of_you_version">Kirjaudu ulos palvelusta &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">Sign out anyway</string>
     <string name="yv_sign_out_pending_highlights_explanation">Some of your highlights haven\'t been saved yet, and they will be lost if you sign out. Do you want to sign out anyway?</string>
     <string name="yv_sign_out_pending_highlights_question">Save your highlights?</string>

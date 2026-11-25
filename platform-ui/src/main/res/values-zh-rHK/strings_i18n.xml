@@ -78,12 +78,10 @@
     <string name="yv_sign_in_introducing">介紹</string>
     <string name="yv_sign_in_no_button">不，謝謝</string>
     <string name="yv_sign_in_prompt_paragraph">**%1$s** 想連接你的 YouVersion **聖經軟件** 帳戶。這將允許他們查看你的 聖經軟件 活動並與之互動。你想繼續嗎？</string>
-    <string name="yv_sign_in_with_you_version">使用 &lt;bold&gt;%1$s&lt;/bold&gt; 登入</string>
     <string name="yv_sign_in_yes_button">是的，請繼續</string>
     <string name="yv_sign_out">登出</string>
     <string name="yv_sign_out_confirmation_message">確定要登出YouVersion嗎？您需要重新登入才能查閱您的螢光標記。</string>
     <string name="yv_sign_out_explanation">你需要重新登入才能存取你的亮點記錄。</string>
-    <string name="yv_sign_out_of_you_version">登出 &lt;bold&gt;%1$s&lt;/bold&gt;</string>
     <string name="yv_sign_out_pending_highlights_confirm">仍然登出</string>
     <string name="yv_sign_out_pending_highlights_explanation">你部分的重點標記尚未儲存，如果你登出，這些標記將會遺失。你確定仍要登出嗎？</string>
     <string name="yv_sign_out_pending_highlights_question">儲存你的重點標記？</string>
