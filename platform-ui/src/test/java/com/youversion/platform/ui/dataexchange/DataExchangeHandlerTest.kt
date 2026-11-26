@@ -14,7 +14,7 @@ import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.dataexchange.api.DataExchangeApi
 import com.youversion.platform.core.dataexchange.models.DataExchangeToken
 import com.youversion.platform.core.di.PlatformKoinGraph
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -37,12 +37,12 @@ class DataExchangeHandlerTest {
             mockkObject(YouVersionApi)
             try {
                 val api = mockk<DataExchangeApi>()
-                coEvery { api.dataExchangeToken(any()) } throws
+                coEvery { api.dataExchangeTokenWithPermissionValues(any()) } throws
                     YouVersionNetworkException(YouVersionNetworkException.Reason.NOT_PERMITTED)
                 every { YouVersionApi.dataExchange } returns api
 
                 val handler = DataExchangeHandler(mockk(relaxed = true))
-                val result = handler.requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+                val result = handler.requestDataExchangeWithPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
                 assertEquals(DataExchangeStatus.NotStarted, result.status)
                 assertFalse(result.isGranted)
@@ -61,17 +61,18 @@ class DataExchangeHandlerTest {
                     appKey = "test",
                 )
                 val api = mockk<DataExchangeApi>()
-                coEvery { api.dataExchangeToken(any()) } returns DataExchangeToken(token = "exchange-token")
+                coEvery { api.dataExchangeTokenWithPermissionValues(any()) } returns
+                    DataExchangeToken(token = "exchange-token")
                 every { YouVersionApi.dataExchange } returns api
 
                 val registry = ImmediateCallbackRegistry("youversionauth:callback?data_exchange_status=granted")
                 val result =
-                    DataExchangeHandler(registry).requestDataExchange(
-                        setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                    DataExchangeHandler(registry).requestDataExchangeWithPermissionValues(
+                        setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
 
                 assertEquals(DataExchangeStatus.Cancelled, result.status)
-                assertFalse(result.grants(SignInWithYouVersionPermission.HIGHLIGHTS))
+                assertFalse(result.grants(YouVersionPermissions.HIGHLIGHTS))
             } finally {
                 unmockkObject(YouVersionApi)
                 YouVersionPlatformConfiguration.clearAuthData()
@@ -92,7 +93,8 @@ class DataExchangeHandlerTest {
                     expiryDate = Date(),
                 )
                 val api = mockk<DataExchangeApi>()
-                coEvery { api.dataExchangeToken(any()) } returns DataExchangeToken(token = "exchange-token")
+                coEvery { api.dataExchangeTokenWithPermissionValues(any()) } returns
+                    DataExchangeToken(token = "exchange-token")
                 every { YouVersionApi.dataExchange } returns api
 
                 val registry =
@@ -100,11 +102,11 @@ class DataExchangeHandlerTest {
                         "youversionauth://callback?data_exchange_status=granted&granted_permissions=highlights",
                     )
                 val result =
-                    DataExchangeHandler(registry).requestDataExchange(
-                        setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                    DataExchangeHandler(registry).requestDataExchangeWithPermissionValues(
+                        setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
 
-                assertTrue(result.grants(SignInWithYouVersionPermission.HIGHLIGHTS))
+                assertTrue(result.grants(YouVersionPermissions.HIGHLIGHTS))
                 assertTrue(registry.isHighlightsPersistedDuringDispatch)
             } finally {
                 unmockkObject(YouVersionApi)
@@ -126,7 +128,8 @@ class DataExchangeHandlerTest {
                     expiryDate = Date(),
                 )
                 val api = mockk<DataExchangeApi>()
-                coEvery { api.dataExchangeToken(any()) } returns DataExchangeToken(token = "exchange-token")
+                coEvery { api.dataExchangeTokenWithPermissionValues(any()) } returns
+                    DataExchangeToken(token = "exchange-token")
                 every { YouVersionApi.dataExchange } returns api
 
                 val registry =
@@ -143,13 +146,13 @@ class DataExchangeHandlerTest {
                         },
                     )
                 val result =
-                    DataExchangeHandler(registry).requestDataExchange(
-                        setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                    DataExchangeHandler(registry).requestDataExchangeWithPermissionValues(
+                        setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
 
                 // The user who answered the prompt granted it; the user now signed in never did.
-                assertTrue(result.grants(SignInWithYouVersionPermission.HIGHLIGHTS))
-                assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+                assertTrue(result.grants(YouVersionPermissions.HIGHLIGHTS))
+                assertFalse(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
             } finally {
                 unmockkObject(YouVersionApi)
                 YouVersionPlatformConfiguration.clearAuthData()
@@ -163,14 +166,14 @@ class DataExchangeHandlerTest {
             mockkObject(YouVersionApi)
             try {
                 val api = mockk<DataExchangeApi>()
-                coEvery { api.dataExchangeToken(any()) } throws
+                coEvery { api.dataExchangeTokenWithPermissionValues(any()) } throws
                     YouVersionNetworkException(YouVersionNetworkException.Reason.NOT_PERMITTED)
                 every { YouVersionApi.dataExchange } returns api
 
                 var isBrowserOpened = false
                 val result =
-                    DataExchangeHandler(mockk(relaxed = true)).requestDataExchange(
-                        permissions = setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                    DataExchangeHandler(mockk(relaxed = true)).requestDataExchangeWithPermissionValues(
+                        permissions = setOf(YouVersionPermissions.HIGHLIGHTS),
                         onBrowserOpened = { isBrowserOpened = true },
                     )
 
@@ -191,14 +194,15 @@ class DataExchangeHandlerTest {
                     appKey = "test",
                 )
                 val api = mockk<DataExchangeApi>()
-                coEvery { api.dataExchangeToken(any()) } returns DataExchangeToken(token = "exchange-token")
+                coEvery { api.dataExchangeTokenWithPermissionValues(any()) } returns
+                    DataExchangeToken(token = "exchange-token")
                 every { YouVersionApi.dataExchange } returns api
 
                 var isBrowserOpened = false
                 DataExchangeHandler(
                     ImmediateCallbackRegistry("youversionauth://callback?data_exchange_status=cancel"),
-                ).requestDataExchange(
-                    permissions = setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                ).requestDataExchangeWithPermissionValues(
+                    permissions = setOf(YouVersionPermissions.HIGHLIGHTS),
                     onBrowserOpened = { isBrowserOpened = true },
                 )
 
@@ -235,7 +239,7 @@ private class ImmediateCallbackRegistry(
         dispatchResult(requestCode, Activity.RESULT_OK, Intent(Intent.ACTION_VIEW, callbackUrl.toUri()))
         isHighlightsPersistedDuringDispatch =
             YouVersionPlatformConfiguration.configState.value
-                ?.grantedPermissions
-                ?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+                ?.grantedPermissionValues
+                ?.contains(YouVersionPermissions.HIGHLIGHTS) == true
     }
 }

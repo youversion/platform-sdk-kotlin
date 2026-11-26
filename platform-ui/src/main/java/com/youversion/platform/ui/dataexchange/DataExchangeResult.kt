@@ -46,18 +46,23 @@ public sealed interface DataExchangeStatus {
  * The outcome of the data exchange permission flow.
  *
  * @property status How the flow ended.
- * @property grantedPermissions The permissions the user granted. A value this SDK version does not recognize is
- *           omitted rather than reported, so callers only see permissions they can act on.
+ * @property grantedPermissionValues The raw values of the permissions the user granted, such as
+ *           [com.youversion.platform.core.users.model.YouVersionPermissions.HIGHLIGHTS].
  */
 public class DataExchangeResult
     @PlatformInternalApi
     constructor(
         public val status: DataExchangeStatus,
-        public val grantedPermissions: List<SignInWithYouVersionPermission>,
+        public val grantedPermissionValues: List<String>,
     ) {
+        /** The granted permissions this SDK version names, without the values it does not. */
+        @Deprecated("Use grantedPermissionValues instead.", ReplaceWith("grantedPermissionValues"))
+        public val grantedPermissions: List<SignInWithYouVersionPermission>
+            get() = grantedPermissionValues.mapNotNull { SignInWithYouVersionPermission.fromRawValue(it) }
+
         /**
          * Whether the user completed the flow. This says nothing about *which* permissions they granted — check
-         * [grantedPermissions] for the one being asked about, since a user can complete the flow while withholding it.
+         * [grantedPermissionValues] for the one being asked about, since a user can complete the flow while withholding it.
          */
         public val isGranted: Boolean
             get() = status == DataExchangeStatus.Granted
@@ -67,23 +72,36 @@ public class DataExchangeResult
          * missing or unrecognized status, and a completed flow that withheld [permission] all answer false, so every
          * non-grant outcome converges here.
          *
+         * @param permission The raw value of the permission to check, such as
+         *        [com.youversion.platform.core.users.model.YouVersionPermissions.HIGHLIGHTS].
+         */
+        public fun grants(permission: String): Boolean = grantedPermissionValues.contains(permission)
+
+        /**
+         * Whether the user granted [permission].
+         *
          * @param permission The permission to check.
          */
-        public fun grants(permission: SignInWithYouVersionPermission): Boolean = grantedPermissions.contains(permission)
+        @Deprecated(
+            "Use grants with a raw String permission value instead.",
+            ReplaceWith("grants(permission.rawValue)"),
+        )
+        public fun grants(permission: SignInWithYouVersionPermission): Boolean = grants(permission.rawValue)
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is DataExchangeResult) return false
-            return status == other.status && grantedPermissions == other.grantedPermissions
+            return status == other.status && grantedPermissionValues == other.grantedPermissionValues
         }
 
         override fun hashCode(): Int {
             var result = status.hashCode()
-            result = 31 * result + grantedPermissions.hashCode()
+            result = 31 * result + grantedPermissionValues.hashCode()
             return result
         }
 
-        override fun toString(): String = "DataExchangeResult(status=$status, grantedPermissions=$grantedPermissions)"
+        override fun toString(): String =
+            "DataExchangeResult(status=$status, grantedPermissionValues=$grantedPermissionValues)"
     }
 
 private const val STATUS_PARAMETER = "data_exchange_status"
@@ -103,8 +121,8 @@ internal fun dataExchangeResult(uri: Uri): DataExchangeResult =
                 "cancel" -> DataExchangeStatus.Cancelled
                 else -> DataExchangeStatus.Unknown(rawValue)
             },
-        grantedPermissions =
+        grantedPermissionValues =
             uri
                 .getQueryParameters(GRANTED_PERMISSIONS_PARAMETER)
-                .mapNotNull { SignInWithYouVersionPermission.fromRawValue(it) },
+                .filter { it.isNotEmpty() },
     )

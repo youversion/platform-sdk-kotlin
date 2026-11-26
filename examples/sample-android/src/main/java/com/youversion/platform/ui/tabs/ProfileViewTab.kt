@@ -26,11 +26,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.YouVersionPlatformConfiguration
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.ui.components.SampleBottomBar
 import com.youversion.platform.ui.components.SampleDestination
 import com.youversion.platform.ui.dataexchange.DataExchangeStatus
-import com.youversion.platform.ui.dataexchange.rememberDataExchange
+import com.youversion.platform.ui.dataexchange.rememberDataExchangeWithPermissionValues
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.theme.linkTextColor
 import com.youversion.platform.ui.views.SignInWithYouVersionButton
@@ -42,10 +42,10 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
     val state by signInViewModel.state.collectAsStateWithLifecycle()
     val config by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
     val hasHighlightsPermission =
-        config?.grantedPermissions?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+        config?.grantedPermissionValues?.contains(YouVersionPermissions.HIGHLIGHTS) == true
     val scope = rememberCoroutineScope()
     var dataExchangeStatusText by remember { mutableStateOf<String?>(null) }
-    val requestDataExchange = rememberDataExchange()
+    val requestDataExchange = rememberDataExchangeWithPermissionValues()
     val linkButtonColors = ButtonDefaults.textButtonColors(contentColor = linkTextColor)
 
     LaunchedEffect(Unit) {
@@ -83,7 +83,7 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                             onClick = {
                                 dataExchangeStatusText = null
                                 scope.launch {
-                                    val result = requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+                                    val result = requestDataExchange(setOf(YouVersionPermissions.HIGHLIGHTS))
                                     dataExchangeStatusText =
                                         when (val status = result?.status) {
                                             null, DataExchangeStatus.NotStarted -> {
@@ -91,7 +91,7 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                                             }
 
                                             DataExchangeStatus.Granted -> {
-                                                if (result.grants(SignInWithYouVersionPermission.HIGHLIGHTS)) {
+                                                if (result.grants(YouVersionPermissions.HIGHLIGHTS)) {
                                                     null
                                                 } else {
                                                     "Highlights permission was not granted."
@@ -136,12 +136,7 @@ fun ProfileViewTab(onDestinationClick: (SampleDestination) -> Unit) {
                 }
             } else {
                 SignInWithYouVersionButton(
-                    permissions = {
-                        setOf(
-                            SignInWithYouVersionPermission.PROFILE,
-                            SignInWithYouVersionPermission.EMAIL,
-                        )
-                    },
+                    permissions = setOf(YouVersionPermissions.PROFILE, YouVersionPermissions.EMAIL),
                     stroked = true,
                 )
             }

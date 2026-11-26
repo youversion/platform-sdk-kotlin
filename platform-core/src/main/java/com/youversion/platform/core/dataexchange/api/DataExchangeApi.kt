@@ -10,7 +10,8 @@ public interface DataExchangeApi {
      * A signed-in user can grant a permission this way without repeating the whole sign-in, which is what makes it
      * possible to ask for a permission at the moment it is needed.
      *
-     * @param permissions The permissions to ask the signed-in user to grant.
+     * @param permissions The raw values of the permissions to ask the signed-in user to grant, such as
+     *     [com.youversion.platform.core.users.model.YouVersionPermissions.HIGHLIGHTS].
      * @return The token to pass to the permission page.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] with reason
      *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.MISSING_AUTHENTICATION] when no
@@ -23,7 +24,22 @@ public interface DataExchangeApi {
      *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.REQUEST_REJECTED] for another
      *         `4xx`, or [com.youversion.platform.core.api.YouVersionNetworkException.Reason.REQUEST_FAILED]
      *         otherwise. The exception's `statusCode`, `serverMessage`, `retryAfter` and `validationIssues` carry
-     *         the server's details.
+     *         the server's details. The default implementation, kept for implementations written before this
+     *         function existed, passes on only the values [SignInWithYouVersionPermission] names.
      */
+    public suspend fun dataExchangeTokenWithPermissionValues(permissions: Collection<String>): DataExchangeToken =
+        @Suppress("DEPRECATION")
+        dataExchangeToken(permissions.mapNotNull { SignInWithYouVersionPermission.fromRawValue(it) }.toSet())
+
+    /**
+     * Creates a short-lived token authorizing one run of the data exchange permission flow.
+     *
+     * @param permissions The permissions to ask the signed-in user to grant.
+     * @return The token to pass to the permission page.
+     */
+    @Deprecated(
+        "Use dataExchangeTokenWithPermissionValues with raw String permission values instead.",
+        ReplaceWith("dataExchangeTokenWithPermissionValues(permissions.map { it.rawValue })"),
+    )
     public suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken
 }

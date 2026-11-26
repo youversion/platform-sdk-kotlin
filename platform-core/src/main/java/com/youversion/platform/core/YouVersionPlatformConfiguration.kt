@@ -8,6 +8,7 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfiguredException
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import com.youversion.platform.core.utilities.koin.startCore
@@ -98,9 +99,14 @@ public object YouVersionPlatformConfiguration {
         get() = config?.isSignInEnabled ?: true
 
     /**
-     * The permissions the signed-in user has granted to this app. Empty when signed out, or when
-     * the user has granted nothing.
+     * The raw values of the permissions the signed-in user has granted to this app, such as
+     * [YouVersionPermissions.HIGHLIGHTS]. Empty when signed out, or when the user has granted nothing.
      */
+    public val grantedPermissionValues: Set<String>
+        get() = config?.grantedPermissionValues.orEmpty()
+
+    /** The granted permissions this SDK version names, without the values it does not. */
+    @Deprecated("Use grantedPermissionValues instead.", ReplaceWith("grantedPermissionValues"))
     public val grantedPermissions: Set<SignInWithYouVersionPermission>
         get() = config?.grantedPermissions.orEmpty()
 
@@ -226,7 +232,7 @@ public object YouVersionPlatformConfiguration {
                 permittedLanguageTags = permittedLanguageTags,
                 permittedVersionIds = permittedVersionIds,
                 excludedVersionIds = excludedVersionIds,
-                grantedPermissions = sessionRepository.grantedPermissionValues.toGrantedPermissions(),
+                grantedPermissionValues = sessionRepository.grantedPermissionValues,
                 isSignInEnabled = isSignInEnabled,
                 appName = appName,
                 signInPromptMessage = signInPromptMessage,
@@ -338,7 +344,7 @@ public object YouVersionPlatformConfiguration {
                 refreshToken = refreshToken,
                 idToken = idToken,
                 expiryDate = expiryDate,
-                grantedPermissions = grantedPermissionValues.toGrantedPermissions(),
+                grantedPermissionValues = grantedPermissionValues,
             )
 
         if (persist) {
@@ -385,17 +391,31 @@ public object YouVersionPlatformConfiguration {
      * does not revoke them, and are cleared by [clearAuthData] when the user signs out or by
      * [saveAuthData] when the tokens it is given identify a different user.
      *
-     * @param permissions The permissions the user granted.
+     * @param permissions The raw values of the permissions the user granted, such as [YouVersionPermissions.HIGHLIGHTS].
      * @throws YouVersionNotConfiguredException If [configure] has not been called first.
      */
-    public fun saveGrantedPermissions(permissions: Collection<SignInWithYouVersionPermission>) {
+    public fun saveGrantedPermissionValues(permissions: Collection<String>) {
         val currentConfig = config ?: throw YouVersionNotConfiguredException()
         val sessionRepository = PlatformCoreKoinComponent.sessionRepository
 
-        val mergedValues = sessionRepository.grantedPermissionValues + permissions.map { it.rawValue }
+        val mergedValues = sessionRepository.grantedPermissionValues + permissions
         sessionRepository.grantedPermissionValues = mergedValues
 
-        _configState.value = currentConfig.updated(grantedPermissions = mergedValues.toGrantedPermissions())
+        _configState.value = currentConfig.updated(grantedPermissionValues = mergedValues)
+    }
+
+    /**
+     * Records permissions the user has granted, merging them with any already held.
+     *
+     * @param permissions The permissions the user granted.
+     * @throws YouVersionNotConfiguredException If [configure] has not been called first.
+     */
+    @Deprecated(
+        "Use saveGrantedPermissionValues with raw String permission values instead.",
+        ReplaceWith("saveGrantedPermissionValues(permissions.map { it.rawValue })"),
+    )
+    public fun saveGrantedPermissions(permissions: Collection<SignInWithYouVersionPermission>) {
+        saveGrantedPermissionValues(permissions.map { it.rawValue })
     }
 
     /**
@@ -426,21 +446,18 @@ public object YouVersionPlatformConfiguration {
      * Paired with [beginPermissionGrant] and meant only for the SDK's own permission flows, which live in
      * platform-ui and so cannot reach an `internal` declaration here.
      *
-     * @param permissions The permissions the user granted.
+     * @param permissions The raw values of the permissions the user granted.
      * @return Whether they were persisted.
      * @throws YouVersionNotConfiguredException If [configure] has not been called first.
      */
     @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-    public fun completePermissionGrant(permissions: Collection<SignInWithYouVersionPermission>): Boolean {
+    public fun completePermissionGrant(permissions: Collection<String>): Boolean {
         config ?: throw YouVersionNotConfiguredException()
         val startingSessionId = PlatformCoreKoinComponent.sessionRepository.permissionGrantSessionId
         if (startingSessionId == null || startingSessionId != YouVersionApi.currentSessionId) return false
-        saveGrantedPermissions(permissions)
+        saveGrantedPermissionValues(permissions)
         return true
     }
-
-    private fun Set<String>.toGrantedPermissions(): Set<SignInWithYouVersionPermission> =
-        mapNotNull { SignInWithYouVersionPermission.fromRawValue(it) }.toSet()
 
     /**
      * Resets the configuration state to its initial uninitialized state.
@@ -478,12 +495,17 @@ public class Config
         public val permittedLanguageTags: Set<String>? = null,
         public val permittedVersionIds: Set<Int>? = null,
         public val excludedVersionIds: Set<Int> = emptySet(),
-        public val grantedPermissions: Set<SignInWithYouVersionPermission> = emptySet(),
+        public val grantedPermissionValues: Set<String> = emptySet(),
         public val isSignInEnabled: Boolean = true,
         public val appName: String? = null,
         public val signInPromptMessage: String? = null,
     ) {
         public val isSignedIn: Boolean = accessToken != null
+
+        /** The granted permissions this SDK version names, without the values it does not. */
+        @Deprecated("Use grantedPermissionValues instead.", ReplaceWith("grantedPermissionValues"))
+        public val grantedPermissions: Set<SignInWithYouVersionPermission>
+            get() = grantedPermissionValues.mapNotNull { SignInWithYouVersionPermission.fromRawValue(it) }.toSet()
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -500,7 +522,7 @@ public class Config
                 permittedLanguageTags == other.permittedLanguageTags &&
                 permittedVersionIds == other.permittedVersionIds &&
                 excludedVersionIds == other.excludedVersionIds &&
-                grantedPermissions == other.grantedPermissions &&
+                grantedPermissionValues == other.grantedPermissionValues &&
                 isSignInEnabled == other.isSignInEnabled &&
                 appName == other.appName &&
                 signInPromptMessage == other.signInPromptMessage
@@ -519,7 +541,7 @@ public class Config
             result = 31 * result + permittedLanguageTags.hashCode()
             result = 31 * result + permittedVersionIds.hashCode()
             result = 31 * result + excludedVersionIds.hashCode()
-            result = 31 * result + grantedPermissions.hashCode()
+            result = 31 * result + grantedPermissionValues.hashCode()
             result = 31 * result + isSignInEnabled.hashCode()
             result = 31 * result + appName.hashCode()
             result = 31 * result + signInPromptMessage.hashCode()
@@ -532,8 +554,8 @@ public class Config
                 "refreshToken=${refreshToken.redacted()}, idToken=${idToken.redacted()}, " +
                 "expiryDate=$expiryDate, permittedLanguageTags=$permittedLanguageTags, " +
                 "permittedVersionIds=$permittedVersionIds, excludedVersionIds=$excludedVersionIds, " +
-                "grantedPermissions=$grantedPermissions, isSignInEnabled=$isSignInEnabled, appName=$appName, " +
-                "signInPromptMessage=$signInPromptMessage)"
+                "grantedPermissionValues=$grantedPermissionValues, isSignInEnabled=$isSignInEnabled, " +
+                "appName=$appName, signInPromptMessage=$signInPromptMessage)"
 
         private fun String?.redacted(): String? = this?.let { "<redacted>" }
     }
@@ -544,7 +566,7 @@ private fun Config.updated(
     refreshToken: String? = this.refreshToken,
     idToken: String? = this.idToken,
     expiryDate: Date? = this.expiryDate,
-    grantedPermissions: Set<SignInWithYouVersionPermission> = this.grantedPermissions,
+    grantedPermissionValues: Set<String> = this.grantedPermissionValues,
     appName: String? = this.appName,
     signInPromptMessage: String? = this.signInPromptMessage,
 ): Config =
@@ -561,7 +583,7 @@ private fun Config.updated(
         permittedLanguageTags = permittedLanguageTags,
         permittedVersionIds = permittedVersionIds,
         excludedVersionIds = excludedVersionIds,
-        grantedPermissions = grantedPermissions,
+        grantedPermissionValues = grantedPermissionValues,
         isSignInEnabled = isSignInEnabled,
         appName = appName,
         signInPromptMessage = signInPromptMessage,

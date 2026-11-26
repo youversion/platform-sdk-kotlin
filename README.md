@@ -29,6 +29,7 @@ currently not available.
   - [Search API](#search-api)
   - [Verse Images API](#verse-images-api)
   - [Videos API](#videos-api)
+  - [Notes API](#notes-api)
   - [Building SDK Models in Tests](#building-sdk-models-in-tests)
 - [Sample App](#sample-app)
 - [For Different Use Cases](#-for-different-use-cases)
@@ -46,6 +47,7 @@ currently not available.
 - 🔍 **Search** - Built-in search in `BibleReader`, plus API access to verse, topic, image, and video search, unified search (verses, topics, images, and videos in one request), and suggested and trending queries
 - 🖼️ **Verse Images** - API access to verse art, filtered by passage and language
 - 🎬 **Videos** - API access to an organization's playlists and to video metadata, thumbnails, and playback streams
+- 📝 **Notes** - API access to list, create, update, and delete the signed-in user's notes, attached to verses
 - 🖍️ **Highlights** - The signed-in user's YouVersion highlights are rendered in `BibleText` and can be created, recolored, and removed from the reader
 - 🔐 **User Authentication** - Seamless "Sign In with YouVersion" integration using `SignInWithYouVersionButton`, with a top-level toggle to disable all sign-in UI
 - 🌅 **Verse of the Day** - Built-in `VerseOfTheDay` component and API access to VOTD data
@@ -370,9 +372,14 @@ class MainActivity : SignInWithYouVersionActivity() {
 
 Use the `SignInWithYouVersionButton` composable in your UI. You can use the `SignInViewModel` to check if the user is already signed in and conditionally display the button.
 
-- `SignInWithYouVersionPermission.PROFILE`: To access the user's name and profile picture.
-- `SignInWithYouVersionPermission.EMAIL`: To access the user's email address.
-- `SignInWithYouVersionPermission.HIGHLIGHTS`: To read and write the user's Bible highlights. See [Highlights](#highlights).
+Permissions are raw string values, and `YouVersionPermissions` names the ones this SDK version knows. Sign-in sends `openid`, `profile`, `email`, `read_notes` and `write_notes` as OAuth scopes and any other value as an optional permission the user may decline, so a new optional permission can be passed as a string before the SDK names it, but a new OAuth scope needs an SDK update:
+
+- `YouVersionPermissions.PROFILE`: To access the user's name and profile picture.
+- `YouVersionPermissions.EMAIL`: To access the user's email address.
+- `YouVersionPermissions.HIGHLIGHTS`: To read and write the user's Bible highlights. See [Highlights](#highlights).
+- `YouVersionPermissions.READ_NOTES` and `WRITE_NOTES`: To read and to change the user's notes. See [Notes API](#notes-api).
+
+The `SignInWithYouVersionPermission` enum is deprecated and no longer gains new values; use the string APIs instead.
 
 ```kotlin
 // ProfileScreen.kt
@@ -380,7 +387,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.views.SignInWithYouVersionButton
 
@@ -400,12 +407,7 @@ fun ProfileScreen() {
         }
     } else {
         SignInWithYouVersionButton(
-            permissions = {
-                setOf(
-                    SignInWithYouVersionPermission.PROFILE,
-                    SignInWithYouVersionPermission.EMAIL
-                )
-            }
+            permissions = setOf(YouVersionPermissions.PROFILE, YouVersionPermissions.EMAIL),
         )
     }
 }
@@ -421,7 +423,7 @@ Highlights belong to the user's YouVersion account, so a highlight created in yo
 
 #### Highlight Permissions
 
-Reading and writing highlights requires the user to be signed in **and** to have granted `SignInWithYouVersionPermission.HIGHLIGHTS`. `BibleReader` asks for it at the moment it is needed, taking one of two routes:
+Reading and writing highlights requires the user to be signed in **and** to have granted `YouVersionPermissions.HIGHLIGHTS`. `BibleReader` asks for it at the moment it is needed, taking one of two routes:
 
 - A **signed-out** user is offered sign-in, with the highlights permission included in the requested permissions. The grant rides along with the sign-in.
 - A **signed-in** user who has not granted it yet is shown a confirmation dialog and then the YouVersion permission page. This is the data exchange flow, and it exists so the user does not have to sign in again just to grant one more permission.
@@ -431,27 +433,27 @@ Both routes return through the same `youversionauth://callback` deep link used b
 To check whether the permission has been granted:
 
 ```kotlin
-val hasHighlightsPermission = YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS)
+val hasHighlightsPermission = YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS)
 ```
 
 #### Requesting the Permission Yourself
 
-Apps that need to start the same permission flow themselves can do it from Compose with `rememberDataExchange`:
+Apps that need to start the same permission flow themselves can do it from Compose with `rememberDataExchangeWithPermissionValues`:
 
 ```kotlin
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
-import com.youversion.platform.ui.dataexchange.rememberDataExchange
+import com.youversion.platform.core.users.model.YouVersionPermissions
+import com.youversion.platform.ui.dataexchange.rememberDataExchangeWithPermissionValues
 
 @Composable
 fun AllowHighlightsButton() {
-    val requestDataExchange = rememberDataExchange()
+    val requestDataExchange = rememberDataExchangeWithPermissionValues()
     val coroutineScope = rememberCoroutineScope()
 
     Button(
         onClick = {
             coroutineScope.launch {
-                val result = requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
-                if (result?.grants(SignInWithYouVersionPermission.HIGHLIGHTS) == true) {
+                val result = requestDataExchange(setOf(YouVersionPermissions.HIGHLIGHTS))
+                if (result?.grants(YouVersionPermissions.HIGHLIGHTS) == true) {
                     // The grant is already persisted; highlights load on the next read.
                 }
             }
@@ -462,9 +464,9 @@ fun AllowHighlightsButton() {
 }
 ```
 
-Outside Compose, use `DataExchangeHandler(activityResultRegistry).requestDataExchange(...)` directly. Either way the granted permission is persisted for you before the call returns, so a later `YouVersionApi.hasPermission(...)` reflects it without any extra work.
+Outside Compose, use `DataExchangeHandler(activityResultRegistry).requestDataExchangeWithPermissionValues(...)` directly. Either way the granted permission is persisted for you before the call returns, so a later `YouVersionApi.hasPermission(...)` reflects it without any extra work.
 
-> **Note**: Data exchange only works for a user who is **already signed in** — it mints its token from the existing access token. For a signed-out user nothing is presented at all (the result is `DataExchangeStatus.NotStarted`); request `SignInWithYouVersionPermission.HIGHLIGHTS` as part of sign-in instead. `rememberDataExchange` and `DataExchangeHandler` live in `platform-ui`.
+> **Note**: Data exchange only works for a user who is **already signed in** — it mints its token from the existing access token. For a signed-out user nothing is presented at all (the result is `DataExchangeStatus.NotStarted`); request `YouVersionPermissions.HIGHLIGHTS` as part of sign-in instead. `rememberDataExchangeWithPermissionValues` and `DataExchangeHandler` live in `platform-ui`.
 
 #### Highlights API
 
@@ -707,6 +709,73 @@ A `Video` carries its title, description, the USFM `references` it covers, `runt
 
 - Invalid arguments throw `IllegalArgumentException` before any request is made: `organizationId` and `id` must not be empty, `fields` must not be empty or name an unknown field, and `pageSize` must be between 1 and 99.
 - A request that fails throws `YouVersionNetworkException`: `NOT_PERMITTED` when the app key is invalid or lacks access, `RATE_LIMITED` (429) or `SERVER_ERROR` (5xx), which a later retry may resolve, `REQUEST_REJECTED` for any other 4xx, which a retry usually will not, `REQUEST_FAILED` for any other error response, and `INVALID_RESPONSE` when the response — including a video's thumbnail URL — cannot be read.
+
+### Notes API
+
+The signed-in user's notes are available through `YouVersionApi.notes`, which is part of `platform-core`. All calls are suspend functions that need a configured app key and a signed-in user.
+
+#### Notes Permissions
+
+Reading notes needs `YouVersionPermissions.READ_NOTES`, and creating, updating, and deleting them need `WRITE_NOTES`. Both are OAuth scopes, so request them when the user signs in; existing sign-ins do not gain them, and the data exchange flow does not grant them.
+
+```kotlin
+SignInWithYouVersionButton(
+    permissions =
+        setOf(
+            YouVersionPermissions.PROFILE,
+            YouVersionPermissions.READ_NOTES,
+            YouVersionPermissions.WRITE_NOTES,
+        ),
+)
+```
+
+Call `YouVersionApi.hasValidToken()` before a notes call to refresh an access token that is about to expire.
+
+#### Listing Notes
+
+```kotlin
+val notes = mutableListOf<Note>()
+var pageToken: String? = null
+do {
+    val page = YouVersionApi.notes.notes(versionId = 111, pageSize = 50, pageToken = pageToken)
+    notes += page.data
+    pageToken = page.nextPageToken
+} while (pageToken != null)
+
+val john3 = YouVersionApi.notes.notes(references = listOf(BibleReference(111, "JHN", 3, 16)))
+```
+
+- `versionId` returns only notes attached to that version; leave it `null` for every note, including notes with no attachment.
+- `references` returns the notes attached to any of the given verses, ranges, or whole chapter, which must all be in one version, book, and chapter. Set `isAnyVersion = true` to match those verses in every version.
+- Notes come newest first. `pageSize` (1–99) and `pageToken` page through them. Keep following `nextPageToken` until it is `null`, even past an empty page, and keep the same filters on every page.
+- A `Note` carries its `content`, `title`, `color`, `tags`, `languageTag`, `status` (`NoteStatus.PRIVATE` or `PUBLIC`), timestamps, and the `references` it is attached to. Attached verses from one chapter keep their gaps, so verses 1–3 and 7 come back as two references. A note whose attachment cannot be read still loads, with `references` set to `null`.
+
+#### Creating, Updating, and Deleting Notes
+
+```kotlin
+val request = NoteCreateRequest(
+    content = "For God so loved the world",
+    status = NoteStatus.PRIVATE,
+    references = listOf(BibleReference(111, "JHN", 3, 16)),
+)
+val note = YouVersionApi.notes.createNote(request)
+
+val updated = YouVersionApi.notes.updateNote(
+    id = note.id,
+    update = NoteUpdate(title = NoteUpdate.Field.Clear, tags = NoteUpdate.Field.Value(listOf("faith"))),
+)
+
+YouVersionApi.notes.deleteNote(note.id)
+```
+
+- Retry a failed create with the same `NoteCreateRequest`: its `requestId` stays the same, so the server creates the note at most once.
+- `NoteUpdate` changes only the fields it names. A `null` field is left unchanged, `Field.Clear` removes the value, and `Field.Value` replaces it. Use `Field.Clear`, not an empty list, to remove a note's attachment.
+
+#### Notes Error Handling
+
+- Invalid arguments throw `IllegalArgumentException` before any request is made: ids must not be empty, `pageSize` must be between 1 and 99, references must be nonempty and in one version, book, and chapter, an attachment cannot be a whole chapter, `content` must not be empty, and an update must change something.
+- A request that fails throws `YouVersionNetworkException`: `MISSING_AUTHENTICATION` when no user is signed in or the server answers 401, which a sign-in or token refresh may resolve (an invalid app key also answers 401); `NOT_PERMITTED` when the server answers 403 because the user has not granted the notes permission the call needs; `RATE_LIMITED` (429) or `SERVER_ERROR` (5xx), which a later retry may resolve; `REQUEST_REJECTED` for any other 4xx, such as deleting a note that no longer exists (`statusCode` 404); and `INVALID_RESPONSE` when the response cannot be read.
+- A request that never gets a response, such as when the device is offline, throws the HTTP client's own exception, such as an `IOException`, rather than `YouVersionNetworkException`.
 
 ### Building SDK Models in Tests
 

@@ -15,8 +15,8 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 
 ## Modules
 
-- `platform-core`: Bible, VOTD, Highlights, Languages, Users, Data Exchange, Organizations, Search, Verse Images, and Videos clients; `YouVersionPlatformConfiguration`; highlights domain (`BibleHighlightsRepository` offline-first queue, `BibleHighlightCache` process-wide cache for the highlight UI); Koin; models. No UI.
-- `platform-ui`: Compose components plus `rememberSignIn`, `rememberDataExchange`, and `SignInWithYouVersionActivity`. Depends on `platform-core`.
+- `platform-core`: Bible, VOTD, Highlights, Languages, Users, Data Exchange, Notes, Organizations, Search, Verse Images, and Videos clients; `YouVersionPlatformConfiguration`; highlights domain (`BibleHighlightsRepository` offline-first queue, `BibleHighlightCache` process-wide cache for the highlight UI); Koin; models. No UI.
+- `platform-ui`: Compose components plus `rememberSignInWithPermissionValues`, `rememberDataExchangeWithPermissionValues`, and `SignInWithYouVersionActivity`. Depends on `platform-core`.
 - `platform-reader`: main entry for apps. `api()` on `platform-core` because `BibleReader` takes a `BibleReference`. `implementation` on `platform-ui` because `platform-ui` never appears in public signatures.
 - `platform-bom`: bill of materials that constrains `platform-core`, `platform-ui`, and `platform-reader` to one version. Each SDK module depends on it via `api(platform(...))`.
 - `examples/sample-android` demonstrates the SDK.
@@ -27,7 +27,7 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 
 - Apps call `YouVersionPlatformConfiguration.configure()` with an `appKey` from `Application.onCreate()`, which starts Koin (`startYouVersionPlatform()`).
 - Koin provides `HttpClient` (Ktor), `Store` (SharedPreferences), and `Logger`.
-- Call sites use `YouVersionApi` (`bible`, `dataExchange`, `highlights`, `languages`, `organizations`, `search`, `users`, `verseImages`, `videos`, `votd`). Network calls are suspend functions.
+- Call sites use `YouVersionApi` (`bible`, `dataExchange`, `highlights`, `languages`, `notes`, `organizations`, `search`, `users`, `verseImages`, `videos`, `votd`). Network calls are suspend functions.
 - Configuration: `platform-core/src/main/java/com/youversion/platform/core/YouVersionPlatformConfiguration.kt`
 - DI: `platform-core/src/main/java/com/youversion/platform/core/utilities/koin/`
 - API entry: `platform-core/src/main/java/com/youversion/platform/core/api/YouVersionApi.kt`
@@ -35,9 +35,13 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 
 ## Permissions
 
-- Values are `SignInWithYouVersionPermission`: `OPENID`, `PROFILE`, `EMAIL`, `HIGHLIGHTS`.
+- Permissions are raw strings. `YouVersionPermissions` names them: `OPENID`, `PROFILE`, `EMAIL`, `HIGHLIGHTS`, `READ_NOTES`, `WRITE_NOTES`.
+- `SignInWithYouVersionPermission` is deprecated and frozen at `OPENID`, `PROFILE`, `EMAIL`, `HIGHLIGHTS`. Add a new permission to `YouVersionPermissions` only, never to the enum.
+- A String method next to a deprecated enum overload takes its own name ending in `WithPermissionValues`, so a call such as `signIn(emptySet())` stays unambiguous.
+- Sign-in sends `openid`, `profile`, `email`, `read_notes`, and `write_notes` as OAuth scopes and every other value as an optional permission. A new OAuth scope needs `UsersEndpoints` updated.
 - A grant cannot be revoked from the app. Do not design a flow that loses a permission.
-- A signed-out user grants inside `rememberSignIn`. A signed-in user grants through `rememberDataExchange`, which needs an access token or `dataExchangeToken()` throws `MISSING_AUTHENTICATION`. Both return on `youversionauth://callback`, handled by `SignInWithYouVersionActivity`.
+- A signed-out user grants inside `rememberSignInWithPermissionValues`. A signed-in user grants an optional permission such as `HIGHLIGHTS` through `rememberDataExchangeWithPermissionValues`, which needs an access token or `dataExchangeTokenWithPermissionValues()` throws `MISSING_AUTHENTICATION`. Both return on `youversionauth://callback`, handled by `SignInWithYouVersionActivity`.
+- Data exchange cannot grant an OAuth scope such as `READ_NOTES` or `WRITE_NOTES`; the server rejects it with `422`. A signed-in user gains a scope only by signing in again with it.
 - Grants follow the session.
 - `configure()` and `saveAuthData()` drop stored grants when the given tokens name a different session.
 - `configure()` does not fill omitted tokens from storage in that case.

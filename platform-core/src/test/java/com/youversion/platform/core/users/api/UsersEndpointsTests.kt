@@ -3,7 +3,7 @@ package com.youversion.platform.core.users.api
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.users.model.SignInWithYouVersionPKCEParameters
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
@@ -11,6 +11,7 @@ import com.youversion.platform.helpers.stopYouVersionPlatformTest
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.Url
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
@@ -50,7 +51,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
     @Test
     fun `test authorizeUrl builds correct url`() {
         YouVersionPlatformConfiguration.configure(appKey = "test_app_key")
-        val permissions = setOf(SignInWithYouVersionPermission.PROFILE, SignInWithYouVersionPermission.EMAIL)
+        val permissions = setOf(YouVersionPermissions.PROFILE, YouVersionPermissions.EMAIL)
         val pkceParams =
             SignInWithYouVersionPKCEParameters(
                 codeChallenge = "challenge_string",
@@ -96,7 +97,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
         val url =
             UsersEndpoints.authorizeUrl(
                 appKey = "app",
-                permissions = setOf(SignInWithYouVersionPermission.PROFILE),
+                permissions = setOf(YouVersionPermissions.PROFILE),
                 redirectUri = "app://callback",
                 parameters = pkceParams,
             )
@@ -120,15 +121,18 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                 appKey = "app",
                 permissions =
                     setOf(
-                        SignInWithYouVersionPermission.PROFILE,
-                        SignInWithYouVersionPermission.HIGHLIGHTS,
+                        YouVersionPermissions.PROFILE,
+                        YouVersionPermissions.HIGHLIGHTS,
+                        YouVersionPermissions.READ_NOTES,
+                        YouVersionPermissions.WRITE_NOTES,
+                        "saved_verses",
                     ),
                 redirectUri = "app://callback",
                 parameters = pkceParams,
             )
 
-        assertTrue(url.contains("scope=openid+profile"))
-        assertTrue(url.contains("requested_permissions=highlights"))
+        assertEquals("openid profile read_notes write_notes", Url(url).parameters["scope"])
+        assertEquals("highlights,saved_verses", Url(url).parameters["requested_permissions"])
     }
 
     @Test
@@ -145,7 +149,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
         val url =
             UsersEndpoints.authorizeUrl(
                 appKey = "app",
-                permissions = setOf(SignInWithYouVersionPermission.PROFILE),
+                permissions = setOf(YouVersionPermissions.PROFILE),
                 redirectUri = "app://callback",
                 parameters = pkceParams,
             )
@@ -166,7 +170,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
         val url =
             UsersEndpoints.authorizeUrl(
                 appKey = "app",
-                permissions = setOf(SignInWithYouVersionPermission.PROFILE),
+                permissions = setOf(YouVersionPermissions.PROFILE),
                 redirectUri = "app://callback",
                 parameters = pkceParams,
             )
@@ -357,8 +361,58 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                     nonce = TEST_NONCE,
                 )
 
-            assertTrue(result.permissions.contains(SignInWithYouVersionPermission.HIGHLIGHTS))
-            assertTrue(result.permissions.contains(SignInWithYouVersionPermission.PROFILE))
+            assertTrue(result.permissionValues.contains(YouVersionPermissions.HIGHLIGHTS))
+            assertTrue(result.permissionValues.contains(YouVersionPermissions.PROFILE))
+        }
+
+    @Test
+    fun `test getSignInResult reads space-separated scopes`() =
+        runTest {
+            val idToken = buildTestJwt(buildJsonObject { put("nonce", TEST_NONCE) })
+            val mockEngine =
+                MockEngine { request ->
+                    when {
+                        request.url.encodedPath.contains("/auth/callback") -> {
+                            respond(
+                                "",
+                                HttpStatusCode.Found,
+                                headersOf("Location", "https://redirect.example.com?code=$TEST_AUTH_CODE"),
+                            )
+                        }
+
+                        else -> {
+                            respondJson(
+                                buildTokenResponseJson(
+                                    idToken,
+                                    scope = "openid profile read_notes write_notes future_scope",
+                                ),
+                            )
+                        }
+                    }
+                }
+            stopYouVersionPlatformTest()
+            startYouVersionPlatformTest(engine = mockEngine)
+            YouVersionPlatformConfiguration.configure(appKey = TEST_APP_KEY)
+
+            val result =
+                YouVersionApi.users.getSignInResult(
+                    callbackUri = "${UsersEndpoints.callbackUrl()}?state=$TEST_STATE",
+                    state = TEST_STATE,
+                    codeVerifier = TEST_CODE_VERIFIER,
+                    redirectUri = TEST_REDIRECT_URI,
+                    nonce = TEST_NONCE,
+                )
+
+            assertEquals(
+                listOf(
+                    "future_scope",
+                    YouVersionPermissions.OPENID,
+                    YouVersionPermissions.PROFILE,
+                    YouVersionPermissions.READ_NOTES,
+                    YouVersionPermissions.WRITE_NOTES,
+                ),
+                result.permissionValues,
+            )
         }
 
     @Test
@@ -590,7 +644,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                 "Original idToken should be preserved",
             )
             assertTrue(
-                result.permissions.isEmpty(),
+                result.permissionValues.isEmpty(),
                 "Permissions should be empty for a refresh response",
             )
         }

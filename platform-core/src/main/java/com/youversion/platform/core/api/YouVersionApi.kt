@@ -9,6 +9,8 @@ import com.youversion.platform.core.highlights.api.HighlightsApi
 import com.youversion.platform.core.highlights.api.HighlightsEndpoints
 import com.youversion.platform.core.languages.api.LanguagesApi
 import com.youversion.platform.core.languages.api.LanguagesEndpoints
+import com.youversion.platform.core.notes.api.NotesApi
+import com.youversion.platform.core.notes.api.NotesEndpoints
 import com.youversion.platform.core.organizations.api.OrganizationsApi
 import com.youversion.platform.core.organizations.api.OrganizationsEndpoints
 import com.youversion.platform.core.search.api.SearchApi
@@ -16,6 +18,7 @@ import com.youversion.platform.core.search.api.SearchEndpoints
 import com.youversion.platform.core.users.api.UsersApi
 import com.youversion.platform.core.users.api.UsersEndpoints
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.core.verseimages.api.VerseImagesApi
 import com.youversion.platform.core.verseimages.api.VerseImagesEndpoints
 import com.youversion.platform.core.videos.api.VideosApi
@@ -33,6 +36,7 @@ public object YouVersionApi {
     public val dataExchange: DataExchangeApi = DataExchangeEndpoints
     public val highlights: HighlightsApi = HighlightsEndpoints
     public val languages: LanguagesApi = LanguagesEndpoints
+    public val notes: NotesApi = NotesEndpoints
     public val organizations: OrganizationsApi = OrganizationsEndpoints
     public val search: SearchApi = SearchEndpoints
     public val users: UsersApi = UsersEndpoints
@@ -90,11 +94,23 @@ public object YouVersionApi {
     /**
      * Whether the signed-in user has granted the given permission to this app.
      *
+     * @param permission The raw value of the permission to check, such as [YouVersionPermissions.READ_NOTES].
+     * @return `true` if the user has granted the permission, `false` otherwise.
+     */
+    public fun hasPermission(permission: String): Boolean =
+        YouVersionPlatformConfiguration.grantedPermissionValues.contains(permission)
+
+    /**
+     * Whether the signed-in user has granted the given permission to this app.
+     *
      * @param permission The permission to check.
      * @return `true` if the user has granted the permission, `false` otherwise.
      */
-    public fun hasPermission(permission: SignInWithYouVersionPermission): Boolean =
-        YouVersionPlatformConfiguration.grantedPermissions.contains(permission)
+    @Deprecated(
+        "Use hasPermission with a raw String permission value instead.",
+        ReplaceWith("hasPermission(permission.rawValue)"),
+    )
+    public fun hasPermission(permission: SignInWithYouVersionPermission): Boolean = hasPermission(permission.rawValue)
 
     /**
      * Checks if the current access token is valid. If the token is expired or close to

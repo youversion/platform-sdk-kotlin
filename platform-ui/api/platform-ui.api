@@ -1,5 +1,6 @@
 public final class com/youversion/platform/ui/dataexchange/DataExchangeEffectsKt {
 	public static final fun rememberDataExchange (Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)Lkotlin/jvm/functions/Function2;
+	public static final fun rememberDataExchangeWithPermissionValues (Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)Lkotlin/jvm/functions/Function2;
 }
 
 public final class com/youversion/platform/ui/dataexchange/DataExchangeHandler {
@@ -7,14 +8,18 @@ public final class com/youversion/platform/ui/dataexchange/DataExchangeHandler {
 	public fun <init> (Landroidx/activity/result/ActivityResultRegistry;)V
 	public final fun requestDataExchange (Ljava/util/Set;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun requestDataExchange$default (Lcom/youversion/platform/ui/dataexchange/DataExchangeHandler;Ljava/util/Set;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun requestDataExchangeWithPermissionValues (Ljava/util/Set;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun requestDataExchangeWithPermissionValues$default (Lcom/youversion/platform/ui/dataexchange/DataExchangeHandler;Ljava/util/Set;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class com/youversion/platform/ui/dataexchange/DataExchangeResult {
 	public static final field $stable I
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGrantedPermissionValues ()Ljava/util/List;
 	public final fun getGrantedPermissions ()Ljava/util/List;
 	public final fun getStatus ()Lcom/youversion/platform/ui/dataexchange/DataExchangeStatus;
 	public final fun grants (Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;)Z
+	public final fun grants (Ljava/lang/String;)Z
 	public fun hashCode ()I
 	public final fun isGranted ()Z
 	public fun toString ()Ljava/lang/String;
@@ -65,6 +70,7 @@ public final class com/youversion/platform/ui/dataexchange/DataExchangeStatus$Un
 
 public final class com/youversion/platform/ui/signin/AuthenticationEffectsKt {
 	public static final fun rememberSignIn (Landroidx/compose/runtime/Composer;I)Lkotlin/jvm/functions/Function2;
+	public static final fun rememberSignInWithPermissionValues (Landroidx/compose/runtime/Composer;I)Lkotlin/jvm/functions/Function2;
 }
 
 public final class com/youversion/platform/ui/signin/ComposableSingletons$SignInErrorAlertKt {
@@ -85,6 +91,7 @@ public final class com/youversion/platform/ui/signin/SignInHandler {
 	public static final field $stable I
 	public fun <init> (Landroid/content/Context;Landroidx/activity/result/ActivityResultRegistry;)V
 	public final fun signIn (Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun signInWithPermissionValues (Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/youversion/platform/ui/signin/SignInViewModel : androidx/lifecycle/AndroidViewModel {
@@ -266,6 +273,7 @@ public final class com/youversion/platform/ui/views/SignInWithYouVersionButtonDe
 }
 
 public final class com/youversion/platform/ui/views/SignInWithYouVersionButtonKt {
+	public static final fun SignInWithYouVersionButton (Ljava/util/Set;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/ui/graphics/Shape;Lcom/youversion/platform/ui/views/SignInWithYouVersionButtonMode;ZZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
 	public static final fun SignInWithYouVersionButton (Lkotlin/jvm/functions/Function0;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/ui/graphics/Shape;Lcom/youversion/platform/ui/views/SignInWithYouVersionButtonMode;ZZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
 }
 

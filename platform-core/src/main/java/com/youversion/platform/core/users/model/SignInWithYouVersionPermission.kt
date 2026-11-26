@@ -1,5 +1,7 @@
 package com.youversion.platform.core.users.model
 
+/** A permission an app asks the user to grant. Replaced by the raw values in [YouVersionPermissions]. */
+@Deprecated("Use the raw String permission values in YouVersionPermissions instead.")
 public enum class SignInWithYouVersionPermission(
     public val rawValue: String,
 ) {

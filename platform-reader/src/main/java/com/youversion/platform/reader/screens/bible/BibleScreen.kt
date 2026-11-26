@@ -62,7 +62,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.models.BibleVersion
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.reader.BibleReaderSearchViewModel
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.R
@@ -79,11 +79,11 @@ import com.youversion.platform.reader.sheets.BibleReaderVerseActionSheet
 import com.youversion.platform.reader.sheets.DataExchangeConfirmationDialog
 import com.youversion.platform.reader.sheets.HighlightColor
 import com.youversion.platform.ui.dataexchange.DataExchangeStatus
-import com.youversion.platform.ui.dataexchange.rememberDataExchange
+import com.youversion.platform.ui.dataexchange.rememberDataExchangeWithPermissionValues
 import com.youversion.platform.ui.signin.SignInErrorAlert
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.signin.SignOutConfirmationAlert
-import com.youversion.platform.ui.signin.rememberSignIn
+import com.youversion.platform.ui.signin.rememberSignInWithPermissionValues
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.BibleIntroText
 import com.youversion.platform.ui.views.BibleTextFootnoteMode
@@ -134,11 +134,11 @@ internal fun BibleScreen(
     var showSignInError by rememberSaveable { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
-    val signIn = rememberSignIn()
+    val signIn = rememberSignInWithPermissionValues()
     val permissions =
         setOf(
-            SignInWithYouVersionPermission.PROFILE,
-            SignInWithYouVersionPermission.HIGHLIGHTS,
+            YouVersionPermissions.PROFILE,
+            YouVersionPermissions.HIGHLIGHTS,
         )
 
     fun launchSignIn(onComplete: () -> Unit = {}) {
@@ -158,11 +158,15 @@ internal fun BibleScreen(
     // which reads the permission both routes persist before the reader can resume: a grant applies the pending
     // highlight, a dismissal or cancellation reads no grant and clears it.
     val isDataExchangeInProgress = rememberSaveable { mutableStateOf(false) }
-    val requestDataExchange = rememberDataExchange(onBrowserOpened = { isDataExchangeInProgress.value = true })
+    val requestDataExchange =
+        rememberDataExchangeWithPermissionValues(onBrowserOpened = {
+            isDataExchangeInProgress.value =
+                true
+        })
     LaunchedEffect(state.shouldStartDataExchangeFlow) {
         if (!state.shouldStartDataExchangeFlow) return@LaunchedEffect
-        val result = requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
-        val isHighlightsGranted = result?.grants(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+        val result = requestDataExchange(setOf(YouVersionPermissions.HIGHLIGHTS))
+        val isHighlightsGranted = result?.grants(YouVersionPermissions.HIGHLIGHTS) == true
         // A null result means there was no launcher to open the browser with, and NotStarted means the flow could not
         // be started; either way nothing was asked and no resume will follow, so end the flow here rather than leaving
         // the reader waiting on a prompt it never saw.
@@ -186,8 +190,8 @@ internal fun BibleScreen(
                     isDataExchangeInProgress.value = false
                     val isHighlightsGranted =
                         YouVersionPlatformConfiguration.configState.value
-                            ?.grantedPermissions
-                            ?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+                            ?.grantedPermissionValues
+                            ?.contains(YouVersionPermissions.HIGHLIGHTS) == true
                     viewModel.onAction(
                         BibleReaderViewModel.Action.DataExchangeCompleted(isHighlightsGranted = isHighlightsGranted),
                     )
@@ -203,7 +207,7 @@ internal fun BibleScreen(
     // recreated during either browser flow.
     val config by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
     val isHighlightsGranted =
-        config?.grantedPermissions?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+        config?.grantedPermissionValues?.contains(YouVersionPermissions.HIGHLIGHTS) == true
     LaunchedEffect(isHighlightsGranted, state.hasHighlightRequest) {
         if (isHighlightsGranted && state.hasHighlightRequest) {
             viewModel.applyHighlightRequestIfPermitted()

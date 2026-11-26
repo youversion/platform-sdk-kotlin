@@ -36,14 +36,14 @@ public data class SignInWithYouVersionPKCEAuthorizationRequest(
          * Creates a fully-formed PKCE authorization request.
          *
          * @param appKey The application's unique key (client_id).
-         * @param permissions The set of permissions (scopes) being requested.
+         * @param permissions The raw values of the permissions being requested, such as [YouVersionPermissions.PROFILE].
          * @param redirectUri The callback URL where the authorization code will be sent.
          * @return A [SignInWithYouVersionPKCEAuthorizationRequest] containing the URL and parameters.
          * @throws SignInWithYouVersionPKCEAuthorizationError if random string generation or URL construction fails.
          */
         public operator fun invoke(
             appKey: String,
-            permissions: Set<SignInWithYouVersionPermission>,
+            permissions: Set<String>,
             redirectUri: String,
         ): SignInWithYouVersionPKCEAuthorizationRequest {
             val codeVerifier = randomURLSafeString(32)

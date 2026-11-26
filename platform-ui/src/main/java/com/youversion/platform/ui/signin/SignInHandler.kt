@@ -15,7 +15,7 @@ import kotlin.coroutines.resume
  *
  * This provides a single suspend function to perform the full authentication flow,
  * similar to the Swift SDK's `YouVersionAPI.Users.signIn(permissions:contextProvider:)`.
- * It can be used from Compose (via [rememberSignIn]), React Native modules, or any
+ * It can be used from Compose (via [rememberSignInWithPermissionValues]), React Native modules, or any
  * other Android context that has access to a [Context] and [ActivityResultRegistry].
  *
  * @param context The Android context needed to launch the Custom Tab and handle callbacks.
@@ -32,11 +32,12 @@ public class SignInHandler(
      * authentication, waits for the redirect callback, and exchanges the authorization
      * code for tokens.
      *
-     * @param permissions The set of permissions to request from the user.
+     * @param permissions The raw values of the permissions to request from the user, such as
+     *        [com.youversion.platform.core.users.model.YouVersionPermissions.PROFILE].
      * @return A [SignInWithYouVersionResult] on success, or null on failure/cancellation.
      * @throws Exception if the token exchange or sign-in launch fails.
      */
-    public suspend fun signIn(permissions: Set<SignInWithYouVersionPermission>): SignInWithYouVersionResult? {
+    public suspend fun signInWithPermissionValues(permissions: Set<String>): SignInWithYouVersionResult? {
         var launcher: ActivityResultLauncher<Intent>? = null
         val callbackIntent =
             try {
@@ -57,4 +58,18 @@ public class SignInHandler(
 
         return YouVersionAuthentication.handleAuthCallback(context, callbackIntent)
     }
+
+    /**
+     * Launches the full YouVersion sign-in flow and suspends until it completes.
+     *
+     * @param permissions The set of permissions to request from the user.
+     * @return A [SignInWithYouVersionResult] on success, or null on failure/cancellation.
+     * @throws Exception if the token exchange or sign-in launch fails.
+     */
+    @Deprecated(
+        "Use signInWithPermissionValues with raw String permission values instead.",
+        ReplaceWith("signInWithPermissionValues(permissions.map { it.rawValue }.toSet())"),
+    )
+    public suspend fun signIn(permissions: Set<SignInWithYouVersionPermission>): SignInWithYouVersionResult? =
+        signInWithPermissionValues(permissions.map { it.rawValue }.toSet())
 }

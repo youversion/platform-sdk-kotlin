@@ -58,7 +58,7 @@ public object DataExchangeEndpoints : DataExchangeApi {
         }
 
     // ----- Data Exchange API
-    override suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken {
+    override suspend fun dataExchangeTokenWithPermissionValues(permissions: Collection<String>): DataExchangeToken {
         if (YouVersionPlatformConfiguration.accessToken == null) {
             throw YouVersionNetworkException(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION)
         }
@@ -90,10 +90,17 @@ public object DataExchangeEndpoints : DataExchangeApi {
         return response.body()
     }
 
-    private fun tokenRequestBody(permissions: Set<SignInWithYouVersionPermission>): JsonObject =
+    @Deprecated(
+        "Use dataExchangeTokenWithPermissionValues with raw String permission values instead.",
+        ReplaceWith("dataExchangeTokenWithPermissionValues(permissions.map { it.rawValue })"),
+    )
+    override suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken =
+        dataExchangeTokenWithPermissionValues(permissions.map { it.rawValue })
+
+    private fun tokenRequestBody(permissions: Collection<String>): JsonObject =
         buildJsonObject {
             putJsonArray("requested_permissions") {
-                permissions.map { it.rawValue }.sorted().forEach { add(it) }
+                permissions.distinct().sorted().forEach { add(it) }
             }
         }
 }

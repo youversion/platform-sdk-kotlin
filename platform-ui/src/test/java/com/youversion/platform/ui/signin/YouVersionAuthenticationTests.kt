@@ -9,8 +9,8 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.users.api.UsersApi
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.users.model.SignInWithYouVersionResult
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -84,7 +84,7 @@ class YouVersionAuthenticationTests {
         YouVersionAuthentication.signIn(
             context = context,
             launcher = launcher,
-            permissions = setOf(SignInWithYouVersionPermission.OPENID),
+            permissions = setOf(YouVersionPermissions.OPENID),
         )
 
         verify(exactly = 1) { PKCEStateStore.save(context, any(), any(), any()) }
@@ -100,7 +100,7 @@ class YouVersionAuthenticationTests {
                 YouVersionAuthentication.signIn(
                     context = context,
                     launcher = launcher,
-                    permissions = setOf(SignInWithYouVersionPermission.OPENID),
+                    permissions = setOf(YouVersionPermissions.OPENID),
                 )
             }
         assertEquals(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION, exception.reason)
@@ -114,7 +114,7 @@ class YouVersionAuthenticationTests {
         YouVersionAuthentication.signIn(
             context = context,
             launcher = launcher,
-            permissions = setOf(SignInWithYouVersionPermission.OPENID),
+            permissions = setOf(YouVersionPermissions.OPENID),
         )
 
         verify { launcher.launch(any()) }
@@ -206,7 +206,7 @@ class YouVersionAuthenticationTests {
                 mockUsersApi.getSignInResult(any(), any(), any(), any(), any())
             } returns expectedResult
             every { YouVersionPlatformConfiguration.saveAuthData(any(), any(), any(), any()) } just Runs
-            every { YouVersionPlatformConfiguration.saveGrantedPermissions(any()) } just Runs
+            every { YouVersionPlatformConfiguration.saveGrantedPermissionValues(any()) } just Runs
 
             val result = YouVersionAuthentication.handleAuthCallback(context, intent)
 
@@ -233,7 +233,7 @@ class YouVersionAuthenticationTests {
                 mockUsersApi.getSignInResult(any(), any(), any(), any(), any())
             } returns expectedResult
             every { YouVersionPlatformConfiguration.saveAuthData(any(), any(), any(), any()) } just Runs
-            every { YouVersionPlatformConfiguration.saveGrantedPermissions(any()) } just Runs
+            every { YouVersionPlatformConfiguration.saveGrantedPermissionValues(any()) } just Runs
 
             YouVersionAuthentication.handleAuthCallback(context, intent)
 
@@ -245,7 +245,7 @@ class YouVersionAuthenticationTests {
                     expiryDate = expectedResult.expiryDate,
                 )
             }
-            verify { YouVersionPlatformConfiguration.saveGrantedPermissions(expectedResult.permissions) }
+            verify { YouVersionPlatformConfiguration.saveGrantedPermissionValues(expectedResult.permissionValues) }
             verify { PKCEStateStore.clear(context) }
         }
 
@@ -258,7 +258,7 @@ class YouVersionAuthenticationTests {
                 mockUsersApi.getSignInResult(any(), any(), any(), any(), any())
             } throws YouVersionNetworkException(YouVersionNetworkException.Reason.SERVER_ERROR)
             every { YouVersionPlatformConfiguration.saveAuthData(any(), any(), any(), any()) } just Runs
-            every { YouVersionPlatformConfiguration.saveGrantedPermissions(any()) } just Runs
+            every { YouVersionPlatformConfiguration.saveGrantedPermissionValues(any()) } just Runs
 
             assertFailsWith<YouVersionNetworkException> {
                 YouVersionAuthentication.handleAuthCallback(context, intent)
@@ -336,7 +336,7 @@ class YouVersionAuthenticationTests {
             expiryDate = Date(),
             refreshToken = "refresh-token",
             idToken = "id-token",
-            permissions = listOf(SignInWithYouVersionPermission.OPENID),
+            permissionValues = listOf(YouVersionPermissions.OPENID),
             yvpUserId = "user-123",
             name = "Test User",
             profilePicture = null,
