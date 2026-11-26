@@ -16,7 +16,7 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 ## Modules
 
 - `platform-core`: Bible, VOTD, Highlights, Languages, Users, Data Exchange, Organizations, Search, Verse Images, and Videos clients; `YouVersionPlatformConfiguration`; highlights domain (`BibleHighlightsRepository` offline-first queue, `BibleHighlightCache` process-wide cache for the highlight UI); Koin; models. No UI.
-- `platform-ui`: Compose components plus `rememberSignIn`, `rememberDataExchange`, and `SignInWithYouVersionActivity`. Depends on `platform-core`.
+- `platform-ui`: Compose components plus `rememberSignInWithPermissionValues`, `rememberDataExchangeWithPermissionValues`, and `SignInWithYouVersionActivity`. Depends on `platform-core`.
 - `platform-reader`: main entry for apps. `api()` on `platform-core` because `BibleReader` takes a `BibleReference`. `implementation` on `platform-ui` because `platform-ui` never appears in public signatures.
 - `platform-bom`: bill of materials that constrains `platform-core`, `platform-ui`, and `platform-reader` to one version. Each SDK module depends on it via `api(platform(...))`.
 - `examples/sample-android` demonstrates the SDK.
@@ -35,9 +35,12 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 
 ## Permissions
 
-- Values are `SignInWithYouVersionPermission`: `OPENID`, `PROFILE`, `EMAIL`, `HIGHLIGHTS`.
+- Permissions are raw strings. `YouVersionPermissions` names them: `OPENID`, `PROFILE`, `EMAIL`, `HIGHLIGHTS`, `READ_NOTES`, `WRITE_NOTES`.
+- `SignInWithYouVersionPermission` is deprecated and frozen at `OPENID`, `PROFILE`, `EMAIL`, `HIGHLIGHTS`. Add a new permission to `YouVersionPermissions` only, never to the enum.
+- A String method next to a deprecated enum overload takes its own name ending in `WithPermissionValues`, so a call such as `signIn(emptySet())` stays unambiguous.
+- Sign-in sends `openid`, `profile`, `email`, `read_notes`, and `write_notes` as OAuth scopes and every other value as an optional permission. A new OAuth scope needs `UsersEndpoints` updated.
 - A grant cannot be revoked from the app. Do not design a flow that loses a permission.
-- A signed-out user grants inside `rememberSignIn`. A signed-in user grants through `rememberDataExchange`, which needs an access token or `dataExchangeToken()` throws `MISSING_AUTHENTICATION`. Both return on `youversionauth://callback`, handled by `SignInWithYouVersionActivity`.
+- A signed-out user grants inside `rememberSignInWithPermissionValues`. A signed-in user grants through `rememberDataExchangeWithPermissionValues`, which needs an access token or `dataExchangeTokenWithPermissionValues()` throws `MISSING_AUTHENTICATION`. Both return on `youversionauth://callback`, handled by `SignInWithYouVersionActivity`.
 - Grants follow the session.
 - `configure()` and `saveAuthData()` drop stored grants when the given tokens name a different session.
 - `configure()` does not fill omitted tokens from storage in that case.
