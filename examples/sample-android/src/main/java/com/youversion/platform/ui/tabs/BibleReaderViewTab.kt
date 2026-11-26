@@ -1,14 +1,20 @@
 package com.youversion.platform.ui.tabs
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.platform.LocalContext
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.reader.BibleReader
+import com.youversion.platform.reader.BibleReaderVerseAction
 import com.youversion.platform.reader.FontDefinition
 import com.youversion.platform.reader.FontDefinitionProvider
 import com.youversion.platform.ui.components.SampleBottomBar
@@ -40,10 +46,24 @@ fun BibleReaderViewTab(
         }
     val colorScheme = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
+    val context = LocalContext.current
+    val bookmarkAction =
+        remember(context) {
+            BibleReaderVerseAction(
+                id = "bookmark",
+                label = "Bookmark",
+                icon = Icons.Outlined.BookmarkBorder,
+            ) { references ->
+                Toast
+                    .makeText(context, "Bookmarked ${references.joinToString { it.asUSFM }}", Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
 
     BibleReader(
         bibleReference = bibleReference,
         fontDefinitionProvider = fontDefinitionProvider,
+        verseActions = BibleReaderVerseAction.defaults + bookmarkAction,
         bottomBar = {
             MaterialTheme(colorScheme = colorScheme, typography = typography) {
                 Box(

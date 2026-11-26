@@ -64,6 +64,7 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.reader.BibleReaderSearchViewModel
+import com.youversion.platform.reader.BibleReaderVerseAction
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.R
 import com.youversion.platform.reader.components.BibleReaderBanner
@@ -104,6 +105,7 @@ private const val CHAPTER_HEADER_ITEM_COUNT = 1
 @Composable
 internal fun BibleScreen(
     viewModel: BibleReaderViewModel,
+    verseActions: List<BibleReaderVerseAction> = BibleReaderVerseAction.defaults,
     bottomBar: @Composable (() -> Unit)? = null,
     onReferencesClick: () -> Unit,
     onVersionsClick: () -> Unit,
@@ -311,8 +313,11 @@ internal fun BibleScreen(
         )
     val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = bottomSheetState)
 
-    LaunchedEffect(Unit) {
-        snapshotFlow { state.showVerseActionSheet }
+    val hasVerseActions = verseActions.isNotEmpty()
+    val showsVerseActionSheet = state.showVerseActionSheet && hasVerseActions
+
+    LaunchedEffect(hasVerseActions) {
+        snapshotFlow { state.showVerseActionSheet && hasVerseActions }
             .collect { shouldShow ->
                 if (shouldShow) {
                     bottomSheetState.expand()
@@ -322,10 +327,10 @@ internal fun BibleScreen(
             }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(hasVerseActions) {
         snapshotFlow { bottomSheetState.currentValue }
             .collect { sheetValue ->
-                if (sheetValue != SheetValue.Expanded && state.showVerseActionSheet) {
+                if (sheetValue != SheetValue.Expanded && state.showVerseActionSheet && hasVerseActions) {
                     viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection)
                 }
             }
@@ -337,7 +342,7 @@ internal fun BibleScreen(
     // here with the same color the modal sheets use.
     val verseActionScrimColor = BottomSheetDefaults.ScrimColor
     val verseActionScrimProgress by animateFloatAsState(
-        targetValue = if (state.showVerseActionSheet) 1f else 0f,
+        targetValue = if (showsVerseActionSheet) 1f else 0f,
         label = "verseActionScrim",
     )
 
@@ -370,6 +375,7 @@ internal fun BibleScreen(
                                 ),
                     )
                     BibleReaderVerseActionSheet(
+                        actions = verseActions,
                         colorsToRemove = colorsToRemove,
                         colorsToAdd = colorsToAdd,
                         showsHighlightColors = showsHighlightColors,
@@ -381,6 +387,9 @@ internal fun BibleScreen(
                         },
                         onCopy = { viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses) },
                         onShare = { viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses) },
+                        onCustomAction = {
+                            viewModel.onAction(BibleReaderViewModel.Action.PerformCustomVerseAction(it))
+                        },
                     )
                 }
             },

@@ -1,11 +1,15 @@
 package com.youversion.platform.reader.sheets
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.youversion.platform.reader.BibleReaderVerseAction
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.Charcoal
 import com.youversion.platform.ui.theme.PureWhite
@@ -23,6 +27,8 @@ class BibleReaderVerseActionSheetTest {
     val composeTestRule = createComposeRule()
 
     private fun renderSheet(
+        actions: List<BibleReaderVerseAction> = BibleReaderVerseAction.defaults,
+        onCustomAction: (BibleReaderVerseAction) -> Unit = {},
         colorsToRemove: List<HighlightColor> = emptyList(),
         colorsToAdd: List<HighlightColor> = emptyList(),
         showsHighlightColors: Boolean = true,
@@ -34,6 +40,7 @@ class BibleReaderVerseActionSheetTest {
         composeTestRule.setContent {
             BibleReaderMaterialTheme {
                 BibleReaderVerseActionSheet(
+                    actions = actions,
                     colorsToRemove = colorsToRemove,
                     colorsToAdd = colorsToAdd,
                     showsHighlightColors = showsHighlightColors,
@@ -41,6 +48,7 @@ class BibleReaderVerseActionSheetTest {
                     onRemoveHighlight = onRemoveHighlight,
                     onCopy = onCopy,
                     onShare = onShare,
+                    onCustomAction = onCustomAction,
                 )
             }
         }
@@ -119,6 +127,40 @@ class BibleReaderVerseActionSheetTest {
         renderSheet()
 
         composeTestRule.onNodeWithContentDescription("Share").assertIsDisplayed()
+    }
+
+    // ----- Configured Actions
+
+    private val bookmark =
+        BibleReaderVerseAction(id = "bookmark", label = "Bookmark", icon = Icons.Filled.Star, onClick = {})
+
+    @Test
+    fun `shows the configured actions in their order`() {
+        renderSheet(actions = listOf(BibleReaderVerseAction.Share, bookmark, BibleReaderVerseAction.Copy))
+
+        val share = composeTestRule.onNodeWithText("Share").getBoundsInRoot().left
+        val custom = composeTestRule.onNodeWithText("Bookmark").getBoundsInRoot().left
+        val copy = composeTestRule.onNodeWithText("Copy").getBoundsInRoot().left
+        assertTrue(share < custom && custom < copy)
+    }
+
+    @Test
+    fun `leaves out the built-in actions the list omits`() {
+        renderSheet(actions = listOf(BibleReaderVerseAction.Copy), colorsToAdd = listOf(HighlightColor.Green))
+
+        composeTestRule.onNodeWithText("Copy").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Share").assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("Add green highlight").assertDoesNotExist()
+    }
+
+    @Test
+    fun `clicking a custom action hands that action to onCustomAction`() {
+        var clicked: BibleReaderVerseAction? = null
+
+        renderSheet(actions = BibleReaderVerseAction.defaults + bookmark, onCustomAction = { clicked = it })
+        composeTestRule.onNodeWithText("Bookmark").performClick()
+
+        assertEquals(bookmark, clicked)
     }
 
     // ----- Highlight Color Picker

@@ -46,5 +46,7 @@ sealed class SampleDestination(
 
     data object BibleCard : SampleDestination("examples/bible-card")
 
+    data object VerseMarkers : SampleDestination("examples/verse-markers")
+
     data object Profile : SampleDestination("profile")
 }

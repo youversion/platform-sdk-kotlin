@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.youversion.platform.reader.BibleReaderVerseAction
 import com.youversion.platform.reader.R
 import com.youversion.platform.reader.icons.CopyIcon
 import com.youversion.platform.ui.theme.ReaderColorScheme
@@ -41,15 +42,15 @@ import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.R as UiR
 
 /**
- * The actions offered for the current verse selection.
+ * The actions offered for the current verse selection, in the order of [actions].
  *
- * Copy and share need no account and are always offered. Highlighting does, so [showsHighlightColors] hides the
- * color picker entirely when the reader has no account and no way to get one — a control that could never work is
- * not shown. When the reader is signed out but sign-in is available, the colors are shown and tapping one asks them
- * to sign in.
+ * Copy and share need no account. Highlighting does, so [showsHighlightColors] hides the color picker entirely when
+ * the reader has no account and no way to get one — a control that could never work is not shown. When the reader is
+ * signed out but sign-in is available, the colors are shown and tapping one asks them to sign in.
  */
 @Composable
 internal fun BibleReaderVerseActionSheet(
+    actions: List<BibleReaderVerseAction>,
     colorsToRemove: List<HighlightColor>,
     colorsToAdd: List<HighlightColor>,
     showsHighlightColors: Boolean,
@@ -57,6 +58,7 @@ internal fun BibleReaderVerseActionSheet(
     onRemoveHighlight: (String) -> Unit,
     onCopy: () -> Unit,
     onShare: () -> Unit,
+    onCustomAction: (BibleReaderVerseAction) -> Unit,
 ) {
     Column(
         modifier =
@@ -68,24 +70,44 @@ internal fun BibleReaderVerseActionSheet(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (showsHighlightColors && (colorsToRemove.isNotEmpty() || colorsToAdd.isNotEmpty())) {
-                HighlightColorPicker(
-                    colorsToRemove = colorsToRemove,
-                    colorsToAdd = colorsToAdd,
-                    onAddHighlight = onAddHighlight,
-                    onRemoveHighlight = onRemoveHighlight,
-                )
+            actions.forEach { action ->
+                when (action.kind) {
+                    BibleReaderVerseAction.Kind.HIGHLIGHT -> {
+                        if (showsHighlightColors && (colorsToRemove.isNotEmpty() || colorsToAdd.isNotEmpty())) {
+                            HighlightColorPicker(
+                                colorsToRemove = colorsToRemove,
+                                colorsToAdd = colorsToAdd,
+                                onAddHighlight = onAddHighlight,
+                                onRemoveHighlight = onRemoveHighlight,
+                            )
+                        }
+                    }
+
+                    BibleReaderVerseAction.Kind.COPY -> {
+                        VerseActionButton(
+                            icon = CopyIcon,
+                            label = stringResource(UiR.string.copy),
+                            onClick = onCopy,
+                        )
+                    }
+
+                    BibleReaderVerseAction.Kind.SHARE -> {
+                        VerseActionButton(
+                            icon = Icons.Outlined.Share,
+                            label = stringResource(UiR.string.share),
+                            onClick = onShare,
+                        )
+                    }
+
+                    BibleReaderVerseAction.Kind.CUSTOM -> {
+                        VerseActionButton(
+                            icon = requireNotNull(action.icon),
+                            label = requireNotNull(action.label),
+                            onClick = { onCustomAction(action) },
+                        )
+                    }
+                }
             }
-            VerseActionButton(
-                icon = CopyIcon,
-                label = stringResource(UiR.string.copy),
-                onClick = onCopy,
-            )
-            VerseActionButton(
-                icon = Icons.Outlined.Share,
-                label = stringResource(UiR.string.share),
-                onClick = onShare,
-            )
         }
 
         Spacer(modifier = Modifier.height(32.dp))

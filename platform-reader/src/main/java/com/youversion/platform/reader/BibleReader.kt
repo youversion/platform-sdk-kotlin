@@ -35,6 +35,9 @@ import org.koin.core.parameter.parametersOf
  * @param bibleReference The reference to open. When null, the reader restores the last-read reference.
  * @param fontDefinitionProvider The fonts the host app offers in the reader's font settings.
  * @param bottomBar The host app's own bottom bar, drawn below the reader.
+ * @param verseActions The actions offered for a verse selection, in order. Leave out a built-in action to hide it,
+ * add [BibleReaderVerseAction]s of the host app's own, or pass an empty list to show no action sheet. IDs must be
+ * unique.
  */
 @OptIn(KoinExperimentalAPI::class)
 @Composable
@@ -42,7 +45,10 @@ public fun BibleReader(
     bibleReference: BibleReference? = null,
     fontDefinitionProvider: FontDefinitionProvider? = null,
     bottomBar: @Composable () -> Unit = {},
+    verseActions: List<BibleReaderVerseAction> = BibleReaderVerseAction.defaults,
 ) {
+    require(verseActions.distinctBy { it.id }.size == verseActions.size) { "Verse action IDs must be unique" }
+
     KoinIsolatedContext(
         context = PlatformKoinGraph.koinApplication,
     ) {
@@ -68,6 +74,7 @@ public fun BibleReader(
                 ) {
                     BibleScreen(
                         viewModel = bibleReaderViewModel,
+                        verseActions = verseActions,
                         bottomBar = bottomBar,
                         onReferencesClick = {
                             onDestinationClick(BibleReaderDestination.References)
@@ -145,6 +152,22 @@ public fun BibleReader(
             }
         }
     }
+}
+
+/** The signature [BibleReader] had before verse actions, kept so apps built against it still link. */
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+@Composable
+public fun BibleReader(
+    bibleReference: BibleReference? = null,
+    fontDefinitionProvider: FontDefinitionProvider? = null,
+    bottomBar: @Composable () -> Unit = {},
+) {
+    BibleReader(
+        bibleReference = bibleReference,
+        fontDefinitionProvider = fontDefinitionProvider,
+        bottomBar = bottomBar,
+        verseActions = BibleReaderVerseAction.defaults,
+    )
 }
 
 /**

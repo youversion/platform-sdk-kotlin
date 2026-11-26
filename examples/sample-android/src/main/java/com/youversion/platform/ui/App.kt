@@ -42,6 +42,7 @@ import com.youversion.platform.ui.content.ContentVideosViewModel
 import com.youversion.platform.ui.content.displayTitle
 import com.youversion.platform.ui.examples.BibleCardExample
 import com.youversion.platform.ui.examples.NavigateExample
+import com.youversion.platform.ui.examples.VerseMarkersExample
 import com.youversion.platform.ui.examples.VotdExample
 import com.youversion.platform.ui.tabs.BibleReaderViewTab
 import com.youversion.platform.ui.tabs.ContentViewTab
@@ -261,6 +262,15 @@ fun App() {
                 route = SampleDestination.BibleCard.route,
             ) {
                 BibleCardExample(
+                    onDestinationClick = onDestinationClick,
+                    onBack = onBack,
+                )
+            }
+
+            composable(
+                route = SampleDestination.VerseMarkers.route,
+            ) {
+                VerseMarkersExample(
                     onDestinationClick = onDestinationClick,
                     onBack = onBack,
                 )

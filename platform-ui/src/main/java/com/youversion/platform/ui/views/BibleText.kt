@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -66,6 +67,7 @@ import com.youversion.platform.ui.icons.LockIcon
 import com.youversion.platform.ui.icons.WifiExclamationIcon
 import com.youversion.platform.ui.theme.ReaderColorScheme
 import com.youversion.platform.ui.theme.UntitledSerif
+import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
 
@@ -248,6 +250,11 @@ public enum class BibleTextLoadingPhase {
  * changes. It
  * does not fire when a load fails, is not permitted, or is cancelled. The blocks are rebuilt from scratch on every
  * load and carry no stable identity, so replace the previous list wholesale rather than diffing against it.
+ * @param verseIndicatorStyle Returns the style to mark a verse's number with, or null to leave it as it is. A verse
+ * number only shows an indicator when [BibleTextOptions.renderVerseNumbers] renders it. Indicators are drawn over
+ * highlights. Keep this quick and free of side effects; load what it reads outside this composable.
+ * @param onVerseIndicatorTap Callback invoked with the verse when its indicator is tapped. An indicator tap does not
+ * reach [onVerseTap], and wins where the indicator's tap target overlaps the text around it.
  */
 @Composable
 public fun BibleText(
@@ -260,6 +267,8 @@ public fun BibleText(
     placeholder: @Composable (BibleTextLoadingPhase) -> Unit = { StandardPlaceholder(it) },
     onStateChange: (BibleTextLoadingPhase) -> Unit = {},
     onBlocksChange: (List<BibleTextBlock>) -> Unit = {},
+    verseIndicatorStyle: ((BibleReference) -> BibleVerseIndicatorStyle?)? = null,
+    onVerseIndicatorTap: ((BibleReference) -> Unit)? = null,
 ) {
     val blocksState = rememberBibleTextBlocksState(reference = reference, textOptions = textOptions)
 
@@ -287,11 +296,41 @@ public fun BibleText(
                         highlights = blocksState.highlights,
                         onVerseTap = onVerseTap,
                         onFootnoteTap = onFootnoteTap,
+                        verseIndicatorStyle = verseIndicatorStyle,
+                        onVerseIndicatorTap = onVerseIndicatorTap,
                     )
                 }
             }
         }
     }
+}
+
+/** The signature [BibleText] had before verse indicators, kept so apps built against it still link. */
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+@Composable
+public fun BibleText(
+    reference: BibleReference,
+    textOptions: BibleTextOptions = BibleTextOptions(),
+    selectedVerses: Set<BibleReference> = emptySet(),
+    onVerseSelectedChange: (Set<BibleReference>) -> Unit = {},
+    onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)? = null,
+    onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)? = null,
+    placeholder: @Composable (BibleTextLoadingPhase) -> Unit = { StandardPlaceholder(it) },
+    onStateChange: (BibleTextLoadingPhase) -> Unit = {},
+    onBlocksChange: (List<BibleTextBlock>) -> Unit = {},
+) {
+    BibleText(
+        reference = reference,
+        textOptions = textOptions,
+        selectedVerses = selectedVerses,
+        onVerseSelectedChange = onVerseSelectedChange,
+        onVerseTap = onVerseTap,
+        onFootnoteTap = onFootnoteTap,
+        placeholder = placeholder,
+        onStateChange = onStateChange,
+        onBlocksChange = onBlocksChange,
+        verseIndicatorStyle = null,
+    )
 }
 
 internal fun BibleReference.Companion.fromAnnotation(annotation: String): BibleReference {
@@ -530,6 +569,10 @@ private fun DrawScope.drawSelectionUnderlines(
  *
  * A block holds a whole paragraph, which is often more than one verse, so a non-null [focusedReference] draws
  * the verses outside it at [unfocusedAlpha] rather than leaving the paragraph lit up whole.
+ *
+ * A verse number [verseIndicatorStyle] gives a style to is drawn as an indicator. When [onVerseIndicatorTap] is set,
+ * each indicator also gets a tap target laid over the text, so a tap on it reaches [onVerseIndicatorTap] rather
+ * than [onClick] even where the target overlaps neighboring text.
  */
 @Composable
 internal fun BibleTextBlock(
@@ -543,6 +586,8 @@ internal fun BibleTextBlock(
     focusedReference: BibleReference? = null,
     unfocusedAlpha: Float = 1f,
     layoutState: BibleTextLayoutState? = null,
+    verseIndicatorStyle: ((BibleReference) -> BibleVerseIndicatorStyle?)? = null,
+    onVerseIndicatorTap: ((BibleReference) -> Unit)? = null,
     onClick: (position: Offset, layoutResult: TextLayoutResult) -> Unit,
 ) {
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
@@ -563,30 +608,50 @@ internal fun BibleTextBlock(
 
     val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
 
+    val (baseText, indicators) =
+        remember(block.text, verseIndicatorStyle) {
+            verseIndicatorStyle?.let { block.text.withVerseIndicators(it) } ?: (block.text to emptyList())
+        }
+
     val selectedRanges =
-        remember(block.text, selectedVerses) {
-            block.text.selectedCharacterRanges(selectedVerses)
+        remember(baseText, selectedVerses) {
+            baseText.selectedCharacterRanges(selectedVerses)
         }
 
     val textColor = textOptions.resolvedTextColor()
 
     val focusedRanges =
-        remember(block.text, focusedReference) {
-            focusedReference?.let { block.text.focusedCharacterRanges(it) }.orEmpty()
+        remember(baseText, focusedReference) {
+            focusedReference?.let { baseText.focusedCharacterRanges(it) }.orEmpty()
         }
 
-    val text =
-        remember(block.text, focusedReference, focusedRanges, unfocusedAlpha, textColor) {
-            if (focusedReference == null) {
-                block.text
-            } else {
-                block.text.dimmedOutside(focusedRanges, textColor.copy(alpha = textColor.alpha * unfocusedAlpha))
+    val isDarkTheme = MaterialTheme.readerColorScheme.isDark
+    val paintedIndicators =
+        remember(indicators, highlights, isDarkTheme, focusedReference, focusedRanges, unfocusedAlpha) {
+            indicators.map { indicator ->
+                val isInFocus =
+                    focusedReference == null ||
+                        focusedRanges.any { it.first <= indicator.range.first && it.last >= indicator.range.last }
+                val highlightColor = highlights.entries.firstOrNull { it.key.overlaps(indicator.reference) }?.value
+                indicator.painted(
+                    alpha = if (isInFocus) 1f else unfocusedAlpha,
+                    isOnDarkHighlight = !isDarkTheme && highlightColor?.isDarkHighlight() == true,
+                )
             }
         }
 
+    val text =
+        remember(baseText, focusedReference, focusedRanges, unfocusedAlpha, textColor, paintedIndicators) {
+            if (focusedReference == null) {
+                baseText
+            } else {
+                baseText.dimmedOutside(focusedRanges, textColor.copy(alpha = textColor.alpha * unfocusedAlpha))
+            }.withIndicatorColors(paintedIndicators)
+        }
+
     val highlightedRanges =
-        remember(block.text, highlights, focusedReference, focusedRanges, unfocusedAlpha) {
-            block.text.highlightedCharacterRanges(highlights).map { (range, color) ->
+        remember(baseText, highlights, focusedReference, focusedRanges, unfocusedAlpha) {
+            baseText.highlightedCharacterRanges(highlights).map { (range, color) ->
                 val isInFocus =
                     focusedReference == null ||
                         focusedRanges.any { it.first <= range.first && it.last >= range.last }
@@ -594,49 +659,63 @@ internal fun BibleTextBlock(
             }
         }
 
-    Text(
-        text = text,
-        textAlign = block.alignment,
-        lineHeight = textOptions.resolvedLineHeight,
-        color = textOptions.textColor ?: Color.Unspecified,
-        style =
-            LocalTextStyle.current.copy(
-                // Swift fakes this with repeated non-breaking spaces (3 per unit, capped at 24)
-                // because AttributedString has no first-line indent; Compose has the real thing,
-                // sized to match at a nbsp's typical width of 0.25em.
-                textIndent =
-                    TextIndent(
-                        firstLine =
-                            textOptions.fontSize * 0.25f *
-                                (block.firstLineHeadIndent * 3).coerceIn(0, 24),
-                    ),
-            ),
-        modifier =
-            Modifier
-                .padding(
-                    start = startPadding,
-                    top = marginTop,
-                    bottom = marginBottom,
-                ).fillMaxWidth()
-                .drawWithContent {
-                    textLayoutResult?.let { drawHighlightBackgrounds(it, highlightedRanges) }
-                    drawContent()
-                    textLayoutResult?.let { drawSelectionUnderlines(it, selectedRanges, selectionColor, 1.dp) }
-                }.pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = { position ->
-                            textLayoutResult?.let { layoutResult ->
-                                onClick(position, layoutResult)
-                            }
-                        },
-                    )
-                },
-        onTextLayout = { result ->
-            textLayoutResult = result
-            layoutState?.place(blockIndex, PlacedBlock(block.text, result, origin))
-        },
-        inlineContent = textOptions.inlineContentMap,
-    )
+    Box(contentAlignment = AbsoluteAlignment.TopLeft) {
+        Text(
+            text = text,
+            textAlign = block.alignment,
+            lineHeight = textOptions.resolvedLineHeight,
+            color = textOptions.textColor ?: Color.Unspecified,
+            style =
+                LocalTextStyle.current.copy(
+                    // Swift fakes this with repeated non-breaking spaces (3 per unit, capped at 24)
+                    // because AttributedString has no first-line indent; Compose has the real thing,
+                    // sized to match at a nbsp's typical width of 0.25em.
+                    textIndent =
+                        TextIndent(
+                            firstLine =
+                                textOptions.fontSize * 0.25f *
+                                    (block.firstLineHeadIndent * 3).coerceIn(0, 24),
+                        ),
+                ),
+            modifier =
+                Modifier
+                    .padding(
+                        start = startPadding,
+                        top = marginTop,
+                        bottom = marginBottom,
+                    ).fillMaxWidth()
+                    .drawWithContent {
+                        textLayoutResult?.let { drawHighlightBackgrounds(it, highlightedRanges) }
+                        textLayoutResult?.let { drawVerseIndicators(it, paintedIndicators) }
+                        drawContent()
+                        textLayoutResult?.let { drawSelectionUnderlines(it, selectedRanges, selectionColor, 1.dp) }
+                    }.pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = { position ->
+                                textLayoutResult?.let { layoutResult ->
+                                    onClick(position, layoutResult)
+                                }
+                            },
+                        )
+                    },
+            onTextLayout = { result ->
+                textLayoutResult = result
+                layoutState?.place(blockIndex, PlacedBlock(block.text, result, origin))
+            },
+            inlineContent = textOptions.inlineContentMap,
+        )
+        val layoutResult = textLayoutResult
+        if (onVerseIndicatorTap != null && layoutResult != null && layoutResult.layoutInput.text.text == text.text) {
+            paintedIndicators.forEach { indicator ->
+                VerseIndicatorTarget(
+                    indicator = indicator,
+                    layoutResult = layoutResult,
+                    origin = origin,
+                    onTap = onVerseIndicatorTap,
+                )
+            }
+        }
+    }
 }
 
 /** Draws one block of Bible text laid out as a table, for the blocks that carry rows rather than a single run. */
