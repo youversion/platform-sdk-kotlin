@@ -48,6 +48,7 @@ import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 @RunWith(RobolectricTestRunner::class)
@@ -213,6 +214,18 @@ class BibleReaderTests {
         }
 
         composeTestRule.onNodeWithText("Host bar").assertIsDisplayed()
+    }
+
+    @Test
+    fun `verse actions sharing an ID are rejected`() {
+        assertFailsWith<IllegalArgumentException> {
+            composeTestRule.setContent {
+                BibleReader(
+                    bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1),
+                    verseActions = listOf(BibleReaderVerseAction.Copy, BibleReaderVerseAction.Copy),
+                )
+            }
+        }
     }
 
     @Test

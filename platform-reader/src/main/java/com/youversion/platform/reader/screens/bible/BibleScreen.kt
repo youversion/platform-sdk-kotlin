@@ -319,7 +319,13 @@ internal fun BibleScreen(
         )
     val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = bottomSheetState)
 
-    val hasVerseActions = verseActions.isNotEmpty()
+    val shownVerseActions =
+        if (showsHighlightColors) {
+            verseActions
+        } else {
+            verseActions.filter { it.kind != BibleReaderVerseAction.Kind.HIGHLIGHT }
+        }
+    val hasVerseActions = shownVerseActions.isNotEmpty()
     val showsVerseActionSheet = state.showVerseActionSheet && hasVerseActions
 
     LaunchedEffect(hasVerseActions) {
@@ -381,7 +387,7 @@ internal fun BibleScreen(
                                 ),
                     )
                     BibleReaderVerseActionSheet(
-                        actions = verseActions,
+                        actions = shownVerseActions,
                         colorsToRemove = colorsToRemove,
                         colorsToAdd = colorsToAdd,
                         showsHighlightColors = showsHighlightColors,

@@ -44,6 +44,7 @@ import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.users.api.UsersApi
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
+import com.youversion.platform.reader.BibleReaderVerseAction
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.sheets.HighlightColor
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
@@ -1228,6 +1229,29 @@ class BibleScreenTest {
 
             composeTestRule.onNodeWithContentDescription("Add yellow highlight").assertDoesNotExist()
             composeTestRule.onNodeWithContentDescription("Copy").assertExists()
+        } finally {
+            cleanUpSignedInConfig()
+        }
+    }
+
+    @Test
+    fun `no sheet opens when highlighting is the only action and the reader cannot sign in`() {
+        showVerseActionSheet()
+        stubConfig(isSignedIn = false, isSignInEnabled = false)
+
+        try {
+            composeTestRule.setContent {
+                BibleScreen(
+                    viewModel = mockViewModel,
+                    verseActions = listOf(BibleReaderVerseAction.Highlight),
+                    onReferencesClick = {},
+                    onVersionsClick = {},
+                    onFontsClick = {},
+                )
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithTag("verse_action_sheet").assertIsNotDisplayed()
         } finally {
             cleanUpSignedInConfig()
         }

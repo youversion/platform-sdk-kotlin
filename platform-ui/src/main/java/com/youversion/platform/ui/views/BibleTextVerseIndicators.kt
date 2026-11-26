@@ -40,22 +40,16 @@ private const val BLUE_LUMA_WEIGHT = 0.114f
 private const val DARK_LUMA_THRESHOLD = 0.5f
 
 /** A rendered verse number that [style] marks as an indicator. [range] covers the characters its marker spans. */
-internal class VerseIndicator(
+internal data class VerseIndicator(
     val reference: BibleReference,
     val range: IntRange,
     val style: BibleVerseIndicatorStyle,
-) {
-    override fun equals(other: Any?): Boolean =
-        other is VerseIndicator && reference == other.reference && range == other.range && style == other.style
-
-    override fun hashCode(): Int = 31 * (31 * reference.hashCode() + range.hashCode()) + style.hashCode()
-
-    override fun toString(): String = "VerseIndicator(reference=$reference, range=$range, style=$style)"
-}
+)
 
 /**
  * The verse numbers in this text that [style] gives a style to, each trimmed to its digits so the marker hugs the
- * number rather than the spaces the renderer places around it.
+ * number rather than the spaces the renderer places around it. A verse that also prints an alternate number is
+ * marked once, on its first number.
  */
 internal fun AnnotatedString.verseIndicators(
     style: (BibleReference) -> BibleVerseIndicatorStyle?,
@@ -72,7 +66,7 @@ internal fun AnnotatedString.verseIndicators(
                     ?.let { BibleReference.fromAnnotation(it.item) }
                     ?: return@mapNotNull null
             style(reference)?.let { VerseIndicator(reference, first..last, it) }
-        }
+        }.distinctBy { it.reference }
 
 /**
  * The text with a non-breaking space added on each side of every verse number in [numbers], as found by

@@ -2752,6 +2752,30 @@ class BibleTextTests {
     }
 
     @Test
+    fun `a verse with an alternate number is marked once, on its own number`() {
+        val text =
+            buildAnnotatedString {
+                listOf("2\u00A0", " 7\u00A0").forEach { label ->
+                    val start = length
+                    append(label)
+                    addStringAnnotation(
+                        BibleTextCategoryAttribute.NAME,
+                        BibleTextCategory.VERSE_LABEL.name,
+                        start,
+                        length,
+                    )
+                }
+                append("Light.")
+                addStringAnnotation(BibleReferenceAttribute.NAME, "1:GEN:1:2", 0, length)
+            }
+
+        val indicators = text.verseIndicators { BibleVerseIndicatorStyle(Color.Blue) }
+
+        assertEquals(listOf(verse(2)), indicators.map { it.reference })
+        assertEquals("2", text.text.substring(indicators.single().range))
+    }
+
+    @Test
     fun `indicators pad their number with a space on each side and keep its verse's annotations`() {
         val text = labeledVerses()
 
