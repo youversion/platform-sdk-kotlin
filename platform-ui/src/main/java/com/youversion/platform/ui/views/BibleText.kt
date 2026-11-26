@@ -70,6 +70,8 @@ import com.youversion.platform.ui.theme.UntitledSerif
 import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
+import com.youversion.platform.ui.views.rendering.BibleTextCategory
+import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
 
 private const val FOOTNOTE_IMAGE_ID = "footnote_image_id"
 
@@ -393,6 +395,34 @@ internal fun AnnotatedString.dimmedOutside(
 }
 
 /**
+ * The text recolored over its highlights as the Swift SDK does. In a light theme a dark highlight turns its verse
+ * white, so it stays readable. Over any other highlight the verse number takes the full [textColor] rather than its
+ * muted color. [highlightedRanges] are the ranges and colors from [highlightedCharacterRanges], before any dimming.
+ */
+internal fun AnnotatedString.withHighlightTextColors(
+    highlightedRanges: List<Pair<IntRange, Color>>,
+    textColor: Color,
+    isDarkTheme: Boolean,
+): AnnotatedString {
+    if (highlightedRanges.isEmpty()) return this
+    val verseLabels =
+        getStringAnnotations(tag = BibleTextCategoryAttribute.NAME, start = 0, end = length)
+            .filter { it.item == BibleTextCategory.VERSE_LABEL.name }
+    return buildAnnotatedString {
+        append(this@withHighlightTextColors)
+        highlightedRanges.forEach { (range, color) ->
+            if (!isDarkTheme && color.isDarkHighlight()) {
+                addStyle(SpanStyle(color = Color.White), range.first, range.last + 1)
+            } else {
+                verseLabels
+                    .filter { it.start >= range.first && it.end <= range.last + 1 }
+                    .forEach { addStyle(SpanStyle(color = textColor), it.start, it.end) }
+            }
+        }
+    }
+}
+
+/**
  * Resolves the cached highlights overlapping [reference] into the colors to draw behind the text,
  * mixing each one into [readerColorScheme] so that a dark reader theme tones them down instead of
  * letting them overwhelm the text they sit behind.
@@ -629,29 +659,41 @@ internal fun BibleTextBlock(
     val paintedIndicators =
         remember(indicators, highlights, isDarkTheme, focusedReference, focusedRanges, unfocusedAlpha) {
             indicators.map { indicator ->
-                val isInFocus =
-                    focusedReference == null ||
-                        focusedRanges.any { it.first <= indicator.range.first && it.last >= indicator.range.last }
                 val highlightColor = highlights.entries.firstOrNull { it.key.overlaps(indicator.reference) }?.value
                 indicator.painted(
-                    alpha = if (isInFocus) 1f else unfocusedAlpha,
+                    isInFocus =
+                        focusedReference == null ||
+                            focusedRanges.any { it.first <= indicator.range.first && it.last >= indicator.range.last },
+                    unfocusedAlpha = unfocusedAlpha,
                     isOnDarkHighlight = !isDarkTheme && highlightColor?.isDarkHighlight() == true,
                 )
             }
         }
 
+    val verseHighlights = remember(baseText, highlights) { baseText.highlightedCharacterRanges(highlights) }
+
     val text =
-        remember(baseText, focusedReference, focusedRanges, unfocusedAlpha, textColor, paintedIndicators) {
+        remember(
+            baseText,
+            verseHighlights,
+            isDarkTheme,
+            focusedReference,
+            focusedRanges,
+            unfocusedAlpha,
+            textColor,
+            paintedIndicators,
+        ) {
+            val highlightedText = baseText.withHighlightTextColors(verseHighlights, textColor, isDarkTheme)
             if (focusedReference == null) {
-                baseText
+                highlightedText
             } else {
-                baseText.dimmedOutside(focusedRanges, textColor.copy(alpha = textColor.alpha * unfocusedAlpha))
+                highlightedText.dimmedOutside(focusedRanges, textColor.copy(alpha = textColor.alpha * unfocusedAlpha))
             }.withIndicatorColors(paintedIndicators)
         }
 
     val highlightedRanges =
-        remember(baseText, highlights, focusedReference, focusedRanges, unfocusedAlpha) {
-            baseText.highlightedCharacterRanges(highlights).map { (range, color) ->
+        remember(verseHighlights, focusedReference, focusedRanges, unfocusedAlpha) {
+            verseHighlights.map { (range, color) ->
                 val isInFocus =
                     focusedReference == null ||
                         focusedRanges.any { it.first <= range.first && it.last >= range.last }
@@ -806,12 +848,14 @@ private fun BibleTableCell(
         remember(cellText, highlights) {
             cellText.highlightedCharacterRanges(highlights)
         }
+    val isDarkTheme = MaterialTheme.readerColorScheme.isDark
     val text =
-        remember(cellText, focusedReference, unfocusedAlpha, textColor) {
+        remember(cellText, highlightedRanges, isDarkTheme, focusedReference, unfocusedAlpha, textColor) {
+            val highlightedText = cellText.withHighlightTextColors(highlightedRanges, textColor, isDarkTheme)
             if (focusedReference == null) {
-                cellText
+                highlightedText
             } else {
-                cellText.dimmedOutside(
+                highlightedText.dimmedOutside(
                     focusedRanges = cellText.focusedCharacterRanges(focusedReference),
                     dimmedColor = textColor.copy(alpha = textColor.alpha * unfocusedAlpha),
                 )

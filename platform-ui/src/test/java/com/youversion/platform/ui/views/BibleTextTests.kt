@@ -2727,13 +2727,59 @@ class BibleTextTests {
         val indicator =
             VerseIndicator(verse(2), 0..2, BibleVerseIndicatorStyle(Color.Blue, foregroundColor = Color.Red))
 
-        val dimmed = indicator.painted(alpha = 0.4f, isOnDarkHighlight = false)
-        val onDark = indicator.painted(alpha = 1f, isOnDarkHighlight = true)
+        val dimmed = indicator.painted(isInFocus = false, unfocusedAlpha = 0.4f, isOnDarkHighlight = true)
+        val onDark = indicator.painted(isInFocus = true, unfocusedAlpha = 0.4f, isOnDarkHighlight = true)
+        val plain = indicator.painted(isInFocus = true, unfocusedAlpha = 0.4f, isOnDarkHighlight = false)
 
         assertEquals(Color.Blue.copy(alpha = 0.4f), dimmed.style.backgroundColor)
-        assertEquals(Color.Red.copy(alpha = 0.4f), dimmed.style.foregroundColor)
+        assertNull(dimmed.style.foregroundColor)
+        assertEquals(Color.Blue, onDark.style.backgroundColor)
         assertEquals(Color.White, onDark.style.foregroundColor)
+        assertEquals(Color.Red, plain.style.foregroundColor)
     }
+
+    @Test
+    fun `a dark highlight in a light theme turns its whole verse white`() {
+        val text = labeledVerses()
+        val verse2 = text.mergedRangeOf(verse(2))
+
+        val recolored =
+            text.withHighlightTextColors(
+                listOf(verse2 to Color(0xFF2B4F8C)),
+                Color.Black,
+                isDarkTheme = false,
+            )
+
+        assertEquals(
+            listOf(AnnotatedString.Range(SpanStyle(color = Color.White), verse2.first, verse2.last + 1)),
+            recolored.spanStyles,
+        )
+    }
+
+    @Test
+    fun `a light highlight, or any highlight in a dark theme, gives only its verse number the full text color`() {
+        val text = labeledVerses()
+        val verse2 = text.mergedRangeOf(verse(2))
+        val number = verse2.first until verse2.first + " 2\u00A0".length
+
+        val light = text.withHighlightTextColors(listOf(verse2 to Color(0xFFFFF3A6)), Color.Black, isDarkTheme = false)
+        val darkTheme =
+            text.withHighlightTextColors(
+                listOf(verse2 to Color(0xFF2B4F8C)),
+                Color.Black,
+                isDarkTheme = true,
+            )
+
+        val expected = listOf(AnnotatedString.Range(SpanStyle(color = Color.Black), number.first, number.last + 1))
+        assertEquals(expected, light.spanStyles)
+        assertEquals(expected, darkTheme.spanStyles)
+    }
+
+    /** The characters [reference] covers in this text, verse number included. */
+    private fun AnnotatedString.mergedRangeOf(reference: BibleReference): IntRange =
+        getStringAnnotations(BibleReferenceAttribute.NAME, 0, length)
+            .single { BibleReference.fromAnnotation(it.item) == reference }
+            .let { it.start until it.end }
 
     @Test
     fun `a highlight is dark when its luma over a white page is below half`() {

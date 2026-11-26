@@ -109,21 +109,29 @@ internal fun AnnotatedString.withVerseIndicators(
 }
 
 /**
- * This indicator as painted: its colors at [alpha], so it fades with the verse it marks, and its number white when
- * it sits on a dark highlight.
+ * This indicator as painted. Outside the focused verse its marker fades to [unfocusedAlpha] and its number keeps the
+ * dimmed text color around it, as in the Swift SDK. Otherwise its number is white on a dark highlight, or its style's
+ * foreground color.
  */
 internal fun VerseIndicator.painted(
-    alpha: Float,
+    isInFocus: Boolean,
+    unfocusedAlpha: Float,
     isOnDarkHighlight: Boolean,
 ): VerseIndicator {
-    val foregroundColor = if (isOnDarkHighlight) Color.White else style.foregroundColor
+    val alpha = if (isInFocus) 1f else unfocusedAlpha
+    val foregroundColor =
+        when {
+            !isInFocus -> null
+            isOnDarkHighlight -> Color.White
+            else -> style.foregroundColor
+        }
     return VerseIndicator(
         reference = reference,
         range = range,
         style =
             BibleVerseIndicatorStyle(
                 backgroundColor = style.backgroundColor.copy(alpha = style.backgroundColor.alpha * alpha),
-                foregroundColor = foregroundColor?.let { it.copy(alpha = it.alpha * alpha) },
+                foregroundColor = foregroundColor,
                 minimumTouchTargetSize = style.minimumTouchTargetSize,
                 contentDescription = style.contentDescription,
             ),
