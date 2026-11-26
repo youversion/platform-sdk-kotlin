@@ -252,9 +252,45 @@ public enum class BibleTextLoadingPhase {
  * changes. It
  * does not fire when a load fails, is not permitted, or is cancelled. The blocks are rebuilt from scratch on every
  * load and carry no stable identity, so replace the previous list wholesale rather than diffing against it.
+ */
+@Composable
+public fun BibleText(
+    reference: BibleReference,
+    textOptions: BibleTextOptions = BibleTextOptions(),
+    selectedVerses: Set<BibleReference> = emptySet(),
+    onVerseSelectedChange: (Set<BibleReference>) -> Unit = {},
+    onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)? = null,
+    onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)? = null,
+    placeholder: @Composable (BibleTextLoadingPhase) -> Unit = { StandardPlaceholder(it) },
+    onStateChange: (BibleTextLoadingPhase) -> Unit = {},
+    onBlocksChange: (List<BibleTextBlock>) -> Unit = {},
+) {
+    BibleTextContent(
+        reference = reference,
+        textOptions = textOptions,
+        selectedVerses = selectedVerses,
+        onVerseSelectedChange = onVerseSelectedChange,
+        onVerseTap = onVerseTap,
+        onFootnoteTap = onFootnoteTap,
+        placeholder = placeholder,
+        onStateChange = onStateChange,
+        onBlocksChange = onBlocksChange,
+        verseIndicatorStyle = null,
+        onVerseIndicatorTap = null,
+    )
+}
+
+/**
+ * Renders the chapter, or the passage within it, named by [reference], marking the verse numbers
+ * [verseIndicatorStyle] gives a style to. Every other parameter behaves as in the [BibleText] overload without it.
+ *
+ * [verseIndicatorStyle] has no default, so a call without it, including one whose trailing lambda is
+ * [onBlocksChange], keeps resolving to that overload.
+ *
  * @param verseIndicatorStyle Returns the style to mark a verse's number with, or null to leave it as it is. A verse
  * number only shows an indicator when [BibleTextOptions.renderVerseNumbers] renders it. Indicators are drawn over
- * highlights. Keep this quick and free of side effects; load what it reads outside this composable.
+ * highlights. It runs during composition, so a Compose state it reads updates the markers when that state changes.
+ * Keep it quick and free of side effects; load what it reads outside this composable.
  * @param onVerseIndicatorTap Callback invoked with the verse when its indicator is tapped. An indicator tap does not
  * reach [onVerseTap], and wins where the indicator's tap target overlaps the text around it.
  */
@@ -269,8 +305,37 @@ public fun BibleText(
     placeholder: @Composable (BibleTextLoadingPhase) -> Unit = { StandardPlaceholder(it) },
     onStateChange: (BibleTextLoadingPhase) -> Unit = {},
     onBlocksChange: (List<BibleTextBlock>) -> Unit = {},
-    verseIndicatorStyle: ((BibleReference) -> BibleVerseIndicatorStyle?)? = null,
+    verseIndicatorStyle: (BibleReference) -> BibleVerseIndicatorStyle?,
     onVerseIndicatorTap: ((BibleReference) -> Unit)? = null,
+) {
+    BibleTextContent(
+        reference = reference,
+        textOptions = textOptions,
+        selectedVerses = selectedVerses,
+        onVerseSelectedChange = onVerseSelectedChange,
+        onVerseTap = onVerseTap,
+        onFootnoteTap = onFootnoteTap,
+        placeholder = placeholder,
+        onStateChange = onStateChange,
+        onBlocksChange = onBlocksChange,
+        verseIndicatorStyle = verseIndicatorStyle,
+        onVerseIndicatorTap = onVerseIndicatorTap,
+    )
+}
+
+@Composable
+private fun BibleTextContent(
+    reference: BibleReference,
+    textOptions: BibleTextOptions,
+    selectedVerses: Set<BibleReference>,
+    onVerseSelectedChange: (Set<BibleReference>) -> Unit,
+    onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)?,
+    onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)?,
+    placeholder: @Composable (BibleTextLoadingPhase) -> Unit,
+    onStateChange: (BibleTextLoadingPhase) -> Unit,
+    onBlocksChange: (List<BibleTextBlock>) -> Unit,
+    verseIndicatorStyle: ((BibleReference) -> BibleVerseIndicatorStyle?)?,
+    onVerseIndicatorTap: ((BibleReference) -> Unit)?,
 ) {
     val blocksState = rememberBibleTextBlocksState(reference = reference, textOptions = textOptions)
 
@@ -305,34 +370,6 @@ public fun BibleText(
             }
         }
     }
-}
-
-/** The signature [BibleText] had before verse indicators, kept so apps built against it still link. */
-@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
-@Composable
-public fun BibleText(
-    reference: BibleReference,
-    textOptions: BibleTextOptions = BibleTextOptions(),
-    selectedVerses: Set<BibleReference> = emptySet(),
-    onVerseSelectedChange: (Set<BibleReference>) -> Unit = {},
-    onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)? = null,
-    onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)? = null,
-    placeholder: @Composable (BibleTextLoadingPhase) -> Unit = { StandardPlaceholder(it) },
-    onStateChange: (BibleTextLoadingPhase) -> Unit = {},
-    onBlocksChange: (List<BibleTextBlock>) -> Unit = {},
-) {
-    BibleText(
-        reference = reference,
-        textOptions = textOptions,
-        selectedVerses = selectedVerses,
-        onVerseSelectedChange = onVerseSelectedChange,
-        onVerseTap = onVerseTap,
-        onFootnoteTap = onFootnoteTap,
-        placeholder = placeholder,
-        onStateChange = onStateChange,
-        onBlocksChange = onBlocksChange,
-        verseIndicatorStyle = null,
-    )
 }
 
 internal fun BibleReference.Companion.fromAnnotation(annotation: String): BibleReference {
@@ -638,10 +675,8 @@ internal fun BibleTextBlock(
 
     val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
 
-    val (baseText, indicators) =
-        remember(block.text, verseIndicatorStyle) {
-            verseIndicatorStyle?.let { block.text.withVerseIndicators(it) } ?: (block.text to emptyList())
-        }
+    val markedNumbers = verseIndicatorStyle?.let { block.text.verseIndicators(it) }.orEmpty()
+    val (baseText, indicators) = remember(block.text, markedNumbers) { block.text.withVerseIndicators(markedNumbers) }
 
     val selectedRanges =
         remember(baseText, selectedVerses) {
@@ -748,13 +783,15 @@ internal fun BibleTextBlock(
         )
         val layoutResult = textLayoutResult
         if (onVerseIndicatorTap != null && layoutResult != null && layoutResult.layoutInput.text.text == text.text) {
-            paintedIndicators.forEach { indicator ->
-                VerseIndicatorTarget(
-                    indicator = indicator,
-                    layoutResult = layoutResult,
-                    origin = origin,
-                    onTap = onVerseIndicatorTap,
-                )
+            Box(modifier = Modifier.matchParentSize()) {
+                paintedIndicators.forEach { indicator ->
+                    VerseIndicatorTarget(
+                        indicator = indicator,
+                        layoutResult = layoutResult,
+                        origin = origin,
+                        onTap = onVerseIndicatorTap,
+                    )
+                }
             }
         }
     }

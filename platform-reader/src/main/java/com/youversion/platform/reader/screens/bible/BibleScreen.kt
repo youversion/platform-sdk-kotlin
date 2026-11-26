@@ -95,11 +95,17 @@ import com.youversion.platform.ui.views.bibleTextBlocks
 import com.youversion.platform.ui.views.rememberBibleTextBlocksState
 import com.youversion.platform.ui.views.rememberBibleTextLayoutState
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 // The chapter header is the one item the list emits ahead of the blocks, so a block's scroll target is its own
 // index plus this.
 private const val CHAPTER_HEADER_ITEM_COUNT = 1
+
+// How long a host's verse action waits for the action sheet to close, so a reader that leaves mid-animation still
+// gets the action rather than losing it.
+private const val VERSE_ACTION_SHEET_CLOSE_TIMEOUT_MILLIS = 1_000L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -388,7 +394,21 @@ internal fun BibleScreen(
                         onCopy = { viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses) },
                         onShare = { viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses) },
                         onCustomAction = {
-                            viewModel.onAction(BibleReaderViewModel.Action.PerformCustomVerseAction(it))
+                            viewModel.onAction(
+                                BibleReaderViewModel.Action.PerformCustomVerseAction(
+                                    verseAction = it,
+                                    awaitSheetClosed = {
+                                        withTimeoutOrNull(VERSE_ACTION_SHEET_CLOSE_TIMEOUT_MILLIS) {
+                                            snapshotFlow {
+                                                bottomSheetState.currentValue to bottomSheetState.targetValue
+                                            }.first { (current, target) ->
+                                                current != SheetValue.Expanded &&
+                                                    current == target
+                                            }
+                                        }
+                                    },
+                                ),
+                            )
                         },
                     )
                 }

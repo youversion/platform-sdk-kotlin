@@ -205,7 +205,7 @@ public final class com/youversion/platform/ui/views/BibleTextFootnoteMode : java
 }
 
 public final class com/youversion/platform/ui/views/BibleTextKt {
-	public static final synthetic fun BibleText (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lcom/youversion/platform/ui/views/BibleTextOptions;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final fun BibleText (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lcom/youversion/platform/ui/views/BibleTextOptions;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
 	public static final fun BibleText (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lcom/youversion/platform/ui/views/BibleTextOptions;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
 }
 

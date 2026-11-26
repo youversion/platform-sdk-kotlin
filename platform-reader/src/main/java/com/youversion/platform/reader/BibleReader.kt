@@ -27,10 +27,13 @@ import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.parameter.parametersOf
 
 /**
- * A complete Bible reader.
+ * A complete Bible reader offering [verseActions] for a verse selection.
  *
  * The sign-in prompt a signed-out reader sees names the host app and shows its reason for asking, both of which come
  * from [YouVersionPlatformConfiguration.appName] and [YouVersionPlatformConfiguration.signInPromptMessage].
+ *
+ * [verseActions] has no default, so a call without it, including one whose trailing lambda is [bottomBar], keeps
+ * resolving to the overload that offers the default actions.
  *
  * @param bibleReference The reference to open. When null, the reader restores the last-read reference.
  * @param fontDefinitionProvider The fonts the host app offers in the reader's font settings.
@@ -44,8 +47,8 @@ import org.koin.core.parameter.parametersOf
 public fun BibleReader(
     bibleReference: BibleReference? = null,
     fontDefinitionProvider: FontDefinitionProvider? = null,
+    verseActions: List<BibleReaderVerseAction>,
     bottomBar: @Composable () -> Unit = {},
-    verseActions: List<BibleReaderVerseAction> = BibleReaderVerseAction.defaults,
 ) {
     require(verseActions.distinctBy { it.id }.size == verseActions.size) { "Verse action IDs must be unique" }
 
@@ -154,8 +157,16 @@ public fun BibleReader(
     }
 }
 
-/** The signature [BibleReader] had before verse actions, kept so apps built against it still link. */
-@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+/**
+ * A complete Bible reader offering the default verse actions, [BibleReaderVerseAction.defaults].
+ *
+ * The sign-in prompt a signed-out reader sees names the host app and shows its reason for asking, both of which come
+ * from [YouVersionPlatformConfiguration.appName] and [YouVersionPlatformConfiguration.signInPromptMessage].
+ *
+ * @param bibleReference The reference to open. When null, the reader restores the last-read reference.
+ * @param fontDefinitionProvider The fonts the host app offers in the reader's font settings.
+ * @param bottomBar The host app's own bottom bar, drawn below the reader.
+ */
 @Composable
 public fun BibleReader(
     bibleReference: BibleReference? = null,

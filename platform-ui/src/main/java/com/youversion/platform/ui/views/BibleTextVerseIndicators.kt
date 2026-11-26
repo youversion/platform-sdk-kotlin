@@ -4,7 +4,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -73,14 +75,14 @@ internal fun AnnotatedString.verseIndicators(
         }
 
 /**
- * The text with a non-breaking space added on each side of every verse number [style] marks, so the marker has room
- * around the number instead of touching the words next to it, paired with those indicators. Each indicator's range
- * spans its number and both added spaces. Annotations and styles stretch over the spaces added inside them.
+ * The text with a non-breaking space added on each side of every verse number in [numbers], as found by
+ * [verseIndicators], so the marker has room around the number instead of touching the words next to it, paired with
+ * those indicators. Each indicator's range spans its number and both added spaces. Annotations and styles stretch
+ * over the spaces added inside them.
  */
 internal fun AnnotatedString.withVerseIndicators(
-    style: (BibleReference) -> BibleVerseIndicatorStyle?,
+    numbers: List<VerseIndicator>,
 ): Pair<AnnotatedString, List<VerseIndicator>> {
-    val numbers = verseIndicators(style)
     if (numbers.isEmpty()) return this to emptyList()
     val insertions = numbers.flatMap { listOf(it.range.first, it.range.last + 1) }.sorted()
 
@@ -203,7 +205,8 @@ internal fun DrawScope.drawVerseIndicators(
 
 /**
  * An invisible tap target centered on [indicator]'s marker and at least its style's minimum size. [origin] is where
- * the text's layout starts inside the box holding both, measured from that box's top left.
+ * the text's layout starts inside the box holding both, measured from that box's top left. The target may reach past
+ * that box, which it never makes larger, so a paragraph shorter than the target keeps its own height.
  */
 @Composable
 internal fun VerseIndicatorTarget(
@@ -228,6 +231,7 @@ internal fun VerseIndicatorTarget(
         modifier =
             Modifier
                 .absoluteOffset { IntOffset(left.roundToInt(), top.roundToInt()) }
+                .wrapContentSize(align = AbsoluteAlignment.TopLeft, unbounded = true)
                 .size(with(density) { width.toDp() }, with(density) { height.toDp() })
                 .testTag("verse_indicator_${indicator.reference.asUSFM}")
                 .clickable(
