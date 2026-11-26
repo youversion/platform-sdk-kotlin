@@ -10,7 +10,8 @@ public interface DataExchangeApi {
      * A signed-in user can grant a permission this way without repeating the whole sign-in, which is what makes it
      * possible to ask for a permission at the moment it is needed.
      *
-     * @param permissions The permissions to ask the signed-in user to grant.
+     * @param permissions The raw values of the permissions to ask the signed-in user to grant, such as
+     *     [com.youversion.platform.core.users.model.YouVersionPermissions.HIGHLIGHTS].
      * @return The token to pass to the permission page.
      * @throws [com.youversion.platform.core.api.YouVersionNetworkException] with reason
      *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.MISSING_AUTHENTICATION] when no
@@ -25,5 +26,18 @@ public interface DataExchangeApi {
      *         otherwise. The exception's `statusCode`, `serverMessage`, `retryAfter` and `validationIssues` carry
      *         the server's details.
      */
-    public suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken
+    public suspend fun dataExchangeToken(permissions: Collection<String>): DataExchangeToken
+
+    /**
+     * Creates a short-lived token authorizing one run of the data exchange permission flow.
+     *
+     * @param permissions The permissions to ask the signed-in user to grant.
+     * @return The token to pass to the permission page.
+     */
+    @Deprecated(
+        "Use dataExchangeToken with raw String permission values instead.",
+        ReplaceWith("dataExchangeToken(permissions.map { it.rawValue })"),
+    )
+    public suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken =
+        dataExchangeToken(permissions.map { it.rawValue })
 }

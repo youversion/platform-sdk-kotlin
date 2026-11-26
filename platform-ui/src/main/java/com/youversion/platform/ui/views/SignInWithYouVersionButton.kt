@@ -42,7 +42,7 @@ import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.icons.YvBibleAppIcon
 import com.youversion.platform.ui.signin.SignInErrorAlert
-import com.youversion.platform.ui.signin.rememberSignIn
+import com.youversion.platform.ui.signin.rememberSignInWithPermissionValues
 import kotlinx.coroutines.launch
 
 public enum class SignInWithYouVersionButtonMode {
@@ -68,8 +68,33 @@ public object SignInWithYouVersionButtonDefaults {
 /**
  * A YouVersion-branded sign-in button that handles the full authentication flow internally.
  *
- * The button uses [rememberSignIn] to launch the sign-in flow when tapped, manages its own
+ * The button uses [rememberSignInWithPermissionValues] to launch the sign-in flow when tapped, manages its own
  * processing state, and displays an error alert on failure.
+ *
+ * @param permissions The raw values of the permissions to request from the user, such as
+ *        [com.youversion.platform.core.users.model.YouVersionPermissions.PROFILE].
+ * @param paddingValues Content padding for the button.
+ * @param shape The button shape.
+ * @param mode The display mode controlling which text is shown.
+ * @param stroked Whether to show a border stroke.
+ * @param dark Whether to use dark-mode colors.
+ * @param onClick Optional click callback. When non-null the built-in auth flow is bypassed.
+ */
+@Composable
+public fun SignInWithYouVersionButton(
+    permissions: Set<String>,
+    paddingValues: PaddingValues = SignInWithYouVersionButtonDefaults.padding,
+    shape: Shape = SignInWithYouVersionButtonDefaults.capsuleShape,
+    mode: SignInWithYouVersionButtonMode = SignInWithYouVersionButtonDefaults.mode,
+    stroked: Boolean = false,
+    dark: Boolean = isSystemInDarkTheme(),
+    onClick: (() -> Unit)? = null,
+) {
+    SignInWithYouVersionButtonContent({ permissions }, paddingValues, shape, mode, stroked, dark, onClick)
+}
+
+/**
+ * A YouVersion-branded sign-in button that handles the full authentication flow internally.
  *
  * @param permissions The set of permissions to request from the user.
  * @param paddingValues Content padding for the button.
@@ -79,6 +104,7 @@ public object SignInWithYouVersionButtonDefaults {
  * @param dark Whether to use dark-mode colors.
  * @param onClick Optional click callback. When non-null the built-in auth flow is bypassed.
  */
+@Deprecated("Use the overload that takes raw String permission values instead.")
 @Composable
 public fun SignInWithYouVersionButton(
     permissions: () -> Set<SignInWithYouVersionPermission>,
@@ -89,8 +115,29 @@ public fun SignInWithYouVersionButton(
     dark: Boolean = isSystemInDarkTheme(),
     onClick: (() -> Unit)? = null,
 ) {
+    SignInWithYouVersionButtonContent(
+        { permissions().map { it.rawValue }.toSet() },
+        paddingValues,
+        shape,
+        mode,
+        stroked,
+        dark,
+        onClick,
+    )
+}
+
+@Composable
+private fun SignInWithYouVersionButtonContent(
+    permissions: () -> Set<String>,
+    paddingValues: PaddingValues,
+    shape: Shape,
+    mode: SignInWithYouVersionButtonMode,
+    stroked: Boolean,
+    dark: Boolean,
+    onClick: (() -> Unit)?,
+) {
     val scope = rememberCoroutineScope()
-    val signIn = rememberSignIn()
+    val signIn = rememberSignInWithPermissionValues()
     var isProcessing by remember { mutableStateOf(false) }
     var showSignInError by rememberSaveable { mutableStateOf(false) }
 

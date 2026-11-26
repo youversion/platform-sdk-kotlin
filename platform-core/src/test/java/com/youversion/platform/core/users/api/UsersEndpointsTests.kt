@@ -3,7 +3,7 @@ package com.youversion.platform.core.users.api
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.users.model.SignInWithYouVersionPKCEParameters
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
@@ -51,7 +51,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
     @Test
     fun `test authorizeUrl builds correct url`() {
         YouVersionPlatformConfiguration.configure(appKey = "test_app_key")
-        val permissions = setOf(SignInWithYouVersionPermission.PROFILE, SignInWithYouVersionPermission.EMAIL)
+        val permissions = setOf(YouVersionPermissions.PROFILE, YouVersionPermissions.EMAIL)
         val pkceParams =
             SignInWithYouVersionPKCEParameters(
                 codeChallenge = "challenge_string",
@@ -97,7 +97,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
         val url =
             UsersEndpoints.authorizeUrl(
                 appKey = "app",
-                permissions = setOf(SignInWithYouVersionPermission.PROFILE),
+                permissions = setOf(YouVersionPermissions.PROFILE),
                 redirectUri = "app://callback",
                 parameters = pkceParams,
             )
@@ -121,17 +121,18 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                 appKey = "app",
                 permissions =
                     setOf(
-                        SignInWithYouVersionPermission.PROFILE,
-                        SignInWithYouVersionPermission.HIGHLIGHTS,
-                        SignInWithYouVersionPermission.READ_NOTES,
-                        SignInWithYouVersionPermission.WRITE_NOTES,
+                        YouVersionPermissions.PROFILE,
+                        YouVersionPermissions.HIGHLIGHTS,
+                        YouVersionPermissions.READ_NOTES,
+                        YouVersionPermissions.WRITE_NOTES,
+                        "saved_verses",
                     ),
                 redirectUri = "app://callback",
                 parameters = pkceParams,
             )
 
         assertEquals("openid profile read_notes write_notes", Url(url).parameters["scope"])
-        assertEquals("highlights", Url(url).parameters["requested_permissions"])
+        assertEquals("highlights,saved_verses", Url(url).parameters["requested_permissions"])
     }
 
     @Test
@@ -148,7 +149,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
         val url =
             UsersEndpoints.authorizeUrl(
                 appKey = "app",
-                permissions = setOf(SignInWithYouVersionPermission.PROFILE),
+                permissions = setOf(YouVersionPermissions.PROFILE),
                 redirectUri = "app://callback",
                 parameters = pkceParams,
             )
@@ -169,7 +170,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
         val url =
             UsersEndpoints.authorizeUrl(
                 appKey = "app",
-                permissions = setOf(SignInWithYouVersionPermission.PROFILE),
+                permissions = setOf(YouVersionPermissions.PROFILE),
                 redirectUri = "app://callback",
                 parameters = pkceParams,
             )
@@ -360,8 +361,8 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                     nonce = TEST_NONCE,
                 )
 
-            assertTrue(result.permissions.contains(SignInWithYouVersionPermission.HIGHLIGHTS))
-            assertTrue(result.permissions.contains(SignInWithYouVersionPermission.PROFILE))
+            assertTrue(result.permissionValues.contains(YouVersionPermissions.HIGHLIGHTS))
+            assertTrue(result.permissionValues.contains(YouVersionPermissions.PROFILE))
         }
 
     @Test
@@ -381,7 +382,10 @@ class UsersEndpointsTests : YouVersionPlatformTest {
 
                         else -> {
                             respondJson(
-                                buildTokenResponseJson(idToken, scope = "openid profile read_notes write_notes"),
+                                buildTokenResponseJson(
+                                    idToken,
+                                    scope = "openid profile read_notes write_notes future_scope",
+                                ),
                             )
                         }
                     }
@@ -401,12 +405,13 @@ class UsersEndpointsTests : YouVersionPlatformTest {
 
             assertEquals(
                 listOf(
-                    SignInWithYouVersionPermission.OPENID,
-                    SignInWithYouVersionPermission.PROFILE,
-                    SignInWithYouVersionPermission.READ_NOTES,
-                    SignInWithYouVersionPermission.WRITE_NOTES,
+                    "future_scope",
+                    YouVersionPermissions.OPENID,
+                    YouVersionPermissions.PROFILE,
+                    YouVersionPermissions.READ_NOTES,
+                    YouVersionPermissions.WRITE_NOTES,
                 ),
-                result.permissions,
+                result.permissionValues,
             )
         }
 
@@ -639,7 +644,7 @@ class UsersEndpointsTests : YouVersionPlatformTest {
                 "Original idToken should be preserved",
             )
             assertTrue(
-                result.permissions.isEmpty(),
+                result.permissionValues.isEmpty(),
                 "Permissions should be empty for a refresh response",
             )
         }

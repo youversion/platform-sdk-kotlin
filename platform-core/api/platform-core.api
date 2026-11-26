@@ -20,6 +20,7 @@ public final class com/youversion/platform/core/Config {
 	public final fun getAuthCallback ()Ljava/lang/String;
 	public final fun getExcludedVersionIds ()Ljava/util/Set;
 	public final fun getExpiryDate ()Ljava/util/Date;
+	public final fun getGrantedPermissionValues ()Ljava/util/Set;
 	public final fun getGrantedPermissions ()Ljava/util/Set;
 	public final fun getHostEnv ()Ljava/lang/String;
 	public final fun getIdToken ()Ljava/lang/String;
@@ -50,6 +51,7 @@ public final class com/youversion/platform/core/YouVersionPlatformConfiguration 
 	public final fun getConfigState ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getExcludedVersionIds ()Ljava/util/Set;
 	public final fun getExpiryDate ()Ljava/util/Date;
+	public final fun getGrantedPermissionValues ()Ljava/util/Set;
 	public final fun getGrantedPermissions ()Ljava/util/Set;
 	public final fun getHostEnv ()Ljava/lang/String;
 	public final fun getIdToken ()Ljava/lang/String;
@@ -62,6 +64,7 @@ public final class com/youversion/platform/core/YouVersionPlatformConfiguration 
 	public final fun isSignedIn ()Z
 	public final fun saveAuthData (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;Z)V
 	public static synthetic fun saveAuthData$default (Lcom/youversion/platform/core/YouVersionPlatformConfiguration;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Date;ZILjava/lang/Object;)V
+	public final fun saveGrantedPermissionValues (Ljava/util/Collection;)V
 	public final fun saveGrantedPermissions (Ljava/util/Collection;)V
 	public final fun setApiHost (Ljava/lang/String;)V
 }
@@ -106,6 +109,7 @@ public final class com/youversion/platform/core/api/YouVersionApi {
 	public final fun getVideos ()Lcom/youversion/platform/core/videos/api/VideosApi;
 	public final fun getVotd ()Lcom/youversion/platform/core/votd/api/VotdApi;
 	public final fun hasPermission (Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;)Z
+	public final fun hasPermission (Ljava/lang/String;)Z
 	public final fun hasValidToken (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun isSignedIn ()Z
 }
@@ -566,11 +570,17 @@ public final class com/youversion/platform/core/bibles/models/BibleVersionIndex$
 }
 
 public abstract interface class com/youversion/platform/core/dataexchange/api/DataExchangeApi {
-	public abstract fun dataExchangeToken (Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun dataExchangeToken (Ljava/util/Collection;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun dataExchangeToken (Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/youversion/platform/core/dataexchange/api/DataExchangeApi$DefaultImpls {
+	public static fun dataExchangeToken (Lcom/youversion/platform/core/dataexchange/api/DataExchangeApi;Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/youversion/platform/core/dataexchange/api/DataExchangeEndpoints : com/youversion/platform/core/dataexchange/api/DataExchangeApi {
 	public static final field INSTANCE Lcom/youversion/platform/core/dataexchange/api/DataExchangeEndpoints;
+	public fun dataExchangeToken (Ljava/util/Collection;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun dataExchangeToken (Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun dataExchangeUrl (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 }
@@ -1038,8 +1048,6 @@ public final class com/youversion/platform/core/users/model/SignInWithYouVersion
 	public static final field HIGHLIGHTS Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
 	public static final field OPENID Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
 	public static final field PROFILE Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
-	public static final field READ_NOTES Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
-	public static final field WRITE_NOTES Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun getRawValue ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lcom/youversion/platform/core/users/model/SignInWithYouVersionPermission;
@@ -1058,6 +1066,7 @@ public final class com/youversion/platform/core/users/model/SignInWithYouVersion
 	public final fun getExpiryDate ()Ljava/util/Date;
 	public final fun getIdToken ()Ljava/lang/String;
 	public final fun getName ()Ljava/lang/String;
+	public final fun getPermissionValues ()Ljava/util/List;
 	public final fun getPermissions ()Ljava/util/List;
 	public final fun getProfilePicture ()Ljava/lang/String;
 	public final fun getRefreshToken ()Ljava/lang/String;
@@ -1067,6 +1076,16 @@ public final class com/youversion/platform/core/users/model/SignInWithYouVersion
 }
 
 public final class com/youversion/platform/core/users/model/SignInWithYouVersionResult$Companion {
+}
+
+public final class com/youversion/platform/core/users/model/YouVersionPermissions {
+	public static final field EMAIL Ljava/lang/String;
+	public static final field HIGHLIGHTS Ljava/lang/String;
+	public static final field INSTANCE Lcom/youversion/platform/core/users/model/YouVersionPermissions;
+	public static final field OPENID Ljava/lang/String;
+	public static final field PROFILE Ljava/lang/String;
+	public static final field READ_NOTES Ljava/lang/String;
+	public static final field WRITE_NOTES Ljava/lang/String;
 }
 
 public final class com/youversion/platform/core/users/model/YouVersionUserInfo {

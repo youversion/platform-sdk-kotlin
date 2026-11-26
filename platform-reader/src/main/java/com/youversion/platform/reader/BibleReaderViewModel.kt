@@ -15,7 +15,7 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.languages.domain.LanguageRepository
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.HighlightRequest
@@ -48,7 +48,7 @@ internal class BibleReaderViewModel(
     private val shareManager: ShareManager,
     private val isSignedIn: () -> Boolean = { YouVersionApi.isSignedIn },
     private val hasHighlightsPermission: () -> Boolean = {
-        YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS)
+        YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS)
     },
 ) : ViewModel() {
     /**

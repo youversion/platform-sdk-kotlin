@@ -7,7 +7,6 @@ import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.failureException
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.dataexchange.models.DataExchangeToken
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -58,7 +57,7 @@ public object DataExchangeEndpoints : DataExchangeApi {
         }
 
     // ----- Data Exchange API
-    override suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken {
+    override suspend fun dataExchangeToken(permissions: Collection<String>): DataExchangeToken {
         if (YouVersionPlatformConfiguration.accessToken == null) {
             throw YouVersionNetworkException(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION)
         }
@@ -90,10 +89,10 @@ public object DataExchangeEndpoints : DataExchangeApi {
         return response.body()
     }
 
-    private fun tokenRequestBody(permissions: Set<SignInWithYouVersionPermission>): JsonObject =
+    private fun tokenRequestBody(permissions: Collection<String>): JsonObject =
         buildJsonObject {
             putJsonArray("requested_permissions") {
-                permissions.map { it.rawValue }.sorted().forEach { add(it) }
+                permissions.distinct().sorted().forEach { add(it) }
             }
         }
 }

@@ -22,7 +22,7 @@ import kotlin.coroutines.resume
  *
  * Asking this way lets a signed-in user grant a permission without repeating the whole sign-in, so a permission can
  * be requested at the moment it is needed. Mirrors [com.youversion.platform.ui.signin.SignInHandler], and can be
- * used from Compose (via [rememberDataExchange]) or any other Android context with an [ActivityResultRegistry].
+ * used from Compose (via [rememberDataExchangeWithPermissionValues]) or any other Android context with an [ActivityResultRegistry].
  *
  * @param activityResultRegistry The registry used to register for the callback.
  */
@@ -36,7 +36,8 @@ public class DataExchangeHandler(
      * activity resumes, and so before this returns — meaning a later [YouVersionApi.hasPermission] reflects them
      * without the caller doing anything.
      *
-     * @param permissions The permissions to ask for.
+     * @param permissions The raw values of the permissions to ask for, such as
+     *        [com.youversion.platform.core.users.model.YouVersionPermissions.HIGHLIGHTS].
      * @param onBrowserOpened Called once the browser is open, and never called when it could not be opened. A caller
      *        that settles the flow on a resume needs this to tell a resume that follows the browser from one that
      *        arrives while the exchange token is still being requested, since only the first means the user answered.
@@ -45,8 +46,9 @@ public class DataExchangeHandler(
      *         [DataExchangeStatus.NotStarted] — telling a caller that settles the flow on a resume that no resume is
      *         coming.
      */
+    @JvmName("requestDataExchangeWithPermissionValues")
     public suspend fun requestDataExchange(
-        permissions: Set<SignInWithYouVersionPermission>,
+        permissions: Set<String>,
         onBrowserOpened: () -> Unit = {},
     ): DataExchangeResult =
         try {
@@ -55,11 +57,27 @@ public class DataExchangeHandler(
             throw cancellation
         } catch (error: Exception) {
             Log.w("YouVersionDataExchange", "Data exchange flow could not be started", error)
-            DataExchangeResult(status = DataExchangeStatus.NotStarted, grantedPermissions = emptyList())
+            DataExchangeResult(status = DataExchangeStatus.NotStarted, grantedPermissionValues = emptyList())
         }
 
-    private suspend fun exchange(
+    /**
+     * Asks the signed-in user to grant [permissions] and suspends until they finish or back out.
+     *
+     * @param permissions The permissions to ask for.
+     * @param onBrowserOpened Called once the browser is open, and never called when it could not be opened.
+     * @return How the flow ended, and which permissions were granted.
+     */
+    @Deprecated(
+        "Use requestDataExchange with raw String permission values instead.",
+        ReplaceWith("requestDataExchange(permissions.map { it.rawValue }.toSet(), onBrowserOpened)"),
+    )
+    public suspend fun requestDataExchange(
         permissions: Set<SignInWithYouVersionPermission>,
+        onBrowserOpened: () -> Unit = {},
+    ): DataExchangeResult = requestDataExchange(permissions.map { it.rawValue }.toSet(), onBrowserOpened)
+
+    private suspend fun exchange(
+        permissions: Set<String>,
         onBrowserOpened: () -> Unit,
     ): DataExchangeResult {
         val token = YouVersionApi.dataExchange.dataExchangeToken(permissions)
@@ -110,7 +128,7 @@ public class DataExchangeHandler(
     }
 
     private fun cancelledResult() =
-        DataExchangeResult(status = DataExchangeStatus.Cancelled, grantedPermissions = emptyList())
+        DataExchangeResult(status = DataExchangeStatus.Cancelled, grantedPermissionValues = emptyList())
 
     internal companion object {
         /**
@@ -124,9 +142,9 @@ public class DataExchangeHandler(
          * activity result dispatch or from onNewIntent would crash the host app.
          */
         fun persistGrantedPermissions(result: DataExchangeResult) {
-            if (!result.isGranted || result.grantedPermissions.isEmpty()) return
+            if (!result.isGranted || result.grantedPermissionValues.isEmpty()) return
             try {
-                if (!YouVersionPlatformConfiguration.completePermissionGrant(result.grantedPermissions)) {
+                if (!YouVersionPlatformConfiguration.completePermissionGrant(result.grantedPermissionValues)) {
                     Log.w("YouVersionDataExchange", "Ignoring permissions granted by a user who is no longer signed in")
                 }
             } catch (error: Exception) {

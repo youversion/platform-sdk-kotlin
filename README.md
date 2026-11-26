@@ -372,10 +372,14 @@ class MainActivity : SignInWithYouVersionActivity() {
 
 Use the `SignInWithYouVersionButton` composable in your UI. You can use the `SignInViewModel` to check if the user is already signed in and conditionally display the button.
 
-- `SignInWithYouVersionPermission.PROFILE`: To access the user's name and profile picture.
-- `SignInWithYouVersionPermission.EMAIL`: To access the user's email address.
-- `SignInWithYouVersionPermission.HIGHLIGHTS`: To read and write the user's Bible highlights. See [Highlights](#highlights).
-- `SignInWithYouVersionPermission.READ_NOTES` and `WRITE_NOTES`: To read and to change the user's notes. See [Notes API](#notes-api).
+Permissions are raw string values. `YouVersionPermissions` names the ones this SDK version knows, and any other value the YouVersion platform accepts can be passed as a string:
+
+- `YouVersionPermissions.PROFILE`: To access the user's name and profile picture.
+- `YouVersionPermissions.EMAIL`: To access the user's email address.
+- `YouVersionPermissions.HIGHLIGHTS`: To read and write the user's Bible highlights. See [Highlights](#highlights).
+- `YouVersionPermissions.READ_NOTES` and `WRITE_NOTES`: To read and to change the user's notes. See [Notes API](#notes-api).
+
+The `SignInWithYouVersionPermission` enum is deprecated and no longer gains new values; use the string APIs instead.
 
 ```kotlin
 // ProfileScreen.kt
@@ -383,7 +387,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.ui.signin.SignInViewModel
 import com.youversion.platform.ui.views.SignInWithYouVersionButton
 
@@ -403,12 +407,7 @@ fun ProfileScreen() {
         }
     } else {
         SignInWithYouVersionButton(
-            permissions = {
-                setOf(
-                    SignInWithYouVersionPermission.PROFILE,
-                    SignInWithYouVersionPermission.EMAIL
-                )
-            }
+            permissions = setOf(YouVersionPermissions.PROFILE, YouVersionPermissions.EMAIL),
         )
     }
 }
@@ -424,7 +423,7 @@ Highlights belong to the user's YouVersion account, so a highlight created in yo
 
 #### Highlight Permissions
 
-Reading and writing highlights requires the user to be signed in **and** to have granted `SignInWithYouVersionPermission.HIGHLIGHTS`. `BibleReader` asks for it at the moment it is needed, taking one of two routes:
+Reading and writing highlights requires the user to be signed in **and** to have granted `YouVersionPermissions.HIGHLIGHTS`. `BibleReader` asks for it at the moment it is needed, taking one of two routes:
 
 - A **signed-out** user is offered sign-in, with the highlights permission included in the requested permissions. The grant rides along with the sign-in.
 - A **signed-in** user who has not granted it yet is shown a confirmation dialog and then the YouVersion permission page. This is the data exchange flow, and it exists so the user does not have to sign in again just to grant one more permission.
@@ -434,27 +433,27 @@ Both routes return through the same `youversionauth://callback` deep link used b
 To check whether the permission has been granted:
 
 ```kotlin
-val hasHighlightsPermission = YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS)
+val hasHighlightsPermission = YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS)
 ```
 
 #### Requesting the Permission Yourself
 
-Apps that need to start the same permission flow themselves can do it from Compose with `rememberDataExchange`:
+Apps that need to start the same permission flow themselves can do it from Compose with `rememberDataExchangeWithPermissionValues`:
 
 ```kotlin
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
-import com.youversion.platform.ui.dataexchange.rememberDataExchange
+import com.youversion.platform.core.users.model.YouVersionPermissions
+import com.youversion.platform.ui.dataexchange.rememberDataExchangeWithPermissionValues
 
 @Composable
 fun AllowHighlightsButton() {
-    val requestDataExchange = rememberDataExchange()
+    val requestDataExchange = rememberDataExchangeWithPermissionValues()
     val coroutineScope = rememberCoroutineScope()
 
     Button(
         onClick = {
             coroutineScope.launch {
-                val result = requestDataExchange(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
-                if (result?.grants(SignInWithYouVersionPermission.HIGHLIGHTS) == true) {
+                val result = requestDataExchange(setOf(YouVersionPermissions.HIGHLIGHTS))
+                if (result?.grants(YouVersionPermissions.HIGHLIGHTS) == true) {
                     // The grant is already persisted; highlights load on the next read.
                 }
             }
@@ -467,7 +466,7 @@ fun AllowHighlightsButton() {
 
 Outside Compose, use `DataExchangeHandler(activityResultRegistry).requestDataExchange(...)` directly. Either way the granted permission is persisted for you before the call returns, so a later `YouVersionApi.hasPermission(...)` reflects it without any extra work.
 
-> **Note**: Data exchange only works for a user who is **already signed in** — it mints its token from the existing access token. For a signed-out user nothing is presented at all (the result is `DataExchangeStatus.NotStarted`); request `SignInWithYouVersionPermission.HIGHLIGHTS` as part of sign-in instead. `rememberDataExchange` and `DataExchangeHandler` live in `platform-ui`.
+> **Note**: Data exchange only works for a user who is **already signed in** — it mints its token from the existing access token. For a signed-out user nothing is presented at all (the result is `DataExchangeStatus.NotStarted`); request `YouVersionPermissions.HIGHLIGHTS` as part of sign-in instead. `rememberDataExchangeWithPermissionValues` and `DataExchangeHandler` live in `platform-ui`.
 
 #### Highlights API
 
@@ -717,17 +716,16 @@ The signed-in user's notes are available through `YouVersionApi.notes`, which is
 
 #### Notes Permissions
 
-Reading notes needs `SignInWithYouVersionPermission.READ_NOTES`, and creating, updating, and deleting them need `WRITE_NOTES`. Both are OAuth scopes, so request them when the user signs in; existing sign-ins do not gain them, and the data exchange flow does not grant them.
+Reading notes needs `YouVersionPermissions.READ_NOTES`, and creating, updating, and deleting them need `WRITE_NOTES`. Both are OAuth scopes, so request them when the user signs in; existing sign-ins do not gain them, and the data exchange flow does not grant them.
 
 ```kotlin
 SignInWithYouVersionButton(
-    permissions = {
+    permissions =
         setOf(
-            SignInWithYouVersionPermission.PROFILE,
-            SignInWithYouVersionPermission.READ_NOTES,
-            SignInWithYouVersionPermission.WRITE_NOTES,
-        )
-    }
+            YouVersionPermissions.PROFILE,
+            YouVersionPermissions.READ_NOTES,
+            YouVersionPermissions.WRITE_NOTES,
+        ),
 )
 ```
 

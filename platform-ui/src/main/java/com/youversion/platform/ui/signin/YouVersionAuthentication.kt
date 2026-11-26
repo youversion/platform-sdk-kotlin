@@ -9,7 +9,6 @@ import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.users.model.SignInWithYouVersionPKCEAuthorizationRequest
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.users.model.SignInWithYouVersionResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -28,7 +27,7 @@ internal object YouVersionAuthentication {
     fun signIn(
         context: Context,
         launcher: ActivityResultLauncher<Intent>,
-        permissions: Set<SignInWithYouVersionPermission>,
+        permissions: Set<String>,
     ) {
         val appKey =
             YouVersionPlatformConfiguration.appKey
@@ -101,7 +100,7 @@ internal object YouVersionAuthentication {
                 idToken = result.idToken,
                 expiryDate = result.expiryDate,
             )
-            YouVersionPlatformConfiguration.saveGrantedPermissions(result.permissions)
+            YouVersionPlatformConfiguration.saveGrantedPermissions(result.permissionValues)
             result
         }
     }

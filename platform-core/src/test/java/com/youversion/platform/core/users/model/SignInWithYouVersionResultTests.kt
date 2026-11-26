@@ -11,7 +11,7 @@ class SignInWithYouVersionResultTests {
         expiryDate: Date? = Date(1000L),
         refreshToken: String? = "refresh",
         idToken: String? = "idToken",
-        permissions: List<SignInWithYouVersionPermission> = listOf(SignInWithYouVersionPermission.EMAIL),
+        permissionValues: List<String> = listOf(YouVersionPermissions.EMAIL),
         yvpUserId: String? = "user",
         name: String? = "name",
         profilePicture: String? = "picture",
@@ -21,7 +21,7 @@ class SignInWithYouVersionResultTests {
         expiryDate = expiryDate,
         refreshToken = refreshToken,
         idToken = idToken,
-        permissions = permissions,
+        permissionValues = permissionValues,
         yvpUserId = yvpUserId,
         name = name,
         profilePicture = profilePicture,
@@ -41,7 +41,7 @@ class SignInWithYouVersionResultTests {
             result(expiryDate = null),
             result(refreshToken = null),
             result(idToken = null),
-            result(permissions = emptyList()),
+            result(permissionValues = emptyList()),
             result(yvpUserId = null),
             result(name = null),
             result(profilePicture = null),
@@ -57,7 +57,7 @@ class SignInWithYouVersionResultTests {
         assertEquals(
             "SignInWithYouVersionResult(accessToken=<redacted>, expiryDate=${Date(1000L)}, " +
                 "refreshToken=<redacted>, idToken=<redacted>, " +
-                "permissions=[${SignInWithYouVersionPermission.EMAIL}], yvpUserId=user, name=name, " +
+                "permissionValues=[${YouVersionPermissions.EMAIL}], yvpUserId=user, name=name, " +
                 "profilePicture=picture, email=<redacted>)",
             result().toString(),
         )

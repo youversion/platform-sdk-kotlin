@@ -3,7 +3,7 @@ package com.youversion.platform.core.dataexchange.api
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.api.YouVersionNetworkException
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.respondJson
 import com.youversion.platform.helpers.startYouVersionPlatformTest
@@ -51,7 +51,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
 
             val token =
                 YouVersionApi.dataExchange.dataExchangeToken(
-                    setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                    setOf(YouVersionPermissions.HIGHLIGHTS),
                 )
 
             assertEquals("short-lived", token.token)
@@ -68,7 +68,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
             val exception =
                 assertFailsWith<YouVersionNetworkException> {
                     YouVersionApi.dataExchange.dataExchangeToken(
-                        setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                        setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
                 }
             assertEquals(YouVersionNetworkException.Reason.NOT_PERMITTED, exception.reason)
@@ -85,7 +85,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
             val exception =
                 assertFailsWith<YouVersionNetworkException> {
                     YouVersionApi.dataExchange.dataExchangeToken(
-                        setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                        setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
                 }
             assertEquals(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION, exception.reason)
@@ -104,7 +104,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
             val exception =
                 assertFailsWith<YouVersionNetworkException> {
                     YouVersionApi.dataExchange.dataExchangeToken(
-                        setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                        setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
                 }
             assertEquals(YouVersionNetworkException.Reason.SERVER_ERROR, exception.reason)
@@ -123,7 +123,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
             val exception =
                 assertFailsWith<YouVersionNetworkException> {
                     YouVersionApi.dataExchange.dataExchangeToken(
-                        setOf(SignInWithYouVersionPermission.HIGHLIGHTS),
+                        setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
                 }
             assertEquals(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION, exception.reason)

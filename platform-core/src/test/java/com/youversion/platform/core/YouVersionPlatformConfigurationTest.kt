@@ -4,6 +4,7 @@ import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.domain.Storage
 import com.youversion.platform.core.users.domain.SessionRepository
 import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.core.utilities.exceptions.YouVersionNotConfiguredException
 import com.youversion.platform.helpers.YouVersionPlatformTest
 import com.youversion.platform.helpers.startYouVersionPlatformTest
@@ -353,7 +354,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 isSignInEnabled = false,
             )
             configureSignIn(appName = "Sample App", signInPromptMessage = "Keep your highlights")
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
             val before = assertNotNull(configState.value).toString()
 
             setApiHost(apiHost = "new.example.com")
@@ -467,12 +468,12 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     }
 
     @Test
-    fun `grantedPermissions is empty when nothing has been granted`() {
+    fun `grantedPermissionValues is empty when nothing has been granted`() {
         with(YouVersionPlatformConfiguration) {
             configure(appKey = "appKey")
 
-            assertEquals(emptySet(), grantedPermissions)
-            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertEquals(emptySet(), grantedPermissionValues)
+            assertFalse(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -480,11 +481,11 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     fun `granted permissions survive a relaunch`() {
         with(YouVersionPlatformConfiguration) {
             configure(appKey = "appKey")
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             configure(appKey = "appKey")
 
-            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertTrue(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -493,11 +494,11 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
         with(YouVersionPlatformConfiguration) {
             configure(appKey = "appKey")
 
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.PROFILE))
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            saveGrantedPermissions(setOf(YouVersionPermissions.PROFILE))
+            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
 
-            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.PROFILE))
-            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertTrue(YouVersionApi.hasPermission(YouVersionPermissions.PROFILE))
+            assertTrue(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -511,12 +512,12 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             // A host managing its own tokens reconfigures as another user.
             configure(appKey = "appKey", accessToken = "userBAccessToken")
 
-            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertFalse(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
             // Mixing in user A's tokens would report user A while requests carried user B's.
             assertEquals("userBAccessToken", accessToken)
             assertNull(refreshToken)
@@ -534,11 +535,11 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             configure(appKey = "appKey", accessToken = "userAAccessToken")
 
-            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertTrue(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
             assertEquals("userARefreshToken", refreshToken)
         }
     }
@@ -553,7 +554,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             // A host managing its own tokens refreshed out of band. Its refresh token names the stored session even
             // though it passes no ID token to name the account with.
@@ -563,7 +564,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 refreshToken = "userARefreshToken",
             )
 
-            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertTrue(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
             assertEquals("userARefreshedAccessToken", accessToken)
             assertEquals(idTokenFor("userA"), idToken)
         }
@@ -579,7 +580,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             // The account the ID token names is what has to match, not the token itself, so a reissued one for the
             // same account is still that account.
@@ -589,7 +590,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA", nonce = "reissued"),
             )
 
-            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertTrue(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
             assertEquals("userARefreshToken", refreshToken)
         }
     }
@@ -604,7 +605,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             configure(appKey = "appKey", accessToken = "userBAccessToken")
             // The same session the reconfiguration established, so this keeps whatever permissions storage holds.
@@ -615,7 +616,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 expiryDate = Date(),
             )
 
-            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertFalse(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -629,7 +630,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             saveAuthData(
                 accessToken = "refreshedToken",
@@ -638,10 +639,10 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 expiryDate = Date(),
             )
 
-            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertTrue(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
 
             configure(appKey = "appKey")
-            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertTrue(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -655,7 +656,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             saveAuthData(
                 accessToken = "userBAccessToken",
@@ -664,11 +665,11 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 expiryDate = Date(),
             )
 
-            assertEquals(emptySet(), grantedPermissions)
-            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertEquals(emptySet(), grantedPermissionValues)
+            assertFalse(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
 
             configure(appKey = "appKey")
-            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertFalse(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -681,7 +682,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 refreshToken = "refreshToken",
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             saveAuthData(
                 accessToken = "userBAccessToken",
@@ -690,7 +691,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 expiryDate = Date(),
             )
 
-            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertFalse(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -703,7 +704,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 refreshToken = "refreshToken",
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             saveAuthData(
                 accessToken = "refreshedAccessToken",
@@ -712,7 +713,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 expiryDate = Date(),
             )
 
-            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertTrue(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -720,15 +721,15 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     fun `clearAuthData clears granted permissions`() {
         with(YouVersionPlatformConfiguration) {
             configure(appKey = "appKey")
-            saveGrantedPermissions(setOf(SignInWithYouVersionPermission.HIGHLIGHTS))
+            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             clearAuthData()
 
-            assertEquals(emptySet(), grantedPermissions)
-            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertEquals(emptySet(), grantedPermissionValues)
+            assertFalse(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
 
             configure(appKey = "appKey")
-            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertFalse(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -738,8 +739,8 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             configureAsUser("userA")
             beginPermissionGrant()
 
-            assertTrue(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
-            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertTrue(completePermissionGrant(listOf(YouVersionPermissions.HIGHLIGHTS)))
+            assertTrue(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -756,8 +757,8 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 expiryDate = Date(),
             )
 
-            assertFalse(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
-            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertFalse(completePermissionGrant(listOf(YouVersionPermissions.HIGHLIGHTS)))
+            assertFalse(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -772,8 +773,8 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             reset()
             configure(appKey = "appKey")
 
-            assertTrue(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
-            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertTrue(completePermissionGrant(listOf(YouVersionPermissions.HIGHLIGHTS)))
+            assertTrue(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -786,8 +787,8 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             reset()
             configureAsUser("userB")
 
-            assertFalse(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
-            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertFalse(completePermissionGrant(listOf(YouVersionPermissions.HIGHLIGHTS)))
+            assertFalse(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -796,8 +797,8 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
         with(YouVersionPlatformConfiguration) {
             configureAsUser("userA")
 
-            assertFalse(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
-            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertFalse(completePermissionGrant(listOf(YouVersionPermissions.HIGHLIGHTS)))
+            assertFalse(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -809,8 +810,8 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
             configure(appKey = "appKey")
             beginPermissionGrant()
 
-            assertFalse(completePermissionGrant(listOf(SignInWithYouVersionPermission.HIGHLIGHTS)))
-            assertFalse(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
+            assertFalse(completePermissionGrant(listOf(YouVersionPermissions.HIGHLIGHTS)))
+            assertFalse(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
         }
     }
 
@@ -841,14 +842,16 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     }
 
     @Test
-    fun `an unrecognized stored permission is reported as not granted`() {
+    @Suppress("DEPRECATION")
+    fun `a stored permission the SDK does not name is kept as granted`() {
         storage.putString(SessionRepository.KEY_GRANTED_PERMISSIONS, "highlights,notes")
 
         with(YouVersionPlatformConfiguration) {
             configure(appKey = "appKey")
 
+            assertEquals(setOf(YouVersionPermissions.HIGHLIGHTS, "notes"), grantedPermissionValues)
+            assertTrue(YouVersionApi.hasPermission("notes"))
             assertEquals(setOf(SignInWithYouVersionPermission.HIGHLIGHTS), grantedPermissions)
-            assertTrue(YouVersionApi.hasPermission(SignInWithYouVersionPermission.HIGHLIGHTS))
         }
     }
 

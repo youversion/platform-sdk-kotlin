@@ -10,9 +10,9 @@ import com.youversion.platform.core.notes.models.NoteUpdate
  * The signed-in user's notes.
  *
  * Every call needs a valid `YouVersionPlatformConfiguration.appKey` and a signed-in user. Reading needs the user to
- * have granted [READ_NOTES][com.youversion.platform.core.users.model.SignInWithYouVersionPermission.READ_NOTES], and
+ * have granted [READ_NOTES][com.youversion.platform.core.users.model.YouVersionPermissions.READ_NOTES], and
  * creating, updating and deleting need
- * [WRITE_NOTES][com.youversion.platform.core.users.model.SignInWithYouVersionPermission.WRITE_NOTES]. Request both
+ * [WRITE_NOTES][com.youversion.platform.core.users.model.YouVersionPermissions.WRITE_NOTES]. Request both
  * when signing in. Call `YouVersionApi.hasValidToken()` first to refresh an access token that is about to expire.
  *
  * Every call throws [com.youversion.platform.core.api.YouVersionNetworkException] with reason

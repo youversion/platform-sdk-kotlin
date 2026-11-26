@@ -31,7 +31,7 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.di.PlatformKoinGraph
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.core.utilities.exceptions.BibleVersionApiException
 import com.youversion.platform.ui.theme.readerColorScheme
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
@@ -123,7 +123,7 @@ public fun rememberBibleTextBlocksState(
     // server to fetch and the request would only come back unauthorized or refused, so it is not made at all.
     val hasHighlightsAccess =
         isSignedIn &&
-            configState?.grantedPermissions?.contains(SignInWithYouVersionPermission.HIGHLIGHTS) == true
+            configState?.grantedPermissionValues?.contains(YouVersionPermissions.HIGHLIGHTS) == true
 
     LaunchedEffect(reference) {
         if (hasHighlightsAccess) {

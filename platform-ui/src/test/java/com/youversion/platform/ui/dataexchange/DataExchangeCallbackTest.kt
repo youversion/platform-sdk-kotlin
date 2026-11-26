@@ -1,7 +1,7 @@
 package com.youversion.platform.ui.dataexchange
 
 import androidx.core.net.toUri
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -20,7 +20,7 @@ class DataExchangeCallbackTest {
             )
 
         assertTrue(result.isGranted)
-        assertEquals(listOf(SignInWithYouVersionPermission.HIGHLIGHTS), result.grantedPermissions)
+        assertEquals(listOf(YouVersionPermissions.HIGHLIGHTS), result.grantedPermissionValues)
     }
 
     @Test
@@ -35,15 +35,15 @@ class DataExchangeCallbackTest {
 
         assertEquals(
             listOf(
-                SignInWithYouVersionPermission.HIGHLIGHTS,
-                SignInWithYouVersionPermission.PROFILE,
+                YouVersionPermissions.HIGHLIGHTS,
+                YouVersionPermissions.PROFILE,
             ),
-            result.grantedPermissions,
+            result.grantedPermissionValues,
         )
     }
 
     @Test
-    fun `ignores a granted permission this version does not recognize`() {
+    fun `keeps a granted permission this version does not name`() {
         val result =
             dataExchangeResult(
                 (
@@ -52,7 +52,8 @@ class DataExchangeCallbackTest {
                 ).toUri(),
             )
 
-        assertEquals(listOf(SignInWithYouVersionPermission.HIGHLIGHTS), result.grantedPermissions)
+        assertEquals(listOf(YouVersionPermissions.HIGHLIGHTS, "notes"), result.grantedPermissionValues)
+        assertTrue(result.grants("notes"))
     }
 
     @Test
@@ -88,13 +89,13 @@ class DataExchangeCallbackTest {
             )
 
         assertTrue(result.isGranted)
-        assertFalse(result.grantedPermissions.contains(SignInWithYouVersionPermission.HIGHLIGHTS))
+        assertFalse(result.grantedPermissionValues.contains(YouVersionPermissions.HIGHLIGHTS))
     }
 
     @Test
     fun `only a highlights grant reports grants of highlights`() {
         fun grantsHighlights(callback: String) =
-            dataExchangeResult(callback.toUri()).grants(SignInWithYouVersionPermission.HIGHLIGHTS)
+            dataExchangeResult(callback.toUri()).grants(YouVersionPermissions.HIGHLIGHTS)
 
         // The one outcome the reader acts on.
         assertTrue(
@@ -112,7 +113,7 @@ class DataExchangeCallbackTest {
 
     @Test
     fun `results with equal values are equal`() {
-        val permissions = listOf(SignInWithYouVersionPermission.HIGHLIGHTS)
+        val permissions = listOf(YouVersionPermissions.HIGHLIGHTS)
         val first = DataExchangeResult(DataExchangeStatus.Granted, permissions)
         val second = DataExchangeResult(DataExchangeStatus.Granted, permissions)
         assertEquals(first, second)
@@ -121,16 +122,16 @@ class DataExchangeCallbackTest {
 
     @Test
     fun `results differing in any value are not equal`() {
-        val base = DataExchangeResult(DataExchangeStatus.Granted, listOf(SignInWithYouVersionPermission.HIGHLIGHTS))
-        assertNotEquals(base, DataExchangeResult(DataExchangeStatus.Cancelled, base.grantedPermissions))
+        val base = DataExchangeResult(DataExchangeStatus.Granted, listOf(YouVersionPermissions.HIGHLIGHTS))
+        assertNotEquals(base, DataExchangeResult(DataExchangeStatus.Cancelled, base.grantedPermissionValues))
         assertNotEquals(base, DataExchangeResult(DataExchangeStatus.Granted, emptyList()))
     }
 
     @Test
     fun `result toString matches the existing format`() {
-        val permissions = listOf(SignInWithYouVersionPermission.HIGHLIGHTS)
+        val permissions = listOf(YouVersionPermissions.HIGHLIGHTS)
         assertEquals(
-            "DataExchangeResult(status=Granted, grantedPermissions=$permissions)",
+            "DataExchangeResult(status=Granted, grantedPermissionValues=$permissions)",
             DataExchangeResult(DataExchangeStatus.Granted, permissions).toString(),
         )
     }

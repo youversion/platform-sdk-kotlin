@@ -1,6 +1,6 @@
 package com.youversion.platform.core
 
-import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
+import com.youversion.platform.core.users.model.YouVersionPermissions
 import java.util.Date
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -21,7 +21,7 @@ class ConfigTests {
         permittedLanguageTags: Set<String>? = setOf("en"),
         permittedVersionIds: Set<Int>? = setOf(1),
         excludedVersionIds: Set<Int> = setOf(2),
-        grantedPermissions: Set<SignInWithYouVersionPermission> = setOf(SignInWithYouVersionPermission.EMAIL),
+        grantedPermissionValues: Set<String> = setOf(YouVersionPermissions.EMAIL),
         isSignInEnabled: Boolean = true,
         appName: String? = "appName",
         signInPromptMessage: String? = "message",
@@ -38,7 +38,7 @@ class ConfigTests {
         permittedLanguageTags = permittedLanguageTags,
         permittedVersionIds = permittedVersionIds,
         excludedVersionIds = excludedVersionIds,
-        grantedPermissions = grantedPermissions,
+        grantedPermissionValues = grantedPermissionValues,
         isSignInEnabled = isSignInEnabled,
         appName = appName,
         signInPromptMessage = signInPromptMessage,
@@ -65,7 +65,7 @@ class ConfigTests {
             config(permittedLanguageTags = null),
             config(permittedVersionIds = null),
             config(excludedVersionIds = emptySet()),
-            config(grantedPermissions = emptySet()),
+            config(grantedPermissionValues = emptySet()),
             config(isSignInEnabled = false),
             config(appName = null),
             config(signInPromptMessage = null),
@@ -81,7 +81,7 @@ class ConfigTests {
             "Config(appKey=<redacted>, authCallback=authCallback, apiHost=apiHost, hostEnv=hostEnv, " +
                 "installId=installId, accessToken=<redacted>, refreshToken=<redacted>, idToken=<redacted>, " +
                 "expiryDate=${Date(1000L)}, permittedLanguageTags=[en], permittedVersionIds=[1], " +
-                "excludedVersionIds=[2], grantedPermissions=[${SignInWithYouVersionPermission.EMAIL}], " +
+                "excludedVersionIds=[2], grantedPermissionValues=[${YouVersionPermissions.EMAIL}], " +
                 "isSignInEnabled=true, appName=appName, signInPromptMessage=message)",
             config().toString(),
         )
