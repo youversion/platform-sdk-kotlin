@@ -40,7 +40,8 @@ Consumer docs: README.md and https://developers.youversion.com/sdks/kotlin.
 - A String method next to a deprecated enum overload takes its own name ending in `WithPermissionValues`, so a call such as `signIn(emptySet())` stays unambiguous.
 - Sign-in sends `openid`, `profile`, `email`, `read_notes`, and `write_notes` as OAuth scopes and every other value as an optional permission. A new OAuth scope needs `UsersEndpoints` updated.
 - A grant cannot be revoked from the app. Do not design a flow that loses a permission.
-- A signed-out user grants inside `rememberSignInWithPermissionValues`. A signed-in user grants through `rememberDataExchangeWithPermissionValues`, which needs an access token or `dataExchangeTokenWithPermissionValues()` throws `MISSING_AUTHENTICATION`. Both return on `youversionauth://callback`, handled by `SignInWithYouVersionActivity`.
+- A signed-out user grants inside `rememberSignInWithPermissionValues`. A signed-in user grants an optional permission such as `HIGHLIGHTS` through `rememberDataExchangeWithPermissionValues`, which needs an access token or `dataExchangeTokenWithPermissionValues()` throws `MISSING_AUTHENTICATION`. Both return on `youversionauth://callback`, handled by `SignInWithYouVersionActivity`.
+- Data exchange cannot grant an OAuth scope such as `READ_NOTES` or `WRITE_NOTES`; the server rejects it with `422`. A signed-in user gains a scope only by signing in again with it.
 - Grants follow the session.
 - `configure()` and `saveAuthData()` drop stored grants when the given tokens name a different session.
 - `configure()` does not fill omitted tokens from storage in that case.
