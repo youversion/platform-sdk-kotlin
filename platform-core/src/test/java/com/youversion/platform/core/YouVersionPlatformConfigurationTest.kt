@@ -354,7 +354,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 isSignInEnabled = false,
             )
             configureSignIn(appName = "Sample App", signInPromptMessage = "Keep your highlights")
-            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
             val before = assertNotNull(configState.value).toString()
 
             setApiHost(apiHost = "new.example.com")
@@ -481,7 +481,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     fun `granted permissions survive a relaunch`() {
         with(YouVersionPlatformConfiguration) {
             configure(appKey = "appKey")
-            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             configure(appKey = "appKey")
 
@@ -494,8 +494,8 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
         with(YouVersionPlatformConfiguration) {
             configure(appKey = "appKey")
 
-            saveGrantedPermissions(setOf(YouVersionPermissions.PROFILE))
-            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.PROFILE))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             assertTrue(YouVersionApi.hasPermission(YouVersionPermissions.PROFILE))
             assertTrue(YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS))
@@ -512,7 +512,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             // A host managing its own tokens reconfigures as another user.
             configure(appKey = "appKey", accessToken = "userBAccessToken")
@@ -535,7 +535,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             configure(appKey = "appKey", accessToken = "userAAccessToken")
 
@@ -554,7 +554,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             // A host managing its own tokens refreshed out of band. Its refresh token names the stored session even
             // though it passes no ID token to name the account with.
@@ -580,7 +580,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             // The account the ID token names is what has to match, not the token itself, so a reissued one for the
             // same account is still that account.
@@ -605,7 +605,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             configure(appKey = "appKey", accessToken = "userBAccessToken")
             // The same session the reconfiguration established, so this keeps whatever permissions storage holds.
@@ -630,7 +630,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             saveAuthData(
                 accessToken = "refreshedToken",
@@ -656,7 +656,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 idToken = idTokenFor("userA"),
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             saveAuthData(
                 accessToken = "userBAccessToken",
@@ -682,7 +682,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 refreshToken = "refreshToken",
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             saveAuthData(
                 accessToken = "userBAccessToken",
@@ -704,7 +704,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
                 refreshToken = "refreshToken",
                 expiryDate = Date(),
             )
-            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             saveAuthData(
                 accessToken = "refreshedAccessToken",
@@ -721,7 +721,7 @@ class YouVersionPlatformConfigurationTest : YouVersionPlatformTest {
     fun `clearAuthData clears granted permissions`() {
         with(YouVersionPlatformConfiguration) {
             configure(appKey = "appKey")
-            saveGrantedPermissions(setOf(YouVersionPermissions.HIGHLIGHTS))
+            saveGrantedPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
             clearAuthData()
 

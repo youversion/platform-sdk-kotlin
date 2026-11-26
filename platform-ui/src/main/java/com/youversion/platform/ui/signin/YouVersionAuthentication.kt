@@ -100,7 +100,7 @@ internal object YouVersionAuthentication {
                 idToken = result.idToken,
                 expiryDate = result.expiryDate,
             )
-            YouVersionPlatformConfiguration.saveGrantedPermissions(result.permissionValues)
+            YouVersionPlatformConfiguration.saveGrantedPermissionValues(result.permissionValues)
             result
         }
     }

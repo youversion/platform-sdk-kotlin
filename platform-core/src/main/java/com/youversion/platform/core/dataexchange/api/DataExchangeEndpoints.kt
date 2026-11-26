@@ -7,6 +7,7 @@ import com.youversion.platform.core.api.buildYouVersionUrlString
 import com.youversion.platform.core.api.failureException
 import com.youversion.platform.core.api.parameter
 import com.youversion.platform.core.dataexchange.models.DataExchangeToken
+import com.youversion.platform.core.users.model.SignInWithYouVersionPermission
 import com.youversion.platform.core.utilities.koin.PlatformCoreKoinComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -57,7 +58,7 @@ public object DataExchangeEndpoints : DataExchangeApi {
         }
 
     // ----- Data Exchange API
-    override suspend fun dataExchangeToken(permissions: Collection<String>): DataExchangeToken {
+    override suspend fun dataExchangeTokenWithPermissionValues(permissions: Collection<String>): DataExchangeToken {
         if (YouVersionPlatformConfiguration.accessToken == null) {
             throw YouVersionNetworkException(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION)
         }
@@ -88,6 +89,13 @@ public object DataExchangeEndpoints : DataExchangeApi {
 
         return response.body()
     }
+
+    @Deprecated(
+        "Use dataExchangeTokenWithPermissionValues with raw String permission values instead.",
+        ReplaceWith("dataExchangeTokenWithPermissionValues(permissions.map { it.rawValue })"),
+    )
+    override suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken =
+        dataExchangeTokenWithPermissionValues(permissions.map { it.rawValue })
 
     private fun tokenRequestBody(permissions: Collection<String>): JsonObject =
         buildJsonObject {

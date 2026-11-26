@@ -2,8 +2,10 @@ package com.youversion.platform.core.users.model
 
 /**
  * The raw values of the permissions an app can ask the user to grant, for sign-in, data exchange and
- * [com.youversion.platform.core.api.YouVersionApi.hasPermission]. Permissions are plain strings, so a permission the
- * platform adds later can be requested before this SDK names it.
+ * [com.youversion.platform.core.api.YouVersionApi.hasPermission]. Permissions are plain strings, so an optional
+ * permission the platform adds later can be requested before this SDK names it. Sign-in sends [OPENID], [PROFILE],
+ * [EMAIL], [READ_NOTES] and [WRITE_NOTES] as OAuth scopes and every other value as an optional permission, so a new
+ * OAuth scope needs an SDK update.
  */
 public object YouVersionPermissions {
     /** The user's identity. Always requested when signing in. */

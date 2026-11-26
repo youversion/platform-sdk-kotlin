@@ -29,7 +29,7 @@ public fun rememberSignInWithPermissionValues(): suspend (Set<String>) -> SignIn
         return remember { { _ -> null } }
     }
     val handler = remember { SignInHandler(context, registryOwner.activityResultRegistry) }
-    return remember { { permissions -> handler.signIn(permissions) } }
+    return remember { { permissions -> handler.signInWithPermissionValues(permissions) } }
 }
 
 /**

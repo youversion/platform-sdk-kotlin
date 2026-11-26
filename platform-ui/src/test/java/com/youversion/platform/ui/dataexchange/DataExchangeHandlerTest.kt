@@ -37,12 +37,12 @@ class DataExchangeHandlerTest {
             mockkObject(YouVersionApi)
             try {
                 val api = mockk<DataExchangeApi>()
-                coEvery { api.dataExchangeToken(any<Collection<String>>()) } throws
+                coEvery { api.dataExchangeTokenWithPermissionValues(any()) } throws
                     YouVersionNetworkException(YouVersionNetworkException.Reason.NOT_PERMITTED)
                 every { YouVersionApi.dataExchange } returns api
 
                 val handler = DataExchangeHandler(mockk(relaxed = true))
-                val result = handler.requestDataExchange(setOf(YouVersionPermissions.HIGHLIGHTS))
+                val result = handler.requestDataExchangeWithPermissionValues(setOf(YouVersionPermissions.HIGHLIGHTS))
 
                 assertEquals(DataExchangeStatus.NotStarted, result.status)
                 assertFalse(result.isGranted)
@@ -61,13 +61,13 @@ class DataExchangeHandlerTest {
                     appKey = "test",
                 )
                 val api = mockk<DataExchangeApi>()
-                coEvery { api.dataExchangeToken(any<Collection<String>>()) } returns
+                coEvery { api.dataExchangeTokenWithPermissionValues(any()) } returns
                     DataExchangeToken(token = "exchange-token")
                 every { YouVersionApi.dataExchange } returns api
 
                 val registry = ImmediateCallbackRegistry("youversionauth:callback?data_exchange_status=granted")
                 val result =
-                    DataExchangeHandler(registry).requestDataExchange(
+                    DataExchangeHandler(registry).requestDataExchangeWithPermissionValues(
                         setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
 
@@ -93,7 +93,7 @@ class DataExchangeHandlerTest {
                     expiryDate = Date(),
                 )
                 val api = mockk<DataExchangeApi>()
-                coEvery { api.dataExchangeToken(any<Collection<String>>()) } returns
+                coEvery { api.dataExchangeTokenWithPermissionValues(any()) } returns
                     DataExchangeToken(token = "exchange-token")
                 every { YouVersionApi.dataExchange } returns api
 
@@ -102,7 +102,7 @@ class DataExchangeHandlerTest {
                         "youversionauth://callback?data_exchange_status=granted&granted_permissions=highlights",
                     )
                 val result =
-                    DataExchangeHandler(registry).requestDataExchange(
+                    DataExchangeHandler(registry).requestDataExchangeWithPermissionValues(
                         setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
 
@@ -128,7 +128,7 @@ class DataExchangeHandlerTest {
                     expiryDate = Date(),
                 )
                 val api = mockk<DataExchangeApi>()
-                coEvery { api.dataExchangeToken(any<Collection<String>>()) } returns
+                coEvery { api.dataExchangeTokenWithPermissionValues(any()) } returns
                     DataExchangeToken(token = "exchange-token")
                 every { YouVersionApi.dataExchange } returns api
 
@@ -146,7 +146,7 @@ class DataExchangeHandlerTest {
                         },
                     )
                 val result =
-                    DataExchangeHandler(registry).requestDataExchange(
+                    DataExchangeHandler(registry).requestDataExchangeWithPermissionValues(
                         setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
 
@@ -166,13 +166,13 @@ class DataExchangeHandlerTest {
             mockkObject(YouVersionApi)
             try {
                 val api = mockk<DataExchangeApi>()
-                coEvery { api.dataExchangeToken(any<Collection<String>>()) } throws
+                coEvery { api.dataExchangeTokenWithPermissionValues(any()) } throws
                     YouVersionNetworkException(YouVersionNetworkException.Reason.NOT_PERMITTED)
                 every { YouVersionApi.dataExchange } returns api
 
                 var isBrowserOpened = false
                 val result =
-                    DataExchangeHandler(mockk(relaxed = true)).requestDataExchange(
+                    DataExchangeHandler(mockk(relaxed = true)).requestDataExchangeWithPermissionValues(
                         permissions = setOf(YouVersionPermissions.HIGHLIGHTS),
                         onBrowserOpened = { isBrowserOpened = true },
                     )
@@ -194,14 +194,14 @@ class DataExchangeHandlerTest {
                     appKey = "test",
                 )
                 val api = mockk<DataExchangeApi>()
-                coEvery { api.dataExchangeToken(any<Collection<String>>()) } returns
+                coEvery { api.dataExchangeTokenWithPermissionValues(any()) } returns
                     DataExchangeToken(token = "exchange-token")
                 every { YouVersionApi.dataExchange } returns api
 
                 var isBrowserOpened = false
                 DataExchangeHandler(
                     ImmediateCallbackRegistry("youversionauth://callback?data_exchange_status=cancel"),
-                ).requestDataExchange(
+                ).requestDataExchangeWithPermissionValues(
                     permissions = setOf(YouVersionPermissions.HIGHLIGHTS),
                     onBrowserOpened = { isBrowserOpened = true },
                 )

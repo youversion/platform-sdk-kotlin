@@ -50,7 +50,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
             YouVersionPlatformConfiguration.configure(appKey = "app", accessToken = "token")
 
             val token =
-                YouVersionApi.dataExchange.dataExchangeToken(
+                YouVersionApi.dataExchange.dataExchangeTokenWithPermissionValues(
                     setOf(YouVersionPermissions.HIGHLIGHTS),
                 )
 
@@ -67,7 +67,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
 
             val exception =
                 assertFailsWith<YouVersionNetworkException> {
-                    YouVersionApi.dataExchange.dataExchangeToken(
+                    YouVersionApi.dataExchange.dataExchangeTokenWithPermissionValues(
                         setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
                 }
@@ -84,7 +84,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
 
             val exception =
                 assertFailsWith<YouVersionNetworkException> {
-                    YouVersionApi.dataExchange.dataExchangeToken(
+                    YouVersionApi.dataExchange.dataExchangeTokenWithPermissionValues(
                         setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
                 }
@@ -103,7 +103,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
 
             val exception =
                 assertFailsWith<YouVersionNetworkException> {
-                    YouVersionApi.dataExchange.dataExchangeToken(
+                    YouVersionApi.dataExchange.dataExchangeTokenWithPermissionValues(
                         setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
                 }
@@ -122,7 +122,7 @@ class DataExchangeApiTests : YouVersionPlatformTest {
 
             val exception =
                 assertFailsWith<YouVersionNetworkException> {
-                    YouVersionApi.dataExchange.dataExchangeToken(
+                    YouVersionApi.dataExchange.dataExchangeTokenWithPermissionValues(
                         setOf(YouVersionPermissions.HIGHLIGHTS),
                     )
                 }

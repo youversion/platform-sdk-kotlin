@@ -35,7 +35,7 @@ public fun rememberDataExchangeWithPermissionValues(
     val currentOnBrowserOpened by rememberUpdatedState(onBrowserOpened)
     val handler = remember { DataExchangeHandler(registryOwner.activityResultRegistry) }
     return remember {
-        { permissions -> handler.requestDataExchange(permissions) { currentOnBrowserOpened() } }
+        { permissions -> handler.requestDataExchangeWithPermissionValues(permissions) { currentOnBrowserOpened() } }
     }
 }
 

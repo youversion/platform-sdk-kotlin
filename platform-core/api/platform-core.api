@@ -570,18 +570,18 @@ public final class com/youversion/platform/core/bibles/models/BibleVersionIndex$
 }
 
 public abstract interface class com/youversion/platform/core/dataexchange/api/DataExchangeApi {
-	public abstract fun dataExchangeToken (Ljava/util/Collection;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public fun dataExchangeToken (Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun dataExchangeToken (Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun dataExchangeTokenWithPermissionValues (Ljava/util/Collection;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/youversion/platform/core/dataexchange/api/DataExchangeApi$DefaultImpls {
-	public static fun dataExchangeToken (Lcom/youversion/platform/core/dataexchange/api/DataExchangeApi;Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun dataExchangeTokenWithPermissionValues (Lcom/youversion/platform/core/dataexchange/api/DataExchangeApi;Ljava/util/Collection;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/youversion/platform/core/dataexchange/api/DataExchangeEndpoints : com/youversion/platform/core/dataexchange/api/DataExchangeApi {
 	public static final field INSTANCE Lcom/youversion/platform/core/dataexchange/api/DataExchangeEndpoints;
-	public fun dataExchangeToken (Ljava/util/Collection;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun dataExchangeToken (Ljava/util/Set;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun dataExchangeTokenWithPermissionValues (Ljava/util/Collection;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun dataExchangeUrl (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 }
 

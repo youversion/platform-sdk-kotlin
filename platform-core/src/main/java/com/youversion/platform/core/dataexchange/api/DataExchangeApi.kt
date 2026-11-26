@@ -24,9 +24,12 @@ public interface DataExchangeApi {
      *         [com.youversion.platform.core.api.YouVersionNetworkException.Reason.REQUEST_REJECTED] for another
      *         `4xx`, or [com.youversion.platform.core.api.YouVersionNetworkException.Reason.REQUEST_FAILED]
      *         otherwise. The exception's `statusCode`, `serverMessage`, `retryAfter` and `validationIssues` carry
-     *         the server's details.
+     *         the server's details. The default implementation, kept for implementations written before this
+     *         function existed, passes on only the values [SignInWithYouVersionPermission] names.
      */
-    public suspend fun dataExchangeToken(permissions: Collection<String>): DataExchangeToken
+    public suspend fun dataExchangeTokenWithPermissionValues(permissions: Collection<String>): DataExchangeToken =
+        @Suppress("DEPRECATION")
+        dataExchangeToken(permissions.mapNotNull { SignInWithYouVersionPermission.fromRawValue(it) }.toSet())
 
     /**
      * Creates a short-lived token authorizing one run of the data exchange permission flow.
@@ -35,9 +38,8 @@ public interface DataExchangeApi {
      * @return The token to pass to the permission page.
      */
     @Deprecated(
-        "Use dataExchangeToken with raw String permission values instead.",
-        ReplaceWith("dataExchangeToken(permissions.map { it.rawValue })"),
+        "Use dataExchangeTokenWithPermissionValues with raw String permission values instead.",
+        ReplaceWith("dataExchangeTokenWithPermissionValues(permissions.map { it.rawValue })"),
     )
-    public suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken =
-        dataExchangeToken(permissions.map { it.rawValue })
+    public suspend fun dataExchangeToken(permissions: Set<SignInWithYouVersionPermission>): DataExchangeToken
 }

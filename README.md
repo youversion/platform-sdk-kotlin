@@ -372,7 +372,7 @@ class MainActivity : SignInWithYouVersionActivity() {
 
 Use the `SignInWithYouVersionButton` composable in your UI. You can use the `SignInViewModel` to check if the user is already signed in and conditionally display the button.
 
-Permissions are raw string values. `YouVersionPermissions` names the ones this SDK version knows, and any other value the YouVersion platform accepts can be passed as a string:
+Permissions are raw string values, and `YouVersionPermissions` names the ones this SDK version knows. Sign-in sends `openid`, `profile`, `email`, `read_notes` and `write_notes` as OAuth scopes and any other value as an optional permission the user may decline, so a new optional permission can be passed as a string before the SDK names it, but a new OAuth scope needs an SDK update:
 
 - `YouVersionPermissions.PROFILE`: To access the user's name and profile picture.
 - `YouVersionPermissions.EMAIL`: To access the user's email address.
@@ -464,7 +464,7 @@ fun AllowHighlightsButton() {
 }
 ```
 
-Outside Compose, use `DataExchangeHandler(activityResultRegistry).requestDataExchange(...)` directly. Either way the granted permission is persisted for you before the call returns, so a later `YouVersionApi.hasPermission(...)` reflects it without any extra work.
+Outside Compose, use `DataExchangeHandler(activityResultRegistry).requestDataExchangeWithPermissionValues(...)` directly. Either way the granted permission is persisted for you before the call returns, so a later `YouVersionApi.hasPermission(...)` reflects it without any extra work.
 
 > **Note**: Data exchange only works for a user who is **already signed in** — it mints its token from the existing access token. For a signed-out user nothing is presented at all (the result is `DataExchangeStatus.NotStarted`); request `YouVersionPermissions.HIGHLIGHTS` as part of sign-in instead. `rememberDataExchangeWithPermissionValues` and `DataExchangeHandler` live in `platform-ui`.
 

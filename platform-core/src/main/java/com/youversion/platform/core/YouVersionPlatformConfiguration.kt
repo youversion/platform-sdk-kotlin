@@ -394,8 +394,7 @@ public object YouVersionPlatformConfiguration {
      * @param permissions The raw values of the permissions the user granted, such as [YouVersionPermissions.HIGHLIGHTS].
      * @throws YouVersionNotConfiguredException If [configure] has not been called first.
      */
-    @JvmName("saveGrantedPermissionValues")
-    public fun saveGrantedPermissions(permissions: Collection<String>) {
+    public fun saveGrantedPermissionValues(permissions: Collection<String>) {
         val currentConfig = config ?: throw YouVersionNotConfiguredException()
         val sessionRepository = PlatformCoreKoinComponent.sessionRepository
 
@@ -412,11 +411,11 @@ public object YouVersionPlatformConfiguration {
      * @throws YouVersionNotConfiguredException If [configure] has not been called first.
      */
     @Deprecated(
-        "Use saveGrantedPermissions with raw String permission values instead.",
-        ReplaceWith("saveGrantedPermissions(permissions.map { it.rawValue })"),
+        "Use saveGrantedPermissionValues with raw String permission values instead.",
+        ReplaceWith("saveGrantedPermissionValues(permissions.map { it.rawValue })"),
     )
     public fun saveGrantedPermissions(permissions: Collection<SignInWithYouVersionPermission>) {
-        saveGrantedPermissions(permissions.map { it.rawValue })
+        saveGrantedPermissionValues(permissions.map { it.rawValue })
     }
 
     /**
@@ -456,7 +455,7 @@ public object YouVersionPlatformConfiguration {
         config ?: throw YouVersionNotConfiguredException()
         val startingSessionId = PlatformCoreKoinComponent.sessionRepository.permissionGrantSessionId
         if (startingSessionId == null || startingSessionId != YouVersionApi.currentSessionId) return false
-        saveGrantedPermissions(permissions)
+        saveGrantedPermissionValues(permissions)
         return true
     }
 

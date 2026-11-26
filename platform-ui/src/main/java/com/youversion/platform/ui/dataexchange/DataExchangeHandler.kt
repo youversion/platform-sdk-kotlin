@@ -46,8 +46,7 @@ public class DataExchangeHandler(
      *         [DataExchangeStatus.NotStarted] — telling a caller that settles the flow on a resume that no resume is
      *         coming.
      */
-    @JvmName("requestDataExchangeWithPermissionValues")
-    public suspend fun requestDataExchange(
+    public suspend fun requestDataExchangeWithPermissionValues(
         permissions: Set<String>,
         onBrowserOpened: () -> Unit = {},
     ): DataExchangeResult =
@@ -68,19 +67,28 @@ public class DataExchangeHandler(
      * @return How the flow ended, and which permissions were granted.
      */
     @Deprecated(
-        "Use requestDataExchange with raw String permission values instead.",
-        ReplaceWith("requestDataExchange(permissions.map { it.rawValue }.toSet(), onBrowserOpened)"),
+        "Use requestDataExchangeWithPermissionValues with raw String permission values instead.",
+        ReplaceWith(
+            "requestDataExchangeWithPermissionValues(permissions.map { it.rawValue }.toSet(), onBrowserOpened)",
+        ),
     )
     public suspend fun requestDataExchange(
         permissions: Set<SignInWithYouVersionPermission>,
         onBrowserOpened: () -> Unit = {},
-    ): DataExchangeResult = requestDataExchange(permissions.map { it.rawValue }.toSet(), onBrowserOpened)
+    ): DataExchangeResult =
+        requestDataExchangeWithPermissionValues(
+            permissions
+                .map {
+                    it.rawValue
+                }.toSet(),
+            onBrowserOpened,
+        )
 
     private suspend fun exchange(
         permissions: Set<String>,
         onBrowserOpened: () -> Unit,
     ): DataExchangeResult {
-        val token = YouVersionApi.dataExchange.dataExchangeToken(permissions)
+        val token = YouVersionApi.dataExchange.dataExchangeTokenWithPermissionValues(permissions)
         val appKey =
             YouVersionPlatformConfiguration.appKey
                 ?: throw YouVersionNetworkException(YouVersionNetworkException.Reason.MISSING_AUTHENTICATION)

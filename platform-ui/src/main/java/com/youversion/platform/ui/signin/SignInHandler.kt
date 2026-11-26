@@ -37,8 +37,7 @@ public class SignInHandler(
      * @return A [SignInWithYouVersionResult] on success, or null on failure/cancellation.
      * @throws Exception if the token exchange or sign-in launch fails.
      */
-    @JvmName("signInWithPermissionValues")
-    public suspend fun signIn(permissions: Set<String>): SignInWithYouVersionResult? {
+    public suspend fun signInWithPermissionValues(permissions: Set<String>): SignInWithYouVersionResult? {
         var launcher: ActivityResultLauncher<Intent>? = null
         val callbackIntent =
             try {
@@ -68,9 +67,9 @@ public class SignInHandler(
      * @throws Exception if the token exchange or sign-in launch fails.
      */
     @Deprecated(
-        "Use signIn with raw String permission values instead.",
-        ReplaceWith("signIn(permissions.map { it.rawValue }.toSet())"),
+        "Use signInWithPermissionValues with raw String permission values instead.",
+        ReplaceWith("signInWithPermissionValues(permissions.map { it.rawValue }.toSet())"),
     )
     public suspend fun signIn(permissions: Set<SignInWithYouVersionPermission>): SignInWithYouVersionResult? =
-        signIn(permissions.map { it.rawValue }.toSet())
+        signInWithPermissionValues(permissions.map { it.rawValue }.toSet())
 }
