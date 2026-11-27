@@ -645,7 +645,8 @@ internal class BibleReaderViewModel(
 
     /**
      * Captures the selection as a note draft and opens the composer, or holds the draft and asks the reader to sign in
-     * when they have no account with the notes permission. A signed-out reader sees the sign-in prompt first; a
+     * when they have no account with the notes permission. As in the Swift SDK, a draft already held for the same
+     * passage is reused, so retrying after a cancelled grant keeps what was typed. A signed-out reader sees the sign-in prompt first; a
      * signed-in reader goes straight to the browser, since only signing in again grants the notes permission.
      */
     private fun startNote() {
@@ -655,13 +656,17 @@ internal class BibleReaderViewModel(
         if (!canWriteNotes && !isSignInEnabled()) return
         val references = BibleReference.referencesByMerging(selection.toList())
         val draft =
-            NoteDraft(
-                references = references,
-                selection = selection,
-                referenceTitle = noteReferenceTitle(references),
-                sessionId = currentSessionId(),
-            )
+            pendingNoteDraft
+                ?.takeIf { it.references == references }
+                ?.let { it.copy(sessionId = it.sessionId ?: currentSessionId()) }
+                ?: NoteDraft(
+                    references = references,
+                    selection = selection,
+                    referenceTitle = noteReferenceTitle(references),
+                    sessionId = currentSessionId(),
+                )
         if (canWriteNotes) {
+            pendingNoteDraft = null
             openNoteDraft(draft)
         } else {
             pendingNoteDraft = draft

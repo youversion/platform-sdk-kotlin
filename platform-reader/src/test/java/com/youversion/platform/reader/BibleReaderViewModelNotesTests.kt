@@ -334,7 +334,7 @@ class BibleReaderViewModelNotesTests {
     }
 
     @Test
-    fun `saving from a note indicator without write access asks for it and reopens the typed note once granted`() {
+    fun `saving from a note indicator without write access keeps the typed note through a cancelled grant`() {
         hasWriteNotes = false
         viewModel.onAction(Action.ShowSavedNotes(verse7, listOf(mockk<Note>())))
         viewModel.onAction(Action.UpdateNote("kept", isPublic = false, hexColor = null))
@@ -343,6 +343,11 @@ class BibleReaderViewModelNotesTests {
 
         assertTrue(createdRequests.isEmpty())
         assertNull(state.noteDraft)
+        assertTrue(state.shouldStartNoteSignIn)
+
+        viewModel.onAction(Action.NoteSignInCompleted)
+        assertTrue(state.showVerseActionSheet)
+        viewModel.onAction(Action.StartNote)
         assertTrue(state.shouldStartNoteSignIn)
 
         hasWriteNotes = true
