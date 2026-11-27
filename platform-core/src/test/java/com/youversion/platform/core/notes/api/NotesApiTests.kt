@@ -266,6 +266,37 @@ class NotesApiTests : YouVersionPlatformTest {
         }
 
     @Test
+    fun `test only successful creates, updates and deletes report a note change`() =
+        runTest {
+            var isFailing = true
+            start { request ->
+                when {
+                    request.method == HttpMethod.Get -> respondJson("""{ "data": [] }""")
+                    isFailing -> respondJson("""{"message":"busy"}""", HttpStatusCode.ServiceUnavailable)
+                    request.method == HttpMethod.Delete -> respond("", HttpStatusCode.NoContent)
+                    else -> respondJson("""{ "id": "n1", "content": "", "status": "private" }""")
+                }
+            }
+            val request =
+                NoteCreateRequest("", NoteStatus.PRIVATE, references = listOf(BibleReference(111, "JHN", 3, 16)))
+            val update = NoteUpdate(status = NoteStatus.PUBLIC)
+            val before = NoteChanges.changeCount.value
+
+            assertFailsWith<YouVersionNetworkException> { YouVersionApi.notes.createNote(request) }
+            assertFailsWith<YouVersionNetworkException> { YouVersionApi.notes.updateNote("n1", update) }
+            assertFailsWith<YouVersionNetworkException> { YouVersionApi.notes.deleteNote("n1") }
+            YouVersionApi.notes.notes()
+            assertEquals(before, NoteChanges.changeCount.value)
+
+            isFailing = false
+            YouVersionApi.notes.createNote(request)
+            YouVersionApi.notes.updateNote("n1", update)
+            YouVersionApi.notes.deleteNote("n1")
+            YouVersionApi.notes.notes()
+            assertEquals(before + 3, NoteChanges.changeCount.value)
+        }
+
+    @Test
     fun `test createNote sends empty content to save a passage without text`() =
         runTest {
             start { respondJson("""{ "id": "n1", "content": "", "status": "private" }""", HttpStatusCode.Created) }

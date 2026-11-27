@@ -93,6 +93,7 @@ import com.youversion.platform.ui.views.BibleTextLoadingPhase
 import com.youversion.platform.ui.views.BibleTextOptions
 import com.youversion.platform.ui.views.SignInWithYouVersionPromptSheet
 import com.youversion.platform.ui.views.bibleTextBlocks
+import com.youversion.platform.ui.views.rememberBibleNoteIndicators
 import com.youversion.platform.ui.views.rememberBibleTextBlocksState
 import com.youversion.platform.ui.views.rememberBibleTextLayoutState
 import kotlinx.coroutines.flow.filterIsInstance
@@ -270,6 +271,8 @@ internal fun BibleScreen(
             rememberBibleTextBlocksState(reference = state.bibleReference, textOptions = bibleTextOptions)
         }
     val chapterLayout = chapterBlocks?.let { rememberBibleTextLayoutState(it) }
+    val noteIndicators =
+        rememberBibleNoteIndicators(reference = state.bibleReference, textOptions = bibleTextOptions)
     val loadingPhase = chapterBlocks?.loadingPhase ?: introLoadingPhase
     val chapterListState = rememberLazyListState()
 
@@ -553,6 +556,15 @@ internal fun BibleScreen(
                                         onVerseTap = { reference, _ ->
                                             viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(reference))
                                         },
+                                        verseIndicatorStyle = noteIndicators::style,
+                                        onVerseIndicatorTap = { reference ->
+                                            viewModel.onAction(
+                                                BibleReaderViewModel.Action.ShowSavedNotes(
+                                                    reference = reference,
+                                                    notes = noteIndicators.notes(reference),
+                                                ),
+                                            )
+                                        },
                                         onFootnoteTap = { reference, footnotes ->
                                             viewModel.onAction(
                                                 BibleReaderViewModel.Action.OpenFootnotes(
@@ -679,6 +691,7 @@ internal fun BibleScreen(
                         state.noteDraft?.let { draft ->
                             BibleReaderNoteComposerSheet(
                                 draft = draft,
+                                noteReferenceTitle = viewModel::noteReferenceTitle,
                                 onUpdate = { content, isPublic, hexColor ->
                                     viewModel.onAction(
                                         BibleReaderViewModel.Action.UpdateNote(content, isPublic, hexColor),

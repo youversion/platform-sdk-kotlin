@@ -17,6 +17,7 @@ import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.notes.api.NotesApi
+import com.youversion.platform.core.notes.models.Note
 import com.youversion.platform.core.notes.models.NoteCreateRequest
 import com.youversion.platform.core.notes.models.NoteStatus
 import com.youversion.platform.core.users.model.YouVersionPermissions
@@ -437,6 +438,10 @@ internal class BibleReaderViewModel(
                 startNote()
             }
 
+            is Action.ShowSavedNotes -> {
+                showSavedNotes(action.reference, action.notes)
+            }
+
             is Action.NoteSignInCompleted -> {
                 continuePendingNote()
             }
@@ -722,7 +727,30 @@ internal class BibleReaderViewModel(
         _state.update { it.copy(selectedVerses = draft.selection, showVerseActionSheet = true) }
     }
 
-    private fun noteReferenceTitle(references: List<BibleReference>): String =
+    /**
+     * Opens the composer for [reference] with the [notes] already attached to it listed below, unless they are empty,
+     * nobody is signed in, or a draft is already open.
+     */
+    private fun showSavedNotes(
+        reference: BibleReference,
+        notes: List<Note>,
+    ) {
+        if (notes.isEmpty() || !isSignedIn() || _state.value.noteDraft != null) return
+        pendingNoteDraft = null
+        val references = listOf(reference)
+        openNoteDraft(
+            NoteDraft(
+                references = references,
+                selection = setOf(reference),
+                referenceTitle = noteReferenceTitle(references),
+                sessionId = currentSessionId(),
+                savedNotes = notes,
+            ),
+        )
+    }
+
+    /** The passage [references] name in the reader's version, with gaps kept, such as `John 3:1-2, 7`. */
+    fun noteReferenceTitle(references: List<BibleReference>): String =
         references.joinToString(", ") { reference ->
             bibleVersion?.displayTitle(reference, includesVersionAbbreviation = false) ?: reference.asUSFM
         }
@@ -737,8 +765,7 @@ internal class BibleReaderViewModel(
 
     /**
      * Creates the open draft's note. A failure keeps the draft, request id included, so retrying cannot create the
-     * note twice. Success closes the composer and refreshes the chapter's highlights in the background, since a
-     * note's color can change them; the refresh keeps the shown highlights until it lands.
+     * note twice. Success closes the composer; the note indicators then reload the chapter's notes and highlights.
      */
     private fun saveNote() {
         val draft = _state.value.noteDraft ?: return
@@ -772,9 +799,6 @@ internal class BibleReaderViewModel(
                 if (isSaved) {
                     _state.update { it.copy(noteDraft = null) }
                     clearVerseSelection()
-                    if (hasHighlightsPermission()) {
-                        bibleHighlightsRepository.ensureHighlightsForChapterLoaded(bibleReference, forceReload = true)
-                    }
                 } else {
                     _state.update { it.copy(noteDraft = draft.copy(showsSaveError = true)) }
                 }
@@ -1187,6 +1211,12 @@ internal class BibleReaderViewModel(
 
         /** Open the notes composer for the selection, signing in first when the reader cannot save notes yet. */
         data object StartNote : Action
+
+        /** Open the composer for [reference] with the saved [notes] attached to it, from a tapped note indicator. */
+        data class ShowSavedNotes(
+            val reference: BibleReference,
+            val notes: List<Note>,
+        ) : Action
 
         /** The sign-in [State.shouldStartNoteSignIn] asked for finished, whether or not it succeeded. */
         data object NoteSignInCompleted : Action

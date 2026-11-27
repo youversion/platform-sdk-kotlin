@@ -106,7 +106,9 @@ internal object NotesEndpoints : NotesApi {
                 request.languageTag?.let { put("language_tag", it) }
                 request.tags?.let { put("tags", JsonArray(it.map(::JsonPrimitive))) }
             }
-        return parseApiBody<NoteBody>(send { httpClient.post(notesUrl()) { jsonBody(body) } }).toNote()
+        return parseApiBody<NoteBody>(send { httpClient.post(notesUrl()) { jsonBody(body) } }).toNote().also {
+            NoteChanges.notifyChanged()
+        }
     }
 
     override suspend fun updateNote(
@@ -126,12 +128,15 @@ internal object NotesEndpoints : NotesApi {
                 update.status?.let { put("status", it.rawValue) }
             }
         require(body.isNotEmpty()) { "update must change at least one field" }
-        return parseApiBody<NoteBody>(send { httpClient.patch(noteUrl(id)) { jsonBody(body) } }).toNote()
+        return parseApiBody<NoteBody>(send { httpClient.patch(noteUrl(id)) { jsonBody(body) } }).toNote().also {
+            NoteChanges.notifyChanged()
+        }
     }
 
     override suspend fun deleteNote(id: String) {
         require(id.isNotEmpty()) { "id must not be empty" }
         send { httpClient.delete(noteUrl(id)) }
+        NoteChanges.notifyChanged()
     }
 
     private suspend fun notesPage(

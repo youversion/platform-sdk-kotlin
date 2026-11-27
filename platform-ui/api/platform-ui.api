@@ -220,6 +220,10 @@ public final class com/youversion/platform/ui/views/BibleTextLoadingPhase : java
 	public static fun values ()[Lcom/youversion/platform/ui/views/BibleTextLoadingPhase;
 }
 
+public final class com/youversion/platform/ui/views/BibleTextNoteIndicatorsKt {
+	public static final fun BibleTextWithNoteIndicators (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lcom/youversion/platform/ui/views/BibleTextOptions;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+}
+
 public final class com/youversion/platform/ui/views/BibleTextOptions {
 	public static final field $stable I
 	public static final field Companion Lcom/youversion/platform/ui/views/BibleTextOptions$Companion;
@@ -270,6 +274,12 @@ public final class com/youversion/platform/ui/views/ComposableSingletons$BibleTe
 	public fun <init> ()V
 	public final fun getLambda$-2053065873$platform_ui_release ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$661006613$platform_ui_release ()Lkotlin/jvm/functions/Function3;
+}
+
+public final class com/youversion/platform/ui/views/ComposableSingletons$BibleTextNoteIndicatorsKt {
+	public static final field INSTANCE Lcom/youversion/platform/ui/views/ComposableSingletons$BibleTextNoteIndicatorsKt;
+	public fun <init> ()V
+	public final fun getLambda$1452712329$platform_ui_release ()Lkotlin/jvm/functions/Function3;
 }
 
 public final class com/youversion/platform/ui/views/ComposableSingletons$SignInWithYouVersionPromptSheetKt {
