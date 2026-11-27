@@ -77,12 +77,13 @@ public interface NotesApi {
     public suspend fun note(id: String): Note
 
     /**
-     * Creates a note. Retry a failed create with the same [request] so the server creates it at most once.
+     * Creates a note. Retry a failed create with the same [request] so the server creates it at most once. Empty
+     * [NoteCreateRequest.content] saves the attached passage without text.
      *
      * @param request The note to create.
      * @return The created [Note].
-     * @throws IllegalArgumentException if [NoteCreateRequest.content] is empty, or [NoteCreateRequest.references] is
-     *     empty, spans more than one version, book or chapter, or names a whole chapter.
+     * @throws IllegalArgumentException if [NoteCreateRequest.references] is empty, spans more than one version, book or
+     *     chapter, or names a whole chapter.
      */
     public suspend fun createNote(request: NoteCreateRequest): Note
 

@@ -92,7 +92,6 @@ internal object NotesEndpoints : NotesApi {
     }
 
     override suspend fun createNote(request: NoteCreateRequest): Note {
-        require(request.content.isNotEmpty()) { "content must not be empty" }
         val body =
             buildJsonObject {
                 put("request_id", request.requestId)

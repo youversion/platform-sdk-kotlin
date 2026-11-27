@@ -75,6 +75,7 @@ import com.youversion.platform.reader.components.PassageSelectionDefaults
 import com.youversion.platform.reader.sheets.BibleReaderFontSettingsSheet
 import com.youversion.platform.reader.sheets.BibleReaderFootnotesSheet
 import com.youversion.platform.reader.sheets.BibleReaderIntroFootnotesSheet
+import com.youversion.platform.reader.sheets.BibleReaderNoteComposerSheet
 import com.youversion.platform.reader.sheets.BibleReaderSearchSheet
 import com.youversion.platform.reader.sheets.BibleReaderVerseActionSheet
 import com.youversion.platform.reader.sheets.DataExchangeConfirmationDialog
@@ -147,6 +148,8 @@ internal fun BibleScreen(
         setOf(
             YouVersionPermissions.PROFILE,
             YouVersionPermissions.HIGHLIGHTS,
+            YouVersionPermissions.READ_NOTES,
+            YouVersionPermissions.WRITE_NOTES,
         )
 
     fun launchSignIn(onComplete: () -> Unit = {}) {
@@ -216,6 +219,15 @@ internal fun BibleScreen(
     val config by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
     val isHighlightsGranted =
         config?.grantedPermissionValues?.contains(YouVersionPermissions.HIGHLIGHTS) == true
+    val canWriteNotes =
+        signInState.isSignedIn &&
+            config?.grantedPermissionValues?.contains(YouVersionPermissions.WRITE_NOTES) == true
+
+    LaunchedEffect(state.shouldStartNoteSignIn) {
+        if (state.shouldStartNoteSignIn) {
+            launchSignIn { viewModel.onAction(BibleReaderViewModel.Action.NoteSignInCompleted) }
+        }
+    }
     LaunchedEffect(isHighlightsGranted, state.hasHighlightRequest) {
         if (isHighlightsGranted && state.hasHighlightRequest) {
             viewModel.applyHighlightRequestIfPermitted()
@@ -320,10 +332,12 @@ internal fun BibleScreen(
     val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = bottomSheetState)
 
     val shownVerseActions =
-        if (showsHighlightColors) {
-            verseActions
-        } else {
-            verseActions.filter { it.kind != BibleReaderVerseAction.Kind.HIGHLIGHT }
+        verseActions.filter {
+            when (it.kind) {
+                BibleReaderVerseAction.Kind.HIGHLIGHT -> showsHighlightColors
+                BibleReaderVerseAction.Kind.SAVE -> canWriteNotes || signInState.isSignInEnabled
+                else -> true
+            }
         }
     val hasVerseActions = shownVerseActions.isNotEmpty()
     val showsVerseActionSheet = state.showVerseActionSheet && hasVerseActions
@@ -397,6 +411,7 @@ internal fun BibleScreen(
                         onRemoveHighlight = {
                             requestHighlight(BibleReaderViewModel.Action.RemoveHighlight(it))
                         },
+                        onSave = { viewModel.onAction(BibleReaderViewModel.Action.StartNote) },
                         onCopy = { viewModel.onAction(BibleReaderViewModel.Action.CopySelectedVerses) },
                         onShare = { viewModel.onAction(BibleReaderViewModel.Action.ShareSelectedVerses) },
                         onCustomAction = {
@@ -653,6 +668,28 @@ internal fun BibleScreen(
                                     launchSignIn { viewModel.onAction(BibleReaderViewModel.Action.SignInCompleted) }
                                 },
                                 onDismissRequest = { viewModel.onAction(BibleReaderViewModel.Action.CancelSignIn) },
+                            )
+                        }
+
+                        state.noteDraft?.let { draft ->
+                            BibleReaderNoteComposerSheet(
+                                draft = draft,
+                                onUpdate = { content, isPublic, hexColor ->
+                                    viewModel.onAction(
+                                        BibleReaderViewModel.Action.UpdateNote(content, isPublic, hexColor),
+                                    )
+                                },
+                                onSave = { viewModel.onAction(BibleReaderViewModel.Action.SaveNote) },
+                                onDismissRequest = {
+                                    viewModel.onAction(BibleReaderViewModel.Action.RequestDismissNote)
+                                },
+                                onConfirmDiscard = {
+                                    viewModel.onAction(BibleReaderViewModel.Action.ConfirmDiscardNote)
+                                },
+                                onCancelDiscard = { viewModel.onAction(BibleReaderViewModel.Action.CancelDiscardNote) },
+                                onDismissSaveError = {
+                                    viewModel.onAction(BibleReaderViewModel.Action.DismissNoteSaveError)
+                                },
                             )
                         }
 

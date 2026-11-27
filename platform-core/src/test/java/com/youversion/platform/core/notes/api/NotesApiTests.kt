@@ -266,15 +266,31 @@ class NotesApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test createNote rejects empty content and a chapter attachment`() =
+    fun `test createNote sends empty content to save a passage without text`() =
+        runTest {
+            start { respondJson("""{ "id": "n1", "content": "", "status": "private" }""", HttpStatusCode.Created) }
+            val request =
+                NoteCreateRequest("", NoteStatus.PRIVATE, references = listOf(BibleReference(111, "JHN", 3, 16)))
+
+            YouVersionApi.notes.createNote(request)
+
+            assertEquals(
+                Json.parseToJsonElement(
+                    """
+                    {
+                      "request_id": "${request.requestId}", "content": "", "status": "private",
+                      "passage": { "bible_id": 111, "passage_id": "JHN.3.16" }
+                    }
+                    """.trimIndent(),
+                ),
+                requests.single().jsonBody(),
+            )
+        }
+
+    @Test
+    fun `test createNote rejects a chapter attachment`() =
         runTest {
             start { error("no request expected") }
-
-            assertFailsWith<IllegalArgumentException> {
-                YouVersionApi.notes.createNote(
-                    NoteCreateRequest("", NoteStatus.PRIVATE, references = listOf(BibleReference(111, "JHN", 3, 16))),
-                )
-            }
 
             assertFailsWith<IllegalArgumentException> {
                 YouVersionApi.notes.createNote(

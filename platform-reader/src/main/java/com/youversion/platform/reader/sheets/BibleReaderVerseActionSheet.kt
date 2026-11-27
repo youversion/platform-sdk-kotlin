@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youversion.platform.reader.BibleReaderVerseAction
 import com.youversion.platform.reader.R
+import com.youversion.platform.reader.icons.BookmarkIcon
 import com.youversion.platform.reader.icons.CopyIcon
 import com.youversion.platform.ui.theme.ReaderColorScheme
 import com.youversion.platform.ui.theme.readerColorScheme
@@ -57,6 +58,7 @@ internal fun BibleReaderVerseActionSheet(
     showsHighlightColors: Boolean,
     onAddHighlight: (String) -> Unit,
     onRemoveHighlight: (String) -> Unit,
+    onSave: () -> Unit,
     onCopy: () -> Unit,
     onShare: () -> Unit,
     onCustomAction: (BibleReaderVerseAction) -> Unit,
@@ -82,6 +84,14 @@ internal fun BibleReaderVerseActionSheet(
                                 onRemoveHighlight = onRemoveHighlight,
                             )
                         }
+                    }
+
+                    BibleReaderVerseAction.Kind.SAVE -> {
+                        VerseActionButton(
+                            icon = BookmarkIcon,
+                            label = stringResource(UiR.string.notes_save),
+                            onClick = onSave,
+                        )
                     }
 
                     BibleReaderVerseAction.Kind.COPY -> {
@@ -156,7 +166,7 @@ private fun HighlightColorPicker(
  * be on the page; the palette color on its own would read differently against the sheet behind it.
  */
 @Composable
-private fun HighlightColorButton(
+internal fun HighlightColorButton(
     highlightColor: HighlightColor,
     isSelected: Boolean,
     onClick: () -> Unit,

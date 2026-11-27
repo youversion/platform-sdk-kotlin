@@ -12,7 +12,7 @@ import java.util.UUID
  * The server checks the formats of [color], [languageTag] and [tags] and rejects a value that does not match with
  * [REQUEST_REJECTED][com.youversion.platform.core.api.YouVersionNetworkException.Reason.REQUEST_REJECTED].
  *
- * @property content The note's text. Must not be empty.
+ * @property content The note's text. Empty saves the attached passage without text.
  * @property status Who can see the note.
  * @property requestId Identifies this create to the server so that retries do not create duplicates. Must be a UUID.
  * @property title The note's title.
