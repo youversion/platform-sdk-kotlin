@@ -40,7 +40,7 @@ import org.koin.core.parameter.parametersOf
  * @param bottomBar The host app's own bottom bar, drawn below the reader.
  * @param verseActions The actions offered for a verse selection, in order. Leave out a built-in action to hide it,
  * add [BibleReaderVerseAction]s of the host app's own, or pass an empty list to show no action sheet. IDs must be
- * unique.
+ * unique: a list that repeats one throws [IllegalArgumentException].
  */
 @OptIn(KoinExperimentalAPI::class)
 @Composable

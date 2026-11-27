@@ -1,11 +1,17 @@
 package com.youversion.platform.ui.views
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -13,10 +19,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -24,6 +35,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextCategory
@@ -198,15 +210,52 @@ internal fun DrawScope.drawVerseIndicators(
 }
 
 /**
+ * Where each painted indicator's tap target sits, in root coordinates, so a tap that lands in several overlapping
+ * targets reaches the verse number closest to it rather than whichever target happens to be drawn on top.
+ */
+internal class VerseIndicatorTargets {
+    private val targets = mutableMapOf<Any, Pair<BibleReference, Rect>>()
+
+    /** Records where the target identified by [key] for [reference] sits, replacing what was known of it. */
+    fun place(
+        key: Any,
+        reference: BibleReference,
+        boundsInRoot: Rect,
+    ) {
+        targets[key] = reference to boundsInRoot
+    }
+
+    /** Forgets the target identified by [key]. */
+    fun remove(key: Any) {
+        targets.remove(key)
+    }
+
+    /** The verse whose target holds [positionInRoot] with its center nearest to it, or [fallback] if none is known. */
+    fun closestTo(
+        positionInRoot: Offset,
+        fallback: BibleReference,
+    ): BibleReference =
+        targets.values
+            .filter { (_, bounds) -> bounds.contains(positionInRoot) }
+            .minByOrNull { (_, bounds) -> (bounds.center - positionInRoot).getDistanceSquared() }
+            ?.first ?: fallback
+}
+
+/** The tap targets of the [BibleText] being drawn, shared by its blocks so overlapping targets resolve across them. */
+internal val LocalVerseIndicatorTargets = staticCompositionLocalOf<VerseIndicatorTargets?> { null }
+
+/**
  * An invisible tap target centered on [indicator]'s marker and at least its style's minimum size. [origin] is where
  * the text's layout starts inside the box holding both, measured from that box's top left. The target may reach past
- * that box, which it never makes larger, so a paragraph shorter than the target keeps its own height.
+ * that box, which it never makes larger, so a paragraph shorter than the target keeps its own height. A tap is handed
+ * to the verse in [targets] closest to it, so where targets overlap, each number keeps the taps nearest to it.
  */
 @Composable
 internal fun VerseIndicatorTarget(
     indicator: VerseIndicator,
     layoutResult: TextLayoutResult,
     origin: Offset,
+    targets: VerseIndicatorTargets,
     onTap: (BibleReference) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -220,6 +269,9 @@ internal fun VerseIndicatorTarget(
         indicator.style.contentDescription ?: indicator.reference.verseStart
             ?.toString()
             .orEmpty()
+    val key = remember { Any() }
+    var positionInRoot by remember { mutableStateOf(Offset.Zero) }
+    DisposableEffect(targets, key) { onDispose { targets.remove(key) } }
 
     Box(
         modifier =
@@ -228,11 +280,24 @@ internal fun VerseIndicatorTarget(
                 .wrapContentSize(align = AbsoluteAlignment.TopLeft, unbounded = true)
                 .size(with(density) { width.toDp() }, with(density) { height.toDp() })
                 .testTag("verse_indicator_${indicator.reference.asUSFM}")
-                .clickable(
-                    interactionSource = null,
-                    indication = null,
-                    role = Role.Button,
-                ) { onTap(indicator.reference) }
-                .semantics { contentDescription = label },
+                .onGloballyPositioned { coordinates ->
+                    positionInRoot = coordinates.positionInRoot()
+                    targets.place(
+                        key = key,
+                        reference = indicator.reference,
+                        boundsInRoot = Rect(positionInRoot, coordinates.size.toSize()),
+                    )
+                }.pointerInput(indicator.reference, targets, onTap) {
+                    detectTapGestures { position ->
+                        onTap(targets.closestTo(positionInRoot + position, fallback = indicator.reference))
+                    }
+                }.semantics {
+                    role = Role.Button
+                    contentDescription = label
+                    onClick {
+                        onTap(indicator.reference)
+                        true
+                    }
+                },
     )
 }

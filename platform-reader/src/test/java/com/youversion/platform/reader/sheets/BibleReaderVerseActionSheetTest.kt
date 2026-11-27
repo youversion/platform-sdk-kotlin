@@ -3,12 +3,14 @@ package com.youversion.platform.reader.sheets
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.text.TextLayoutResult
 import com.youversion.platform.reader.BibleReaderVerseAction
 import com.youversion.platform.ui.theme.BibleReaderMaterialTheme
 import com.youversion.platform.ui.theme.Charcoal
@@ -18,6 +20,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -161,6 +165,26 @@ class BibleReaderVerseActionSheetTest {
         composeTestRule.onNodeWithText("Bookmark").performClick()
 
         assertEquals(bookmark, clicked)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a custom action's label fits on one line inside its button`() {
+        renderSheet(actions = listOf(BibleReaderVerseAction("long", "Remember this", Icons.Filled.Star) {}))
+
+        val layoutResults = mutableListOf<TextLayoutResult>()
+        val label = composeTestRule.onNodeWithText("Remember this", useUnmergedTree = true)
+        label
+            .fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult]
+            .action
+            ?.invoke(layoutResults)
+        val labelBounds = label.getBoundsInRoot()
+        val buttonBounds = composeTestRule.onNodeWithText("Remember this").getBoundsInRoot()
+
+        assertEquals(1, layoutResults.single().lineCount)
+        assertTrue(labelBounds.left >= buttonBounds.left && labelBounds.right <= buttonBounds.right)
     }
 
     // ----- Highlight Color Picker

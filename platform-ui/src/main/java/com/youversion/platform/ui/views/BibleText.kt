@@ -21,6 +21,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -352,20 +353,23 @@ private fun BibleTextContent(
     if (blocksState.loadingPhase != BibleTextLoadingPhase.SUCCESS) {
         placeholder(blocksState.loadingPhase)
     } else {
+        val verseIndicatorTargets = remember { VerseIndicatorTargets() }
         ProvideVersionDirection(isRightToLeft = blocksState.isVersionRightToLeft) {
-            Column {
-                blocksState.visibleBlocks.indices.forEach { index ->
-                    BibleBlockContent(
-                        visibleBlocks = blocksState.visibleBlocks,
-                        index = index,
-                        textOptions = blocksState.textOptions,
-                        selectedVerses = selectedVerses,
-                        highlights = blocksState.highlights,
-                        onVerseTap = onVerseTap,
-                        onFootnoteTap = onFootnoteTap,
-                        verseIndicatorStyle = verseIndicatorStyle,
-                        onVerseIndicatorTap = onVerseIndicatorTap,
-                    )
+            CompositionLocalProvider(LocalVerseIndicatorTargets provides verseIndicatorTargets) {
+                Column {
+                    blocksState.visibleBlocks.indices.forEach { index ->
+                        BibleBlockContent(
+                            visibleBlocks = blocksState.visibleBlocks,
+                            index = index,
+                            textOptions = blocksState.textOptions,
+                            selectedVerses = selectedVerses,
+                            highlights = blocksState.highlights,
+                            onVerseTap = onVerseTap,
+                            onFootnoteTap = onFootnoteTap,
+                            verseIndicatorStyle = verseIndicatorStyle,
+                            onVerseIndicatorTap = onVerseIndicatorTap,
+                        )
+                    }
                 }
             }
         }
@@ -783,12 +787,14 @@ internal fun BibleTextBlock(
         )
         val layoutResult = textLayoutResult
         if (onVerseIndicatorTap != null && layoutResult != null && layoutResult.layoutInput.text.text == text.text) {
+            val targets = LocalVerseIndicatorTargets.current ?: remember { VerseIndicatorTargets() }
             Box(modifier = Modifier.matchParentSize()) {
                 paintedIndicators.forEach { indicator ->
                     VerseIndicatorTarget(
                         indicator = indicator,
                         layoutResult = layoutResult,
                         origin = origin,
+                        targets = targets,
                         onTap = onVerseIndicatorTap,
                     )
                 }

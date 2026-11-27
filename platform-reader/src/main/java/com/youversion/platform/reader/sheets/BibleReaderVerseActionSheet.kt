@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -219,14 +220,14 @@ private fun VerseActionButton(
         verticalArrangement = Arrangement.Center,
         modifier =
             Modifier
-                .size(56.dp)
+                .sizeIn(minWidth = 56.dp, minHeight = 56.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 .clickable(
                     interactionSource = null,
                     indication = ripple(),
                     onClick = onClick,
-                ),
+                ).padding(horizontal = 12.dp),
     ) {
         Icon(
             imageVector = icon,

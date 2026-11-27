@@ -2930,6 +2930,42 @@ class BibleTextTests {
         assertEquals(emptyList(), verseTaps)
     }
 
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a tap where two indicators' targets overlap reaches the closer number`() {
+        val indicatorTaps = mutableListOf<BibleReference>()
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns
+            listOf(annotatedBlock("", marginTop = 0.dp).modified(text = labeledVerses(listOf("Light.\n", "Amen."))))
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                androidx.compose.foundation.layout.Box(modifier = Modifier.width(400.dp)) {
+                    BibleText(
+                        reference = chapterReference,
+                        textOptions = BibleTextOptions(fontSize = 12.sp),
+                        verseIndicatorStyle = { BibleVerseIndicatorStyle(Color.Blue) },
+                        onVerseIndicatorTap = { indicatorTaps += it },
+                    )
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+        val text = "\u00A01\u00A0\u00A0Light.\n \u00A02\u00A0\u00A0Amen."
+        val layout = textLayout(text)
+        val firstNumber = layout.getBoundingBox(text.indexOf('1'))
+        val secondTarget = composeTestRule.onNodeWithContentDescription("2").getBoundsInRoot()
+        val textTop = composeTestRule.onNodeWithText(text).getBoundsInRoot().top
+        assertTrue(secondTarget.top < textTop + with(composeTestRule.density) { firstNumber.center.y.toDp() })
+
+        tapCharacter(text, text.indexOf('1'))
+        tapCharacter(text, text.indexOf('2'))
+
+        assertEquals(listOf(verse(1), verse(2)), indicatorTaps)
+    }
+
     /** Taps the leading quarter of the character at [index], which resolves to that character's own offset. */
     private fun tapCharacter(
         text: String,
