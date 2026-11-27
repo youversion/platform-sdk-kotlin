@@ -288,9 +288,13 @@ class NotesApiTests : YouVersionPlatformTest {
         }
 
     @Test
-    fun `test createNote rejects a chapter attachment`() =
+    fun `test createNote rejects a chapter attachment and a note with neither text nor passage`() =
         runTest {
             start { error("no request expected") }
+
+            assertFailsWith<IllegalArgumentException> {
+                YouVersionApi.notes.createNote(NoteCreateRequest("", NoteStatus.PRIVATE))
+            }
 
             assertFailsWith<IllegalArgumentException> {
                 YouVersionApi.notes.createNote(

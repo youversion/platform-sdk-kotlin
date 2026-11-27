@@ -2,8 +2,9 @@ package com.youversion.platform.reader.sheets
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -33,9 +35,11 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +48,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -119,6 +126,7 @@ internal fun BibleReaderNoteComposerSheet(
                     HighlightColorButton(
                         highlightColor = highlightColor,
                         isSelected = isSelected,
+                        contentDescription = stringResource(highlightColor.nameResId),
                         onClick = {
                             if (!draft.isSaving) {
                                 onUpdate(
@@ -227,28 +235,44 @@ private fun NoteHeader(
                 color = MaterialTheme.colorScheme.onBackground,
             )
         }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        val interactionSource = remember { MutableInteractionSource() }
+        Box(
+            contentAlignment = Alignment.TopCenter,
             modifier =
                 Modifier
+                    .heightIn(min = 48.dp)
                     .alpha(if (isEnabled) 1f else 0.5f)
-                    .clip(CircleShape)
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-                    .clickable(enabled = isEnabled, onClick = onToggleVisibility)
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                    .toggleable(
+                        value = isPublic,
+                        interactionSource = interactionSource,
+                        indication = null,
+                        enabled = isEnabled,
+                        role = Role.Switch,
+                        onValueChange = { onToggleVisibility() },
+                    ).testTag("note_visibility_toggle"),
         ) {
-            Icon(
-                imageVector = if (isPublic) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.size(14.dp),
-            )
-            Text(
-                text = stringResource(if (isPublic) UiR.string.notes_public else UiR.string.notes_private),
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier =
+                    Modifier
+                        .clip(CircleShape)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                        .indication(interactionSource, ripple())
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+            ) {
+                Icon(
+                    imageVector = if (isPublic) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.size(14.dp),
+                )
+                Text(
+                    text = stringResource(if (isPublic) UiR.string.notes_public else UiR.string.notes_private),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+            }
         }
     }
 }
@@ -260,6 +284,7 @@ private fun NoteTextField(
     onContentChange: (String) -> Unit,
 ) {
     val textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground)
+    val label = stringResource(UiR.string.notes_placeholder)
     BasicTextField(
         value = content,
         onValueChange = onContentChange,
@@ -267,7 +292,11 @@ private fun NoteTextField(
         textStyle = textStyle,
         cursorBrush = SolidColor(MaterialTheme.colorScheme.onBackground),
         maxLines = 3,
-        modifier = Modifier.fillMaxWidth().testTag("note_content_field"),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = label }
+                .testTag("note_content_field"),
         decorationBox = { innerTextField ->
             Box(
                 modifier =
@@ -281,7 +310,7 @@ private fun NoteTextField(
             ) {
                 if (content.isEmpty()) {
                     Text(
-                        text = stringResource(UiR.string.notes_placeholder),
+                        text = label,
                         style = textStyle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

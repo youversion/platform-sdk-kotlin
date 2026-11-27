@@ -82,8 +82,9 @@ public interface NotesApi {
      *
      * @param request The note to create.
      * @return The created [Note].
-     * @throws IllegalArgumentException if [NoteCreateRequest.references] is empty, spans more than one version, book or
-     *     chapter, or names a whole chapter.
+     * @throws IllegalArgumentException if [NoteCreateRequest.content] is empty and the request attaches no references,
+     *     or [NoteCreateRequest.references] is empty, spans more than one version, book or chapter, or names a whole
+     *     chapter.
      */
     public suspend fun createNote(request: NoteCreateRequest): Note
 

@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -164,16 +165,20 @@ private fun HighlightColorPicker(
  *
  * The swatch is mixed into the reader background so it shows the color the highlight will actually
  * be on the page; the palette color on its own would read differently against the sheet behind it.
+ *
+ * [contentDescription] replaces the spoken "Add/Remove … highlight" label for pickers that choose a color rather
+ * than highlight verses, such as the notes composer. The swatch announces [isSelected] either way.
  */
 @Composable
 internal fun HighlightColorButton(
     highlightColor: HighlightColor,
     isSelected: Boolean,
     onClick: () -> Unit,
+    contentDescription: String? = null,
 ) {
     val colorName = stringResource(highlightColor.nameResId)
-    val contentDescription =
-        stringResource(
+    val spokenDescription =
+        contentDescription ?: stringResource(
             if (isSelected) {
                 R.string.verse_action_remove_highlight
             } else {
@@ -198,7 +203,10 @@ internal fun HighlightColorButton(
                     interactionSource = null,
                     indication = ripple(),
                     onClick = onClick,
-                ).semantics { this.contentDescription = contentDescription },
+                ).semantics {
+                    this.contentDescription = spokenDescription
+                    selected = isSelected
+                },
     ) {
         if (isSelected) {
             Icon(
