@@ -4,6 +4,7 @@ import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
+import com.youversion.platform.core.notes.api.NoteChanges
 import com.youversion.platform.core.notes.api.NotesApi
 import com.youversion.platform.core.notes.models.Note
 import com.youversion.platform.core.notes.models.NoteCreateRequest
@@ -545,5 +546,35 @@ class BibleReaderViewModelNotesTests {
         assertEquals(savedNote, draft.editingNote)
         viewModel.onAction(Action.DeleteSavedNote(otherNote))
         assertEquals(listOf("n2"), deletedIds)
+    }
+
+    @Test
+    fun `deleting the edited note starts a new note under a new request id`() {
+        createNote = { throw YouVersionNetworkException(YouVersionNetworkException.Reason.SERVER_ERROR) }
+        viewModel.onAction(Action.ShowSavedNotes(verse1, listOf(savedNote, otherNote)))
+        viewModel.onAction(Action.SaveNote)
+        viewModel.onAction(Action.DismissNoteSaveError)
+        viewModel.onAction(Action.EditSavedNote(savedNote))
+
+        viewModel.onAction(Action.DeleteSavedNote(savedNote))
+        createNote = {}
+        viewModel.onAction(Action.SaveNote)
+
+        assertEquals(2, createdRequests.size)
+        assertTrue(createdRequests[0].requestId != createdRequests[1].requestId)
+    }
+
+    @Test
+    fun `a note the server already deleted counts as deleted`() {
+        val changesBefore = NoteChanges.changeCount.value
+        deleteNote = { throw mockk<YouVersionNetworkException> { every { statusCode } returns 404 } }
+        editSavedNote()
+
+        viewModel.onAction(Action.DeleteSavedNote(otherNote))
+
+        val draft = assertNotNull(state.noteDraft)
+        assertFalse(draft.showsSaveError)
+        assertEquals(listOf(savedNote), draft.savedNotes)
+        assertEquals(changesBefore + 1, NoteChanges.changeCount.value)
     }
 }

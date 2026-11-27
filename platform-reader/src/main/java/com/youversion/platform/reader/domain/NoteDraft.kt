@@ -144,15 +144,13 @@ internal data class NoteDraft(
 
     /**
      * This draft once [note] is deleted: gone from [savedNotes], and no longer edited. Its fields empty when they were
-     * the note's own, but text the reader changed is kept for a new note.
+     * the note's own, but text the reader changed is kept for a new note, under a new [requestId] so an earlier
+     * create that may have reached the server is not reused.
      */
     fun deleting(note: Note): NoteDraft {
         val remaining = copy(savedNotes = savedNotes.filterNot { it.id == note.id })
         if (editingNote?.id != note.id) return remaining
-        return if (hasChanges) {
-            remaining.copy(editingNote = null)
-        } else {
-            remaining.copy(editingNote = null, content = "", isPublic = false, hexColor = null)
-        }
+        val newNote = remaining.copy(editingNote = null, requestId = UUID.randomUUID().toString())
+        return if (hasChanges) newNote else newNote.copy(content = "", isPublic = false, hexColor = null)
     }
 }

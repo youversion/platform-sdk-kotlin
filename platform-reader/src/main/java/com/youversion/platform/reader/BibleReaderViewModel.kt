@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
+import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.bibles.domain.BibleVersionRepository
@@ -18,6 +19,7 @@ import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.highlights.models.highlightRgbOrNull
 import com.youversion.platform.core.highlights.models.isSameHighlightColor
 import com.youversion.platform.core.languages.domain.LanguageRepository
+import com.youversion.platform.core.notes.api.NoteChanges
 import com.youversion.platform.core.notes.api.NotesApi
 import com.youversion.platform.core.notes.models.Note
 import com.youversion.platform.core.users.model.YouVersionPermissions
@@ -45,6 +47,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.net.HttpURLConnection
 
 internal class BibleReaderViewModel(
     bibleReference: BibleReference?,
@@ -803,13 +806,22 @@ internal class BibleReaderViewModel(
 
     /**
      * Deletes [note], one of the open draft's saved notes, keeping the composer and anything the reader typed. It
-     * needs the write permission as saving does, and a failure leaves the note listed.
+     * needs the write permission as saving does, and a failure leaves the note listed. A note the server no longer
+     * has counts as deleted, so retrying a delete whose response was lost does not fail forever.
      */
     private fun deleteSavedNote(note: Note) {
         val draft = _state.value.noteDraft ?: return
         if (draft.isBusy || draft.sessionId != currentSessionId() || note !in draft.savedNotes) return
         if (!holdNoteDraftUnlessWritable(draft)) return
-        mutateNote(draft, draft.copy(isDeleting = true), "Failed to delete note", { notesApi.deleteNote(note.id) }) {
+        val delete: suspend () -> Unit = {
+            try {
+                notesApi.deleteNote(note.id)
+            } catch (e: YouVersionNetworkException) {
+                if (e.statusCode != HttpURLConnection.HTTP_NOT_FOUND) throw e
+                NoteChanges.notifyChanged()
+            }
+        }
+        mutateNote(draft, draft.copy(isDeleting = true), "Failed to delete note", delete) {
             _state.update { state -> state.copy(noteDraft = state.noteDraft?.deleting(note)?.copy(isDeleting = false)) }
         }
     }
