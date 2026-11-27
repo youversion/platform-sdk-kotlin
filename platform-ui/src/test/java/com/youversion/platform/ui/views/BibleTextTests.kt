@@ -40,6 +40,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
@@ -2937,11 +2938,10 @@ class BibleTextTests {
         assertEquals(emptyList(), verseTaps)
     }
 
-    @Test
-    @GraphicsMode(GraphicsMode.Mode.NATIVE)
-    @Config(sdk = [34])
-    fun `a tap where two indicators' targets overlap reaches the closer number`() {
-        val indicatorTaps = mutableListOf<BibleReference>()
+    private val stackedIndicatorText = "\u00A01\u00A0\u00A0Light.\n \u00A02\u00A0\u00A0Amen."
+
+    /** Verses 1 and 2 marked on consecutive lines at 12sp, where verse 2's tap target overlaps the "1" above it. */
+    private fun setStackedIndicatorContent(onVerseIndicatorTap: (BibleReference) -> Unit) {
         coEvery { mockVersionRepository.version(any()) } returns ltrVersion
         coEvery {
             BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
@@ -2954,13 +2954,21 @@ class BibleTextTests {
                         reference = chapterReference,
                         textOptions = BibleTextOptions(fontSize = 12.sp),
                         verseIndicatorStyle = { BibleVerseIndicatorStyle(Color.Blue) },
-                        onVerseIndicatorTap = { indicatorTaps += it },
+                        onVerseIndicatorTap = onVerseIndicatorTap,
                     )
                 }
             }
         }
         composeTestRule.waitForIdle()
-        val text = "\u00A01\u00A0\u00A0Light.\n \u00A02\u00A0\u00A0Amen."
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a tap where two indicators' targets overlap reaches the closer number`() {
+        val indicatorTaps = mutableListOf<BibleReference>()
+        setStackedIndicatorContent(onVerseIndicatorTap = { indicatorTaps += it })
+        val text = stackedIndicatorText
         val layout = textLayout(text)
         val firstNumber = layout.getBoundingBox(text.indexOf('1'))
         val secondTarget = composeTestRule.onNodeWithContentDescription("2").getBoundsInRoot()
@@ -2971,6 +2979,27 @@ class BibleTextTests {
         tapCharacter(text, text.indexOf('2'))
 
         assertEquals(listOf(verse(1), verse(2)), indicatorTaps)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `an accessibility click opens an indicator's own verse after a touch on it was dragged away`() {
+        val indicatorTaps = mutableListOf<BibleReference>()
+        setStackedIndicatorContent(onVerseIndicatorTap = { indicatorTaps += it })
+        val text = stackedIndicatorText
+        val firstNumber = textLayout(text).getBoundingBox(text.indexOf('1'))
+
+        composeTestRule.onNodeWithText(text).performTouchInput {
+            down(firstNumber.center)
+            moveTo(Offset(width - 1f, height - 1f))
+            up()
+        }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithContentDescription("2").performSemanticsAction(SemanticsActions.OnClick)
+        composeTestRule.waitForIdle()
+
+        assertEquals(listOf(verse(2)), indicatorTaps)
     }
 
     @Test

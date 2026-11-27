@@ -249,7 +249,8 @@ internal val LocalVerseIndicatorTargets = staticCompositionLocalOf<VerseIndicato
  * the text's layout starts inside the box holding both, measured from that box's top left. The target may reach past
  * that box, which it never makes larger, so a paragraph shorter than the target keeps its own height. A touch is handed
  * to the verse in [targets] closest to it, so where targets overlap, each number keeps the taps nearest to it. A
- * keyboard, D-pad or accessibility activation, which has no position, opens the target's own verse.
+ * keyboard, D-pad or accessibility activation, which has no position, opens the target's own verse, even after a
+ * touch on the target was dragged away or cancelled.
  */
 @Composable
 internal fun VerseIndicatorTarget(
@@ -292,10 +293,14 @@ internal fun VerseIndicatorTarget(
                 }.pointerInput(Unit) {
                     awaitPointerEventScope {
                         while (true) {
-                            awaitPointerEvent(PointerEventPass.Initial)
-                                .changes
+                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                            event.changes
                                 .firstOrNull { it.changedToDown() }
                                 ?.let { pressPositionInRoot = positionInRoot + it.position }
+                            if (event.changes.none { it.pressed }) {
+                                awaitPointerEvent(PointerEventPass.Final)
+                                pressPositionInRoot = null
+                            }
                         }
                     }
                 }.clickable(
