@@ -3,6 +3,7 @@ package com.youversion.platform.reader.sheets
 import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -23,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.AlertDialog
@@ -34,27 +37,37 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -67,6 +80,7 @@ import com.youversion.platform.reader.domain.NoteDraft
 import com.youversion.platform.reader.icons.BookmarkIcon
 import com.youversion.platform.ui.theme.readerColorScheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.TimeZone
 import com.youversion.platform.ui.R as UiR
@@ -75,6 +89,11 @@ import com.youversion.platform.ui.R as UiR
  * The notes composer for [draft]: its passage, a text field, a Private/Public control, the highlight colors in palette
  * order, and Cancel and Save. A draft opened from a verse indicator lists the notes already saved on its verse below,
  * each titled with the passage [noteReferenceTitle] gives for its attachment.
+ *
+ * Tapping a saved note calls [onEditSavedNote] to load it into the composer, after the reader confirms replacing any
+ * unsaved changes, and focuses the text field. Swiping a saved note toward the start, or its accessibility action,
+ * calls [onDeleteSavedNote] once the reader confirms. While a saved note is edited, the header shows its passage and
+ * Save waits for a change.
  *
  * Swiping the sheet away or tapping Cancel calls [onDismissRequest] rather than closing it, so the reader is asked
  * before unsaved changes are lost; the sheet closes once the draft is gone.
@@ -86,6 +105,8 @@ internal fun BibleReaderNoteComposerSheet(
     noteReferenceTitle: (List<BibleReference>) -> String,
     onUpdate: (content: String, isPublic: Boolean, hexColor: String?) -> Unit,
     onSave: () -> Unit,
+    onEditSavedNote: (Note) -> Unit,
+    onDeleteSavedNote: (Note) -> Unit,
     onDismissRequest: () -> Unit,
     onConfirmDiscard: () -> Unit,
     onCancelDiscard: () -> Unit,
@@ -97,7 +118,7 @@ internal fun BibleReaderNoteComposerSheet(
         rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
             confirmValueChange = { value ->
-                if (value == SheetValue.Hidden && (currentDraft.hasChanges || currentDraft.isSaving)) {
+                if (value == SheetValue.Hidden && (currentDraft.hasChanges || currentDraft.isBusy)) {
                     currentOnDismissRequest()
                     false
                 } else {
@@ -105,6 +126,12 @@ internal fun BibleReaderNoteComposerSheet(
                 }
             },
         )
+    val focusRequester = remember { FocusRequester() }
+    var noteToEdit by remember { mutableStateOf<Note?>(null) }
+    var noteToDelete by remember { mutableStateOf<Note?>(null) }
+    LaunchedEffect(draft.editingNote?.id) {
+        if (draft.editingNote != null) focusRequester.requestFocus()
+    }
     LaunchedEffect(draft.showsDiscardConfirmation) {
         if (!draft.showsDiscardConfirmation && !sheetState.isVisible) {
             sheetState.show()
@@ -125,27 +152,30 @@ internal fun BibleReaderNoteComposerSheet(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             NoteHeader(
-                referenceTitle = draft.referenceTitle,
+                referenceTitle =
+                    draft.editingNote?.let { noteReferenceTitle(it.references.orEmpty()) } ?: draft.referenceTitle,
                 isPublic = draft.isPublic,
-                isEnabled = !draft.isSaving,
+                isEnabled = !draft.isBusy,
                 onToggleVisibility = { onUpdate(draft.content, !draft.isPublic, draft.hexColor) },
             )
             NoteTextField(
                 content = draft.content,
-                isEnabled = !draft.isSaving,
+                isEnabled = !draft.isBusy,
+                focusRequester = focusRequester,
                 onContentChange = { onUpdate(it, draft.isPublic, draft.hexColor) },
             )
             Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()).alpha(if (draft.isSaving) 0.5f else 1f),
+                modifier = Modifier.horizontalScroll(rememberScrollState()).alpha(if (draft.isBusy) 0.5f else 1f),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 HighlightColor.entries.forEach { highlightColor ->
-                    val isSelected = draft.hexColor == highlightColor.hexColor
+                    val isSelected =
+                        draft.hexColor?.let(::highlightRgbOrNull) == highlightRgbOrNull(highlightColor.hexColor)
                     HighlightColorButton(
                         swatch = HighlightSwatch(highlightColor.hexColor, highlightColor, isSelected),
                         contentDescription = stringResource(highlightColor.nameResId),
                         onClick = {
-                            if (!draft.isSaving) {
+                            if (!draft.isBusy) {
                                 onUpdate(
                                     draft.content,
                                     draft.isPublic,
@@ -159,7 +189,7 @@ internal fun BibleReaderNoteComposerSheet(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(
                     onClick = onDismissRequest,
-                    enabled = !draft.isSaving,
+                    enabled = !draft.isBusy,
                     colors =
                         ButtonDefaults.textButtonColors(
                             contentColor = MaterialTheme.colorScheme.onBackground,
@@ -171,7 +201,7 @@ internal fun BibleReaderNoteComposerSheet(
                 Spacer(modifier = Modifier.weight(1f))
                 Button(
                     onClick = onSave,
-                    enabled = !draft.isSaving,
+                    enabled = draft.canSave,
                     colors =
                         ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.onBackground,
@@ -199,28 +229,59 @@ internal fun BibleReaderNoteComposerSheet(
                     color = MaterialTheme.colorScheme.onBackground,
                 )
                 draft.savedNotes.forEach { note ->
-                    SavedNoteCard(note = note, referenceTitle = noteReferenceTitle(note.references.orEmpty()))
+                    key(note.id) {
+                        SavedNoteCard(
+                            note = note,
+                            referenceTitle = noteReferenceTitle(note.references.orEmpty()),
+                            isEnabled = !draft.isBusy,
+                            onClick = {
+                                when {
+                                    draft.editingNote?.id == note.id -> focusRequester.requestFocus()
+                                    draft.hasChanges -> noteToEdit = note
+                                    else -> onEditSavedNote(note)
+                                }
+                            },
+                            onDelete = { noteToDelete = note },
+                        )
+                    }
                 }
             }
         }
     }
 
+    noteToEdit?.let { note ->
+        ConfirmationDialog(
+            title = stringResource(UiR.string.notes_replace_title),
+            message = stringResource(UiR.string.notes_replace_message),
+            confirmLabel = stringResource(UiR.string.notes_replace),
+            onConfirm = {
+                noteToEdit = null
+                onEditSavedNote(note)
+            },
+            onCancel = { noteToEdit = null },
+        )
+    }
+
+    noteToDelete?.let { note ->
+        ConfirmationDialog(
+            title = stringResource(UiR.string.notes_delete_title),
+            message = stringResource(UiR.string.notes_delete_message),
+            confirmLabel = stringResource(UiR.string.notes_delete),
+            onConfirm = {
+                noteToDelete = null
+                onDeleteSavedNote(note)
+            },
+            onCancel = { noteToDelete = null },
+        )
+    }
+
     if (draft.showsDiscardConfirmation) {
-        AlertDialog(
-            onDismissRequest = onCancelDiscard,
-            title = { Text(stringResource(UiR.string.notes_discard_title)) },
-            text = { Text(stringResource(UiR.string.notes_discard_message)) },
-            confirmButton = {
-                TextButton(
-                    onClick = onConfirmDiscard,
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                ) {
-                    Text(stringResource(UiR.string.notes_discard))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onCancelDiscard) { Text(stringResource(UiR.string.cancel)) }
-            },
+        ConfirmationDialog(
+            title = stringResource(UiR.string.notes_discard_title),
+            message = stringResource(UiR.string.notes_discard_message),
+            confirmLabel = stringResource(UiR.string.notes_discard),
+            onConfirm = onConfirmDiscard,
+            onCancel = onCancelDiscard,
         )
     }
 
@@ -234,6 +295,33 @@ internal fun BibleReaderNoteComposerSheet(
             },
         )
     }
+}
+
+/** An alert asking the reader to confirm a destructive [confirmLabel] action, or cancel it. */
+@Composable
+private fun ConfirmationDialog(
+    title: String,
+    message: String,
+    confirmLabel: String,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text(title) },
+        text = { Text(message) },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+            ) {
+                Text(confirmLabel)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) { Text(stringResource(UiR.string.cancel)) }
+        },
+    )
 }
 
 @Composable
@@ -308,6 +396,7 @@ private fun NoteHeader(
 private fun NoteTextField(
     content: String,
     isEnabled: Boolean,
+    focusRequester: FocusRequester,
     onContentChange: (String) -> Unit,
 ) {
     val textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground)
@@ -322,6 +411,7 @@ private fun NoteTextField(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .focusRequester(focusRequester)
                 .semantics { contentDescription = label }
                 .testTag("note_content_field"),
         decorationBox = { innerTextField ->
@@ -348,71 +438,131 @@ private fun NoteTextField(
     )
 }
 
+/**
+ * A saved note that opens for editing when tapped, and asks to be deleted when swiped toward the start or through its
+ * accessibility action. The swipe springs back, since the note stays until the deletion succeeds.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SavedNoteCard(
     note: Note,
     referenceTitle: String,
+    isEnabled: Boolean,
+    onClick: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     val isPublic = note.status == NoteStatus.PUBLIC
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .testTag("saved_note_card")
-                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
-                .padding(12.dp),
-    ) {
-        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                text = stringResource(UiR.string.notes_added_note_on, referenceTitle),
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.weight(1f),
-            )
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Icon(
-                    imageVector = if (isPublic) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.size(14.dp),
-                )
-                Text(
-                    text = stringResource(if (isPublic) UiR.string.notes_public else UiR.string.notes_private),
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-            }
-        }
-        if (note.content.isNotEmpty()) {
-            Text(
-                text = note.content,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                        .padding(12.dp),
-            )
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            note.color?.let(::highlightRgbOrNull)?.let { rgb ->
-                val dotColor = MaterialTheme.readerColorScheme.mixedHighlightColor(Color(0xFF000000L or rgb))
-                Box(
+    val shape = RoundedCornerShape(12.dp)
+    val deleteLabel = stringResource(UiR.string.notes_delete)
+    val swipeState = rememberSwipeToDismissBoxState()
+    val scope = rememberCoroutineScope()
+    SwipeToDismissBox(
+        state = swipeState,
+        enableDismissFromStartToEnd = false,
+        gesturesEnabled = isEnabled,
+        onDismiss = {
+            onDelete()
+            scope.launch { swipeState.reset() }
+        },
+        backgroundContent = {
+            if (swipeState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
                     modifier =
                         Modifier
-                            .size(12.dp)
-                            .clip(CircleShape)
-                            .background(dotColor)
-                            .testTag("saved_note_color"),
+                            .fillMaxSize()
+                            .clip(shape)
+                            .background(MaterialTheme.colorScheme.error)
+                            .padding(horizontal = 20.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Delete,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onError,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text(text = deleteLabel, fontSize = 14.sp, color = MaterialTheme.colorScheme.onError)
+                }
+            }
+        },
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .testTag("saved_note_card")
+                    .clip(shape)
+                    .background(MaterialTheme.colorScheme.background)
+                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), shape)
+                    .clickable(enabled = isEnabled, role = Role.Button, onClick = onClick)
+                    .semantics {
+                        if (isEnabled) {
+                            customActions =
+                                listOf(
+                                    CustomAccessibilityAction(deleteLabel) {
+                                        onDelete()
+                                        true
+                                    },
+                                )
+                        }
+                    }.padding(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(UiR.string.notes_added_note_on, referenceTitle),
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f),
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Icon(
+                        imageVector = if (isPublic) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        text = stringResource(if (isPublic) UiR.string.notes_public else UiR.string.notes_private),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
+            }
+            if (note.content.isNotEmpty()) {
+                Text(
+                    text = note.content,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            .padding(12.dp),
                 )
             }
-            note.createdTime?.let(::noteTimeMillis)?.let { createdMillis -> NoteAge(createdMillis) }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                note.color?.let(::highlightRgbOrNull)?.let { rgb ->
+                    val dotColor = MaterialTheme.readerColorScheme.mixedHighlightColor(Color(0xFF000000L or rgb))
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(12.dp)
+                                .clip(CircleShape)
+                                .background(dotColor)
+                                .testTag("saved_note_color"),
+                    )
+                }
+                note.createdTime?.let(::noteTimeMillis)?.let { createdMillis -> NoteAge(createdMillis) }
+            }
         }
     }
 }
