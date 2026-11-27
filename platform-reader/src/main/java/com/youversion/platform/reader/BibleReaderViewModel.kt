@@ -768,12 +768,23 @@ internal class BibleReaderViewModel(
     }
 
     /**
-     * Creates the open draft's note. A failure keeps the draft, request id included, so retrying cannot create the
+     * Creates the open draft's note. A composer opened from a note indicator needs only the read permission, so
+     * without the write permission the draft is held, text included, while the reader grants it, and reopens once
+     * it lands. A failure keeps the draft, request id included, so retrying cannot create the
      * note twice. Success closes the composer; the note indicators then reload the chapter's notes and highlights.
      */
     private fun saveNote() {
         val draft = _state.value.noteDraft ?: return
         if (draft.isSaving || draft.sessionId != currentSessionId()) return
+        if (!hasWriteNotesPermission()) {
+            if (!isSignInEnabled()) {
+                updateNoteDraft { it.copy(showsSaveError = true) }
+                return
+            }
+            pendingNoteDraft = draft
+            _state.update { it.copy(noteDraft = null, shouldStartNoteSignIn = true) }
+            return
+        }
         val request =
             NoteCreateRequest(
                 content = draft.content,

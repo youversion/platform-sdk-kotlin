@@ -13,6 +13,7 @@ import com.youversion.platform.core.highlights.api.HighlightsEndpoints
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.highlights.models.Highlight
 import com.youversion.platform.core.highlights.models.isSameHighlightColor
+import com.youversion.platform.core.notes.api.NoteChanges
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -34,6 +35,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.pow
@@ -163,6 +165,7 @@ public class BibleHighlightsRepository internal constructor(
 
     private val loadScope = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
 
+    private val seenNoteChangeCount = AtomicInteger(NoteChanges.changeCount.value)
     private val queueLock = ReentrantLock()
     private var isProcessingQueue = false
     private var processingJob: Job? = null
@@ -221,7 +224,9 @@ public class BibleHighlightsRepository internal constructor(
     /**
      * Loads the chapter containing [reference] from the server if it has not been loaded recently.
      *
-     * Loading is throttled per chapter and de-duplicated while a load is in flight. Pass [forceReload] to bypass the
+     * Loading is throttled per chapter and de-duplicated while a load is in flight. A note change reported by
+     * [NoteChanges] since the last call lifts the throttle for every chapter, since a note's color can change the
+     * highlights the server returns even when no note view saw the change. Pass [forceReload] to bypass the
      * time-based throttle. It does not interrupt a load already in progress; instead, when one is in flight it waits for
      * that load to finish and then starts a single fresh load, so a forced reload always reflects server state fetched
      * after this call rather than being silently dropped. It schedules at most one follow-up load: if another load has
@@ -239,6 +244,10 @@ public class BibleHighlightsRepository internal constructor(
                 chapter = reference.chapter,
             )
 
+        val noteChangeCount = NoteChanges.changeCount.value
+        if (seenNoteChangeCount.getAndSet(noteChangeCount) != noteChangeCount) {
+            cache.forgetRecentChapterFetches()
+        }
         if (!forceReload && cache.hasRecentlyLoadedChapter(chapter)) {
             return
         }

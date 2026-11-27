@@ -57,7 +57,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleReference
@@ -388,8 +387,6 @@ private fun SavedNoteCard(
         if (note.content.isNotEmpty()) {
             Text(
                 text = note.content,
-                maxLines = 4,
-                overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier =
                     Modifier

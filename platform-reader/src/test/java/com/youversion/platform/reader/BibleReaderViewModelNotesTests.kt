@@ -334,6 +334,26 @@ class BibleReaderViewModelNotesTests {
     }
 
     @Test
+    fun `saving from a note indicator without write access asks for it and reopens the typed note once granted`() {
+        hasWriteNotes = false
+        viewModel.onAction(Action.ShowSavedNotes(verse7, listOf(mockk<Note>())))
+        viewModel.onAction(Action.UpdateNote("kept", isPublic = false, hexColor = null))
+
+        viewModel.onAction(Action.SaveNote)
+
+        assertTrue(createdRequests.isEmpty())
+        assertNull(state.noteDraft)
+        assertTrue(state.shouldStartNoteSignIn)
+
+        hasWriteNotes = true
+        viewModel.openPendingNoteIfPermitted()
+
+        assertEquals("kept", assertNotNull(state.noteDraft).content)
+        viewModel.onAction(Action.SaveNote)
+        assertEquals(listOf("kept"), createdRequests.map { it.content })
+    }
+
+    @Test
     fun `a note indicator opens nothing while signed out, without notes, or over an open draft`() {
         val note = mockk<Note>()
         viewModel.onAction(Action.ShowSavedNotes(verse7, emptyList()))
