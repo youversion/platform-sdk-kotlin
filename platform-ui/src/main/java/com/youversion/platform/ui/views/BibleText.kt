@@ -788,7 +788,7 @@ internal fun BibleTextBlock(
         val layoutResult = textLayoutResult
         if (onVerseIndicatorTap != null && layoutResult != null && layoutResult.layoutInput.text.text == text.text) {
             val targets = LocalVerseIndicatorTargets.current ?: remember { VerseIndicatorTargets() }
-            Box(modifier = Modifier.matchParentSize()) {
+            Box(modifier = Modifier.matchParentSize(), contentAlignment = AbsoluteAlignment.TopLeft) {
                 paintedIndicators.forEach { indicator ->
                     VerseIndicatorTarget(
                         indicator = indicator,

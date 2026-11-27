@@ -21,11 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getBoundsInRoot
@@ -35,8 +38,11 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
@@ -2653,8 +2659,9 @@ class BibleTextTests {
         onVerseTap: (BibleReference) -> Unit = {},
         onFootnoteTap: (BibleReference) -> Unit = {},
         onVerseIndicatorTap: ((BibleReference) -> Unit)? = {},
+        version: BibleVersion = ltrVersion,
     ) {
-        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery { mockVersionRepository.version(any()) } returns version
         coEvery {
             BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
         } returns listOf(annotatedBlock("", marginTop = 0.dp, footnotes = footnotes).modified(text = text))
@@ -2964,6 +2971,46 @@ class BibleTextTests {
         tapCharacter(text, text.indexOf('2'))
 
         assertEquals(listOf(verse(1), verse(2)), indicatorTaps)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `in a right-to-left version an indicator's tap target sits on its marker`() {
+        val indicatorTaps = mutableListOf<BibleReference>()
+        val style: (BibleReference) -> BibleVerseIndicatorStyle? = {
+            if (it.verseStart == 2) BibleVerseIndicatorStyle(Color.Blue) else null
+        }
+        setIndicatorContent(style = style, onVerseIndicatorTap = { indicatorTaps += it }, version = rtlVersion)
+        val labeled = labeledVerses()
+        val text = labeled.withVerseIndicators(labeled.verseIndicators(style)).first.text
+        val number = textLayout(text).getBoundingBox(text.indexOf("2\u00A0"))
+        val textLeft = composeTestRule.onNodeWithText(text).getBoundsInRoot().left
+        val markerCenter = textLeft + with(composeTestRule.density) { number.center.x.toDp() }
+        val target = composeTestRule.onNodeWithContentDescription("2").getBoundsInRoot()
+
+        tapCharacter(text, text.indexOf('2'))
+
+        assertEquals(markerCenter.value, ((target.left + target.right) / 2).value, 2f)
+        assertEquals(listOf(verse(2)), indicatorTaps)
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun `a keyboard can focus an indicator and open its verse`() {
+        val indicatorTaps = mutableListOf<BibleReference>()
+        setIndicatorContent(
+            style = { if (it.verseStart == 2) BibleVerseIndicatorStyle(Color.Blue) else null },
+            onVerseIndicatorTap = { indicatorTaps += it },
+        )
+        val target = composeTestRule.onNodeWithContentDescription("2")
+
+        target.requestFocus()
+        target.assertIsFocused()
+        target.performKeyInput { pressKey(Key.Enter) }
+        composeTestRule.waitForIdle()
+
+        assertEquals(listOf(verse(2)), indicatorTaps)
     }
 
     /** Taps the leading quarter of the character at [index], which resolves to that character's own offset. */

@@ -1,6 +1,6 @@
 package com.youversion.platform.ui.views
 
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.size
@@ -19,6 +19,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -26,8 +28,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -247,8 +247,9 @@ internal val LocalVerseIndicatorTargets = staticCompositionLocalOf<VerseIndicato
 /**
  * An invisible tap target centered on [indicator]'s marker and at least its style's minimum size. [origin] is where
  * the text's layout starts inside the box holding both, measured from that box's top left. The target may reach past
- * that box, which it never makes larger, so a paragraph shorter than the target keeps its own height. A tap is handed
- * to the verse in [targets] closest to it, so where targets overlap, each number keeps the taps nearest to it.
+ * that box, which it never makes larger, so a paragraph shorter than the target keeps its own height. A touch is handed
+ * to the verse in [targets] closest to it, so where targets overlap, each number keeps the taps nearest to it. A
+ * keyboard, D-pad or accessibility activation, which has no position, opens the target's own verse.
  */
 @Composable
 internal fun VerseIndicatorTarget(
@@ -271,6 +272,7 @@ internal fun VerseIndicatorTarget(
             .orEmpty()
     val key = remember { Any() }
     var positionInRoot by remember { mutableStateOf(Offset.Zero) }
+    var pressPositionInRoot by remember { mutableStateOf<Offset?>(null) }
     DisposableEffect(targets, key) { onDispose { targets.remove(key) } }
 
     Box(
@@ -287,17 +289,25 @@ internal fun VerseIndicatorTarget(
                         reference = indicator.reference,
                         boundsInRoot = Rect(positionInRoot, coordinates.size.toSize()),
                     )
-                }.pointerInput(indicator.reference, targets, onTap) {
-                    detectTapGestures { position ->
-                        onTap(targets.closestTo(positionInRoot + position, fallback = indicator.reference))
+                }.pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            awaitPointerEvent(PointerEventPass.Initial)
+                                .changes
+                                .firstOrNull { it.changedToDown() }
+                                ?.let { pressPositionInRoot = positionInRoot + it.position }
+                        }
                     }
-                }.semantics {
-                    role = Role.Button
-                    contentDescription = label
-                    onClick {
-                        onTap(indicator.reference)
-                        true
-                    }
-                },
+                }.clickable(
+                    interactionSource = null,
+                    indication = null,
+                    role = Role.Button,
+                ) {
+                    onTap(
+                        pressPositionInRoot?.let { targets.closestTo(it, fallback = indicator.reference) }
+                            ?: indicator.reference,
+                    )
+                    pressPositionInRoot = null
+                }.semantics { contentDescription = label },
     )
 }
