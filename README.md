@@ -229,7 +229,7 @@ YouVersionPlatformConfiguration.configure(
     context = this,
     appKey = "YOUR_APP_KEY_HERE",
     appName = "Your App Name",
-    signInPromptMessage = "Sign in to see your **YouVersion** highlights in **Your App Name**",
+    signInPromptMessage = "Sign in to see your **YouVersion** highlights and notes in **Your App Name**",
 )
 ```
 
@@ -247,7 +247,7 @@ To offer your own fonts in the reader's font settings sheet, or to render a bott
 
 #### Verse Actions
 
-Selecting verses opens an action sheet that offers Highlight, Copy, and Share by default. Pass `verseActions` to reorder them, leave some out, or add your own:
+Selecting verses opens an action sheet that offers Highlight, Save, Copy, and Share by default. Pass `verseActions` to reorder them, leave some out, or add your own:
 
 ```kotlin
 BibleReader(
@@ -261,6 +261,10 @@ BibleReader(
 ```
 
 A custom action's callback receives the selected verses, sorted and merged into ranges, once the sheet has closed and the selection has cleared. Labels come from your app and should already be localized. IDs must be unique, and a repeated ID throws `IllegalArgumentException`. An empty list shows no sheet. Highlight is left out for a signed-out reader when sign-in is disabled.
+
+#### Saving Notes
+
+The verse action sheet's Save action opens a notes composer for the selected verses, where the reader adds optional text, a color, and Private or Public visibility. A save with no text saves the passage alone. Saving needs `YouVersionPermissions.WRITE_NOTES`, so the reader's sign-in requests `READ_NOTES` and `WRITE_NOTES` along with its other permissions, and a reader who signed in before your app asked for notes is sent to sign in again. Leave `BibleReaderVerseAction.Save` out of `verseActions` to hide it.
 
 #### Search
 
@@ -800,6 +804,8 @@ val updated = YouVersionApi.notes.updateNote(
 
 YouVersionApi.notes.deleteNote(note.id)
 ```
+
+An empty `content` saves the attached passage without text.
 
 - Retry a failed create with the same `NoteCreateRequest`: its `requestId` stays the same, so the server creates the note at most once.
 - `NoteUpdate` changes only the fields it names. A `null` field is left unchanged, `Field.Clear` removes the value, and `Field.Value` replaces it. Use `Field.Clear`, not an empty list, to remove a note's attachment.

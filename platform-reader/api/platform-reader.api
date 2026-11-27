@@ -18,6 +18,7 @@ public final class com/youversion/platform/reader/BibleReaderVerseAction$Compani
 	public final fun getCopy ()Lcom/youversion/platform/reader/BibleReaderVerseAction;
 	public final fun getDefaults ()Ljava/util/List;
 	public final fun getHighlight ()Lcom/youversion/platform/reader/BibleReaderVerseAction;
+	public final fun getSave ()Lcom/youversion/platform/reader/BibleReaderVerseAction;
 	public final fun getShare ()Lcom/youversion/platform/reader/BibleReaderVerseAction;
 }
 
@@ -91,6 +92,19 @@ public final class com/youversion/platform/reader/sheets/ComposableSingletons$Bi
 	public fun <init> ()V
 	public final fun getLambda$-1995449047$platform_reader_release ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$1547754200$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class com/youversion/platform/reader/sheets/ComposableSingletons$BibleReaderNoteComposerSheetKt {
+	public static final field INSTANCE Lcom/youversion/platform/reader/sheets/ComposableSingletons$BibleReaderNoteComposerSheetKt;
+	public fun <init> ()V
+	public final fun getLambda$-1071014474$platform_reader_release ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-1071874721$platform_reader_release ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-1072848840$platform_reader_release ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$-1419332867$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-798401306$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$104686812$platform_reader_release ()Lkotlin/jvm/functions/Function3;
+	public final fun getLambda$467669479$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$727233598$platform_reader_release ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class com/youversion/platform/reader/sheets/ComposableSingletons$BibleReaderSearchSheetKt {

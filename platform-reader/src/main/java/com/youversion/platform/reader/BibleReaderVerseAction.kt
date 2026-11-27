@@ -6,7 +6,8 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 /**
  * One action in the [BibleReader]'s verse action sheet.
  *
- * Pass a list of these as `verseActions` to reorder or leave out the built-in actions ([Highlight], [Copy], [Share])
+ * Pass a list of these as `verseActions` to reorder or leave out the built-in actions ([Highlight], [Save], [Copy],
+ * [Share])
  * and to add the host app's own. An empty list shows no sheet at all.
  */
 public class BibleReaderVerseAction private constructor(
@@ -37,7 +38,7 @@ public class BibleReaderVerseAction private constructor(
 
     private constructor(id: String, kind: Kind) : this(id = id, kind = kind, label = null, icon = null, onClick = null)
 
-    internal enum class Kind { HIGHLIGHT, COPY, SHARE, CUSTOM }
+    internal enum class Kind { HIGHLIGHT, SAVE, COPY, SHARE, CUSTOM }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -67,13 +68,22 @@ public class BibleReaderVerseAction private constructor(
          */
         public val Highlight: BibleReaderVerseAction = BibleReaderVerseAction(id = "highlight", kind = Kind.HIGHLIGHT)
 
+        /**
+         * Opens the notes composer for the selected verses, where the reader saves them with optional text, a color,
+         * and a visibility. Saving needs an account with the
+         * [WRITE_NOTES][com.youversion.platform.core.users.model.YouVersionPermissions.WRITE_NOTES] permission, which
+         * the reader asks for by signing in. It is left out when the host app has disabled sign-in and the reader has
+         * no such account.
+         */
+        public val Save: BibleReaderVerseAction = BibleReaderVerseAction(id = "save", kind = Kind.SAVE)
+
         /** Copies the selected verses. */
         public val Copy: BibleReaderVerseAction = BibleReaderVerseAction(id = "copy", kind = Kind.COPY)
 
         /** Shares the selected verses. */
         public val Share: BibleReaderVerseAction = BibleReaderVerseAction(id = "share", kind = Kind.SHARE)
 
-        /** The actions the reader shows when the host app passes none: [Highlight], [Copy], then [Share]. */
-        public val defaults: List<BibleReaderVerseAction> = listOf(Highlight, Copy, Share)
+        /** The actions the reader shows when the host app passes none: [Highlight], [Save], [Copy], then [Share]. */
+        public val defaults: List<BibleReaderVerseAction> = listOf(Highlight, Save, Copy, Share)
     }
 }

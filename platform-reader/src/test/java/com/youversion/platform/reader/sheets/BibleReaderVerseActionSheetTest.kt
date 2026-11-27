@@ -38,6 +38,7 @@ class BibleReaderVerseActionSheetTest {
         showsHighlightColors: Boolean = true,
         onAddHighlight: (String) -> Unit = {},
         onRemoveHighlight: (String) -> Unit = {},
+        onSave: () -> Unit = {},
         onCopy: () -> Unit = {},
         onShare: () -> Unit = {},
     ) {
@@ -50,6 +51,7 @@ class BibleReaderVerseActionSheetTest {
                     showsHighlightColors = showsHighlightColors,
                     onAddHighlight = onAddHighlight,
                     onRemoveHighlight = onRemoveHighlight,
+                    onSave = onSave,
                     onCopy = onCopy,
                     onShare = onShare,
                     onCustomAction = onCustomAction,

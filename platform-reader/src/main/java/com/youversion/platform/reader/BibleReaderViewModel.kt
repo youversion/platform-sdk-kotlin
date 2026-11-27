@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
@@ -15,10 +16,14 @@ import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.languages.domain.LanguageRepository
+import com.youversion.platform.core.notes.api.NotesApi
+import com.youversion.platform.core.notes.models.NoteCreateRequest
+import com.youversion.platform.core.notes.models.NoteStatus
 import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
 import com.youversion.platform.reader.domain.HighlightRequest
+import com.youversion.platform.reader.domain.NoteDraft
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
 import com.youversion.platform.ui.theme.ReaderTheme
@@ -26,10 +31,14 @@ import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.LanguageRowItem
 import com.youversion.platform.ui.views.rendering.BibleVersionRendering
 import com.youversion.platform.ui.views.versions.BibleVersionsViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -50,6 +59,14 @@ internal class BibleReaderViewModel(
     private val hasHighlightsPermission: () -> Boolean = {
         YouVersionApi.hasPermission(YouVersionPermissions.HIGHLIGHTS)
     },
+    private val hasWriteNotesPermission: () -> Boolean = {
+        YouVersionApi.hasPermission(YouVersionPermissions.WRITE_NOTES)
+    },
+    private val isSignInEnabled: () -> Boolean = { YouVersionPlatformConfiguration.isSignInEnabled },
+    private val notesApi: NotesApi = YouVersionApi.notes,
+    private val hasValidToken: suspend () -> Boolean = { YouVersionApi.hasValidToken() },
+    private val currentSessionId: () -> String? = { YouVersionApi.currentSessionId },
+    sessionIdChanges: Flow<String?> = YouVersionPlatformConfiguration.configState.map { currentSessionId() },
 ) : ViewModel() {
     /**
      * A highlight change the reader asked for but that is waiting on the highlights permission. Captured when the
@@ -73,6 +90,14 @@ internal class BibleReaderViewModel(
      * so the dim is seen fading in rather than arriving already applied from behind the sheet.
      */
     private var pendingFocusedReference: BibleReference? = null
+
+    /**
+     * A note the reader started that waits on signing in for the notes permission. Held in memory only, so it survives
+     * the reader being recreated but not the process ending while the browser is open; it holds a selection and no
+     * text yet, so tapping Save again is all that is lost.
+     */
+    private var pendingNoteDraft: NoteDraft? = null
+    private var noteSaveJob: Job? = null
     private val _state: MutableStateFlow<State>
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
 
@@ -126,6 +151,28 @@ internal class BibleReaderViewModel(
         loadLanguages()
         observeHighlightRequest()
         restoreHighlightRequest()
+        sessionIdChanges.onEach(::dropNoteDraftsOfOtherSessions).launchIn(viewModelScope)
+    }
+
+    /**
+     * Drops the drafts that belong to a session other than [sessionId], so a sign-out or another account signing in
+     * never saves or resumes the previous account's note. A pending draft captured while signed out belongs to no
+     * session yet and is bound to the first one that signs in, so it is dropped once that account leaves even if its
+     * notes permission is still pending.
+     */
+    private fun dropNoteDraftsOfOtherSessions(sessionId: String?) {
+        bindPendingNoteDraft(sessionId)
+        if (pendingNoteDraft?.sessionId?.let { it != sessionId } == true) {
+            pendingNoteDraft = null
+            _state.update {
+                it.copy(shouldStartNoteSignIn = false, selectedVerses = emptySet(), showVerseActionSheet = false)
+            }
+        }
+        if (_state.value.noteDraft?.let { it.sessionId != sessionId } == true) {
+            noteSaveJob?.cancel()
+            noteSaveJob = null
+            _state.update { it.copy(noteDraft = null, selectedVerses = emptySet(), showVerseActionSheet = false) }
+        }
     }
 
     /**
@@ -386,6 +433,38 @@ internal class BibleReaderViewModel(
                 removeHighlight(action.hexColor)
             }
 
+            is Action.StartNote -> {
+                startNote()
+            }
+
+            is Action.NoteSignInCompleted -> {
+                continuePendingNote()
+            }
+
+            is Action.UpdateNote -> {
+                updateNoteDraft { it.edited(action.content, action.isPublic, action.hexColor) }
+            }
+
+            is Action.SaveNote -> {
+                saveNote()
+            }
+
+            is Action.RequestDismissNote -> {
+                requestDismissNote()
+            }
+
+            is Action.ConfirmDiscardNote -> {
+                discardNote()
+            }
+
+            is Action.CancelDiscardNote -> {
+                updateNoteDraft { it.copy(showsDiscardConfirmation = false) }
+            }
+
+            is Action.DismissNoteSaveError -> {
+                updateNoteDraft { it.copy(showsSaveError = false) }
+            }
+
             is Action.SignInCompleted -> {
                 continueAfterSignIn()
             }
@@ -435,6 +514,7 @@ internal class BibleReaderViewModel(
 
     private fun toggleVerseSelection(reference: BibleReference) {
         highlightRequest = null
+        pendingNoteDraft = null
         _state.update { currentState ->
             val newSelection =
                 if (currentState.selectedVerses.contains(reference)) {
@@ -450,6 +530,7 @@ internal class BibleReaderViewModel(
     }
 
     private fun clearVerseSelection() {
+        pendingNoteDraft = null
         _state.update {
             it.copy(
                 selectedVerses = emptySet(),
@@ -530,6 +611,7 @@ internal class BibleReaderViewModel(
      */
     private fun continueAfterSignIn() {
         _state.update { it.copy(shouldStartSignIn = false) }
+        continuePendingNote()
         val request = highlightRequest ?: return
         if (!isSignedIn()) {
             highlightRequest = null
@@ -546,6 +628,172 @@ internal class BibleReaderViewModel(
     private fun cancelSignIn() {
         highlightRequest = null
         _state.update { it.copy(shouldStartSignIn = false) }
+        pendingNoteDraft?.let { draft ->
+            pendingNoteDraft = null
+            restoreSelection(draft)
+        }
+    }
+
+    /**
+     * Captures the selection as a note draft and opens the composer, or holds the draft and asks the reader to sign in
+     * when they have no account with the notes permission. A signed-out reader sees the sign-in prompt first; a
+     * signed-in reader goes straight to the browser, since only signing in again grants the notes permission.
+     */
+    private fun startNote() {
+        val selection = _state.value.selectedVerses
+        if (selection.isEmpty()) return
+        val canWriteNotes = isSignedIn() && hasWriteNotesPermission()
+        if (!canWriteNotes && !isSignInEnabled()) return
+        val references = BibleReference.referencesByMerging(selection.toList())
+        val draft =
+            NoteDraft(
+                references = references,
+                selection = selection,
+                referenceTitle = noteReferenceTitle(references),
+                sessionId = currentSessionId(),
+            )
+        if (canWriteNotes) {
+            openNoteDraft(draft)
+        } else {
+            pendingNoteDraft = draft
+            val isSignedIn = isSignedIn()
+            _state.update {
+                it.copy(
+                    showVerseActionSheet = false,
+                    shouldStartSignIn = !isSignedIn,
+                    shouldStartNoteSignIn = isSignedIn,
+                )
+            }
+        }
+    }
+
+    /**
+     * Opens a held draft now that the notes permission is available. Called by the reader when the permission lands,
+     * since the sign-in that grants it can finish its token exchange after the browser has already returned. A no-op
+     * when nothing is held or the permission is still absent.
+     */
+    fun openPendingNoteIfPermitted() {
+        if (pendingNoteDraft != null && isSignedIn() && hasWriteNotesPermission()) {
+            continuePendingNote()
+        }
+    }
+
+    /**
+     * Resumes the held draft after a sign-in attempt. It opens only for the account that started it, or for the one
+     * that signed in to continue a signed-out draft, and only once the notes permission was granted. One that landed
+     * in another account drops the draft. Otherwise the reader returns to their selection and the draft stays held
+     * until the permission lands, through [openPendingNoteIfPermitted], or the selection changes.
+     */
+    private fun continuePendingNote() {
+        _state.update { it.copy(shouldStartNoteSignIn = false) }
+        val draft = pendingNoteDraft ?: return
+        val sessionId = currentSessionId()
+        when {
+            draft.sessionId != null && draft.sessionId != sessionId -> {
+                pendingNoteDraft = null
+                clearVerseSelection()
+            }
+
+            isSignedIn() && hasWriteNotesPermission() -> {
+                pendingNoteDraft = null
+                openNoteDraft(draft.copy(sessionId = sessionId))
+            }
+
+            else -> {
+                bindPendingNoteDraft(sessionId)
+                restoreSelection(draft)
+            }
+        }
+    }
+
+    /** Binds a held draft captured while signed out to [sessionId], the first session seen after it. */
+    private fun bindPendingNoteDraft(sessionId: String?) {
+        val draft = pendingNoteDraft ?: return
+        if (draft.sessionId == null && sessionId != null) {
+            pendingNoteDraft = draft.copy(sessionId = sessionId)
+        }
+    }
+
+    private fun openNoteDraft(draft: NoteDraft) {
+        _state.update { it.copy(noteDraft = draft, showVerseActionSheet = false, selectedVerses = draft.selection) }
+    }
+
+    private fun restoreSelection(draft: NoteDraft) {
+        _state.update { it.copy(selectedVerses = draft.selection, showVerseActionSheet = true) }
+    }
+
+    private fun noteReferenceTitle(references: List<BibleReference>): String =
+        references.joinToString(", ") { reference ->
+            bibleVersion?.displayTitle(reference, includesVersionAbbreviation = false) ?: reference.asUSFM
+        }
+
+    /** Applies [change] to the open draft, unless there is none or a save is in flight. */
+    private fun updateNoteDraft(change: (NoteDraft) -> NoteDraft) {
+        _state.update { state ->
+            val draft = state.noteDraft
+            if (draft == null || draft.isSaving) state else state.copy(noteDraft = change(draft))
+        }
+    }
+
+    /**
+     * Creates the open draft's note. A failure keeps the draft, request id included, so retrying cannot create the
+     * note twice. Success closes the composer and refreshes the chapter's highlights in the background, since a
+     * note's color can change them; the refresh keeps the shown highlights until it lands.
+     */
+    private fun saveNote() {
+        val draft = _state.value.noteDraft ?: return
+        if (draft.isSaving || draft.sessionId != currentSessionId()) return
+        val request =
+            NoteCreateRequest(
+                content = draft.content,
+                status = if (draft.isPublic) NoteStatus.PUBLIC else NoteStatus.PRIVATE,
+                requestId = draft.requestId,
+                color = draft.hexColor,
+                references = draft.references,
+            )
+        _state.update { it.copy(noteDraft = draft.copy(isSaving = true, showsSaveError = false)) }
+        noteSaveJob =
+            viewModelScope.launch {
+                val isSaved =
+                    try {
+                        hasValidToken()
+                        notesApi.createNote(request)
+                        true
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Logger.w("Failed to save note", e)
+                        false
+                    }
+                noteSaveJob = null
+                if (_state.value.noteDraft?.requestId != draft.requestId || draft.sessionId != currentSessionId()) {
+                    return@launch
+                }
+                if (isSaved) {
+                    _state.update { it.copy(noteDraft = null) }
+                    clearVerseSelection()
+                    if (hasHighlightsPermission()) {
+                        bibleHighlightsRepository.ensureHighlightsForChapterLoaded(bibleReference, forceReload = true)
+                    }
+                } else {
+                    _state.update { it.copy(noteDraft = draft.copy(showsSaveError = true)) }
+                }
+            }
+    }
+
+    private fun requestDismissNote() {
+        val draft = _state.value.noteDraft ?: return
+        when {
+            draft.isSaving -> Unit
+            draft.hasChanges -> updateNoteDraft { it.copy(showsDiscardConfirmation = true) }
+            else -> discardNote()
+        }
+    }
+
+    private fun discardNote() {
+        if (_state.value.noteDraft?.isSaving != false) return
+        _state.update { it.copy(noteDraft = null) }
+        clearVerseSelection()
     }
 
     private fun applyHighlight(request: HighlightRequest) {
@@ -784,6 +1032,10 @@ internal class BibleReaderViewModel(
         val showDataExchangeConfirmation: Boolean = false,
         val shouldStartDataExchangeFlow: Boolean = false,
         val hasHighlightRequest: Boolean = false,
+        /** The note the composer is showing, or `null` when it is closed. */
+        val noteDraft: NoteDraft? = null,
+        /** Whether a signed-in reader is to be sent to sign in again for the notes permission. */
+        val shouldStartNoteSignIn: Boolean = false,
         val showingIntroFootnotes: Boolean = false,
         val introFootnotes: List<AnnotatedString> = emptyList(),
         val introBookUSFM: String? = null,
@@ -932,6 +1184,30 @@ internal class BibleReaderViewModel(
         data class RemoveHighlight(
             val hexColor: String,
         ) : Action
+
+        /** Open the notes composer for the selection, signing in first when the reader cannot save notes yet. */
+        data object StartNote : Action
+
+        /** The sign-in [State.shouldStartNoteSignIn] asked for finished, whether or not it succeeded. */
+        data object NoteSignInCompleted : Action
+
+        /** The reader changed the open draft's text, visibility, or color. */
+        data class UpdateNote(
+            val content: String,
+            val isPublic: Boolean,
+            val hexColor: String?,
+        ) : Action
+
+        data object SaveNote : Action
+
+        /** The reader asked to close the composer; unsaved changes are confirmed first. */
+        data object RequestDismissNote : Action
+
+        data object ConfirmDiscardNote : Action
+
+        data object CancelDiscardNote : Action
+
+        data object DismissNoteSaveError : Action
 
         /** A sign-in attempt finished; continue any highlight the reader asked for before signing in. */
         data object SignInCompleted : Action
