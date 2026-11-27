@@ -528,6 +528,7 @@ internal class BibleReaderViewModel(
     }
 
     private fun clearVerseSelection() {
+        pendingNoteDraft = null
         _state.update {
             it.copy(
                 selectedVerses = emptySet(),
@@ -665,19 +666,40 @@ internal class BibleReaderViewModel(
     }
 
     /**
+     * Opens a held draft now that the notes permission is available. Called by the reader when the permission lands,
+     * since the sign-in that grants it can finish its token exchange after the browser has already returned. A no-op
+     * when nothing is held or the permission is still absent.
+     */
+    fun openPendingNoteIfPermitted() {
+        if (pendingNoteDraft != null && isSignedIn() && hasWriteNotesPermission()) {
+            continuePendingNote()
+        }
+    }
+
+    /**
      * Resumes the held draft after a sign-in attempt. It opens only for the account that started it, or for the one
-     * that signed in to continue a signed-out draft, and only once the notes permission was granted. A sign-in that
-     * did not grant it returns the reader to their selection; one that landed in another account drops the draft.
+     * that signed in to continue a signed-out draft, and only once the notes permission was granted. One that landed
+     * in another account drops the draft. Otherwise the reader returns to their selection and the draft stays held
+     * until the permission lands, through [openPendingNoteIfPermitted], or the selection changes.
      */
     private fun continuePendingNote() {
         _state.update { it.copy(shouldStartNoteSignIn = false) }
         val draft = pendingNoteDraft ?: return
-        pendingNoteDraft = null
         val sessionId = currentSessionId()
         when {
-            draft.sessionId != null && draft.sessionId != sessionId -> clearVerseSelection()
-            isSignedIn() && hasWriteNotesPermission() -> openNoteDraft(draft.copy(sessionId = sessionId))
-            else -> restoreSelection(draft)
+            draft.sessionId != null && draft.sessionId != sessionId -> {
+                pendingNoteDraft = null
+                clearVerseSelection()
+            }
+
+            isSignedIn() && hasWriteNotesPermission() -> {
+                pendingNoteDraft = null
+                openNoteDraft(draft.copy(sessionId = sessionId))
+            }
+
+            else -> {
+                restoreSelection(draft)
+            }
         }
     }
 

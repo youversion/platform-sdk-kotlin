@@ -219,9 +219,14 @@ internal fun BibleScreen(
     val config by YouVersionPlatformConfiguration.configState.collectAsStateWithLifecycle()
     val isHighlightsGranted =
         config?.grantedPermissionValues?.contains(YouVersionPermissions.HIGHLIGHTS) == true
-    val canWriteNotes =
-        signInState.isSignedIn &&
-            config?.grantedPermissionValues?.contains(YouVersionPermissions.WRITE_NOTES) == true
+    val isWriteNotesGranted = config?.grantedPermissionValues?.contains(YouVersionPermissions.WRITE_NOTES) == true
+    val canWriteNotes = signInState.isSignedIn && isWriteNotesGranted
+
+    LaunchedEffect(isWriteNotesGranted) {
+        if (isWriteNotesGranted) {
+            viewModel.openPendingNoteIfPermitted()
+        }
+    }
 
     LaunchedEffect(state.shouldStartNoteSignIn) {
         if (state.shouldStartNoteSignIn) {

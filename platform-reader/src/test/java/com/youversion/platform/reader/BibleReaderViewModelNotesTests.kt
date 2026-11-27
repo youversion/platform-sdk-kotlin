@@ -195,6 +195,33 @@ class BibleReaderViewModelNotesTests {
     }
 
     @Test
+    fun `a grant that lands after sign-in returns still opens the held draft`() {
+        hasWriteNotes = false
+        select(verse1, verse7)
+        viewModel.onAction(Action.StartNote)
+        viewModel.onAction(Action.NoteSignInCompleted)
+
+        hasWriteNotes = true
+        viewModel.openPendingNoteIfPermitted()
+
+        assertEquals(listOf(verse1, verse7), assertNotNull(state.noteDraft).references)
+    }
+
+    @Test
+    fun `putting the selection down drops a draft still waiting on the grant`() {
+        hasWriteNotes = false
+        select(verse1)
+        viewModel.onAction(Action.StartNote)
+        viewModel.onAction(Action.NoteSignInCompleted)
+        viewModel.onAction(Action.ClearVerseSelection)
+
+        hasWriteNotes = true
+        viewModel.openPendingNoteIfPermitted()
+
+        assertNull(state.noteDraft)
+    }
+
+    @Test
     fun `a signed-out reader's draft goes to whoever signs in to continue it`() {
         isSignedIn = false
         hasWriteNotes = false
