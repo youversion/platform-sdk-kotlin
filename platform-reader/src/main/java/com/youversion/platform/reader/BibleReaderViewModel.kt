@@ -157,9 +157,11 @@ internal class BibleReaderViewModel(
     /**
      * Drops the drafts that belong to a session other than [sessionId], so a sign-out or another account signing in
      * never saves or resumes the previous account's note. A pending draft captured while signed out belongs to no
-     * session yet and is kept for whoever signs in.
+     * session yet and is bound to the first one that signs in, so it is dropped once that account leaves even if its
+     * notes permission is still pending.
      */
     private fun dropNoteDraftsOfOtherSessions(sessionId: String?) {
+        bindPendingNoteDraft(sessionId)
         if (pendingNoteDraft?.sessionId?.let { it != sessionId } == true) {
             pendingNoteDraft = null
             _state.update {
@@ -698,8 +700,17 @@ internal class BibleReaderViewModel(
             }
 
             else -> {
+                bindPendingNoteDraft(sessionId)
                 restoreSelection(draft)
             }
+        }
+    }
+
+    /** Binds a held draft captured while signed out to [sessionId], the first session seen after it. */
+    private fun bindPendingNoteDraft(sessionId: String?) {
+        val draft = pendingNoteDraft ?: return
+        if (draft.sessionId == null && sessionId != null) {
+            pendingNoteDraft = draft.copy(sessionId = sessionId)
         }
     }
 

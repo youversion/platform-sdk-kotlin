@@ -52,6 +52,7 @@ class BibleReaderViewModelNotesTests {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         val bibleReaderRepository = mockk<BibleReaderRepository>(relaxed = true)
         every { bibleReaderRepository.produceBibleReference(any()) } returns chapter
+        every { bibleReaderRepository.highlightRequest } returns null
         val userSettingsRepository = mockk<UserSettingsRepository>(relaxed = true)
         every { userSettingsRepository.readerLineSpacingFraction } returns null
         highlightsRepository = mockk(relaxed = true)
@@ -238,6 +239,27 @@ class BibleReaderViewModelNotesTests {
         viewModel.onAction(Action.SignInCompleted)
 
         assertEquals("user:b", assertNotNull(state.noteDraft).sessionId)
+    }
+
+    @Test
+    fun `a signed-out draft stays with the first account even while its grant is pending`() {
+        isSignedIn = false
+        hasWriteNotes = false
+        sessionId.value = null
+        select(verse1)
+        viewModel.onAction(Action.StartNote)
+        isSignedIn = true
+        sessionId.value = "user:a"
+        viewModel.onAction(Action.SignInCompleted)
+
+        isSignedIn = false
+        sessionId.value = null
+        isSignedIn = true
+        hasWriteNotes = true
+        sessionId.value = "user:b"
+        viewModel.openPendingNoteIfPermitted()
+
+        assertNull(state.noteDraft)
     }
 
     @Test
