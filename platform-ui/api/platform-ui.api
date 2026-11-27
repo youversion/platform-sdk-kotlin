@@ -206,6 +206,7 @@ public final class com/youversion/platform/ui/views/BibleTextFootnoteMode : java
 
 public final class com/youversion/platform/ui/views/BibleTextKt {
 	public static final fun BibleText (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lcom/youversion/platform/ui/views/BibleTextOptions;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final fun BibleText (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lcom/youversion/platform/ui/views/BibleTextOptions;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class com/youversion/platform/ui/views/BibleTextLoadingPhase : java/lang/Enum {
@@ -245,6 +246,19 @@ public final class com/youversion/platform/ui/views/BibleTextOptions {
 public final class com/youversion/platform/ui/views/BibleTextOptions$Companion {
 }
 
+public final class com/youversion/platform/ui/views/BibleVerseIndicatorStyle {
+	public static final field $stable I
+	public synthetic fun <init> (JLandroidx/compose/ui/graphics/Color;JLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JLandroidx/compose/ui/graphics/Color;JLjava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackgroundColor-0d7_KjU ()J
+	public final fun getContentDescription ()Ljava/lang/String;
+	public final fun getForegroundColor-QN2ZGVo ()Landroidx/compose/ui/graphics/Color;
+	public final fun getMinimumTouchTargetSize-MYxV2XQ ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/youversion/platform/ui/views/ComposableSingletons$BibleIntroTextKt {
 	public static final field INSTANCE Lcom/youversion/platform/ui/views/ComposableSingletons$BibleIntroTextKt;
 	public fun <init> ()V
@@ -254,6 +268,7 @@ public final class com/youversion/platform/ui/views/ComposableSingletons$BibleIn
 public final class com/youversion/platform/ui/views/ComposableSingletons$BibleTextKt {
 	public static final field INSTANCE Lcom/youversion/platform/ui/views/ComposableSingletons$BibleTextKt;
 	public fun <init> ()V
+	public final fun getLambda$-2053065873$platform_ui_release ()Lkotlin/jvm/functions/Function3;
 	public final fun getLambda$661006613$platform_ui_release ()Lkotlin/jvm/functions/Function3;
 }
 

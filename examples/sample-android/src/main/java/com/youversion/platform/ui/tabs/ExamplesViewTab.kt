@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -79,6 +80,12 @@ fun ExamplesViewTab(
                     title = "Card",
                     icon = BibleCardIcon,
                     onClick = { onExampleClick(SampleDestination.BibleCard) },
+                )
+                ExampleDivider()
+                ExampleRow(
+                    title = "Verse Markers",
+                    icon = Icons.Filled.Bookmark,
+                    onClick = { onExampleClick(SampleDestination.VerseMarkers) },
                 )
             }
         }

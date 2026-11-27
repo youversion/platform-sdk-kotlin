@@ -1,6 +1,24 @@
 public final class com/youversion/platform/reader/BibleReaderKt {
+	public static final fun BibleReader (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lcom/youversion/platform/reader/FontDefinitionProvider;Ljava/util/List;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun BibleReader (Lcom/youversion/platform/core/bibles/domain/BibleReference;Lcom/youversion/platform/reader/FontDefinitionProvider;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun BibleReader (Ljava/lang/String;Ljava/lang/String;Lcom/youversion/platform/core/bibles/domain/BibleReference;Lcom/youversion/platform/reader/FontDefinitionProvider;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class com/youversion/platform/reader/BibleReaderVerseAction {
+	public static final field $stable I
+	public static final field Companion Lcom/youversion/platform/reader/BibleReaderVerseAction$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Landroidx/compose/ui/graphics/vector/ImageVector;Lkotlin/jvm/functions/Function1;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/youversion/platform/reader/BibleReaderVerseAction$Companion {
+	public final fun getCopy ()Lcom/youversion/platform/reader/BibleReaderVerseAction;
+	public final fun getDefaults ()Ljava/util/List;
+	public final fun getHighlight ()Lcom/youversion/platform/reader/BibleReaderVerseAction;
+	public final fun getShare ()Lcom/youversion/platform/reader/BibleReaderVerseAction;
 }
 
 public final class com/youversion/platform/reader/ComposableSingletons$BibleReaderKt {
@@ -8,6 +26,7 @@ public final class com/youversion/platform/reader/ComposableSingletons$BibleRead
 	public fun <init> ()V
 	public final fun getLambda$-1886664161$platform_reader_release ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda$-1979241537$platform_reader_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-2046011233$platform_reader_release ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class com/youversion/platform/reader/FontDefinition {

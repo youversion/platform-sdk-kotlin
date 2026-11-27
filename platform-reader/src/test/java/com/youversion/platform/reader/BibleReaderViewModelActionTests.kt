@@ -1,5 +1,7 @@
 package com.youversion.platform.reader
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import com.youversion.platform.core.bibles.domain.BibleReference
@@ -142,6 +144,52 @@ class BibleReaderViewModelActionTests {
     fun teardown() {
         Dispatchers.resetMain()
         BibleReaderTheme.selectedColorScheme.value = null
+    }
+
+    // ----- Custom Verse Actions
+
+    @Test
+    fun `a custom verse action receives the selection sorted and merged, after the selection clears`() {
+        var received: List<BibleReference>? = null
+        var selectionWhenCalled: Set<BibleReference>? = null
+        val action =
+            BibleReaderVerseAction(
+                id = "bookmark",
+                label = "Bookmark",
+                icon = Icons.Filled.Star,
+            ) {
+                received = it
+                selectionWhenCalled = viewModel.state.value.selectedVerses
+            }
+        listOf(5, 1, 2, 3).forEach { viewModel.onAction(BibleReaderViewModel.Action.OnVerseTap(verseReference(it))) }
+
+        viewModel.onAction(BibleReaderViewModel.Action.PerformCustomVerseAction(action))
+
+        val current = viewModel.state.value.bibleReference
+        assertEquals(
+            listOf(
+                BibleReference(current.versionId, current.bookUSFM, current.chapter, verseStart = 1, verseEnd = 3),
+                verseReference(5),
+            ),
+            received,
+        )
+        assertEquals(emptySet(), selectionWhenCalled)
+        assertFalse(viewModel.state.value.showVerseActionSheet)
+    }
+
+    @Test
+    fun `a custom verse action is not called without a selection`() {
+        var isCalled = false
+        val action =
+            BibleReaderVerseAction(
+                id = "bookmark",
+                label = "Bookmark",
+                icon = Icons.Filled.Star,
+            ) { isCalled = true }
+
+        viewModel.onAction(BibleReaderViewModel.Action.PerformCustomVerseAction(action))
+
+        assertFalse(isCalled)
     }
 
     // ----- Font Settings

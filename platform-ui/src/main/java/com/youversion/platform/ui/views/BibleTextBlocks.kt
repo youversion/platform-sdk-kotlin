@@ -219,6 +219,9 @@ public fun rememberBibleTextBlocksState(
  * verses it covers at full strength and dims everything else, the rest of the block holding them included. One
  * no block covers is ignored, since dimming every block would fade the chapter while pointing at nothing.
  *
+ * A verse number [verseIndicatorStyle] gives a style to is drawn as an indicator over any highlight, and a tap on it
+ * reaches [onVerseIndicatorTap] instead of [onVerseTap]. Verse numbers in table blocks are not marked.
+ *
  * Blocks are keyed by position: no reader option changes how many blocks a chapter has, so a restyle keeps each
  * index on the same block. A setting that adds or drops blocks, such as headings, would need stable keys.
  */
@@ -230,6 +233,8 @@ public fun LazyListScope.bibleTextBlocks(
     layoutState: BibleTextLayoutState? = null,
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)? = null,
     onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)? = null,
+    verseIndicatorStyle: ((BibleReference) -> BibleVerseIndicatorStyle?)? = null,
+    onVerseIndicatorTap: ((BibleReference) -> Unit)? = null,
 ) {
     if (state.loadingPhase != BibleTextLoadingPhase.SUCCESS) {
         item { StandardPlaceholder(state.loadingPhase) }
@@ -283,6 +288,8 @@ public fun LazyListScope.bibleTextBlocks(
                     layoutState = layoutState,
                     onVerseTap = onVerseTap,
                     onFootnoteTap = onFootnoteTap,
+                    verseIndicatorStyle = verseIndicatorStyle,
+                    onVerseIndicatorTap = onVerseIndicatorTap,
                 )
             }
         }
@@ -308,6 +315,8 @@ internal fun BibleBlockContent(
     layoutState: BibleTextLayoutState? = null,
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)?,
     onFootnoteTap: ((reference: BibleReference, footNotes: List<AnnotatedString>) -> Unit)?,
+    verseIndicatorStyle: ((BibleReference) -> BibleVerseIndicatorStyle?)? = null,
+    onVerseIndicatorTap: ((BibleReference) -> Unit)? = null,
 ) {
     val block = visibleBlocks[index]
     val coroutineScope = rememberCoroutineScope()
@@ -324,12 +333,15 @@ internal fun BibleBlockContent(
             focusedReference = focusedReference,
             unfocusedAlpha = unfocusedAlpha,
             layoutState = layoutState,
+            verseIndicatorStyle = verseIndicatorStyle,
+            onVerseIndicatorTap = onVerseIndicatorTap,
             onClick = { localPosition, textLayoutResult ->
                 coroutineScope.launch {
                     val characterIndex = textLayoutResult.getOffsetForPosition(localPosition)
+                    val laidOutText = textLayoutResult.layoutInput.text
 
                     val tappedRef =
-                        block.text
+                        laidOutText
                             .getStringAnnotations(
                                 tag = BibleReferenceAttribute.NAME,
                                 start = characterIndex,
@@ -342,7 +354,7 @@ internal fun BibleBlockContent(
 
                     if (tappedRef != null) {
                         val tappedFootnote =
-                            block.text
+                            laidOutText
                                 .getStringAnnotations(
                                     tag = BibleTextCategoryAttribute.NAME,
                                     start = characterIndex,

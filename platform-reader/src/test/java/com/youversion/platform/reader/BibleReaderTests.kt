@@ -1,14 +1,20 @@
 package com.youversion.platform.reader
 
 import android.content.Context
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Text
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.core.app.ApplicationProvider
 import com.youversion.platform.core.YouVersionPlatformConfiguration
 import com.youversion.platform.core.api.YouVersionApi
@@ -41,6 +47,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 
 @RunWith(RobolectricTestRunner::class)
 class BibleReaderTests {
@@ -194,6 +203,63 @@ class BibleReaderTests {
 
         composeTestRule.onNodeWithText("Bible Versions").assertDoesNotExist()
         composeTestRule.onNodeWithText("NIV").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a trailing lambda is still the host's bottom bar`() {
+        composeTestRule.setContent {
+            BibleReader(bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)) {
+                Text("Host bar")
+            }
+        }
+
+        composeTestRule.onNodeWithText("Host bar").assertIsDisplayed()
+    }
+
+    @Test
+    fun `verse actions sharing an ID are rejected`() {
+        assertFailsWith<IllegalArgumentException> {
+            composeTestRule.setContent {
+                BibleReader(
+                    bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1),
+                    verseActions = listOf(BibleReaderVerseAction.Copy, BibleReaderVerseAction.Copy),
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `a custom verse action runs with the merged selection once the action sheet has closed`() {
+        var receivedReferences: List<BibleReference>? = null
+        val bookmark =
+            BibleReaderVerseAction(id = "bookmark", label = "Bookmark", icon = Icons.Filled.Star) {
+                receivedReferences = it
+            }
+        composeTestRule.setContent {
+            BibleReader(
+                bibleReference = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1),
+                verseActions = listOf(bookmark) + BibleReaderVerseAction.defaults,
+            )
+        }
+        composeTestRule
+            .onNodeWithText("In the beginning", substring = true)
+            .performTouchInput { click(centerLeft + Offset(4f, 0f)) }
+        composeTestRule.onNodeWithText("Bookmark").assertIsDisplayed()
+
+        composeTestRule.mainClock.autoAdvance = false
+        composeTestRule.onNodeWithText("Bookmark").performClick()
+        composeTestRule.mainClock.advanceTimeByFrame()
+        val referencesWhileSheetShows = receivedReferences
+        composeTestRule.onNodeWithText("Bookmark").assertIsDisplayed()
+        composeTestRule.mainClock.autoAdvance = true
+        composeTestRule.waitForIdle()
+
+        assertNull(referencesWhileSheetShows)
+        composeTestRule.onNodeWithText("Bookmark").assertIsNotDisplayed()
+        assertEquals(
+            listOf(BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)),
+            receivedReferences,
+        )
     }
 
     @Test

@@ -182,7 +182,10 @@ private class ReadingAnchor(
     val fractionIntoLine: Float,
 )
 
-/** A block's text as last laid out, with [origin] being where the text starts within its list item. */
+/**
+ * A block as last laid out, with [origin] being where the text starts within its list item. [text] is the block's
+ * own text, which identifies it; offsets into [layout] index the text it laid out, which verse indicators may pad.
+ */
 internal class PlacedBlock(
     val text: AnnotatedString,
     val layout: TextLayoutResult,
@@ -190,7 +193,7 @@ internal class PlacedBlock(
 )
 
 private fun PlacedBlock.boundsOf(reference: BibleReference): Rect? {
-    val ranges = text.selectedCharacterRanges(setOf(reference))
+    val ranges = layout.layoutInput.text.selectedCharacterRanges(setOf(reference))
     if (ranges.isEmpty()) return null
     val first = ranges.minOf { it.first }
     val last = ranges.maxOf { it.last }

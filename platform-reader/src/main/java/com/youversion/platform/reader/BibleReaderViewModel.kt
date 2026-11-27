@@ -374,6 +374,10 @@ internal class BibleReaderViewModel(
                 shareSelectedVerses()
             }
 
+            is Action.PerformCustomVerseAction -> {
+                performCustomVerseAction(action.verseAction, action.awaitSheetClosed)
+            }
+
             is Action.AddHighlight -> {
                 addHighlight(action.hexColor)
             }
@@ -639,6 +643,20 @@ internal class BibleReaderViewModel(
         }
     }
 
+    private fun performCustomVerseAction(
+        verseAction: BibleReaderVerseAction,
+        awaitSheetClosed: suspend () -> Unit,
+    ) {
+        val selectedVerses = _state.value.selectedVerses.toList()
+        if (selectedVerses.isEmpty()) return
+        val mergedReferences = BibleReference.referencesByMerging(selectedVerses)
+        clearVerseSelection()
+        viewModelScope.launch {
+            awaitSheetClosed()
+            verseAction.onClick?.invoke(mergedReferences)
+        }
+    }
+
     private fun shareSelectedVerses() {
         val version = bibleVersion ?: return
         val selectedVerses = _state.value.selectedVerses.toList()
@@ -897,6 +915,15 @@ internal class BibleReaderViewModel(
         data object CopySelectedVerses : Action
 
         data object ShareSelectedVerses : Action
+
+        /**
+         * Runs a host app's own verse action: the selection is merged into ranges and cleared, and once
+         * [awaitSheetClosed] returns, handed to the action's callback.
+         */
+        data class PerformCustomVerseAction(
+            val verseAction: BibleReaderVerseAction,
+            val awaitSheetClosed: suspend () -> Unit = {},
+        ) : Action
 
         data class AddHighlight(
             val hexColor: String,

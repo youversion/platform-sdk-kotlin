@@ -27,22 +27,31 @@ import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.parameter.parametersOf
 
 /**
- * A complete Bible reader.
+ * A complete Bible reader offering [verseActions] for a verse selection.
  *
  * The sign-in prompt a signed-out reader sees names the host app and shows its reason for asking, both of which come
  * from [YouVersionPlatformConfiguration.appName] and [YouVersionPlatformConfiguration.signInPromptMessage].
  *
+ * [verseActions] has no default, so a call without it, including one whose trailing lambda is [bottomBar], keeps
+ * resolving to the overload that offers the default actions.
+ *
  * @param bibleReference The reference to open. When null, the reader restores the last-read reference.
  * @param fontDefinitionProvider The fonts the host app offers in the reader's font settings.
  * @param bottomBar The host app's own bottom bar, drawn below the reader.
+ * @param verseActions The actions offered for a verse selection, in order. Leave out a built-in action to hide it,
+ * add [BibleReaderVerseAction]s of the host app's own, or pass an empty list to show no action sheet. IDs must be
+ * unique: a list that repeats one throws [IllegalArgumentException].
  */
 @OptIn(KoinExperimentalAPI::class)
 @Composable
 public fun BibleReader(
     bibleReference: BibleReference? = null,
     fontDefinitionProvider: FontDefinitionProvider? = null,
+    verseActions: List<BibleReaderVerseAction>,
     bottomBar: @Composable () -> Unit = {},
 ) {
+    require(verseActions.distinctBy { it.id }.size == verseActions.size) { "Verse action IDs must be unique" }
+
     KoinIsolatedContext(
         context = PlatformKoinGraph.koinApplication,
     ) {
@@ -68,6 +77,7 @@ public fun BibleReader(
                 ) {
                     BibleScreen(
                         viewModel = bibleReaderViewModel,
+                        verseActions = verseActions,
                         bottomBar = bottomBar,
                         onReferencesClick = {
                             onDestinationClick(BibleReaderDestination.References)
@@ -145,6 +155,30 @@ public fun BibleReader(
             }
         }
     }
+}
+
+/**
+ * A complete Bible reader offering the default verse actions, [BibleReaderVerseAction.defaults].
+ *
+ * The sign-in prompt a signed-out reader sees names the host app and shows its reason for asking, both of which come
+ * from [YouVersionPlatformConfiguration.appName] and [YouVersionPlatformConfiguration.signInPromptMessage].
+ *
+ * @param bibleReference The reference to open. When null, the reader restores the last-read reference.
+ * @param fontDefinitionProvider The fonts the host app offers in the reader's font settings.
+ * @param bottomBar The host app's own bottom bar, drawn below the reader.
+ */
+@Composable
+public fun BibleReader(
+    bibleReference: BibleReference? = null,
+    fontDefinitionProvider: FontDefinitionProvider? = null,
+    bottomBar: @Composable () -> Unit = {},
+) {
+    BibleReader(
+        bibleReference = bibleReference,
+        fontDefinitionProvider = fontDefinitionProvider,
+        bottomBar = bottomBar,
+        verseActions = BibleReaderVerseAction.defaults,
+    )
 }
 
 /**

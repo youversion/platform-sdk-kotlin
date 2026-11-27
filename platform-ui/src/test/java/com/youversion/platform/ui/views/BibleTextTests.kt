@@ -21,11 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getBoundsInRoot
@@ -35,8 +38,12 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
@@ -46,9 +53,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.width
 import app.cash.turbine.test
 import com.youversion.platform.core.bibles.domain.BibleChapterRepository
 import com.youversion.platform.core.bibles.domain.BibleReference
@@ -2607,6 +2617,526 @@ class BibleTextTests {
         coVerify {
             BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), Color.Cyan, any(), any())
         }
+    }
+
+    // endregion
+
+    // region Verse Indicators
+
+    private val indicatorVerses = listOf("In the beginning God created the heaven and the earth. ", "Light. ", "Amen.")
+
+    /** Verses numbered from 1, each led by a verse label the way the renderer writes one: a space, digits, a nbsp. */
+    private fun labeledVerses(
+        verses: List<String> = indicatorVerses,
+        footnoteAfterVerse: Int? = null,
+    ): AnnotatedString =
+        buildAnnotatedString {
+            verses.forEachIndexed { index, verse ->
+                val number = index + 1
+                val start = length
+                val label = (if (index == 0) "" else " ") + "$number\u00A0"
+                append(label)
+                addStringAnnotation(BibleTextCategoryAttribute.NAME, BibleTextCategory.VERSE_LABEL.name, start, length)
+                append(verse)
+                if (footnoteAfterVerse == number) {
+                    val markerStart = length
+                    append("※")
+                    addStringAnnotation(
+                        BibleTextCategoryAttribute.NAME,
+                        BibleTextCategory.FOOTNOTE_MARKER.name,
+                        markerStart,
+                        length,
+                    )
+                }
+                addStringAnnotation(BibleReferenceAttribute.NAME, "1:GEN:1:$number", start, length)
+            }
+        }
+
+    private fun setIndicatorContent(
+        text: AnnotatedString = labeledVerses(),
+        width: Dp = 400.dp,
+        footnotes: List<AnnotatedString> = emptyList(),
+        style: (BibleReference) -> BibleVerseIndicatorStyle? = { BibleVerseIndicatorStyle(Color.Blue) },
+        onVerseTap: (BibleReference) -> Unit = {},
+        onFootnoteTap: (BibleReference) -> Unit = {},
+        onVerseIndicatorTap: ((BibleReference) -> Unit)? = {},
+        version: BibleVersion = ltrVersion,
+    ) {
+        coEvery { mockVersionRepository.version(any()) } returns version
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns listOf(annotatedBlock("", marginTop = 0.dp, footnotes = footnotes).modified(text = text))
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                androidx.compose.foundation.layout.Box(modifier = Modifier.width(width)) {
+                    BibleText(
+                        reference = chapterReference,
+                        onVerseTap = { reference, _ -> onVerseTap(reference) },
+                        onFootnoteTap = { reference, _ -> onFootnoteTap(reference) },
+                        verseIndicatorStyle = style,
+                        onVerseIndicatorTap = onVerseIndicatorTap,
+                    )
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+    }
+
+    @Test
+    fun `markers follow state the style callback reads while the callback stays the same`() {
+        var markedVerses by mutableStateOf(emptySet<BibleReference>())
+        val style: (BibleReference) -> BibleVerseIndicatorStyle? = { reference ->
+            BibleVerseIndicatorStyle(Color.Blue).takeIf { reference in markedVerses }
+        }
+        val indicatorTaps = mutableListOf<BibleReference>()
+        setIndicatorContent(style = style, onVerseIndicatorTap = { indicatorTaps += it })
+        composeTestRule.onNodeWithContentDescription("2").assertDoesNotExist()
+
+        markedVerses = setOf(verse(2))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithContentDescription("2").performClick()
+
+        assertEquals(listOf(verse(2)), indicatorTaps)
+    }
+
+    @Test
+    fun `a trailing lambda still receives the loaded blocks`() {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns listOf(annotatedBlock("Light."))
+        var receivedBlocks: List<BibleTextBlock>? = null
+
+        composeTestRule.setContent {
+            BibleText(reference = testReference) { receivedBlocks = it }
+        }
+        composeTestRule.waitForIdle()
+
+        assertEquals(listOf("Light."), receivedBlocks?.map { it.text.text })
+    }
+
+    @Test
+    fun `indicator tap targets do not make a short paragraph taller`() {
+        var onVerseIndicatorTap by mutableStateOf<((BibleReference) -> Unit)?>(null)
+        val indicatorTaps = mutableListOf<BibleReference>()
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns listOf(annotatedBlock("", marginTop = 0.dp).modified(text = labeledVerses(listOf("Light."))))
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                androidx.compose.foundation.layout.Column(modifier = Modifier.width(400.dp)) {
+                    BibleText(
+                        reference = chapterReference,
+                        verseIndicatorStyle = { BibleVerseIndicatorStyle(Color.Blue) },
+                        onVerseIndicatorTap = onVerseIndicatorTap,
+                    )
+                    Text("After")
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+        val topWithoutTargets = composeTestRule.onNodeWithText("After").getBoundsInRoot().top
+
+        onVerseIndicatorTap = { indicatorTaps += it }
+        composeTestRule.waitForIdle()
+        val topWithTargets = composeTestRule.onNodeWithText("After").getBoundsInRoot().top
+        composeTestRule.onNodeWithContentDescription("1").performClick()
+
+        assertTrue(topWithoutTargets < 48.dp)
+        assertEquals(topWithoutTargets, topWithTargets)
+        assertEquals(listOf(verse(1)), indicatorTaps)
+    }
+
+    @Test
+    fun `verse indicators cover only the digits of the verses the style marks`() {
+        val text = labeledVerses()
+
+        val indicators = text.verseIndicators { if (it.verseStart == 2) BibleVerseIndicatorStyle(Color.Blue) else null }
+
+        assertEquals(1, indicators.size)
+        assertEquals(verse(2), indicators.single().reference)
+        assertEquals("2", text.text.substring(indicators.single().range))
+    }
+
+    @Test
+    fun `a verse with an alternate number is marked once, on its own number`() {
+        val text =
+            buildAnnotatedString {
+                listOf("2\u00A0", " 7\u00A0").forEach { label ->
+                    val start = length
+                    append(label)
+                    addStringAnnotation(
+                        BibleTextCategoryAttribute.NAME,
+                        BibleTextCategory.VERSE_LABEL.name,
+                        start,
+                        length,
+                    )
+                }
+                append("Light.")
+                addStringAnnotation(BibleReferenceAttribute.NAME, "1:GEN:1:2", 0, length)
+            }
+
+        val indicators = text.verseIndicators { BibleVerseIndicatorStyle(Color.Blue) }
+
+        assertEquals(listOf(verse(2)), indicators.map { it.reference })
+        assertEquals("2", text.text.substring(indicators.single().range))
+    }
+
+    @Test
+    fun `indicators pad their number with a space on each side and keep its verse's annotations`() {
+        val text = labeledVerses()
+
+        val numbers = text.verseIndicators { if (it.verseStart == 2) BibleVerseIndicatorStyle(Color.Blue) else null }
+        val (padded, indicators) = text.withVerseIndicators(numbers)
+
+        val indicator = indicators.single()
+        assertEquals("\u00A02\u00A0", padded.text.substring(indicator.range))
+        assertEquals(text.text.length + 2, padded.length)
+        assertEquals(
+            listOf(verse(1), verse(2), verse(3)),
+            padded
+                .getStringAnnotations(BibleReferenceAttribute.NAME, 0, padded.length)
+                .map { BibleReference.fromAnnotation(it.item) },
+        )
+        indicator.range.forEach { offset ->
+            assertEquals(
+                listOf("1:GEN:1:2"),
+                padded.getStringAnnotations(BibleReferenceAttribute.NAME, offset, offset + 1).map { it.item },
+            )
+        }
+        assertEquals(
+            1,
+            padded
+                .verseIndicators {
+                    if (it.verseStart ==
+                        2
+                    ) {
+                        BibleVerseIndicatorStyle(Color.Blue)
+                    } else {
+                        null
+                    }
+                }.size,
+        )
+    }
+
+    @Test
+    fun `a painted indicator fades with its verse and turns its number white on a dark highlight`() {
+        val indicator =
+            VerseIndicator(verse(2), 0..2, BibleVerseIndicatorStyle(Color.Blue, foregroundColor = Color.Red))
+
+        val dimmed = indicator.painted(isInFocus = false, unfocusedAlpha = 0.4f, isOnDarkHighlight = true)
+        val onDark = indicator.painted(isInFocus = true, unfocusedAlpha = 0.4f, isOnDarkHighlight = true)
+        val plain = indicator.painted(isInFocus = true, unfocusedAlpha = 0.4f, isOnDarkHighlight = false)
+
+        assertEquals(Color.Blue.copy(alpha = 0.4f), dimmed.style.backgroundColor)
+        assertNull(dimmed.style.foregroundColor)
+        assertEquals(Color.Blue, onDark.style.backgroundColor)
+        assertEquals(Color.White, onDark.style.foregroundColor)
+        assertEquals(Color.Red, plain.style.foregroundColor)
+    }
+
+    @Test
+    fun `a dark highlight in a light theme turns its whole verse white`() {
+        val text = labeledVerses()
+        val verse2 = text.mergedRangeOf(verse(2))
+
+        val recolored =
+            text.withHighlightTextColors(
+                listOf(verse2 to Color(0xFF2B4F8C)),
+                Color.Black,
+                isDarkTheme = false,
+            )
+
+        assertEquals(
+            listOf(AnnotatedString.Range(SpanStyle(color = Color.White), verse2.first, verse2.last + 1)),
+            recolored.spanStyles,
+        )
+    }
+
+    @Test
+    fun `a light highlight, or any highlight in a dark theme, gives only its verse number the full text color`() {
+        val text = labeledVerses()
+        val verse2 = text.mergedRangeOf(verse(2))
+        val number = verse2.first until verse2.first + " 2\u00A0".length
+
+        val light = text.withHighlightTextColors(listOf(verse2 to Color(0xFFFFF3A6)), Color.Black, isDarkTheme = false)
+        val darkTheme =
+            text.withHighlightTextColors(
+                listOf(verse2 to Color(0xFF2B4F8C)),
+                Color.Black,
+                isDarkTheme = true,
+            )
+
+        val expected = listOf(AnnotatedString.Range(SpanStyle(color = Color.Black), number.first, number.last + 1))
+        assertEquals(expected, light.spanStyles)
+        assertEquals(expected, darkTheme.spanStyles)
+    }
+
+    /** The characters [reference] covers in this text, verse number included. */
+    private fun AnnotatedString.mergedRangeOf(reference: BibleReference): IntRange =
+        getStringAnnotations(BibleReferenceAttribute.NAME, 0, length)
+            .single { BibleReference.fromAnnotation(it.item) == reference }
+            .let { it.start until it.end }
+
+    @Test
+    fun `a highlight is dark when its luma over a white page is below half`() {
+        assertTrue(Color(0xFF2B4F8C).isDarkHighlight())
+        assertTrue(!Color(0xFFFFF3A6).isDarkHighlight())
+        assertTrue(!Color(0xFF000000).copy(alpha = 0.2f).isDarkHighlight())
+    }
+
+    @Test
+    fun `an indicator's foreground color recolors only its number`() {
+        val text = labeledVerses()
+        val indicators = text.verseIndicators { BibleVerseIndicatorStyle(Color.Blue, foregroundColor = Color.White) }
+
+        val recolored = text.withIndicatorColors(indicators)
+
+        assertEquals(
+            indicators.map { AnnotatedString.Range(SpanStyle(color = Color.White), it.range.first, it.range.last + 1) },
+            recolored.spanStyles,
+        )
+    }
+
+    @Test
+    fun `tapping an indicator reaches onVerseIndicatorTap and not onVerseTap`() {
+        val indicatorTaps = mutableListOf<BibleReference>()
+        val verseTaps = mutableListOf<BibleReference>()
+        setIndicatorContent(
+            style = { if (it.verseStart == 2) BibleVerseIndicatorStyle(Color.Blue) else null },
+            onVerseTap = { verseTaps += it },
+            onVerseIndicatorTap = { indicatorTaps += it },
+        )
+
+        composeTestRule.onNodeWithContentDescription("2").performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals(listOf(verse(2)), indicatorTaps)
+        assertEquals(emptyList(), verseTaps)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `an indicator's tap target grows to its minimum size and wins over the verse text it overlaps`() {
+        val indicatorTaps = mutableListOf<BibleReference>()
+        val verseTaps = mutableListOf<BibleReference>()
+        setIndicatorContent(
+            style = { if (it.verseStart == 2) BibleVerseIndicatorStyle(Color.Blue) else null },
+            onVerseTap = { verseTaps += it },
+            onVerseIndicatorTap = { indicatorTaps += it },
+        )
+        val target = composeTestRule.onNodeWithContentDescription("2")
+        val bounds = target.getBoundsInRoot()
+        assertTrue(bounds.width >= 48.dp && bounds.height >= 48.dp)
+
+        target.performTouchInput { click(Offset(width - 2f, height / 2f)) }
+        composeTestRule.waitForIdle()
+
+        assertEquals(listOf(verse(2)), indicatorTaps)
+        assertEquals(emptyList(), verseTaps)
+    }
+
+    private val stackedIndicatorText = "\u00A01\u00A0\u00A0Light.\n \u00A02\u00A0\u00A0Amen."
+
+    /** Verses 1 and 2 marked on consecutive lines at 12sp, where verse 2's tap target overlaps the "1" above it. */
+    private fun setStackedIndicatorContent(onVerseIndicatorTap: (BibleReference) -> Unit) {
+        coEvery { mockVersionRepository.version(any()) } returns ltrVersion
+        coEvery {
+            BibleVersionRendering.textBlocks(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns
+            listOf(annotatedBlock("", marginTop = 0.dp).modified(text = labeledVerses(listOf("Light.\n", "Amen."))))
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                androidx.compose.foundation.layout.Box(modifier = Modifier.width(400.dp)) {
+                    BibleText(
+                        reference = chapterReference,
+                        textOptions = BibleTextOptions(fontSize = 12.sp),
+                        verseIndicatorStyle = { BibleVerseIndicatorStyle(Color.Blue) },
+                        onVerseIndicatorTap = onVerseIndicatorTap,
+                    )
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a tap where two indicators' targets overlap reaches the closer number`() {
+        val indicatorTaps = mutableListOf<BibleReference>()
+        setStackedIndicatorContent(onVerseIndicatorTap = { indicatorTaps += it })
+        val text = stackedIndicatorText
+        val layout = textLayout(text)
+        val firstNumber = layout.getBoundingBox(text.indexOf('1'))
+        val secondTarget = composeTestRule.onNodeWithContentDescription("2").getBoundsInRoot()
+        val textTop = composeTestRule.onNodeWithText(text).getBoundsInRoot().top
+        assertTrue(secondTarget.top < textTop + with(composeTestRule.density) { firstNumber.center.y.toDp() })
+
+        tapCharacter(text, text.indexOf('1'))
+        tapCharacter(text, text.indexOf('2'))
+
+        assertEquals(listOf(verse(1), verse(2)), indicatorTaps)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `an accessibility click opens an indicator's own verse after a touch on it was dragged away`() {
+        val indicatorTaps = mutableListOf<BibleReference>()
+        setStackedIndicatorContent(onVerseIndicatorTap = { indicatorTaps += it })
+        val text = stackedIndicatorText
+        val firstNumber = textLayout(text).getBoundingBox(text.indexOf('1'))
+
+        composeTestRule.onNodeWithText(text).performTouchInput {
+            down(firstNumber.center)
+            moveTo(Offset(width - 1f, height - 1f))
+            up()
+        }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithContentDescription("2").performSemanticsAction(SemanticsActions.OnClick)
+        composeTestRule.waitForIdle()
+
+        assertEquals(listOf(verse(2)), indicatorTaps)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `in a right-to-left version an indicator's tap target sits on its marker`() {
+        val indicatorTaps = mutableListOf<BibleReference>()
+        val style: (BibleReference) -> BibleVerseIndicatorStyle? = {
+            if (it.verseStart == 2) BibleVerseIndicatorStyle(Color.Blue) else null
+        }
+        setIndicatorContent(style = style, onVerseIndicatorTap = { indicatorTaps += it }, version = rtlVersion)
+        val labeled = labeledVerses()
+        val text = labeled.withVerseIndicators(labeled.verseIndicators(style)).first.text
+        val number = textLayout(text).getBoundingBox(text.indexOf("2\u00A0"))
+        val textLeft = composeTestRule.onNodeWithText(text).getBoundsInRoot().left
+        val markerCenter = textLeft + with(composeTestRule.density) { number.center.x.toDp() }
+        val target = composeTestRule.onNodeWithContentDescription("2").getBoundsInRoot()
+
+        tapCharacter(text, text.indexOf('2'))
+
+        assertEquals(markerCenter.value, ((target.left + target.right) / 2).value, 2f)
+        assertEquals(listOf(verse(2)), indicatorTaps)
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun `a keyboard can focus an indicator and open its verse`() {
+        val indicatorTaps = mutableListOf<BibleReference>()
+        setIndicatorContent(
+            style = { if (it.verseStart == 2) BibleVerseIndicatorStyle(Color.Blue) else null },
+            onVerseIndicatorTap = { indicatorTaps += it },
+        )
+        val target = composeTestRule.onNodeWithContentDescription("2")
+
+        target.requestFocus()
+        target.assertIsFocused()
+        target.performKeyInput { pressKey(Key.Enter) }
+        composeTestRule.waitForIdle()
+
+        assertEquals(listOf(verse(2)), indicatorTaps)
+    }
+
+    /** Taps the leading quarter of the character at [index], which resolves to that character's own offset. */
+    private fun tapCharacter(
+        text: String,
+        index: Int,
+    ) {
+        val box = textLayout(text).getBoundingBox(index)
+        val position = Offset(box.left + box.width / 4, box.center.y)
+        composeTestRule.onNodeWithText(text).performTouchInput { click(position) }
+        composeTestRule.waitForIdle()
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `verse text away from an indicator still reaches onVerseTap`() {
+        val indicatorTaps = mutableListOf<BibleReference>()
+        val verseTaps = mutableListOf<BibleReference>()
+        setIndicatorContent(
+            text = labeledVerses(listOf("Light. ")),
+            style = { BibleVerseIndicatorStyle(Color.Blue, minimumTouchTargetSize = DpSize(1.dp, 1.dp)) },
+            onVerseTap = { verseTaps += it },
+            onVerseIndicatorTap = { indicatorTaps += it },
+        )
+
+        tapCharacter("\u00A01\u00A0\u00A0Light. ", "\u00A01\u00A0\u00A0Light. ".indexOf('t'))
+
+        assertEquals(listOf(verse(1)), verseTaps)
+        assertEquals(emptyList(), indicatorTaps)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `a footnote marker still reaches onFootnoteTap when its verse has an indicator`() {
+        val footnoteTaps = mutableListOf<BibleReference>()
+        setIndicatorContent(
+            text = labeledVerses(listOf("Light."), footnoteAfterVerse = 1),
+            style = { BibleVerseIndicatorStyle(Color.Blue, minimumTouchTargetSize = DpSize(1.dp, 1.dp)) },
+            onFootnoteTap = { footnoteTaps += it },
+        )
+
+        tapCharacter("\u00A01\u00A0\u00A0Light.※", "\u00A01\u00A0\u00A0Light.※".indexOf('※'))
+
+        assertEquals(listOf(verse(1)), footnoteTaps)
+    }
+
+    @Test
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    @Config(sdk = [34])
+    fun `an indicator on a wrapped line puts its tap target on that line`() {
+        setIndicatorContent(width = 120.dp)
+        val labeled = labeledVerses()
+        val text =
+            labeled
+                .withVerseIndicators(
+                    labeled.verseIndicators { BibleVerseIndicatorStyle(Color.Blue) },
+                ).first.text
+        val layout = textLayout(text)
+        val numberOffset = text.indexOf("3\u00A0")
+        assertTrue(layout.getLineForOffset(numberOffset) > 0)
+
+        val target = composeTestRule.onNodeWithContentDescription("3").getBoundsInRoot()
+        val textTop = composeTestRule.onNodeWithText(text).getBoundsInRoot().top
+        val lineCenter =
+            with(composeTestRule.density) {
+                val line = layout.getLineForOffset(numberOffset)
+                ((layout.getLineTop(line) + layout.getLineBottom(line)) / 2).toDp()
+            }
+
+        assertEquals((textTop + lineCenter).value, ((target.top + target.bottom) / 2).value, 2f)
+    }
+
+    @Test
+    fun `an indicator's content description overrides the verse number`() {
+        setIndicatorContent(
+            style = { BibleVerseIndicatorStyle(Color.Blue, contentDescription = "Notes on ${it.verseStart}") },
+        )
+
+        composeTestRule.onNodeWithContentDescription("Notes on 2").assertIsDisplayed()
+    }
+
+    @Test
+    fun `no style leaves the plain rendering and its verse taps`() {
+        val verseTaps = mutableListOf<BibleReference>()
+        setIndicatorContent(
+            text = labeledVerses(listOf("Light. ")),
+            style = { null },
+            onVerseTap = { verseTaps += it },
+        )
+
+        composeTestRule.onNodeWithContentDescription("1").assertDoesNotExist()
+        composeTestRule.onNodeWithText("1\u00A0Light. ").performTouchInput { click(centerLeft + Offset(2f, 0f)) }
+        composeTestRule.waitForIdle()
+
+        assertEquals(listOf(verse(1)), verseTaps)
     }
 
     // endregion

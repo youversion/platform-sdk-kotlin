@@ -195,6 +195,22 @@ fun Demo() {
 
 When the user is signed in and has granted the `highlights` permission, `BibleText` also renders their YouVersion highlights behind the verse text. See [Highlights](#highlights).
 
+#### Marking Verse Numbers
+
+To mark some verse numbers, for example the verses your app has saved something for, pass `verseIndicatorStyle`. It returns a style for a verse, or null to leave its number as it is. Pass `onVerseIndicatorTap` to make the marked numbers tappable:
+
+```kotlin
+BibleText(
+    reference = BibleReference(versionId = 3034, bookUSFM = "JHN", chapter = 3),
+    verseIndicatorStyle = { verse ->
+        if (verse in savedVerses) BibleVerseIndicatorStyle(backgroundColor = Color(0xFFFFE08A)) else null
+    },
+    onVerseIndicatorTap = { verse -> openSavedItem(verse) },
+)
+```
+
+A marked number gets a rounded fill drawn over any highlight. Its tap area is at least 48dp (`minimumTouchTargetSize`), wins over a tap on the verse text around it, and goes to the nearest number where two overlap. TalkBack reads the verse number unless you set `contentDescription`. The style is read on every recomposition, so Compose state it reads, such as `savedVerses` above, updates the marks.
+
 ### Bible Reader
 
 Displays a full Bible reading experience, very similar to the YouVersion Bible app, ready to be added as a tab in your app.
@@ -228,6 +244,23 @@ BibleReader(
 ```
 
 To offer your own fonts in the reader's font settings sheet, or to render a bottom bar beneath the reader, pass `fontDefinitionProvider` and `bottomBar`.
+
+#### Verse Actions
+
+Selecting verses opens an action sheet that offers Highlight, Copy, and Share by default. Pass `verseActions` to reorder them, leave some out, or add your own:
+
+```kotlin
+BibleReader(
+    verseActions =
+        listOf(
+            BibleReaderVerseAction(id = "bookmark", label = stringResource(R.string.bookmark), icon = Icons.Outlined.BookmarkBorder) { references ->
+                saveBookmark(references)
+            },
+        ) + BibleReaderVerseAction.defaults,
+)
+```
+
+A custom action's callback receives the selected verses, sorted and merged into ranges, once the sheet has closed and the selection has cleared. Labels come from your app and should already be localized. IDs must be unique, and a repeated ID throws `IllegalArgumentException`. An empty list shows no sheet. Highlight is left out for a signed-out reader when sign-in is disabled.
 
 #### Search
 
