@@ -689,6 +689,10 @@ internal fun BibleScreen(
                                     )
                                 },
                                 onSave = { viewModel.onAction(BibleReaderViewModel.Action.SaveNote) },
+                                onEditSavedNote = { viewModel.onAction(BibleReaderViewModel.Action.EditSavedNote(it)) },
+                                onDeleteSavedNote = {
+                                    viewModel.onAction(BibleReaderViewModel.Action.DeleteSavedNote(it))
+                                },
                                 onDismissRequest = {
                                     viewModel.onAction(BibleReaderViewModel.Action.RequestDismissNote)
                                 },

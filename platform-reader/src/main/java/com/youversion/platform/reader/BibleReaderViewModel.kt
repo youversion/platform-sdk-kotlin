@@ -20,8 +20,6 @@ import com.youversion.platform.core.highlights.models.isSameHighlightColor
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.notes.api.NotesApi
 import com.youversion.platform.core.notes.models.Note
-import com.youversion.platform.core.notes.models.NoteCreateRequest
-import com.youversion.platform.core.notes.models.NoteStatus
 import com.youversion.platform.core.users.model.YouVersionPermissions
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.CopyManager
@@ -102,7 +100,7 @@ internal class BibleReaderViewModel(
      * text yet, so tapping Save again is all that is lost.
      */
     private var pendingNoteDraft: NoteDraft? = null
-    private var noteSaveJob: Job? = null
+    private var noteMutationJob: Job? = null
     private val _state: MutableStateFlow<State>
     val state: StateFlow<State> by lazy { _state.asStateFlow() }
 
@@ -174,8 +172,8 @@ internal class BibleReaderViewModel(
             }
         }
         if (_state.value.noteDraft?.let { it.sessionId != sessionId } == true) {
-            noteSaveJob?.cancel()
-            noteSaveJob = null
+            noteMutationJob?.cancel()
+            noteMutationJob = null
             _state.update { it.copy(noteDraft = null, selectedVerses = emptySet(), showVerseActionSheet = false) }
         }
     }
@@ -456,6 +454,14 @@ internal class BibleReaderViewModel(
 
             is Action.SaveNote -> {
                 saveNote()
+            }
+
+            is Action.EditSavedNote -> {
+                updateNoteDraft { it.editing(action.note) }
+            }
+
+            is Action.DeleteSavedNote -> {
+                deleteSavedNote(action.note)
             }
 
             is Action.RequestDismissNote -> {
@@ -764,61 +770,96 @@ internal class BibleReaderViewModel(
             bibleVersion?.displayTitle(reference, includesVersionAbbreviation = false) ?: reference.asUSFM
         }
 
-    /** Applies [change] to the open draft, unless there is none or a save is in flight. */
+    /** Applies [change] to the open draft, unless there is none or a save or deletion is in flight. */
     private fun updateNoteDraft(change: (NoteDraft) -> NoteDraft) {
         _state.update { state ->
             val draft = state.noteDraft
-            if (draft == null || draft.isSaving) state else state.copy(noteDraft = change(draft))
+            if (draft == null || draft.isBusy) state else state.copy(noteDraft = change(draft))
         }
     }
 
     /**
-     * Creates the open draft's note. A composer opened from a note indicator needs only the read permission, so
-     * without the write permission the draft is held, text included, while the reader grants it, and reopens once
-     * it lands. A failure keeps the draft, request id included, so retrying cannot create the
-     * note twice. Success closes the composer; the note indicators then reload the chapter's notes and highlights.
+     * Creates the open draft's note, or changes the saved note it is editing, sending only the fields that changed.
+     * Without the write permission the draft is held, text included, while the reader grants it, and reopens once it
+     * lands. A failure keeps the draft, request id included, so retrying cannot create the note twice. Success closes
+     * the composer; the note indicators then reload the chapter's notes and highlights.
      */
     private fun saveNote() {
         val draft = _state.value.noteDraft ?: return
-        if (draft.isSaving || draft.sessionId != currentSessionId()) return
-        if (!hasWriteNotesPermission()) {
-            if (!isSignInEnabled()) {
-                updateNoteDraft { it.copy(showsSaveError = true) }
-                return
+        if (!draft.canSave || draft.sessionId != currentSessionId() || !holdNoteDraftUnlessWritable(draft)) return
+        val editingNote = draft.editingNote
+        val save: suspend () -> Unit = {
+            if (editingNote == null) {
+                notesApi.createNote(draft.createRequest())
+            } else {
+                notesApi.updateNote(editingNote.id, draft.update())
             }
+        }
+        mutateNote(draft, draft.copy(isSaving = true), "Failed to save note", save) {
+            _state.update { it.copy(noteDraft = null) }
+            clearVerseSelection()
+        }
+    }
+
+    /**
+     * Deletes [note], one of the open draft's saved notes, keeping the composer and anything the reader typed. It
+     * needs the write permission as saving does, and a failure leaves the note listed.
+     */
+    private fun deleteSavedNote(note: Note) {
+        val draft = _state.value.noteDraft ?: return
+        if (draft.isBusy || draft.sessionId != currentSessionId() || note !in draft.savedNotes) return
+        if (!holdNoteDraftUnlessWritable(draft)) return
+        mutateNote(draft, draft.copy(isDeleting = true), "Failed to delete note", { notesApi.deleteNote(note.id) }) {
+            _state.update { state -> state.copy(noteDraft = state.noteDraft?.deleting(note)?.copy(isDeleting = false)) }
+        }
+    }
+
+    /**
+     * Whether the reader can write notes now. Otherwise the open [draft] is held while they sign in for the
+     * permission, or, when sign-in is disabled, shows an error.
+     */
+    private fun holdNoteDraftUnlessWritable(draft: NoteDraft): Boolean {
+        if (hasWriteNotesPermission()) return true
+        if (isSignInEnabled()) {
             pendingNoteDraft = draft
             _state.update { it.copy(noteDraft = null, shouldStartNoteSignIn = true) }
-            return
+        } else {
+            updateNoteDraft { it.copy(showsSaveError = true) }
         }
-        val request =
-            NoteCreateRequest(
-                content = draft.content,
-                status = if (draft.isPublic) NoteStatus.PUBLIC else NoteStatus.PRIVATE,
-                requestId = draft.requestId,
-                color = draft.hexColor,
-                references = draft.references,
-            )
-        _state.update { it.copy(noteDraft = draft.copy(isSaving = true, showsSaveError = false)) }
-        noteSaveJob =
+        return false
+    }
+
+    /**
+     * Shows [busyDraft] while [mutation] runs, then calls [onSuccess] or shows the error over [draft]. A result that
+     * returns after the draft closed or the account changed is ignored.
+     */
+    private fun mutateNote(
+        draft: NoteDraft,
+        busyDraft: NoteDraft,
+        failureMessage: String,
+        mutation: suspend () -> Unit,
+        onSuccess: () -> Unit,
+    ) {
+        _state.update { it.copy(noteDraft = busyDraft.copy(showsSaveError = false)) }
+        noteMutationJob =
             viewModelScope.launch {
-                val isSaved =
+                val isMutated =
                     try {
                         hasValidToken()
-                        notesApi.createNote(request)
+                        mutation()
                         true
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
-                        Logger.w("Failed to save note", e)
+                        Logger.w(failureMessage, e)
                         false
                     }
-                noteSaveJob = null
+                noteMutationJob = null
                 if (_state.value.noteDraft?.requestId != draft.requestId || draft.sessionId != currentSessionId()) {
                     return@launch
                 }
-                if (isSaved) {
-                    _state.update { it.copy(noteDraft = null) }
-                    clearVerseSelection()
+                if (isMutated) {
+                    onSuccess()
                 } else {
                     _state.update { it.copy(noteDraft = draft.copy(showsSaveError = true)) }
                 }
@@ -828,14 +869,14 @@ internal class BibleReaderViewModel(
     private fun requestDismissNote() {
         val draft = _state.value.noteDraft ?: return
         when {
-            draft.isSaving -> Unit
+            draft.isBusy -> Unit
             draft.hasChanges -> updateNoteDraft { it.copy(showsDiscardConfirmation = true) }
             else -> discardNote()
         }
     }
 
     private fun discardNote() {
-        if (_state.value.noteDraft?.isSaving != false) return
+        if (_state.value.noteDraft?.isBusy != false) return
         _state.update { it.copy(noteDraft = null) }
         clearVerseSelection()
     }
@@ -1277,6 +1318,16 @@ internal class BibleReaderViewModel(
         ) : Action
 
         data object SaveNote : Action
+
+        /** Load the saved [note] into the composer for editing, replacing any unsaved changes. */
+        data class EditSavedNote(
+            val note: Note,
+        ) : Action
+
+        /** Delete the saved [note] listed below the composer, which the reader has confirmed. */
+        data class DeleteSavedNote(
+            val note: Note,
+        ) : Action
 
         /** The reader asked to close the composer; unsaved changes are confirmed first. */
         data object RequestDismissNote : Action

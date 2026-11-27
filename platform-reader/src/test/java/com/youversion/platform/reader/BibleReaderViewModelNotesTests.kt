@@ -2,11 +2,13 @@ package com.youversion.platform.reader
 
 import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.notes.api.NotesApi
 import com.youversion.platform.core.notes.models.Note
 import com.youversion.platform.core.notes.models.NoteCreateRequest
 import com.youversion.platform.core.notes.models.NoteStatus
+import com.youversion.platform.core.notes.models.NoteUpdate
 import com.youversion.platform.reader.BibleReaderViewModel.Action
 import com.youversion.platform.reader.domain.BibleReaderRepository
 import com.youversion.platform.reader.domain.UserSettingsRepository
@@ -29,7 +31,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, PlatformInternalApi::class)
 class BibleReaderViewModelNotesTests {
     private val chapter = BibleReference(versionId = 111, bookUSFM = "JHN", chapter = 3)
     private val verse1 = BibleReference(111, "JHN", 3, 1)
@@ -42,6 +44,25 @@ class BibleReaderViewModelNotesTests {
     private val sessionId = MutableStateFlow<String?>("user:a")
     private val createdRequests = mutableListOf<NoteCreateRequest>()
     private var createNote: suspend (NoteCreateRequest) -> Unit = {}
+    private val updates = mutableListOf<Pair<String, NoteUpdate>>()
+    private var updateNote: suspend () -> Unit = {}
+    private val deletedIds = mutableListOf<String>()
+    private var deleteNote: suspend () -> Unit = {}
+    private val savedNote =
+        Note(
+            id = "n1",
+            title = "Kept title",
+            content = "Born again",
+            color = "FFEC5B",
+            references = listOf(BibleReference(111, "JHN", 3, 1, 2)),
+            languageTag = "en",
+            tags = listOf("faith"),
+            status = NoteStatus.PUBLIC,
+            createdTime = null,
+            updatedTime = null,
+        )
+    private val otherNote =
+        Note("n2", null, "Wind", null, listOf(verse7), null, null, NoteStatus.PRIVATE, null, null)
     private lateinit var highlightsRepository: BibleHighlightsRepository
     private lateinit var viewModel: BibleReaderViewModel
 
@@ -62,6 +83,15 @@ class BibleReaderViewModelNotesTests {
             createdRequests += request
             createNote(request)
             mockk()
+        }
+        coEvery { notesApi.updateNote(any(), any()) } coAnswers {
+            updates += firstArg<String>() to secondArg<NoteUpdate>()
+            updateNote()
+            mockk()
+        }
+        coEvery { notesApi.deleteNote(any()) } coAnswers {
+            deletedIds += firstArg<String>()
+            deleteNote()
         }
         viewModel =
             BibleReaderViewModel(
@@ -373,5 +403,147 @@ class BibleReaderViewModelNotesTests {
         viewModel.onAction(Action.StartNote)
         viewModel.onAction(Action.ShowSavedNotes(verse7, listOf(note)))
         assertEquals(listOf(verse1), assertNotNull(state.noteDraft).references)
+    }
+
+    private fun editSavedNote() {
+        viewModel.onAction(Action.ShowSavedNotes(verse1, listOf(savedNote, otherNote)))
+        viewModel.onAction(Action.EditSavedNote(savedNote))
+    }
+
+    @Test
+    fun `editing a saved note loads its fields and waits for a change before saving`() {
+        editSavedNote()
+
+        val draft = assertNotNull(state.noteDraft)
+        assertEquals(savedNote, draft.editingNote)
+        assertEquals("Born again", draft.content)
+        assertTrue(draft.isPublic)
+        assertEquals("FFEC5B", draft.hexColor)
+        assertFalse(draft.canSave)
+
+        viewModel.onAction(Action.UpdateNote("Born again!", isPublic = true, hexColor = "ffec5b"))
+        assertTrue(assertNotNull(state.noteDraft).canSave)
+        viewModel.onAction(Action.UpdateNote("Born again", isPublic = true, hexColor = "ffec5b"))
+        assertFalse(assertNotNull(state.noteDraft).hasChanges)
+
+        viewModel.onAction(Action.SaveNote)
+        assertTrue(updates.isEmpty())
+    }
+
+    @Test
+    fun `saving an edited note patches only the changed fields of that note`() {
+        editSavedNote()
+        viewModel.onAction(Action.UpdateNote("Born again", isPublic = false, hexColor = "b4ffc1"))
+
+        viewModel.onAction(Action.SaveNote)
+
+        assertEquals(
+            listOf("n1" to NoteUpdate(color = NoteUpdate.Field.Value("b4ffc1"), status = NoteStatus.PRIVATE)),
+            updates,
+        )
+        assertTrue(createdRequests.isEmpty())
+        assertNull(state.noteDraft)
+    }
+
+    @Test
+    fun `removing an edited note's color clears it explicitly`() {
+        editSavedNote()
+        viewModel.onAction(Action.UpdateNote("Born again", isPublic = true, hexColor = null))
+
+        viewModel.onAction(Action.SaveNote)
+
+        assertEquals(listOf("n1" to NoteUpdate(color = NoteUpdate.Field.Clear)), updates)
+    }
+
+    @Test
+    fun `an edited note cannot save with its text emptied`() {
+        editSavedNote()
+        viewModel.onAction(Action.UpdateNote("", isPublic = false, hexColor = "FFEC5B"))
+
+        viewModel.onAction(Action.SaveNote)
+
+        assertFalse(assertNotNull(state.noteDraft).canSave)
+        assertTrue(updates.isEmpty())
+    }
+
+    @Test
+    fun `a failed edit keeps the edited note in the composer for a retry`() {
+        updateNote = { throw YouVersionNetworkException(YouVersionNetworkException.Reason.SERVER_ERROR) }
+        editSavedNote()
+        viewModel.onAction(Action.UpdateNote("Born of the Spirit", isPublic = true, hexColor = "FFEC5B"))
+
+        viewModel.onAction(Action.SaveNote)
+
+        val failed = assertNotNull(state.noteDraft)
+        assertTrue(failed.showsSaveError)
+        assertEquals(savedNote, failed.editingNote)
+        assertEquals("Born of the Spirit", failed.content)
+
+        updateNote = {}
+        viewModel.onAction(Action.DismissNoteSaveError)
+        viewModel.onAction(Action.SaveNote)
+        assertEquals(List(2) { "n1" to NoteUpdate(content = "Born of the Spirit") }, updates)
+        assertNull(state.noteDraft)
+    }
+
+    @Test
+    fun `deleting the note being edited keeps the reader's unsaved text as a new note`() {
+        editSavedNote()
+        viewModel.onAction(Action.UpdateNote("Born again!", isPublic = true, hexColor = "FFEC5B"))
+
+        viewModel.onAction(Action.DeleteSavedNote(savedNote))
+
+        assertEquals(listOf("n1"), deletedIds)
+        val draft = assertNotNull(state.noteDraft)
+        assertEquals(listOf(otherNote), draft.savedNotes)
+        assertNull(draft.editingNote)
+        assertEquals("Born again!", draft.content)
+        assertFalse(draft.isDeleting)
+    }
+
+    @Test
+    fun `deleting the unchanged edited note empties the composer`() {
+        editSavedNote()
+
+        viewModel.onAction(Action.DeleteSavedNote(savedNote))
+
+        val draft = assertNotNull(state.noteDraft)
+        assertNull(draft.editingNote)
+        assertEquals("", draft.content)
+        assertFalse(draft.hasChanges)
+    }
+
+    @Test
+    fun `a failed delete keeps the note listed and shows the error`() {
+        deleteNote = { throw YouVersionNetworkException(YouVersionNetworkException.Reason.SERVER_ERROR) }
+        editSavedNote()
+
+        viewModel.onAction(Action.DeleteSavedNote(otherNote))
+
+        val draft = assertNotNull(state.noteDraft)
+        assertTrue(draft.showsSaveError)
+        assertEquals(listOf(savedNote, otherNote), draft.savedNotes)
+        assertEquals(savedNote, draft.editingNote)
+    }
+
+    @Test
+    fun `deleting without write access holds the draft through a cancelled grant`() {
+        hasWriteNotes = false
+        editSavedNote()
+
+        viewModel.onAction(Action.DeleteSavedNote(otherNote))
+
+        assertTrue(deletedIds.isEmpty())
+        assertNull(state.noteDraft)
+        assertTrue(state.shouldStartNoteSignIn)
+
+        viewModel.onAction(Action.NoteSignInCompleted)
+        hasWriteNotes = true
+        viewModel.openPendingNoteIfPermitted()
+
+        val draft = assertNotNull(state.noteDraft)
+        assertEquals(savedNote, draft.editingNote)
+        viewModel.onAction(Action.DeleteSavedNote(otherNote))
+        assertEquals(listOf("n2"), deletedIds)
     }
 }
