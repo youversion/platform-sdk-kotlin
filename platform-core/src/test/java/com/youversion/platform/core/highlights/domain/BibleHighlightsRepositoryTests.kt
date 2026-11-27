@@ -5,6 +5,7 @@ import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.api.HighlightsApi
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.highlights.models.Highlight
+import com.youversion.platform.core.notes.api.NoteChanges
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -95,6 +96,27 @@ class BibleHighlightsRepositoryTests {
             advanceUntilIdle()
 
             assertEquals(1, api.highlightsCount)
+        }
+
+    @Test
+    fun `a note change made while no note view watched lifts the throttle once for every chapter`() =
+        runTest(testDispatcher) {
+            val api = FakeHighlightsApi()
+            val repository = repository(api)
+            val genesis = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1)
+            val exodus = BibleReference(versionId = 1, bookUSFM = "EXO", chapter = 1)
+            repository.ensureHighlightsForChapterLoaded(genesis)
+            repository.ensureHighlightsForChapterLoaded(exodus)
+            advanceUntilIdle()
+
+            NoteChanges.notifyChanged()
+            repository.ensureHighlightsForChapterLoaded(genesis)
+            repository.ensureHighlightsForChapterLoaded(exodus)
+            advanceUntilIdle()
+            repository.ensureHighlightsForChapterLoaded(genesis)
+            advanceUntilIdle()
+
+            assertEquals(4, api.highlightsCount)
         }
 
     @Test
@@ -561,6 +583,27 @@ class BibleHighlightsRepositoryTests {
 
             assertEquals(1, api.deleteCount)
             assertEquals("GEN.1.1", api.deletedPassages.first())
+        }
+
+    @Test
+    fun `removeHighlights matches a color the server sent with alpha or in short form`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(
+                            Highlight(bibleId = 1, passageId = "GEN.1.1", color = "80DFDCFF"),
+                            Highlight(bibleId = 1, passageId = "GEN.1.2", color = "f00"),
+                        ),
+                )
+            val repository = repository(api)
+            val alphaVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val shortVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
+
+            repository.removeHighlights(listOf(alphaVerse, shortVerse), matchingColor = "dfdcff")
+            advanceUntilIdle()
+
+            assertEquals(listOf("GEN.1.1"), api.deletedPassages)
         }
 
     @Test

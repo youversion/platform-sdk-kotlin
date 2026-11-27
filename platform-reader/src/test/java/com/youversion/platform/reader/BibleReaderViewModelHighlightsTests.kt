@@ -37,6 +37,7 @@ class BibleReaderViewModelHighlightsTests {
         )
     private val verseOne = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
     private val verseTwo = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
+    private val verseThree = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 3)
 
     private val yellow = "#ffff00"
     private val blue = "#0000ff"
@@ -444,54 +445,76 @@ class BibleReaderViewModelHighlightsTests {
         verify { bibleHighlightsRepository.addHighlights(match { it.toSet() == setOf(verseOne) }, yellow) }
     }
 
-    // ----- Color presence helpers
-
-    @Test
-    fun `isColorPresentOnAnySelectedVerses is true when a single selected verse carries the color`() {
-        highlight(verseOne, yellow)
-        selectVerses(verseOne, verseTwo)
-
-        assertTrue(viewModel.isColorPresentOnAnySelectedVerses(yellow))
-        assertFalse(viewModel.isColorPresentOnAllSelectedVerses(yellow))
-    }
+    // ----- Color presence
 
     @Test
     fun `isColorPresentOnAllSelectedVerses is true only when every selected verse carries the color`() {
         highlight(verseOne, yellow)
-        highlight(verseTwo, yellow)
         selectVerses(verseOne, verseTwo)
+        assertFalse(viewModel.isColorPresentOnAllSelectedVerses(yellow))
 
+        highlight(verseTwo, yellow)
         assertTrue(viewModel.isColorPresentOnAllSelectedVerses(yellow))
-        assertTrue(viewModel.isColorPresentOnAnySelectedVerses(yellow))
     }
 
     @Test
-    fun `color presence helpers are false when nothing is selected`() {
-        assertFalse(viewModel.isColorPresentOnAnySelectedVerses(yellow))
+    fun `isColorPresentOnAllSelectedVerses is false when nothing is selected`() {
         assertFalse(viewModel.isColorPresentOnAllSelectedVerses(yellow))
     }
 
     @Test
-    fun `color comparison ignores the hash prefix and case`() {
-        highlight(verseOne, "#FFFF00")
+    fun `a color saved with alpha, in short form, or in another case counts as its palette color`() {
+        highlight(verseOne, "#80DFDCFF")
+        highlight(verseTwo, "#ff0")
+        highlight(verseThree, "#FFEC5B")
+
+        selectVerses(verseOne)
+        assertTrue(viewModel.isColorPresentOnAllSelectedVerses("dfdcff"))
+        assertFalse(viewModel.isColorPresentOnAllSelectedVerses("80dfdc"))
+        viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection)
+
+        selectVerses(verseTwo)
+        assertTrue(viewModel.isColorPresentOnAllSelectedVerses("ffff00"))
+        viewModel.onAction(BibleReaderViewModel.Action.ClearVerseSelection)
+
+        selectVerses(verseThree)
+        assertTrue(viewModel.isColorPresentOnAllSelectedVerses("ffec5b"))
+    }
+
+    // ----- Swatches (Swift BibleReaderHighlightColors.swatches)
+
+    private fun swatchSummary() =
+        viewModel.highlightSwatches().map { "${it.hexColor}${if (it.isSelected) "*" else ""}" }
+
+    @Test
+    fun `swatches list the palette unselected when the selection has no highlight`() {
         selectVerses(verseOne)
 
-        assertTrue(viewModel.isColorPresentOnAnySelectedVerses("ffff00"))
-        assertTrue(viewModel.isColorPresentOnAllSelectedVerses("ffff00"))
+        assertEquals(listOf("ffec5b", "b4ffc1", "bbf4ff", "ffdca7", "ffcff8", "dfdcff"), swatchSummary())
     }
 
     @Test
-    fun `different colors across selected verses are each removable and all remain recolorable`() {
+    fun `a palette color on only some selected verses is one unselected swatch`() {
         highlight(verseOne, HighlightColor.Yellow.hexColor)
-        highlight(verseTwo, HighlightColor.Blue.hexColor)
         selectVerses(verseOne, verseTwo)
 
-        assertTrue(viewModel.isColorPresentOnAnySelectedVerses(HighlightColor.Yellow.hexColor))
-        assertTrue(viewModel.isColorPresentOnAnySelectedVerses(HighlightColor.Blue.hexColor))
+        assertEquals(listOf("ffec5b", "b4ffc1", "bbf4ff", "ffdca7", "ffcff8", "dfdcff"), swatchSummary())
+    }
 
-        assertFalse(viewModel.isColorPresentOnAllSelectedVerses(HighlightColor.Yellow.hexColor))
-        assertFalse(viewModel.isColorPresentOnAllSelectedVerses(HighlightColor.Blue.hexColor))
+    @Test
+    fun `a saved palette color with alpha is selected in its palette position under its saved value`() {
+        highlight(verseOne, "#80DFDCFF")
+        selectVerses(verseOne)
 
-        assertFalse(viewModel.isColorPresentOnAnySelectedVerses(HighlightColor.Pink.hexColor))
+        assertEquals(listOf("ffec5b", "b4ffc1", "bbf4ff", "ffdca7", "ffcff8", "#80dfdcff*"), swatchSummary())
+    }
+
+    @Test
+    fun `a color outside the palette gets its own selected swatch after the palette`() {
+        highlight(verseOne, "#a1b2c3")
+        highlight(verseTwo, "#ffec5b")
+        selectVerses(verseOne, verseTwo)
+
+        assertEquals(listOf("ffec5b", "b4ffc1", "bbf4ff", "ffdca7", "ffcff8", "dfdcff", "#a1b2c3*"), swatchSummary())
     }
 }

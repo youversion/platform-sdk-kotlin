@@ -1,6 +1,7 @@
 package com.youversion.platform.reader.domain
 
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.notes.models.Note
 import java.util.UUID
 
 /**
@@ -16,6 +17,8 @@ import java.util.UUID
  * @property selection The verses as the reader selected them, restored when composing is abandoned before it opens.
  * @property referenceTitle The passage shown at the top of the composer.
  * @property sessionId The session the draft belongs to, or `null` while signed out.
+ * @property savedNotes The notes already attached to the passage, newest first, listed below the composer when it was
+ *     opened from a verse indicator.
  * @property content The note's text; empty saves the passage alone.
  * @property isPublic Whether anyone can see the note rather than only its author.
  * @property hexColor The note's color as six lowercase hexadecimal digits, or `null` for none.
@@ -29,6 +32,7 @@ internal data class NoteDraft(
     val selection: Set<BibleReference>,
     val referenceTitle: String,
     val sessionId: String?,
+    val savedNotes: List<Note> = emptyList(),
     val content: String = "",
     val isPublic: Boolean = false,
     val hexColor: String? = null,

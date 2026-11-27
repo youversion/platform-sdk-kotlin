@@ -15,8 +15,11 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
+import com.youversion.platform.core.highlights.models.highlightRgbOrNull
+import com.youversion.platform.core.highlights.models.isSameHighlightColor
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.notes.api.NotesApi
+import com.youversion.platform.core.notes.models.Note
 import com.youversion.platform.core.notes.models.NoteCreateRequest
 import com.youversion.platform.core.notes.models.NoteStatus
 import com.youversion.platform.core.users.model.YouVersionPermissions
@@ -26,6 +29,8 @@ import com.youversion.platform.reader.domain.HighlightRequest
 import com.youversion.platform.reader.domain.NoteDraft
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
+import com.youversion.platform.reader.sheets.HighlightColor
+import com.youversion.platform.reader.sheets.HighlightSwatch
 import com.youversion.platform.ui.theme.ReaderTheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.LanguageRowItem
@@ -103,7 +108,7 @@ internal class BibleReaderViewModel(
 
     /**
      * The signed-in user's cached highlights. Exposed so the verse action sheet recomposes when highlights change and
-     * re-evaluates [isColorPresentOnAnySelectedVerses] / [isColorPresentOnAllSelectedVerses].
+     * re-evaluates [highlightSwatches].
      */
     internal val highlights: StateFlow<List<BibleHighlight>>
         get() = bibleHighlightsRepository.highlights
@@ -437,6 +442,10 @@ internal class BibleReaderViewModel(
                 startNote()
             }
 
+            is Action.ShowSavedNotes -> {
+                showSavedNotes(action.reference, action.notes)
+            }
+
             is Action.NoteSignInCompleted -> {
                 continuePendingNote()
             }
@@ -636,7 +645,8 @@ internal class BibleReaderViewModel(
 
     /**
      * Captures the selection as a note draft and opens the composer, or holds the draft and asks the reader to sign in
-     * when they have no account with the notes permission. A signed-out reader sees the sign-in prompt first; a
+     * when they have no account with the notes permission. As in the Swift SDK, a draft already held for the same
+     * passage is reused, so retrying after a cancelled grant keeps what was typed. A signed-out reader sees the sign-in prompt first; a
      * signed-in reader goes straight to the browser, since only signing in again grants the notes permission.
      */
     private fun startNote() {
@@ -646,13 +656,17 @@ internal class BibleReaderViewModel(
         if (!canWriteNotes && !isSignInEnabled()) return
         val references = BibleReference.referencesByMerging(selection.toList())
         val draft =
-            NoteDraft(
-                references = references,
-                selection = selection,
-                referenceTitle = noteReferenceTitle(references),
-                sessionId = currentSessionId(),
-            )
+            pendingNoteDraft
+                ?.takeIf { it.references == references }
+                ?.let { it.copy(sessionId = it.sessionId ?: currentSessionId()) }
+                ?: NoteDraft(
+                    references = references,
+                    selection = selection,
+                    referenceTitle = noteReferenceTitle(references),
+                    sessionId = currentSessionId(),
+                )
         if (canWriteNotes) {
+            pendingNoteDraft = null
             openNoteDraft(draft)
         } else {
             pendingNoteDraft = draft
@@ -722,7 +736,30 @@ internal class BibleReaderViewModel(
         _state.update { it.copy(selectedVerses = draft.selection, showVerseActionSheet = true) }
     }
 
-    private fun noteReferenceTitle(references: List<BibleReference>): String =
+    /**
+     * Opens the composer for [reference] with the [notes] already attached to it listed below, unless they are empty,
+     * nobody is signed in, or a draft is already open. As in the Swift SDK, the verse selection is left as it is.
+     */
+    private fun showSavedNotes(
+        reference: BibleReference,
+        notes: List<Note>,
+    ) {
+        if (notes.isEmpty() || !isSignedIn() || _state.value.noteDraft != null) return
+        pendingNoteDraft = null
+        val references = listOf(reference)
+        val draft =
+            NoteDraft(
+                references = references,
+                selection = setOf(reference),
+                referenceTitle = noteReferenceTitle(references),
+                sessionId = currentSessionId(),
+                savedNotes = notes,
+            )
+        _state.update { it.copy(noteDraft = draft, showVerseActionSheet = false) }
+    }
+
+    /** The passage [references] name in the reader's version, with gaps kept, such as `John 3:1-2, 7`. */
+    fun noteReferenceTitle(references: List<BibleReference>): String =
         references.joinToString(", ") { reference ->
             bibleVersion?.displayTitle(reference, includesVersionAbbreviation = false) ?: reference.asUSFM
         }
@@ -736,13 +773,23 @@ internal class BibleReaderViewModel(
     }
 
     /**
-     * Creates the open draft's note. A failure keeps the draft, request id included, so retrying cannot create the
-     * note twice. Success closes the composer and refreshes the chapter's highlights in the background, since a
-     * note's color can change them; the refresh keeps the shown highlights until it lands.
+     * Creates the open draft's note. A composer opened from a note indicator needs only the read permission, so
+     * without the write permission the draft is held, text included, while the reader grants it, and reopens once
+     * it lands. A failure keeps the draft, request id included, so retrying cannot create the
+     * note twice. Success closes the composer; the note indicators then reload the chapter's notes and highlights.
      */
     private fun saveNote() {
         val draft = _state.value.noteDraft ?: return
         if (draft.isSaving || draft.sessionId != currentSessionId()) return
+        if (!hasWriteNotesPermission()) {
+            if (!isSignInEnabled()) {
+                updateNoteDraft { it.copy(showsSaveError = true) }
+                return
+            }
+            pendingNoteDraft = draft
+            _state.update { it.copy(noteDraft = null, shouldStartNoteSignIn = true) }
+            return
+        }
         val request =
             NoteCreateRequest(
                 content = draft.content,
@@ -772,9 +819,6 @@ internal class BibleReaderViewModel(
                 if (isSaved) {
                     _state.update { it.copy(noteDraft = null) }
                     clearVerseSelection()
-                    if (hasHighlightsPermission()) {
-                        bibleHighlightsRepository.ensureHighlightsForChapterLoaded(bibleReference, forceReload = true)
-                    }
                 } else {
                     _state.update { it.copy(noteDraft = draft.copy(showsSaveError = true)) }
                 }
@@ -829,10 +873,43 @@ internal class BibleReaderViewModel(
     }
 
     /**
-     * Whether [hexColor] is already highlighted on at least one of the currently selected verses. The color picker uses
-     * this to decide whether to offer a remove affordance for the color.
+     * The color picker's swatches for the selection, as the Swift SDK builds them: one per red, green and blue, the
+     * palette in order and then each other color on the selection. A color is selected, and removed when tapped, when
+     * it is on every selected verse or is outside the palette; a palette color on only some of them is added to all.
      */
-    fun isColorPresentOnAnySelectedVerses(hexColor: String): Boolean = selectedVersesWithColor(hexColor).isNotEmpty()
+    fun highlightSwatches(): List<HighlightSwatch> {
+        val paletteHexColors = HighlightColor.entries.map { it.hexColor }
+        val selectedHexColors =
+            _state.value.selectedVerses
+                .flatMap { bibleHighlightsRepository.highlights(overlapping = it) }
+                .map { it.hexColor.lowercase() }
+                .distinct()
+                .filter { highlightRgbOrNull(it) != null }
+                .sortedWith(
+                    compareBy(
+                        { hex ->
+                            paletteHexColors.indexOfFirst { isSameHighlightColor(it, hex) }.takeIf { it >= 0 }
+                                ?: Int.MAX_VALUE
+                        },
+                        { it },
+                    ),
+                )
+        val selectedByRgb = selectedHexColors.reversed().associateBy { highlightRgbOrNull(it) }
+        val availableRgb =
+            paletteHexColors.filterNot { isColorPresentOnAllSelectedVerses(it) }.mapNotNullTo(mutableSetOf()) {
+                highlightRgbOrNull(it)
+            }
+        val seenRgb = mutableSetOf<Long>()
+        return (paletteHexColors + selectedHexColors).mapNotNull { hex ->
+            val rgb = highlightRgbOrNull(hex)?.takeIf { seenRgb.add(it) } ?: return@mapNotNull null
+            val isSelected = rgb !in availableRgb
+            HighlightSwatch(
+                hexColor = if (isSelected) selectedByRgb[rgb] ?: hex else hex,
+                highlightColor = HighlightColor.entries.firstOrNull { highlightRgbOrNull(it.hexColor) == rgb },
+                isSelected = isSelected,
+            )
+        }
+    }
 
     /**
      * Whether [hexColor] is already highlighted on every currently selected verse. Returns false when nothing is
@@ -847,13 +924,8 @@ internal class BibleReaderViewModel(
         _state.value.selectedVerses.filterTo(mutableSetOf()) { reference ->
             bibleHighlightsRepository
                 .highlights(overlapping = reference)
-                .any { isSameHexColor(it.hexColor, hexColor) }
+                .any { isSameHighlightColor(it.hexColor, hexColor) }
         }
-
-    private fun isSameHexColor(
-        first: String,
-        second: String,
-    ): Boolean = first.removePrefix("#").equals(second.removePrefix("#"), ignoreCase = true)
 
     private fun copySelectedVerses() {
         val version = bibleVersion ?: return
@@ -1187,6 +1259,12 @@ internal class BibleReaderViewModel(
 
         /** Open the notes composer for the selection, signing in first when the reader cannot save notes yet. */
         data object StartNote : Action
+
+        /** Open the composer for [reference] with the saved [notes] attached to it, from a tapped note indicator. */
+        data class ShowSavedNotes(
+            val reference: BibleReference,
+            val notes: List<Note>,
+        ) : Action
 
         /** The sign-in [State.shouldStartNoteSignIn] asked for finished, whether or not it succeeded. */
         data object NoteSignInCompleted : Action

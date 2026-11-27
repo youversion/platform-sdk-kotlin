@@ -33,8 +33,7 @@ class BibleReaderVerseActionSheetTest {
     private fun renderSheet(
         actions: List<BibleReaderVerseAction> = BibleReaderVerseAction.defaults,
         onCustomAction: (BibleReaderVerseAction) -> Unit = {},
-        colorsToRemove: List<HighlightColor> = emptyList(),
-        colorsToAdd: List<HighlightColor> = emptyList(),
+        highlightSwatches: List<HighlightSwatch> = emptyList(),
         showsHighlightColors: Boolean = true,
         onAddHighlight: (String) -> Unit = {},
         onRemoveHighlight: (String) -> Unit = {},
@@ -46,8 +45,7 @@ class BibleReaderVerseActionSheetTest {
             BibleReaderMaterialTheme {
                 BibleReaderVerseActionSheet(
                     actions = actions,
-                    colorsToRemove = colorsToRemove,
-                    colorsToAdd = colorsToAdd,
+                    highlightSwatches = highlightSwatches,
                     showsHighlightColors = showsHighlightColors,
                     onAddHighlight = onAddHighlight,
                     onRemoveHighlight = onRemoveHighlight,
@@ -63,8 +61,11 @@ class BibleReaderVerseActionSheetTest {
     @Test
     fun `hides the highlight colors when sign-in is unavailable`() {
         renderSheet(
-            colorsToRemove = listOf(HighlightColor.Yellow),
-            colorsToAdd = listOf(HighlightColor.Green),
+            highlightSwatches =
+                listOf(
+                    HighlightSwatch(HighlightColor.Yellow.hexColor, HighlightColor.Yellow, true),
+                    HighlightSwatch(HighlightColor.Green.hexColor, HighlightColor.Green, false),
+                ),
             showsHighlightColors = false,
         )
 
@@ -75,7 +76,7 @@ class BibleReaderVerseActionSheetTest {
     @Test
     fun `keeps copy and share available when the highlight colors are hidden`() {
         renderSheet(
-            colorsToAdd = listOf(HighlightColor.Green),
+            highlightSwatches = listOf(HighlightSwatch(HighlightColor.Green.hexColor, HighlightColor.Green, false)),
             showsHighlightColors = false,
         )
 
@@ -152,7 +153,10 @@ class BibleReaderVerseActionSheetTest {
 
     @Test
     fun `leaves out the built-in actions the list omits`() {
-        renderSheet(actions = listOf(BibleReaderVerseAction.Copy), colorsToAdd = listOf(HighlightColor.Green))
+        renderSheet(
+            actions = listOf(BibleReaderVerseAction.Copy),
+            highlightSwatches = listOf(HighlightSwatch(HighlightColor.Green.hexColor, HighlightColor.Green, false)),
+        )
 
         composeTestRule.onNodeWithText("Copy").assertIsDisplayed()
         composeTestRule.onNodeWithText("Share").assertDoesNotExist()
@@ -193,14 +197,18 @@ class BibleReaderVerseActionSheetTest {
 
     @Test
     fun `displays an add affordance for a color to add`() {
-        renderSheet(colorsToAdd = listOf(HighlightColor.Yellow))
+        renderSheet(
+            highlightSwatches = listOf(HighlightSwatch(HighlightColor.Yellow.hexColor, HighlightColor.Yellow, false)),
+        )
 
         composeTestRule.onNodeWithContentDescription("Add yellow highlight").assertIsDisplayed()
     }
 
     @Test
     fun `displays a remove affordance for a color to remove`() {
-        renderSheet(colorsToRemove = listOf(HighlightColor.Yellow))
+        renderSheet(
+            highlightSwatches = listOf(HighlightSwatch(HighlightColor.Yellow.hexColor, HighlightColor.Yellow, true)),
+        )
 
         composeTestRule.onNodeWithContentDescription("Remove yellow highlight").assertIsDisplayed()
     }
@@ -210,7 +218,7 @@ class BibleReaderVerseActionSheetTest {
         var addedHex: String? = null
 
         renderSheet(
-            colorsToAdd = listOf(HighlightColor.Green),
+            highlightSwatches = listOf(HighlightSwatch(HighlightColor.Green.hexColor, HighlightColor.Green, false)),
             onAddHighlight = { addedHex = it },
         )
 
@@ -224,7 +232,7 @@ class BibleReaderVerseActionSheetTest {
         var removedHex: String? = null
 
         renderSheet(
-            colorsToRemove = listOf(HighlightColor.Blue),
+            highlightSwatches = listOf(HighlightSwatch(HighlightColor.Blue.hexColor, HighlightColor.Blue, true)),
             onRemoveHighlight = { removedHex = it },
         )
 
@@ -234,14 +242,16 @@ class BibleReaderVerseActionSheetTest {
     }
 
     @Test
-    fun `a color present on some but not all verses renders both add and remove affordances`() {
-        renderSheet(
-            colorsToRemove = listOf(HighlightColor.Yellow),
-            colorsToAdd = listOf(HighlightColor.Yellow),
-        )
+    fun `a color outside the palette is spoken as its hex and removes its saved value`() {
+        var removedHex: String? = null
 
-        composeTestRule.onNodeWithContentDescription("Remove yellow highlight").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Add yellow highlight").assertIsDisplayed()
+        renderSheet(
+            highlightSwatches = listOf(HighlightSwatch("a1b2c3", null, true)),
+            onRemoveHighlight = { removedHex = it },
+        )
+        composeTestRule.onNodeWithContentDescription("Remove #A1B2C3 highlight").performClick()
+
+        assertEquals("a1b2c3", removedHex)
     }
 
     // ----- Swatch Color

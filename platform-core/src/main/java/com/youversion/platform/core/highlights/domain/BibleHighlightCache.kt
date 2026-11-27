@@ -126,6 +126,11 @@ internal class BibleHighlightCache {
         return Date().time - lastFetch.time < throttlingInterval.inWholeMilliseconds
     }
 
+    /** Lets the next load of every chapter reach the server, whenever it last loaded. */
+    fun forgetRecentChapterFetches() {
+        recentChapterFetches.clear()
+    }
+
     fun isChapterLoading(chapter: BibleReference): Boolean =
         currentlyLoadingChapters.containsKey(normalizeToChapter(chapter))
 

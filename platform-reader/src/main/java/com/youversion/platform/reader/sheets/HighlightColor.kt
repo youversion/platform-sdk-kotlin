@@ -24,3 +24,16 @@ internal enum class HighlightColor(
     Pink(Color(0xFFFFCFF8), "ffcff8", R.string.highlight_color_pink),
     Purple(Color(0xFFDFDCFF), "dfdcff", R.string.highlight_color_purple),
 }
+
+/**
+ * One color in a highlight picker, as the Swift SDK's `BibleReaderHighlightColors.Swatch`.
+ *
+ * @property hexColor The color to add or remove, as saved when [isSelected] so removing it matches what is stored.
+ * @property highlightColor The palette entry with the same red, green and blue, or null for a color outside the palette.
+ * @property isSelected Whether the color is on the whole selection, so tapping it removes the color.
+ */
+internal data class HighlightSwatch(
+    val hexColor: String,
+    val highlightColor: HighlightColor?,
+    val isSelected: Boolean,
+)

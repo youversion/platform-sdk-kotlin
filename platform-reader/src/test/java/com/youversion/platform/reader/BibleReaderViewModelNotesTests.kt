@@ -4,6 +4,7 @@ import com.youversion.platform.core.api.YouVersionNetworkException
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.notes.api.NotesApi
+import com.youversion.platform.core.notes.models.Note
 import com.youversion.platform.core.notes.models.NoteCreateRequest
 import com.youversion.platform.core.notes.models.NoteStatus
 import com.youversion.platform.reader.BibleReaderViewModel.Action
@@ -12,7 +13,6 @@ import com.youversion.platform.reader.domain.UserSettingsRepository
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -132,7 +132,6 @@ class BibleReaderViewModelNotesTests {
         assertEquals("ffec5b", createdRequests[1].color)
         assertNull(state.noteDraft)
         assertTrue(state.selectedVerses.isEmpty())
-        verify { highlightsRepository.ensureHighlightsForChapterLoaded(state.bibleReference, forceReload = true) }
     }
 
     @Test
@@ -290,7 +289,6 @@ class BibleReaderViewModelNotesTests {
 
         assertNull(state.noteDraft)
         assertTrue(state.selectedVerses.isEmpty())
-        verify(exactly = 0) { highlightsRepository.ensureHighlightsForChapterLoaded(any(), any()) }
     }
 
     @Test
@@ -321,5 +319,59 @@ class BibleReaderViewModelNotesTests {
         assertNull(state.noteDraft)
         assertFalse(state.shouldStartSignIn)
         assertTrue(state.showVerseActionSheet)
+    }
+
+    @Test
+    fun `tapping a note indicator opens the composer for that verse with its saved notes`() {
+        val note = mockk<Note>()
+
+        viewModel.onAction(Action.ShowSavedNotes(verse7, listOf(note)))
+
+        val draft = assertNotNull(state.noteDraft)
+        assertEquals(listOf(verse7), draft.references)
+        assertEquals(listOf(note), draft.savedNotes)
+        assertEquals("user:a", draft.sessionId)
+    }
+
+    @Test
+    fun `saving from a note indicator without write access keeps the typed note through a cancelled grant`() {
+        hasWriteNotes = false
+        viewModel.onAction(Action.ShowSavedNotes(verse7, listOf(mockk<Note>())))
+        viewModel.onAction(Action.UpdateNote("kept", isPublic = false, hexColor = null))
+
+        viewModel.onAction(Action.SaveNote)
+
+        assertTrue(createdRequests.isEmpty())
+        assertNull(state.noteDraft)
+        assertTrue(state.shouldStartNoteSignIn)
+
+        viewModel.onAction(Action.NoteSignInCompleted)
+        assertTrue(state.showVerseActionSheet)
+        viewModel.onAction(Action.StartNote)
+        assertTrue(state.shouldStartNoteSignIn)
+
+        hasWriteNotes = true
+        viewModel.openPendingNoteIfPermitted()
+
+        assertEquals("kept", assertNotNull(state.noteDraft).content)
+        viewModel.onAction(Action.SaveNote)
+        assertEquals(listOf("kept"), createdRequests.map { it.content })
+    }
+
+    @Test
+    fun `a note indicator opens nothing while signed out, without notes, or over an open draft`() {
+        val note = mockk<Note>()
+        viewModel.onAction(Action.ShowSavedNotes(verse7, emptyList()))
+        assertNull(state.noteDraft)
+
+        isSignedIn = false
+        viewModel.onAction(Action.ShowSavedNotes(verse7, listOf(note)))
+        assertNull(state.noteDraft)
+
+        isSignedIn = true
+        select(verse1)
+        viewModel.onAction(Action.StartNote)
+        viewModel.onAction(Action.ShowSavedNotes(verse7, listOf(note)))
+        assertEquals(listOf(verse1), assertNotNull(state.noteDraft).references)
     }
 }

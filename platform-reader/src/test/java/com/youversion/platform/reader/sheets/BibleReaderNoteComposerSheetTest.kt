@@ -49,6 +49,7 @@ class BibleReaderNoteComposerSheetTest {
                 draft?.let { current ->
                     BibleReaderNoteComposerSheet(
                         draft = current,
+                        noteReferenceTitle = { "John 3:16" },
                         onUpdate = { content, isPublic, hexColor ->
                             draft = current.edited(content, isPublic, hexColor)
                         },
