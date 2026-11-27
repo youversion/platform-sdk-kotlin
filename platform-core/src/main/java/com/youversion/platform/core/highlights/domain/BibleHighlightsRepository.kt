@@ -12,6 +12,7 @@ import com.youversion.platform.core.highlights.api.HighlightsApi
 import com.youversion.platform.core.highlights.api.HighlightsEndpoints
 import com.youversion.platform.core.highlights.models.BibleHighlight
 import com.youversion.platform.core.highlights.models.Highlight
+import com.youversion.platform.core.highlights.models.isSameHighlightColor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -315,7 +316,7 @@ public class BibleHighlightsRepository internal constructor(
             currentCoroutineContext().ensureActive()
             val matchingReferences =
                 references.filter { selection ->
-                    highlights(overlapping = selection).any { isSameHexColor(it.hexColor, matchingColor) }
+                    highlights(overlapping = selection).any { isSameHighlightColor(it.hexColor, matchingColor) }
                 }
             if (matchingReferences.isNotEmpty()) removeHighlights(matchingReferences)
         }
@@ -797,11 +798,6 @@ public class BibleHighlightsRepository internal constructor(
     private fun hexWithHash(color: String): String = if (color.startsWith("#")) color else "#$color"
 
     private fun hexWithoutHash(color: String): String = color.removePrefix("#")
-
-    private fun isSameHexColor(
-        first: String,
-        second: String,
-    ): Boolean = hexWithoutHash(first).equals(hexWithoutHash(second), ignoreCase = true)
 
     private fun backoffMillis(retryCount: Int): Long {
         val seconds = 2.0.pow(minOf(retryCount, MAX_BACKOFF_EXPONENT)).toLong()

@@ -564,6 +564,27 @@ class BibleHighlightsRepositoryTests {
         }
 
     @Test
+    fun `removeHighlights matches a color the server sent with alpha or in short form`() =
+        runTest(testDispatcher) {
+            val api =
+                FakeHighlightsApi(
+                    highlightsToReturn =
+                        listOf(
+                            Highlight(bibleId = 1, passageId = "GEN.1.1", color = "80DFDCFF"),
+                            Highlight(bibleId = 1, passageId = "GEN.1.2", color = "f00"),
+                        ),
+                )
+            val repository = repository(api)
+            val alphaVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
+            val shortVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 2)
+
+            repository.removeHighlights(listOf(alphaVerse, shortVerse), matchingColor = "dfdcff")
+            advanceUntilIdle()
+
+            assertEquals(listOf("GEN.1.1"), api.deletedPassages)
+        }
+
+    @Test
     fun `removeHighlights with a non-matching color deletes nothing`() =
         runTest(testDispatcher) {
             val api =

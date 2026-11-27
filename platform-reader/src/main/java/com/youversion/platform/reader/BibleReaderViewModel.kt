@@ -15,6 +15,7 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
+import com.youversion.platform.core.highlights.models.isSameHighlightColor
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.notes.api.NotesApi
 import com.youversion.platform.core.notes.models.Note
@@ -871,13 +872,8 @@ internal class BibleReaderViewModel(
         _state.value.selectedVerses.filterTo(mutableSetOf()) { reference ->
             bibleHighlightsRepository
                 .highlights(overlapping = reference)
-                .any { isSameHexColor(it.hexColor, hexColor) }
+                .any { isSameHighlightColor(it.hexColor, hexColor) }
         }
-
-    private fun isSameHexColor(
-        first: String,
-        second: String,
-    ): Boolean = first.removePrefix("#").equals(second.removePrefix("#"), ignoreCase = true)
 
     private fun copySelectedVerses() {
         val version = bibleVersion ?: return

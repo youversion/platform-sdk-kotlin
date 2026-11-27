@@ -472,6 +472,18 @@ class BibleReaderViewModelHighlightsTests {
     }
 
     @Test
+    fun `a color saved with alpha or in short form counts as its palette color`() {
+        highlight(verseOne, "#80DFDCFF")
+        highlight(verseTwo, "#ff0")
+        selectVerses(verseOne, verseTwo)
+
+        assertTrue(viewModel.isColorPresentOnAnySelectedVerses("dfdcff"))
+        assertFalse(viewModel.isColorPresentOnAllSelectedVerses("dfdcff"))
+        assertTrue(viewModel.isColorPresentOnAnySelectedVerses("ffff00"))
+        assertFalse(viewModel.isColorPresentOnAnySelectedVerses("80dfdc"))
+    }
+
+    @Test
     fun `color comparison ignores the hash prefix and case`() {
         highlight(verseOne, "#FFFF00")
         selectVerses(verseOne)
