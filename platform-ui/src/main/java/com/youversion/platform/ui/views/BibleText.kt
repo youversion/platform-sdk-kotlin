@@ -48,6 +48,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.StringAnnotation
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -62,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleReference
 import com.youversion.platform.core.di.PlatformInternalApi
 import com.youversion.platform.core.highlights.models.BibleHighlight
+import com.youversion.platform.core.highlights.models.highlightRgbOrNull
 import com.youversion.platform.ui.R
 import com.youversion.platform.ui.icons.FootnotesIcon
 import com.youversion.platform.ui.icons.LockIcon
@@ -75,6 +77,10 @@ import com.youversion.platform.ui.views.rendering.BibleTextCategory
 import com.youversion.platform.ui.views.rendering.BibleTextCategoryAttribute
 
 private const val FOOTNOTE_IMAGE_ID = "footnote_image_id"
+private const val FOOTNOTE_IMAGE_ON_DARK_HIGHLIGHT_ID = "footnote_image_on_dark_highlight_id"
+
+/** The gray of the Swift SDK's default verse selection underline. */
+private val DefaultSelectionColor = Color(0xFF8E8E93)
 
 private val DefaultFootnoteMarker: AnnotatedString =
     buildAnnotatedString {
@@ -115,32 +121,35 @@ public class BibleTextOptions(
 ) {
     internal val inlineContentMap =
         mapOf(
-            FOOTNOTE_IMAGE_ID to
-                InlineTextContent(
-                    Placeholder(
-                        width = fontSize * 1.5,
-                        height = fontSize,
-                        placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
-                    ),
-                ) {
-                    val iconSize = with(LocalDensity.current) { fontSize.toDp() }
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .offset(y = -iconSize / 4)
-                                .alpha(0.8f),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = FootnotesIcon,
-                            contentDescription = stringResource(R.string.footnote_aria_label),
-                            modifier = Modifier.size(iconSize),
-                            tint = LocalContentColor.current.copy(alpha = 0.6f),
-                        )
-                    }
-                },
+            FOOTNOTE_IMAGE_ID to footnoteImageContent(isOnDarkHighlight = false),
+            FOOTNOTE_IMAGE_ON_DARK_HIGHLIGHT_ID to footnoteImageContent(isOnDarkHighlight = true),
         )
+
+    private fun footnoteImageContent(isOnDarkHighlight: Boolean) =
+        InlineTextContent(
+            Placeholder(
+                width = fontSize * 1.5,
+                height = fontSize,
+                placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
+            ),
+        ) {
+            val iconSize = with(LocalDensity.current) { fontSize.toDp() }
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .offset(y = -iconSize / 4)
+                        .alpha(if (isOnDarkHighlight) 1f else 0.8f),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = FootnotesIcon,
+                    contentDescription = stringResource(R.string.footnote_aria_label),
+                    modifier = Modifier.size(iconSize),
+                    tint = if (isOnDarkHighlight) Color.White else LocalContentColor.current.copy(alpha = 0.6f),
+                )
+            }
+        }
 
     /** Line height including [lineSpacingFraction], or the default when it is unset. */
     internal val resolvedLineHeight: TextUnit
@@ -437,8 +446,9 @@ internal fun AnnotatedString.dimmedOutside(
 
 /**
  * The text recolored over its highlights as the Swift SDK does. In a light theme a dark highlight turns its verse
- * white, so it stays readable. Over any other highlight the verse number takes the full [textColor] rather than its
- * muted color. [highlightedRanges] are the ranges and colors from [highlightedCharacterRanges], before any dimming.
+ * white, so it stays readable, footnote icons included. Over any other highlight the verse number takes the full
+ * [textColor] rather than its muted color. [highlightedRanges] are the ranges and colors from
+ * [highlightedCharacterRanges], before any dimming.
  */
 internal fun AnnotatedString.withHighlightTextColors(
     highlightedRanges: List<Pair<IntRange, Color>>,
@@ -449,16 +459,30 @@ internal fun AnnotatedString.withHighlightTextColors(
     val verseLabels =
         getStringAnnotations(tag = BibleTextCategoryAttribute.NAME, start = 0, end = length)
             .filter { it.item == BibleTextCategory.VERSE_LABEL.name }
+    val whiteRanges =
+        highlightedRanges.filter { (_, color) -> !isDarkTheme && color.isDarkHighlight() }.map { it.first }
     return buildAnnotatedString {
         append(this@withHighlightTextColors)
         highlightedRanges.forEach { (range, color) ->
-            if (!isDarkTheme && color.isDarkHighlight()) {
+            if (range in whiteRanges) {
                 addStyle(SpanStyle(color = Color.White), range.first, range.last + 1)
             } else {
                 verseLabels
                     .filter { it.start >= range.first && it.end <= range.last + 1 }
                     .forEach { addStyle(SpanStyle(color = textColor), it.start, it.end) }
             }
+        }
+    }.mapAnnotations { annotation ->
+        val isFootnoteImage = (annotation.item as? StringAnnotation)?.value == FOOTNOTE_IMAGE_ID
+        if (isFootnoteImage && whiteRanges.any { annotation.start in it }) {
+            AnnotatedString.Range(
+                StringAnnotation(FOOTNOTE_IMAGE_ON_DARK_HIGHLIGHT_ID),
+                annotation.start,
+                annotation.end,
+                annotation.tag,
+            )
+        } else {
+            annotation
         }
     }
 }
@@ -539,21 +563,17 @@ internal fun highlightLineSpan(
 }
 
 /**
- * Parses a `#RRGGBB` or `#AARRGGBB` hex string (as stored on [com.youversion.platform.core.highlights.models.BibleHighlight.hexColor])
- * into a Compose [Color], or returns null when the string is not valid hex. Six-digit values are treated as fully opaque.
+ * Parses a `#RGB`, `#RRGGBB` or `#AARRGGBB` hex string (as stored on [com.youversion.platform.core.highlights.models.BibleHighlight.hexColor])
+ * into a Compose [Color], or returns null when the string is not valid hex. Three- and six-digit values are treated as
+ * fully opaque, and `#abc` reads as `#aabbcc`, as in the Swift SDK.
  *
  * An eight-digit value parses with its alpha, but every highlight goes through
  * [ReaderColorScheme.mixedHighlightColor] before it is painted, which drops that alpha. So the alpha
  * survives parsing and never reaches the page.
  */
 internal fun String.toHighlightColorOrNull(): Color? {
-    val hex = removePrefix("#")
-    val value = hex.toLongOrNull(radix = 16) ?: return null
-    return when (hex.length) {
-        6 -> Color(0xFF000000L or value)
-        8 -> Color(value)
-        else -> null
-    }
+    val rgb = highlightRgbOrNull(this) ?: return null
+    return if (removePrefix("#").length == 8) Color(removePrefix("#").toLong(radix = 16)) else Color(0xFF000000L or rgb)
 }
 
 /**
@@ -610,13 +630,12 @@ private fun DrawScope.drawHighlightBackgrounds(
 }
 
 /**
- * Draws underlines at the bottom of each text line that contains characters in [selectedRanges].
+ * Draws thin underlines at the bottom of each text line that contains characters in [selectedRanges].
  */
 private fun DrawScope.drawSelectionUnderlines(
     layoutResult: TextLayoutResult,
     selectedRanges: List<IntRange>,
     color: Color,
-    strokeWidth: Dp,
 ) {
     selectedRanges
         .filterNot { it.isEmpty() }
@@ -626,7 +645,7 @@ private fun DrawScope.drawSelectionUnderlines(
                     color = color,
                     start = rect.bottomLeft,
                     end = rect.bottomRight,
-                    strokeWidth = strokeWidth.toPx(),
+                    strokeWidth = 0.5.dp.toPx(),
                 )
             }
         }
@@ -677,7 +696,7 @@ internal fun BibleTextBlock(
         onDispose { layoutState?.remove(blockIndex, textLayoutResult) }
     }
 
-    val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
+    val selectionColor = textOptions.selectionColor ?: DefaultSelectionColor
 
     val markedNumbers = verseIndicatorStyle?.let { block.text.verseIndicators(it) }.orEmpty()
     val (baseText, indicators) = remember(block.text, markedNumbers) { block.text.withVerseIndicators(markedNumbers) }
@@ -769,7 +788,7 @@ internal fun BibleTextBlock(
                         textLayoutResult?.let { drawHighlightBackgrounds(it, highlightedRanges) }
                         textLayoutResult?.let { drawVerseIndicators(it, paintedIndicators) }
                         drawContent()
-                        textLayoutResult?.let { drawSelectionUnderlines(it, selectedRanges, selectionColor, 1.dp) }
+                        textLayoutResult?.let { drawSelectionUnderlines(it, selectedRanges, selectionColor) }
                     }.pointerInput(Unit) {
                         detectTapGestures(
                             onTap = { position ->
@@ -814,7 +833,7 @@ internal fun BibleTableBlock(
     unfocusedAlpha: Float = 1f,
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)?,
 ) {
-    val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
+    val selectionColor = textOptions.selectionColor ?: DefaultSelectionColor
 
     Column(
         modifier = Modifier.padding(8.dp),
@@ -837,7 +856,7 @@ internal fun BibleTableBlock(
                         Modifier.drawWithContent {
                             drawContent()
                             val layoutResult = cellLayoutResult ?: return@drawWithContent
-                            drawSelectionUnderlines(layoutResult, selectedRanges, selectionColor, 2.dp)
+                            drawSelectionUnderlines(layoutResult, selectedRanges, selectionColor)
                         }
                     if (i == 0) {
                         Box(modifier = Modifier.weight(1f)) {
@@ -881,7 +900,7 @@ private fun BibleTableCell(
     onVerseTap: ((reference: BibleReference, position: Offset) -> Unit)?,
 ) {
     var cellLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-    val selectionColor = textOptions.selectionColor ?: LocalContentColor.current
+    val selectionColor = textOptions.selectionColor ?: DefaultSelectionColor
     val textColor = textOptions.resolvedTextColor()
     val selectedRanges =
         remember(cellText, selectedVerses) {
@@ -914,7 +933,7 @@ private fun BibleTableCell(
                 .drawWithContent {
                     cellLayoutResult?.let { drawHighlightBackgrounds(it, highlightedRanges) }
                     drawContent()
-                    cellLayoutResult?.let { drawSelectionUnderlines(it, selectedRanges, selectionColor, 1.dp) }
+                    cellLayoutResult?.let { drawSelectionUnderlines(it, selectedRanges, selectionColor) }
                 }.pointerInput(Unit) {
                     detectTapGestures(
                         onTap = { position ->

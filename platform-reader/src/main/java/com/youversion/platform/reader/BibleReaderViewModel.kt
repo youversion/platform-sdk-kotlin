@@ -15,6 +15,7 @@ import com.youversion.platform.core.bibles.domain.BibleVersionRepository
 import com.youversion.platform.core.bibles.models.BibleVersion
 import com.youversion.platform.core.highlights.domain.BibleHighlightsRepository
 import com.youversion.platform.core.highlights.models.BibleHighlight
+import com.youversion.platform.core.highlights.models.highlightRgbOrNull
 import com.youversion.platform.core.highlights.models.isSameHighlightColor
 import com.youversion.platform.core.languages.domain.LanguageRepository
 import com.youversion.platform.core.notes.api.NotesApi
@@ -28,6 +29,8 @@ import com.youversion.platform.reader.domain.HighlightRequest
 import com.youversion.platform.reader.domain.NoteDraft
 import com.youversion.platform.reader.domain.ShareManager
 import com.youversion.platform.reader.domain.UserSettingsRepository
+import com.youversion.platform.reader.sheets.HighlightColor
+import com.youversion.platform.reader.sheets.HighlightSwatch
 import com.youversion.platform.ui.theme.ReaderTheme
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.components.LanguageRowItem
@@ -105,7 +108,7 @@ internal class BibleReaderViewModel(
 
     /**
      * The signed-in user's cached highlights. Exposed so the verse action sheet recomposes when highlights change and
-     * re-evaluates [isColorPresentOnAnySelectedVerses] / [isColorPresentOnAllSelectedVerses].
+     * re-evaluates [highlightSwatches].
      */
     internal val highlights: StateFlow<List<BibleHighlight>>
         get() = bibleHighlightsRepository.highlights
@@ -730,7 +733,7 @@ internal class BibleReaderViewModel(
 
     /**
      * Opens the composer for [reference] with the [notes] already attached to it listed below, unless they are empty,
-     * nobody is signed in, or a draft is already open.
+     * nobody is signed in, or a draft is already open. As in the Swift SDK, the verse selection is left as it is.
      */
     private fun showSavedNotes(
         reference: BibleReference,
@@ -739,15 +742,15 @@ internal class BibleReaderViewModel(
         if (notes.isEmpty() || !isSignedIn() || _state.value.noteDraft != null) return
         pendingNoteDraft = null
         val references = listOf(reference)
-        openNoteDraft(
+        val draft =
             NoteDraft(
                 references = references,
                 selection = setOf(reference),
                 referenceTitle = noteReferenceTitle(references),
                 sessionId = currentSessionId(),
                 savedNotes = notes,
-            ),
-        )
+            )
+        _state.update { it.copy(noteDraft = draft, showVerseActionSheet = false) }
     }
 
     /** The passage [references] name in the reader's version, with gaps kept, such as `John 3:1-2, 7`. */
@@ -854,10 +857,43 @@ internal class BibleReaderViewModel(
     }
 
     /**
-     * Whether [hexColor] is already highlighted on at least one of the currently selected verses. The color picker uses
-     * this to decide whether to offer a remove affordance for the color.
+     * The color picker's swatches for the selection, as the Swift SDK builds them: one per red, green and blue, the
+     * palette in order and then each other color on the selection. A color is selected, and removed when tapped, when
+     * it is on every selected verse or is outside the palette; a palette color on only some of them is added to all.
      */
-    fun isColorPresentOnAnySelectedVerses(hexColor: String): Boolean = selectedVersesWithColor(hexColor).isNotEmpty()
+    fun highlightSwatches(): List<HighlightSwatch> {
+        val paletteHexColors = HighlightColor.entries.map { it.hexColor }
+        val selectedHexColors =
+            _state.value.selectedVerses
+                .flatMap { bibleHighlightsRepository.highlights(overlapping = it) }
+                .map { it.hexColor.lowercase() }
+                .distinct()
+                .filter { highlightRgbOrNull(it) != null }
+                .sortedWith(
+                    compareBy(
+                        { hex ->
+                            paletteHexColors.indexOfFirst { isSameHighlightColor(it, hex) }.takeIf { it >= 0 }
+                                ?: Int.MAX_VALUE
+                        },
+                        { it },
+                    ),
+                )
+        val selectedByRgb = selectedHexColors.reversed().associateBy { highlightRgbOrNull(it) }
+        val availableRgb =
+            paletteHexColors.filterNot { isColorPresentOnAllSelectedVerses(it) }.mapNotNullTo(mutableSetOf()) {
+                highlightRgbOrNull(it)
+            }
+        val seenRgb = mutableSetOf<Long>()
+        return (paletteHexColors + selectedHexColors).mapNotNull { hex ->
+            val rgb = highlightRgbOrNull(hex)?.takeIf { seenRgb.add(it) } ?: return@mapNotNull null
+            val isSelected = rgb !in availableRgb
+            HighlightSwatch(
+                hexColor = if (isSelected) selectedByRgb[rgb] ?: hex else hex,
+                highlightColor = HighlightColor.entries.firstOrNull { highlightRgbOrNull(it.hexColor) == rgb },
+                isSelected = isSelected,
+            )
+        }
+    }
 
     /**
      * Whether [hexColor] is already highlighted on every currently selected verse. Returns false when nothing is

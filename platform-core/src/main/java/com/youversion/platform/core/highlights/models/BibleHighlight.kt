@@ -36,15 +36,20 @@ public fun isSameHighlightColor(
     first: String,
     second: String,
 ): Boolean {
-    val firstRgb = highlightRgb(first)
-    val secondRgb = highlightRgb(second)
+    val firstRgb = highlightRgbOrNull(first)
+    val secondRgb = highlightRgbOrNull(second)
     if (firstRgb == null || secondRgb == null) {
         return first.removePrefix("#").equals(second.removePrefix("#"), ignoreCase = true)
     }
     return firstRgb == secondRgb
 }
 
-private fun highlightRgb(hexColor: String): Long? {
+/**
+ * The red, green and blue of a highlight [hexColor] as `0xRRGGBB`, read as [isSameHighlightColor] reads it, or null when
+ * it is not three, six or eight hexadecimal digits.
+ */
+@PlatformInternalApi
+public fun highlightRgbOrNull(hexColor: String): Long? {
     val digits = hexColor.removePrefix("#")
     if (!digits.all { it.isDigit() || it.lowercaseChar() in 'a'..'f' }) return null
     val value = digits.toLongOrNull(radix = 16) ?: return null

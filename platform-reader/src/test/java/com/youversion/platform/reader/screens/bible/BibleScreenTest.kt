@@ -47,6 +47,7 @@ import com.youversion.platform.core.utilities.exceptions.BibleVersionApiExceptio
 import com.youversion.platform.reader.BibleReaderVerseAction
 import com.youversion.platform.reader.BibleReaderViewModel
 import com.youversion.platform.reader.sheets.HighlightColor
+import com.youversion.platform.reader.sheets.HighlightSwatch
 import com.youversion.platform.ui.theme.ui.BibleReaderTheme
 import com.youversion.platform.ui.views.rendering.BibleReferenceAttribute
 import com.youversion.platform.ui.views.rendering.BibleTextBlock
@@ -120,6 +121,8 @@ class BibleScreenTest {
         mockk<BibleReaderViewModel>(relaxed = true) {
             every { state } returns stateFlow
             every { highlights } returns highlightsFlow
+            every { highlightSwatches() } returns
+                HighlightColor.entries.map { HighlightSwatch(it.hexColor, it, isSelected = false) }
         }
 
     @Before
@@ -1441,11 +1444,8 @@ class BibleScreenTest {
     fun `highlight picker gains a remove affordance when highlights change without reselecting`() {
         val selectedVerse = BibleReference(versionId = 1, bookUSFM = "GEN", chapter = 1, verse = 1)
         var presentColors = emptySet<String>()
-        every { mockViewModel.isColorPresentOnAnySelectedVerses(any()) } answers {
-            presentColors.contains(firstArg<String>())
-        }
-        every { mockViewModel.isColorPresentOnAllSelectedVerses(any()) } answers {
-            presentColors.contains(firstArg<String>())
+        every { mockViewModel.highlightSwatches() } answers {
+            HighlightColor.entries.map { HighlightSwatch(it.hexColor, it, it.hexColor in presentColors) }
         }
 
         stateFlow.value =

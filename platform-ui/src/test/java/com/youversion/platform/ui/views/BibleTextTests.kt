@@ -2855,6 +2855,27 @@ class BibleTextTests {
     }
 
     @Test
+    fun `a dark highlight in a light theme turns only its own footnote icons white`() {
+        val text =
+            buildAnnotatedString {
+                append("a")
+                append(ImageFootnoteMarker)
+                append("b")
+                append(ImageFootnoteMarker)
+            }
+        val inlineIds = { string: AnnotatedString -> string.getStringAnnotations(0, string.length).map { it.item } }
+
+        val recolored = text.withHighlightTextColors(listOf(0..1 to Color(0xFF2B4F8C)), Color.Black, false)
+        val darkTheme = text.withHighlightTextColors(listOf(0..1 to Color(0xFF2B4F8C)), Color.Black, true)
+
+        val (whiteIcon, plainIcon) = inlineIds(recolored)
+        assertTrue(whiteIcon != plainIcon)
+        assertTrue(whiteIcon in BibleTextOptions().inlineContentMap)
+        assertEquals(inlineIds(text), listOf(plainIcon, plainIcon))
+        assertEquals(inlineIds(text), inlineIds(darkTheme))
+    }
+
+    @Test
     fun `a light highlight, or any highlight in a dark theme, gives only its verse number the full text color`() {
         val text = labeledVerses()
         val verse2 = text.mergedRangeOf(verse(2))
@@ -3161,8 +3182,13 @@ class BibleTextTests {
     @Test
     fun `toHighlightColorOrNull returns null for invalid or wrong-length hex`() {
         assertNull("#ZZZZZZ".toHighlightColorOrNull())
-        assertNull("#FFF".toHighlightColorOrNull())
+        assertNull("#FFFF".toHighlightColorOrNull())
         assertNull("".toHighlightColorOrNull())
+    }
+
+    @Test
+    fun `toHighlightColorOrNull reads three digits as doubled, as the Swift SDK does`() {
+        assertEquals(Color(0xFFFF00AA), "#f0a".toHighlightColorOrNull())
     }
 
     // endregion

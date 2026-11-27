@@ -30,7 +30,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -42,8 +41,10 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -60,10 +61,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youversion.platform.core.bibles.domain.BibleReference
+import com.youversion.platform.core.highlights.models.highlightRgbOrNull
 import com.youversion.platform.core.notes.models.Note
 import com.youversion.platform.core.notes.models.NoteStatus
 import com.youversion.platform.reader.domain.NoteDraft
 import com.youversion.platform.reader.icons.BookmarkIcon
+import com.youversion.platform.ui.theme.readerColorScheme
+import kotlinx.coroutines.delay
 import java.util.Calendar
 import java.util.TimeZone
 import com.youversion.platform.ui.R as UiR
@@ -139,8 +143,7 @@ internal fun BibleReaderNoteComposerSheet(
                 HighlightColor.entries.forEach { highlightColor ->
                     val isSelected = draft.hexColor == highlightColor.hexColor
                     HighlightColorButton(
-                        highlightColor = highlightColor,
-                        isSelected = isSelected,
+                        swatch = HighlightSwatch(highlightColor.hexColor, highlightColor, isSelected),
                         contentDescription = stringResource(highlightColor.nameResId),
                         onClick = {
                             if (!draft.isSaving) {
@@ -191,7 +194,6 @@ internal fun BibleReaderNoteComposerSheet(
                 }
             }
             if (draft.savedNotes.isNotEmpty()) {
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                 Text(
                     text = stringResource(UiR.string.notes_previously_saved),
                     fontWeight = FontWeight.Bold,
@@ -338,7 +340,7 @@ private fun NoteTextField(
                     Text(
                         text = label,
                         style = textStyle,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
                     )
                 }
                 innerTextField()
@@ -402,41 +404,50 @@ private fun SavedNoteCard(
             horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            note.color?.let(::noteColor)?.let { color ->
+            note.color?.let(::highlightRgbOrNull)?.let { rgb ->
+                val dotColor = MaterialTheme.readerColorScheme.mixedHighlightColor(Color(0xFF000000L or rgb))
                 Box(
                     modifier =
                         Modifier
                             .size(12.dp)
                             .clip(CircleShape)
-                            .background(color)
+                            .background(dotColor)
                             .testTag("saved_note_color"),
                 )
             }
-            note.createdTime?.let(::noteTimeMillis)?.let { createdMillis ->
-                Text(
-                    text =
-                        DateUtils
-                            .getRelativeTimeSpanString(
-                                createdMillis,
-                                System.currentTimeMillis(),
-                                DateUtils.MINUTE_IN_MILLIS,
-                                DateUtils.FORMAT_ABBREV_RELATIVE,
-                            ).toString(),
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            note.createdTime?.let(::noteTimeMillis)?.let { createdMillis -> NoteAge(createdMillis) }
         }
     }
 }
 
-/** The color of a note's six-digit hexadecimal [hexColor], or null when it is not one. */
-private fun noteColor(hexColor: String): Color? =
-    hexColor
-        .removePrefix("#")
-        .takeIf { it.length == 6 }
-        ?.toLongOrNull(16)
-        ?.let { Color(0xFF000000 or it) }
+/**
+ * How long ago [createdMillis] was, abbreviated as the platform formats it, such as "3 hr. ago", and refreshed every
+ * minute as the Swift SDK does. Accessibility services read it unabbreviated, such as "3 hours ago".
+ */
+@Composable
+private fun NoteAge(createdMillis: Long) {
+    var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(DateUtils.MINUTE_IN_MILLIS)
+            nowMillis = System.currentTimeMillis()
+        }
+    }
+    val spokenAge = DateUtils.getRelativeTimeSpanString(createdMillis, nowMillis, DateUtils.MINUTE_IN_MILLIS).toString()
+    Text(
+        text =
+            DateUtils
+                .getRelativeTimeSpanString(
+                    createdMillis,
+                    nowMillis,
+                    DateUtils.MINUTE_IN_MILLIS,
+                    DateUtils.FORMAT_ABBREV_RELATIVE,
+                ).toString(),
+        fontSize = 11.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.semantics { contentDescription = spokenAge },
+    )
+}
 
 private val noteTimeRegex =
     Regex("""(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-]\d{2}:?\d{2})?""")

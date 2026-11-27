@@ -79,7 +79,6 @@ import com.youversion.platform.reader.sheets.BibleReaderNoteComposerSheet
 import com.youversion.platform.reader.sheets.BibleReaderSearchSheet
 import com.youversion.platform.reader.sheets.BibleReaderVerseActionSheet
 import com.youversion.platform.reader.sheets.DataExchangeConfirmationDialog
-import com.youversion.platform.reader.sheets.HighlightColor
 import com.youversion.platform.ui.dataexchange.DataExchangeStatus
 import com.youversion.platform.ui.dataexchange.rememberDataExchangeWithPermissionValues
 import com.youversion.platform.ui.signin.SignInErrorAlert
@@ -122,14 +121,7 @@ internal fun BibleScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val highlights by viewModel.highlights.collectAsStateWithLifecycle()
 
-    val colorsToRemove =
-        remember(state.selectedVerses, highlights) {
-            HighlightColor.entries.filter { viewModel.isColorPresentOnAnySelectedVerses(it.hexColor) }
-        }
-    val colorsToAdd =
-        remember(state.selectedVerses, highlights) {
-            HighlightColor.entries.filter { !viewModel.isColorPresentOnAllSelectedVerses(it.hexColor) }
-        }
+    val highlightSwatches = remember(state.selectedVerses, highlights) { viewModel.highlightSwatches() }
 
     val signInViewModel = viewModel<SignInViewModel>()
     val signInState by signInViewModel.state.collectAsStateWithLifecycle()
@@ -410,8 +402,7 @@ internal fun BibleScreen(
                     )
                     BibleReaderVerseActionSheet(
                         actions = shownVerseActions,
-                        colorsToRemove = colorsToRemove,
-                        colorsToAdd = colorsToAdd,
+                        highlightSwatches = highlightSwatches,
                         showsHighlightColors = showsHighlightColors,
                         onAddHighlight = {
                             requestHighlight(BibleReaderViewModel.Action.AddHighlight(it))

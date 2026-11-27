@@ -36,6 +36,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.youversion.platform.core.highlights.models.highlightRgbOrNull
 import com.youversion.platform.reader.BibleReaderVerseAction
 import com.youversion.platform.reader.R
 import com.youversion.platform.reader.icons.BookmarkIcon
@@ -54,8 +55,7 @@ import com.youversion.platform.ui.R as UiR
 @Composable
 internal fun BibleReaderVerseActionSheet(
     actions: List<BibleReaderVerseAction>,
-    colorsToRemove: List<HighlightColor>,
-    colorsToAdd: List<HighlightColor>,
+    highlightSwatches: List<HighlightSwatch>,
     showsHighlightColors: Boolean,
     onAddHighlight: (String) -> Unit,
     onRemoveHighlight: (String) -> Unit,
@@ -77,10 +77,9 @@ internal fun BibleReaderVerseActionSheet(
             actions.forEach { action ->
                 when (action.kind) {
                     BibleReaderVerseAction.Kind.HIGHLIGHT -> {
-                        if (showsHighlightColors && (colorsToRemove.isNotEmpty() || colorsToAdd.isNotEmpty())) {
+                        if (showsHighlightColors && highlightSwatches.isNotEmpty()) {
                             HighlightColorPicker(
-                                colorsToRemove = colorsToRemove,
-                                colorsToAdd = colorsToAdd,
+                                highlightSwatches = highlightSwatches,
                                 onAddHighlight = onAddHighlight,
                                 onRemoveHighlight = onRemoveHighlight,
                             )
@@ -128,8 +127,7 @@ internal fun BibleReaderVerseActionSheet(
 
 @Composable
 private fun HighlightColorPicker(
-    colorsToRemove: List<HighlightColor>,
-    colorsToAdd: List<HighlightColor>,
+    highlightSwatches: List<HighlightSwatch>,
     onAddHighlight: (String) -> Unit,
     onRemoveHighlight: (String) -> Unit,
 ) {
@@ -143,18 +141,12 @@ private fun HighlightColorPicker(
                 .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 .padding(horizontal = 12.dp),
     ) {
-        colorsToRemove.forEach { highlightColor ->
+        highlightSwatches.forEach { swatch ->
             HighlightColorButton(
-                highlightColor = highlightColor,
-                isSelected = true,
-                onClick = { onRemoveHighlight(highlightColor.hexColor) },
-            )
-        }
-        colorsToAdd.forEach { highlightColor ->
-            HighlightColorButton(
-                highlightColor = highlightColor,
-                isSelected = false,
-                onClick = { onAddHighlight(highlightColor.hexColor) },
+                swatch = swatch,
+                onClick = {
+                    if (swatch.isSelected) onRemoveHighlight(swatch.hexColor) else onAddHighlight(swatch.hexColor)
+                },
             )
         }
     }
@@ -167,16 +159,19 @@ private fun HighlightColorPicker(
  * be on the page; the palette color on its own would read differently against the sheet behind it.
  *
  * [contentDescription] replaces the spoken "Add/Remove … highlight" label for pickers that choose a color rather
- * than highlight verses, such as the notes composer. The swatch announces [isSelected] either way.
+ * than highlight verses, such as the notes composer. The swatch announces whether it is selected either way. A color
+ * outside the palette has no name, so it is spoken as its hex value.
  */
 @Composable
 internal fun HighlightColorButton(
-    highlightColor: HighlightColor,
-    isSelected: Boolean,
+    swatch: HighlightSwatch,
     onClick: () -> Unit,
     contentDescription: String? = null,
 ) {
-    val colorName = stringResource(highlightColor.nameResId)
+    val isSelected = swatch.isSelected
+    val colorName =
+        swatch.highlightColor?.let { stringResource(it.nameResId) }
+            ?: "#" + swatch.hexColor.removePrefix("#").uppercase()
     val spokenDescription =
         contentDescription ?: stringResource(
             if (isSelected) {
@@ -187,7 +182,9 @@ internal fun HighlightColorButton(
             colorName,
         )
     val readerColorScheme = MaterialTheme.readerColorScheme
-    val swatchColor = highlightColor.swatchColor(readerColorScheme)
+    val swatchColor =
+        swatch.highlightColor?.swatchColor(readerColorScheme)
+            ?: readerColorScheme.mixedHighlightColor(Color(0xFF000000L or (highlightRgbOrNull(swatch.hexColor) ?: 0L)))
     Box(
         contentAlignment = Alignment.Center,
         modifier =
@@ -218,14 +215,6 @@ internal fun HighlightColorButton(
         }
     }
 }
-
-/**
- * Resolves the palette color of this highlight into the color its picker swatch is filled with,
- * mixing it into the reader background the same way the verse fill is so the swatch shows the color
- * the highlight will actually be on the page.
- */
-internal fun HighlightColor.swatchColor(readerColorScheme: ReaderColorScheme): Color =
-    readerColorScheme.mixedHighlightColor(color)
 
 @Composable
 private fun VerseActionButton(
@@ -263,3 +252,11 @@ private fun VerseActionButton(
         )
     }
 }
+
+/**
+ * Resolves the palette color of this highlight into the color its picker swatch is filled with,
+ * mixing it into the reader background the same way the verse fill is so the swatch shows the color
+ * the highlight will actually be on the page.
+ */
+internal fun HighlightColor.swatchColor(readerColorScheme: ReaderColorScheme): Color =
+    readerColorScheme.mixedHighlightColor(color)
